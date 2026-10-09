@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -29,18 +29,17 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = F
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
     previous = None
+    queued_since = None
+    printed_minute = None
     while True:
+        queued = False
         try:
             seen, snapshot = _seen(top, item, sha)
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
             reason = _pending(item, names, seen)
-            queued = ""
-            if (any(state == QUEUED for _, state in seen)
-                    or any(not any(name == want or name.startswith(want + " (")
-                                   for name, _ in seen) for want in names)):
-                queued = queued_reason(top, sha, item)
+            queued = any(state == QUEUED for _, state in seen)
         except repo.Refused as error:
             if not progress or error.entry is not REFUSALS["not_green"]:
                 raise
@@ -48,8 +47,22 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = F
         else:
             if not reason:
                 return
-            if queued:
-                repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
+        if queued:
+            now = time.monotonic()
+            if queued_since is None:
+                queued_since = now
+            minute = int((now - queued_since) / 60)
+            if minute != printed_minute:
+                print(f"Waiting: checks queued for {minute} minutes during this wait; "
+                      "shared runners may be busy or no runner may match the runner setting "
+                      "in forge.toml.", flush=True)
+                printed_minute = minute
+            # A repo cannot tell a busy shared pool from an absent runner. Zero is
+            # the explicit one-look override; ordinary queue time never ends a wait.
+            if timeout > 0:
+                deadline = now + timeout
+        else:
+            queued_since = printed_minute = None
         left = deadline - time.monotonic()
         if left <= 0:
             if progress:
@@ -84,10 +97,11 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
-    """Diagnose an old queue only when this repo shows no matching runner activity."""
+    """Doctor alone diagnoses a week-old queue with no matching activity that week."""
     runs = _ask(top, item, ".workflow_runs",
                 "repos/{owner}/{repo}/actions/runs?per_page=100")
     now = datetime.fromisoformat(repo.now())
+    since = now - timedelta(days=7)
     for run in runs:
         heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
         if run.get("status") != "queued" or sha not in [run.get("head_sha"), *heads]:
@@ -96,7 +110,7 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
             # A rerun can queue an old workflow; age its latest update, not the original run.
             queued = max(datetime.fromisoformat(run[key]) for key in ("created_at", "updated_at")
                          if run.get(key))
-            old = (now - queued).total_seconds() >= 300
+            old = queued <= since
         except (ValueError, TypeError):
             continue
         if old:
@@ -105,7 +119,7 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
                 try:
                     # A running workflow need not update its timestamp for each job start.
                     if (candidate.get("status") == "completed"
-                            and datetime.fromisoformat(candidate["updated_at"]) < queued):
+                            and datetime.fromisoformat(candidate["updated_at"]) < since):
                         continue
                 except (KeyError, ValueError, TypeError):
                     pass
@@ -120,12 +134,17 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
                         started = datetime.fromisoformat(job["started_at"])
                     except (KeyError, ValueError, TypeError):
                         continue
-                    if queued <= started <= now:
+                    if started <= now and (since <= started or job["status"] == "in_progress"):
                         return ""
-            return ("Pull request checks have stayed queued for at least five minutes; "
-                    "no runner has picked up a job for this repo using "
-                    f"runner = {json.dumps(runner)} in forge.toml during that time. "
-                    "Check that a matching runner is available, then run forge sync")
+                    try:
+                        finished = datetime.fromisoformat(job["completed_at"])
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                    if started <= finished <= now and since <= finished:
+                        return ""
+            return ("Pull request checks have stayed queued for at least seven days: "
+                    "likely missing runner; no job in this repo using "
+                    f"runner = {json.dumps(runner)} in forge.toml has run in the last seven days")
     return ""
 
 

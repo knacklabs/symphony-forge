@@ -1,4 +1,4 @@
-"""Busy runners keep CI waiting; only absent runner activity warrants the warning.
+"""Queued checks keep CI waiting; doctor diagnoses a week without matching runner activity.
 
 Audit: real close, land and doctor commands consume GitHub run/job responses. The
 regression is the old age-only refusal; elapsed time and GitHub alone are faked.
@@ -69,7 +69,7 @@ def _client(env, history, runner):
     (command, activity) for command in ("close", "land", "land-merge", "doctor")
     for activity in ("busy", "missing")
 ] + [("doctor", activity) for activity in (
-    "busy-running", "busy-rerun", "busy-case", "missing-case", "wrong-label",
+    "busy-running", "busy-rerun", "busy-case", "busy-days-ago", "missing-case", "wrong-label",
     "old-job", "future-job", "unassigned")])
 def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command, activity):
     env = clock
@@ -78,10 +78,10 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
     if command == "land-merge":
         _agent(env)
     where = _fix(env, "working", worked=True)
-    # The other branch's workflow predates this queue, but one of its jobs starts
-    # inside the queue window. Workflow creation time alone cannot detect activity.
+    # An old queued run cannot diagnose a missing runner if a matching job from
+    # another branch has run in the last week, including an earlier workflow attempt.
     now = datetime.now(timezone.utc)
-    queued_at = now - timedelta(minutes=6)
+    queued_at = now - timedelta(days=8)
     queued = {"id": 101, "status": "queued", "head_sha": "current-head",
               "created_at": queued_at.isoformat(), "updated_at": queued_at.isoformat()}
     other = {"id": 102, "status": "completed", "head_sha": "0" * 40,
@@ -105,8 +105,10 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
         job["labels"] = ["gpu" if activity == "busy-case" else "other"]
     elif activity == "wrong-label":
         job["labels"] = ["self-hosted"]
+    elif activity == "busy-days-ago":
+        job["started_at"] = (now - timedelta(days=6)).isoformat()
     elif activity == "old-job":
-        job["started_at"] = (queued_at - timedelta(minutes=1)).isoformat()
+        job["started_at"] = (now - timedelta(days=7, minutes=1)).isoformat()
     elif activity == "future-job":
         job["started_at"] = (now + timedelta(minutes=10)).isoformat()
     elif activity == "unassigned":
@@ -132,12 +134,12 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
                           *([] if command == "doctor" else [ITEM]),
                           cwd=env.repo.path if command == "land-merge" else where)
     output = done.stdout + done.stderr
-    if not activity.startswith("busy"):
+    if command == "doctor" and not activity.startswith("busy"):
         assert done.returncode != 0, output
-        assert "no runner has picked" in output, output
+        assert "likely" in output.lower() and "runner" in output.lower(), output
         assert f"runner = {json.dumps(runner)}" in output and "forge.toml" in output, output
     else:
-        assert "no runner has picked" not in output, output
+        assert "likely missing" not in output.lower(), output
         if command != "doctor":
             assert done.returncode == 0, output
             assert "clean review and green checks" in output, output

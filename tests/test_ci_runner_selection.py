@@ -1,4 +1,4 @@
-"""Client CI runner selection and actionable checks queued without a runner."""
+"""Client CI runner selection and doctor diagnostics after a week without runner activity."""
 from __future__ import annotations
 
 import json
@@ -13,8 +13,6 @@ import pytest
 from conftest import ROOT, _install
 from test_close import GREEN, env, run  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
-from test_land import ITEM, RUNS, _agent, _fix, _queue, _runs, _workers, land  # noqa: F401
-from test_land_waits_for_check_progress import clock  # noqa: F401
 from test_migrate import _copied_client
 
 STORY = "FIX-RUNNER-SETTING"
@@ -110,7 +108,7 @@ def test_6_sync_refuses_blank_runner_label(repo, runner):
     (command, state) for command in ("doctor", "close")
     for state in ("old-queued", "recent-queued", "recent-rerun", "running")
 ] + [("doctor", "target-event"), ("doctor", "another-head"), ("close", "optional-queued")])
-def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, command, state):
+def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, state):
     config = (env.repo.path / "forge.toml").read_text("utf-8") + 'runner = "self-hosted"\n'
     env.commit(env.repo.path, "forge.toml", config, "Select the organisation runner")
     item, where = env.start_fix()
@@ -118,7 +116,7 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
     env.gh.respond("pr", "list", stdout=json.dumps([
         {"number": 7, "state": "OPEN", "body": "", "isDraft": True, "headRefOid": head}]))
     now = datetime.now(timezone.utc)
-    created = now - timedelta(minutes=10 if state != "recent-queued" else 1)
+    created = now - (timedelta(minutes=1) if state == "recent-queued" else timedelta(days=8))
     status = "in_progress" if state == "running" else "queued"
     env.checks([run("tests"), run("forge-pr-check"), run("lint", None, status)]
                if state == "optional-queued" else [run("tests", None, status), run("forge-pr-check")])
@@ -134,7 +132,7 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
             "sha": head if state == "target-event" else "0" * 40}}]
     env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
                    stdout=json.dumps(workflow_run) + "\n")
-    # Age alone no longer diagnoses a missing runner; no assigned jobs is evidence.
+    # A week-old queue without recent assigned jobs is evidence for doctor, never close.
     env.gh.respond("api", "--paginate", "--jq", ".jobs[]", stdout="")
     if command == "close":
         # Closing commits its review before waiting. GitHub returns that current head,
@@ -151,22 +149,22 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
         _install(env.repo.bin, "gh", stub)
     result = env.repo.forge(command, *([item] if command == "close" else []), cwd=where)
     output = result.stdout + result.stderr
-    if state in ("old-queued", "target-event", "optional-queued"):
+    if command == "doctor" and state in ("old-queued", "target-event"):
         assert result.returncode != 0, output
         assert "queued" in output.lower(), output
-        assert "no runner has picked" in output.lower(), output
+        assert "likely" in output.lower() and "runner" in output.lower(), output
         assert 'runner = "self-hosted"' in output and "forge.toml" in output, output
         assert "still running" not in output, output
         assert any(call[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"]
                    for call in env.gh.calls()), output
     else:
-        assert "no runner has picked" not in output.lower(), output
+        assert "likely missing" not in output.lower(), output
         if command == "close":
             expected = "still running" if state == "running" else "still queued"
             assert result.returncode != 0 and expected in output, output
 
 
-def test_5_missing_check_queries_queued_runs_without_windows_batch_operators(env):
+def test_5_missing_check_does_not_diagnose_a_missing_runner(env):
     item, _ = env.start_fix()
     env.checks([run("tests")])
     closed = env.close(item)
@@ -174,36 +172,5 @@ def test_5_missing_check_queries_queued_runs_without_windows_batch_operators(env
     assert "forge-pr-check has not reported" in closed.stderr
     queries = [call for call in env.gh.calls()
                if call[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"]]
-    assert queries
-    # Windows' gh.cmd shim interprets an unquoted & as a second command.
-    # Pagination already follows every page without adding per_page to the URL.
-    assert all("&" not in call[-1] for call in queries), queries
-
-
-@pytest.mark.parametrize("phase", ["close", "merge"])
-@pytest.mark.parametrize("answer", ["malformed", "failed"])
-def test_7_land_retries_queued_run_lookup_failures_without_a_worker_round(clock, phase, answer):
-    # The check-run lookup works; only the separate Actions lookup temporarily fails.
-    # Both land's close phase and its merge revalidation must keep their progress wait.
-    env = clock
-    _agent(env)
-    _fix(env, "working", worked=True)
-    queued = [run("tests", None, "queued"), run("forge-pr-check")]
-    looks = [queued, queued, GREEN] if phase == "close" else [GREEN, queued, queued, GREEN]
-    _queue(env, RUNS, *_runs(*looks))
-    actions = ["api", "--paginate", "--jq", ".workflow_runs[]"]
-    if answer == "failed":
-        stub = env.repo.bin / "gh"
-        stub.write_text(stub.read_text("utf-8").replace('        answer(out)',
-            '        if out == "failed-queued-answer":\n'
-            '            answer("GitHub Actions temporarily unavailable", 1)\n'
-            '        answer(out)'), encoding="utf-8")
-    _queue(env, actions, "{" if answer == "malformed" else "failed-queued-answer", "")
-    done = env.repo.forge("land", ITEM)
-    assert done.returncode == 0, done.stdout + done.stderr
-    assert "Merged tidy-readme and removed its worktree" in done.stdout
-    assert done.stdout.count(f"Closing {ITEM}.") == 1
-    assert len(env.review_calls()) == 1
-    assert not _workers(env)
-    assert len(env.gh_calls("pr", "merge")) == 1
-    assert len(env.gh_calls(*actions)) >= 2
+    assert not queries
+    assert "missing runner" not in closed.stderr.lower()

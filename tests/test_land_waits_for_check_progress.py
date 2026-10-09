@@ -126,7 +126,8 @@ def test_2_land_retries_one_bad_github_answer(clock, answer):
 def test_3_land_stops_when_github_shows_no_check_progress(clock, answer):
     env = clock
     _fix(env, "working", worked=True)
-    rows = _pending()
+    # This rule concerns stalled running checks; queued checks now keep waiting.
+    rows = _pending(1)
     if answer == "old-head":
         rows = [dict(row, head_sha="0" * 40) for row in GREEN]
     looks = [rows]
@@ -174,7 +175,7 @@ def test_5_land_keeps_progress_waiting_during_merge_revalidation(clock, answer):
     elif answer == "long":
         answers = _runs(*[look for stage in range(4) for look in [_pending(stage)] * 3], GREEN)
     else:
-        answers = _runs(_pending())
+        answers = _runs(_pending(1))
     _queue(env, RUNS, *_runs(GREEN), *answers)
     done = env.repo.forge("land", ITEM)
     assert "clean review and green checks" in done.stdout
