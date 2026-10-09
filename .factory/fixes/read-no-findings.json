@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "40070947a40fb0d606a70cc484ebc098b95186120a8ef2df821b6019d84985b7",
-    "changed": "08b95fed47664f8edee9621ff55a6c9b5f814088e2cb656068782fffdab46dff",
-    "commit": "3c3e687697d611b94e63255520b8b3fe3074b7f5",
+    "branch_diff": "6dfc3d7f2a95deded666a504f293cf6460f474dd46c78488fc3643c09a61b8a0",
+    "changed": "430e475de8529876abd71c09e53627d5f30648337176f5f127b00f034f515fb0",
+    "commit": "cccdf85d5d0b435925b804595f0f5d14a1a887f5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The previously reported cases remain broken: `6. There are no findings.`, `6. No bugs found.`, and `6. No findings reported.` The recognizer excludes their prefix, noun, or suffix, so each clean reply produces `passed: no` at src/forge/story.py:276 and requires a disposition and another round. This violates the Done-when requirement to accept common no-findings wording. The command table in tests/test_read_accepts_no_findings.py also still omits all three cases for both client histories. Extend recognition conservatively and add these cases to that table.",
-        "file": "src/forge/story.py",
-        "line": 254,
-        "priority": "P1",
-        "title": "Not done: forge read still rejects common no-findings wording"
-      }
-    ],
-    "id": "b9d87402-53a2-428c-ad00-080c4e6b4239",
-    "status": "blocked"
+    "findings": [],
+    "id": "6fc774e2-f468-43b8-bf54-5bf2c7241bbf",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T15:43:09+00:00",
@@ -41,6 +33,10 @@
     },
     {
       "at": "2026-10-09T18:39:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:45:01+00:00",
       "step": "review"
     }
   ],
