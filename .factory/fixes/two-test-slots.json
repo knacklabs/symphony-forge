@@ -1,0 +1,14 @@
+{
+  "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
+  "branch": "fix/two-test-slots",
+  "done_when": "The shared test lane admits one test run per four available cores, at least one (two on an 8-core machine), each test command still getting half the machine's cores as its worker count; forge doctor, the lanes view and the pane show the test lane's size; the coordinator guide says so; command tests cover an 8-core machine admitting two test runs while a third waits, and a 4-core machine keeping one, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T17:43:41+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The machine-wide test lane runs one test run at a time, so on an 8-core machine three or more closes and worker test runs often queue behind each other while cores sit idle (owner, 2026-10-09: two test runs at once, each with half the cores)"
+}
