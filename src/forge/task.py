@@ -119,6 +119,8 @@ def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[st
     rel = repo.write_state(item, repo.add_step({**state, "status": "started", "branch": branch},
                                                "start"), path)
     if carry:  # after the state, so the git hooks know the branch
+        # Copying files alone would lose the story's starter and approval after cleanup.
+        git("update-ref", f"refs/tags/forge-plan/{branch}", carry[0], "", cwd=path)
         git("checkout", carry[0], "--", *carry[1], cwd=path)
         repo.commit_state(f"Bring in the approved plan from {carry[0]}", *carry[1], top=path)
     repo.commit_state(message, rel, top=path)

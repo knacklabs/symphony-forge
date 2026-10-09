@@ -505,6 +505,11 @@ def _push(top: Path, branch: str) -> None:
     """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
     tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
                     "refs/tags/forge-start/", cwd=top).splitlines()
+    # Replay and copied plans can detach ownership history from the work branch.
+    retained = repo.git("for-each-ref", "--format=%(refname)",
+                        f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
+                        cwd=top).splitlines()
+    tags = list(dict.fromkeys(tags + retained))
     for wait in (1, 2, 4, None):
         try:
             repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
