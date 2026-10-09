@@ -2,13 +2,28 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-mod",
   "done_when": "The mod drops a session's seen-event ids when that session ends and keeps the list bounded; the spinner shows the place in line for runs launched from the session's folder; a zero-test progress report is accepted; the Machine tab's tooltip and alt text are asserted in its native tests; native mod tests cover each, and new and existing repos get it through forge sync",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bce13f90d066e0bef6083ed545c08ffd21ddb93155a65be723a1b051bb9af770",
+    "changed": "f712423344f22616d3b87797c61c11b1a5bff5cfea86bd5f24848d8f94a55b19",
+    "commit": "5dd25f04061b1774e1647d33ce19d44164c82786",
+    "dismissals": [],
+    "findings": [],
+    "id": "4fbebefe-5e79-4407-9a15-f7e6f310f37b",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:32+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:41:29+00:00",
+      "step": "review"
     }
   ],
   "why": "Real issues the coordinator skipped, still in the Claude Code mod (audit, 2026-10-09): the events seen-id list grows forever until Claude's storage limit makes it resubmit forever, the spinner matches the worktree instead of the coordinator's folder so it never shows the place in line, a test run reporting zero total tests rejects the whole Machine snapshot, and the Machine tab's tooltip and alt facts have no test",
