@@ -6,9 +6,9 @@ from test_fix_a_repo_s_own_review_rules_such_as_which import flat
 
 STORY = "FIX-REVIEWS-FIND-ONE-MORE-CASE-OF-THE-SAME-D"
 
-WANTED = ("That means checking every sibling case of the same kind, too: the other states, the "
-          "other providers and the other callers of the same code. Report them together in one "
-          "finding that names each place.")
+WANTED = ("Sweep the sibling cases normal use reaches, too: the other states, providers and "
+          "callers of the same code that people or agents are likely to hit, not every rare "
+          "combination.")
 
 
 def test_1_the_review_prompt_asks_for_every_sibling_case_in_one_finding(env):
