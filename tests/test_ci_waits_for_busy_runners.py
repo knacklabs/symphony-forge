@@ -78,14 +78,17 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
     if command == "land-merge":
         _agent(env)
     where = _fix(env, "working", worked=True)
-    # An old queued run cannot diagnose a missing runner if a matching job from
-    # another branch has run in the last week, including an earlier workflow attempt.
+    # Expired demand cannot diagnose a missing runner if a matching job from
+    # another branch ran in the last week, including an earlier workflow attempt.
     now = datetime.now(timezone.utc)
-    queued_at = now - timedelta(days=8)
+    queued_at = now - timedelta(minutes=10)
     queued = {"id": 101, "status": "queued", "head_sha": "current-head",
               "created_at": queued_at.isoformat(), "updated_at": queued_at.isoformat()}
+    expired = {"id": 100, "status": "completed", "head_sha": "1" * 40,
+               "created_at": (now - timedelta(days=9)).isoformat(),
+               "updated_at": (now - timedelta(days=8)).isoformat()}
     other = {"id": 102, "status": "completed", "head_sha": "0" * 40,
-             "created_at": (now - timedelta(hours=1)).isoformat(), "updated_at": now.isoformat()}
+             "created_at": (now - timedelta(days=9)).isoformat(), "updated_at": now.isoformat()}
     stub = env.repo.bin / "gh"
     stub.write_text(stub.read_text("utf-8").replace('        answer(out)', '''
         if args[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"]:
@@ -113,8 +116,14 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
         job["started_at"] = (now + timedelta(minutes=10)).isoformat()
     elif activity == "unassigned":
         job.update(status="queued", runner_id=0)
-    _queue(env, ACTIONS, *_runs([queued, other]))
-    for run_id, jobs in ((101, []), (102, [] if activity == "missing" else [job])):
+    _queue(env, ACTIONS, *_runs([queued, expired, other]))
+    current_job = {"status": "queued", "labels": [runner], "runner_id": 0,
+                   "started_at": queued_at.isoformat()}
+    expired_job = {"status": "completed", "conclusion": "failure", "labels": [runner],
+                   "runner_id": 0, "started_at": expired["created_at"],
+                   "completed_at": expired["updated_at"]}
+    for run_id, jobs in ((100, [expired_job]), (101, [current_job]),
+                         (102, [] if activity == "missing" else [job])):
         endpoint = f"repos/{{owner}}/{{repo}}/actions/runs/{run_id}/jobs"
         # GitHub defaults to the latest attempt; a queued rerun hides older jobs.
         _queue(env, JOBS + [endpoint + "?per_page=100"],

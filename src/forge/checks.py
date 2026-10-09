@@ -97,54 +97,54 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
-    """Doctor alone diagnoses a week-old queue with no matching activity that week."""
+    """Doctor diagnoses old unmet demand, including jobs GitHub already expired."""
     runs = _ask(top, item, ".workflow_runs",
                 "repos/{owner}/{repo}/actions/runs?per_page=100")
     now = datetime.fromisoformat(repo.now())
     since = now - timedelta(days=7)
+    runner = repo.config(top)["runner"]
+    old_demand = current_demand = False
     for run in runs:
         heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
-        if run.get("status") != "queued" or sha not in [run.get("head_sha"), *heads]:
-            continue
-        try:
-            # A rerun can queue an old workflow; age its latest update, not the original run.
-            queued = max(datetime.fromisoformat(run[key]) for key in ("created_at", "updated_at")
-                         if run.get(key))
-            old = queued <= since
-        except (ValueError, TypeError):
-            continue
-        if old:
-            runner = repo.config(top)["runner"]
-            for candidate in runs:
+        jobs = _ask(top, item, ".jobs",
+                    f"repos/{{owner}}/{{repo}}/actions/runs/{run['id']}/jobs?filter=all")
+        for job in jobs:
+            if not any(runner.casefold() == label.casefold() for label in job.get("labels") or []):
+                continue
+            if job.get("runner_id"):
+                if job.get("status") not in ("in_progress", "completed"):
+                    continue
                 try:
-                    # A running workflow need not update its timestamp for each job start.
-                    if (candidate.get("status") == "completed"
-                            and datetime.fromisoformat(candidate["updated_at"]) < since):
-                        continue
-                except (KeyError, ValueError, TypeError):
-                    pass
-                jobs = _ask(top, item, ".jobs",
-                            f"repos/{{owner}}/{{repo}}/actions/runs/{candidate['id']}/jobs?filter=all")
-                for job in jobs:
-                    if (not any(runner.casefold() == label.casefold()
-                                for label in job.get("labels") or []) or not job.get("runner_id")
-                            or job.get("status") not in ("in_progress", "completed")):
-                        continue
-                    try:
-                        started = datetime.fromisoformat(job["started_at"])
-                    except (KeyError, ValueError, TypeError):
-                        continue
+                    started = datetime.fromisoformat(job["started_at"])
                     if started <= now and (since <= started or job["status"] == "in_progress"):
                         return ""
-                    try:
-                        finished = datetime.fromisoformat(job["completed_at"])
-                    except (KeyError, ValueError, TypeError):
-                        continue
+                    finished = datetime.fromisoformat(job["completed_at"])
                     if started <= finished <= now and since <= finished:
                         return ""
-            return ("Pull request checks have stayed queued for at least seven days: "
-                    "likely missing runner; no job in this repo using "
-                    f"runner = {json.dumps(runner)} in forge.toml has run in the last seven days")
+                except (KeyError, ValueError, TypeError):
+                    pass
+                continue
+            if job.get("status") == "queued":
+                # Fresh retries must not inherit the original run's age.
+                observed = job.get("started_at") or run.get(
+                    "updated_at" if run.get("run_attempt", 1) > 1 else "created_at")
+            elif (job.get("status") == "completed"
+                  and job.get("conclusion") in ("failure", "cancelled", "timed_out")):
+                observed = job.get("completed_at")
+            else:
+                continue
+            try:
+                observed = datetime.fromisoformat(observed)
+                if observed > now:
+                    continue
+                old_demand |= observed <= since
+                current_demand |= sha in [run.get("head_sha"), *heads]
+            except (ValueError, TypeError):
+                continue
+    if old_demand and current_demand:
+        return ("Runner demand has gone unmet for at least seven days: "
+                "likely missing runner; no job in this repo using "
+                f"runner = {json.dumps(runner)} in forge.toml has run in the last seven days")
     return ""
 
 

@@ -106,7 +106,7 @@ def test_6_sync_refuses_blank_runner_label(repo, runner):
 
 @pytest.mark.parametrize("command,state", [
     (command, state) for command in ("doctor", "close")
-    for state in ("old-queued", "recent-queued", "recent-rerun", "running")
+    for state in ("recent-queued", "recent-rerun", "running")
 ] + [("doctor", "target-event"), ("doctor", "another-head"), ("close", "optional-queued")])
 def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, state):
     config = (env.repo.path / "forge.toml").read_text("utf-8") + 'runner = "self-hosted"\n'
@@ -116,7 +116,7 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, 
     env.gh.respond("pr", "list", stdout=json.dumps([
         {"number": 7, "state": "OPEN", "body": "", "isDraft": True, "headRefOid": head}]))
     now = datetime.now(timezone.utc)
-    created = now - (timedelta(minutes=1) if state == "recent-queued" else timedelta(days=8))
+    created = now - (timedelta(days=8) if state == "recent-rerun" else timedelta(minutes=1))
     status = "in_progress" if state == "running" else "queued"
     env.checks([run("tests"), run("forge-pr-check"), run("lint", None, status)]
                if state == "optional-queued" else [run("tests", None, status), run("forge-pr-check")])
@@ -130,10 +130,26 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, 
         workflow_run["head_sha"] = env.repo.git("rev-parse", "main")
         workflow_run["pull_requests"] = [{"head": {
             "sha": head if state == "target-event" else "0" * 40}}]
+    runs = [workflow_run]
+    if state in ("target-event", "another-head"):
+        # An unmatched job expires after a day; earlier expired demand still
+        # matters when the client retries on its current pull request.
+        runs.append({"id": 102, "status": "completed", "head_sha": "0" * 40,
+                     "created_at": (now - timedelta(days=9)).isoformat(),
+                     "updated_at": (now - timedelta(days=8)).isoformat()})
     env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
-                   stdout=json.dumps(workflow_run) + "\n")
-    # A week-old queue without recent assigned jobs is evidence for doctor, never close.
-    env.gh.respond("api", "--paginate", "--jq", ".jobs[]", stdout="")
+                   stdout="".join(json.dumps(row) + "\n" for row in runs))
+    env.gh.respond("api", "--paginate", "--jq", ".jobs[]",
+                   "repos/{owner}/{repo}/actions/runs/101/jobs?filter=all",
+                   stdout=json.dumps({"status": status, "labels": ["self-hosted"],
+                                      "runner_id": 9 if status == "in_progress" else 0,
+                                      "started_at": now.isoformat()}) + "\n")
+    env.gh.respond("api", "--paginate", "--jq", ".jobs[]",
+                   "repos/{owner}/{repo}/actions/runs/102/jobs?filter=all",
+                   stdout=json.dumps({"status": "completed", "conclusion": "failure",
+                                      "labels": ["self-hosted"], "runner_id": 0,
+                                      "started_at": (now - timedelta(days=9)).isoformat(),
+                                      "completed_at": (now - timedelta(days=8)).isoformat()}) + "\n")
     if command == "close":
         # Closing commits its review before waiting. GitHub returns that current head,
         # rather than the fixture's earlier head, when queried after the push.
@@ -149,9 +165,8 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, 
         _install(env.repo.bin, "gh", stub)
     result = env.repo.forge(command, *([item] if command == "close" else []), cwd=where)
     output = result.stdout + result.stderr
-    if command == "doctor" and state in ("old-queued", "target-event"):
+    if command == "doctor" and state == "target-event":
         assert result.returncode != 0, output
-        assert "queued" in output.lower(), output
         assert "likely" in output.lower() and "runner" in output.lower(), output
         assert 'runner = "self-hosted"' in output and "forge.toml" in output, output
         assert "still running" not in output, output
