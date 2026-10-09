@@ -1332,6 +1332,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 72,
+      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "forge-ci-linux-prs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_runs_only_related_tests.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_close_runs_only_related_tests.py",

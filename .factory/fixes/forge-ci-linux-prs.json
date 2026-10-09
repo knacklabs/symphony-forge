@@ -2,16 +2,30 @@
   "base": "49e6b9ab810cebe9b5537cde92238e2535e7d187",
   "branch": "fix/forge-ci-linux-prs",
   "done_when": "In Forge's own repo only, pull request CI runs just the Linux test groups (sized so each stays under its time limit); pushes to main and release tags run the full Linux, Mac and Windows matrix; close's named checks still pass on pull requests; the release steps in this repo's docs say to confirm main's full-matrix run is green before tagging; the shipped client workflow is unchanged; this repo's CI tests check the pull-request and main job sets",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b64fb7aba04515af22a50ad2189cfaf99ae932147921f5fe7a5e04aefe9ccd3e",
+    "changed": "cd958a95cd45edc58c8d5bfc72874068c29e29dfe8093682e772082a1a04c7b9",
+    "commit": "8bdc5ea5fd415e843f10ff825c32e011229e00b6",
+    "dismissals": [],
+    "findings": [],
+    "id": "44bbbce8-f400-45ad-98ac-4a8094197b44",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T12:19:38+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T13:51:24+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 58fd944d4d383807318db51b727e00fc15c810fa` exited with status 1 on this machine.\n\n        with Popen(*popenargs, **kwargs) as process:\n            try:\n                stdout, stderr = process.communicate(input, timeout=timeout)\n            except TimeoutExpired as exc:\n                process.kill()\n                if _mswindows:\n                    # Windows accumulates the output in a single blocking\n                    # read() call run on child threads, with the timeout\n                    # being done in a join() on those threads.  communicate()\n                    # _after_ kill() is required to collect that and add it\n                    # to the exception.\n                    exc.stdout, exc.stderr = process.communicate()\n                else:\n                    # POSIX _communicate already populated the output so\n                    # far into the TimeoutExpired exception.\n                    process.wait()\n                raise\n            except:  # Including KeyboardInterrupt, communicate handled that.\n                process.kill()\n                # We don't call process.wait() as .__exit__ does that for us.\n                raise\n            retcode = process.poll()\n            if check and retcode:\n>               raise CalledProcessError(retcode, process.args,\n                                         output=stdout, stderr=stderr)\nE               subprocess.CalledProcessError: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-forge-ci-linux-prs/.venv/bin/python', '-m', 'pytest', 'tests', '-q', '--collect-only']' returned non-zero exit status 1.\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:571: CalledProcessError\n1 failed, 5 passed in 5.87s",
   "why": "Forge's own CI runs about 17 jobs (3 Linux, 6 Mac, 8 Windows) on every pull request, and the knacklabs organisation shares about 20 runners, so even one Forge pull request leaves client repos' CI queued (2026-10-09). Owner decision: Linux on pull requests, every OS on main and before each release",
   "worker": "codex"
 }
