@@ -456,7 +456,7 @@ def machine_board(top: Path, history: Item | None = None,
                    "waiting for approval": "Waiting for approval", "approved": "Approved",
                    "checks failed": "Checks failed"}.get(stage) or STATUS.get(stage, "Not started yet"))
         finished_at = (merged_details.get(branch, {}).get("mergedAt") or state.get("finished")
-                       or (history["dates"].get(repo.state_path(item)) if finished else None))
+                       or (history["dates"].get(repo.state_path(item)) if finished and kind != "story" else None))
         if finished and _when(finished_at):
             status += " on " + _day(_when(finished_at))
         if worker:

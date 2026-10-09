@@ -88,8 +88,21 @@ def _row(data, key):
     return next(row for row in data["items"] if row["id"] == key)
 
 
-def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path):
+@pytest.mark.parametrize("historical_state", [False, True], ids=["roadmap-only", "historical-state"])
+def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkeypatch, historical_state):
     tree = _fix(client)
+    if historical_state:
+        # First addition records creation, not completion; the roadmap alone finishes it.
+        path = tree / ".factory/stories/PAST/story.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({"status": "approved", "title": "People keep saved baskets"}), "utf-8")
+        client.git("add", "-A", cwd=tree)
+        with monkeypatch.context() as dated:
+            dated.setenv("GIT_AUTHOR_DATE", OLD)
+            dated.setenv("GIT_COMMITTER_DATE", OLD)
+            client.git("commit", "-qm", "Record the basket plan", cwd=tree)
+        client.git("merge", "-q", "--ff-only", "fix/correct-state")
+        _land_fixture(client)
     (tree / "plans").mkdir(exist_ok=True)
     (tree / "plans/roadmap.json").write_text(json.dumps({"items": [
         {"key": "PAST", "title": "People keep saved baskets", "status": "done"}]}), "utf-8")
@@ -98,6 +111,8 @@ def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path):
     row = _row(data, "PAST")
     assert row["stage"] == "done" and not row["stalled"]
     assert "People keep saved baskets Finished" in text
+    assert row["status"] == "Finished"
+    assert "People keep saved baskets Finished on" not in text
     assert data["kind_stage_counts"]["stories"]["done"] == 1
     assert data["kind_stage_counts"]["stories"]["needs a spec"] == 0
 
@@ -127,6 +142,8 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
         earlier.setenv("FORGE_NOW", OLD)
         _fix(client, status="fixing", round=1)
         _fix(client, "Finished help text", "finished-help", status="done", round=1)
+        earlier.setenv("FORGE_NOW", "2026-10-08T11:00:00+00:00")
+        _fix(client, "Help text waits for fixes", "day-idle", status="fixing", round=1)
     _records(client, "events.jsonl", [
         {"id": f"{item}:end", "event": "run end", "item": item, "kind": "work", "at": OLD}
         for item in ("correct-state", "finished-help")])
@@ -137,10 +154,14 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
     assert re.search(r"Stalled.*4 days", text, re.I)
     assert idle["waits_on"] in text
     assert not done["stalled"]
+    day_idle = _row(data, "day-idle")
+    assert day_idle["stalled"] and day_idle["idle_seconds"] == 25 * 3600
+    assert day_idle["waits_on"] and day_idle["waits_on"] in text
+    assert re.search(r"Help text waits for fixes.*Stalled", text)
 
 
 @pytest.mark.parametrize("child_activity", ["running", "recently merged"])
-def test_3_story_idle_time_tracks_its_parts(
+def test_11_story_idle_time_tracks_its_parts(
         client, tmp_path, monkeypatch, claude_payload, gh, child_activity):
     configured = _fix(client)
     version = client.forge("--version").stdout.split()[-1]
@@ -190,7 +211,7 @@ def test_3_story_idle_time_tracks_its_parts(
 
 
 @pytest.mark.parametrize("run_round", [1, 2], ids=["older round", "current round"])
-def test_4_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
+def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
         client, tmp_path, monkeypatch, run_round):
     with monkeypatch.context() as earlier:
         earlier.setenv("FORGE_NOW", OLD)
