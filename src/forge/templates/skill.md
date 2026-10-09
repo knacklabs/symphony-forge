@@ -697,6 +697,10 @@ story's work, using the same overlap rule as `forge task start`.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
+  kept as unnecessary. `keep` only a finding outside the boundary or factually wrong, and give
+  the reason as the Leave out line it falls under, the Raise line it lacks, the cited fact that
+  disproves it, or the human's `Decided:` line.
 - `Disputed keep <n>: <why>`: the reader still disagrees with a finding you kept. Put it to the
   human as one question with options, record the answer in the doc's Notes as
   `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
@@ -891,9 +895,11 @@ and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pyte
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
-before anything else. If the code proves the finding wrong, dismiss it with
-`forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
-`forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+before anything else. The review's "What counts" list is the boundary: every P0 or P1 finding
+inside it gets a fix round with `forge work <item>`, never a dismissal for being unnecessary, rare
+or low value. Dismiss only a finding outside the boundary or factually wrong, with
+`forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
+out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then

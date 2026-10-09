@@ -27,8 +27,8 @@ def test_1_a_task_s_own_records_are_not_listed_outside_scope(env):
     assert "- other.py" in outside, "a product file outside Scope is still listed"
     for record in (RECORDS, "plans/roadmap.json", "plans/SHOP.read.md"):
         assert record not in outside, record
-    assert ("Forge's own records (everything under `.factory/`, `plans/roadmap.json` and the "
-            "story's read notes) are not part of the change: never report them as files outside "
+    assert ("Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the "
+            "story's doc and its read notes) are not part of the change: never report them as files outside "
             "Scope or as unrelated changes.") in flat(prompt)
 
 
