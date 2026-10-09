@@ -74,27 +74,32 @@ def close(args: argparse.Namespace) -> int:
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    continued = (os.environ.pop("FORGE_CLOSE_ACCEPTED", "") == "1" and choice == "accept"
+                 and reason and (state.get("stop") or {}).get("choice") == choice
+                 and state["stop"].get("reason") == reason.strip())
     if choice or reason is not None:
         if (not choice or not reason or not reason.strip() or
-                not state.get("stop") or state["stop"].get("choice") or
+                not state.get("stop") or (state["stop"].get("choice") and not continued) or
                 args.dismiss or args.because):
             repo.refuse(REFUSALS["bad_choice"], item=item)
-        result = state["review"]
-        if choice == "accept":
-            dismissed = {d["finding"] for d in result["dismissals"]}
-            result["dismissals"].extend(
-                {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
-                 "accepted": True}
-                for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
-            result["status"] = "clean"
-        state["stop"].update(choice=choice, reason=reason.strip())
-        state["status"] = "waiting for checks" if choice == "accept" else "fixing"
-        _save(top, item, state, f"Record the human's review loop choice: {choice}")
+        if not continued:
+            result = state["review"]
+            if choice == "accept":
+                dismissed = {d["finding"] for d in result["dismissals"]}
+                result["dismissals"].extend(
+                    {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
+                     "accepted": True}
+                    for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
+                result["status"] = "clean"
+            state["stop"].update(choice=choice, reason=reason.strip())
+            state["status"] = "waiting for checks" if choice == "accept" else "fixing"
+            _save(top, item, state, f"Record the human's review loop choice: {choice}")
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
             return 0
-        print("Recorded the human's choice.")
+        if not continued:
+            print("Recorded the human's choice.")
     had_stop = bool(state.get("stop"))
     if not switch:
         check_stop(item, state)
@@ -120,6 +125,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
+    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept")
     if switch:
         files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
                              "HEAD", cwd=top).splitlines())

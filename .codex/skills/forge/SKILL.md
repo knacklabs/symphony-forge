@@ -804,6 +804,8 @@ an upgrade test in the test from a text fixture folder. Close refuses added bina
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
+When a worker round or close's merge changes the item's Forge pin, land and close say so in one
+line and continue through uv under that release before reading its new settings.
 Close merges the default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. When the
