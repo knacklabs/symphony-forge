@@ -1,10 +1,8 @@
 ---
 slug: board-for-the-team
 title: The board tells a team what's happening, what needs them and when it goes live
-status: confirmed
-saved: 2026-10-09T15:44:20+00:00
-confirmed_by: "Ravi Kiran Vemula"
-confirmed_hash: 0e88aa3a5c6b6606467d4e9cbefaf305793ca284b838f434121f29abe3e3fc52
+status: draft
+saved: 2026-10-09T15:57:55+00:00
 ---
 
 # The board tells a team what's happening, what needs them and when it goes live
@@ -63,6 +61,10 @@ Options weighed: **Don't build** (the board stays unusable for a team; rejected 
 5. Each item shows where its time went (working versus waiting), one line per review round, and who started and approved it.
 6. The page uses the full width of a laptop, reads in light and dark mode, and stacks to one column in a narrow window.
 7. Right after an upgrade, older items show who started, approved and merged them and their review results from git and GitHub; what can't be found is unknown, never invented.
+
+## Roadmap
+
+- FORGE-BOARD-2: The board tells a team what's happening, what needs them and when it goes live
 
 ## Success measure
 
