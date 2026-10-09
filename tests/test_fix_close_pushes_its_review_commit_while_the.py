@@ -28,7 +28,10 @@ def test_1_close_never_counts_a_check_result_from_an_earlier_head(env):
             "forge-pr-check has not reported.") in done.stdout + done.stderr
     pushed = env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
     assert pushed != earlier
-    assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
+    # Missing current-head checks also query queued workflows, which have no commit URL.
+    for field in (".check_runs[]", ".statuses[]"):
+        calls = env.gh_calls("api", "--paginate", "--jq", field)
+        assert calls and all(f"/commits/{pushed}/" in call[-1] for call in calls)
 
 
 def test_2_close_retries_a_failed_push_before_giving_up(env):

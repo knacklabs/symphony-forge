@@ -24,6 +24,16 @@ the install line to fix it.
 - **A new repo:** create it on GitHub with an `origin` remote and no commits, then run `forge init`.
   It writes `forge.toml`, the docs skeleton and the files for both hosts in one first commit,
   pushes it, installs the git hooks and switches on branch protection for the default branch.
+- **CI runners:** `runner = "ubuntu-latest"` is the default in `forge.toml`. For an organisation
+  using self-hosted Linux runners, use `forge init --runner self-hosted`, or set
+  `runner = "self-hosted"` in an existing repo's settings in a fix and run `forge sync`.
+  A custom runner label works too. Sync writes that label into both generated jobs in
+  `.github/workflows/forge.yml`; new repos get it at init and earlier adopted repos get it after
+  upgrading Forge and syncing. The jobs install uv and select Python themselves; Node tests
+  install Node from the repo's version file or engines, defaulting to the client stack's Node 22.
+  `forge doctor` checks the current branch's open pull request. It and close's check wait report
+  checks queued for at least five minutes without starting and name the runner setting to check.
+  Make a matching runner available or correct the setting, then sync; keep the required checks.
 - **A repo that copied in the old Forge:** `forge migrate` moves it over in one pull request.
 - **Rules for agents:** a repo keeps them in AGENTS.md only, outside Forge's block. Claude Code
   reads AGENTS.md itself, so `forge sync` moves any lines a CLAUDE.md has that AGENTS.md lacks into

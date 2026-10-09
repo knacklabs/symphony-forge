@@ -34,6 +34,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/runner-setting.json\tNot done: command tests for new clients, earlier-release adoption and queued-without-a-runner diagnostics\trunner-setting",
+      "kind": "bug",
+      "path": ".factory/fixes/runner-setting.json",
+      "line": 5,
+      "text": "Not done: command tests for new clients, earlier-release adoption and queued-without-a-runner diagnostics",
+      "from": "blocking",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/runner-setting.json\tNot done: proof list\trunner-setting",
+      "kind": "bug",
+      "path": ".factory/fixes/runner-setting.json",
+      "line": 11,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/runner-setting.json\tNot done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation\trunner-setting",
+      "kind": "bug",
+      "path": ".factory/fixes/runner-setting.json",
+      "line": 5,
+      "text": "Not done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation",
+      "from": "blocking",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -771,28 +804,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026\tmachine-test-speed",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/machine.test.ts",
-      "line": 231,
-      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026",
-      "from": "blocking",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026\tmachine-test-speed",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/machine.test.ts",
-      "line": 231,
-      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026",
-      "from": "blocking",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tThe native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
       "kind": "bug",
       "path": "src/forge/mod/hooks/machine.test.ts",
@@ -1266,17 +1277,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_codex_resume.py\tThe Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 559,
-      "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
-      "from": "worker",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/test_codex_turns_trust_forge_hooks.py",
@@ -1284,6 +1284,17 @@
       "text": "Not done: Hook trust in new and upgraded client repos",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_commands_load_only_their_owner.py",
+      "line": 90,
+      "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
       "status": "open",
       "closed_by": null
     },
@@ -1317,6 +1328,17 @@
       "text": "The doctor interrupt check times out locally on this branch and on the default branch.",
       "from": "worker",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_doctor_batches_file_checks.py\tWindows CI crashed its worker during the previous-release fix case's real git push; the owner passes locally but this failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_doctor_batches_file_checks.py",
+      "line": 128,
+      "text": "Windows CI crashed its worker during the previous-release fix case's real git push; the owner passes locally but this failure remains unresolved.",
+      "from": "worker",
+      "item": "runner-setting",
       "status": "open",
       "closed_by": null
     },
@@ -1394,6 +1416,17 @@
       "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
       "from": "worker",
       "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
+      "line": 24,
+      "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
       "status": "open",
       "closed_by": null
     },
@@ -1482,6 +1515,17 @@
       "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
       "from": "worker",
       "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: Both lane-stop regression tests pass on every CI platform\tlane-stop-race",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 187,
+      "text": "Not done: Both lane-stop regression tests pass on every CI platform",
+      "from": "blocking",
+      "item": "lane-stop-race",
       "status": "open",
       "closed_by": null
     },
@@ -1640,17 +1684,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tWindows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_machine_views_recent_finished_items.py",
-      "line": 184,
-      "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
-      "from": "worker",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "tests/test_mod_install.py",
@@ -1680,6 +1713,17 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_onechat_registry.py\tWindows CI's fresh init exited 1 with no output; its local owner passes but the failure's cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_onechat_registry.py",
+      "line": 26,
+      "text": "Windows CI's fresh init exited 1 with no output; its local owner passes but the failure's cause remains unresolved.",
+      "from": "worker",
+      "item": "runner-setting",
       "status": "open",
       "closed_by": null
     },
@@ -1933,6 +1977,28 @@
       "text": "Respect terminal check states when projecting the CI gate",
       "from": "review",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tDiagnose queued checks outside the configured check names",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 46,
+      "text": "Diagnose queued checks outside the configured check names",
+      "from": "review",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tPreserve progress retries when the queued-run lookup fails",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 49,
+      "text": "Preserve progress retries when the queued-run lookup fails",
+      "from": "review",
+      "item": "runner-setting",
       "status": "open",
       "closed_by": null
     },
@@ -2751,35 +2817,57 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
-      "kind": "bug",
-      "path": "tests/test_commands_load_only_their_owner.py",
-      "line": 90,
-      "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "key": "improve\tsrc/forge/templates/skill.md\tThe generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
+      "kind": "improve",
+      "path": "src/forge/templates/skill.md",
+      "line": 566,
+      "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
-      "item": "lane-stop-race",
+      "item": "runner-setting",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026\tmachine-test-speed",
       "kind": "bug",
-      "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
-      "line": 24,
-      "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
-      "from": "worker",
-      "item": "lane-stop-race",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_lanes_view.py\tNot done: Both lane-stop regression tests pass on every CI platform\tlane-stop-race",
-      "kind": "bug",
-      "path": "tests/test_lanes_view.py",
-      "line": 187,
-      "text": "Not done: Both lane-stop regression tests pass on every CI platform",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026",
       "from": "blocking",
-      "item": "lane-stop-race",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026\tmachine-test-speed",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026",
+      "from": "blocking",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tThe Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 559,
+      "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tWindows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 184,
+      "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
       "status": "open",
       "closed_by": null
     }

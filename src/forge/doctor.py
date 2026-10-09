@@ -11,7 +11,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, close, codex, init, machine, quicktest, repo, review, story, sync, task
+from forge import __version__, checks, close, codex, init, machine, quicktest, repo, review, story, sync, task
 
 COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks", "args": [(('--fix',), {"action": "store_true", "help":
@@ -376,6 +376,18 @@ def doctor(args: argparse.Namespace) -> int:
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
     if not cfg["checks"]: add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
+    if shutil.which("gh"):
+        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state")
+        for pr in prs if isinstance(prs, list) else []:
+            if not isinstance(pr, dict) or pr.get("state") != "OPEN" or not pr.get("headRefOid"):
+                continue
+            try:
+                if reason := checks.queued_reason(top, pr["headRefOid"]):
+                    add(reason, "make a matching runner available or correct runner in forge.toml, "
+                        "then run forge sync")
+            except repo.Refused as error:
+                add(str(error).partition("\nNext: ")[0], "check gh auth status and GitHub access, "
+                    "then run forge doctor")
     protection = (repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/branches/" f"{repo.default_branch(top)}/protection", cwd=top)
                   if shutil.which("gh") else None)
     plan_note = (init.skipped(repo.default_branch(top), cfg["checks"]) if protection and init.no_protection_plan(protection) else "")

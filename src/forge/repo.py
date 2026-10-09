@@ -309,11 +309,11 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "fast_test": str,
-        "signoff": str,
+        "signoff": str, "runner": str,
         "merge": str, "checks": list, "interfaces": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "fast_test": "",
-            "signoff": "",
+            "signoff": "", "runner": "ubuntu-latest",
             "merge": "human", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "merge": ("agent", "human")}
@@ -492,6 +492,8 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "version" and not VERSION.fullmatch(value):
             return "version must be a Forge release, such as v1.2.1"
+        if key == "runner" and not value.strip():
+            return "runner must name a GitHub Actions runner label"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
             return ("signoff must name the client's sign-off record, "
                     "docs/decisions/NNNN-client-signoff.md")
