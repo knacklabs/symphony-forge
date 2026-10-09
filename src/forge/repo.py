@@ -521,6 +521,10 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
             for path in trees.values() if (path / "forge.toml").is_file()}
     landed_ref = story.landed_ref(top)
     landed = _pin(story.show(top, landed_ref, "forge.toml") or "")
+    # Task start must update its story before an old checkout can hand it to the old release.
+    if (words == "task start" and (task := ITEM.fullmatch(item)) and task["task"]
+            and landed_ref == f"origin/{default_branch(top)}" and _older(pinned, landed)):
+        return
     branch = current_branch(top)
     if branch == default_branch(top) and _older(pinned) and _older(landed):
         upgrade = next((branch[4:] for branch, path in trees.items()
