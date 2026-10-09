@@ -30,13 +30,28 @@
   "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
   "branch": "fix/claude-sonnet-default",
   "done_when": "For repos whose workers are claude, Forge's defaults are: implementation (build, fix, lite and design, frontend included) claude-sonnet-5-5 at xhigh; plan reads (grill) claude-opus-5-5 at high; the planner and architect roles use the plan-read entry and the debugger, security and performance roles claude-opus-5-5 at high; Autoreview stays the external program and runs every review (normal, light and the prototype sign-off review) on the repo's own tool, Claude for Claude-only repos and Codex for Codex-only repos, with Autoreview's own default model and effort (Forge pins none); forge init writes these and Forge's built-in defaults match; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults; the coordinator guide states them; command tests cover forge init for a new Claude-only repo, the roles' models after sync, reviews running on Claude with no pinned model, and an earlier-adopted repo left unchanged on upgrade",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "604228ec9f13d954de4aafc142d1034bdc02db47a547f77b2f35e18b86044146",
+    "changed": "7164ed7b38be5ec26ee804c471c1f2ba71f29fd6de18868bd51ef18b38b67ceb",
+    "commit": "5b1fcec66087664e340cb03b7d9961c8d4b1285e",
+    "dismissals": [],
+    "findings": [],
+    "id": "c0e833d7-6bd3-42e7-9ad8-38d49f65d2c1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T18:41:33+00:00",
+      "step": "review"
     }
   ],
   "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
