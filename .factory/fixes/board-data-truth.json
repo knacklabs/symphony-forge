@@ -9,31 +9,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1a6bbb182d06de334f486781a9391607e7a02722c5b9615ddb8f34e850d36455",
-    "changed": "43d7bfd570957afc924d12a94dd53e201790eda0b0c8950f0049979f41090ec6",
-    "commit": "89a4be4c45047fcaad78f423a8d14ef1ef31f8d1",
+    "branch_diff": "93c426710cc8e108c634b143887bb0499d74d55302839ee31543061d2861897f",
+    "changed": "1e0550d1a7392209eb9fbc3ebe86ef7493a53b08a719332e5bf1caee6f6eea4a",
+    "commit": "db6f384c04c243b3253264feaf79ac9ed7216914",
     "dismissals": [],
     "findings": [
       {
-        "body": "A recently merged part still does not reset its parent's idle clock when GitHub reports the merge before origin is fetched. These dates include descendant events, saved steps and fetched Git history, but omit GitHub's mergedAt. With the previous activity four days old, the board marks the part finished while showing its story stalled for four days. New evidence beyond the previous ruling: src/forge/merge.py:96\u2013128 emits no merge run events, and a human GitHub merge does not perform that command's fetch. Include the actual descendant merge timestamp in the shared idle derivation.",
+        "body": "When the roadmap marks a previously approved story done but its saved state has no `finished` timestamp, this fallback displays \u201cFinished on\u201d the date its story record first landed. `history[\"dates\"]` comes from `git log --diff-filter=A` in `src/forge/board.py:694\u2013701`, so that date can precede completion by weeks. This introduces an incorrect date in both JSON and the page. Restrict this fallback to tasks/fixes, whose first landed state represents their merge; leave a story's completion date unknown unless completion evidence supplies it. The roadmap-only proof has no historical story record, so it cannot detect this case.",
         "file": "src/forge/board.py",
-        "line": 351,
-        "priority": "P1",
-        "title": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation"
-      },
-      {
-        "body": "The 'recently merged' case supplies synthetic merge start/end events, then derives the asserted five-minute idle time from them. No production merge path emits those events: src/forge/merge.py:96 performs the GitHub merge and :128 fetches origin without recording a merge run. Consequently, this proof passes while genuine GitHub-only merges leave parent idle time wrong. Exercise the supplied GitHub mergedAt without invented merge events, or actual landed merge history, and assert the resulting parent idle time. The running-descendant case remains meaningful.",
-        "file": "tests/test_board_status_and_times.py",
-        "line": 174,
-        "priority": "P1",
-        "title": "Not done: test_3_story_idle_time_tracks_its_parts"
+        "line": 455,
+        "priority": "P2",
+        "title": "Do not use a story's creation date as its completion date"
       }
     ],
-    "id": "1c2ec7ad-1fca-4f63-b8bd-87d722b207c8",
-    "status": "blocked"
+    "id": "3cac112a-2f79-468d-8ae2-81b22664c529",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T12:16:18+00:00",
@@ -45,6 +38,10 @@
     },
     {
       "at": "2026-10-09T14:17:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T15:33:46+00:00",
       "step": "review"
     }
   ],
