@@ -3,12 +3,14 @@
   "branch": "fix/enable-no-review",
   "done_when": "forge merge enable's close skips the model review and instead records a clean result only after a mechanical check that the fix changes nothing but forge.toml's top-level merge setting, set to agent (every other parsed setting equal to the default branch's); any other change is refused with a plain reason and no review; tests and CI still run and the owner still merges; no other item skips review; a command test covers a new repo and one adopted on an earlier release, including a refused case with an extra change",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T04:50:15+00:00",
       "step": "start"
     }
   ],
-  "why": "forge merge enable runs the normal model review on its one-line forge.toml change; if that review blocks (for example on a missing proof list), no one can fix it: agents may never touch the merge setting and the owner would have to repair a change Forge wrote. Owner decision 2026-10-09: skip the model review for this change"
+  "why": "forge merge enable runs the normal model review on its one-line forge.toml change; if that review blocks (for example on a missing proof list), no one can fix it: agents may never touch the merge setting and the owner would have to repair a change Forge wrote. Owner decision 2026-10-09: skip the model review for this change",
+  "worker": "codex"
 }
