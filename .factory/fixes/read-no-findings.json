@@ -15,20 +15,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "69c181a7f14b387e365a4147548c33676ea216200451d473c63241e17fd33bd3",
-    "changed": "676567c11c815084424caa57b0a31939277ca6fc2b4f1efef0ab65509a84aa82",
-    "commit": "121eba37e4b5e1547bb52c493a50af4ed1e0e6ad",
+    "branch_diff": "7c7846025a7294ee8de25c8ef6587d31cdcb64e79d41c1a7208a038eb7aaa8ba",
+    "changed": "6a0767b6a668b4b70eebe480baf2688ff5f15985d68d4fdda0c5df86879e398a",
+    "commit": "fd1bd386e7ba22a4d58cfe46024b9f136589ad7d",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Ordinary clean replies such as `6. There were no findings.` and `6. I have no findings to report.` still fail: the matcher permits only `there are`, `i found`, or `found` before `no`. Consequently, these replies produce `passed: no`, require a disposition, and trigger another read despite containing no findings. These are new counterexamples beyond the three named wording repairs; neither the normalization ruling nor the restriction on arbitrary explanations addresses them. The command-test table omits both forms for both client histories, so its supplied passing result does not establish the promised acceptance of common wording.",
+        "body": "Raise: Not done. The classifier discards real findings: `6. No test covers this bug.` matches the unrestricted `no ... bug` expression, so lines 260\u2013262 replace the finding with `No findings.` and record a passing round without a disposition. This substantive missing-test counterexample is new evidence the finite-acceptance ruling did not weigh. Conversely, `6. I have no findings\\nto report.` is one numbered item containing the explicitly promised sentence, but lines 252\u2013259 evaluate its physical lines independently and reject `to report`. Both defects affect the shared story/spec read path for either reader. The command table covers neither scenario, so the supplied 49 passing tests do not detect these failures.",
         "file": "src/forge/story.py",
-        "line": 254,
+        "line": 255,
         "priority": "P1",
-        "title": "Not done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '"
+        "title": "Not done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a"
       }
     ],
-    "id": "dc8327df-c199-42cb-9398-775d21ea1844",
+    "id": "de24712a-a07a-4fad-8eaa-207dc3949c17",
     "status": "blocked"
   },
   "round": 4,
@@ -56,6 +56,10 @@
     },
     {
       "at": "2026-10-09T22:42:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:14:47+00:00",
       "step": "review"
     }
   ],
