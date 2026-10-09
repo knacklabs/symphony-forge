@@ -229,7 +229,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         else:
             try:
                 lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
-                         else nextstep._story(top, item, tree, _read(top, tree or where, f"plans/{item}.md"),
+                         else nextstep._story(top, item, tree, _read(top, tree or where, f"plans/{item}.md", history),
                                               title, trees, merged_prs, by_branch, {}, history,
                                               readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
@@ -413,7 +413,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             completed = history["stories"].get(key, {})
             if state.get("status") != "done" and completed.get("status") == "done":
                 state = completed
-            text = _read(top, trees.get(f"story/{key}", where), f"plans/{key}.md")
+            text = _read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)
             title = state.get("title") or next((s.removeprefix("# ") for s in text.splitlines()
                                                 if s.startswith("# ")), "A story with no title yet")
             items[key] = row(key, "story", title, state, where)
@@ -429,7 +429,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         if not match["key"] or match["task"]:
             continue
         key = match["key"]
-        specs = task.rows(task.sections(_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md")))
+        specs = task.rows(task.sections(_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)))
         parts = []
         for tid, spec in specs.items():
             tid = tid.strip("` ")
@@ -677,9 +677,11 @@ def _prs(top: Path) -> list[Item] | None:
                 if pr.get("state") == "OPEN" else {})} for pr in prs]
 
 
-def _read(top: Path, where: Path | str, rel: str) -> str:
+def _read(top: Path, where: Path | str, rel: str, history: Item | None = None) -> str:
     if isinstance(where, Path):
         return (where / rel).read_text(encoding="utf-8") if (where / rel).is_file() else ""
+    if history is not None:
+        return history["docs"].get(f"{where}:{rel}", "")
     return story.show(top, where, rel) or ""
 
 
