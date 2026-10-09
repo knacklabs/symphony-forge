@@ -415,7 +415,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if digest:
         return _approval(top, key, path, title, digest, refusals, text, readiness), []
     if readiness is not None:
-        readiness.update(stage="building", parts={task["id"]: "Waiting" for task in doc["tasks"]})
+        readiness["stage"] = "building"
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
@@ -464,7 +464,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             readiness["stage"] = "planning"
         return lines + reread, list(states.values())
     if readiness is not None:
-        readiness["parts"].update({name: "Can start now" for name in ready})
+        readiness["parts"].update({name: "Waiting" if deps else "Can start now"
+                                   for name, deps in waits.items()})
     if ready:
         rows = {task["id"]: task for task in doc["tasks"]}
         landed = story.landed_ref(top)

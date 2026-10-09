@@ -257,6 +257,42 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     assert ready_json.returncode == 0, ready_json.stderr
     assert json.loads(ready_json.stdout)["stage_counts"] == ready_counts
 
+    # Task/fix checkouts retain an equally recent inherited story record, but
+    # the owning story's live task table is what next and board must both read.
+    table_edit = doc.replace("SHOW, PACK/SAVE | yes |", "SAVE, PACK/SAVE | yes |")
+    table_edit = table_edit.replace("\nNew moving parts:",
+                                    "\n| ADDED | Export a basket | A portable copy | 1 | "
+                                    "`src/export.py` | `tests/test_export.py` | none | no |"
+                                    "\n\nNew moving parts:")
+    table_edit = re.sub(r"^(\| )(SAVE|SHOW|SHARE|EXTRA|BUSY|ADDED)( \|)",
+                        r"\1`\2`\3", table_edit, flags=re.M)
+    (story_tree / "plans/SHOP.md").write_text(table_edit, encoding="utf-8")
+    table_next = repo.forge("next")
+    assert table_next.returncode == 0, table_next.stderr
+    assert "Next: forge read SHOP" in table_next.stdout
+    assert "Next: forge task start SHOP/EXTRA" not in table_next.stdout
+    assert "Next: forge task start SHOP/ADDED" not in table_next.stdout
+    table_json = repo.forge("board", "--json")
+    assert table_json.returncode == 0, table_json.stderr
+    edited_map = next(m for m in json.loads(table_json.stdout)["dependency_maps"] if m["id"] == "SHOP")
+    edited_parts = {p["id"]: p for p in edited_map["parts"]}
+    assert set(edited_parts) == {*parts, "SHOP/ADDED"}
+    assert edited_parts["SHOP/SHARE"]["waits_for"] == ["SHOP/SAVE", "PACK/SAVE"]
+    assert {key: edited_parts[key]["status"] for key in
+            ("SHOP/SAVE", "SHOP/SHOW", "SHOP/EXTRA", "SHOP/ADDED")} == {
+        "SHOP/SAVE": "Merged", "SHOP/SHOW": "Running",
+        "SHOP/EXTRA": "Not started", "SHOP/ADDED": "Not started"}
+    table_page = repo.forge("board", "--out", str(out))
+    assert table_page.returncode == 0, table_page.stderr
+    edited_drawing = _svg(out.read_text("utf-8"), "Roadmap dependencies")
+    edited_titles = _titles(edited_drawing)
+    assert {"Export a basket: Not started", "Save a basket: Merged",
+            "Show when it was saved: Running", "Share a basket waits for Save a basket"} <= edited_titles
+    assert "Share a basket waits for Show when it was saved" not in edited_titles
+    assert all("Unknown part" not in title for title in edited_titles)
+    assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
+               "Save a basket: Merged" for n in edited_drawing.iter()) == 1
+
     # An edited approved plan requires another read before an idle part starts.
     changed = doc.replace("Shoppers can save a basket and come back to it later.",
                           "Shoppers can save a basket and return tomorrow.")
