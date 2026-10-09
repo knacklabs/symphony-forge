@@ -166,6 +166,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 333,
+      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -2087,6 +2098,17 @@
       "text": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence",
       "from": "blocking",
       "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tCheck liveness before treating unmatched run starts as running",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 195,
+      "text": "Check liveness before treating unmatched run starts as running",
+      "from": "review",
+      "item": "board-data-truth",
       "status": "open",
       "closed_by": null
     },

@@ -2,13 +2,45 @@
   "base": "49e6b9ab810cebe9b5537cde92238e2535e7d187",
   "branch": "fix/board-data-truth",
   "done_when": "Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories the roadmap marks done count and show as done; items idle past the stalled threshold show as stalled with their idle time and what they wait on, and finished items never do; a running worker or review shows as running with its elapsed time; ready-to-merge, plan-read and waiting-for-approval stages match forge next; a finished story's parts show finished; prose and timeline times agree; header counts are labelled separately for stories and fixes; a person shows under one display name; titles are shortened at a word boundary; command tests reproduce each of these on a board with real-shaped data for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/board.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4ff5f00d9925902deb25153e0056e5a3a4277db54967991c970499ff5f520a5a",
+    "changed": "f519f69ee0fefb880229ff2c28cfe621d23f30102566daae1dfede12cead3161",
+    "commit": "c03f9f40e16d98d934f94fa8953aa6febc820ce4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "A story's idle time uses only events and steps recorded against the story itself. Its children's activity is attached later without updating this calculation. Consequently, a story approved four days ago is shown as stalled for four days even when a task worker is currently building it, or a part merged minutes ago. The card can say \u201cStalled\u201d alongside a running part and a waiting reason saying that worker is building. Include descendant activity when deriving the parent story's idle state. The named idle proof exercises fixes only and misses both story scenarios.",
+        "file": "src/forge/board.py",
+        "line": 333,
+        "priority": "P1",
+        "title": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation"
+      },
+      {
+        "body": "An unmatched start is historical evidence, not proof that a process still runs. `src/forge/repo.py:303\u2013306` writes the end event in `finally`, so killing the Forge process leaves an unmatched start even when the recorded lock is demonstrably dead. This helper then reports that run forever: the board suppresses stalling, and the new callers in `nextstep.py:394`, `:581`, and `:623` tell the coordinator to wait instead of reporting the stopped worker or reader. A stale start from an older round also suppresses the stopped-worker check at line 623. The live-run-wins ruling does not cover this evidence of a stopped process; reconcile unmatched starts with available process liveness and the current round.",
+        "file": "src/forge/board.py",
+        "line": 195,
+        "priority": "P2",
+        "title": "Check liveness before treating unmatched run starts as running"
+      }
+    ],
+    "id": "8deaf30b-afc9-40bc-b5b4-267e79d37ce1",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T12:16:18+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T13:49:39+00:00",
+      "step": "review"
     }
   ],
   "why": "The forge board page shows wrong or contradicting data (Opus review of a real client board, 2026-10-09): stories the roadmap marks done show as 'Not started yet' and count as needing a spec; items idle for days aren't shown as stalled while finished stories are flagged stalled; running workers and reviews show as 'Needs fixes'; a card says Ready to merge while the header counts none; a story in a plan-read round shows as 'Waiting for approval'; a finished story's part says 'In progress'; prose times disagree with the timeline; header counts mix stories and fixes unlabelled; one person appears under two names; fix titles are cut mid-word",
