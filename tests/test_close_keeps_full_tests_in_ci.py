@@ -140,10 +140,12 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     assert "fast_test" not in workflow
 
 
-def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default(env, tmp_path):
+def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default(env, tmp_path, monkeypatch):
     # Forge ships a package-pattern command. Appending test filenames to it mixes
     # Go's invocation modes; running the whole package also runs unrelated tests.
     assert shutil.which("go"), "The Go client command regression requires Go."
+    # Cached Go successes can replay output without rewriting receipts outside the module.
+    monkeypatch.setenv("GOCACHE", str(tmp_path / "go-cache"))
     receipts = tmp_path / "go-test-receipts"
     receipts.mkdir()
     env.repo.write("go.mod", "module example.com/cart\n\ngo 1.20\n")
@@ -181,10 +183,19 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert sorted(path.name for path in receipts.iterdir()) == ["Cart", "Discount"]
+    assert sorted(path.name for path in receipts.iterdir()) == ["Cart", "Discount"], closed.stdout + closed.stderr
     assert env.review_calls(), "Go's local selection must reach review."
     assert (where / "forge.toml").read_text("utf-8").endswith(
         "test = " + json.dumps(command) + "\n")
+
+    # Confirm why the receipt fixture needs its own cache: unchanged Go inputs replay success.
+    for receipt in receipts.iterdir():
+        receipt.unlink()
+    env.commit(where, "settings.json", "{}\n")
+    again = env.close(item)
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert "(cached)" in env.prompt(), env.prompt()
+    assert list(receipts.iterdir()) == []
 
 
 @pytest.mark.parametrize("runner", ["vitest", "jest"])
