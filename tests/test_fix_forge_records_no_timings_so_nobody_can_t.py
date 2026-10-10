@@ -108,6 +108,8 @@ def _codex_rounds(repo, monkeypatch, sdk_data):
     (folder / "forge.toml").write_text(_toml(version, "codex", {
         "build": {"model": "gpt-6-sol", "effort": "medium"},
         "fix": {"model": "gpt-6-luna", "effort": "high"}}), "utf-8")
+    repo.git("add", "forge.toml", cwd=folder)
+    repo.git("commit", "-q", "-m", "Configure the next worker round", cwd=folder)
     second = repo.forge("work", item)
     assert second.returncode == 0, second.stderr
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
