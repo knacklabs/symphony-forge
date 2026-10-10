@@ -9,24 +9,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "592792aa59bc3e33f183662cc42697d9ad55ecc608d2e860af7bdad325987709",
-    "changed": "c3f2f51af0f9afb4c169119ebb732d8dfc5b324b068a633d1f24359eb8e4b927",
-    "commit": "c56e2c9fb5acc714aaa42647476ed4f6cae1f078",
+    "branch_diff": "91fb30e86c304ff0bbc3625d7019c72a383cd7ffd9af83fac17cb30b3b304bf2",
+    "changed": "d039f73db27a9a1cf4a55f63b0691bc373595070f4312410935229aed3bb361b",
+    "commit": "c626a9e38e4cab1fcd9d3a0ff7ff2bbcc0aaca11",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. For a spec-free story whose first task depends on another story's task, the new entry is committed only on `story/<KEY>` here. `task.start_base` uses the default branch for cross-story dependencies (`src/forge/task.py:288\u2013296`), while `task.start` copies only the plan, read notes, and story state (`src/forge/task.py:280\u2013283`). That task's pull request can therefore merge without the roadmap entry, leaving the completed story absent from the default branch's roadmap. The new test checks creation and approval but stops before task start.",
+        "body": "Raise: Functional. When `forge story new <KEY> --from-fix <fix>` promotes a fix, this line adds a missing roadmap entry only to `story/<KEY>`. `_promote` in `src/forge/story.py:928` renames the existing fix branch to `task/<KEY>-SPEC` without copying that entry. The new carry logic in `src/forge/task.py:139` runs only for `forge task start`, so it does not cover promotion. A promoted story with just its SPEC task can therefore merge without its roadmap entry. The changed guide explicitly includes stories promoted from fixes; `test_22_promote` checks the story branch's roadmap but not the promoted task branch.",
         "file": "src/forge/story.py",
         "line": 139,
         "priority": "P1",
-        "title": "A dependent story's roadmap entry never reaches the default branch"
+        "title": "Promoted stories leave their roadmap entry off the task branch"
       }
     ],
-    "id": "6fc20924-f5e0-477e-81ee-0b399956729d",
+    "id": "d454b90d-ec77-495b-b321-731a7449998a",
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-10T15:18:21+00:00",
@@ -39,8 +39,16 @@
     {
       "at": "2026-10-10T17:51:53.924012+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:45:09.656380+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/story.py",
+    "wait_id": "2631ba4f-09c4-419a-a219-e31ab01f848f"
+  },
   "why": "A new story needs a spec, its own read loop, a confirmation and a roadmap fix before its plan can even start",
   "worker": "codex"
 }
