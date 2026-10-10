@@ -63,7 +63,7 @@
     "status": "blocked"
   },
   "round": 7,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
@@ -99,7 +99,9 @@
     }
   ],
   "stop": {
-    "file": "docs/guide.md"
+    "choice": "narrow",
+    "file": "docs/guide.md",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the two remaining findings: a full proof list in the latest commit, and the guide's Codex fallback limited to split workers"
   },
   "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
   "worker": "codex"
