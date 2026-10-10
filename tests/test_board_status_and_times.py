@@ -172,7 +172,7 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
     assert not legacy["stalled"] and legacy["idle_seconds"] == 300
 
 
-@pytest.mark.parametrize("child_activity", ["running", "recently merged", "legacy timing", "branch commit"])
+@pytest.mark.parametrize("child_activity", ["running", "recently merged", "legacy timing", "branch commit", "stalled"])
 def test_11_story_idle_time_tracks_its_parts(
         client, tmp_path, monkeypatch, claude_payload, gh, child_activity):
     configured = _fix(client)
@@ -205,6 +205,16 @@ def test_11_story_idle_time_tracks_its_parts(
         gh.respond("pr", "list", "--state", "open", stdout="[]")
         # A human GitHub merge has no local run event or fetched merge commit.
         events = []
+    elif child_activity == "stalled":
+        part = worktree(client, "task/SHOP-SAVE")
+        state_path = part / ".factory/stories/SHOP/tasks/SAVE.json"
+        state = json.loads(state_path.read_text("utf-8"))
+        state.update(status="working", round=1)
+        state_path.write_text(json.dumps(state), encoding="utf-8")
+        events = [
+            {"event": "run start", "id": "save-work", "item": "SHOP/SAVE", "kind": "work", "round": 1, "at": OLD},
+            {"event": "run end", "id": "save-end", "run_id": "save-work", "item": "SHOP/SAVE", "kind": "work", "round": 1, "at": OLD},
+        ]
     else:
         events = []
         if child_activity == "legacy timing":
@@ -221,6 +231,12 @@ def test_11_story_idle_time_tracks_its_parts(
     _records(client, "events.jsonl", events)
     data, text, _ = _board(client, tmp_path)
     parent = _row(data, "SHOP")
+    if child_activity == "stalled":
+        assert parent["stalled"] and parent["idle_seconds"] == 4 * 86400
+        assert "Save a basket" in parent["waits_on"]
+        assert "SHOP/SAVE" not in parent["waits_on"]
+        assert parent["waits_on"] in text
+        return
     assert not parent["stalled"]
     assert "Stalled" not in text
     if child_activity == "running":
@@ -267,6 +283,44 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
     next_text = client.forge("next")
     assert next_text.returncode == 0, next_text.stderr
     assert "The fix correct-state's worker has stopped." in next_text.stdout
+
+
+@pytest.mark.parametrize("command", ["board", "next"])
+def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
+        client, tmp_path, monkeypatch, command):
+    with monkeypatch.context() as earlier:
+        earlier.setenv("FORGE_NOW", OLD)
+        for number in range(4):
+            _fix(client, f"Basket work {number}", f"basket-{number}", status="working", round=1)
+    events = [{"event": "progress", "item": "retired-work", "at": OLD,
+               "step": f"Historical step {number}"} for number in range(1000)]
+    events.append({"event": "run start", "id": "basket-work", "item": "basket-0",
+                   "kind": "work", "round": 1, "at": "2026-10-09T11:50:00+00:00"})
+    _records(client, "events.jsonl", events)
+    observer = tmp_path / "event-reads"
+    observer.mkdir()
+    reads = observer / "reads"
+    # Observe filesystem reads without replacing Forge's event parsing or data.
+    (observer / "sitecustomize.py").write_text(
+        "import os, sys\n"
+        f"log = {json.dumps(reads.as_posix())}\n"
+        "def observe(event, args):\n"
+        "    if event == 'open' and isinstance(args[0], (str, bytes, os.PathLike)):\n"
+        "        if os.fsdecode(os.fspath(args[0])).replace('\\\\', '/').endswith('/events.jsonl') and args[1] == 'r':\n"
+        "            with open(log, 'a', encoding='utf-8') as file: file.write('read\\n')\n"
+        "sys.addaudithook(observe)\n", encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(observer) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+    for active in (True, False):
+        reads.write_text("", encoding="utf-8")
+        shown = client.forge(command, "--json")
+        assert shown.returncode == 0, shown.stdout + shown.stderr
+        assert reads.read_text("utf-8").splitlines() == ["read"]
+        row = _row(json.loads(shown.stdout), "basket-0")
+        assert (row["worker"] is not None) == active
+        if active:
+            events.append({"event": "run end", "id": "basket-end", "run_id": "basket-work", "item": "basket-0",
+                           "kind": "work", "round": 1, "at": NOW})
+            _records(client, "events.jsonl", events)
 
 
 @pytest.mark.parametrize("kind", ["work", "review"])

@@ -183,18 +183,26 @@ def _rollup(pr: Item) -> list[Item]:
         return []
 
 
-def active_runs(top: Path, item: str, activity: list[Item] | None = None,
-                round_number: int | None = None) -> list[Item]:
-    if activity is None:
+def _event_history(top: Path) -> tuple[list[Item], dict[str, list[Item]]]:
+    def read():
         path = repo.forge_dir(top) / "events.jsonl"
-        activity = []
+        recorded, by_item = [], {}
         for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
             try:
                 event = json.loads(line)
-                if isinstance(event, dict) and event.get("item") == item:
-                    activity.append(event)
+                if isinstance(event, dict):
+                    recorded.append(event)
+                    by_item.setdefault(event.get("item"), []).append(event)
             except ValueError:
                 continue
+        return recorded, by_item
+    return repo.command_fact("board events", top, read)
+
+
+def active_runs(top: Path, item: str, activity: list[Item] | None = None,
+                round_number: int | None = None) -> list[Item]:
+    if activity is None:
+        activity = _event_history(top)[1].get(item, [])
     ended = {e.get("run_id") for e in activity if e.get("event") == "run end"}
     runs = []
     for event in activity:
@@ -247,16 +255,16 @@ def machine_board(top: Path, history: Item | None = None,
     completed.update({key: state for key, state in roadmap.items() if state.get("status") == "done"})
     completed.update({STATE.fullmatch(rel)["key"]: state for rel, (state, _) in best.items()
                       if rel.endswith("/story.json") and state.get("status") == "done"})
-    timings, recorded = [], []
-    for name, rows in (("timings", timings), ("events", recorded)):
-        path = repo.forge_dir(top) / f"{name}.jsonl"
-        for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-            try:
-                value = json.loads(line)
-                if isinstance(value, dict):
-                    rows.append(value)
-            except ValueError:
-                continue
+    recorded, by_item = _event_history(top)
+    timings = []
+    path = repo.forge_dir(top) / "timings.jsonl"
+    for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
+        try:
+            value = json.loads(line)
+            if isinstance(value, dict):
+                timings.append(value)
+        except ValueError:
+            continue
 
     branch_dates = dict(line.split("\0", 1) for line in repo.git(
         "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)",
@@ -337,7 +345,7 @@ def machine_board(top: Path, history: Item | None = None,
                 model = None
             worker = {"kind": "read" if kind == "story" else "build", "model": model,
                       "started_at": None}
-        activity = [e for e in recorded if e.get("item") == item]
+        activity = by_item.get(item, [])
         active = active_runs(top, item, activity, state.get("round") if kind != "story" else None)
         finished = state.get("status") in ("done", "merged")
         if finished:
@@ -602,6 +610,12 @@ def machine_board(top: Path, history: Item | None = None,
     maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet",
                  "parts": [], "stage": "done" if s["key"] in completed else "needs a spec"}
                 for s in roadmap.values() if s["key"] not in mapped)
+    part_titles = {part["id"]: part["title"] for entry in maps for part in entry["parts"]}
+    for parent in items.values():
+        for item in [parent, *parent["children"]]:
+            if item["waits_on"]:
+                item["waits_on"] = re.sub(r"(?<![\w/-])[A-Z][A-Z0-9-]*/[A-Z0-9][A-Z0-9-]*(?![\w/-])",
+                    lambda match: part_titles.get(match[0], "A part with no name yet"), item["waits_on"])
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
