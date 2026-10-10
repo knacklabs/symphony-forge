@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tUnrelated live skill changes exceed this part's scope\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 82,
+      "text": "Unrelated live skill changes exceed this part's scope",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.codex/skills/forge/SKILL.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
       "kind": "bug",
       "path": ".codex/skills/forge/SKILL.md",
@@ -1618,6 +1629,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tApproved stories with no started part still show building; COUNTS owns that correction.",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 427,
+      "text": "Approved stories with no started part still show building; COUNTS owns that correction.",
+      "from": "worker",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -1889,6 +1911,17 @@
       "text": "Not done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '",
       "from": "blocking",
       "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a timed cold-read round\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 290,
+      "text": "Not done: forge read records a timed cold-read round",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
       "status": "open",
       "closed_by": null
     },
@@ -2168,6 +2201,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tA failed first PR publish makes a pre-PR worker question depend on GitHub\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 84,
+      "text": "A failed first PR publish makes a pre-PR worker question depend on GitHub",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tA pre-PR worker question now requires a working GitHub connection\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -2318,6 +2362,17 @@
       "text": "Not done: test_3_story_idle_time_tracks_its_parts",
       "from": "blocking",
       "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_chatview_start.py",
+      "line": 57,
+      "text": "Not done: move the remaining Codex-worker tests to claude_session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
       "status": "open",
       "closed_by": null
     },
@@ -2641,6 +2696,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tStandard: Tests own and clean up every process they start\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 23,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tThe full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "The full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tWindows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
       "kind": "bug",
       "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
@@ -2648,6 +2725,17 @@
       "text": "Windows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
       "from": "worker",
       "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tNot done: keep mixed worker tests on their intended routes\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+      "line": 37,
+      "text": "Not done: keep mixed worker tests on their intended routes",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
       "status": "open",
       "closed_by": null
     },
@@ -4595,50 +4683,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
-      "kind": "bug",
-      "path": "tests/test_chatview_start.py",
-      "line": 57,
-      "text": "Not done: move the remaining Codex-worker tests to claude_session",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SWITCH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tStandard: Tests own and clean up every process they start\tFORGE-TOOLS-1/SWITCH",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 23,
-      "text": "Standard: Tests own and clean up every process they start",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SWITCH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tThe full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 101,
-      "text": "The full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
-      "from": "worker",
-      "item": "FORGE-TOOLS-1/SWITCH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tNot done: keep mixed worker tests on their intended routes\tFORGE-TOOLS-1/SWITCH",
-      "kind": "bug",
-      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
-      "line": 37,
-      "text": "Not done: keep mixed worker tests on their intended routes",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SWITCH",
       "status": "open",
       "closed_by": null
     }

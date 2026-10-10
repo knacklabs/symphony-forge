@@ -1,47 +1,42 @@
 {
   "branch": "task/FORGE-BOARD-2-RECORD",
   "flagged": [
+    ".claude/skills/forge/SKILL.md",
     "src/forge/nextstep.py",
+    "src/forge/story.py",
     "src/forge/time_records.py",
     "src/forge/worker.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9e3605001186ec58051d972ccc532c1eb2ca36489de400daf020e3cdd187826e",
-    "changed": "c3fbd3e77453522e5c1cbc54acb727a751a87ac93fdac7135682d2a1d9b15f3c",
-    "commit": "bf61c3c4f72282a7e28051c3b147bcd330032146",
+    "branch_diff": "e9418abb289c53260ff790f17f50296a19de909337b865e180701a45ab837e76",
+    "changed": "a0fd60ca9daebe68d896d31afd6e41a842e85c380c1dbf46bde109e8fbb153f1",
+    "commit": "d68757627f9991e304c2871fd7faafdb2108fd51",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The board copies the merged record's category totals and intervals into each item, but never returns working, waiting or unknown second totals. In time_records.item, unknown intervals are explicitly skipped when totals are accumulated. A teammate can see an unknown interval in `forge board --json` but cannot see its required number of unknown seconds; the named test compares the same incomplete fields on both machines.",
-        "file": "src/forge/time_records.py",
-        "line": 241,
-        "priority": "P1",
-        "title": "Not done: item time is not split into working, waiting and unknown seconds"
-      },
-      {
-        "body": "Raise: Not done. `story()` derives its bounds only from part intervals and read rounds. An approved story with no part started has no interval from its last plan read to the present, so its runway ends at the read and omits that elapsed unknown time. For an older read note without recorded seconds, the code also creates a zero-length unknown span. This is a normal approved-but-not-started story, which item 5 requires to have an honest runway.",
-        "file": "src/forge/time_records.py",
-        "line": 471,
-        "priority": "P1",
-        "title": "Not done: story runway omits unknown time after the last recorded span"
-      },
-      {
-        "body": "Raise: Functional. The new no-worktree branch always says the starter merges from their worktree. In a `merge = \"human\"` repo, a teammate viewing a ready PR without its worktree should be told to merge it on GitHub; no starter worktree is needed. This is the previously identified human-merge case, now evidenced by the implemented unconditional branch, and it gives the owner the wrong next action on the board.",
-        "file": "src/forge/nextstep.py",
-        "line": 640,
-        "priority": "P1",
-        "title": "Human-merge PRs without a local worktree name the wrong merger"
-      },
-      {
-        "body": "Raise: Functional. When a worker asks a question, this new call invokes `close._refresh_record` even before the item has a PR. That function calls `_pull_request`, whose `gh pr list` failure raises instead of leaving the question local. A worker operating during a GitHub outage therefore fails after recording its question, although the specified pre-PR path is local. The same unnecessary lookup occurs for a pre-PR `--note` answer.",
+        "body": "Raise: Functional. This treats a saved review or local PR-body file as proof that a pull request exists. If a first close saves its review but GitHub rejects PR creation, a later `forge work` question or `--note` answer calls `_refresh_record`, which queries GitHub and fails during the same outage. The specified pre-PR question path should remain local. The offline-before-PR test starts without a saved review, so it misses this case.",
         "file": "src/forge/worker.py",
-        "line": 265,
+        "line": 84,
         "priority": "P1",
-        "title": "A pre-PR worker question now requires a working GitHub connection"
+        "title": "A failed first PR publish makes a pre-PR worker question depend on GitHub"
+      },
+      {
+        "body": "Raise: Test. The new `forge read` path writes measured seconds to the read note, but the named board tests insert `seconds` into that note directly or construct the note themselves. They would still pass if `forge read` stopped recording the duration, leaving real plan reads unknown in story runways. The timed read needs command-level proof through `forge read`.",
+        "file": "src/forge/story.py",
+        "line": 290,
+        "priority": "P1",
+        "title": "Not done: forge read records a timed cold-read round"
+      },
+      {
+        "body": "Raise: Gate. Both `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` change instructions for runner diagnosis, upgrade cleanup, read responses and part-size limits. Those changes do not support this part's shared time record or its required shipped guide paragraph, so these outside-Scope files contain work this part does not need.",
+        "file": ".claude/skills/forge/SKILL.md",
+        "line": 82,
+        "priority": "P1",
+        "title": "Unrelated live skill changes exceed this part's scope"
       }
     ],
-    "id": "8f7f9a0d-d446-44a3-a336-3651744e2fb6",
+    "id": "00e127aa-ea20-4169-b86b-e45905fa810b",
     "status": "blocked"
   },
   "round": 5,
@@ -53,6 +48,10 @@
     },
     {
       "at": "2026-10-10T20:13:52.145955+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:47:53.040053+00:00",
       "step": "review"
     }
   ],
