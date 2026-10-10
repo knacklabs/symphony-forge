@@ -209,6 +209,55 @@ def own_version_only(path: Path, base: str) -> bool:
     return snapshots[0] == snapshots[1]
 
 
+def close_tests(base: str) -> int:
+    """CI owns the full suite; close's default selects tests by their filenames."""
+    changed = git_files("diff", "--no-renames", "--name-only", f"{base}...HEAD")
+    changed += git_files("ls-files", "--others", "--exclude-standard")
+    tests = [name for name in git_files("ls-files", "--cached", "--others", "--exclude-standard")
+             if Path(name).is_file() and re.search(r"^test_|_test\.|[.]test[.]|[.]spec[.]|_spec[.]",
+                                                  Path(name).name)]
+    stems = {Path(name).stem for name in changed if name not in tests}
+    selected = [name for name in tests if name in changed or any(
+        re.match(r"^(?:test_" + re.escape(stem) + r"(?:_|\.)|" + re.escape(stem)
+                 + r"(?:_test\.|_spec\.|\.test\.|\.spec\.))", Path(name).name)
+        for stem in stems)]
+    if not selected:
+        print("No changed or source-named test files to run.", flush=True)
+        return 0
+    print("Related tests: " + ", ".join(sorted(selected)), flush=True)
+    command = repo.config(Path.cwd())["test"]
+    parts = quicktest.test_parts(Path.cwd(), command)
+    commands = []
+    environment = dict(os.environ)
+    with tempfile.TemporaryDirectory(prefix="forge-close-tests-") as folder:
+        excluded = [name for name in tests if name not in selected]
+        selection = Path(folder) / "_forge_pytest_selection.py"
+        selection.write_text("from pathlib import Path\n"
+                             "def pytest_configure(config):\n"
+                             "    excluded = {Path(p).resolve() for p in " + json.dumps(excluded) + "}\n"
+                             "    config.args = [p for p in config.args if Path(p.split('::', 1)[0]).resolve() not in excluded]\n"
+                             "    config.option.ignore = (config.option.ignore or []) + " + json.dumps(excluded) + "\n",
+                             "utf-8")
+        environment["PYTHONPATH"] = os.pathsep.join([folder, environment.get("PYTHONPATH", "")])
+        for kind, part, passthrough in parts:
+            if kind == "python":
+                if any(name.endswith(".py") for name in selected):
+                    commands.append(narrow_command(part, excluded, str(machine.half_cores())))
+            elif kind == "node-install" or (kind == "node-check" and re.search(r"\b(?:lint|typecheck)\b", part)):
+                commands.append(part)
+            else:
+                files = [name for name in selected if not name.endswith(".py")] if kind in ("vitest", "jest") else selected
+                if files:
+                    if kind == "node-check" and shlex.split(part)[0] == "npm" and "--" not in shlex.split(part):
+                        passthrough = " --"
+                    if kind == "jest":
+                        passthrough += " --runTestsByPath"
+                    # shortcut: custom launchers must forward file arguments; use fast_test otherwise.
+                    arguments = subprocess.list2cmdline(files) if os.name == "nt" else shlex.join(files)
+                    commands.append(part + passthrough + " " + arguments)
+        return subprocess.run(" && ".join(commands), shell=True, env=environment).returncode if commands else 0
+
+
 def test(args) -> int:
     if args.base is None:
         from forge import review
@@ -220,7 +269,7 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        status, report = review.test_run(top, review.close_test(top, base), base, always=True)
+        status, report = review.test_run(top, review.close_test(top, base, closing=False), base, always=True)
         print(report)
         return status
     changed = git_files("diff", "--no-renames", "--name-only", args.base)

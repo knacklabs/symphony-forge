@@ -959,10 +959,15 @@ wait; if the merge needs a person, it stops with close's existing conflict next 
 When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
-When the pull request's `tests` check runs the full suite, recommend a fast close command: set
-`fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
-fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
-instead of `test`; the `tests` check keeps running the full `test`.
+When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
+Close runs `fast_test` when set; otherwise it runs only changed test files and tests named
+after changed source files. CI runs the full suite.
+The fallback keeps the test command's setup and options, excludes unrelated pytest files,
+and passes selected filenames to other runners. Custom launchers must forward file arguments;
+set `fast_test` for runners that need another selection method. If no matching tests exist,
+close runs none locally. A red CI still sends the item back to the worker.
+To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
+`{base}` standing for the merge base with the default branch.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
