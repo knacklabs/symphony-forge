@@ -173,8 +173,8 @@
       "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
       "from": "blocking",
       "item": "workers-split",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "explore-kind"
     },
     {
       "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
@@ -184,8 +184,8 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "workers-split",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "explore-kind"
     },
     {
       "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
@@ -195,8 +195,8 @@
       "text": "Update the repository test that still requires Codex workers",
       "from": "blocking",
       "item": "workers-split",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "explore-kind"
     },
     {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
@@ -3517,6 +3517,39 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: command tests for explore defaults, selection and earlier-adopted clients\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: command tests for explore defaults, selection and earlier-adopted clients",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: explore kind for read-only work\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: explore kind for read-only work",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: proof list\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "explore-kind",
       "status": "open",
       "closed_by": null
     }
