@@ -515,18 +515,17 @@ our default or the agent, so record each as the client, salesperson or developer
 run the strict sign-off review before anyone asks for sign-off: write `forge decision new
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
-repo's tool and its own model and effort defaults. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
+before any reply is recorded; it runs the strict review alone and stops. That review always runs
+on `gpt-6.1-sol` at high effort, whatever `forge.toml` says, and refuses a run on any other model
+or effort. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
 records.
 
-Every normal, light and sign-off review runs through the external Autoreview program:
-Claude when `workers = "claude"`, Codex when `workers = "codex"`. With split workers,
-it uses Codex when installed and Claude otherwise. Forge pins no review model or effort,
-including when an older `forge.toml` still has `[models.review]` entries. A prototype fix
-before sign-off gets a light review that blocks only on P0 findings.
+On Codex, every other review runs on `[models.review]` in `forge.toml`, which `forge init` sets
+to `gpt-6.1-sol` at high effort; a prototype fix before sign-off gets a light review on
+`gpt-6.1-sol` at medium effort that blocks only on P0 findings.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
@@ -633,6 +632,10 @@ fix's folder:
 
 ## Planning a story
 
+Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
+accepts numbered no-findings statements with separate notes that tests were not run; a real
+finding still needs a disposition and another round.
+
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
 
@@ -719,6 +722,11 @@ trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
+Before `forge work` can start a worker, resolve any unfinished merge in the item's checkout
+and commit the merge, then rerun `forge work <item>`. Work refuses before changing its start
+record or the index, so both conflicted and resolved but uncommitted merges stay intact.
+New repos get this guidance at init; existing repos get it after upgrading and running sync.
+
 Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff
 and any question. Forge sets these for each thread, including resumed threads; neither
@@ -764,30 +772,9 @@ discards the answer.
 
 Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
-tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry,
-and `forge ask` Codex's. Claude workers and plan readers with no entry
-use Forge's defaults; other tools use their own settings. Claude workers use model and effort
-and ignore the Codex-only subagents and subagent_effort keys.
-
-Claude implementation (build, fix, lite and design, including frontend) defaults to
-`claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) default to
-`claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
-`forge init` writes these Claude entries explicitly; omitted entries use the same built-in
-defaults. Claude planner and architect roles use the plan-read entry; debugger, security
-and performance roles use Opus 5.5 at high effort. Autoreview owns every review's model
-and effort, including prototype sign-off.
-
-Existing model entries stay unchanged on upgrade. To opt in, set each of
-`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]`,
-`[models.design.claude]` to Sonnet at xhigh. Set `[models.grill.claude]` to Opus at high.
-For a missing implementation entry,
-add a top-level line before the first table, replacing `build` with each kind:
-`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
-For plan reads, use this line:
-`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
-If build, fix or lite has a single entry, move it to its family's table before adding the
-Claude entry. Then run `forge sync` to refresh subagent roles. Legacy review entries stay
-in existing settings but no longer override Autoreview's defaults.
+tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
+review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+Claude workers use model and effort and ignore the Codex-only subagents and subagent_effort keys.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
@@ -807,12 +794,9 @@ For a side job inside your own session, hand it to one of Forge's subagent roles
 `planner` and `architect` for planning and design choices; `debugger`, `security` and
 `performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
 The diagnosing and planning roles change no files. Building an item still goes through
-`forge work`. To change a building or planning role's model or effort, change `forge.toml`
-and run `forge sync`; Claude diagnostic roles keep Opus at high effort.
-Codex roles use their host's entry when the kind has per-tool entries. With a single entry, a model
-from the other tool is omitted so the Codex role uses the session's model. Claude building
-roles use their implementation entry or Sonnet xhigh; Claude planning uses grill or Opus high,
-and Claude diagnosing always uses Opus high.
+`forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
+Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
+from the other tool is omitted so the role uses the session's model.
 
 The explorer role and `forge ask` use the read-only `explore` kind; `lite` keeps a fix's first
 build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and

@@ -54,6 +54,7 @@ export class JsonLogger implements LoggerService {
   warn(message: string, module?: string, context?: object) { this.write('warn', message, module, context); }
   error(message: string, trace?: string, module?: string) { this.write('error', message, module, { trace }); }
   debug(message: string, module?: string, context?: object) { this.write('debug', message, module, context); }
+  fatal(message: string, module?: string, context?: object) { this.write('fatal', message, module, context); }
 }
 // main.ts: NestFactory.create(AppModule, { logger: new JsonLogger() })
 ```

@@ -5,11 +5,12 @@ import json
 import os
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 
-from test_close import env  # noqa: F401 (pytest fixture)
+from test_close import env, run  # noqa: F401 (pytest fixture)
 
 STORY = "FIX-FORGE-S-OWN-CLOSES-STILL-RUN-THE-WHOLE-T"
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,6 +59,8 @@ def record_run(request):
             changes[shared_input] += '[tool.pytest.ini_options]\naddopts = "-q"\n'
         assert changes[shared_input] != original
     item, _ = env.start_fix(changes)
+    settings = tomllib.loads((env.repo.path / "forge.toml").read_text("utf-8"))
+    env.checks([run(name) for name in settings["checks"]])
 
     closed = env.close(item)
 

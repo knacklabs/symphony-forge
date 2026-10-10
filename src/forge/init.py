@@ -143,7 +143,8 @@ def _scaffold(top: Path, runner: str = "ubuntu-latest") -> dict[str, str]:
         "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES,
                                 runner=runner),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
-           for path in sorted(skeleton.rglob("*")) if path.is_file()},
+           for path in sorted(skeleton.rglob("*")) if path.is_file()
+           and (test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
         "plans/roadmap.json": ROADMAP,
     }
 

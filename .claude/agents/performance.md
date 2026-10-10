@@ -2,7 +2,6 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: performance
 description: "Measures performance problems and finds the smallest fix."
-model: "claude-opus-5-5"
 effort: "high"
 ---
 
