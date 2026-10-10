@@ -156,7 +156,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                        timedelta(seconds=timing["seconds"])
                        for timing in records(repo, "timings.jsonl") if timing["item"] == item)
         assert finished > datetime.fromisoformat(board["events"][-1]["time"])
-        assert ended["idle_since"] == finished.isoformat()
+        assert datetime.fromisoformat(ended["idle_since"]) == finished
         assert ended["idle_seconds"] == 0
         assert ended["stalled"] is False
         assert board["events"][-1]["item"] == item
