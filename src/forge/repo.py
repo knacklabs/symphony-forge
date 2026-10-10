@@ -109,7 +109,7 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
-        input: str | None = None) -> subprocess.CompletedProcess[str]:
+        input: str | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
     exe = shutil.which(args[0])
     if exe is None:
@@ -119,7 +119,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
                               text=True, encoding="utf-8", errors="replace",
                               # Git hooks need the caller's worker identity.
-                              env=os.environ if args[0] == "git" else {**os.environ, "FORGE_WORKER": "1"})
+                              env=(os.environ if env is None else env) if args[0] == "git"
+                              else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
@@ -192,9 +193,10 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
         time.sleep(pause)
 
 
-def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
+def git(*args: str, cwd: str | os.PathLike[str] | None = None,
+        env: dict[str, str] | None = None) -> str:
     """Run git and return its trimmed output. A failure raises CalledProcessError."""
-    done = run("git", *args, cwd=cwd)
+    done = run("git", *args, cwd=cwd, env=env)
     if done.returncode:
         raise subprocess.CalledProcessError(done.returncode, ["git", *args], done.stdout, done.stderr)
     return done.stdout.strip()
