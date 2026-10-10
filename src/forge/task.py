@@ -252,7 +252,8 @@ def start(args: argparse.Namespace) -> None:
     tasks = rows(sections(text))
     if task not in tasks:
         refuse(REFUSALS["no_task"], key=key, task=task)
-    approved = (json.loads(show(source, repo.state_path(key)) or "{}").get("approval") or {}).get("hash")
+    approval = json.loads(show(source, repo.state_path(key)) or "{}").get("approval") or {}
+    approved = approval.get("hash")
     if not approved:
         refuse(REFUSALS["not_approved"], key=key)
     if approved != approval_hash(text):
@@ -280,7 +281,9 @@ def start(args: argparse.Namespace) -> None:
     base = start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
              ) if source != base else None
-    path = _new_checkout(item, branch, f"{key}-{task}", base, {}, f"Start {item}", carry)
+    # Earlier approvals keep their agreed parts, including ones not started yet.
+    state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
     print(f"Started {item} on {branch} in {path}")
     print(f"Next: forge work {item}")
 
@@ -374,14 +377,15 @@ def allow_large(args: argparse.Namespace) -> None:
         refuse(REFUSALS["no_reason"])
     top = repo.root()
     branch = repo.current_branch(top)
-    found = branch_item(branch, top) if branch.startswith(("fix/", "forge/")) else None
+    found = branch_item(branch, top) if branch.startswith(("fix/", "forge/", "task/")) else None
     if found is None:
         refuse(REFUSALS["not_fix"], branch=branch or "A detached HEAD")
     name, state = found
     state["allow_large"] = args.reason.strip()
-    repo.commit_state(f"Allow the fix past the fix limit: {state['allow_large']}",
+    kind, limit = ("story part", "line limit") if "/" in name else ("fix", "fix limit")
+    repo.commit_state(f"Allow the {kind} past the {limit}: {state['allow_large']}",
                       repo.write_state(name, state, top), top=top)
-    print(f"Fix {name} may now go over the fix limit.")
+    print(f"{kind.capitalize()} {name} may now go over the {limit}.")
 
 
 def amend(args: argparse.Namespace) -> None:

@@ -149,6 +149,17 @@ def close(args: argparse.Namespace) -> int:
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         _refresh_record(top, item, state, pr)
+    if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
+        excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
+        excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
+        stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"origin/{default}...HEAD",
+                         "--", ".", *excluded, cwd=top)
+        lines = sum(int(number) for record in stats.split("\0")
+                    for number in record.split("\t", 2)[:2] if number.isdigit())
+        if lines > limit:
+            raise repo.Refused(
+                f"This story part changes {lines} lines outside tests, over the limit of {limit}; "
+                'split it or record a reason with forge fix allow-large "<reason>".', "")
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:

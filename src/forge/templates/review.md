@@ -8,6 +8,8 @@ AGENTS.md has them. -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
 $delivers
 
+Recorded allowance: $allowance
+
 ## Scope
 This part may change only these paths:
 $scope
