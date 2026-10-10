@@ -39,16 +39,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b340d6035adfe4c3b0a2a95e7b2087bd357071a0f1ecbfacf229672e8a6797be",
-    "changed": "57c41f38b95b666bf994db3ba80ece8ac0dd6e310326b31467d67ea44ee25823",
-    "commit": "3b08743a2ce61e50724d1684885fd4f8838fca76",
+    "branch_diff": "1e983032e26631bdd379c54d295092bb72706c07336f5e2cfd40919b967dcb78",
+    "changed": "d06afa9b486c41edddf6b6e3b777d87344697dd485daa296b92e54fcc17a3f2d",
+    "commit": "82f225f95283405cbf4ff0d2a03c1df72bfc94f9",
     "dismissals": [],
-    "findings": [],
-    "id": "3627b708-f248-42cb-91ef-e9cbe1032b6b",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Functional. The changed coordinator guidance says tools other than Claude workers and plan readers use their own settings when an entry is absent. In fact, `src/forge/repo.py:496-498` supplies Forge's `gpt-6.1-sol` medium default for Codex build, fix and lite workers, and `src/forge/codex.py:154` applies it. A user removing one of those entries to use Codex's settings will still get Forge's pinned default. The same claim appears in the shipped host guides.",
+        "file": "docs/guide.md",
+        "line": 145,
+        "priority": "P1",
+        "title": "Guide misstates what happens when a Codex worker has no model entry"
+      },
+      {
+        "body": "Raise: Not done. The newly added text says Claude plan reads work when Claude is the only installed tool, while the same guide's Install section at line 11 says users need both Claude Code and Codex. A Claude-only repo owner gets contradictory setup instructions for the configuration this change explicitly supports.",
+        "file": "docs/guide.md",
+        "line": 143,
+        "priority": "P1",
+        "title": "Guide gives conflicting requirements for Claude-only use"
+      }
+    ],
+    "id": "dc629ce6-0364-4224-b79b-3795a9f92368",
+    "status": "blocked"
   },
   "round": 10,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
@@ -100,6 +115,10 @@
     },
     {
       "at": "2026-10-10T09:06:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:27:35+00:00",
       "step": "review"
     }
   ],

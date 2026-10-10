@@ -243,6 +243,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/guide.md\tGuide gives conflicting requirements for Claude-only use\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 143,
+      "text": "Guide gives conflicting requirements for Claude-only use",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tGuide misstates what happens when a Codex worker has no model entry\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 145,
+      "text": "Guide misstates what happens when a Codex worker has no model entry",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tGuide promises Claude for Codex-only user-facing work\tclaude-sonnet-default",
       "kind": "bug",
       "path": "docs/guide.md",
@@ -617,6 +639,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 458,
+      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 459,
+      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -657,6 +701,17 @@
       "text": "Preserve ownership references across copied plans and follow-up replay",
       "from": "blocking",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tSelect Forge's Python when regenerating under a changed pin\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 466,
+      "text": "Select Forge's Python when regenerating under a changed pin",
+      "from": "blocking",
+      "item": "skipped-close",
       "status": "open",
       "closed_by": null
     },
@@ -1530,6 +1585,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a\tread-notes-ignored",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 252,
+      "text": "Not done: forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a",
+      "from": "blocking",
+      "item": "read-notes-ignored",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1706,6 +1772,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/upgrade.py\tStandard: data is protected against loss\tupgrade-stale-fix",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 97,
+      "text": "Standard: data is protected against loss",
+      "from": "blocking",
+      "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: Explain temporary settings edits and direct extra-suite commands in worker briefs\tworker-no-settings",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -1845,6 +1922,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_refreshes_pull_request_contract.py\tNot done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale\tskipped-close",
+      "kind": "bug",
+      "path": "tests/test_close_refreshes_pull_request_contract.py",
+      "line": 46,
+      "text": "Not done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale",
+      "from": "blocking",
+      "item": "skipped-close",
       "status": "open",
       "closed_by": null
     },
@@ -2142,6 +2230,28 @@
       "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
       "from": "worker",
       "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tAnonymous Docker Hub image pulls can block the cleanup test on both the default branch and pull requests.",
+      "kind": "bug",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "Anonymous Docker Hub image pulls can block the cleanup test on both the default branch and pull requests.",
+      "from": "worker",
+      "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tDocker registry authentication timeouts can stop the prototype cleanup test before cleanup runs.",
+      "kind": "bug",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "Docker registry authentication timeouts can stop the prototype cleanup test before cleanup runs.",
+      "from": "worker",
+      "item": "upgrade-stale-fix",
       "status": "open",
       "closed_by": null
     },
@@ -3968,94 +4078,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a\tread-notes-ignored",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 252,
-      "text": "Not done: forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a",
-      "from": "blocking",
-      "item": "read-notes-ignored",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 458,
-      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks",
-      "from": "blocking",
-      "item": "skipped-close",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line\tskipped-close",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 459,
-      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line",
-      "from": "blocking",
-      "item": "skipped-close",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tSelect Forge's Python when regenerating under a changed pin\tskipped-close",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 466,
-      "text": "Select Forge's Python when regenerating under a changed pin",
-      "from": "blocking",
-      "item": "skipped-close",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_refreshes_pull_request_contract.py\tNot done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale\tskipped-close",
-      "kind": "bug",
-      "path": "tests/test_close_refreshes_pull_request_contract.py",
-      "line": 46,
-      "text": "Not done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale",
-      "from": "blocking",
-      "item": "skipped-close",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/upgrade.py\tStandard: data is protected against loss\tupgrade-stale-fix",
-      "kind": "bug",
-      "path": "src/forge/upgrade.py",
-      "line": 97,
-      "text": "Standard: data is protected against loss",
-      "from": "blocking",
-      "item": "upgrade-stale-fix",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tAnonymous Docker Hub image pulls can block the cleanup test on both the default branch and pull requests.",
-      "kind": "bug",
-      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
-      "line": 34,
-      "text": "Anonymous Docker Hub image pulls can block the cleanup test on both the default branch and pull requests.",
-      "from": "worker",
-      "item": "upgrade-stale-fix",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tDocker registry authentication timeouts can stop the prototype cleanup test before cleanup runs.",
-      "kind": "bug",
-      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
-      "line": 34,
-      "text": "Docker registry authentication timeouts can stop the prototype cleanup test before cleanup runs.",
-      "from": "worker",
-      "item": "upgrade-stale-fix",
       "status": "open",
       "closed_by": null
     }
