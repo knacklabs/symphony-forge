@@ -10,6 +10,7 @@
   },
   "done_when": "Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or effort change, a Forge or machine restart, or a fresh worktree of the same item; a fresh chat starts only when the recorded chat truly can't be resumed (the tool reports it gone, or the item moved to the other tool), and then the round says why in one line; plan reads keep their reader chat across rounds the same way; the coordinator guide says so; command tests with stubbed Codex and Claude cover each resume case and each fresh-chat reason, for a new repo and one adopted on an earlier release",
   "flagged": [
+    "src/forge/codex.py",
     "src/forge/codex_turn.py",
     "src/forge/story.py",
     "src/forge/worker.py",
@@ -18,27 +19,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4f2cb850f7fcd5429b7c165e8cb0d4440c105b170988016d3e80c1927602a171",
-    "changed": "6c3141e74672fde241ebb6dd68734ba07d188304fef8056f2d04540233efc6a8",
-    "commit": "5e218431926b4fadcfc559f4895aa7689fbf63c8",
+    "branch_diff": "6af40bc235f278f45476ad7a4f9fe5d9e7cbadbade15546a2fb0063bb62fa1f6",
+    "changed": "784518bd4c776b47c6b46e7216def0bc03ab82a53e64051957ae077cdb7ff35b",
+    "commit": "0b917f4e52235697fcfc83f8487fbf7c7b55458a",
     "dismissals": [],
     "findings": [
       {
-        "body": "When a recorded Codex rollout is gone, the pinned runtime returns `no rollout found for thread id <id>`, as verified in [Codex 0.159.2's resume error mapping](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/app-server/src/request_processors/thread_processor.rs). This whitelist instead expects `no rollout found for <id>`, so it raises and stops rather than starting a replacement chat with a reason. This affects task workers, fix workers and plan readers. Proof tests 3 and 6 pass because their inherited stubs emit the incorrect wording at tests/test_codex_resume.py:101 and tests/test_readloop_rounds.py:79. Recognize the pinned runtime's actual missing-rollout response and use that response in both command proofs.",
-        "file": "src/forge/codex_turn.py",
-        "line": 209,
+        "body": "Raise: Not done \u2014 A missing Claude reader chat can repeatedly fail instead of starting its replacement. `_claude_read` requests stream-json, but this condition examines only the beginning of stderr. Claude can report an unavailable session in a stdout result's `errors` array ([provider reproduction](https://github.com/anthropics/claude-code/issues/40609)). `src/forge/repo.py:352` converts that result into stdout text, so an empty stderr makes this condition return the failed attempt; subsequent reads retry the same unavailable ID without a replacement or reason line. Proof test 6 misses this case because its inherited stub at `tests/test_readloop_rounds.py:128` emits only plain stderr. Handle the structured missing-session diagnostic and exercise it through the command proof.",
+        "file": "src/forge/story.py",
+        "line": 832,
         "priority": "P1",
-        "title": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff"
+        "title": "Not done: Recover Claude reader chats reported missing in structured output"
       },
       {
-        "body": "An existing client can upgrade with a passing Codex reader whose chat was already archived: tests/fixtures/forge-v1.2.2/src/forge/story.py:255 explicitly archives passing reads. This path now resumes its recorded ID without restoring it. [Codex 0.159.2 rejects archived sessions during resume](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/app-server/src/request_processors/thread_processor.rs), so later amendments repeatedly fail instead of continuing that chat. Removing future archival does not repair these existing sessions. The adopted-client proof creates its first read using the current implementation (tests/test_worker_and_reader_chats_survive_rounds.py:148), leaving this upgrade case uncovered. Restore the archived reader chat and add a command test beginning with an earlier-release passing read.",
-        "file": "src/forge/story.py",
-        "line": 251,
+        "body": "Raise: Not done \u2014 Chats started on the earlier release lose continuity when their local record disappears before their first current-release round. Recovery here uses committed `chat` fields or the structured turn log, but v1.2.2 Claude workers saved their session only in local JSON (`tests/fixtures/forge-v1.2.2/src/forge/worker.py:410`); its Claude readers likewise saved only local JSON (`tests/fixtures/forge-v1.2.2/src/forge/story.py:613`), and its notes omitted session identity (`story.py:73`). After upgrading and losing that JSON, current Forge starts another chat without asking Claude to resume the still-existing original. Erasing the entire Forge metadata folder similarly loses earlier-release Codex identities. The adopted-client proofs do not catch this: tests 1 and 2 start their original chats using current Forge, after setup replaces the old configuration. Test 12 covers an earlier-release reader only while its local record remains available. Preserve or recover those existing bindings during upgrade and cover record loss beginning with earlier-release worker and reader rounds.",
+        "file": "src/forge/codex.py",
+        "line": 179,
         "priority": "P1",
-        "title": "Not done: Resume reader chats archived by an earlier release"
+        "title": "Not done: Preserve pre-upgrade chats when local records disappear"
       }
     ],
-    "id": "7688a040-6f69-4261-a444-2aa2979d5649",
+    "id": "7b9de293-05b0-4524-b4d8-b9f206a8b284",
     "status": "blocked"
   },
   "round": 4,
@@ -58,6 +59,10 @@
     },
     {
       "at": "2026-10-09T22:51:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:20:55+00:00",
       "step": "review"
     }
   ],

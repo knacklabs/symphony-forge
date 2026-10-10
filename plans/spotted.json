@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-trends.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-trends",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -538,6 +549,17 @@
       "item": "lane-identity-env",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve pre-upgrade chats when local records disappear\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 179,
+      "text": "Not done: Preserve pre-upgrade chats when local records disappear",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
@@ -1321,6 +1343,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: Recover Claude reader chats reported missing in structured output\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 832,
+      "text": "Not done: Recover Claude reader chats reported missing in structured output",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: Resume reader chats archived by an earlier release\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2021,6 +2054,17 @@
       "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "from": "worker",
       "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
+      "kind": "bug",
+      "path": "tests/test_machine_test_lane_capacity.py",
+      "line": 19,
+      "text": "Number both new tests to keep the full suite passing",
+      "from": "blocking",
+      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     },
@@ -2949,6 +2993,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 84,
+      "text": "Keep expanded compact counts within the prompt width",
+      "from": "review",
+      "item": "two-test-slots",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -3301,6 +3356,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/worker.py\tA commit nudge has no full brief to resend if Codex reports its chat unavailable.",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 221,
+      "text": "A commit nudge has no full brief to resend if Codex reports its chat unavailable.",
+      "from": "worker",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/worker.py\tKeep Claude's structured failure reason in the work log",
       "kind": "edge",
       "path": "src/forge/worker.py",
@@ -3506,39 +3572,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
-      "kind": "bug",
-      "path": ".factory/fixes/spec-trends.json",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "spec-trends",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
-      "kind": "bug",
-      "path": "tests/test_machine_test_lane_capacity.py",
-      "line": 19,
-      "text": "Number both new tests to keep the full suite passing",
-      "from": "blocking",
-      "item": "two-test-slots",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
-      "kind": "edge",
-      "path": "src/forge/mod/hooks/pane.ts",
-      "line": 84,
-      "text": "Keep expanded compact counts within the prompt width",
-      "from": "review",
-      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     }
