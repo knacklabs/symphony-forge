@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.codex/skills/forge/SKILL.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
+      "kind": "bug",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 623,
+      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
       "kind": "bug",
       "path": ".factory/fixes/board-spec.json",
@@ -701,6 +712,17 @@
       "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
       "from": "blocking",
       "item": "lane-identity-env",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve recoverable chats during upgrade migration\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 229,
+      "text": "Not done: Preserve recoverable chats during upgrade migration",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -1706,6 +1728,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 627,
+      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tqueued-not-stop",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -2186,6 +2219,28 @@
       "text": "Not done: launcher routing and generated-runtime exclusion proofs",
       "from": "blocking",
       "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
+      "kind": "bug",
+      "path": "tests/test_installers_explain_docker_start.py",
+      "line": 53,
+      "text": "Not done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
+      "kind": "bug",
+      "path": "tests/test_installers_explain_docker_start.py",
+      "line": 26,
+      "text": "Not done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows",
+      "from": "blocking",
+      "item": "skipped-templates",
       "status": "open",
       "closed_by": null
     },
@@ -3664,6 +3719,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/templates/skill.md\tInclude scoped packages in the recursive Yarn refresh",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 623,
+      "text": "Include scoped packages in the recursive Yarn refresh",
+      "from": "review",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
       "kind": "edge",
       "path": "src/forge/templates/skill.md",
@@ -3906,6 +3972,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 56,
+      "text": "The baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
+      "from": "worker",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -3946,72 +4023,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.codex/skills/forge/SKILL.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
-      "kind": "bug",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 623,
-      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
-      "from": "blocking",
-      "item": "skipped-templates",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 627,
-      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
-      "from": "blocking",
-      "item": "skipped-templates",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
-      "kind": "bug",
-      "path": "tests/test_installers_explain_docker_start.py",
-      "line": 53,
-      "text": "Not done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows",
-      "from": "blocking",
-      "item": "skipped-templates",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
-      "kind": "bug",
-      "path": "tests/test_installers_explain_docker_start.py",
-      "line": 26,
-      "text": "Not done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows",
-      "from": "blocking",
-      "item": "skipped-templates",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/templates/skill.md\tInclude scoped packages in the recursive Yarn refresh",
-      "kind": "edge",
-      "path": "src/forge/templates/skill.md",
-      "line": 623,
-      "text": "Include scoped packages in the recursive Yarn refresh",
-      "from": "review",
-      "item": "skipped-templates",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.codex/skills/forge/SKILL.md\tThe baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
-      "kind": "improve",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 56,
-      "text": "The baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
-      "from": "worker",
-      "item": "skipped-templates",
       "status": "open",
       "closed_by": null
     }

@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "da27d8a2a3ff079b22894b1b9c2fa0596ceacf3368e512bff078d2802769dae7",
-    "changed": "3ed1df8dce199d7f1fa0afb7f875291e12b6124f6388578dfabd44129c58a75c",
-    "commit": "10bacd0c2627364da94c7afcf23636348d7aba20",
+    "branch_diff": "8ec2862f00678ba09ec6050cf93e829224063d12eedc29a258a53c09d5119e77",
+    "changed": "bba55d261baa19c0c97a67305fb0389381588cd700de1816dea2aa47c9e19f51",
+    "commit": "ad47a25fe539e0404c0785b98d4c508d65f9b7b0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. Renaming or deleting a previously read spec still blocks `forge sync` and upgrades while its original worktree remains registered. The migration calls `story._paths()` before checking whether the reader already has a durable chat binding. `src/forge/story.py:771\u2013773` refuses when that spec document no longer exists, and `src/forge/sync.py:509` invokes the migration unconditionally. This affects both providers, including already-preserved chats. The previous finding remains open; `test_13_previous_release_spec_reader_survives_removed_owner_and_metadata` removes the owning worktree and does not exercise a renamed or deleted spec in a retained worktree.",
+        "body": "Raise: Not done. Upgrade sync silently skips recoverable earlier-release chats when their local records or owning checkout have moved. `preserve_chats()` enumerates only `*.json` at line 221, ignoring a Codex identity retained in its `.log` after the JSON disappears. Its owner lookup also requires the recorded checkout path for spec readers: moving or recreating an unmerged spec's worktree makes that lookup fail, and the fallback at lines 237\u2013239 cannot help when the spec has not landed. Worker records on `forge/<item>` branches are likewise skipped because lines 226\u2013229 search only `fix/<item>`, although `src/forge/worker.py:65` explicitly supports both. Earlier reader notes omit native identities (`tests/fixtures/forge-v1.2.2/src/forge/story.py:73`), so these skipped bindings disappear when local metadata is subsequently lost; the next round starts fresh without attempting the still-available provider chat. The named upgrade tests erase records after sync, and test_13 removes the spec owner after landing, so they do not cover these migration gaps.",
         "file": "src/forge/codex.py",
-        "line": 245,
+        "line": 229,
         "priority": "P1",
-        "title": "Skip stale spec-reader records before resolving their document paths"
+        "title": "Not done: Preserve recoverable chats during upgrade migration"
       }
     ],
-    "id": "d1820f57-08bc-47fd-b3e4-162bcb32b69c",
+    "id": "de854aaa-eef9-4929-9249-661368119ebf",
     "status": "blocked"
   },
   "round": 9,
@@ -80,6 +80,10 @@
     },
     {
       "at": "2026-10-10T06:14:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:03:59+00:00",
       "step": "review"
     }
   ],
