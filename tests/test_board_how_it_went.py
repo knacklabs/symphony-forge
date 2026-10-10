@@ -37,10 +37,10 @@ def published(env, item, *, merged_at=None):
                                           ("story-runway", False), ("rebuilt-history", False),
                                           ("question-wait", False), ("conflict-wait", False),
                                           ("item-totals", False), ("approved-runway-known", False),
-                                          ("approved-runway-unknown", False)],
+                                          ("approved-runway-unknown", False), ("real-read-runway", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
-                              "approved-runway-unknown"])
+                              "approved-runway-unknown", "real-read-runway"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-runway":
         story_runway(env, monkeypatch)
@@ -59,6 +59,9 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
         return
     if case.startswith("approved-runway-"):
         approved_runway(env, monkeypatch, case == "approved-runway-known")
+        return
+    if case == "real-read-runway":
+        real_read_runway(env, monkeypatch)
         return
     client(env, previous)
     # GitHub only returns requested fields, including for older PRs outside GraphQL's window.
@@ -229,6 +232,23 @@ def approved_runway(env, monkeypatch, known):
     assert current["total_seconds"] == (70 if known else 60)
     assert current["time_breakdown"] == {"working": 10 if known else 0, "waiting": 0, "unknown": 60}
     assert current["intervals"][-1] == {"start": at(0), "end": at(60), "kind": "unknown"}
+
+
+def real_read_runway(env, monkeypatch):
+    read_at = datetime(2026, 10, 10, 10, tzinfo=timezone.utc)
+    monkeypatch.setenv("FORGE_NOW", read_at.isoformat())
+    # This helper executes the real read command and approval hook; no receipt is inserted.
+    approve_story(env.repo, STORY_DOC)
+    monkeypatch.setenv("FORGE_NOW", (read_at + timedelta(seconds=60)).isoformat())
+    current = row(env.repo, "SHOP")
+    assert current["approved_by"] == "Forge Test"
+    assert current["gates"]["plan_read"]["status"] == "passed"
+    assert current["time_breakdown"]["working"] > 0
+    assert current["time_breakdown"]["waiting"] == 0
+    assert current["time_breakdown"]["unknown"] == 60
+    assert any(interval["kind"] == "working" and datetime.fromisoformat(interval["end"]) == read_at
+               for interval in current["intervals"])
+    assert current["total_seconds"] == pytest.approx(current["time_breakdown"]["working"] + 60)
 
 
 def question_wait(env, monkeypatch):

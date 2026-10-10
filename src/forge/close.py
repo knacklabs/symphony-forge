@@ -656,8 +656,13 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         is_draft = bool(url)
         url = url or _gh(top, "pr", "create", *create)
         print(f"Opened the pull request: {url.strip()}")
-        return {"number": int(url.strip().rsplit("/", 1)[1]), "state": "OPEN",
+        number = int(url.strip().rsplit("/", 1)[1])
+        repo.record_event(top, item, "pull request published", number=number)
+        return {"number": number, "state": "OPEN",
                 "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}
+    if not any(event.get("item") == item and event.get("event") == "pull request published"
+               and event.get("number") == pr["number"] for event in time_records.read(top, "events")):
+        repo.record_event(top, item, "pull request published", number=pr["number"])
     if draft and not pr.get("isDraft"):
         _draft(top, "pr", "ready", str(pr["number"]), "--undo")
     body = pr.get("body") or ""
