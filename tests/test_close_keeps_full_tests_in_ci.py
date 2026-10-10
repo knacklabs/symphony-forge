@@ -155,7 +155,9 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
     env.repo.write("cart.go", "package cart\n\nfunc Cart() int { return 1 }\n")
     for filename, name in (("cart_test.go", "Cart"), ("discount_test.go", "Discount")):
         env.repo.write(filename, 'package cart\n\nimport ("os"; "testing")\n\n'
+                       'const quote' + name + ' = \'"\'\n'
                        f"func Test{name}(t *testing.T) {{\n"
+                       '    t.Log("selected client test")\n'
                        '    if Cart() != sharedAmount() { t.Fatal("wrong amount") }\n'
                        f"    if err := os.WriteFile({json.dumps(str(receipts / name))}, "
                        '[]byte("ran"), 0600); err != nil { t.Fatal(err) }\n}\n')
@@ -187,22 +189,25 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
 
 
 @pytest.mark.parametrize("runner", ["vitest", "jest"])
-def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_path, runner):
+@pytest.mark.parametrize("selected_count", [2, 120], ids=["small-change", "large-change"])
+def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_path, runner, selected_count):
     # The old command grew with every unrelated file. This transparent npm boundary
     # records transport size and delegates execution to the real installed runner.
     npm = shutil.which("npm")
     assert npm, "The Node client regression requires npm."
-    log = tmp_path / "npm-transport.json"
+    log = tmp_path / "npm-transport.jsonl"
     _install(env.repo.bin, "npm", f"#!{sys.executable}\n"
              "import json, os, subprocess, sys\nfrom pathlib import Path\n"
-             f"Path({json.dumps(str(log))}).write_text(json.dumps(sys.argv[1:]), encoding='utf-8')\n"
+             f"with Path({json.dumps(str(log))}).open('a', encoding='utf-8') as out:\n"
+             "    out.write(json.dumps(sys.argv[1:]) + '\\n')\n"
              f"words = [{json.dumps(npm)}, *sys.argv[1:]]\n"
              "sys.exit(subprocess.run(subprocess.list2cmdline(words) if os.name == 'nt' else words, "
              "shell=os.name == 'nt').returncode)\n")
     root = "client tests with long names"
     receipts = tmp_path / "node-receipts"
     receipts.mkdir()
-    for name in ("cart", "changed"):
+    selected = ["cart", "changed"] + [f"changed-{index:03}" for index in range(selected_count - 2)]
+    for name in selected:
         env.repo.write(f"{root}/{name}.test.js", "const fs = require('node:fs');\n"
                        f"test('client', () => fs.writeFileSync({json.dumps(str(receipts / name))}, 'ran'));\n")
     for index in range(250):
@@ -211,6 +216,7 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_pa
     env.repo.write("package.json", '{"name":"client","version":"1.0.0"}\n')
     env.repo.write("cart.js", "const value = 1;\n")
     if runner == "vitest":
+        env.repo.write("vitest.config.mjs", "export default { root: " + json.dumps(root) + " };\n")
         command = ("npm exec --yes --package=vitest@3.2.4 -- vitest run " + json.dumps(root)
                    + " --globals --maxWorkers=1 --no-file-parallelism")
     else:
@@ -221,14 +227,18 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_pa
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Existing Node client tests")
     env.repo.git("push", "-q", "origin", "main")
-    item, _ = env.start_fix({"cart.js": "const value = 2;\n",
-                            f"{root}/changed.test.js": (env.repo.path / root / "changed.test.js").read_text("utf-8")
-                                                       + "// Changed test\n"})
+    changes = {"cart.js": "const value = 2;\n"}
+    for name in selected[1:]:
+        filename = f"{root}/{name}.test.js"
+        changes[filename] = (env.repo.path / filename).read_text("utf-8") + "// Changed test\n"
+    item, _ = env.start_fix(changes)
 
     closed = env.close(item)
 
     if log.exists():
-        arguments = json.loads(log.read_text("utf-8"))
-        assert len(subprocess.list2cmdline([npm, *arguments])) < 8191, arguments
+        calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
+        for arguments in calls:
+            assert len(subprocess.list2cmdline([npm, *arguments])) < 8191, arguments
+        assert len(calls) == 1 if selected_count == 2 else len(calls) > 1
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert sorted(path.name for path in receipts.iterdir()) == ["cart", "changed"]
+    assert sorted(path.name for path in receipts.iterdir()) == sorted(selected)
