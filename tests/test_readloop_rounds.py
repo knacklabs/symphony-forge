@@ -487,7 +487,8 @@ def _one_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
 
 def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
-    setup(repo)
+    # Promotion now needs a committed entry; only brand-new stories add one.
+    setup(repo, keys=("SHOP", "BASKET"))
     _install(repo.bin, "claude", f"#!{sys.executable}\n{CLAUDE}")
     assert repo.forge("fix", "start", "Recover the saved basket", "--done",
                       "Saved baskets return").returncode == 0

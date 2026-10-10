@@ -178,10 +178,7 @@ def test_1_what_changes_first(repo):
 
 def test_11_story_doc_shape(repo):
     setup(repo)
-    refused = repo.forge("story", "new", "NOPE", "Not planned")
-    assert refused.returncode == 1
-    assert refused.stderr == ("NOPE is not on the roadmap (plans/roadmap.json).\n"
-                              "Next: forge roadmap add <spec>\n")
+    # Story creation now adds missing roadmap entries; document validation stays the same.
 
     shop = new_story(repo, "SHOP")
     malformed = {
@@ -288,7 +285,8 @@ def test_12_cold_read(repo, claude_payload, monkeypatch):
 
 
 def test_22_promote(repo):
-    setup(repo)
+    # The narrowed goal flow is for new stories; promotion keeps an existing roadmap entry.
+    setup(repo, keys=("SHOP", "BASKET"))
     fix = repo.path.parent / "repo-fix-keep-baskets"
     # ponytail: WORK's `forge fix start` isn't in this branch; this builds the same fix by hand.
     repo.git("worktree", "add", "-q", "-b", "fix/keep-baskets", str(fix), "main")
