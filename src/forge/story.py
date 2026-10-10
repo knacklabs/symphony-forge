@@ -48,6 +48,7 @@ REFUSALS = {
     "no_story": ("There is no story {key} here.", 'forge story new {key} "<title>"'),
     "no_spec": ("docs/specs/{slug}.md does not exist.", "forge spec save {slug}"),
     "bad_doc": ("{doc} is malformed: {problem}.", "edit {doc}, then run forge next"),
+    "too_many_results": ("This story has more than six Done when items; split it into smaller stories.", ""),
     "discarded": ("A file changed during the cold read of {doc}, so the read was discarded.",
                   "git status, then forge read {target}"),
     "reader_failed": ("The cold read of {doc} failed: {problem}", "forge read {target}"),
@@ -157,11 +158,15 @@ def read(args: Any) -> int:
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
     later = bool(record.get("read_hash"))
+    if is_story:
+        text = _text(doc)
+        parsed = _parsed(text, rel)
+        approval = (repo.read_state(target, top) or {}).get("approval") or {}
+        if len(parsed["done"]) > 6 and approval.get("hash") != approval_hash(text):
+            repo.refuse(REFUSALS["too_many_results"])
     number = undisposed(findings) if later else ""
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
-    if is_story:
-        _parsed(_text(doc), rel)
     apps = [app for variable, app in COORDINATORS.items() if os.environ.get(variable)]
     if len(apps) != 1:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
