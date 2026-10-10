@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "23dd056bf4c95b41ba09ddcfd8d652ff4f99fc134489709a3c15df217400b710",
-    "changed": "064f0f86781aa388843a73ac4992d1d964f020e4c3998084d085813dbf43cd60",
-    "commit": "5c5c98c5a37e63776c80b043c44c320857b04699",
+    "branch_diff": "3d38a1600196ffbc0c28b59bea484d2e87ab6e0826c27a9d8549767765cdcbc8",
+    "changed": "987a8f5c5207f04f00a6fa86fe13a6cefed69b8bfb0cb1e703bf05bc74bb322b",
+    "commit": "3649f9dc81968b815129d9f84c80f56f9fde3190",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "A new note can be silently marked as a clean read when the reader repeats a settled note in the same reply.\nRaise: Functional \u2014 `_findings(said)` stores findings by their supplied number. If a reader writes `1. New delivery defect` followed by `1. Saving needs an account` (a settled note), the second entry replaces the first. Filtering then removes the settled entry and sets `said` to `No findings.`, so the new defect cannot block. The named test covers only uniquely numbered replies.",
-        "file": "src/forge/story.py",
-        "line": 256,
-        "priority": "P1",
-        "title": "New cold-read notes can be lost when a settled note repeats"
-      }
-    ],
-    "id": "92343679-1d11-4d20-94a5-e677790fed91",
-    "status": "blocked"
+    "findings": [],
+    "id": "b01ce3be-f4bf-48ee-86c1-f966056a9863",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T14:39:28+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-10T15:49:20.047182+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:44:10.518186+00:00",
       "step": "review"
     }
   ],
