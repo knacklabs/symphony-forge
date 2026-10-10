@@ -2,28 +2,30 @@
   "base": "58fd944d4d383807318db51b727e00fc15c810fa",
   "branch": "fix/work-during-merge",
   "done_when": "forge work on a branch with an unfinished merge either hands the worker the conflicts to resolve and records its start without a partial commit (so the record lands with the merge commit), or, if that can't be done safely, refuses with a plain next step (resolve and commit the merge, then rerun) instead of a git error and a doctor hint; command tests cover a conflicted default-branch merge on a task and a fix, for a new repo and one adopted on an earlier release",
-  "flagged": [],
+  "flagged": [
+    "src/forge/worker.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5aa8e9fa6faf25cadde39effe62fadbc796b2d713cefe28278e94e1febb62c90",
-    "changed": "7438415d006ed1281eacbf43de263d3eef842c3dfa6f51e74d7aa6a62369335c",
-    "commit": "633f5652a92d845debe212cdfea8eb1aa6852d42",
+    "branch_diff": "67c8f13461a762e5e4665676e9eb4c39a619b3bbda5f64d94de1b1ec20875a4e",
+    "changed": "1346d1c07db6158b817c7bf9eff321383bf91a3d02042b618ed5b429bcfa6181",
+    "commit": "eee6610571f8a93d95a0e625e7249db974483060",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported edge case remains for both task and fix checkouts. When `forge work` runs inside a checkout whose unfinished merge conflicts in `forge.toml`, `src/forge/cli.py:138` calls `repo.check_pin` before this guard. `src/forge/repo.py:576` parses the conflicted configuration and refuses with `Next: forge doctor`, so the user never receives the resolve-and-commit guidance. Detect the pending merge before parsing the caller's configuration. The four command cases conflict only in `merge.txt`, so they pass while this path remains broken.",
+        "body": "Raise: Not done. The previously reported configuration-conflict gap remains for both task and fix checkouts. When branch settings and a default-branch update conflict in `forge.toml`, running `forge work` from the item's checkout reaches `src/forge/cli.py:138` first. That calls `check_pin`, which parses the caller's configuration at `src/forge/repo.py:578`; conflict markers trigger the refusal at line 456 with `Next: forge doctor` (line 36). The new merge guard is never reached, so the required resolve-and-commit guidance is absent. The four passing command cases conflict only in `merge.txt` (`tests/test_work_requires_a_finished_merge.py:64\u201375`) and cannot catch this failure. Check the target's pending merge before caller configuration parsing and cover this command path.",
         "file": "src/forge/worker.py",
         "line": 68,
-        "priority": "P2",
-        "title": "Check for a pending merge before parsing a conflicted forge.toml"
+        "priority": "P1",
+        "title": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint"
       }
     ],
-    "id": "1de79b84-6c3a-46c6-8202-4d0bc1d4bfcd",
-    "status": "clean"
+    "id": "4f547a47-5efe-4cbe-95b5-72426afdfa86",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T13:06:47+00:00",
@@ -51,6 +53,10 @@
     },
     {
       "at": "2026-10-10T00:06:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:00:51+00:00",
       "step": "review"
     }
   ],
