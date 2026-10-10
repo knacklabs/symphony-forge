@@ -1,0 +1,41 @@
+{
+  "base": "a729e9f3e557f8a555eb9171ff8ed13119beb34e",
+  "branch": "fix/read-notes-ignored",
+  "done_when": "forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a reply with no numbered items keeps today's rule); a numbered real finding still fails; the word list for tests-not-run notes is deleted; the existing no-findings command test gains the 'Runtime and visual checks were not run; this was a document-only review.' case for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/story.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "70f9fdc217b994c1dccb8a7ba546c6f913b1766da38997460dc9985009c34abb",
+    "changed": "583ae2078fb10f12889530408d5b63699e6d17b5c78a65884302e5ed3f41d15e",
+    "commit": "0a78561ef8b376c09190a88a8c00da35f69b9544",
+    "dismissals": [],
+    "findings": [],
+    "id": "4578735b-e012-4fb0-b245-66ac82d1b4cf",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T05:19:03+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T05:41:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:23:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:07:55+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clean cold reads keep failing because readers add a different 'checks were not run' note each time ('Runtime and visual checks were not run; this was a document-only review.')",
+  "worker": "codex"
+}
