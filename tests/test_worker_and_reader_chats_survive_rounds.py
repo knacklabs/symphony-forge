@@ -680,22 +680,39 @@ def test_14_failed_previous_release_codex_reader_keeps_its_logged_chat(
     assert len(_sent(reader.log, "thread/start")) == 1
 
 
-def test_15_previous_release_split_worker_keeps_last_successful_claude_chat(
-        repo, monkeypatch, tmp_path, sdk_data):
+@pytest.mark.parametrize("last", ["codex", "claude"], ids=["fallback-last", "claude-last"])
+def test_15_previous_release_split_worker_follows_its_last_successful_tool(
+        repo, monkeypatch, tmp_path, sdk_data, last):
     folder, item, claude, _ = _worker(repo, monkeypatch, sdk_data, "claude", "task", adopted=True)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     fallback = _old_round(repo, tmp_path, folder, "work", item)
     assert "fell back to Codex" in fallback.stdout
     assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1
+    first = _chat(claude, "claude")
     monkeypatch.delenv("STUB_CLAUDE_EXIT")
-    successful = _old_round(repo, tmp_path, folder, "work", item)
-    assert "fell back to Codex" not in successful.stdout
-    first = _chat(claude, "claude", resumed=True)
+    if last == "claude":
+        successful = _old_round(repo, tmp_path, folder, "work", item)
+        assert "fell back to Codex" not in successful.stdout
+        first = _chat(claude, "claude", resumed=True)
     _sync_elsewhere(repo, tmp_path)
     shutil.rmtree(repo.path / ".git/forge")
     said = _work(repo, item)
-    assert "Starting a new" not in said.stdout
-    assert _chat(claude, "claude", resumed=True) == first
+    if last == "codex":
+        explanations = [line for line in said.stdout.splitlines() if line.startswith("Starting a new")]
+        assert len(explanations) == 1 and "its last round ran on Codex" in explanations[0], said.stdout
+        replacement = _chat(claude, "claude")
+        assert replacement != first
+        prompt = calls(claude)[-1]["brief"]
+        assert "The earlier brief in this conversation still applies." not in prompt
+        assert "# Worker brief" in prompt
+        assert "1. The board shows every story." in prompt
+        assert (ROOT / "src/forge/standards.md").read_text("utf-8").strip() in prompt
+        continued = _work(repo, item)
+        assert "Starting a new" not in continued.stdout
+        assert _chat(claude, "claude", resumed=True) == replacement
+    else:
+        assert "Starting a new" not in said.stdout
+        assert _chat(claude, "claude", resumed=True) == first
     assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1
 
 

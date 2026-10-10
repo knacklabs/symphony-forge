@@ -19,10 +19,14 @@ STORY = "reuse-worker-chats"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("family", ["codex", "claude"])
-@pytest.mark.parametrize("amended", [True, False], ids=["changed-spec", "unchanged-spec"])
+@pytest.mark.parametrize("family,amended,failed", [
+    (family, amended, False) for family in ("codex", "claude") for amended in (True, False)
+] + [("codex", False, True)], ids=[
+    "codex-changed-spec", "codex-unchanged-spec", "claude-changed-spec",
+    "claude-unchanged-spec", "codex-failed-unchanged-spec",
+])
 def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
-        repo, monkeypatch, tmp_path, sdk_data, adopted, family, amended):
+        repo, monkeypatch, tmp_path, sdk_data, adopted, family, amended, failed):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted)
     started = repo.forge("fix", "start", "Publish invoice plan", "--done", "The plan is saved")
     assert started.returncode == 0, started.stdout + started.stderr
@@ -48,8 +52,14 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
         saved = repo.forge("spec", "save", "invoices", cwd=owner)
         assert saved.returncode == 0, saved.stdout + saved.stderr
     reader.say("No findings.\n")
-    _old_round(repo, tmp_path, owner, "read", "invoices")
+    if failed:
+        reader.fail(True)
+    read = _old_round(repo, tmp_path, owner, "read", "invoices", expect_success=not failed)
     first = _reader_chat(reader)
+    if failed:
+        assert "Codex reported the turn failed" in read.stderr
+        assert not (owner / "docs/specs/invoices.read.md").exists()
+        reader.fail(False)
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
         repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
     repo.git("worktree", "remove", str(owner))

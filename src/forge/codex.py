@@ -182,6 +182,13 @@ def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
                 if fields.get("session") else None}
     else:
         chat = (repo.read_state(item, checkout) or {}).get("chat", {})
+        if not chat and saved.get("conversation") and saved.get("claude"):
+            # Earlier releases kept both fallback IDs; the work log records which tool ran last.
+            launches = re.findall(rf"^--- forge work {re.escape(item)} at .*$|"
+                                  r"^Codex app-server: process \d+$",
+                                  sync.read(repo.work_log(checkout, item)), re.M)
+            if launches:
+                saved["claude" if launches[-1].startswith("Codex ") else "conversation"] = None
     if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")) and not (
             chat.get("conversation") or (chat.get("claude") or {}).get("id")):
         lines = sync.read(_item_file(checkout, item, ".log", kind)).splitlines()
@@ -247,12 +254,21 @@ def preserve_chats(top: Path) -> None:
                 landed = story.show(top, repo.default_branch(top), rel)
                 notes = f"docs/specs/{item}.read.md"
                 landed_notes = story.show(top, repo.default_branch(top), notes) or ""
+                begun = saved.get("head") or saved.get("start")
+                if not begun:
+                    lines = sync.read(path.with_suffix(".log")).splitlines()
+                    begun = json.loads(lines[-1]).get("start") if lines else None
+                owning = set()
+                if begun and repo.run("git", "merge-base", "--is-ancestor", begun,
+                                      repo.default_branch(top), cwd=top).returncode == 1:
+                    owning = set(repo.git("for-each-ref", f"--contains={begun}",
+                                          "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
                 matches = [name for name, tree in trees.items()
-                           if (tree / rel).is_file() and (sync.read(tree / rel) != landed
+                           if (tree / rel).is_file() and (name in owning or sync.read(tree / rel) != landed
                                or sync.read(tree / notes) != landed_notes)]
                 matches += [name for name in sorted(refs - trees.keys())
                             if name.startswith(("fix/", "forge/", "story/", "task/"))
-                            and (text := story.show(top, name, rel)) is not None and (text != landed
+                            and (text := story.show(top, name, rel)) is not None and (name in owning or text != landed
                                 or (story.show(top, name, notes) or "") != landed_notes)]
                 if len(matches) > 1:
                     repo.refuse(REFUSALS["chat_owner"], item=item)
