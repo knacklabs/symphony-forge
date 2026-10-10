@@ -157,15 +157,15 @@ def read(args: Any) -> int:
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
     later = bool(record.get("read_hash"))
-    number = undisposed(findings) if later else ""
-    if number:
-        repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
     if is_story:
         text = _text(doc)
         parsed = _parsed(text, rel)
         approval = (repo.read_state(target, top) or {}).get("approval") or {}
         if len(parsed["done"]) > 6 and approval.get("hash") != approval_hash(text):
             repo.refuse(REFUSALS["too_many_results"])
+    number = undisposed(findings) if later else ""
+    if number:
+        repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
     apps = [app for variable, app in COORDINATORS.items() if os.environ.get(variable)]
     if len(apps) != 1:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
