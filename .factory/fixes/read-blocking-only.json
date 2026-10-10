@@ -2,17 +2,27 @@
   "base": "4436362fd178474e291311077681bb515dab731e",
   "branch": "fix/read-blocking-only",
   "done_when": "A cold read passes when none of its notes is blocking (the plan is wrong, contradicts itself, or a builder could not act on it); other notes are recorded and do not trigger another round, and the reader brief says which notes block. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
-  "flagged": [],
+  "flagged": [
+    "src/forge/templates/cold-read.md"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "29f1d2b0e21b22aa9b369522c03f6f69f025531c35a94dcab80c343f36d4743f",
-    "changed": "c6b8b0c30f69c8519e1e650a462c6cafc4d4e1d8f14114da9a38af7deab29c07",
-    "commit": "7f3307799e50f5731bd010b9ae369dbe7a48af2f",
+    "branch_diff": "601ee023a484a268151ed3825e7601ecb18b54ab7518da5f10345dce387758bb",
+    "changed": "f6d4be9aef08188a8119fd2ddeb6c7157ce19d1b2e268361010e83290f7da47d",
+    "commit": "82103d70760c528d110632e5a3fad1338774e366",
     "dismissals": [],
-    "findings": [],
-    "id": "33368ec0-c255-4d1f-baaa-394db34ca339",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The follow-up brief still treats advisory notes as findings that need to be closed. Raise: Not done: this line says advisory notes need no disposition, but the same brief says every previous finding has a disposition and asks the reader whether each is closed (lines 133\u2013155). In a normal mixed round, `story.read` includes the advisory note in `$dispositions`, so the reader is told to reassess a wording note while resolving the blocker. The new test stops before that follow-up round.",
+        "file": "src/forge/templates/cold-read.md",
+        "line": 169,
+        "priority": "P1",
+        "title": "Not done: Follow-up reader brief contradicts the advisory rule"
+      }
+    ],
+    "id": "1f236b78-b1e0-4aec-b312-42230e752a80",
+    "status": "blocked"
   },
   "round": 3,
   "status": "fixing",
@@ -24,9 +34,12 @@
     {
       "at": "2026-10-10T15:44:48.266010+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:21:10.938916+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 07c8e9d70ee6b500483e33e56d95eac6ac91758b` exited with status 1 on this machine.\n        assert synced.returncode == 0, synced.stdout + synced.stderr\n        shop = new_story(repo, \"SHOP\")\n        doc = shop / \"plans/SHOP.md\"\n        doc.write_text(plan(7), encoding=\"utf-8\")\n        refused = repo.forge(\"read\", \"SHOP\")\n        assert (refused.returncode, refused.stderr) == (1, MESSAGE)\n        assert not (repo.bin / \"claude-calls.jsonl\").exists()\n        assert not (shop / \"plans/SHOP.read.md\").exists()\n        for host in (\".codex\", \".claude\"):\n            guide = (repo.path / host / \"skills/forge/SKILL.md\").read_text(\"utf-8\")\n            assert \"at most six Done when items\" in \" \".join(guide.split())\n        for guide in initial_guides:\n            assert \"at most six Done when items\" in \" \".join(guide.split())\n        # Wrapped prose is still one result, so a six-item plan reaches the reader.\n        doc.write_text(plan(6).replace(\"1. Shoppers see result 1.\",\n                                     \"1. Shoppers see result 1,\\n   including after sign-in.\"),\n                       encoding=\"utf-8\")\n        read = repo.forge(\"read\", \"SHOP\")\n        assert read.returncode == 0 and \"found nothing\" in read.stdout, read.stdout + read.stderr\n        # A later revision must get the split message even with an unanswered finding.\n        (repo.bin / \"claude-says.md\").write_text(\"1. The saved basket can be lost.\\n\", encoding=\"utf-8\")\n        read = repo.forge(\"read\", \"SHOP\")\n>       assert read.returncode == 0 and \"give every finding a disposition\" in read.stdout, read.stderr\nE       AssertionError:\nE       assert (0 == 0 and 'give every finding a disposition' in 'Wrote round 2 of the cold read to plans/SHOP.read.md.\\nNext: give every blocking finding a disposition, amend the doc, then forge read SHOP\\n')\nE        +  where 0 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-read-blocking-only/.venv/bin/python', '/priv...lans/SHOP.read.md.\\nNext: give every blocking finding a disposition, amend the doc, then forge read SHOP\\n', stderr='').returncode\nE        +  and   'Wrote round 2 of the cold read to plans/SHOP.read.md.\\nNext: give every blocking finding a disposition, amend the doc, then forge read SHOP\\n' = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-read-blocking-only/.venv/bin/python', '/priv...lans/SHOP.read.md.\\nNext: give every blocking finding a disposition, amend the doc, then forge read SHOP\\n', stderr='').stdout\n\ntests/test_story_reads_limit_done_when_items.py:68: AssertionError\n2 failed, 95 passed in 297.23s (0:04:57)",
   "why": "Plan reads loop for many rounds on wording notes because a read passes only when a round finds nothing",
   "worker": "codex"
 }
