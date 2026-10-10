@@ -4,21 +4,37 @@
   "done_when": "Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories the roadmap marks done count and show as done; items idle past the stalled threshold show as stalled with their idle time and what they wait on, and finished items never do; a running worker or review shows as running with its elapsed time; ready-to-merge, plan-read and waiting-for-approval stages match forge next; a finished story's parts show finished; prose and timeline times agree; header counts are labelled separately for stories and fixes; a person shows under one display name; titles are shortened at a word boundary; command tests reproduce each of these on a board with real-shaped data for a new repo and one adopted on an earlier release",
   "flagged": [
     "src/forge/board.py",
+    "src/forge/nextstep.py",
     "tests/test_board_status_and_times.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "76641524708a38a8654c55e3dd3326c2286262d7269c3b478466e1bfd6a55e4c",
-    "changed": "0e5b21c3e015ef2163756dd22aaa00eb3f056c83e598cee53adf59f03dcf6d65",
-    "commit": "6c005b1632987df37f8f5796c7894dab57199edb",
+    "branch_diff": "3d67175870062b651638f88f3bd9e9878255ec742f714570c6360a769e598d77",
+    "changed": "00f0aacfa2bd765ffb1745d1d2de11533a670b912244521527e11a3487a84a32",
+    "commit": "6f6401fed165468371d29dbdfb857c5c8d417649",
     "dismissals": [],
-    "findings": [],
-    "id": "0e997284-cb2c-43fc-816e-d400fec6f545",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done. An upgraded 1.2.2 client can show recently worked items as stalled for days. The idle clock now uses events and saved steps, ignoring both recorded timings and recent branch commits. New evidence from the shipped earlier-release implementation shows why this matters: tests/fixtures/forge-v1.2.2/src/forge/worker.py:115\u2013118 changes the worker status without adding a dated step, and its repo.py:117\u2013126 records timings without run events. Start an item four days ago, complete another worker round five minutes ago on 1.2.2, then upgrade: this derivation reports four days idle despite the recent work. Parent stories inherit the same incorrect clock. The named adoption tests seed current-format events and do not exercise this legacy case.",
+        "file": "src/forge/board.py",
+        "line": 363,
+        "priority": "P1",
+        "title": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation"
+      },
+      {
+        "body": "Raise: Functional. During a normal first forge close after forge work finishes, the saved status remains working while the close command runs tests. src/forge/review.py:288 records an active test run, and src/forge/close.py:187 runs those tests before publishing the reviewing status. This condition now treats any active run as evidence that the worker is still running, so forge next says \u201cA worker is building\u2026\u201d even though the worker has ended and the board JSON has worker=null with test activity. The fallback must distinguish test activity from a live worker; the existing nested worker/test test does not cover tests running after the worker exits.",
+        "file": "src/forge/nextstep.py",
+        "line": 635,
+        "priority": "P1",
+        "title": "Do not report an exited worker as building while tests run"
+      }
+    ],
+    "id": "1538e7a0-6f12-43c8-8ccf-4427101fef01",
+    "status": "blocked"
   },
   "round": 6,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T12:16:18+00:00",
@@ -50,6 +66,10 @@
     },
     {
       "at": "2026-10-10T01:40:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:03:03+00:00",
       "step": "review"
     }
   ],
