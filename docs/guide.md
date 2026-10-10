@@ -8,8 +8,10 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 ## Install
 
-You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, Claude Code and Codex.
-Either agent can coordinate the work; the first cold read of a story or spec runs on the other one.
+You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
+repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
+the first cold read uses the other agent when installed, otherwise a separate conversation
+of the coordinating agent.
 `forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
@@ -142,7 +144,8 @@ single entry counts for its model's family: a gpt model is Codex's, any other is
 kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
 Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
 installed tool. Claude planner and architect roles use that plan-read entry; debugger,
-security and performance use Opus 5.5 at high effort. Other tools use their own settings.
+security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
+no entry use Forge's `gpt-6.1-sol` at medium effort; Codex design uses its design default.
 Ask your agent to change these settings in a fix.
 
 `forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),
