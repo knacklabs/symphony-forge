@@ -9,24 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2d378b52f18ea13dad595546d35339af9074a63e0b5c8414057019a77f3e4492",
-    "changed": "29bcedab48ddb4d3edb9732c52aa32af390c3856fea28d1c0ab251307f378937",
-    "commit": "eac193c45710f6e3a7ca0049364968b81e2755a2",
+    "branch_diff": "8f217e361dec8411daba6244dd8940fac2f1d1f5cb93f35245394ac6badc2484",
+    "changed": "bd21a794a7f0d3a4dcde72b3774702a43d817e53c77377e602cd5d34d6275130",
+    "commit": "5eba1da84b8db00dbc16a2f4dfe71ba769cf7664",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Functional. A client with `.python-version` set to `3.10` can have Forge correctly installed under Python 3.11, yet this regeneration command selects the client's incompatible interpreter. `--isolated --no-project` does not disable Python-version discovery: [uv's implementation](https://raw.githubusercontent.com/astral-sh/uv/0.8.22/crates/uv/src/commands/project/run.rs) reads the pin and resolves `--with` using that interpreter. Forge requires Python >=3.11 (`pyproject.toml:9`), so a generated-file conflict incorporating an upgraded Forge pin fails dependency resolution and aborts close. The previous launcher (`src/forge/repo.py:638\u2013643`) uses `uv tool run`, which [ignores project Python pins](https://docs.astral.sh/uv/concepts/tools/#python-versions). Land also reaches this path through `close.close` (`src/forge/land.py:54`). The package-acquisition stub executes the script in its existing interpreter (`tests/test_running_commands_follow_changed_forge_pin.py:50\u201355`), so the passing proofs do not detect this regression.",
-        "file": "src/forge/close.py",
-        "line": 466,
-        "priority": "P1",
-        "title": "Select Forge's Python when regenerating under a changed pin"
-      }
-    ],
-    "id": "077ff401-006f-4ab8-a570-833d270c439f",
-    "status": "blocked"
+    "findings": [],
+    "id": "f01db94d-5778-4d6c-bddb-b0872241e4cc",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:27+00:00",
@@ -54,6 +46,10 @@
     },
     {
       "at": "2026-10-10T02:53:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:06:42+00:00",
       "step": "review"
     }
   ],
