@@ -1,6 +1,13 @@
 {
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/story-from-goal",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12667-8711-7b81-9eca-c3c5541f1551",
+    "head": "7b9c6e29d6eaeb7ddd78cc5d9a0e2719151e82ab",
+    "start": "9d0cf702ef866d1baa40ad649c4ff30461d79b8e"
+  },
   "done_when": "forge story new <KEY> \"<title>\" works for a story that has no spec: the story's own branch adds it to the roadmap, the plan's Why carries the problem, and the story gets one read loop and one approval; stories made from a spec work as today and specs stay optional. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
     "src/forge/nextstep.py",
