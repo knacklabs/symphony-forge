@@ -1299,6 +1299,61 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 255,
+      "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 255,
+      "text": "Not done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 254,
+      "text": "Not done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read still passes substantive findings\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 257,
+      "text": "Not done: forge read still passes substantive findings",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read still rejects common no-findings wording\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 254,
+      "text": "Not done: forge read still rejects common no-findings wording",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: running readers' model and effort with default settings\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1306,6 +1361,17 @@
       "text": "Not done: running readers' model and effort with default settings",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 813,
+      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "from": "worker",
+      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     },
@@ -1427,6 +1493,17 @@
       "text": "Not done: worker questions on both worker paths",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 250,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     },
@@ -1966,6 +2043,17 @@
       "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "from": "worker",
       "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
+      "kind": "bug",
+      "path": "tests/test_machine_test_lane_capacity.py",
+      "line": 19,
+      "text": "Number both new tests to keep the full suite passing",
+      "from": "blocking",
+      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     },
@@ -2883,6 +2971,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 84,
+      "text": "Keep expanded compact counts within the prompt width",
+      "from": "review",
+      "item": "two-test-slots",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -3444,46 +3543,35 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: command tests for explore defaults, selection and earlier-adopted clients\texplore-kind",
       "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 813,
-      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
-      "from": "worker",
-      "item": "skipped-workers",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 250,
-      "text": "Standard: Delete before adding",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: command tests for explore defaults, selection and earlier-adopted clients",
       "from": "blocking",
-      "item": "skipped-workers",
+      "item": "explore-kind",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: explore kind for read-only work\texplore-kind",
       "kind": "bug",
-      "path": "tests/test_machine_test_lane_capacity.py",
-      "line": 19,
-      "text": "Number both new tests to keep the full suite passing",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: explore kind for read-only work",
       "from": "blocking",
-      "item": "two-test-slots",
+      "item": "explore-kind",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
-      "kind": "edge",
-      "path": "src/forge/mod/hooks/pane.ts",
-      "line": 84,
-      "text": "Keep expanded compact counts within the prompt width",
-      "from": "review",
-      "item": "two-test-slots",
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: proof list\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "explore-kind",
       "status": "open",
       "closed_by": null
     },
