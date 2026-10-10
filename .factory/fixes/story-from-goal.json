@@ -1,13 +1,6 @@
 {
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/story-from-goal",
-  "chat": {
-    "approval": null,
-    "claude": null,
-    "conversation": "01a12667-8711-7b81-9eca-c3c5541f1551",
-    "head": "7b9c6e29d6eaeb7ddd78cc5d9a0e2719151e82ab",
-    "start": "9d0cf702ef866d1baa40ad649c4ff30461d79b8e"
-  },
   "done_when": "forge story new <KEY> \"<title>\" works for a story that has no spec: the story's own branch adds it to the roadmap, the plan's Why carries the problem, and the story gets one read loop and one approval; stories made from a spec work as today and specs stay optional. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
     "src/forge/nextstep.py",
@@ -16,24 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bd4671a494c35f619faabb62d3df286830167ec421670fa808a9fbc3b96c48a1",
-    "changed": "dc3796be70df05b252fc18f96b5fb90c738ab29936fdccb1c4df2065bab633a3",
-    "commit": "d77974d610d11168dc683d8ebc8e476f3752b0bf",
+    "branch_diff": "badf3b647807ef4a252691f1f28ea0733a0fcefe2a661918eb124f4835a7ba5c",
+    "changed": "7b27b9936d40ef89e9d98bb7c910c817a5728f1d2136d81e85aa0793d98bc32f",
+    "commit": "dced18f65a13f4433b4c5fc6f5f9479be7b3ec24",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Functional. This new check reads the fix worktree, so an agent can add the required roadmap entry and run promotion before committing it. Promotion then renames the fix branch, but `_promote` commits only the state files; the SPEC task branch has no committed roadmap entry to deliver. This is distinct from the earlier promotion finding: the new refusal covers missing and default-only entries, but accepts an entry present only as a local edit. The promotion test covers committed, missing and default-only entries, not this state.",
-        "file": "src/forge/story.py",
-        "line": 124,
-        "priority": "P1",
-        "title": "Promotion accepts an uncommitted roadmap entry and leaves it off the task branch"
-      }
-    ],
-    "id": "180bda06-38b8-498a-beec-9ec3384212f7",
-    "status": "blocked"
+    "findings": [],
+    "id": "9fd41d8c-3b82-4f81-a9a3-6b61d74063f3",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:18:21+00:00",
@@ -53,6 +38,10 @@
     },
     {
       "at": "2026-10-10T19:40:14.784771+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:23:03.659425+00:00",
       "step": "review"
     }
   ],
