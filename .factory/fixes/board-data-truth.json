@@ -10,20 +10,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f9244edca942c65ff3c0463a0f3b94df6868da46f23c8df5fa3348eafa9fd352",
-    "changed": "56afb25f175ce0e7c09148715811585f0b8bb7466165e2ca9993d72784d9af3e",
-    "commit": "eecee1feccdc185a4fde1b7887ec5aeb7b27ef4a",
+    "branch_diff": "339b1dc92f41282539a29117f3e22820c51013c05da4705aea49156c3ebcd8ec",
+    "changed": "d0940efe766559722a5d791fed81889d5b3640115905d91fd1cc633d62f369e2",
+    "commit": "b31b8cce79c0ca954a82eab18151571262ab97cd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. This change alters board status copy, timelines and the grouped header counts, but the cumulative proof list contains no required impeccable shaping, audit and polish pass incorporating the emil-design-eng checklist. The named browser tests verify rendered text and mobile overflow; they do not establish that required UI inspection. Supply the missing pass and its proof-list entry for the changed board.",
+        "body": "Raise: Functional. When a teammate updates a task name on the published story branch and starts that task, an observer with an older local story worktree gets contradictory names on the board. This lookup always selects the local story worktree, even when it is behind the published plan. The dependency map instead uses `story._plan` (board.py:574\u2013575), whose published-plan reconciliation is implemented in story.py:455\u2013477. Consequently, the task card and JSON child retain the old name while the dependency map shows the new one; `_page` also replaces its freshly gathered task name with this stale row title at board.py:1099. Use the same reconciled plan for both derivations.",
         "file": "src/forge/board.py",
-        "line": 1144,
+        "line": 531,
         "priority": "P1",
-        "title": "Not done: impeccable pass"
+        "title": "Derive task titles from the current published story plan"
       }
     ],
-    "id": "4e07dbb4-7a5f-4457-9d67-911b62c44a37",
+    "id": "2c6cbb79-6a13-40ca-8a4a-2aedb1355a46",
     "status": "blocked"
   },
   "round": 17,
@@ -87,6 +87,10 @@
     },
     {
       "at": "2026-10-10T11:31:21.230370+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T12:48:56.253617+00:00",
       "step": "review"
     }
   ],
