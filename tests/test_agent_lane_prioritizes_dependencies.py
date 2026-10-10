@@ -18,8 +18,9 @@ STORY = "unblockers-first"
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("dependency", ["after", "scope-only-draft"])
 def test_1_waiting_prerequisites_start_first_and_explain_their_place(
-        env, gh, tmp_path, claude_payload, history, unsynced_up):
+        env, gh, tmp_path, claude_payload, history, unsynced_up, dependency):
     repo = env.repo
     if history == "new":
         _client(repo, gh, tmp_path, history)
@@ -48,7 +49,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nworkers = "claude"\n'
                'models.build = { model = "opus", effort = "high" }\n'
                'models.fix = { model = "opus", effort = "high" }\n' + GRILL)
-    repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
+    repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}, {"key": "WISH"}]}')
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure the client")
     repo.path = main
@@ -58,7 +59,8 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
     doc = DOC.replace("`tests/test_page.py` | SAVE | yes |",
                       "`tests/test_page.py` | none | yes |").replace(
                           "`tests/test_share.py` | SAVE | yes |",
-                          "`tests/test_share.py` | SAVE, SHOW | yes |")
+                          "`tests/test_share.py` | SAVE, SHOW | yes |" if dependency == "after"
+                          else "`tests/test_share.py` | none | yes |")
     story_tree = ready(repo, "SHOP", doc)
     approved = hook(repo, claude_plan(claude_payload, doc, cwd=story_tree))
     assert approved.returncode == 0, approved.stderr
@@ -67,6 +69,9 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         started = repo.forge("task", "start", f"SHOP/{part}")
         assert started.returncode == 0, started.stderr
         prerequisites.append((f"SHOP/{part}", worktree(repo, f"task/SHOP-{part}").name))
+    if dependency == "scope-only-draft":
+        # Unapproved work has no After entries; its scopes alone wait on SHOP's started parts.
+        ready(repo, "WISH", doc)
     occupied = make_work(repo, "Already running")
     ordinary = [make_work(repo, title) for title in ("Earlier typo", "Later typo")]
     hold_agents(env)
