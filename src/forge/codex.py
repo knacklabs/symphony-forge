@@ -242,12 +242,10 @@ def preserve_chats(top: Path) -> None:
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
             if owner is None and folder == "read" and not branch:
                 matches = [name for name, tree in trees.items()
-                           if (tree / "docs/specs" / f"{item}.md").is_file()
-                           and (tree / "docs/specs" / f"{item}.read.md").is_file()]
+                           if (tree / "docs/specs" / f"{item}.md").is_file()]
                 matches += [name for name in sorted(refs - trees.keys())
                             if name.startswith(("fix/", "forge/", "story/", "task/"))
-                            and story.show(top, name, f"docs/specs/{item}.md") is not None
-                            and story.show(top, name, f"docs/specs/{item}.read.md") is not None]
+                            and story.show(top, name, f"docs/specs/{item}.md") is not None]
                 if len(matches) > 1:
                     repo.refuse(REFUSALS["chat_owner"], item=item)
                 branch = matches[0] if matches else ""

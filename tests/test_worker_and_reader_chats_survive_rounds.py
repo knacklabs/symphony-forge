@@ -721,12 +721,13 @@ def test_17_upgrade_recovers_previous_release_codex_chat_without_local_json(
     assert len(_sent(log, "thread/start")) == 1
 
 
-@pytest.mark.parametrize("family,change", [
-    (family, change) for family in ("codex", "claude") for change in ("move", "recreate")
-] + [("codex", "log-only"), ("codex", "ambiguous"),
-     ("codex", "removed"), ("claude", "removed")])
+@pytest.mark.parametrize("family,change,failed", [
+    (family, change, False) for family in ("codex", "claude") for change in ("move", "recreate")
+] + [("codex", "log-only", False), ("codex", "ambiguous", False),
+     ("codex", "removed", False), ("claude", "removed", False)]
+  + [("codex", change, True) for change in ("move", "recreate", "removed", "log-only", "ambiguous")])
 def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
-        repo, monkeypatch, tmp_path, sdk_data, family, change):
+        repo, monkeypatch, tmp_path, sdk_data, family, change, failed):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted=True)
     started = repo.forge("fix", "start", "Keep invoice plan", "--done", "The plan is read")
     assert started.returncode == 0, started.stdout + started.stderr
@@ -737,10 +738,16 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     spec.write_text(SPEC, encoding="utf-8")
     saved = repo.forge("spec", "save", "invoices", cwd=owner)
     assert saved.returncode == 0, saved.stdout + saved.stderr
-    reader.say(f"1. {FIRST}\n" if change == "removed" else "No findings.\n")
-    _old_round(repo, tmp_path, owner, "read", "invoices")
+    reader.say(f"1. {FIRST}\n" if change == "removed" and not failed else "No findings.\n")
+    if failed:
+        reader.fail(True)
+    read = _old_round(repo, tmp_path, owner, "read", "invoices", expect_success=not failed)
     first = _reader_chat(reader)
-    if change == "removed":
+    if failed:
+        assert "Codex reported the turn failed" in read.stderr
+        assert not (owner / "docs/specs/invoices.read.md").exists()
+        reader.fail(False)
+    if change == "removed" and not failed:
         repo.git("add", "docs/specs/invoices.read.md", cwd=owner)
         repo.git("commit", "-qm", "Keep earlier reader findings", cwd=owner)
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
@@ -773,9 +780,10 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     shutil.rmtree(repo.path / ".git/forge")
     if change == "removed":
         repo.git("worktree", "add", "-q", str(relocated), branch)
-        notes = relocated / "docs/specs/invoices.read.md"
-        text = notes.read_text("utf-8")
-        notes.write_text(text.replace(FIRST, FIRST + "\n   Disposition: cut"), encoding="utf-8")
+        if not failed:
+            notes = relocated / "docs/specs/invoices.read.md"
+            text = notes.read_text("utf-8")
+            notes.write_text(text.replace(FIRST, FIRST + "\n   Disposition: cut"), encoding="utf-8")
         reader.say("No findings.\n")
     read = repo.forge("read", "invoices", cwd=relocated)
     assert read.returncode == 0, read.stdout + read.stderr
