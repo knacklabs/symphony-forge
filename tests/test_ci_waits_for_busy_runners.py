@@ -112,7 +112,7 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
     for run_id, jobs in ((101, [current_job]), (102, [] if activity == "missing" else [job])):
         endpoint = f"repos/{{owner}}/{{repo}}/actions/runs/{run_id}/jobs"
         _queue(env, JOBS + [endpoint + "?per_page=100"], *_runs(jobs))
-    pending = [{**run("tests", None, "queued"), "created_at": queued_at.isoformat()},
+    pending = [{**run("tests", None, "queued"), "started_at": queued_at.isoformat()},
                run("forge-pr-check")]
     looks = [pending, pending, GREEN]
     if command == "land-merge":

@@ -121,7 +121,7 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_five_minute_queue(e
     created = now - timedelta(minutes=1 if state in ("recent-queued", "recent-rerun") else 10)
     status = "in_progress" if state == "running" else "queued"
     pending = {**run("lint" if state == "optional-queued" else "tests", None, status),
-               "created_at": created.isoformat()}
+               "started_at": created.isoformat()}
     env.checks([run("tests"), run("forge-pr-check"), pending]
                if state == "optional-queued" else [pending, run("forge-pr-check")])
     workflow_run = {

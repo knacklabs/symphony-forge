@@ -113,21 +113,36 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
     """Doctor samples recent runner activity only for a five-minute queued check."""
     now = datetime.fromisoformat(repo.now())
     queued = False
+    untimed_suites = set()
     for check in _ask(top, item, ".check_runs",
                       f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100"):
         if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
             continue
         try:
-            queued |= datetime.fromisoformat(check["created_at"]) <= now - timedelta(minutes=5)
+            queued |= datetime.fromisoformat(check["started_at"]) <= now - timedelta(minutes=5)
+        except (KeyError, ValueError, TypeError):
+            if suite := check.get("check_suite", {}).get("id"):
+                untimed_suites.add(suite)
+    if not queued and not untimed_suites:
+        return ""
+    since = now - timedelta(days=7)
+    cutoff = since.isoformat(timespec="seconds").replace("+00:00", "Z")
+    until = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+    # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
+    runs = _ask(top, item, ".workflow_runs",
+                "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                "--raw-field", "per_page=100", "--raw-field", f"created={cutoff}..{until}",
+                paginate=False)
+    # Queued checks may have no start time; their linked current workflow attempt has one.
+    for run in runs[:100]:
+        if run.get("check_suite_id") not in untimed_suites or run.get("status") != "queued":
+            continue
+        try:
+            queued |= since <= datetime.fromisoformat(run["run_started_at"]) <= now - timedelta(minutes=5)
         except (KeyError, ValueError, TypeError):
             pass
     if not queued:
         return ""
-    since = now - timedelta(days=7)
-    cutoff = since.isoformat(timespec="seconds").replace("+00:00", "Z")
-    runs = _ask(top, item, ".workflow_runs",
-                f"repos/{{owner}}/{{repo}}/actions/runs?per_page=100&created=%3E%3D{cutoff}",
-                paginate=False)
     runner = repo.config(top)["runner"]
     # One newest-first page of runs and one page of latest jobs per run bound the lookup.
     for run in runs[:100]:
@@ -178,10 +193,11 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
     return seen, snapshot
 
 
-def _ask(top: Path, item: str, field: str, endpoint: str, *, paginate: bool = True) -> list[dict[str, Any]]:
+def _ask(top: Path, item: str, field: str, endpoint: str, *options: str,
+         paginate: bool = True) -> list[dict[str, Any]]:
     # --paginate with "<field>[]" prints one JSON object per line across all pages.
     done = repo.run("gh", "api", *(["--paginate"] if paginate else []),
-                    "--jq", f"{field}[]", endpoint, cwd=top)
+                    "--jq", f"{field}[]", *options, endpoint, cwd=top)
     try:
         text = done.stdout.strip()
         found = (json.loads(text) if text.startswith("[")

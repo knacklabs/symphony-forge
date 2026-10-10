@@ -51,7 +51,9 @@ def _doctor_client(clock, history, monkeypatch, queued_minutes=6, state="queued"
     now = datetime.now(timezone.utc).replace(microsecond=0)
     monkeypatch.setenv("FORGE_NOW", now.isoformat())
     check = run("tests", None, state)
-    check["created_at"] = (now - timedelta(minutes=queued_minutes)).isoformat()
+    # Check runs expose started_at, not a top-level created_at.
+    check["started_at"] = (now - timedelta(minutes=queued_minutes)).isoformat() if queued_minutes is not None else None
+    check["check_suite"] = {"id": 7}
     env.checks([check, run("forge-pr-check")])
     env.gh.respond("pr", "list", stdout=json.dumps([
         {"state": "OPEN", "headRefOid": head}]))
@@ -74,7 +76,9 @@ def _history(env, rows, jobs):
     (4, "queued", "none"), (6, "in_progress", "none"),
     (6, "queued", "none"), (6, "queued", "matching"),
     (6, "queued", "wrong-label"), (6, "queued", "unassigned"),
-    (6, "queued", "successful")])
+    (6, "queued", "successful"), (None, "queued", "none"),
+    (None, "queued", "workflow-age"), (None, "queued", "fresh-workflow"),
+    (None, "queued", "wrong-suite")])
 def test_2_only_doctor_reports_missing_runner_for_old_queue_without_recent_activity(
         clock, history, monkeypatch, minutes, state, activity):
     # Recent workflow activity replaces accumulated expired-attempt demand.
@@ -87,12 +91,19 @@ def test_2_only_doctor_reports_missing_runner_for_old_queue_without_recent_activ
         job["labels"] = ["other"]
     elif activity == "unassigned":
         job["runner_id"] = 0
-    _history(env, rows, {101: [] if activity == "none" else [job]})
+    workflow_age = activity in ("workflow-age", "fresh-workflow", "wrong-suite")
+    if workflow_age:
+        queued_at = (now - timedelta(minutes=4 if activity == "fresh-workflow" else 6)).isoformat()
+        rows = [{"id": 101, "created_at": queued_at, "run_started_at": queued_at,
+                 "check_suite_id": 8 if activity == "wrong-suite" else 7,
+                 "status": "queued", "conclusion": None}]
+    _history(env, rows, {101: [] if activity == "none" or workflow_age else [job]})
 
     done = env.repo.forge("doctor", cwd=where)
     output = done.stdout + done.stderr
 
-    if minutes >= 5 and state == "queued" and activity != "matching":
+    old_queue = (minutes is not None and minutes >= 5) or activity == "workflow-age"
+    if old_queue and state == "queued" and activity != "matching":
         assert "likely missing runner" in output, output
         assert "last seven days" in output, output
         assert 'runner = "self-hosted"' in output, output
@@ -134,13 +145,22 @@ def test_4_five_thousand_old_runs_need_at_most_101_history_requests(clock, histo
     edge = '''if args and args[0] == "api" and "--jq" in args:
     from datetime import datetime
     from urllib.parse import parse_qs, urlsplit
-    endpoint = args[-1]
-    if "/actions/runs?" in endpoint:
+    endpoint = next((arg for arg in args if "/actions/runs" in arg), "")
+    if urlsplit(endpoint).path.endswith("/actions/runs"):
         rows = json.loads((here / "workflow-history.json").read_text("utf-8"))
         query = parse_qs(urlsplit(endpoint).query)
+        for index, arg in enumerate(args[:-1]):
+            if arg == "--raw-field":
+                key, value = args[index + 1].split("=", 1)
+                query[key] = [value]
         if "created" in query:
-            cutoff = datetime.fromisoformat(query["created"][0].removeprefix(">="))
-            rows = [row for row in rows if datetime.fromisoformat(row["created_at"]) >= cutoff]
+            window = query["created"][0]
+            if ".." in window:
+                since, until = map(datetime.fromisoformat, window.split(".."))
+                rows = [row for row in rows if since <= datetime.fromisoformat(row["created_at"]) <= until]
+            else:
+                cutoff = datetime.fromisoformat(window.removeprefix(">="))
+                rows = [row for row in rows if datetime.fromisoformat(row["created_at"]) >= cutoff]
         if "--paginate" not in args:
             rows = rows[:int(query.get("per_page", ["30"])[0])]
         answer(json.dumps(rows))
@@ -163,5 +183,11 @@ def test_4_five_thousand_old_runs_need_at_most_101_history_requests(clock, histo
     assert len(calls) <= 101, calls
     assert len(calls) == 101, calls  # A full recent page has no matching activity.
     assert all("--paginate" not in call for call in calls), calls
-    assert "created=" in calls[0][-1] and "per_page=100" in calls[0][-1], calls[0]
+    assert ["--method", "GET"] == calls[0][calls[0].index("--method"):calls[0].index("--method") + 2], calls[0]
+    fields = [calls[0][i + 1] for i, arg in enumerate(calls[0][:-1]) if arg == "--raw-field"]
+    assert "per_page=100" in fields, calls[0]
+    since = (now - timedelta(days=7)).isoformat().replace("+00:00", "Z")
+    until = now.isoformat().replace("+00:00", "Z")
+    assert f"created={since}..{until}" in fields, calls[0]
+    assert all("&" not in arg for arg in calls[0]), calls[0]
     assert "likely missing runner" in output, output
