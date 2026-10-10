@@ -7,6 +7,10 @@ nothing more.
 
 $review_loop
 
+Wait for a recorded choice only after close has stopped the review loop. Otherwise, fix the
+findings in this round, including new findings after a recorded narrow or split; do not ask for
+another choice unless close stops the loop again. This rule applies in later rounds too.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings
