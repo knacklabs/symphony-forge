@@ -754,7 +754,8 @@ ask the human to review it in Codex's /hooks, then run the command again.
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
-`[models.lite]` in `forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
+`[models.explore]` in `forge.toml`, falling back to `[models.lite]` when explore is absent.
+Its records stay under `.git/forge/`; the conversation is temporary and does not
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
 
@@ -781,6 +782,12 @@ The diagnosing and planning roles change no files. Building an item still goes t
 `forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
 Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
 from the other tool is omitted so the role uses the session's model.
+
+The explorer role and `forge ask` use the read-only `explore` kind; `lite` keeps a fix's first
+build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
+`[models.explore.codex]` with the same settings as the initial lite Codex entry. Existing repos
+without explore keep using lite for read-only work after upgrading and syncing. To choose
+separate read-only settings there, add the explore entries in a fix and run `forge sync`.
 
 ## Build simple
 
@@ -844,7 +851,11 @@ Generated-conflict sync and the merge commit check use the new pin too, so the m
 before the original land or close command continues.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
-any other file stops close for the worker to resolve. When the
+any other file stops close for the worker to resolve. While waiting for checks, close stops at once
+if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
+in the default branch. Land retries close once itself, including a conflict during its merge check
+wait; if the merge needs a person, it stops with close's existing conflict next step.
+When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
