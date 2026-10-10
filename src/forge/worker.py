@@ -163,7 +163,10 @@ def work(args: argparse.Namespace) -> None:
         state["worker"] = family
         state["round"] = round_number
         admission["round"] = round_number
-        repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
+        message = f"{item} is {state['status']}"
+        if note is not None:
+            message += "\n\nCoordinator note:\n" + ((question + "\n") if question else "") + "Answer: " + note
+        repo.commit_state(message, repo.write_state(item, state, top),
                           top=top)
         repo.record_event(top, item, "work phase", lane_id=admission["id"],
                           phase="fixing_findings" if findings or failing else "building")
