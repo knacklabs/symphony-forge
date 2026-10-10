@@ -1,5 +1,6 @@
 """Close runs related tests locally and leaves the full suite to the pull request."""
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -159,6 +160,8 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
     env.repo.write("unrelated_test.go", 'package cart\n\nimport "testing"\n\n'
                    'func sharedAmount() int { return 2 }\n'
                    'func TestUnrelated(t *testing.T) { t.Fatal("unrelated root test ran") }\n')
+    env.repo.write("inactive_test.go", '//go:build ignored_by_forge_fixture\n\npackage cart\n\n'
+                   'import "testing"\nfunc TestUnrelated(t *testing.T) {}\n')
     env.repo.write("other/other.go", "package other\n\nconst Value = 1\n")
     env.repo.write("other/other_test.go", 'package other\n\nimport "testing"\n\n'
                    'func TestOther(t *testing.T) { t.Fatal("unrelated package ran") }\n')
@@ -172,6 +175,7 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
         "cart.go": "package cart\n\nfunc Cart() int { return amount() }\n",
         "discount_test.go": (env.repo.path / "discount_test.go").read_text("utf-8")
                             + "// Changed discount test\n",
+        "inactive_test.go": (env.repo.path / "inactive_test.go").read_text("utf-8") + "// Changed inactive test\n",
     })
 
     closed = env.close(item)
@@ -185,11 +189,18 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
 
 @pytest.mark.parametrize("runner", ["vitest", "jest"])
 @pytest.mark.parametrize("selected_count", [2, 250], ids=["small-change", "large-change"])
-def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_path, runner, selected_count):
+def test_4_close_keeps_node_selection_within_the_windows_shell_limit(
+        env, tmp_path, monkeypatch, runner, selected_count):
     # The old command grew with every unrelated file. This transparent npm boundary
     # records transport size and delegates execution to the real installed runner.
     npm = shutil.which("npm")
     assert npm, "The Node client regression requires npm."
+    for name in list(os.environ):
+        if name.lower().startswith("npm_config_"):
+            monkeypatch.delenv(name)
+    for kind in ("user", "global"):
+        config = env.repo.write(f"npm-{kind}.rc", "")
+        monkeypatch.setenv(f"NPM_CONFIG_{kind.upper()}CONFIG", config.as_posix())
     log = tmp_path / "npm-transport.jsonl"
     output = tmp_path / "npm-output.txt"
     _install(env.repo.bin, "npm", f"#!{sys.executable}\n"
@@ -218,7 +229,7 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_pa
         config_file = "vitest.config.mjs" if selected_count == 2 else "client-vitest.config.mjs"
         env.repo.write(config_file, "export default { root: " + json.dumps(root) + " };\n")
         command = ("npm exec --yes --package=vitest@3.2.4 -- vitest run " + json.dumps(root)
-                   + " --globals --maxWorkers=1 --no-file-parallelism")
+                   + " --globals --maxWorkers=1 --no-file-parallelism --pool=threads --no-isolate")
         if selected_count > 2:
             command += " --config=" + config_file
     else:

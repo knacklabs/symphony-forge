@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import machine, quicktest, repo
+from forge import init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -239,13 +239,33 @@ def close_tests(base: str) -> int:
                              "    config.option.ignore = (config.option.ignore or []) + " + json.dumps(excluded) + "\n",
                              "utf-8")
         environment["PYTHONPATH"] = os.pathsep.join([folder, environment.get("PYTHONPATH", "")])
+        if any(kind == "vitest" for kind, _, _ in parts):
+            preload = Path(folder) / "vitest-config.cjs"
+            preload.write_text("const prefix = " + json.dumps(Path(folder).as_posix() + "/selection-") + ";\n" + r"""
+if (/(?:^|[\\/])(?:vitest(?:\.m?js)?|cli\.js)$/.test(process.argv[1] || '') &&
+    process.argv.some(arg => arg.startsWith(prefix))) {
+  const kept = process.argv.slice(0, 2);
+  process.env.FORGE_CLOSE_VITEST_CONFIG = '';
+  for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    const config = arg === '--config' || arg === '-c' ? process.argv[++i] :
+      arg.startsWith('--config=') || arg.startsWith('-c=') ? arg.slice(arg.indexOf('=') + 1) : undefined;
+    if (config === undefined) kept.push(arg);
+    else if (config.startsWith(prefix)) kept.push('--config', config);
+    else process.env.FORGE_CLOSE_VITEST_CONFIG = config;
+  }
+  process.argv = kept;
+}
+""", "utf-8")
+            environment["NODE_OPTIONS"] = (environment.get("NODE_OPTIONS", "") + " --require "
+                                           + json.dumps(preload.as_posix(), ensure_ascii=False)).strip()
         for kind, part, passthrough in parts:
             if kind == "python":
                 if any(name.endswith(".py") for name in selected):
                     commands.append(narrow_command(part, excluded, str(machine.half_cores())))
             elif kind == "node-install" or (kind == "node-check" and re.search(r"\b(?:lint|typecheck)\b", part)):
                 commands.append(part)
-            elif part == "go test -v ./...":
+            elif part == dict(init.STACKS).get("go.mod"):
                 for directory in sorted({Path(name).parent for name in selected if name.endswith("_test.go")}):
                     package = "./" + directory.as_posix()
                     listed = repo.run("go", "list", "-json", package)
@@ -293,7 +313,7 @@ def close_tests(base: str) -> int:
                                 arguments = ["--filter", selection.as_posix()] + batch
                             else:
                                 selection.write_text("""import {resolve, dirname} from 'node:path';
-import {existsSync, realpathSync} from 'node:fs';
+import {existsSync} from 'node:fs';
 import {createRequire} from 'node:module';
 const require = createRequire(process.argv[1]);
 const {BaseSequencer} = await import(require.resolve('vitest/node'));
@@ -304,8 +324,8 @@ export default async env => {
   const values = flags => args.flatMap((arg, i) => flags.includes(arg) ? [args[i + 1]] :
     flags.some(flag => arg.startsWith(flag + '=')) ? [arg.slice(arg.indexOf('=') + 1)] : []);
   const root = resolve(values(['--root', '-r']).at(-1) || process.cwd());
-  let original = values(['--config', '-c']).map(p => resolve(root, p))
-    .filter(p => realpathSync(p) !== realpathSync(WRAPPER)).at(-1);
+  let original = process.env.FORGE_CLOSE_VITEST_CONFIG;
+  if (original) original = resolve(root, original);
   const names = ['vitest.config', 'vite.config'].flatMap(name =>
     ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs'].map(ext => name + '.' + ext));
   for (let dir = root; !original; dir = dirname(dir)) {
@@ -321,7 +341,7 @@ export default async env => {
   };
   return config;
 };
-""".replace("WRAPPER", json.dumps(selection.as_posix()), 1).replace("SELECTED", paths, 1), "utf-8")
+""".replace("SELECTED", paths, 1), "utf-8")
                                 arguments = ["--config", selection.as_posix()] + batch
                         arguments = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
                         narrowed = part + passthrough + " " + arguments
