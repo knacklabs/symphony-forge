@@ -40,6 +40,14 @@ def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeyp
     assert plain.returncode == 0, plain.stdout + plain.stderr
     assert _sent(codex_log, "thread/start")[-1]["config"]["model"] == "gpt-6-sol"
     assert calls(claude_log) == []
+    # A source repo's unused workers value must not change its design model either.
+    config.write_text(config.read_text("utf-8").replace('repo = "client"', 'repo = "forge-source"'),
+                      encoding="utf-8")
+    repo.git("commit", "-qam", "Choose one tool in a source repo", cwd=folder)
+    source = repo.forge("work", "BOARD/PAGE")
+    assert source.returncode == 0, source.stdout + source.stderr
+    assert _sent(codex_log, "thread/resume")[-1]["config"]["model"] == "gpt-6-nova"
+    assert calls(claude_log) == []
     config.write_text(original.replace('workers = "codex"', 'workers = "split"\ntools = "claude"'), encoding="utf-8")
     repo.git("commit", "-qam", "Choose Claude", cwd=folder)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
@@ -47,4 +55,4 @@ def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeyp
     assert failed.returncode == 1, failed.stdout + failed.stderr
     assert "exit code 3" in failed.stderr
     assert len(calls(claude_log)) == 1
-    assert len(_sent(codex_log, "turn/start")) == 3
+    assert len(_sent(codex_log, "turn/start")) == 4

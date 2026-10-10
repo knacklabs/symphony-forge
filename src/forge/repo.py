@@ -485,8 +485,8 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
 
 
 def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
-    """A User-facing row is design work in clients, or when the source repo opts into split."""
-    return (cfg["repo"] == "client" or cfg["workers"] == "split") and row.get(
+    """A User-facing row is design work in clients, with one tool, or under source split."""
+    return (cfg["repo"] == "client" or cfg["tools"] != "both" or cfg["workers"] == "split") and row.get(
         "User-facing", "").lower() in ("yes", "true")
 
 
