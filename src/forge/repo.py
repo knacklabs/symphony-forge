@@ -117,7 +117,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     def execute():
         return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
                               text=True, encoding="utf-8", errors="replace",
-                              env={**os.environ, "FORGE_WORKER": "1"})
+                              # Git hooks need the caller's worker identity.
+                              env=os.environ if args[0] == "git" else {**os.environ, "FORGE_WORKER": "1"})
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()

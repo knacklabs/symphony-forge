@@ -110,6 +110,9 @@ REFUSALS = {
                 "with forge fix allow-large.", "forge story new <KEY> --from-fix {fix}"),
     "push_default": ("{branch} changes only through a merged pull request, so this push is refused.",
                      "forge close <item>"),
+    "worker_settings": ("Workers leave forge.toml to the coordinator; settings change in their own "
+                        "fix whose Done-when names forge.toml.",
+                        "report the needed settings change in your last message."),
 }
 
 
@@ -122,6 +125,10 @@ def pre_commit(args: argparse.Namespace) -> None:
     if found is None:
         refuse(REFUSALS["not_forge"], branch=branch or "A detached HEAD")
     item, state = found
+    if os.environ.get("FORGE_WORKER") and git(
+            "diff", "--cached", "--name-only", "--no-renames", "--", "forge.toml", cwd=top):
+        if not task.settings_allowed(item, top, state):
+            refuse(REFUSALS["worker_settings"])
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []

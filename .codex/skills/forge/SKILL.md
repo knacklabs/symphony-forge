@@ -856,7 +856,11 @@ Generated-conflict sync and the merge commit check use the new pin too, so the m
 before the original land or close command continues.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
-any other file stops close for the worker to resolve. When the
+any other file stops close for the worker to resolve. While waiting for checks, close stops at once
+if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
+in the default branch. Land retries close once itself, including a conflict during its merge check
+wait; if the merge needs a person, it stops with close's existing conflict next step.
+When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
