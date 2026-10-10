@@ -91,6 +91,13 @@ def main():
         if method == "hooks/list":  # no project hook waits for trust here
             send(id=message["id"], result={"data": []})
             continue
+        if method == "model/list":  # vendor metadata for the resumed model's Fast tier
+            model = config.get("model", "stub-model")
+            send(id=message["id"], result={"data": [{"id": model, "model": model,
+                "displayName": model, "description": "Stub model", "hidden": False,
+                "isDefault": True, "defaultReasoningEffort": "medium", "supportedReasoningEfforts": [],
+                "serviceTiers": [{"id": "priority", "name": "Fast"}]}], "nextCursor": None})
+            continue
         threads = json.loads(STORE.read_text("utf-8")) if STORE.exists() else {}
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"
         saved = threads.setdefault(id, {"cwd": params.get("cwd"), "turns": {}}) \

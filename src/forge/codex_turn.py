@@ -179,14 +179,25 @@ def main() -> int:
             settings["config"] = {**(settings["config"] or {}), "hooks": {"state": state}}
         # The SDK's high-level Thread discards these settings; null effort follows the model.
         request_raw = client._request_raw
+        tier = "default"  # The protocol's standard-speed override also clears inherited Fast.
         def selected_request(method, params=None):
+            nonlocal tier
+            if method == "turn/start":
+                params = {**params, "serviceTierForTurn": tier}
             response = request_raw(method, params)
             if method in ("thread/start", "thread/resume"):
                 effort, cursor = response.get("reasoningEffort"), None
-                while effort is None:
+                while effort is None or request.get("fast"):
                     page = request_raw("model/list", {"includeHidden": True, "cursor": cursor})
-                    effort = next((model["defaultReasoningEffort"] for model in page["data"]
-                                   if model["model"] == response["model"]), None)
+                    model = next((model for model in page["data"]
+                                  if model["model"] == response["model"]), None)
+                    if model is not None:
+                        effort = effort or model["defaultReasoningEffort"]
+                        if request.get("fast"):
+                            tier = next((entry["id"] for entry in model.get("serviceTiers") or []
+                                         if entry.get("name") == "Fast" or entry["id"] == "priority"),
+                                        "default")
+                        break
                     cursor = page.get("nextCursor")
                     if not cursor:
                         break
