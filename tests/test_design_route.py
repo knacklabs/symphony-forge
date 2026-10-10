@@ -11,7 +11,7 @@ from test_worker import calls, install_claude
 STORY = "FORGE-DESIGN-1"
 
 
-def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypatch, sdk_data):
+def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypatch, sdk_data, request):
     # Was "even with codex workers"; workers = codex now builds everything on Codex, and split
     # keeps this route.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
@@ -49,6 +49,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     state_file.write_text(json.dumps(state), encoding="utf-8")
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
     repo.git("commit", "-qam", "Allow other work", cwd=fix)
+    request.getfixturevalue("claude_session")
     ordinary = repo.forge("work", "fix-the-login-typo")
     assert ordinary.returncode == 0, ordinary.stdout + ordinary.stderr
     assert len(_sent(codex_log, "turn/start")) == 1
@@ -70,6 +71,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
                       '\n[models.design.claude]\nmodel = "custom-opus"\neffort = "high"\n',
                       encoding="utf-8")
     repo.git("commit", "-qam", "Use a custom design model", cwd=folder)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
@@ -83,6 +86,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     # A client story row without User-facing uses the configured Codex worker.
     started = repo.forge("task", "start", "BOARD/HELP")
     assert started.returncode == 0, started.stdout + started.stderr
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.delenv("CODEX_THREAD_ID")
     ordinary_task = repo.forge("work", "BOARD/HELP")
     assert ordinary_task.returncode == 0, ordinary_task.stdout + ordinary_task.stderr
     assert len(_sent(codex_log, "turn/start")) == 3
@@ -92,6 +97,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                      'workers = "claude"'), encoding="utf-8")
     repo.git("commit", "-qam", "Use Claude workers", cwd=folder)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     claude_worker = repo.forge("work", "BOARD/PAGE")
     assert claude_worker.returncode == 0, claude_worker.stdout + claude_worker.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]

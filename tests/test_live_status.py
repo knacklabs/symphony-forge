@@ -115,6 +115,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         assert repo.forge("read", item).returncode == 0
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
     elif case == "codex":
+        request.getfixturevalue("claude_session")
         folder, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
         item = "BOARD/PAGE"
         model, effort = "gpt-6-sol", "medium"
