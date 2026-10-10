@@ -16,27 +16,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5a9f2687945c19e7ecca92a29c738910abf8e28e5e961229822e2294bbb740d6",
-    "changed": "1793b203656374dbdbae0ed7b105900ec14874a131940d84324d94090d70a287",
-    "commit": "705b414d32438fa40c08bbd7d6731162ec23a800",
+    "branch_diff": "0096881b61c43b9aedd1bbea14d1af0763732277eca1b5d0201d3ce24b22a75f",
+    "changed": "bae8655251148307ac34b8afb90ff4756e7f99595e0db0d449f00a3d73f6952c",
+    "commit": "a667dee5f5c4d4203d2fe250e1f85ae95e4e7568",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A first `forge work` on a standalone fix is classified as `Lite` with round 1 (`src/forge/worker.py:106` and `:153`). This condition enables Fast only after round 1 or when another planned item waits, so every first-round fix runs at normal speed. The shipped guide (`src/forge/templates/skill.md:874`), doctor text (`src/forge/doctor.py:427`), and upgrade notice (`src/forge/sync.py:519`) also omit fixes from the stated default policy.",
+        "body": "Raise: Scale. In the default `needed` mode, every first-round task that is neither a fix nor already in a repair round calls `board.machine_board()` before Codex starts. That builds the full board, reads the repository's item history, and makes GitHub requests for open and merged pull requests, including uncached `gh pr list --limit 1000` calls (`src/forge/board.py:231,241,246-251`; `src/forge/nextstep.py:670-675`). In a normal repo with many completed items and pull requests, each new independent task pays this unrelated local and network cost even though it will run at normal speed.",
         "file": "src/forge/codex.py",
-        "line": 264,
+        "line": 270,
         "priority": "P1",
-        "title": "Not done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for"
-      },
-      {
-        "body": "Raise: Test. The named command-level Fast test runs only `BOARD/PAGE` and `BOARD/HELP`, both planned tasks. No test starts a standalone fix and asserts that its first Codex turn uses Fast. Consequently the 49 passing tests do not catch the missing every-fix behavior. The doctor and upgrade tests likewise assert the older policy wording without fixes.",
-        "file": "tests/test_codex_fast_when_work_waits.py",
-        "line": 43,
-        "priority": "P1",
-        "title": "Not done: first-round fix Fast coverage"
+        "title": "Full board scan delays every ordinary first Codex work turn"
       }
     ],
-    "id": "84676b32-83f0-4e65-8da4-6efd2d962760",
+    "id": "5fc479ca-464b-4ce6-8b25-47099bfcba64",
     "status": "blocked"
   },
   "round": 2,
@@ -48,6 +41,10 @@
     },
     {
       "at": "2026-10-10T17:07:35.167058+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:25:48.741513+00:00",
       "step": "review"
     }
   ],
