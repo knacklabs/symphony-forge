@@ -1,0 +1,14 @@
+{
+  "base": "0346f246b9991479c42679babe4d91c2bd5c55df",
+  "branch": "fix/read-note-tail",
+  "done_when": "forge read records a round as passed when its only other line is a tests-not-run note followed by any trailing clause after a semicolon, comma or dash (for example 'Tests were not run; runtime behaviour remains unverified.'); a real finding still fails; the existing no-findings command test gains that case for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T01:46:08+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A clean cold read still fails when its tests-not-run note carries a trailing clause, such as 'Tests were not run; runtime behaviour remains unverified.'"
+}
