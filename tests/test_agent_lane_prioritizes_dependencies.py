@@ -1,25 +1,40 @@
 """Planned prerequisites get the machine's next agent place before ordinary work."""
 import json
+import shutil
 import sys
 
 import pytest
 
-from conftest import _install, machine_cores
+from conftest import ROOT, _install, machine_cores
 from test_board import DOC
 from test_board_dependency_timelines import _client, _land_fixture
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import finish, hold_agents, make_work, start
 from test_story import GRILL, READER, claude_plan, hook, ready, worktree
+from test_upgrade_command import unsynced_up  # noqa: F401
 
 STORY = "unblockers-first"
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_1_waiting_prerequisites_start_first_and_explain_their_place(
-        env, gh, tmp_path, claude_payload, history):
+        env, gh, tmp_path, claude_payload, history, unsynced_up):
     repo = env.repo
-    _client(repo, gh, tmp_path, history)
+    if history == "new":
+        _client(repo, gh, tmp_path, history)
+    else:
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
+                        dirs_exist_ok=True)
+        repo.git("add", "-A")
+        repo.git("commit", "-qm", "Adopt earlier Forge")
+        _land_fixture(repo)
+        version = repo.forge("--version").stdout.split()[-1]
+        upgraded = repo.forge("upgrade", version)
+        assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+        branch = f"fix/upgrade-forge-to-{version.replace('.', '-')}"
+        repo.git("merge", "-q", "--ff-only", branch)
+        _land_fixture(repo)
     for host in (".codex", ".claude"):
         guide = " ".join((repo.path / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "Waiting items that other planned work waits on go first, first-come within each group" in guide
@@ -62,11 +77,13 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         process, output = start(repo.path, tmp_path / "occupied", repo, "work", occupied[0])
         processes[occupied[0]], outputs[occupied[0]] = process, output
         _until(lambda: seen(occupied[1]), "occupied agent place")
+        gh.log.write_text("", encoding="utf-8")
         for index, (item, marker) in enumerate([ordinary[0], *prerequisites, ordinary[1]]):
             process, output = start(repo.path, tmp_path / f"waiting-{index}", repo, "work", item)
             processes[item], outputs[item] = process, output
             _until(lambda: "in line." in output.read_text("utf-8"), "waiting agent place")
             assert not seen(marker)
+        assert not gh.calls(), "Agent admission must not read GitHub's board history"
         lanes = repo.forge("lanes", "--json")
         assert lanes.returncode == 0, lanes.stderr
         rows = json.loads(lanes.stdout)["agents"]["entries"]
