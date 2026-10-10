@@ -32,7 +32,7 @@ Each principle has a check; the check is an acceptance criterion, a CI check or 
 8. The agent does the work; the human decides (approve a story, choose between options, merge). Check: human touches per story are counted; target three or fewer.
 9. Same result from any agent: logic in `forge` commands and git, thin host adapters. Check: the same behaviour tests run through both adapters.
 10. Slow is a bug: close in minutes, CI under 5 minutes. Check: time per step is recorded and shown on the board; over-budget steps get fixes.
-11. Plain English wherever a human looks: no IDs, hashes or jargon on the board, in PR summaries or in questions. Check: reviewed on board and PR text.
+11. Plain English wherever a human looks: no IDs, hashes or jargon on the board, in PR summaries or in questions; the one exception is a story's own key, shown small beside its title on the board so similar titles can be told apart. Check: reviewed on board and PR text.
 12. Reversible by default: every change and every migration is one PR; rollback is a revert. Check: no command changes a client repo outside a branch and PR.
 13. Measure the factory: task cycle time, human touches per story, share of PRs fixing Forge instead of the product. Check: these three are the rebuild's success measure.
 

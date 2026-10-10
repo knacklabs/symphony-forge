@@ -523,7 +523,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
             page.write(string.Template(rules).substitute(standards=(
                 Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
-        engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
+        engine = cfg["workers"]
+        if engine == "split":
+            engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
@@ -531,20 +533,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
-        # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
-        # for the engine's family, and on Claude with no Claude review entry, its Claude cold-read model.
-        chosen = ({"model": "gpt-6.1-sol", "effort": "medium"} if light and engine == "codex" else
-                  repo.models(cfg, "review", engine)
-                  or (repo.models(cfg, "grill", "claude") if engine == "claude" else {}))
-        if chosen:
-            argv += ["--model", f"{engine}={chosen['model']}"]
-            argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        with machine.agent_slot(top, "review", item, **chosen):
+        with machine.agent_slot(top, "review", item):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
-                with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
+                with repo.record_run(top, item, "review", family=engine) as ran:
                     findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
                                                 strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
@@ -555,16 +549,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             serious = [f for f in findings if f["priority"] in SERIOUS]
             repo.record_event(top, item, "review result", commit=head,
                 review_round=round_number(top, item, state),
-                outcome="failed" if reason or selected.get("model") != "gpt-6.1-sol"
-                or selected.get("effort") != "high" else "blocked" if serious else "clean",
+                outcome="failed" if reason else "blocked" if serious else "clean",
                 findings=None if reason else [{key: finding[key] for key in
                     ("title", "priority", "file")} for finding in findings])
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
-                             "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            if selected.get("model") != "gpt-6.1-sol" or selected.get("effort") != "high":
-                repo.refuse(("The sign-off review did not confirm GPT-6.1 Sol at high effort: "
-                             "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
             if serious:
                 repo.refuse(("Customer sign-off review found a blocking issue: "
@@ -622,7 +611,7 @@ def signoff(top: Path, answers: str) -> str:
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
-    cfg = {"models": {"review": {"model": "gpt-6.1-sol", "effort": "high"}}}
+    cfg = repo.config(top)
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 
 

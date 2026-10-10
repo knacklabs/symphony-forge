@@ -4333,6 +4333,127 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 82,
+      "text": "Recorded allowance does not match the whole change",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tStandard: Touch only what the task needs\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 628,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/claude-sonnet-default.json\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": ".factory/fixes/claude-sonnet-default.json",
+      "line": 2,
+      "text": "Recorded allowance does not match the whole change",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tGuide gives conflicting requirements for Claude-only use\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 143,
+      "text": "Guide gives conflicting requirements for Claude-only use",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tGuide misstates what happens when a Codex worker has no model entry\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 145,
+      "text": "Guide misstates what happens when a Codex worker has no model entry",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tGuide promises Claude for Codex-only user-facing work\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 161,
+      "text": "Guide promises Claude for Codex-only user-facing work",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tNot done: Guide promises Codex fallback for Claude-only workers\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 167,
+      "text": "Not done: Guide promises Codex fallback for Claude-only workers",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tplans/spotted.json\tStandard: Touch only what the task needs\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "plans/spotted.json",
+      "line": 310,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_claude_implementation_defaults.py\tNot done: proof list\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "tests/test_claude_implementation_defaults.py",
+      "line": 20,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/spec-graph.json\tNot done: proof list\tspec-graph",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-graph.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-graph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/board-for-the-team.md\tNot done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back\tspec-graph",
+      "kind": "bug",
+      "path": "docs/specs/board-for-the-team.md",
+      "line": 47,
+      "text": "Not done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back",
+      "from": "blocking",
+      "item": "spec-graph",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
