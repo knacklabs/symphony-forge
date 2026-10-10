@@ -1,0 +1,73 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-09T22:43:09+00:00",
+      "because": "'Any common wording' had no end: each review round named one more phrasing. One general sentence rule replaces the word lists.",
+      "done_when": "forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes like 'tests were not run' don't count as findings; the reader's instructions ask for the plain no-findings form; a real finding still fails the round; a command test with a faked reader covers the numbered 'No findings' form, the plain form and a real finding, for a new repo and one adopted on an earlier release"
+    }
+  ],
+  "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
+  "branch": "fix/read-no-findings",
+  "done_when": "forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by findings, issues, problems, bugs or defects (for example 'No findings.', 'There were no findings.', 'I have no findings to report.'), and notes like 'tests were not run' don't count as findings; the reader's instructions ask for the plain no-findings form; a real finding still fails the round; a command test with a faked reader covers the numbered form, the plain form, those wordings and a real finding, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/story.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f6e9fad0f112e20e345c981ebc883e4a7a30b4c611a612300ab3705723820e2",
+    "changed": "9552c6e05203d69894d845007b52c6a6b9fae8e43f8bd65f78e655008363f694",
+    "commit": "f53b2cb6d8c13cca18c66fe877fa94822fa7caf8",
+    "dismissals": [],
+    "findings": [],
+    "id": "f734983c-157d-49d5-a2b2-704e64bb3451",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T15:43:09+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T16:03:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:28:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:39:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:45:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:42:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:14:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:13:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:53:34+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/story.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the one remaining Not-done finding: accept the three named no-findings wordings"
+  },
+  "why": "A cold read that found nothing is recorded as not passed when the reader writes 'No findings' as a numbered item (for example '6. No findings.' plus a note that tests weren't run), so forge next asks for a disposition on it and the plan pays an extra read round (reported by a client session, 2026-10-09)",
+  "worker": "codex"
+}
