@@ -331,6 +331,17 @@
       "closed_by": "claude-sonnet-default"
     },
     {
+      "key": "bug\tplans/spotted.json\tStandard: Touch only what the task needs\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "plans/spotted.json",
+      "line": 310,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",

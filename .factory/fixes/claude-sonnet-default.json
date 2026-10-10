@@ -34,32 +34,26 @@
     ".claude/skills/forge/SKILL.md",
     ".factory/fixes/claude-sonnet-default.json",
     "docs/guide.md",
+    "plans/spotted.json",
     "tests/test_claude_implementation_defaults.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1e983032e26631bdd379c54d295092bb72706c07336f5e2cfd40919b967dcb78",
-    "changed": "d06afa9b486c41edddf6b6e3b777d87344697dd485daa296b92e54fcc17a3f2d",
-    "commit": "82f225f95283405cbf4ff0d2a03c1df72bfc94f9",
+    "branch_diff": "503f27e8f4a9a987d323c3d783ad1305f5a08a135c834602b99c1a2338cf2397",
+    "changed": "c8202e3ec789c0c03d8435f5e4913bb4b53c5a215d332382d80b450532d80786",
+    "commit": "b1e443444988f858d08e06a755874d6df6728a04",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. The changed coordinator guidance says tools other than Claude workers and plan readers use their own settings when an entry is absent. In fact, `src/forge/repo.py:496-498` supplies Forge's `gpt-6.1-sol` medium default for Codex build, fix and lite workers, and `src/forge/codex.py:154` applies it. A user removing one of those entries to use Codex's settings will still get Forge's pinned default. The same claim appears in the shipped host guides.",
-        "file": "docs/guide.md",
-        "line": 145,
+        "body": "Raise: Data loss. The raw-parent diff changes `closed_by` from `worker-no-settings` to `claude-sonnet-default` for three already-done `workers-split` findings at lines 310, 321, and 332. This overwrites their recorded resolution history even though this fix leaves `forge.toml` unchanged. `src/forge/spotted.py:160-166` changes `closed_by` only when an open finding is resolved. The standard says, \u201cEvery changed line should trace to the task.\u201d Restore the prior values.",
+        "file": "plans/spotted.json",
+        "line": 310,
         "priority": "P1",
-        "title": "Guide misstates what happens when a Codex worker has no model entry"
-      },
-      {
-        "body": "Raise: Not done. The newly added text says Claude plan reads work when Claude is the only installed tool, while the same guide's Install section at line 11 says users need both Claude Code and Codex. A Claude-only repo owner gets contradictory setup instructions for the configuration this change explicitly supports.",
-        "file": "docs/guide.md",
-        "line": 143,
-        "priority": "P1",
-        "title": "Guide gives conflicting requirements for Claude-only use"
+        "title": "Standard: Touch only what the task needs"
       }
     ],
-    "id": "dc629ce6-0364-4224-b79b-3795a9f92368",
+    "id": "77a6df47-38a8-4990-be0a-9021980fd866",
     "status": "blocked"
   },
   "round": 11,
@@ -119,6 +113,10 @@
     },
     {
       "at": "2026-10-10T09:27:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:06:45+00:00",
       "step": "review"
     }
   ],
