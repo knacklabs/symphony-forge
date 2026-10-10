@@ -19,20 +19,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ea1a9b4093240e97a11322e379cd61bb35ef1f03c86392f26f8169db80d39dab",
-    "changed": "b7765e99f7ebd1be8868d1fcb47669ddc0edd51c2475969e8da6d8182dc0b4c3",
-    "commit": "ddf5321a6b163036c91d70dfcaa55d7505308877",
+    "branch_diff": "9cc48c7f168f295e1d470d9212c275242e9d2e419cde73ee2ea45c89d9f6827d",
+    "changed": "775e5ffe7d31fe0a83061f2c428d8222bcf0b5a474b4f52f4c2cb9bf8d203a62",
+    "commit": "5eb025c2526754a6093350dc238ae71201925661",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done \u2014 changing the reader tool back can resume an old chat without the required fresh-chat reason. After a Codex read, removing Codex makes Claude start a new session; the local record still retains the Codex ID. If Claude is then removed and Codex restored, this branch clears `why` and resumes that old Codex thread. The reverse sequence has the same defect. The command tests cover one tool change, but not a return to the first tool.",
-        "file": "src/forge/story.py",
-        "line": 235,
+        "body": "Raise: Not done \u2014 a later round can resume an obsolete worker or reader chat and overwrite the current binding. At line 196, local JSON takes precedence over the committed state or read notes. In a normal two-machine flow, machine B may be told that machine A\u2019s chat is gone, start a replacement, and commit its ID. When A updates the branch, its older local JSON still wins. The next round resumes the old ID; a worker round can also commit that ID back over the replacement through `remember()`.",
+        "file": "src/forge/codex.py",
+        "line": 196,
         "priority": "P1",
-        "title": "Not done: Returning to a reader tool can reuse a stale chat"
+        "title": "Not done: A stale local record can replace the current chat"
+      },
+      {
+        "body": "Raise: Not done \u2014 an unmerged spec reader loses its chat after upgrade when that spec also exists on the default branch. If its old owning worktree was removed, line 245 selects the upgrade checkout as owner merely because it contains the spec, before searching the retained work branch. Sync then writes or skips the binding there, leaving the unmerged branch without its reader ID. Recreating that branch after local metadata loss starts a fresh chat. The named moved-owner tests explicitly use a spec absent from the default checkout, so they do not cover this common amendment flow.",
+        "file": "src/forge/codex.py",
+        "line": 245,
+        "priority": "P1",
+        "title": "Not done: Upgrade can bind a spec reader to the wrong branch"
       }
     ],
-    "id": "6a325aa2-f2bd-494b-92fd-e004275b650a",
+    "id": "ab50c7c9-f825-418f-b840-62727426d70b",
     "status": "blocked"
   },
   "round": 15,
@@ -120,6 +127,10 @@
     },
     {
       "at": "2026-10-10T15:52:52.567414+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:49:19.292618+00:00",
       "step": "review"
     }
   ],

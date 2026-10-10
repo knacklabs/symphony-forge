@@ -397,6 +397,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tDerive task titles from the current published story plan\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 531,
+      "text": "Derive task titles from the current published story plan",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tInclude the waiting story's approval document in board JSON\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -415,6 +426,28 @@
       "text": "Not done: Developer assignments in task start, forge next, the board and story guidance",
       "from": "blocking",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 333,
+      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 423,
+      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303",
+      "from": "blocking",
+      "item": "board-data-truth",
       "status": "open",
       "closed_by": null
     },
@@ -529,6 +562,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: impeccable pass\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1144,
+      "text": "Not done: impeccable pass",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: plan_read from the story's current read record\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -584,6 +628,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: required tests check\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1001,
+      "text": "Not done: required tests check",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: roadmap-wide dependency map, can-start-now states and six stage counts\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -602,6 +657,50 @@
       "text": "Preserve commit-status timestamps when adapting the GraphQL rollup",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tPreserve current failed checks on remote-only and behind branches\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 175,
+      "text": "Preserve current failed checks on remote-only and behind branches",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tRead the event history once per command\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 191,
+      "text": "Read the event history once per command",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tStandard: Each commit leaves the build working\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 629,
+      "text": "Standard: Each commit leaves the build working",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tStandard: Plain English wherever a human looks\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 497,
+      "text": "Standard: Plain English wherever a human looks",
+      "from": "blocking",
+      "item": "board-data-truth",
       "status": "open",
       "closed_by": null
     },
@@ -848,6 +947,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: A stale local record can replace the current chat\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 196,
+      "text": "Not done: A stale local record can replace the current chat",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -952,6 +1062,17 @@
       "path": "src/forge/codex.py",
       "line": 183,
       "text": "Not done: Recover earlier-release reader chats after failed reads",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Upgrade can bind a spec reader to the wrong branch\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 245,
+      "text": "Not done: Upgrade can bind a spec reader to the wrong branch",
       "from": "blocking",
       "item": "reuse-worker-chats",
       "status": "open",
@@ -1607,6 +1728,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 635,
+      "text": "Do not report an exited worker as building while tests run",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: Developer assignments must be discoverable and current in teammate checkouts\tstart-is-claim",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -1845,6 +1977,17 @@
       "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
       "from": "blocking",
       "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 167,
+      "text": "Not done: forge read does not give the split message on a later read",
+      "from": "blocking",
+      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     },
@@ -2263,6 +2406,39 @@
       "text": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data",
       "from": "blocking",
       "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: required tests check\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 143,
+      "text": "Not done: required tests check",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 135,
+      "text": "Not done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_story_idle_time_tracks_its_parts\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 174,
+      "text": "Not done: test_3_story_idle_time_tracks_its_parts",
+      "from": "blocking",
+      "item": "board-data-truth",
       "status": "open",
       "closed_by": null
     },
@@ -3257,6 +3433,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board.py\tCheck liveness before treating unmatched run starts as running",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 195,
+      "text": "Check liveness before treating unmatched run starts as running",
+      "from": "review",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tClassify stale completed checks as failed",
       "kind": "edge",
       "path": "src/forge/board.py",
@@ -3297,6 +3484,17 @@
       "text": "Do not recreate expired merged assignments as unstarted parts",
       "from": "review",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tDo not use a story's creation date as its completion date",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 455,
+      "text": "Do not use a story's creation date as its completion date",
+      "from": "review",
+      "item": "board-data-truth",
       "status": "open",
       "closed_by": null
     },
@@ -4518,182 +4716,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tDerive task titles from the current published story plan\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 531,
-      "text": "Derive task titles from the current published story plan",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 333,
-      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 423,
-      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: impeccable pass\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 1144,
-      "text": "Not done: impeccable pass",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: required tests check\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 1001,
-      "text": "Not done: required tests check",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tPreserve current failed checks on remote-only and behind branches\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 175,
-      "text": "Preserve current failed checks on remote-only and behind branches",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tRead the event history once per command\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 191,
-      "text": "Read the event history once per command",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tStandard: Each commit leaves the build working\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 629,
-      "text": "Standard: Each commit leaves the build working",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tStandard: Plain English wherever a human looks\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 497,
-      "text": "Standard: Plain English wherever a human looks",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 635,
-      "text": "Do not report an exited worker as building while tests run",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_status_and_times.py\tNot done: required tests check\tboard-data-truth",
-      "kind": "bug",
-      "path": "tests/test_board_status_and_times.py",
-      "line": 143,
-      "text": "Not done: required tests check",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not\tboard-data-truth",
-      "kind": "bug",
-      "path": "tests/test_board_status_and_times.py",
-      "line": 135,
-      "text": "Not done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_story_idle_time_tracks_its_parts\tboard-data-truth",
-      "kind": "bug",
-      "path": "tests/test_board_status_and_times.py",
-      "line": 174,
-      "text": "Not done: test_3_story_idle_time_tracks_its_parts",
-      "from": "blocking",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tCheck liveness before treating unmatched run starts as running",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 195,
-      "text": "Check liveness before treating unmatched run starts as running",
-      "from": "review",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tDo not use a story's creation date as its completion date",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 455,
-      "text": "Do not use a story's creation date as its completion date",
-      "from": "review",
-      "item": "board-data-truth",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 167,
-      "text": "Not done: forge read does not give the split message on a later read",
-      "from": "blocking",
-      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     }
