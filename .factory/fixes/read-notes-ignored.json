@@ -1,0 +1,14 @@
+{
+  "base": "a729e9f3e557f8a555eb9171ff8ed13119beb34e",
+  "branch": "fix/read-notes-ignored",
+  "done_when": "forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a reply with no numbered items keeps today's rule); a numbered real finding still fails; the word list for tests-not-run notes is deleted; the existing no-findings command test gains the 'Runtime and visual checks were not run; this was a document-only review.' case for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T05:19:03+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clean cold reads keep failing because readers add a different 'checks were not run' note each time ('Runtime and visual checks were not run; this was a document-only review.')"
+}
