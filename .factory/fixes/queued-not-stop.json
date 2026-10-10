@@ -9,27 +9,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d445287ee9727f0fe5a8c12a9837ab0e368041c6698b6259432cf87e98cbaf88",
-    "changed": "9686428ff38f7b61ebd26175bcedeac904c9d82544da977e00983a4457983420",
-    "commit": "2aa5ed640e01e68b6c2b25b5d711dd7905ae6c16",
+    "branch_diff": "00455c65902d865669a7d9b7fc2f2137797108295c9526842191a17befb20949",
+    "changed": "453ecb88fd935cddd66a5d3dff448cdbd37c09c6012eb66b456c95e7c14a932c",
+    "commit": "22a7d8aa1c77e9cf17bcafe60a3208663b5e5174",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. Doctor still diagnoses a missing runner from demand that a successful retry already resolved. An unassigned attempt that expired ten days ago sets both demand flags here, even if its retry succeeded eight days ago and all current checks are green. The successful retry falls outside the activity window and never clears those flags. src/forge/doctor.py:380\u2013385 calls this for open pull requests without requiring pending checks. Resolved history can also supply old_demand for a fresh, short queue, incorrectly treating it as seven days of unmet demand. The previously reported gap remains open: exclude resolved attempts while retaining expired demand whose retries remain unmet.",
+        "body": "Raise: Functional. Doctor never diagnoses a missing runner from real GitHub check responses. The [check-runs API](https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference) does not expose a top-level `created_at`. Accessing it here raises KeyError, which is swallowed; `queued` remains false and the function returns before inspecting runner history. The passing proofs invent that field in tests/test_queued_checks_keep_waiting.py:54, tests/test_ci_waits_for_busy_runners.py:115 and tests/test_ci_runner_selection.py:124, masking the defect for both client histories. Use an available GitHub timestamp and make those fixtures reflect the actual response contract. This API-contract evidence is independent of the recorded ruling about bounded history sampling.",
         "file": "src/forge/checks.py",
-        "line": 141,
+        "line": 121,
         "priority": "P1",
-        "title": "Ignore resolved attempts when detecting current runner demand"
+        "title": "Not done: doctor detects a runner that never picks anything up"
       },
       {
-        "body": "Raise: Scale. When no recent matching activity exists, doctor now requests jobs serially for every retained workflow run, including old completed workflows using unrelated runners. There is no history cutoff or demand-based guard. Switching a documented runner setting in a repository with 5,000 retained runs therefore requires at least 5,000 job requests plus workflow-list pagination on every doctor invocation, even for a short queue. This creates thousands of network round trips and exceeds a standard authenticated user's hourly request budget if completed within that hour. The previous implementation skipped completed runs predating the queue. Restrict activity lookups to the relevant window and older demand lookups to unresolved candidates. [GitHub rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api).",
+        "body": "Raise: Functional. The new endpoint contains an unescaped `&`. src/forge/repo.py:118 passes it through subprocess without shell escaping, while tests/conftest.py:70 installs the fake GitHub CLI as `gh.cmd` on Windows. [Python documents](https://docs.python.org/3.11/library/subprocess.html#security-considerations) that command scripts can undergo shell parsing even with shell=False. The query therefore splits into two commands: gh receives the endpoint without the date filter, and cmd attempts to execute `created=...`. Doctor reports a GitHub-access failure instead of the runner diagnosis, and the new diagnostic proofs fail in the Windows suite configured at .github/workflows/forge-next.yml:54\u201380. Preserve the complete query when passing through supported command shims.",
         "file": "src/forge/checks.py",
-        "line": 109,
+        "line": 129,
         "priority": "P1",
-        "title": "Bound doctor's job-history requests"
+        "title": "Preserve the history query through Windows command shims"
       }
     ],
-    "id": "df369c96-f9e4-4ac1-abec-11021612e7a9",
+    "id": "26c7df0d-9e31-4ad3-ac87-169789c336cf",
     "status": "blocked"
   },
   "round": 5,
@@ -81,6 +81,10 @@
     },
     {
       "at": "2026-10-10T01:03:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:21:37+00:00",
       "step": "review"
     }
   ],
