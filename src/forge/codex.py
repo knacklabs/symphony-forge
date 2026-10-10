@@ -245,11 +245,15 @@ def preserve_chats(top: Path) -> None:
             if owner is None and folder == "read" and not branch:
                 rel = f"docs/specs/{item}.md"
                 landed = story.show(top, repo.default_branch(top), rel)
+                notes = f"docs/specs/{item}.read.md"
+                landed_notes = story.show(top, repo.default_branch(top), notes) or ""
                 matches = [name for name, tree in trees.items()
-                           if (tree / rel).is_file() and sync.read(tree / rel) != landed]
+                           if (tree / rel).is_file() and (sync.read(tree / rel) != landed
+                               or sync.read(tree / notes) != landed_notes)]
                 matches += [name for name in sorted(refs - trees.keys())
                             if name.startswith(("fix/", "forge/", "story/", "task/"))
-                            and (text := story.show(top, name, rel)) is not None and text != landed]
+                            and (text := story.show(top, name, rel)) is not None and (text != landed
+                                or (story.show(top, name, notes) or "") != landed_notes)]
                 if len(matches) > 1:
                     repo.refuse(REFUSALS["chat_owner"], item=item)
                 branch = matches[0] if matches else ""

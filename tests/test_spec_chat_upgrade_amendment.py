@@ -20,8 +20,9 @@ STORY = "reuse-worker-chats"
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
 @pytest.mark.parametrize("family", ["codex", "claude"])
+@pytest.mark.parametrize("amended", [True, False], ids=["changed-spec", "unchanged-spec"])
 def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
-        repo, monkeypatch, tmp_path, sdk_data, adopted, family):
+        repo, monkeypatch, tmp_path, sdk_data, adopted, family, amended):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted)
     started = repo.forge("fix", "start", "Publish invoice plan", "--done", "The plan is saved")
     assert started.returncode == 0, started.stdout + started.stderr
@@ -41,10 +42,11 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
     branch = "fix/amend-invoice-plan"
     owner = worktree(repo, branch)
     spec = owner / "docs/specs/invoices.md"
-    spec.write_text(SPEC.replace("## Roadmap", "Invoices also show their payment date.\n\n## Roadmap"),
-                    encoding="utf-8")
-    saved = repo.forge("spec", "save", "invoices", cwd=owner)
-    assert saved.returncode == 0, saved.stdout + saved.stderr
+    if amended:
+        spec.write_text(SPEC.replace("## Roadmap", "Invoices also show their payment date.\n\n## Roadmap"),
+                        encoding="utf-8")
+        saved = repo.forge("spec", "save", "invoices", cwd=owner)
+        assert saved.returncode == 0, saved.stdout + saved.stderr
     reader.say("No findings.\n")
     _old_round(repo, tmp_path, owner, "read", "invoices")
     first = _reader_chat(reader)
