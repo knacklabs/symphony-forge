@@ -261,7 +261,8 @@ def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
         return cfg["codex_fast"] == "always"
     if kind not in ("Build", "Fix", "Lite"):
         return False
-    if (repo.read_state(item, top) or {}).get("round", 0) > 1:
+    state = repo.read_state(item, top) or {}
+    if state.get("kind") == "fix" or state.get("round", 0) > 1:
         return True
     from forge import board
 

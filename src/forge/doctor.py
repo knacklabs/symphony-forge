@@ -424,9 +424,6 @@ def doctor(args: argparse.Namespace) -> int:
                 if not any((folder / "skills" / skill / "SKILL.md").is_file() for folder in skills[host]):
                     add(f"{skill} is required for UI work but isn't installed where the " f"{host} worker reads skills.", INSTALL[skill])
     for line in codex.tidy(top): print(f"- {line}")
-    fast = {"needed": "on when other planned work waits or after the first repair round",
-            "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    print(f"- Codex Fast: {fast}; models without Fast run normally.")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
@@ -444,6 +441,9 @@ def doctor(args: argparse.Namespace) -> int:
     budget = machine.half_cores()
     print(f"This machine: {cores} cores, so {budget} agents at once and "
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+    fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
+            "off": "off", "always": "always on"}[cfg["codex_fast"]]
+    print(f"- Codex Fast: {fast}; models without Fast run normally.")
     claude = shutil.which("claude")
     version = None
     if claude:
