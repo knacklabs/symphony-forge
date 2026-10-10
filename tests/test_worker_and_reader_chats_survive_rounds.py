@@ -94,6 +94,8 @@ def _work(repo, item):
 
 def _previous_release(repo, tmp_path):
     old = tmp_path / "previous-release"
+    if old.exists():
+        return
     shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
     (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
     # The text fixture omits transport and prompts; the old command owners are unchanged.
@@ -102,7 +104,7 @@ def _previous_release(repo, tmp_path):
     _install(repo.bin, "old-forge", FORGE_SHIM.format(python=sys.executable, src=(old / "src").as_posix()))
 
 
-def _old_round(repo, tmp_path, folder, *command):
+def _old_round(repo, tmp_path, folder, *command, expect_success=True):
     _previous_release(repo, tmp_path)
     config = folder / "forge.toml"
     current = config.read_text("utf-8")
@@ -120,7 +122,7 @@ def _old_round(repo, tmp_path, folder, *command):
         _install(repo.bin, "forge", installed)
         config.write_text(current, encoding="utf-8")
         repo.git("restore", "--staged", ".", cwd=folder)
-    assert done.returncode == 0, done.stdout + done.stderr
+    assert (done.returncode == 0) == expect_success, done.stdout + done.stderr
     return done
 
 
@@ -611,3 +613,40 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert read.returncode == 0, read.stdout + read.stderr
     assert "Starting a new" not in read.stdout
     assert _reader_chat(reader, resumed=True) == first
+
+
+def test_14_failed_previous_release_codex_reader_keeps_its_logged_chat(
+        repo, monkeypatch, tmp_path, sdk_data):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted=True)
+    reader.fail(True)
+    failed = _old_round(repo, tmp_path, reader.shop, "read", "SHOP", expect_success=False)
+    assert "Codex reported the turn failed" in failed.stderr
+    first = _reader_chat(reader)
+    record = repo.path / ".git/forge/threads/read/SHOP.json"
+    assert json.loads(record.read_text("utf-8"))["conversation"] is None
+    _sync_elsewhere(repo, tmp_path)
+    shutil.rmtree(repo.path / ".git/forge")
+    reader.fail(False)
+    said = reader.ok()
+    assert "Starting a new" not in said
+    assert _reader_chat(reader, resumed=True) == first
+    assert len(_sent(reader.log, "thread/start")) == 1
+
+
+def test_15_previous_release_split_worker_keeps_last_successful_claude_chat(
+        repo, monkeypatch, tmp_path, sdk_data):
+    folder, item, claude, _ = _worker(repo, monkeypatch, sdk_data, "claude", "task", adopted=True)
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    fallback = _old_round(repo, tmp_path, folder, "work", item)
+    assert "fell back to Codex" in fallback.stdout
+    assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1
+    monkeypatch.delenv("STUB_CLAUDE_EXIT")
+    successful = _old_round(repo, tmp_path, folder, "work", item)
+    assert "fell back to Codex" not in successful.stdout
+    first = _chat(claude, "claude", resumed=True)
+    _sync_elsewhere(repo, tmp_path)
+    shutil.rmtree(repo.path / ".git/forge")
+    said = _work(repo, item)
+    assert "Starting a new" not in said.stdout
+    assert _chat(claude, "claude", resumed=True) == first
+    assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1

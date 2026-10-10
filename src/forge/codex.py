@@ -180,14 +180,14 @@ def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
                 if fields.get("session") else None}
     else:
         chat = (repo.read_state(item, checkout) or {}).get("chat", {})
-    if not any(key in saved for key in ("conversation", "claude")) and (
-            kind == "Grill" or not (chat.get("conversation") or chat.get("claude"))):
+    if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")) and not (
+            chat.get("conversation") or (chat.get("claude") or {}).get("id")):
         lines = sync.read(_item_file(checkout, item, ".log", kind)).splitlines()
         if lines:
             logged = json.loads(lines[-1])
-            chat.update({key: logged[key] for key in ("conversation", "claude", "head")
+            saved.update({key: logged[key] for key in ("conversation", "claude", "head")
                          if logged.get(key)})
-            chat["start"] = logged.get("start") or repo.git("rev-parse", "HEAD", cwd=checkout)
+            saved["start"] = logged.get("start") or repo.git("rev-parse", "HEAD", cwd=checkout)
     return {**chat, **saved}
 
 
@@ -220,12 +220,9 @@ def preserve_chats(top: Path) -> None:
             if folder not in ("fix", "task", "read"):
                 continue
             saved = _json(path)
-            if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
-                continue
             branch = (f"story/{item}" if folder == "read" and story.KEY.fullmatch(item) else
                       f"{folder}/{item.replace('/', '-')}" if folder != "read" else "")
-            recorded = ((saved.get("claude") or {}).get("checkout") if not saved.get("conversation")
-                        else saved.get("checkout"))
+            recorded = saved.get("checkout") or (saved.get("claude") or {}).get("checkout")
             owner = trees.get(branch) if branch else next((tree for tree in trees.values()
                                                            if str(tree) == recorded), None)
             added = False
@@ -254,6 +251,9 @@ def preserve_chats(top: Path) -> None:
                         continue
                     rel = repo.state_path(item)
                 with hold(owner, item, kind):
+                    saved = record(owner, item, kind)
+                    if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
+                        continue
                     if repo.git("status", "--porcelain", "--", rel, cwd=owner):
                         repo.refuse(REFUSALS["chat_dirty"], path=owner / rel)
                     if folder == "read":

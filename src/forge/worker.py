@@ -103,7 +103,9 @@ def work(args: argparse.Namespace) -> None:
             codex.recover(top, item)
         saved = codex.record(top, item)
         state = repo.read_state(item, top) or {}
-        last = state.get("worker") or ("codex" if saved.get("conversation") else
+        # Earlier releases kept both fallback chats without recording which tool ran last.
+        last = state.get("worker") or (family if saved.get("conversation") and saved.get("claude") else
+                                      "codex" if saved.get("conversation") else
                                       "claude" if saved.get("claude") else None)
         previous = bool(last) or state.get("status", "started") != "started"
         moved = (f"its last round ran on {last.title()}" if last else
