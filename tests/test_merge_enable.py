@@ -188,7 +188,10 @@ def _prototype_run(env, _):
     assert ready.returncode == 0, ready.stderr
     lines = ready.stdout.splitlines()
     assert lines[-2:] == READY
-    assert lines[:-2] and all(line == "Updated the pull request's review block." for line in lines[:-2])
+    # Close now reports its review result too; the final advice still names only the owner.
+    assert lines[:-2].count("Review: clean.") == 1
+    updates = [line for line in lines[:-2] if line != "Review: clean."]
+    assert updates and all(line == "Updated the pull request's review block." for line in updates)
     shown = next_lines()
     assert f"The fix {FIX} is ready to merge: {URL}\nNext: merge {URL}, then forge next" in shown
     assert f"Next: forge merge {FIX}" not in shown
