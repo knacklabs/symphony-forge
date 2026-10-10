@@ -65,7 +65,7 @@ def _board(repo, tmp_path):
     return json.loads(machine.stdout), _rendered_text(path), path.read_text("utf-8")
 
 
-def _rendered_text(path, width=1280):
+def _rendered_text(path, width=1280, accessibility=False):
     browser = subprocess.run([
         REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with", "playwright==1.55.0",
         "python", "-c",
@@ -81,10 +81,34 @@ def _rendered_text(path, width=1280):
         "                summary.click()\n"
         "        if width == 375:\n"
         "            assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')\n"
+        "        if sys.argv[3] == 'True':\n"
+        "            page.emulate_media(color_scheme='dark')\n"
+        "            links = page.locator('a[href]')\n"
+        "            assert links.count() > 0, 'The rendered board needs a real pull-request link'\n"
+        "            for link in links.all():\n"
+        "                contrast = link.evaluate('''link => {\n"
+        "                    const rgb = color => color.match(/[\\d.]+/g).slice(0, 3).map(Number);\n"
+        "                    const luminance = color => rgb(color).map(v => {\n"
+        "                        v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;\n"
+        "                    }).reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);\n"
+        "                    let background = link;\n"
+        "                    while (getComputedStyle(background).backgroundColor === 'rgba(0, 0, 0, 0)')\n"
+        "                        background = background.parentElement;\n"
+        "                    const a = luminance(getComputedStyle(link).color);\n"
+        "                    const b = luminance(getComputedStyle(background).backgroundColor);\n"
+        "                    return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);\n"
+        "                }''')\n"
+        "                assert contrast >= 4.5, f'Pull-request link contrast is {contrast}:1'\n"
+        "            page.evaluate('''() => {\n"
+        "                const sizes = [...document.querySelectorAll('body, body *')].map(element =>\n"
+        "                    [element, parseFloat(getComputedStyle(element).fontSize)]);\n"
+        "                for (const [element, size] of sizes) element.style.fontSize = `${size * 2}px`;\n"
+        "            }''')\n"
+        "            assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), '200% text overflows'\n"
         "        print(json.dumps(' '.join(page.locator('body').inner_text().split())))\n"
         "    finally:\n"
         "        browser.close()\n",
-        path.resolve().as_uri(), str(width)],
+        path.resolve().as_uri(), str(width), str(accessibility)],
         capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert browser.returncode == 0, browser.stdout + browser.stderr
     return json.loads(browser.stdout)
@@ -479,13 +503,19 @@ def test_9_one_person_has_one_display_name_across_approval_history(
     assert "Sam Alias" not in text
 
 
-def test_10_mobile_browser_shows_running_status_and_counts_without_overflow(client, tmp_path):
+def test_10_mobile_browser_shows_running_status_and_counts_without_overflow(client, tmp_path, gh):
     _fix(client, status="fixing", round=1)
+    long_title = "Read " + "saved_basket_state_" * 3 + ".py"
+    _fix(client, long_title, "long-path", status="working", round=1)
+    opened = pr("fix/long-path", long_title, "The filename stays readable.", None, [], ["README.md"])
+    opened.update(state="OPEN", number=7, url="https://github.com/acme/shop/pull/7")
+    gh.respond("pr", "list", stdout=json.dumps([opened]))
+    gh.respond("pr", "list", "--state", "merged", stdout="[]")
     _records(client, "events.jsonl", [{"event": "run start", "id": "browser-run",
         "item": "correct-state", "kind": "review", "round": 1, "at": "2026-10-09T11:50:00Z"}])
     data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
-    text = _rendered_text(tmp_path / "board.html", width=375)
+    text = _rendered_text(tmp_path / "board.html", width=375, accessibility=True)
     assert row["status"] in text
     assert "10 minutes" in text
     assert "Needs fixes" not in text
