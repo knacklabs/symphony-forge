@@ -33,7 +33,7 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
     with repo.record_run(top, item, "ci") as result:
         result.update(outcome="unknown", state="unknown")
         try:
-            _wait(top, item, sha, names, progress, result)
+            _wait(top, item, sha, names, branch, progress, result)
         except repo.Refused as error:
             if error.entry is REFUSALS["red"]:
                 result["outcome"] = "failed"
@@ -44,7 +44,7 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
-def _wait(top: Path, item: str, sha: str, names: list[str], progress: bool,
+def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
           result: dict[str, Any]) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
