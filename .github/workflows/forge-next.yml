@@ -47,9 +47,12 @@ jobs:
         # Slower platforms need more runners as the suite grows.
         include: >-
           ${{ github.event_name == 'pull_request' &&
-            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
-            {"os":"ubuntu-latest","group":2,"groups":3},
-            {"os":"ubuntu-latest","group":3,"groups":3}]') ||
+            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":6},
+            {"os":"ubuntu-latest","group":2,"groups":6},
+            {"os":"ubuntu-latest","group":3,"groups":6},
+            {"os":"ubuntu-latest","group":4,"groups":6},
+            {"os":"ubuntu-latest","group":5,"groups":6},
+            {"os":"ubuntu-latest","group":6,"groups":6}]') ||
             fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
             {"os":"ubuntu-latest","group":2,"groups":3},
             {"os":"ubuntu-latest","group":3,"groups":3},

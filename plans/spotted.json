@@ -4465,6 +4465,17 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "from": "worker",
+      "item": "no-bare-flip",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
