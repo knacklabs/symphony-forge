@@ -165,10 +165,11 @@ existing settings but no longer override Autoreview's defaults.
 In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
 uses its worker's design entry: `[models.design.codex]` with `workers = "codex"`, and
 `[models.design.claude]` with `workers = "claude"` or `"split"`. Claude's default is
-`claude-sonnet-5-5` at xhigh effort. If the `claude` command is missing, or Claude fails before changing the checkout,
+`claude-sonnet-5-5` at xhigh effort. With `workers = "split"`, if the `claude` command is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. Split routing also applies to User-facing story tasks in
+failure without a Codex retry. Claude-only repos report the failure without a Codex retry.
+Split routing also applies to User-facing story tasks in
 Forge's own repo. Other work keeps its usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
 to change that choice.
 
