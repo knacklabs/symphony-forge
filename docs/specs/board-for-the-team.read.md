@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-09T21:26:27+00:00
-read_hash: 18428dcdfb6aaac8e85c107425195c0a6d3208ca
-round: 8
+read_at: 2026-10-10T03:07:02+00:00
+read_hash: ee66620d08c255c7472cecf320be3f3a4515f77c
+round: 10
 passed: yes
-doc_seen: 18428dcdfb6aaac8e85c107425195c0a6d3208ca
+doc_seen: ee66620d08c255c7472cecf320be3f3a4515f77c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 657d3a5dc9b2d68f37aac01fa54abfa58df11596
+notes_seen: 17d359d2b8a4d73e030854c3d77df798ad2156c6
 ---
 # Cold read notes
 
@@ -122,5 +122,17 @@ No findings.
    Disposition: keep: owner chose (2026-10-09) to show team and per-person weekly merged work through Forge and around it, each person's own trend with no ranking, so a team sees how much ships outside Forge; the Why and Options weighed now record it.
 
 ## Round 8
+
+No findings.
+
+## Round 9
+
+21. The new column rule has no valid layout for cross-story dependency cycles.
+    Raise: Plan gap
+    Behaviour 2 and acceptance criterion 7 put each part one column after its latest prerequisite. Two story plans waiting on each other make that impossible.
+    `src/forge/story.py:930–941` explicitly permits cross-story cycles; their tasks wait in `forge next`. Ordinary edits to separate plans can therefore produce supported inputs that the new graph has no rule for displaying.
+   Disposition: keep: behaviour 2 and criterion 7 now say parts waiting on each other in a loop share the earliest column they could otherwise take, labelled as waiting on each other.
+
+## Round 10
 
 No findings.
