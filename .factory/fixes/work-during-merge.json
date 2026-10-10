@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "67c8f13461a762e5e4665676e9eb4c39a619b3bbda5f64d94de1b1ec20875a4e",
-    "changed": "1346d1c07db6158b817c7bf9eff321383bf91a3d02042b618ed5b429bcfa6181",
-    "commit": "eee6610571f8a93d95a0e625e7249db974483060",
+    "branch_diff": "8eec6ccb6c64ca7afa35a8757d71959bb3efc295ddebb47d033b2ca64bb55c84",
+    "changed": "ee428af66ceb957d6e1826206b949106989ff84d86ba2e780367c231eaa7e28e",
+    "commit": "9a887c9a76b30cb16dbbbb5a7dbcf45d9457bb11",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The previously reported configuration-conflict gap remains for both task and fix checkouts. When branch settings and a default-branch update conflict in `forge.toml`, running `forge work` from the item's checkout reaches `src/forge/cli.py:138` first. That calls `check_pin`, which parses the caller's configuration at `src/forge/repo.py:578`; conflict markers trigger the refusal at line 456 with `Next: forge doctor` (line 36). The new merge guard is never reached, so the required resolve-and-commit guidance is absent. The four passing command cases conflict only in `merge.txt` (`tests/test_work_requires_a_finished_merge.py:64\u201375`) and cannot catch this failure. Check the target's pending merge before caller configuration parsing and cover this command path.",
-        "file": "src/forge/worker.py",
-        "line": 68,
-        "priority": "P1",
-        "title": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint"
-      }
-    ],
-    "id": "4f547a47-5efe-4cbe-95b5-72426afdfa86",
-    "status": "blocked"
+    "findings": [],
+    "id": "53c2ef29-4e86-4f37-9dab-a7807cc8bc96",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T13:06:47+00:00",
@@ -57,6 +49,10 @@
     },
     {
       "at": "2026-10-10T01:00:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:49:05+00:00",
       "step": "review"
     }
   ],
