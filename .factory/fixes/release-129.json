@@ -10,31 +10,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9e1a62f42fbdb11724a37a1019cecbff8a8b86ba71c0b42c4113e885c0757e21",
-    "changed": "3b7a03ca32752ba9a7d59438c12febf00db304f718c8a047f40cb775ecabb3f5",
-    "commit": "f1d529d910b781c5a2dd68911880b7e5bd5012fb",
+    "branch_diff": "81b58893ad4a580b92420c8ec11280b9b75ba2b1e3f8aaa2178e2a17f341441a",
+    "changed": "59c91ed69c2755f5a45c2445fc4902f2703d519e87c9d28224cd4240811d86b4",
+    "commit": "3158b056fb02166d6ed14fe043c9b2b2a7b390b7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate \u2014 the branch also repairs unrelated generated-file drift, exceeding the recorded version-bump allowance. All four hooks in both `.claude/settings.json` and `.codex/hooks.json` now resolve `CLAUDE_PROJECT_DIR`, changing hook behavior; both generated Forge skills also gain unrelated board, routing, merge and claim guidance. New evidence beyond the coordinator's ruling is the verified raw-parent patch of commit `f1d529d910b781c5a2dd68911880b7e5bd5012fb`, which introduces these changes after the ruling explicitly kept unrelated sync drift outside this release. These edits address additional problems rather than recorded version consistency.",
-        "file": ".claude/settings.json",
-        "line": 8,
-        "priority": "P1",
-        "title": "Allowance does not match the version-only change"
-      },
-      {
-        "body": "Raise: Gate \u2014 the latest commit supplies no proof list for Forge to copy into the pull request. Its complete message is `Refresh generated host files for v1.2.9`. The earlier release commit contains a proof list, but the required latest-commit handoff omits it, including evidence for the subsequently refreshed host files. The supplied successful close test run does not satisfy this separate proof-list requirement.",
-        "file": "tests/test_release_version.py",
-        "line": 12,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "3e9c7030-eaea-41f4-aa82-0e756578e51a",
-    "status": "blocked"
+    "findings": [],
+    "id": "10fb18a4-dcc2-4694-aab7-df9ebe909c44",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T00:24:25+00:00",
@@ -42,6 +27,10 @@
     },
     {
       "at": "2026-10-10T01:44:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:26:13+00:00",
       "step": "review"
     }
   ],
