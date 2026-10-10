@@ -658,6 +658,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
   code names, file paths or test names. "Code exists" is not a result.
+- Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
+  line asking you to split them into smaller stories; already approved larger stories stay as they are.
 - Each item's evidence, edge cases and the test or check that proves it go under the same number in
   `### Done-when details`, the first section under `## For the builders`. Workers and reviewers
   get the entries of the items their task covers. An item with nothing to add has no entry.
