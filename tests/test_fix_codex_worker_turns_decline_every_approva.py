@@ -12,7 +12,7 @@ def _answers(calls, before):
             if "answered" in call]
 
 
-def test_1_full_access_turn_accepts_and_read_only_turn_declines(repo, monkeypatch, sdk_data):
+def test_1_full_access_turn_accepts_and_read_only_turn_declines(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
 
     # forge work: Codex never asks and its automatic reviewer isn't used, and each request that

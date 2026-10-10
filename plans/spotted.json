@@ -2267,6 +2267,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_chatview_start.py",
+      "line": 57,
+      "text": "Not done: move the remaining Codex-worker tests to claude_session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "tests/test_ci_job_budgets.py",
@@ -2586,6 +2597,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tStandard: Tests own and clean up every process they start\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 23,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tThe full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "The full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tWindows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
       "kind": "bug",
       "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
@@ -2593,6 +2626,17 @@
       "text": "Windows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
       "from": "worker",
       "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tNot done: keep mixed worker tests on their intended routes\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+      "line": 37,
+      "text": "Not done: keep mixed worker tests on their intended routes",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
       "status": "open",
       "closed_by": null
     },
@@ -4540,6 +4584,17 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
       "status": "open",
       "closed_by": null
     },
