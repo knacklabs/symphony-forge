@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-10T07:37:27+00:00
-read_hash: e30cd6f8b5ac67a845554b3b32ce991fc92eda48
-round: 20
+read_at: 2026-10-10T08:55:37+00:00
+read_hash: 58ef214e422e54cdc19d06dced2d804f70be6799
+round: 21
 passed: yes
-doc_seen: e30cd6f8b5ac67a845554b3b32ce991fc92eda48
+doc_seen: 58ef214e422e54cdc19d06dced2d804f70be6799
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 621af5f824f04c5061e6121c74f7a4bc51b19b1e
+notes_seen: f29f476997226169652e4e964f1b715b7901903a
 ---
 # Cold read notes
 
@@ -189,5 +189,9 @@ Runtime and visual checks were not run; this was a document-only review.
    Disposition: keep: not a finding; the reader reported none (its unnumbered note is not a finding; fix read-notes-ignored).
 
 ## Round 20
+
+No findings.
+
+## Round 21
 
 No findings.
