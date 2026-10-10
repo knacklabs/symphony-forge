@@ -16,6 +16,10 @@ from forge import __version__, repo
 # The Forge agent runs (work rounds, plan reads, close reviews) one machine runs at once, whatever
 # the repo, so several repos' agents can't run it out of memory.
 _agent_entry: dict[str, Any] | None = None
+_WAIT_REASONS = {
+    True: "Other planned work waits on this item, so it goes before runs nothing waits on.",
+    False: "Nothing waits on this item; runs other planned work waits on go first.",
+}
 
 COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
     "help": "Show this release's machine-wide runs", "position": 60,
@@ -74,11 +78,18 @@ def remember(top: Path) -> None:
 
 
 def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
-    """Join either machine-wide lane and wait for admission, first come, first served."""
+    """Join a lane; prerequisite agents go first, with arrival order within each group."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
     root = main_checkout(repo)
+    unblocks = False
+    if kind != "test" and item and "/" in item:
+        from forge import board
+
+        unblocks = any(item in part["waits_for"] and part["status"] != "Merged"
+                       for plan in board.machine_board(repo)["dependency_maps"]
+                       for part in plan["parts"])
     title = None
     round_number = None
     if item and (match := repository.ITEM.fullmatch(item)):
@@ -101,7 +112,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
-             "agent": None, "round": round_number,
+             "agent": None, "round": round_number, "unblocks": unblocks,
              "output_path": None, "progress": None}
     size = test_slots() if kind == "test" else half_cores()
     with _queue() as runs:
@@ -116,12 +127,17 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 if position is None:
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 place = position - size + 1
+                if place <= 0:
+                    # Admission holds the place before the model process is launched.
+                    lane[position]["admitted"] = True
+                    entry["admitted"] = True
             if place <= 0:
                 _lane_event(entry, "lane admitted")
                 return entry
             if place != said:
                 print(f"{size} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
-                      f"its turn: it is number {place} in line.", flush=True)
+                      f"its turn: it is number {place} in line."
+                      + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""), flush=True)
                 said = place
             time.sleep(0.5)
     except BaseException:
@@ -172,7 +188,7 @@ def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
 
 
 def entries() -> list[dict[str, Any]]:
-    """Live running and waiting entries, in arrival order, from both lanes."""
+    """Live running and waiting entries, in admission order, from both lanes."""
     with _queue() as runs:
         return list(runs)
 
@@ -247,7 +263,8 @@ def lanes(args: Any) -> int:
         for name in ("agents", "tests"):
             for run in result[name]["entries"]:
                 state = f"waiting #{run['place']}" if run["place"] else "running"
-                print(f"{run['repo_name']}: {run['item']} ({run['kind']}, {state})")
+                reason = f" {_WAIT_REASONS[bool(run.get('unblocks'))]}" if run["place"] and name == "agents" else ""
+                print(f"{run['repo_name']}: {run['item']} ({run['kind']}, {state}){reason}")
         if not any(result[name]["entries"] for name in ("agents", "tests")):
             print("Nothing running")
     return 0
@@ -355,6 +372,10 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 run["process"] = run["forge"]
                 retained.append(run)
         runs[:] = retained
+        agents = iter(sorted((run for run in runs if run["kind"] != "test"), key=lambda run:
+            0 if run.get("admitted") or run["started_at"] or run.get("legacy") else
+            1 if run.get("unblocks") else 2))
+        runs[:] = [run if run["kind"] == "test" else next(agents) for run in runs]
         yield runs
         path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
         os.replace(path.with_suffix(".new"), path)

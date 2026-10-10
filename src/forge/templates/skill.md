@@ -131,7 +131,8 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
-plan reads and close reviews share a first-come line and say their place while waiting. The test
+plan reads and close reviews share a line. Waiting items that other planned work waits on go
+first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
 one on four. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
 and the per-test budget.
@@ -740,8 +741,9 @@ setup-only, platform or "foundation" stories. A story that no spec behaviour lin
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line, first come, first served, and print their
-place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
+reviews), across all its repos; the rest wait in line. Items that other planned work waits on go
+first, first-come within each group; runs print their place and why when they start waiting and
+each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on. Forge compares
 content history, never commit dates: an older copy on the default branch does not block a start.
