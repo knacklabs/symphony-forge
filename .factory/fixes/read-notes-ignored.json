@@ -2,13 +2,38 @@
   "base": "a729e9f3e557f8a555eb9171ff8ed13119beb34e",
   "branch": "fix/read-notes-ignored",
   "done_when": "forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a reply with no numbered items keeps today's rule); a numbered real finding still fails; the word list for tests-not-run notes is deleted; the existing no-findings command test gains the 'Runtime and visual checks were not run; this was a document-only review.' case for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/story.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3231ef54d2c8e844811aae2390eeab3ee4ce198e02dfbfe5c3c9f735ab6330ab",
+    "changed": "dfb928dbce520caaa5a3218d4eb93f49ec89b3cdc9ddea1db96ca7d36f9b7905",
+    "commit": "1e7711adf608863f3fda98d5439426ef67e4ca4c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. Replies without numbered items no longer keep today's rule. The base parser accepts `**No findings.**\\nNote: tests weren't run.`, but the new `[said]` fallback combines both lines into one string that cannot match `empty`, recording a failed round and requiring a disposition for a clean review. The existing command test's expectation is changed from True to False at tests/test_read_accepts_no_findings.py:39, so the reported 60 passing cases conceal this regression for both client histories. The same fallback also rejects previously accepted unnumbered bullet lists such as `- No findings.\\n- No issues found.`. The shipped guidance and proof list describe the narrower replacement rule rather than proving the required preservation.",
+        "file": "src/forge/story.py",
+        "line": 252,
+        "priority": "P1",
+        "title": "Not done: forge read records a round as passed when every numbered item says there are no findings, whatever unnumbered note lines follow (a"
+      }
+    ],
+    "id": "ba4444a4-7d11-463a-a1f6-a880d841d08f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T05:19:03+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T05:41:15+00:00",
+      "step": "review"
     }
   ],
   "why": "Clean cold reads keep failing because readers add a different 'checks were not run' note each time ('Runtime and visual checks were not run; this was a document-only review.')",
