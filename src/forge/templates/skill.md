@@ -258,6 +258,9 @@ Every pull request body stays within GitHub's size limit. Forge leaves tool-comm
 of the shared time record, shortens duplicated and advisory detail before the contract, and
 says plainly when it shortened anything. Exceptionally large time histories retain recent
 evidence and current readiness; omitted time stays unknown. Full contracts and proof stay in git.
+Items report working, waiting and unknown seconds alongside their detailed categories. An
+unfinished story's runway continues through now, including unknown time after its last read
+or recorded part activity; a read without a duration establishes a date, never guessed work.
 
 Live rows add `activity` (status and a running action), `idle_since` and `stalled`
 after 24 idle hours. A recorded worker adds tool, model, effort, round, start,

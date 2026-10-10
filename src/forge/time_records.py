@@ -312,7 +312,10 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         rounds.append({"round": number, "worker_round": worker_round,
                        "line": f"Round {number if number is not None else 'unknown'}: " + "; ".join(steps),
                        "findings": findings, "new_findings": fresh, "repeat_findings": repeats})
-    return {"time_breakdown": totals, "rounds": rounds, "intervals": intervals,
+    grouped = {f"{kind}_seconds": round(sum((when(span["end"]) - when(span["start"])).total_seconds()
+                                           for span in intervals if span["kind"] == kind), 3)
+               if intervals or (start and end) else None for kind in ("working", "waiting", "unknown")}
+    return {"time_breakdown": totals, **grouped, "rounds": rounds, "intervals": intervals,
             "events": events, "timings": timings, "state": state, "ended_at": ended_at,
             "total_seconds": round((end - start).total_seconds(), 3) if start and end and end >= start else None}
 
@@ -338,6 +341,8 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "")
                                           for r in [*data["clean_reviews"], review]}.values())
     times = "; ".join(f"{label}: {duration(data['time_breakdown'][category])}"
                       for category, label in zip(CATEGORIES, LABELS))
+    times = "; ".join(f"{kind}: {duration(data[f'{kind}_seconds'])}"
+                      for kind in ("working", "waiting", "unknown")) + "\n\n" + times
     current = times + "\n\n" + "\n".join(r["line"] for r in data["rounds"])
     managed = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", published, re.S)
     previous = HISTORY_SECTION.search(managed[0]) if managed else None
@@ -462,7 +467,7 @@ def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str
     return re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", replace, body, count=1, flags=re.S)
 
 
-def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]]) -> dict[str, Any]:
+def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unfinished: bool = True) -> dict[str, Any]:
     spans = [span for part in parts for span in part.get("intervals", [])]
     for read in read_rounds:
         end, seconds = when(read.get("read_at")), read.get("seconds")
@@ -471,6 +476,8 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]]) -> dic
             spans.append({"start": (end - timedelta(seconds=seconds if known else 0)).isoformat(),
                           "end": end.isoformat(), "kind": "working" if known else "unknown"})
     points = sorted({at for span in spans for name in ("start", "end") if (at := when(span.get(name)))})
+    if points and unfinished and (now := when(repo.now())) and now > points[-1]:
+        points.append(now)
     intervals, totals = [], dict.fromkeys(("working", "waiting", "unknown"), 0.0)
     for a, b in zip(points, points[1:]):
         kinds = {span.get("kind") for span in spans if (x := when(span.get("start")))

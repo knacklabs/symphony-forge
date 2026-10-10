@@ -584,7 +584,8 @@ def machine_board(top: Path, history: Item | None = None,
                     break
                 seen.add(previous)
                 notes = repo.run("git", "cat-file", "blob", previous, cwd=top).stdout
-            current.update(time_records.story(current["children"], read_rounds))
+            current.update(time_records.story(current["children"], read_rounds,
+                                              unfinished=current["stage"] != "done"))
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
     active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}

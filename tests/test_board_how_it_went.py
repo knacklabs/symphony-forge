@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from test_close import CLEAN, GREEN, STORY_DOC, body, blocked, env, finding, run  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, approve_story, body, blocked, env, finding, run  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
 from test_last_task_records_story_outcome import github_merge
@@ -35,9 +35,12 @@ def published(env, item, *, merged_at=None):
 
 @pytest.mark.parametrize("case,previous", [("shared-fix", False), ("shared-fix", True),
                                           ("story-runway", False), ("rebuilt-history", False),
-                                          ("question-wait", False), ("conflict-wait", False)],
+                                          ("question-wait", False), ("conflict-wait", False),
+                                          ("item-totals", False), ("approved-runway-known", False),
+                                          ("approved-runway-unknown", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
-                              "question-wait", "conflict-wait"])
+                              "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
+                              "approved-runway-unknown"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-runway":
         story_runway(env, monkeypatch)
@@ -50,6 +53,12 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
         return
     if case == "conflict-wait":
         conflict_wait(env, monkeypatch)
+        return
+    if case == "item-totals":
+        item_totals(env, monkeypatch)
+        return
+    if case.startswith("approved-runway-"):
+        approved_runway(env, monkeypatch, case == "approved-runway-known")
         return
     client(env, previous)
     # GitHub only returns requested fields, including for older PRs outside GraphQL's window.
@@ -114,7 +123,8 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     assert next_step.returncode == 0, next_step.stderr
     assert any("keep-basket" in line and "is ready" in line
                for line in next_step.stdout.splitlines())
-    for field in ("intervals", "time_breakdown", "rounds", "total_seconds"):
+    for field in ("intervals", "time_breakdown", "rounds", "total_seconds",
+                  "working_seconds", "waiting_seconds", "unknown_seconds"):
         assert on_a[field] == on_b[field], field
     # A's stale local logs must not erase B's reviews when A publishes next.
     env.repo.git("merge", "--no-edit", f"origin/fix/{item}", cwd=where)
@@ -157,6 +167,68 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     assert row(env.repo, item)["total_seconds"] == done["total_seconds"]
     assert done["time_breakdown"]["waiting_for_owner"] > on_b["time_breakdown"]["waiting_for_owner"]
     assert done["merged_by"] in ("Ana", {"login": "ana", "name": "Ana"})
+
+
+def item_totals(env, monkeypatch):
+    began = datetime(2026, 10, 10, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+    monkeypatch.setenv("FORGE_NOW", at(60))
+    state = {"steps": [{"step": "start", "at": at(0)}]}
+    fix, _ = env.start_fix(**state)
+    part, _ = env.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json", state,
+                        {"app.py": "print('saved basket')\n"})
+    events, timings = [], []
+    for item in (fix, part):
+        events.extend([
+            {"id": item + "-phase", "item": item, "round": 1, "event": "work phase", "phase": "building", "at": at(10)},
+            {"id": item + "-worker", "item": item, "round": 1, "event": "run start", "kind": "worker", "at": at(10)},
+            {"id": item + "-end", "item": item, "round": 1, "event": "run end", "kind": "worker", "run_id": item + "-worker", "at": at(20)},
+            {"id": item + "-wait", "item": item, "round": 1, "event": "owner wait start", "reason": "merge", "at": at(45)},
+            {"id": item + "-wait-end", "item": item, "round": 1, "event": "owner wait end", "wait_id": item + "-wait", "at": at(55)},
+        ])
+        timings.extend([
+            {"item": item, "round": 1, "step": "review", "start": at(25), "seconds": 5, "outcome": "clean"},
+            {"item": item, "round": 1, "step": "CI wait", "start": at(30), "seconds": 10, "outcome": "passed"},
+        ])
+    top = env.repo.path / ".git/forge"
+    top.mkdir(exist_ok=True)
+    for name, records in (("events", events), ("timings", timings)):
+        (top / f"{name}.jsonl").write_text("".join(json.dumps(record) + "\n" for record in records), "utf-8")
+    expected = [(0, 10, "unknown"), (10, 20, "working"), (20, 25, "unknown"),
+                (25, 30, "working"), (30, 40, "waiting"), (40, 45, "unknown"),
+                (45, 55, "waiting"), (55, 60, "unknown")]
+    for item in (fix, part):
+        current = row(env.repo, item)
+        assert [(interval["start"], interval["end"], interval["kind"]) for interval in current["intervals"]] == [
+            (at(start), at(end), kind) for start, end, kind in expected]
+        for kind, seconds in (("working", 15), ("waiting", 20), ("unknown", 25)):
+            assert current[f"{kind}_seconds"] == seconds
+        assert current["total_seconds"] == 60
+        assert current["time_breakdown"]["nothing_running"] == 15
+
+
+def approved_runway(env, monkeypatch, known):
+    began = datetime(2026, 10, 10, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+    monkeypatch.setenv("FORGE_NOW", at(60))
+    approve_story(env.repo, STORY_DOC)
+    listing = env.repo.git("worktree", "list", "--porcelain")
+    story_tree = next(Path(block.splitlines()[0].removeprefix("worktree "))
+                      for block in listing.split("\n\n") if "branch refs/heads/story/SHOP" in block)
+    notes = (story_tree / "plans/SHOP.read.md").read_text("utf-8")
+    notes = re.sub(r"^read_at:.*$", "read_at: " + at(0), notes, flags=re.M)
+    notes = re.sub(r"^seconds:.*\n", "", notes, flags=re.M)
+    if known:
+        notes = notes.replace("\n---", "\nseconds: 10\n---", 1)
+    env.commit(story_tree, "plans/SHOP.read.md", notes)
+    env.repo.git("push", "-q", "origin", "story/SHOP", cwd=story_tree)
+    current = row(env.repo, "SHOP")
+    assert current["approved_by"] == "Forge Test"
+    assert current["gates"]["plan_read"]["status"] == "passed"
+    assert current["children"] == []
+    assert current["total_seconds"] == (70 if known else 60)
+    assert current["time_breakdown"] == {"working": 10 if known else 0, "waiting": 0, "unknown": 60}
+    assert current["intervals"][-1] == {"start": at(0), "end": at(60), "kind": "unknown"}
 
 
 def question_wait(env, monkeypatch):

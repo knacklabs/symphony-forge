@@ -39,7 +39,7 @@ def _resumable_question(repo, monkeypatch, sdk_data):
     return folder, calls, turns, record, question
 
 
-@pytest.mark.parametrize("scenario", ("fresh", "resume", "interrupt"))
+@pytest.mark.parametrize("scenario", ("fresh", "resume", "interrupt", "offline-before-pr"))
 def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_data, gh,
                                                          scenario):
     if scenario == "resume":
@@ -49,6 +49,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
         _interrupted_answer_keeps_the_question_unanswered(repo, monkeypatch, sdk_data)
         return
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    if scenario == "offline-before-pr":
+        gh.respond("pr", "list", exit=1, stderr="GitHub is unavailable\n")
     question = "Question: May I use the existing parser?"
     monkeypatch.setenv("STUB_SAY", "\n\n" + question)
     before = repo.git("rev-list", "--count", "HEAD", cwd=folder)
@@ -82,6 +84,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     brief = _sent(calls, "turn/start")[-1]["input"][0]["text"]
     assert question in brief and "Yes, use it." in brief
     assert json.loads(record.read_text("utf-8"))["question"] is None
+    if scenario == "offline-before-pr":
+        assert not [call for call in gh.calls() if call[:2] == ["pr", "list"]]
 
 
 def _answer_continues_the_same_conversation(repo, monkeypatch, sdk_data):

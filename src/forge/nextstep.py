@@ -637,7 +637,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:
         return []
-    if status == "ready" and not path:
+    if status == "ready" and not path and repo.merge_setting(top) == "agent":
         from forge import task
         starter = task.starters(top).get(repo.state_path(item)) or "The person who started it"
         return [f"{label} is ready; {starter} merges it from its worktree."]
