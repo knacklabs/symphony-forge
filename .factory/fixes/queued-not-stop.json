@@ -9,31 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "00455c65902d865669a7d9b7fc2f2137797108295c9526842191a17befb20949",
-    "changed": "453ecb88fd935cddd66a5d3dff448cdbd37c09c6012eb66b456c95e7c14a932c",
-    "commit": "22a7d8aa1c77e9cf17bcafe60a3208663b5e5174",
+    "branch_diff": "2faa34e4f8308653ea6944df5d4b411692fe925a449c2bc1a3d3268017051c32",
+    "changed": "fbfb18d70c118594ee9c3a5e72540130e91b6fe24a8368e1e13e6636a50db0ec",
+    "commit": "4a77b0be1ad501fb9d2c70349ee0b9a2dcc158fb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Functional. Doctor never diagnoses a missing runner from real GitHub check responses. The [check-runs API](https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference) does not expose a top-level `created_at`. Accessing it here raises KeyError, which is swallowed; `queued` remains false and the function returns before inspecting runner history. The passing proofs invent that field in tests/test_queued_checks_keep_waiting.py:54, tests/test_ci_waits_for_busy_runners.py:115 and tests/test_ci_runner_selection.py:124, masking the defect for both client histories. Use an available GitHub timestamp and make those fixtures reflect the actual response contract. This API-contract evidence is independent of the recorded ruling about bounded history sampling.",
-        "file": "src/forge/checks.py",
-        "line": 121,
-        "priority": "P1",
-        "title": "Not done: doctor detects a runner that never picks anything up"
-      },
-      {
-        "body": "Raise: Functional. The new endpoint contains an unescaped `&`. src/forge/repo.py:118 passes it through subprocess without shell escaping, while tests/conftest.py:70 installs the fake GitHub CLI as `gh.cmd` on Windows. [Python documents](https://docs.python.org/3.11/library/subprocess.html#security-considerations) that command scripts can undergo shell parsing even with shell=False. The query therefore splits into two commands: gh receives the endpoint without the date filter, and cmd attempts to execute `created=...`. Doctor reports a GitHub-access failure instead of the runner diagnosis, and the new diagnostic proofs fail in the Windows suite configured at .github/workflows/forge-next.yml:54\u201380. Preserve the complete query when passing through supported command shims.",
-        "file": "src/forge/checks.py",
-        "line": 129,
-        "priority": "P1",
-        "title": "Preserve the history query through Windows command shims"
-      }
-    ],
-    "id": "26c7df0d-9e31-4ad3-ac87-169789c336cf",
-    "status": "blocked"
+    "findings": [],
+    "id": "130a8bb6-8cc6-4d2c-8172-31fb5d5ea3f5",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T12:16:17+00:00",
@@ -85,6 +70,10 @@
     },
     {
       "at": "2026-10-10T02:21:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:15:13+00:00",
       "step": "review"
     }
   ],
