@@ -2,16 +2,30 @@
   "base": "a729e9f3e557f8a555eb9171ff8ed13119beb34e",
   "branch": "fix/no-bare-flip",
   "done_when": "No test and no Forge command can change the real repository's git settings through an inherited git environment: an autouse fixture clears GIT_* variables for every test, not only tests using the repo fixture; Forge's own temporary-repository git calls (migrate's source fetch) run without GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE; one command test runs those paths with GIT_DIR pointing at a separate sentinel repository and checks its core.bare stays false; new and existing client repos get the migrate change on upgrade",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b4ab53c36dc3eeb0484e6c247097fe96e3cee787594cfac24afdcb92aecc131c",
+    "changed": "0ced30a6b431eac7b9e6891098866a0ff9784c882b07ca8f0b9f8c7a2a8315d8",
+    "commit": "11de415ec5468e336052fbe19fb4761ca8bd868d",
+    "dismissals": [],
+    "findings": [],
+    "id": "3ecfbd35-f5d6-4f03-8d89-11621f3780fa",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T05:02:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T09:24:05+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 1960037271e62b3800610f5a98de5823f813c234` exited with status 1 on this machine.\n        other = env.tmp / \"other repo\"\n        env.repo.git(\"clone\", \"-q\", \"--no-hardlinks\", str(env.repo.path), str(other))\n        env.repo.git(\"remote\", \"set-url\", \"origin\", env.repo.git(\"remote\", \"get-url\", \"origin\"),\n                     cwd=other)\n        other_env = Forge(Repo(other, env.repo.bin), env.gh, env.tmp)\n        second, _ = other_env.start(\"other-fix\", \"fix/other-fix\", \".factory/fixes/other-fix.json\",\n                                    {\"kind\": \"fix\", \"why\": \"Other\", \"done_when\": \"Other is done\"},\n                                    {\"other.py\": \"x = 2\\n\"})\n        one = _close(env, first)\n        deadline = time.monotonic() + 30\n        while _runs(log) != [\"start fix-tidy-readme\"]:  # the first close is inside its test run\n            assert time.monotonic() < deadline and one.poll() is None, one.communicate()\n            time.sleep(0.05)\n        two = _close(other_env, second)\n        said = \"\"\n        while \"waits its turn: it is number 1 in line.\" not in said:  # the second close says it waits before its run starts\n            line = two.stdout.readline()\n>           assert line, two.communicate()\nE           AssertionError: ('', 'autoreview done\nE             ')\nE           assert ''\n\ntests/test_fix_close_reruns_the_full_test_command_even.py:101: AssertionError\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n1 failed, 1947 passed, 5 skipped in 3402.33s (0:56:42)",
   "why": "Forge's own repo was switched to a bare repository (core.bare = true) while tests ran, which stopped every git command in its main checkout and worktrees",
   "worker": "codex"
 }
