@@ -136,7 +136,19 @@ def close(args: argparse.Namespace) -> int:
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
-    _merge_default(top, item, branch, default)
+    try:
+        _merge_default(top, item, branch, default)
+    except repo.Refused as error:
+        if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
+            if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
+                repo.record_event(top, item, "owner wait start", reason="merge conflict")
+            _push(top, branch)
+            _publish(top, item, state, branch, default, pr,
+                     {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
+        raise
+    if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
+        repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
+        _refresh_record(top, item, state, pr)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:
@@ -188,7 +200,7 @@ def close(args: argparse.Namespace) -> int:
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
     if not fresh:
-        if pending := time_records.pending_merge_wait(top, item):
+        if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
@@ -309,13 +321,14 @@ def close(args: argparse.Namespace) -> int:
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
     if merge == "human":
-        pending = time_records.pending_merge_wait(top, item)
+        pending = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
         _publish(top, item, state, branch, default, pr, result, evidence)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
+    _publish(top, item, state, branch, default, pr, result, evidence)
     if merge == "agent":
         print(f"Ready: {item} has a clean review and green checks.")
         print(f"Next: forge merge {item}")
@@ -594,6 +607,18 @@ def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
                          "--json", "number,state,body,isDraft"))
     return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
                 None)
+
+
+def _refresh_record(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | None = None) -> str:
+    pr = pr or _pull_request(top, state.get("branch") or repo.current_branch(top))
+    if not pr:
+        return ""
+    body = time_records.refresh_record(top, item, state, pr.get("body") or "")
+    if body != (pr.get("body") or ""):
+        path = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
+        path.write_bytes(body.encode("utf-8"))
+        _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(path))
+    return body
 
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,

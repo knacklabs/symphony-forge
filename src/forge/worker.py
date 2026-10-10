@@ -110,6 +110,8 @@ def work(args: argparse.Namespace) -> None:
           f"because {why}", flush=True)
     if note is not None and (pending := codex.record(top, item).get("question_id")):
         repo.record_event(top, item, "owner wait end", wait_id=pending)
+        from forge import close
+        close._refresh_record(top, item, state)
     from forge import time_records
     if pending_merge := time_records.pending_merge_wait(top, item):
         repo.record_event(top, item, "owner wait end", wait_id=pending_merge["id"])
@@ -171,6 +173,7 @@ def work(args: argparse.Namespace) -> None:
         nudge = COMMIT_NUDGE
         outcome = "failed"
         final = None
+        asked = ""
         nudged = ""
         try:
             if not on_codex:
@@ -254,6 +257,9 @@ def work(args: argparse.Namespace) -> None:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
+            if asked or note is not None:
+                from forge import close
+                close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
                       f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")

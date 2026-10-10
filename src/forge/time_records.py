@@ -1,6 +1,7 @@
-"""An item's elapsed time and review history, derived from its existing diagnostic logs."""
+"""Elapsed time and review history, shared through pull requests and local observations."""
 import json
 import hashlib
+import math
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -43,14 +44,32 @@ def when(value: Any) -> datetime | None:
 
 
 def duration(value: float | None) -> str:
-    return "unknown" if value is None else f"{value:g}s"
+    return plain(value)
 
 
-def pending_merge_wait(top: Path, key: str) -> dict[str, Any] | None:
-    events = [event for event in read(top, "events") if event.get("item") == key]
+def plain(seconds: float | None) -> str:
+    if seconds is None:
+        return "unknown"
+    value = max(0, round(seconds))
+    if value < 60:
+        return f"{value} second" + ("s" if value != 1 else "")
+    minutes = round(value / 60)
+    if minutes < 60:
+        return f"{minutes} minute" + ("s" if minutes != 1 else "")
+    hours, minutes = divmod(minutes, 60)
+    if hours < 24:
+        return f"{hours} hour" + ("s" if hours != 1 else "") + (
+            f" {minutes} minute" + ("s" if minutes != 1 else "") if minutes else "")
+    days = round(value / 86400)
+    return f"{days} day" + ("s" if days != 1 else "")
+
+
+def pending_merge_wait(top: Path, key: str, published: str = "", *, reason: str = "merge") -> dict[str, Any] | None:
+    events = [event for event in [*from_body(published).get("events", []), *read(top, "events")]
+              if event.get("item") == key]
     ended = {event.get("wait_id") for event in events if event.get("event") == "owner wait end"}
     return next((event for event in reversed(events) if event.get("event") == "owner wait start"
-                 and event.get("reason") == "merge" and event.get("id") not in ended), None)
+                 and event.get("reason") == reason and event.get("id") not in ended), None)
 
 
 def item(top: Path, key: str, state: dict[str, Any], *,
@@ -205,6 +224,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     if not merged and end and recorded_end:
         end = max(end, recorded_end)  # Completed monotonic durations are more precise than now's whole seconds.
     bound = end or recorded_end
+    intervals = []
     if start and bound:
         points = sorted({start, bound, *[max(start, min(bound, p)) for a, b, _, _ in spans for p in (a, b)],
                          *([max(start, min(bound, complete_since))] if complete_since else []),
@@ -215,6 +235,9 @@ def item(top: Path, key: str, state: dict[str, Any], *,
             covering = [(category, number) for x, y, category, number in spans if x <= a and y >= b]
             category, number = min(covering, key=lambda c: priority.index(c[0])) if covering else (
                 "nothing_running" if end and complete_since and a >= complete_since else "unknown", None)
+            intervals.append({"start": a.isoformat(), "end": b.isoformat(), "category": category,
+                              "kind": "working" if category in CATEGORIES[:4] else
+                                      "waiting" if category in CATEGORIES[4:7] else "unknown"})
             if category == "unknown":
                 continue
             seconds = (b - a).total_seconds()
@@ -289,21 +312,37 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         rounds.append({"round": number, "worker_round": worker_round,
                        "line": f"Round {number if number is not None else 'unknown'}: " + "; ".join(steps),
                        "findings": findings, "new_findings": fresh, "repeat_findings": repeats})
-    return {"time_breakdown": totals, "rounds": rounds,
+    return {"time_breakdown": totals, "rounds": rounds, "intervals": intervals,
+            "events": events, "timings": timings, "state": state, "ended_at": ended_at,
             "total_seconds": round((end - start).total_seconds(), 3) if start and end and end >= start else None}
 
 
 def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "") -> str:
     records = {name: [row for row in read(top, name) if row.get("item") == key]
                for name in ("events", "timings")}
-    data = item(top, key, state, **records)
+    data = merged(item(top, key, state, **records), from_body(published))
+    data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
+                                  for r in [*data.get("clean_reviews", []),
+                                            *[e for e in data["events"] if e.get("event") == "review result"
+                                              and e.get("outcome") == "clean"]]}.values())
+    try:
+        ready = json.loads(repo.ready_path(key, top).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ready = {}
+    head = repo.git("rev-parse", "HEAD", cwd=top)
+    data["ready"] = None
+    if ready.get("commit") == head and ready.get("review") == "clean":
+        data["ready"] = {"commit": head, "review": "clean"}
+        if review := state.get("review"):
+            data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
+                                          for r in [*data["clean_reviews"], review]}.values())
     times = "; ".join(f"{label}: {duration(data['time_breakdown'][category])}"
                       for category, label in zip(CATEGORIES, LABELS))
     current = times + "\n\n" + "\n".join(r["line"] for r in data["rounds"])
     managed = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", published, re.S)
     previous = HISTORY_SECTION.search(managed[0]) if managed else None
-    retained = ""
-    if previous:
+    retained = data.get("legacy_text") or ""
+    if previous and not from_body(published):
         text = previous[0].removeprefix("## How it went\n").strip()
         marker = re.search(r"\n<!-- forge:history (\{.*\}) -->\s*$", text)
         complete = False
@@ -321,8 +360,114 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "")
         if complete and RESUMED not in text:
             retained = ""
     if retained:
+        data["legacy_text"] = retained
         current = (retained + "\n\n" + RESUMED + "\n\n"
                    "Observed after resuming in this checkout (totals are separate from the "
                    "published measurements above):\n\n" + current)
+    if data.get("rebuilt"):
+        current = "Rebuilt from history.\n\n" + current
     saved = {name: checkpoint(rows) for name, rows in records.items()}
-    return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->"
+    shared = {**data, "state": {"steps": [s for s in data["state"].get("steps", []) if s.get("step") == "start"]}}
+    return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->" + \
+        "\n<!-- forge:time-record " + json.dumps(shared, separators=(",", ":")) + " -->"
+
+
+def from_body(body: str) -> dict[str, Any]:
+    block = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", body or "", re.S)
+    match = re.search(r"<!-- forge:time-record (\{.*?\}) -->", block[0], re.S) if block else None
+    try:
+        data = json.loads(match[1]) if match else {}
+        if not isinstance(data, dict) or not all(
+            isinstance(data.get(name), list) and all(isinstance(row, dict) for row in data[name])
+            for name in ("events", "timings")):
+            return {}
+        if not isinstance(data.get("state", {}), dict) or not isinstance(data.get("ready") or {}, dict):
+            return {}
+        steps = data.get("state", {}).get("steps", [])
+        reviews = data.get("clean_reviews", [])
+        if not isinstance(steps, list) or not isinstance(reviews, list):
+            return {}
+        if not isinstance(data.get("legacy_text") or "", str):
+            return {}
+        for row in [*data["events"], *data["timings"], *steps, *reviews]:
+            if not isinstance(row, dict) or any(row.get(key) is not None and not isinstance(row[key], str)
+                    for key in ("id", "run_id", "lane_id", "wait_id", "at", "start", "step", "event",
+                                "kind", "phase", "outcome", "commit")):
+                return {}
+            if any(row.get(key) is not None and not isinstance(row[key], int)
+                   for key in ("round", "review_round")):
+                return {}
+            if row.get("phase") is not None and row["phase"] not in ("building", "fixing_findings", "unknown"):
+                return {}
+            seconds = row.get("seconds")
+            if seconds is not None and (not isinstance(seconds, (int, float)) or
+                                        not math.isfinite(seconds) or seconds < 0):
+                return {}
+            findings = row.get("findings")
+            if findings is not None and (not isinstance(findings, list) or any(
+                    not isinstance(f, dict) or any(f.get(key) is not None and not isinstance(f[key], str)
+                        for key in ("file", "title", "priority")) for f in findings)):
+                return {}
+        return data
+    except (ValueError, TypeError):
+        return {}
+
+
+def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
+    """Union observations, then derive once so overlapping snapshots never add time."""
+    if not published:
+        return {**local, "source": "local"}
+    rows = {}
+    for name in ("events", "timings"):
+        unique = {}
+        for row in [*published.get(name, []), *local.get(name, [])]:
+            identity = row.get("id") if name == "events" else None
+            unique.setdefault(identity or json.dumps(row, sort_keys=True), {**row})
+        rows[name] = sorted(unique.values(), key=lambda row: row.get("at") or row.get("start") or "")
+    reviews = [r for r in rows["events"] if r.get("event") == "review result"]
+    if reviews and reviews[0].get("review_round") == 1:
+        for number, result in enumerate(reviews, 1):
+            if result.get("review_round") is None and isinstance(result.get("findings"), list):
+                result["review_round"] = number
+    state = {**published.get("state", {}), **local.get("state", {})}
+    starts = [step for data in (local, published) for step in data.get("state", {}).get("steps", [])
+              if step.get("step") == "start" and when(step.get("at"))]
+    if starts:
+        state = {**state, "steps": [min(starts, key=lambda step: step["at"])]}
+    data = item(Path("."), "", state, events=[{**r, "item": ""} for r in rows["events"]],
+                timings=[{**r, "item": ""} for r in rows["timings"]], ended_at=local.get("ended_at"))
+    data.update(rows, source="pull request and local" if local.get("events") or local.get("timings")
+                else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")))
+    data["ready"] = published.get("ready")
+    data["legacy_text"] = published.get("legacy_text")
+    data["clean_reviews"] = list({r.get("id") or r.get("commit"): r for r in
+                                  [*published.get("clean_reviews", []), *local.get("clean_reviews", [])]}.values())
+    return data
+
+
+def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str:
+    history = how_it_went(top, key, state, body)
+    def replace(block: re.Match[str]) -> str:
+        text, count = HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
+        return text if count else text.replace("<!-- forge:end -->", history + "\n<!-- forge:end -->", 1)
+    return re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", replace, body, count=1, flags=re.S)
+
+
+def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]]) -> dict[str, Any]:
+    spans = [span for part in parts for span in part.get("intervals", [])]
+    for read in read_rounds:
+        end, seconds = when(read.get("read_at")), read.get("seconds")
+        if end:
+            known = isinstance(seconds, (float, int)) and seconds >= 0
+            spans.append({"start": (end - timedelta(seconds=seconds if known else 0)).isoformat(),
+                          "end": end.isoformat(), "kind": "working" if known else "unknown"})
+    points = sorted({at for span in spans for name in ("start", "end") if (at := when(span.get(name)))})
+    intervals, totals = [], dict.fromkeys(("working", "waiting", "unknown"), 0.0)
+    for a, b in zip(points, points[1:]):
+        kinds = {span.get("kind") for span in spans if (x := when(span.get("start")))
+                 and (y := when(span.get("end"))) and x <= a and y >= b}
+        kind = "working" if "working" in kinds else "waiting" if "waiting" in kinds else "unknown"
+        totals[kind] += (b - a).total_seconds()
+        intervals.append({"start": a.isoformat(), "end": b.isoformat(), "kind": kind})
+    return {"intervals": intervals, "time_breakdown": totals,
+            "total_seconds": sum(totals.values()) if points else None}

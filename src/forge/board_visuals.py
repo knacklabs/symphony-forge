@@ -74,13 +74,8 @@ def dependencies(stories: list[dict]) -> str:
 
 
 def _duration(seconds: float | None) -> str:
-    if seconds is None:
-        return "unknown"
-    hours, remainder = divmod(seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    values = [(hours, "hour"), (minutes, "minute"), (seconds, "second")]
-    return " ".join(f'{value:g} {unit}{"" if value == 1 else "s"}'
-                    for value, unit in values if value) or "0 seconds"
+    from forge.time_records import plain
+    return plain(seconds)
 
 
 def timeline(item: dict) -> str:

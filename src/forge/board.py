@@ -77,7 +77,7 @@ def repo_root(top: Path) -> str:
 CHECKS_QUERY = """query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes { number headRefName headRefOid title url isDraft
+      nodes { number headRefName headRefOid title url isDraft body
         commits(last: 1) { nodes { commit { statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
@@ -204,14 +204,16 @@ def machine_board(top: Path, history: Item | None = None,
     # A capped all-state snapshot may omit older open or merged PRs.
     complete = prs_snapshot is not None and len(prs_snapshot) < 1000
     older = ([p for p in prs_snapshot if p.get("state") == "OPEN"] if complete else
-             nextstep._prs(top, "open", "number,headRefName,url,isDraft"))
+             nextstep._prs(top, "open", "number,headRefName,headRefOid,url,isDraft,body"))
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
-    merged_dates = {p["headRefName"]: p.get("mergedAt") for p in (prs_snapshot if complete else
-                    nextstep._prs(top, "merged", "headRefName,mergedAt"))
-                    if (not complete or p.get("state") == "MERGED")
-                    and isinstance(p.get("headRefName"), str)}
-    merged_prs = set(merged_dates) if trees else set()
+    finished_prs = [p for p in (prs_snapshot if complete else
+                    nextstep._prs(top, "merged", "headRefName,headRefOid,state,mergedAt,mergedBy,body"))
+                    if p.get("state", "MERGED") == "MERGED"
+                    and isinstance(p.get("headRefName"), str)]
+    by_branch.update({p["headRefName"]: p for p in finished_prs})
+    merged_dates = {p["headRefName"]: p.get("mergedAt") for p in finished_prs}
+    merged_prs = set(merged_dates)
     readiness: dict[str, Item] = {}
     timings, recorded = time_records.read(top, "timings"), time_records.read(top, "events")
 
@@ -333,7 +335,7 @@ def machine_board(top: Path, history: Item | None = None,
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
                 stages[-1]["elapsed"] = elapsed(live[0].get("at"))
-        stage, receipt = (nextstep._item_readiness(item, state, top, checks)
+        stage, receipt = (nextstep._item_readiness(item, state, top, checks, pr)
                           if kind != "story" else (state.get("status"), {}))
         stage = stage or "unknown"
         pending = codex.record(top, item).get("question_id")
@@ -394,11 +396,12 @@ def machine_board(top: Path, history: Item | None = None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                **(time_records.item(top, item, state, events=recorded, timings=timings,
-                                     ended_at=merged_dates.get(branch)) if kind != "story" else {
-                    "total_seconds": sum(r.get("seconds") or 0 for r in timings
-                                         if r.get("item") == item and r.get("round") is not None)
-                                     if round_number is not None else None}),
+                "merged_by": (pr or {}).get("mergedBy"),
+                **({k: v for k, v in time_records.merged(
+                    time_records.item(top, item, state, events=recorded, timings=timings,
+                                      ended_at=merged_dates.get(branch)),
+                    time_records.from_body((pr or {}).get("body") or "")).items()
+                    if k not in ("events", "timings", "state", "ended_at")} if kind != "story" else {}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 
@@ -438,6 +441,23 @@ def machine_board(top: Path, history: Item | None = None,
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
                 item["children"].append(child)
+    for key, current in items.items():
+        if current["kind"] == "story":
+            notes = _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
+            read_rounds, seen = [], set()
+            while notes:
+                record, _ = story._record(notes)
+                try:
+                    seconds = float(record["seconds"])
+                except (KeyError, ValueError):
+                    seconds = None
+                read_rounds.append({"read_at": record.get("read_at"), "seconds": seconds})
+                previous = record.get("notes_seen")
+                if not previous or previous in seen:
+                    break
+                seen.add(previous)
+                notes = repo.run("git", "cat-file", "blob", previous, cwd=top).stdout
+            current.update(time_records.story(current["children"], read_rounds))
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
     active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}
@@ -687,7 +707,7 @@ def _prs(top: Path) -> list[Item] | None:
         return None
     # GitHub times out on this repo when it resolves files and checks for every pull request.
     done = repo.run("gh", "pr", "list", "--state", "all", "--limit", "1000", "--json",
-                    "headRefName,state,title,body,mergedAt,url", cwd=top)
+                    "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url", cwd=top)
     try:
         prs = json.loads(done.stdout) if done.returncode == 0 else None
     except ValueError:
@@ -695,7 +715,7 @@ def _prs(top: Path) -> list[Item] | None:
     if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
         return None
     recent = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "25", "--json",
-                      "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup", cwd=top)
+                      "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", cwd=top)
     try:
         details = json.loads(recent.stdout) if recent.returncode == 0 else []
     except ValueError:
@@ -860,11 +880,8 @@ def _working_days(start: datetime, end: datetime) -> int:
 
 
 def _took(delta: timedelta) -> str:
-    minutes = max(1, round(delta.total_seconds() / 60))
-    days, rest = divmod(minutes, 24 * 60)
-    hours, minutes = divmod(rest, 60)
-    shown = [(days, "day"), (hours, "hour")] if days else [(hours, "hour"), (minutes, "minute")]
-    return " ".join(_n(n, word) for n, word in shown if n)
+    from forge.time_records import plain
+    return plain(delta.total_seconds())
 
 
 def _n(n: float, word: str) -> str:

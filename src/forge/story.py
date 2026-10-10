@@ -31,6 +31,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -70,7 +71,7 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen")
+RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
@@ -221,8 +222,10 @@ def read(args: Any) -> int:
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
         with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
+            clock = time.monotonic()
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why, round_number)
+            read_seconds = time.monotonic() - clock
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
@@ -236,8 +239,10 @@ def read(args: Any) -> int:
                 name = (prefix.rstrip(" -") if name[59] in " -" else
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
+            clock = time.monotonic()
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
                             fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number)
+            read_seconds = time.monotonic() - clock
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
@@ -272,7 +277,7 @@ def read(args: Any) -> int:
     record = {"reader": f"{reader} ({model})" + (
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
                   if reader == here else ""),
-              "read_at": repo.now(), "read_hash": read_hash,
+              "read_at": repo.now(), "seconds": str(round(read_seconds, 3)), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8"))}

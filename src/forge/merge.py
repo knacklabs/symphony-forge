@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, repo, story, task, time_records
+from forge import checks, close, codex, githooks, repo, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -81,18 +81,8 @@ def merge(args: argparse.Namespace) -> int:
         checks.wait(worktree, item, head, config["checks"],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
         completion = ["--body-file", "-"]
-        body = pr.get("body") or ""
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
-        history = time_records.how_it_went(top, item, item_state, body)
-        def refresh_history(block: re.Match[str]) -> str:
-            text, count = time_records.HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
-            return text if count else text.replace(close.END, "\n" + history + "\n" + close.END, 1)
-        body = re.sub(re.escape(close.BEGIN) + ".*?" + re.escape(close.END),
-                      refresh_history, body, count=1, flags=re.S)
-        if body != (pr.get("body") or ""):
-            body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
-            body_file.write_bytes(body.encode("utf-8"))
-            close._gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
+        body = close._refresh_record(top, item, item_state, pr)
         if "/" in item:
             key, tid = item.split("/")
             state = story.json_of(story.show(top, head, repo.state_path(key)))
