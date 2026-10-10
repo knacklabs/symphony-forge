@@ -9,13 +9,46 @@
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/codex-fast-when-needed",
   "done_when": "Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for an item that other planned work waits on, and run normally otherwise or when the model has no Fast tier; one forge.toml setting turns Fast off or always on; forge doctor shows which applies, and upgrading tells existing repos in one line that Fast is now on for quick work. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/codex.py",
+    "tests/test_codex_fast_when_work_waits.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5a9f2687945c19e7ecca92a29c738910abf8e28e5e961229822e2294bbb740d6",
+    "changed": "1793b203656374dbdbae0ed7b105900ec14874a131940d84324d94090d70a287",
+    "commit": "705b414d32438fa40c08bbd7d6731162ec23a800",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. A first `forge work` on a standalone fix is classified as `Lite` with round 1 (`src/forge/worker.py:106` and `:153`). This condition enables Fast only after round 1 or when another planned item waits, so every first-round fix runs at normal speed. The shipped guide (`src/forge/templates/skill.md:874`), doctor text (`src/forge/doctor.py:427`), and upgrade notice (`src/forge/sync.py:519`) also omit fixes from the stated default policy.",
+        "file": "src/forge/codex.py",
+        "line": 264,
+        "priority": "P1",
+        "title": "Not done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for"
+      },
+      {
+        "body": "Raise: Test. The named command-level Fast test runs only `BOARD/PAGE` and `BOARD/HELP`, both planned tasks. No test starts a standalone fix and asserts that its first Codex turn uses Fast. Consequently the 49 passing tests do not catch the missing every-fix behavior. The doctor and upgrade tests likewise assert the older policy wording without fixes.",
+        "file": "tests/test_codex_fast_when_work_waits.py",
+        "line": 43,
+        "priority": "P1",
+        "title": "Not done: first-round fix Fast coverage"
+      }
+    ],
+    "id": "84676b32-83f0-4e65-8da4-6efd2d962760",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:34:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T17:07:35.167058+00:00",
+      "step": "review"
     }
   ],
   "why": "Codex offers a Fast mode at about twice the speed and Forge never uses it",
