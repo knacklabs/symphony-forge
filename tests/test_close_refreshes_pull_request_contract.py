@@ -13,7 +13,7 @@ STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_1_close_replaces_done_when_after_amend_and_preserves_human_notes(env, previous):
+def test_2_close_replaces_done_when_after_amend_and_preserves_human_notes(env, previous):
     client(env, previous)
     item, where = env.start_fix()
     first = env.close(item)
@@ -35,7 +35,7 @@ def test_1_close_replaces_done_when_after_amend_and_preserves_human_notes(env, p
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_2_close_reads_story_title_as_utf8_in_a_legacy_locale(env, previous, monkeypatch):
+def test_4_close_reads_story_title_as_utf8_in_a_legacy_locale(env, previous, monkeypatch):
     client(env, previous)
     title = "Shoppers save a basket 雪"
     env.commit(env.repo.path, "plans/SHOP.md",

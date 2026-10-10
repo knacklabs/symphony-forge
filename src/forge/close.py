@@ -467,7 +467,8 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
                                 f"git+https://github.com/knacklabs/symphony-forge@{release}",
                                 "--python", sys.executable, "python", "-I", "-c", script, cwd=top)
             else:
-                package = json.dumps(Path(__file__).resolve().parent.parent.as_posix())
+                package = json.dumps((top / "src" if cfg.get("repo") == "forge-source"
+                                      else Path(__file__).resolve().parent.parent).as_posix())
                 done = repo.run(sys.executable, "-c",
                                 f"import sys; sys.path.insert(0, {package}); {script}", cwd=top)
             done.check_returncode()

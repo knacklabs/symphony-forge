@@ -11,12 +11,12 @@ from test_close import env  # noqa: F401
 from test_review_record_reuses_parent_tests import suite_runs
 from test_setup import _fresh_client
 
-STORY = "FIX-SKIPPED-CLOSE"
+STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("client_kind", ["new", "previous"])
 @pytest.mark.parametrize("review_case", ["none", "existing", "new"])
-def test_close_test_state_change_reuses_parent_ci(env, tmp_path, monkeypatch,
+def test_3_close_test_state_change_reuses_parent_ci(env, tmp_path, monkeypatch,
                                                  client_kind, review_case):
     # The existing owner tests review-only records and contract edits. This regression
     # exercises the test receipt close removes after passing its local test command.

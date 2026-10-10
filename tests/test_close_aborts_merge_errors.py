@@ -14,7 +14,7 @@ STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_close_aborts_merge_when_conflicted_source_raises_syntax_error(env, previous):
+def test_5_close_aborts_merge_when_conflicted_source_raises_syntax_error(env, previous):
     client(env, previous)
     repo = env.repo
     shutil.copytree(conftest.ROOT / "src", repo.path / "src",
@@ -37,7 +37,7 @@ def test_close_aborts_merge_when_conflicted_source_raises_syntax_error(env, prev
     before = repo.git("rev-parse", "HEAD", cwd=where)
     closed = repo.forge("close", item, cwd=where)
     assert closed.returncode == 1, closed.stdout + closed.stderr
-    assert "the merge was aborted" in closed.stderr
+    assert "Merging main into fix/tidy-readme failed; the merge was aborted:" in closed.stderr
     assert "invalid syntax" in closed.stderr
     assert f"Next: forge close {item}" in closed.stderr
     assert repo.git("rev-parse", "HEAD", cwd=where) == before

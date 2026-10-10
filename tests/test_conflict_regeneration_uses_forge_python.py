@@ -14,7 +14,7 @@ STORY = "skipped-close"
 
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
 @pytest.mark.parametrize("stage", ["close-guide-conflict", "land-guide-conflict"])
-def test_1_conflict_regeneration_uses_forge_python_despite_client_pin(
+def test_6_conflict_regeneration_uses_forge_python_despite_client_pin(
         land, adoption, stage, monkeypatch):
     earlier = repin._earlier_release
 
