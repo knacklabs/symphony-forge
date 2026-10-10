@@ -10,6 +10,9 @@ def test_9_synced_guides_explain_tools_and_the_session_handoff(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\ntest = "true"\n')
     template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
+    # Fixture sync cannot detect stale guides delivered in this checkout.
+    for host in (".claude", ".codex"):
+        assert (ROOT / host / "skills/forge/SKILL.md").read_text(encoding="utf-8") == template
     for adopted in (False, True):
         if adopted:
             for host in (".claude", ".codex"):

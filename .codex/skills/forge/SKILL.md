@@ -207,12 +207,22 @@ dependencies omitted from active rows. Arrows point to the waiting part; labels 
 distinguish merged, running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 `stage_counts` counts each roadmap story and fix once, including recorded completed items;
-parts belong to their parent story's count. The page shows those six totals in one line:
+`kind_stage_counts` separates those totals into `stories` and `fixes`. Parts belong to their
+parent story's count. The page labels the two groups separately, with six totals each:
 needs a spec, planning, waiting for approval, building, ready to merge and done.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
-get it after upgrading Forge and syncing.
+get it after upgrading Forge and syncing. Cards and JSON use the same `status` and `took`
+derivation; running stages include their elapsed time. Roadmap completion marks the story
+and its parts finished. Finished items never stall; idle items past one day expose
+`stalled`, `idle_seconds`, and `waits_on`. A story's idle clock includes its parts' activity;
+a running part keeps the story active and a finished part resets its idle clock, including
+a merge reported by GitHub before its commit is fetched. An older
+worker round or a worker whose recorded lock is demonstrably dead is not a live run.
+Live readers, workers and reviews take precedence
+over a saved status, including in `forge next`. Approval history uses one display name per
+Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
@@ -741,7 +751,11 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
-- Keep tasks small: at most three Done-when items and about 400 changed lines each.
+- Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
+  additions and removals outside tests. Close stops a part over 400 lines before review;
+  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
+  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+- Keep each part's builder notes to its goal, files and one test per rule.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
@@ -778,6 +792,13 @@ the upgrade before Forge can forward the command to the checkout's older release
 story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
+
+**Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
+answers and fixed or dismissed findings, including the coordinator's recorded work notes.
+Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
+they cannot block or start another round. A new defect needs distinct text and new evidence.
+Human acceptance still expires when the accepted version changes. New repos get this on init;
+existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
@@ -970,8 +991,8 @@ When a worker round or close's merge changes the item's Forge pin, land and clos
 line and continue through uv under that release before reading its new settings.
 Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
 before the original land or close command continues.
-Next lets failed pull request checks choose the next step only when that pull request's head
-matches the local branch head; after a local repair, follow the current local step.
+The board and next use failed pull request checks only when they belong to that pull request's
+current head, including branches that exist only on the remote or are ahead of the local branch.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
