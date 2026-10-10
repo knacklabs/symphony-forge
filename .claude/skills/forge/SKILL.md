@@ -79,11 +79,15 @@ it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
 it after upgrading Forge and syncing. The jobs set up uv and Python, and install
 Node for Node tests, respecting version files or engines with Node 22 as the fallback.
-If the current branch's pull request checks stay queued for at least five minutes and no job
-in this repo using the configured runner has started during that queue, `forge doctor`, close
-and land name the runner setting. Make a matching runner available or correct the setting and
-sync; keep the required checks enabled. If a matching job has started, the pool is busy: close
-and land keep their normal check waits, and doctor gives no missing-runner warning.
+Close and land keep waiting while checks are queued. The wait line shows minutes observed
+queued during this wait: shared runners may be busy or no runner may match the runner setting.
+Only `forge doctor` reports a likely missing runner, when a current check has been queued at
+least five minutes and no matching job started in its sample of this repo's runs created in
+the last seven days. It reads at most 100 newest runs, skips successful runs, and reads one
+page of latest jobs per remaining run, without earlier attempts or older runs. Make a
+matching runner available or correct the setting; run `forge sync` only if you
+change the runner setting. Keep the required checks enabled. New and upgraded repos get the
+same waiting and doctor behaviour from the upgraded Forge commands.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
@@ -174,17 +178,28 @@ dependencies omitted from active rows. Arrows point to the waiting part; labels 
 distinguish merged, running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 `stage_counts` counts each roadmap story and fix once, including recorded completed items;
-parts belong to their parent story's count. The page shows those six totals in one line:
+`kind_stage_counts` separates those totals into `stories` and `fixes`. Parts belong to their
+parent story's count. The page labels the two groups separately, with six totals each:
 needs a spec, planning, waiting for approval, building, ready to merge and done.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
-get it after upgrading Forge and syncing.
+get it after upgrading Forge and syncing. Cards and JSON use the same `status` and `took`
+derivation; running stages include their elapsed time. Roadmap completion marks the story
+and its parts finished. Finished items never stall; idle items past one day expose
+`stalled`, `idle_seconds`, and `waits_on`. A story's idle clock includes its parts' activity;
+a running part keeps the story active and a finished part resets its idle clock, including
+a merge reported by GitHub before its commit is fetched. An older
+worker round or a worker whose recorded lock is demonstrably dead is not a live run.
+Live readers, workers and reviews take precedence
+over a saved status, including in `forge next`. Approval history uses one display name per
+Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
 `approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
 absolute path to its document in its own worktree; other rows have null approval.
+Task and fix rows add `time_breakdown` and `rounds`.
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
@@ -200,11 +215,41 @@ the row stays visible with no runnable command; check the connection and run `fo
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
 started_at, ended_at and seconds for the current round from Forge's timing records;
-unrecorded values are null. Total_seconds adds recorded stage durations across rounds;
-live elapsed time comes from timestamps. Worker-owned tests belong to Build; close's tests and
-`forge test` belong to Tests. A skipped test has status skipped. Run starts and ends
+unrecorded values are null. For tasks and fixes, total_seconds is elapsed time from the item's recorded start
+(or first recorded activity) to now, including idle time; a finished item needs a recorded end.
+Their snapshot already includes live time, so do not add a running stage's timer to it.
+Worker-owned tests are separated from building in the breakdown, while close's tests and
+`forge test` still appear in the Tests stage. A skipped test has status skipped. Run starts and ends
 provide live worker and reader metadata; completed timing durations supply stage end
 times. Values remain null where the producer has not recorded them.
+
+`time_breakdown` separates building, own tests, reviewing, fixing findings, waiting for CI,
+waiting in line, waiting for the owner and nothing running. Overlapping steps count once:
+tests and recorded waits come out of the enclosing worker's time. `rounds` retains each round's
+plain `line`, its finding titles, priorities and files, and its new and repeated finding counts.
+Round lines number review attempts; the row's current `round` still identifies its worker turn.
+Repeated means the same title and file appeared in an earlier recorded review. A missing
+earlier review makes unseen findings' new-versus-repeat counts unknown. Repeats observed in the
+retained history remain known even beside unseen findings whose classification is unknown.
+CI lines distinguish passed, failed and gave up while queued or
+running; losing contact with GitHub without a known result stays unknown.
+An earlier release's failed CI timing without an explicit result also stays unknown.
+Old records are not filled in with guessed findings, durations or zeroes. A known original start
+can give an elapsed total even when some earlier activity is unknown; that unknown time is not
+called idle and the known breakdown need not add up to the elapsed total. Gaps between legacy
+timings stay unknown until complete activity recording begins. Earlier run and question events
+do not establish completeness; historical questions without a recorded end stay unknown.
+
+Quote the item's round lines when explaining a long run, then quote the relevant breakdown
+categories rather than adding overlapping stage timers. The pane and `/forge` show these same
+details. The pull request's short **How it went** section comes from the same logs and keeps
+earlier findings after later reviews. Forge keeps the pull request body in an agent squash
+merge; when the human merges, keep this section in the squash commit body too. New repos get
+this guide and the recording behaviour at init; previously adopted repos get them on upgrade
+and sync. Their earlier unrecorded history remains unknown. If a fresh clone or missing local
+logs cannot reconstruct already published measurements, How it went retains them and shows
+the current checkout's observations separately. Quote each snapshot separately; do not add
+their totals, because their intervals may overlap.
 
 Live rows add `activity` (status and a running action), `idle_since` and `stalled`
 after 24 idle hours. A recorded worker adds tool, model, effort, round, start,
@@ -318,8 +363,8 @@ from this repo, each with Build → Tests → Review → CI → Merge, its round
 time. A third active item replaces the last line with `+N more · /forge for all`.
 Finished stages show ✓ and their duration, the current stage ● and a live timer,
 and failed stages ✗ in red. Unreached stages have only their name; skipped tests
-show `Tests –`. Symbols carry the meaning without colour. The total adds recorded
-durations across rounds and live elapsed time without counting concurrent stages
+show `Tests –`. Symbols carry the meaning without colour. The total uses the elapsed-time
+snapshot, which includes live and idle time without counting concurrent stages
 twice. At widths under 80 columns it is one line: running and waiting counts, the first
 active item's current stage and time, its total and the next step; without lane data,
 the first line is only the next step; the narrow strip has no item or lane summary.
@@ -604,6 +649,11 @@ shares its cache across worktrees, and stays silent when GitHub cannot be reache
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
 
+Before starting another upgrade, it removes an earlier upgrade's leftover worktree and local
+branch when its pull request has merged and the checkout has no unpushed or uncommitted work.
+An open upgrade or local work still refuses and stays in place. Ignored configuration and data
+also stay in place; only recognized cache directories may be discarded.
+
 1. Ask which release to move to, recommending the newest.
 2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
@@ -643,8 +693,9 @@ or a builder could not act on it. Readers prefix numbered findings with `Blockin
 findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
-accepts numbered no-findings statements with separate notes that tests were not run; a real
-blocking finding still needs a disposition and another round.
+accepts replies with at least one no-findings line when every numbered or bulleted item says
+there are no findings, ignoring other note lines. A numbered or bulleted blocking finding still
+needs a disposition and another round.
 
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
@@ -676,7 +727,11 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
-- Keep tasks small: at most three Done-when items and about 400 changed lines each.
+- Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
+  additions and removals outside tests. Close stops a part over 400 lines before review;
+  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
+  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+- Keep each part's builder notes to its goal, files and one test per rule.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
@@ -713,6 +768,13 @@ the upgrade before Forge can forward the command to the checkout's older release
 story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
+
+**Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
+answers and fixed or dismissed findings, including the coordinator's recorded work notes.
+Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
+they cannot block or start another round. A new defect needs distinct text and new evidence.
+Human acceptance still expires when the accepted version changes. New repos get this on init;
+existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
@@ -904,8 +966,8 @@ When a worker round or close's merge changes the item's Forge pin, land and clos
 line and continue through uv under that release before reading its new settings.
 Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
 before the original land or close command continues.
-Next lets failed pull request checks choose the next step only when that pull request's head
-matches the local branch head; after a local repair, follow the current local step.
+The board and next use failed pull request checks only when they belong to that pull request's
+current head, including branches that exist only on the remote or are ahead of the local branch.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -991,10 +1053,11 @@ round if the check is still red.
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
 loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
-GitHub shows progress, retrying unreadable or failed answers. It stops waiting on green or
-failed checks, or after 30 minutes without a check starting, finishing or being replaced, and
-says which checks are still running, missing, or unreadable. Close on its own still waits at
-most ten minutes. When it stops, follow its refusal and the
+GitHub shows progress or checks remain queued, retrying unreadable or failed answers. It stops
+waiting on green or failed checks, or after 30 minutes without a check starting, finishing or
+being replaced while none are queued, and says which checks are still running, missing, or
+unreadable. Close on its own still waits at most ten minutes while none are queued. When it
+stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
 GitHub reads also retry unreadable answers and server errors three times, pausing for one,
 two and four seconds. If GitHub still does not answer, rerun the command. Not-found and

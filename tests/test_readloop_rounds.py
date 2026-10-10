@@ -332,10 +332,10 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.continued()
     prompt = reader.prompt()
     assert "Round 3 of your cold read" in prompt and f"+{decided}" in prompt
-    # The last round's findings, and the older one whose disposition changed; not the unchanged one.
+    # Every earlier answer now remains in the brief, including unchanged dispositions.
     assert f"3. Disputed keep 1: shoppers without an account lose baskets too.\n   Disposition: keep per {decided}" in prompt
     assert f"1. {FIRST}\n   Disposition: keep per {decided}" in prompt
-    assert SECOND not in prompt
+    assert SECOND in prompt
     assert "a numbered list starting at 4" in _flat(prompt)
 
     # Only exactly "No findings." passes; the conversation is archived once it does.

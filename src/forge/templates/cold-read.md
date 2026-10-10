@@ -136,8 +136,7 @@ whole doc again yourself. Its diff since your last round:
 
 $diff
 
-Your last round's blocking findings, and any older blocking finding whose disposition changed
-since then, each with its disposition:
+All earlier rounds' blocking findings and their answers, each with its disposition:
 
 $dispositions
 
@@ -153,9 +152,11 @@ When that diff is not empty, check the plan still matches the changed spec. Re-r
 Check:
 
 1. Is each of those findings closed? `cut` means the doc was edited to remove it, `defer` that it
-   moved to the spec's Out of scope, and `keep` that it stays for the stated reason. When a cut
-   or a defer didn't happen in the doc, raise the finding again.
-   - Raise a kept finding again only when you disagree with its stated reason, as
+   moved to the spec's Out of scope, and `keep` that it stays for the stated reason.
+   Settled findings stay settled: do not repeat a disposed note or finding. Forge ignores a
+   repeat with the same finding text, even when its evidence or number changes. Report a new
+   defect as a distinct finding and explain the new evidence.
+   - Raise a kept finding again only with new evidence of a distinct defect, as
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
 2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
