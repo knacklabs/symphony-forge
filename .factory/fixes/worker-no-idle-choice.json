@@ -3,12 +3,14 @@
   "branch": "fix/worker-no-idle-choice",
   "done_when": "The worker brief says a recorded choice is needed only after close has stopped the review loop and otherwise the worker fixes the findings in that round; new repos get it at init and existing repos on sync, with one command test",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T11:57:15+00:00",
       "step": "start"
     }
   ],
-  "why": "Workers sit idle waiting for a choice Forge refuses to record: after a recorded narrow, a worker treats every new finding as needing a fresh choice, but a choice can only be recorded once close stops the loop"
+  "why": "Workers sit idle waiting for a choice Forge refuses to record: after a recorded narrow, a worker treats every new finding as needing a fresh choice, but a choice can only be recorded once close stops the loop",
+  "worker": "codex"
 }
