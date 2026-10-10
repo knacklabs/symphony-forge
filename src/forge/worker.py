@@ -43,6 +43,8 @@ COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review ca
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
+    "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
+              "forge work {item}"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
@@ -55,11 +57,8 @@ REFUSALS = {
 }
 
 
-def work(args: argparse.Namespace) -> None:
-    item = args.item
-    note = getattr(args, "note", None)
-    if note is not None and not note.strip():
-        refuse(REFUSALS["empty_note"], item=item)
+def checkout(item: str) -> tuple[re.Match[str], Path]:
+    """Find a work checkout and refuse its unfinished merge before parsing any settings."""
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -68,6 +67,17 @@ def work(args: argparse.Namespace) -> None:
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
+    if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
+        refuse(REFUSALS["merge"], item=item, top=top)
+    return match, top
+
+
+def work(args: argparse.Namespace) -> None:
+    item = args.item
+    note = getattr(args, "note", None)
+    if note is not None and not note.strip():
+        refuse(REFUSALS["empty_note"], item=item)
+    match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:

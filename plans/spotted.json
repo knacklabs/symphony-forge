@@ -3750,6 +3750,94 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.claude/settings.json\tAllowance does not match the version-only change\trelease-129",
+      "kind": "bug",
+      "path": ".claude/settings.json",
+      "line": 8,
+      "text": "Allowance does not match the version-only change",
+      "from": "blocking",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-129",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.claude/settings.json\tGenerated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
+      "kind": "improve",
+      "path": ".claude/settings.json",
+      "line": 8,
+      "text": "Generated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
+      "from": "worker",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.claude/skills/forge/SKILL.md\tBoth generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 167,
+      "text": "Both generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
+      "from": "worker",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: unfinished merges with a conflicted forge.toml still produce a doctor hint\twork-during-merge",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 68,
+      "text": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint",
+      "from": "blocking",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tLinux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 337,
+      "text": "Linux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "from": "worker",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tCheck for a pending merge before parsing a conflicted forge.toml",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 68,
+      "text": "Check for a pending merge before parsing a conflicted forge.toml",
+      "from": "review",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tCI container setup can fail when Docker Hub limits unauthenticated pulls.",
+      "kind": "edge",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "CI container setup can fail when Docker Hub limits unauthenticated pulls.",
+      "from": "worker",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
