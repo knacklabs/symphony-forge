@@ -4,6 +4,7 @@ The existing moved-owner cases introduce a spec absent from the default branch.
 This case keeps that default copy while the amendment's checkout is removed;
 only the external readers are faked, and the final read proves durable recovery.
 """
+import json
 import shutil
 
 import pytest
@@ -36,6 +37,11 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
     spec.write_text(SPEC, encoding="utf-8")
     saved = repo.forge("spec", "save", "invoices", cwd=published)
     assert saved.returncode == 0, saved.stdout + saved.stderr
+    reader.say("No findings.\n")
+    if failed:
+        read = repo.forge("read", "invoices", cwd=published)
+        assert read.returncode == 0, read.stdout + read.stderr
+        landed_chat = _reader_chat(reader)
     repo.git("merge", "-q", "--ff-only", "fix/publish-invoice-plan")
     repo.git("worktree", "remove", str(published))
     repo.git("branch", "-D", "fix/publish-invoice-plan")
@@ -53,12 +59,17 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
         assert saved.returncode == 0, saved.stdout + saved.stderr
     reader.say("No findings.\n")
     if failed:
+        accepted = (owner / "docs/specs/invoices.read.md").read_bytes()
+        reader.lose()
+        (repo.bin / "threads.json").write_text(
+            json.dumps({"unrelated": {"cwd": str(owner)}}), encoding="utf-8")
         reader.fail(True)
     read = _old_round(repo, tmp_path, owner, "read", "invoices", expect_success=not failed)
     first = _reader_chat(reader)
     if failed:
         assert "Codex reported the turn failed" in read.stderr
-        assert not (owner / "docs/specs/invoices.read.md").exists()
+        assert first != landed_chat
+        assert (owner / "docs/specs/invoices.read.md").read_bytes() == accepted
         reader.fail(False)
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
         repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)

@@ -249,18 +249,31 @@ def preserve_chats(top: Path) -> None:
             owner = trees.get(branch) if branch else next((tree for tree in trees.values()
                                                            if str(tree) == recorded), None)
             added = False
+            recovered = None
             if owner is None and folder == "read" and not branch:
                 rel = f"docs/specs/{item}.md"
-                landed = story.show(top, repo.default_branch(top), rel)
                 notes = f"docs/specs/{item}.read.md"
                 landed_notes = story.show(top, repo.default_branch(top), notes) or ""
+                binding = saved
+                if not (binding.get("conversation") or (binding.get("claude") or {}).get("id")):
+                    lines = sync.read(path.with_suffix(".log")).splitlines()
+                    binding = json.loads(lines[-1]) if lines else saved
+                fields, _ = story._record(landed_notes)
+                if (fields.get("conversation") or fields.get("session")) and (
+                        fields.get("conversation") or None, fields.get("session") or None) == (
+                        binding.get("conversation"), (binding.get("claude") or {}).get("id")):
+                    continue  # The landed binding already recovers this chat without an owner search.
+                landed = story.show(top, repo.default_branch(top), rel)
                 begun = saved.get("head") or saved.get("start")
                 if not begun:
                     lines = sync.read(path.with_suffix(".log")).splitlines()
                     begun = json.loads(lines[-1]).get("start") if lines else None
+                ancestry = repo.run("git", "merge-base", "--is-ancestor", begun,
+                                    repo.default_branch(top), cwd=top).returncode if begun else None
+                if (fields.get("conversation") or fields.get("session")) and ancestry == 0:
+                    continue  # A newer landed binding supersedes this machine's old record.
                 owning = set()
-                if begun and repo.run("git", "merge-base", "--is-ancestor", begun,
-                                      repo.default_branch(top), cwd=top).returncode == 1:
+                if ancestry == 1:
                     owning = set(repo.git("for-each-ref", f"--contains={begun}",
                                           "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
                 matches = [name for name, tree in trees.items()
@@ -274,6 +287,13 @@ def preserve_chats(top: Path) -> None:
                     repo.refuse(REFUSALS["chat_owner"], item=item)
                 branch = matches[0] if matches else ""
                 owner = trees.get(branch)
+                if branch in owning and not (
+                        saved.get("conversation") or (saved.get("claude") or {}).get("id")):
+                    branch_notes = (sync.read(owner / notes) if owner else
+                                    story.show(top, branch, notes) or "")
+                    if branch_notes == landed_notes and (
+                            story.show(top, begun, notes) or "") == landed_notes:
+                        recovered = binding
             if owner is None and branch in refs:
                 owner = Path(temporary) / "item"
                 repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
@@ -290,7 +310,7 @@ def preserve_chats(top: Path) -> None:
                         continue  # A renamed or deleted spec no longer owns this reader record.
                     _, _, notes, _ = story._paths(item, owner)
                     fields, _ = story._record(sync.read(notes))
-                    if fields.get("conversation") or fields.get("session"):
+                    if not recovered and (fields.get("conversation") or fields.get("session")):
                         continue
                     rel = notes.relative_to(owner).as_posix()
                 else:
@@ -299,14 +319,14 @@ def preserve_chats(top: Path) -> None:
                         continue
                     rel = repo.state_path(item)
                 with hold(owner, item, kind):
-                    saved = record(owner, item, kind)
+                    saved = recovered or record(owner, item, kind)
                     if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
                         continue
                     if repo.git("status", "--porcelain", "--", rel, cwd=owner):
                         repo.refuse(REFUSALS["chat_dirty"], path=owner / rel)
                     if folder == "read":
                         reader = fields.get("reader", "").split(" ")[0]
-                        if reader not in story.NAMES:
+                        if recovered or reader not in story.NAMES:
                             reader = "codex" if saved.get("conversation") else "claude"
                         chat = (saved.get("conversation") if reader == "codex" else
                                 (saved.get("claude") or {}).get("id"))
