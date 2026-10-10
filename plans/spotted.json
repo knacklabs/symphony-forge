@@ -1134,6 +1134,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 260,
+      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 268,
+      "text": "Not done: Close's default test selection breaks Go clients",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -2527,6 +2549,17 @@
       "text": "Not done: proof that Forge's own outer uv commands are frozen",
       "from": "blocking",
       "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "from": "worker",
+      "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
     },
@@ -4474,17 +4507,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 101,
-      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
-      "from": "worker",
-      "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
     }

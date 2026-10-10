@@ -2,13 +2,45 @@
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/tests-once-per-round",
   "done_when": "Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise only the test files the change touched and the tests named after its changed source files; CI still runs the full suite and a red CI sends the item back. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/fasttest.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3333481659f04d5b8a1cab882c3f0ee59b0d479f6e11cd74eaa9335137577062",
+    "changed": "7282fc00c877ad2b91f9bbba5f5a2f43e831fd86ee6b952bddb77aca8b593972",
+    "commit": "ae7d0f71392615b8f1f7a5e89fdf7998e718dd43",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Close fails before review when a Go client changes a source file with a matching test.\nRaise: Functional \u2014 Forge's unchanged `src/forge/init.py:58` sets a new Go repo's default command to `go test -v ./...`, with no `fast_test`. This branch appends selected filenames to that command, producing a command such as `go test -v ./... cart_test.go`. [Go's test command](https://pkg.go.dev/cmd/go) treats package patterns and file lists as different invocation modes, so this cannot run the selected test. The ruling about custom launchers needing `fast_test` does not cover this launcher: Forge ships it as the default. The named command test covers pytest, Vitest and Jest, but not Go.",
+        "file": "src/forge/fasttest.py",
+        "line": 268,
+        "priority": "P1",
+        "title": "Not done: Close's default test selection breaks Go clients"
+      },
+      {
+        "body": "Close cannot run selected Node tests on Windows once the repo has a few hundred test files.\nRaise: Scale \u2014 This line adds one `--exclude` argument for every unselected Vitest file; lines 255\u2013258 similarly put every unselected Jest path into one regex. With 200 test paths averaging 35 characters, the Vitest command exceeds [cmd.exe's 8,191-character limit](https://learn.microsoft.com/en-US/troubleshoot/windows-client/shell-experience/command-line-string-limitation). `subprocess.run(..., shell=True)` at line 269 then fails before the runner starts. The proof's Node cases use only four files, so they do not exercise this normal repo size.",
+        "file": "src/forge/fasttest.py",
+        "line": 260,
+        "priority": "P1",
+        "title": "Close's Node test command exceeds the Windows shell limit in a realistic repo"
+      }
+    ],
+    "id": "001e1d53-64c1-4c0a-9d97-195e95f25975",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:16:43+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T16:50:48.905493+00:00",
+      "step": "review"
     }
   ],
   "why": "Each round runs the same tests twice, on the laptop and in CI, which is most of a round's time",
