@@ -248,6 +248,8 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
     repo.git("commit", "-qam", "Review findings", cwd=folder)
 
     # Claude fails cleanly, so split falls back to Codex: a new conversation, not the first one.
+    # With both tools and no coordinating session, both rounds use their kits.
+    monkeypatch.delenv("CODEX_THREAD_ID")
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     fell = repo.forge("work", "BOARD/PAGE")
     assert fell.returncode == 0, fell.stdout + fell.stderr

@@ -107,6 +107,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
 
 def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
                                                                             sdk_data):
+    # A two-tool fallback needs both kits, so run without a coordinating session.
+    monkeypatch.delenv("CODEX_THREAD_ID")
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     config = folder / "forge.toml"
