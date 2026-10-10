@@ -1,8 +1,10 @@
 ---
 slug: board-for-the-team
 title: The board tells a team what's happening, what needs them and when it goes live
-status: draft
+status: confirmed
 saved: 2026-10-10T05:17:47+00:00
+confirmed_by: "Ravi Kiran Vemula"
+confirmed_hash: 113e9c37e38d11319e693c0e14d62fc2a3d1be4b08cd1f6d3b88b93376117e3f
 ---
 
 # The board tells a team what's happening, what needs them and when it goes live
