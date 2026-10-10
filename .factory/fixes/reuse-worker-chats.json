@@ -19,16 +19,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2e1a0a03f5994b2432859bbb2e5f83b5d6ee2772c33d7c7c2da44fe4e2f498b3",
-    "changed": "cd1d9d868997a5de4db9a3562fb08735d207e160b22aa8dbe2d992e5c4f2ca5b",
-    "commit": "4e7473b8f412ade6f1c276a1da2620365c838f9d",
+    "branch_diff": "ea1a9b4093240e97a11322e379cd61bb35ef1f03c86392f26f8169db80d39dab",
+    "changed": "b7765e99f7ebd1be8868d1fcb47669ddc0edd51c2475969e8da6d8182dc0b4c3",
+    "commit": "ddf5321a6b163036c91d70dfcaa55d7505308877",
     "dismissals": [],
-    "findings": [],
-    "id": "87c06dd1-911e-4d13-8c7f-d6be57ea40f6",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done \u2014 changing the reader tool back can resume an old chat without the required fresh-chat reason. After a Codex read, removing Codex makes Claude start a new session; the local record still retains the Codex ID. If Claude is then removed and Codex restored, this branch clears `why` and resumes that old Codex thread. The reverse sequence has the same defect. The command tests cover one tool change, but not a return to the first tool.",
+        "file": "src/forge/story.py",
+        "line": 235,
+        "priority": "P1",
+        "title": "Not done: Returning to a reader tool can reuse a stale chat"
+      }
+    ],
+    "id": "6a325aa2-f2bd-494b-92fd-e004275b650a",
+    "status": "blocked"
   },
   "round": 14,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T16:42:38+00:00",
@@ -108,6 +116,10 @@
     },
     {
       "at": "2026-10-10T14:41:14.349899+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T15:52:52.567414+00:00",
       "step": "review"
     }
   ],
