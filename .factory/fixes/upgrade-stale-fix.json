@@ -1,0 +1,89 @@
+{
+  "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
+  "branch": "fix/upgrade-stale-fix",
+  "done_when": "forge upgrade treats an earlier upgrade fix whose pull request has merged as finished: it removes that fix's leftover worktree and local branch (only when they hold nothing unpushed) and carries on; an earlier upgrade fix that is still open, or has unpushed work, still refuses as today; a command test covers a repo adopted on an earlier release upgrading twice with the first fix's worktree left behind, plus the unpushed-work refusal",
+  "flagged": [
+    "src/forge/upgrade.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2d8a89204832963e0e60fe3879d837d0d86bc9b409eb5ffb0350ba00ae806166",
+    "changed": "086bddf3a4fac5f1728eb3ac3fa06aff0a30246607b3b04cc6908e32a814256f",
+    "commit": "8a8f7c170e5ed085a9dd3d3f46e2679dcb688a75",
+    "dismissals": [],
+    "findings": [],
+    "id": "b2f8b3d0-272f-41b0-b89f-5f54d7630bb4",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T08:00:11+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T08:33:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:11:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T19:51:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:46:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:27:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:29:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:25:43+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:43:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:04:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:08:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:19:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:52:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:17:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:05:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:39:57+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge upgrade refuses with 'The upgrade to vX is still open in fix upgrade-forge-to-vX' when that earlier upgrade fix's pull request has merged and only its worktree was left behind (reported by a client session upgrading to v1.2.8)",
+  "worker": "codex"
+}
