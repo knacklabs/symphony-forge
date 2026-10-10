@@ -1794,6 +1794,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2527,6 +2538,17 @@
       "text": "Not done: proof that Forge's own outer uv commands are frozen",
       "from": "blocking",
       "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "from": "worker",
+      "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
     },
@@ -4474,17 +4496,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 101,
-      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
-      "from": "worker",
-      "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
     }
