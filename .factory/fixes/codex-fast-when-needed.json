@@ -1,0 +1,14 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/codex-fast-when-needed",
+  "done_when": "Codex runs through the app server use the model's Fast tier for an item that other planned work waits on and for repair rounds after the first, and run normally otherwise or when the model has no Fast tier; one forge.toml setting turns Fast off or always on; forge doctor shows which applies, and upgrading tells existing repos in one line that Fast is now on when it matters. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T15:34:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Codex offers a Fast mode at about twice the speed and Forge never uses it"
+}
