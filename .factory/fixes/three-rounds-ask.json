@@ -1,0 +1,14 @@
+{
+  "base": "4436362fd178474e291311077681bb515dab731e",
+  "branch": "fix/three-rounds-ask",
+  "done_when": "After three read or review rounds in a row with no blocking note or real finding, Forge stops the loop and asks the human to accept or narrow, and that choice can always be recorded, whichever command stopped the loop. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T14:39:33+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Loops keep going past three rounds with nothing real found and the human's choice cannot always be recorded"
+}
