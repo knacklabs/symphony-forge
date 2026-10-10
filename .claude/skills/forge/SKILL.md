@@ -624,8 +624,11 @@ lists a refresh fix with its `forge fix start` command; start it like any ready 
 fix's folder:
 
 1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
-   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `yarn upgrade` (Yarn 1), `yarn up -R '*' '@*/*'` (Yarn 3+), `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
    `go get -u=patch ./... && go mod tidy`); never raise a range.
+   For Yarn 2, remove only `yarn.lock`, then run `yarn install --no-immutable`;
+   keep every `package.json` unchanged. This re-resolves the whole dependency tree within its
+   declared ranges; recursive `yarn up -R` starts in Yarn 3.
 2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
    same tag, and rebuild the image.
 3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.

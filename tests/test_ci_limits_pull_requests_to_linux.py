@@ -38,7 +38,9 @@ def test_1_event_runs_every_required_platform_group_once(event, counts):
 def test_2_pull_requests_keep_closes_named_checks():
     checks = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["checks"]
     workflow = (ROOT / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-    for name, event in zip(checks, ["pull_request", "pull_request_target"], strict=True):
+    # Shared checks stay generated; Forge's additional Windows installer check has its own owner test.
+    assert {"tests", "forge-pr-check"} <= set(checks)
+    for name, event in (("tests", "pull_request"), ("forge-pr-check", "pull_request_target")):
         job = workflow.split(f"\n  {name}:\n", 1)[1].split("\n  forge-pr-check:", 1)[0]
         assert f"if: github.event_name == '{event}'" in job
         assert f"&& '{name}' || '{name} (other event)'" in job

@@ -1,6 +1,6 @@
 name: forge-next
 
-# Forge's own suite: Linux on pull requests, every supported platform on main and release tags.
+# Full suite: Linux on pull requests, all platforms on main and release tags; Windows installer checks on every event.
 
 on:
   pull_request:
@@ -17,6 +17,14 @@ permissions:
   actions: read
 
 jobs:
+  windows-installers:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --frozen --python 3.11 pytest tests/test_installers_explain_docker_start.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+
   plugin:
     runs-on: ubuntu-latest
     timeout-minutes: 5
