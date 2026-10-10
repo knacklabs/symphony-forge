@@ -36,6 +36,7 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("**No findings.**\nNote: tests weren't run.", True),
     ("No findings.\n6. The saved time has no time zone.", False),
     ("6. No findings.\n7. Tests were not run, so the required proof is missing.", False),
+    ("1. No findings.\nTests were not run; runtime behaviour remains unverified.\nThe required proof is missing.", False),
     ("6. No findings.\nTests were not run (required proof is missing).", False),
     ("6. No findings but the required proof is missing.", False),
     ("6. No findings however the required proof is missing.", False),
