@@ -368,7 +368,9 @@ def _red_without_a_failing_check_stops(env, conclusion, bucket):
 
 def _blocked_red_blocked_red(env):
     _fix(env, "working", worked=True)
-    env.reviews(blocked(BLOCKER), CLEAN, blocked(BLOCKER), CLEAN)
+    # The clean second review settles the greeting defect; round three finds a new one.
+    env.reviews(blocked(BLOCKER), CLEAN,
+                blocked(finding("P1", "Saving loses the reader name")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     done = _land(env)
