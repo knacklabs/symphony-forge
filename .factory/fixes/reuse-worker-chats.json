@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8ec2862f00678ba09ec6050cf93e829224063d12eedc29a258a53c09d5119e77",
-    "changed": "bba55d261baa19c0c97a67305fb0389381588cd700de1816dea2aa47c9e19f51",
-    "commit": "ad47a25fe539e0404c0785b98d4c508d65f9b7b0",
+    "branch_diff": "b9e7278fa751bc191c8be2f90a502ea3764a01cc94c16ccf0da8363b992623bb",
+    "changed": "8bf7800ed00fb6fbb815cae29752b0c355725a2c7d1f22a2e47cf9e3dd726db1",
+    "commit": "3365aa18543c7d9a0a432f77a547971ef0053882",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Upgrade sync silently skips recoverable earlier-release chats when their local records or owning checkout have moved. `preserve_chats()` enumerates only `*.json` at line 221, ignoring a Codex identity retained in its `.log` after the JSON disappears. Its owner lookup also requires the recorded checkout path for spec readers: moving or recreating an unmerged spec's worktree makes that lookup fail, and the fallback at lines 237\u2013239 cannot help when the spec has not landed. Worker records on `forge/<item>` branches are likewise skipped because lines 226\u2013229 search only `fix/<item>`, although `src/forge/worker.py:65` explicitly supports both. Earlier reader notes omit native identities (`tests/fixtures/forge-v1.2.2/src/forge/story.py:73`), so these skipped bindings disappear when local metadata is subsequently lost; the next round starts fresh without attempting the still-available provider chat. The named upgrade tests erase records after sync, and test_13 removes the spec owner after landing, so they do not cover these migration gaps.",
+        "body": "Raise: Not done. Upgrade silently skips an unmerged spec reader when its worktree has been removed but its branch remains. For spec slugs, `branch` is empty (line 231), so the temporary-worktree recovery cannot run; owner discovery searches only registered worktrees and then continues here. A concrete case is an earlier-release read with findings, committed notes, removal of its clean worktree, upgrade sync, subsequent metadata loss, and recreation of that same branch. Earlier-release notes contain no native identity (`tests/fixtures/forge-v1.2.2/src/forge/story.py:73`), and the unmerged spec is absent from the default branch, so the next read starts fresh without attempting the available Codex or Claude chat. `test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves` recreates the owner before sync; test_13 covers an already-landed spec. Neither covers this promised fresh-worktree continuity case.",
         "file": "src/forge/codex.py",
-        "line": 229,
+        "line": 254,
         "priority": "P1",
-        "title": "Not done: Preserve recoverable chats during upgrade migration"
+        "title": "Not done: Preserve spec-reader chats when their owning worktree is removed"
       }
     ],
-    "id": "de854aaa-eef9-4929-9249-661368119ebf",
+    "id": "91d9a9b2-bab1-4e16-b908-de7a75be8c57",
     "status": "blocked"
   },
   "round": 10,
@@ -84,6 +84,10 @@
     },
     {
       "at": "2026-10-10T07:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:51:41+00:00",
       "step": "review"
     }
   ],
