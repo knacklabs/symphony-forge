@@ -42,9 +42,14 @@ from forge import codex, machine, repo, task, worker
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
                 'forge story new <KEY> "<title>"'),
-    "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).", "forge roadmap add <spec>"),
     "no_title": ("A new story needs a plain-English title.", 'forge story new {key} "<title>"'),
     "no_fix": ("There is no fix named {fix} in a worktree here.", "forge next"),
+    "fix_roadmap": ("The fix {fix} has no roadmap entry for {key}.",
+                    "add {key} to plans/roadmap.json in {path}, commit it, then "
+                    "forge story new {key} --from-fix {fix}"),
+    "uncommitted_roadmap": ("The roadmap in fix {fix} has uncommitted changes.",
+                            "commit plans/roadmap.json in {path}, then "
+                            "forge story new {key} --from-fix {fix}"),
     "no_story": ("There is no story {key} here.", 'forge story new {key} "<title>"'),
     "no_spec": ("docs/specs/{slug}.md does not exist.", "forge spec save {slug}"),
     "bad_doc": ("{doc} is malformed: {problem}.", "edit {doc}, then run forge next"),
@@ -119,6 +124,10 @@ def new(args: Any) -> int:
         fix_state = repo.read_state(fix, fix_top) if fix_top else None
         if not fix_state:
             repo.refuse(REFUSALS["no_fix"], fix=fix)
+        if key not in {item["key"] for item in repo.roadmap(fix_top)}:
+            repo.refuse(REFUSALS["fix_roadmap"], fix=fix, key=key, path=fix_top)
+        if show(fix_top, "HEAD", "plans/roadmap.json") != _text(fix_top / "plans/roadmap.json"):
+            repo.refuse(REFUSALS["uncommitted_roadmap"], fix=fix, key=key, path=fix_top)
         why = fix_state.get("why") or why
         done = fix_state.get("done_when") or done  # the promoted task covers Done-when item 1
         # The task's Scope is what the fix changed since it left the default branch.
@@ -126,17 +135,18 @@ def new(args: Any) -> int:
         scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
                  if not path.startswith(".factory/")]
         row = f"| SPEC | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
-    elif key not in {item["key"] for item in repo.roadmap(top)}:
-        repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")
     if not title:
         repo.refuse(REFUSALS["no_title"], key=key)
+    if not fix:
+        why = title
+    repo.roadmap(top)  # Validate local input before starting from the default branch.
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
     _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
     changed = [doc]
-    if fix and key not in {item["key"] for item in repo.roadmap(path)}:
+    if not fix and key not in {item["key"] for item in repo.roadmap(path)}:
         changed += add_to_roadmap(path, [{"key": key, "title": title}])
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))

@@ -162,7 +162,7 @@ def test_6_forge_next_lists_a_due_check_until_forge_spec_measure_records_it(repo
     # A due check comes before the idle lines, where discovery and the next planning step go.
     assert _next(repo, monkeypatch, "2026-10-01") == DUE + [
         "No story or fix is in progress.",
-        'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+        'Next: forge story new <KEY> "<title>"',
         'Next: forge fix start "<why>" --done "<done when>"']
 
     # Recording the result: only in a fix, only on the confirmed text, and the spec stays confirmed.
