@@ -2212,6 +2212,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 58,
+      "text": "Not done: scope-only blocker admission test",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
       "kind": "bug",
       "path": "tests/test_board_dependency_timelines.py",
