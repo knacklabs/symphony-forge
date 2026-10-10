@@ -3816,6 +3816,149 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.codex/skills/forge/SKILL.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
+      "kind": "bug",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 623,
+      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 627,
+      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
+      "kind": "bug",
+      "path": "tests/test_installers_explain_docker_start.py",
+      "line": 53,
+      "text": "Not done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
+      "kind": "bug",
+      "path": "tests/test_installers_explain_docker_start.py",
+      "line": 26,
+      "text": "Not done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tInclude scoped packages in the recursive Yarn refresh",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 623,
+      "text": "Include scoped packages in the recursive Yarn refresh",
+      "from": "review",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 56,
+      "text": "The baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
+      "from": "worker",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tBound doctor's job-history requests\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 109,
+      "text": "Bound doctor's job-history requests",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks anything up\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 121,
+      "text": "Not done: doctor detects a runner that never picks anything up",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks up jobs\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 113,
+      "text": "Not done: doctor detects a runner that never picks up jobs",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tPreserve the history query through Windows command shims\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 129,
+      "text": "Preserve the history query through Windows command shims",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 86,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
+      "from": "review",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
