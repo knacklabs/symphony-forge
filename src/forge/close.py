@@ -454,8 +454,11 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
                      *files, cwd=top)
             release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
             # Keep argv on one line for uv's Windows .cmd shims.
-            script = ("from forge import repo, sync; "
-                      "top = repo.root(); cfg = repo.config(top); sync.write(top, cfg); "
+            script = ("from forge import repo, sync, githooks; "
+                      "top = repo.root(); cfg = repo.config(top); folder = githooks.husky_folder(top); "
+                      "keep = frozenset((folder.resolve() / hook).relative_to(top.resolve()).as_posix() "
+                      "for hook in ('pre-commit', 'pre-push')) if folder else frozenset(); "
+                      "sync.write(top, cfg, keep); "
                       "sync.write_file(top, 'docs/commands.md', sync.command_page()) "
                       "if cfg.get('repo') == 'forge-source' else None")
             if release != cfg["version"] and repo.VERSION.fullmatch(release):

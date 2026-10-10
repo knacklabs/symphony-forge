@@ -15,7 +15,8 @@ STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("history", ["new", "previously-adopted"])
-@pytest.mark.parametrize("merge", ["no-conflict", "generated-conflict", "changed-pin-conflict"])
+@pytest.mark.parametrize("merge", ["no-conflict", "generated-conflict", "changed-pin-conflict",
+                                   "husky-conflict", "changed-pin-husky-conflict"])
 def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hooks(
         env, history, merge, monkeypatch):
     repo = env.repo
@@ -53,24 +54,35 @@ def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hook
                                                  f'version = "{version}"'))
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=where))
+    if "husky" in merge:
+        hooks = where / ".husky"
+        patient(lambda: hooks.mkdir(exist_ok=True))
+        repo.git("config", "core.hooksPath", ".husky/_", cwd=where)
+    else:
+        hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=where))
     custom = b"#!/bin/sh\n# The client's own local hook.\nexit 0\n"
     for name in ("pre-commit", "pre-push"):
-        (hooks / name).write_bytes(custom)
-        (hooks / name).chmod(0o755)
+        patient(lambda: (hooks / name).write_bytes(custom))
+        patient(lambda: (hooks / name).chmod(0o755))
+    if "husky" in merge:
+        # Team hooks are committed and deliberately contain no Forge check.
+        repo.git("add", "--", ".husky/pre-commit", ".husky/pre-push", cwd=where)
+        repo.git("commit", "-qm", "Keep the team's Husky hooks", cwd=where)
     guide = ".codex/skills/forge/SKILL.md"
     if merge != "no-conflict":
         env.commit(where, guide, (where / guide).read_text("utf-8").replace(
             "# Forge", "# Worker's Forge", 1))
-    if merge == "changed-pin-conflict":
+    if merge.startswith("changed-pin"):
         env.commit(where, "forge.toml", config)
     env.commit(where, "app.py", "print('upgraded client')\n")
     if merge != "no-conflict":
         env.commit(repo.path, guide, (repo.path / guide).read_text("utf-8").replace(
             "# Forge", "# Default branch's Forge", 1))
-        if merge == "changed-pin-conflict":
+        if merge.startswith("changed-pin") or "husky" in merge:
+            # Main's upgrade avoids the separate missing-Husky-check sync refusal.
             env.commit(repo.path, "forge.toml", config.replace('version = "v1.2.2"',
-                f'version = "{version}"\nfast_test = ""'))
+                f'version = "{version}"' + ('\nfast_test = ""' if merge.startswith("changed-pin") else '')))
+        if merge.startswith("changed-pin"):
             _earlier_release(env)
             monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
         repo.git("push", "-q", "origin", "main")
