@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8e82c408b88ce8a22214f21e8786ec8d41f6fa19264c36236cdf321190226764",
-    "changed": "ed35c9cf1871b390b1c25303c7ca78e95c0e4f7c3f4eef4c2e1a73292fed2f1a",
-    "commit": "a31507304e50e1071dcdfc740661f2773d7f42db",
+    "branch_diff": "6b020d7006980bd045b5ac0bc126f50b6a6cd37fa9936ea695bd82809fb75bfe",
+    "changed": "643304f4e3eca07966b991260bae12805ebf255347c2e855296593fdac6e3042",
+    "commit": "4e008229cb18872181d2d09152abbc2f0ead0e1b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. If a story has an earlier cold-read finding without a disposition, then its plan is revised from six to seven Done when items, `forge read` refuses at lines 160\u2013162 before reaching this limit check. It prints the two-line disposition error instead of the required one-line message to split the story. This is a normal planning revision that the fresh-story and approved-story tests do not cover.",
-        "file": "src/forge/story.py",
-        "line": 167,
-        "priority": "P1",
-        "title": "Not done: forge read does not give the split message on a later read"
-      }
-    ],
-    "id": "2ebc7767-667a-424c-9ef0-28089e9a854b",
-    "status": "blocked"
+    "findings": [],
+    "id": "72579f57-02b1-49c9-b21b-06534be7c3f2",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T14:39:38+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-10T14:54:53.917093+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T15:50:44.863707+00:00",
       "step": "review"
     }
   ],
