@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "316cda68ac92cc46c7d1e6902929a3ba2ddef55b471848420d7bb6e8fd58ab6f",
-    "changed": "e784670f022bd4616b69a6cb6bc25b9444819944000284aa63261073a76066e1",
-    "commit": "54519362a66f5256dfb36dc05670667a9d76cc31",
+    "branch_diff": "106cdec1ce30c909e045c843c5094574ddc57033bb02b1bec3fb591d5fad41fa",
+    "changed": "d08f17f43f97a24531a6ab4718741b11b4f464104d124e73be7cbeb302efe308",
+    "commit": "3a45662d84ccde449e10c3040fa7b9a6a25729d9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done \u2014 an existing repo upgraded between worker rounds can keep waiting for a choice that close will not record. The ruling that resumed rounds inherit the clarification assumes their earlier brief already contained it. In an active session started before this change, it did not. On resume, `src/forge/worker.py:423-428` sends \u201cThe earlier brief in this conversation still applies\u201d and the old review-loop instruction, but never reads these new template lines. The command test starts its worker only after sync, so it does not cover this upgrade path.",
-        "file": "src/forge/templates/brief.md",
-        "line": 10,
-        "priority": "P1",
-        "title": "Not done: Active worker sessions miss the brief update after sync"
-      }
-    ],
-    "id": "2bc0067f-1de1-4fa2-8943-14419751fdc1",
-    "status": "blocked"
+    "findings": [],
+    "id": "3856bbbf-5977-460a-b8b3-3a5a1151d1da",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T11:57:15+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-10T12:50:57.767818+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T14:09:42.615260+00:00",
       "step": "review"
     }
   ],
