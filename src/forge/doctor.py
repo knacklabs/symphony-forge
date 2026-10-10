@@ -440,7 +440,8 @@ def doctor(args: argparse.Namespace) -> int:
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
     budget = machine.half_cores()
-    print(f"This machine: {cores} cores, so {budget} agents at once and test runs on {budget} cores.")
+    print(f"This machine: {cores} cores, so {budget} agents at once and "
+          f"{machine.test_slots()} test runs at once, each on {budget} cores.")
     claude = shutil.which("claude")
     version = None
     if claude:

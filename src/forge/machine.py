@@ -33,6 +33,11 @@ def half_cores() -> int:
     return max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2)
 
 
+def test_slots() -> int:
+    """One test run per four available cores, with at least one place."""
+    return max(1, half_cores() // 2)
+
+
 def _repos_file() -> Path:
     config = os.environ.get("APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME")
     return Path(config or Path.home() / ("AppData/Roaming" if os.name == "nt" else ".config")) / "forge" / "repos"
@@ -98,7 +103,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None, "round": round_number,
              "output_path": None, "progress": None}
-    size = 1 if kind == "test" else half_cores()
+    size = test_slots() if kind == "test" else half_cores()
     with _queue() as runs:
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
@@ -216,7 +221,7 @@ def view() -> dict[str, Any]:
                           if key in ("pid", "started")}
     return {name: {"size": size, "entries": [run for run in runs
             if (run["kind"] == "test") == (name == "tests")]}
-            for name, size in (("agents", half_cores()), ("tests", 1))}
+            for name, size in (("agents", half_cores()), ("tests", test_slots()))}
 
 
 def lanes(args: Any) -> int:
@@ -238,6 +243,7 @@ def lanes(args: Any) -> int:
     if args.json:
         print(json.dumps(result))
     else:
+        print(f"Test lane: {result['tests']['size']} places.")
         for name in ("agents", "tests"):
             for run in result[name]["entries"]:
                 state = f"waiting #{run['place']}" if run["place"] else "running"
