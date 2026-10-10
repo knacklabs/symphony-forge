@@ -102,7 +102,9 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     assert read(repo).startswith("Round 7 of the cold read of plans/SHOP.md found nothing.")
     assert "passed: yes\n" in notes.read_text("utf-8")
     assert repo.git("rev-parse", "story/SHOP~1") == tip
-    assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= last_files(repo, "story/SHOP")
+    # The choice already committed the document; the passing round commits its new notes.
+    assert repo.git("show", "story/SHOP:plans/SHOP.md") == DOC.strip()
+    assert "plans/SHOP.read.md" in last_files(repo, "story/SHOP")
     assert repo.git("status", "--porcelain", cwd=shop) == ""
 
     # A spec read on a branch is committed there too once a round passes.

@@ -27,7 +27,11 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         env.commit(where, "forge.toml", config + 'models.grill.claude = { model = "opus", effort = "high" }\n')
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     if target == "SHOP":
+        env.commit(where, "docs/decisions/0001-client-signoff.md",
+                   '---\nstatus: accepted\nconfirmed_by: A Client\n---\n# Signed off\n')
         env.commit(where, "plans/roadmap.json", json.dumps({"items": [{"key": target}]}))
+        # Stories start on the default branch: land the fixture's upgrade and sign-off first.
+        repo.git("merge", "--ff-only", repo.git("rev-parse", "HEAD", cwd=where))
         made = repo.forge("story", "new", target, "Shoppers can save a basket", cwd=where)
         assert made.returncode == 0, made.stderr
         where = worktree(repo, "story/SHOP")
@@ -62,6 +66,9 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
     assert invalid.returncode == 1 and "non-empty --reason" in invalid.stderr
     reason = "The human chose this scope after reading the remaining notes"
+    if choice == "accept":
+        # The owner's supplied reason must also settle an unfinished latest disposition.
+        notes.write_text(notes.read_text("utf-8") + "   Disposition: keep\n", "utf-8")
     chosen = repo.forge("read", target, "--resolve", choice, "--reason", reason, cwd=where)
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     assert len(calls.read_text("utf-8").splitlines()) == 3
@@ -70,12 +77,11 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     assert repo.forge("read", target, "--resolve", choice, "--reason", reason,
                       cwd=where).returncode == 1
     if choice == "accept" and target == "SHOP":
-        env.commit(where, "docs/decisions/0001-client-signoff.md",
-                   '---\nstatus: accepted\nconfirmed_by: A Client\n---\n# Signed off\n')
         approved = hook(repo, claude_plan(claude_payload, doc.read_text("utf-8"), cwd=where))
         assert approved.returncode == 0, approved.stderr
         doc.write_text(doc.read_text("utf-8") + "\nA new requirement.\n", "utf-8")
-        changed = hook(repo, claude_plan(claude_payload, doc.read_text("utf-8"), cwd=where))
+        # Once approved, task start is the boundary that checks later edits against the read.
+        changed = repo.forge("task", "start", "SHOP/SAVE", cwd=where)
         assert changed.returncode == 1 and "changed after" in changed.stderr
     elif choice == "accept":
         confirmed = repo.forge("spec", "confirm", target, "--by", "Ravi", cwd=where)

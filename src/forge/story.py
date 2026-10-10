@@ -171,8 +171,9 @@ def read(args: Any) -> int:
         if choice == "accept":
             # Keep the notes and the owner's evidence; acceptance covers the current document.
             for block in _findings(findings).values():
-                if not DISPOSITION.search(block):
-                    findings = findings.replace(block, block + f"\n   Disposition: keep - {reason}", 1)
+                if undisposed(block):
+                    settled = DISPOSITION.sub("", block, count=1).rstrip()
+                    findings = findings.replace(block, settled + f"\n   Disposition: keep - {reason}", 1)
             record["read_hash"] = _store(top, doc.read_bytes(), rel)
         _write(notes, _notes(record, findings))
         repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes), top=top)
