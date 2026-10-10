@@ -67,8 +67,11 @@ def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
         result = repo.forge("sync")
     assert result.returncode == 0, result.stdout + result.stderr
 
-    for name in ("worker", "coder", "frontend", "tester", "refactorer", "explorer"):
+    for name in ("worker", "coder", "frontend", "tester", "refactorer"):
         assert _settings(top, name)[1] == ("claude-sonnet-5-5", "xhigh"), name
+    # Fresh init separates read-only explore; configs without explore retain lite.
+    assert _settings(top, "explorer")[1] == (
+        ("claude-haiku-5-5", "high") if models is None else ("claude-sonnet-5-5", "xhigh"))
     for name in ("planner", "architect"):
         assert _settings(top, name)[1] == planning, name
     for name in ("debugger", "security", "performance"):
