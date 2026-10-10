@@ -16,24 +16,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e70d903208a22dd87d4516629bb29a9d78edf901217d0520a63ada68b729b7d7",
-    "changed": "ab82d1e6b1a9b0387925ebf9c5fb1dfe51571c7bd6be013170cc7e70c40f07e6",
-    "commit": "644449cad21790837915a57322288fc07ab9e4b4",
+    "branch_diff": "dd4081e0f245808f409eff51ebb492730d3024e62b72df43923c73a379c76304",
+    "changed": "7ee498c398ea4e4c25ba0aa01ace45b94a8929c2253101631ac8e8132d14240e",
+    "commit": "0510ece768655e97419621a62c3db5ead3dc0879",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Data loss. Resuming a published task or fix branch in a fresh clone and rerunning `forge close` erases its earlier rounds from the pull request. The logs are uncommitted (`src/forge/repo.py:249`), but this calculation uses only those local logs, and `_publish` replaces the existing managed block (`src/forge/close.py:627`). Consequently, previously published findings and durations disappear even when close reuses the saved review. The refresh in `src/forge/merge.py:86\u201393` has the same problem and can squash the reduced history. New evidence beyond the legacy-unknown ruling: these values are already recorded in the fetched PR body, rather than unrecorded legacy activity. Preserve that published history when local records cannot reconstruct it; the named history tests retain the original local logs throughout.",
-        "file": "src/forge/close.py",
-        "line": 605,
-        "priority": "P1",
-        "title": "Preserve published round history when resuming in a fresh clone"
-      }
-    ],
-    "id": "ee8466ef-d07d-4457-b766-ce4f1395c820",
-    "status": "blocked"
+    "findings": [],
+    "id": "ff6bd22a-0a40-4ada-aa1e-8c37f7ba0e64",
+    "status": "clean"
   },
   "round": 12,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T11:28:56+00:00",
@@ -85,6 +77,10 @@
     },
     {
       "at": "2026-10-10T09:20:28.608388+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:03:38.132298+00:00",
       "step": "review"
     }
   ],
