@@ -7,6 +7,9 @@ nothing more.
 
 $review_loop
 
+Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
+review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings
