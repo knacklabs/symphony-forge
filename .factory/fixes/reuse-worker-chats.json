@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "89a5c9b882755200fb5bd7738a49ef0f83bcece3e2a9aa1a11d3c668720cdf98",
-    "changed": "33662e189bed8b1880b32869b1c4f59c44c98076e981df813e5bf31b1de9d8f4",
-    "commit": "ab97ecd7b46fe3d97e3d673eda6b3142050b0fbf",
+    "branch_diff": "b6440d8e2ca3627deb97a826e5855a80b933556a3b7335c5c6fd8ef8a9953a6f",
+    "changed": "a5bfadc90bf27da0999ddd0753902554c9a7592de76150d1d987f253942fc2fd",
+    "commit": "36e816d19d4358f841d94393232be96f2469e933",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The previous finding remains open: upgrade silently loses a recoverable earlier-release Codex spec-reader chat when its owner moves, is recreated or removed, or its local JSON disappears. Both owner searches require `docs/specs/<slug>.read.md` (lines 246 and 250), but a first failed v1.2.2 read clears the local identity and refuses before creating notes (`tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235`). Although the native ID remains in the turn log, sync skips preservation. Deleting machine metadata after sync then makes the next read start fresh without attempting that chat. `test_14_failed_previous_release_codex_reader_keeps_its_logged_chat` exercises a story with a directly identifiable branch; test_18 exercises successful spec reads that create notes. Neither catches the failed-spec owner case.",
+        "body": "Raise: Not done. The previous finding remains open: upgrade loses a recoverable earlier-release Codex spec-reader chat after its owner moves, is recreated or removed, or its local JSON disappears. Both owner searches require reader notes (lines 246 and 250), but a first failed v1.2.2 read clears the local identity and refuses before creating notes (`tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235`). The native ID remains in the turn log, yet sync finds no owner and skips preservation. Subsequent machine-metadata loss makes the next read start fresh without attempting that chat. The named proofs still miss this case: test_14 exercises a story with a directly identifiable branch; test_18 exercises successful spec reads that create notes.",
         "file": "src/forge/codex.py",
         "line": 246,
         "priority": "P1",
         "title": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge"
       }
     ],
-    "id": "efdd13f7-d902-4acb-8bbf-40d326ea8d6f",
+    "id": "8e2ac345-9029-4c09-a4f8-cb34dfbee242",
     "status": "blocked"
   },
   "round": 11,
@@ -96,6 +96,10 @@
     },
     {
       "at": "2026-10-10T09:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:23:51+00:00",
       "step": "review"
     }
   ],
