@@ -1,10 +1,12 @@
 {
   "branch": "task/FORGE-TOOLS-1-SETTING",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T11:29:35.863096+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "worker": "codex"
 }
