@@ -1,0 +1,14 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/story-from-goal",
+  "done_when": "forge story new <KEY> \"<title>\" works for a story that has no spec: the story's own branch adds it to the roadmap, the plan's Why carries the problem, and the story gets one read loop and one approval; stories made from a spec work as today and specs stay optional. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T15:18:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A new story needs a spec, its own read loop, a confirmation and a roadmap fix before its plan can even start"
+}
