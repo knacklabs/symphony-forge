@@ -15,7 +15,7 @@ import sys
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_worker import _sent
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_readloop_rounds import CODEX, FIRST, _no_codex, _setup
@@ -305,7 +305,8 @@ def _old_story_keeps_todays_rules(repo, claude_payload, monkeypatch, tmp_path,
 
 def promoted(repo):
     """Story BASKET promoted from a fix that changed basket.py, its doc written and read."""
-    setup(repo)
+    # Promotion now needs a committed entry; only brand-new stories add one.
+    setup(repo, keys=("SHOP", "BASKET"))
     assert repo.forge("fix", "start", "Keep baskets", "--done", "A basket survives").returncode == 0
     fix = worktree(repo, "fix/keep-baskets")
     (fix / "basket.py").write_text("SAVED = True\n", encoding="utf-8")
@@ -345,6 +346,12 @@ def _approval_reaches_promoted_task(repo, claude_payload, monkeypatch, tmp_path,
 def _failed_merge_leaves_task(repo, claude_payload, monkeypatch, tmp_path,
         sdk_data):  # noqa: F811
     fix, text = promoted(repo)
+    # The inherited roadmap is unchanged by promotion; make a real conflicting plan edit.
+    story = worktree(repo, "story/BASKET")
+    patient(lambda: (story / "plans/roadmap.json").write_text(json.dumps({"items": [
+        {"key": "SHOP"}, {"key": "BASKET", "title": "Keep baskets"}]}), encoding="utf-8"))
+    repo.git("add", "plans/roadmap.json", cwd=story)
+    repo.git("commit", "-q", "-m", "Name the basket story", cwd=story)
     # An uncommitted edit in the task's folder is in the merge's way.
     (fix / "plans").mkdir(exist_ok=True)
     roadmap = fix / "plans" / "roadmap.json"
