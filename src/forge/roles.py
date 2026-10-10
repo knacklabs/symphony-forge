@@ -41,7 +41,7 @@ ROLES = {
     "refactorer": ("build", "Makes behaviour-preserving refactors for a bounded task.",
                    BUILD + " Keep behaviour and validation exactly as they are; the existing tests "
                            "must pass unchanged."),
-    "explorer": ("lite", "Explores the codebase and traces dependencies without changing files.",
+    "explorer": ("explore", "Explores the codebase and traces dependencies without changing files.",
                  "Answer the question you were handed by reading the repo. " + READ_ONLY),
     "planner": ("design", "Turns an approved story into bounded tasks with their tests.",
                 "Split the approved story into the fewest tasks that each prove Done-when items end "
@@ -69,6 +69,8 @@ def _family(model: str) -> str:
 def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
     """(model, effort) for a role on this host; "" leaves it out so the session's own applies."""
     models = cfg.get("models", {})
+    if kind == "explore" and kind not in models:
+        kind = "lite"
     # A kind with no entry for this family gets none: the role inherits the session's settings.
     entry = models.get(kind, {})
     per_family = kind == "design" or any(host in entry for host in repo.FAMILIES)
