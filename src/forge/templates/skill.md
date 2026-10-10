@@ -112,6 +112,7 @@ Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...
 `"both"` (the default when absent). One tool puts every item on it, including design work
 with its own design model; `workers` is ignored. With both, `workers` keeps its usual meaning.
 Forge's planning, approval, build, review, CI and merge process stays the same.
+Doctor's SDK, project trust and UI skill checks follow the selected tool too.
 
 When a round's tool is the coordinator's, its route is native: that session's own background subagent,
 even with both tools. The other tool runs through its kit: the Codex app server or the Claude

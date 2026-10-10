@@ -302,8 +302,10 @@ def doctor(args: argparse.Namespace) -> int:
             said = _last(done) if done.returncode else "no forge is on PATH after uv installed it"
             add(f"{problem} Installing it failed: {said}", install)
         else: add(problem, REPAIR if repairs and not args.fix else install)
-    on_codex = cfg["workers"] != "claude"  # split runs Codex and Claude
-    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE") and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
+    workers = cfg["workers"] if cfg["tools"] == "both" else cfg["tools"]
+    on_codex = workers != "claude"  # split runs Codex and Claude
+    needs_sdk = on_codex or bool(cfg["tools"] == "both" and os.environ.get("CLAUDECODE")
+                                and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
     sdk_failed = ""
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         try: codex.install()
@@ -419,7 +421,8 @@ def doctor(args: argparse.Namespace) -> int:
     has_frontend = (any((top / path / "package.json").is_file() for path in ("frontend", "web", "apps/web"))
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte", "@angular/core", "next", "vite")))
     if has_frontend:
-        for host in (host for host in skills if cfg["workers"] in (host, "split") or shutil.which(host)):
+        for host in (host for host in skills if cfg["tools"] == host or cfg["tools"] == "both"
+                     and (workers in (host, "split") or shutil.which(host))):
             for skill in ("impeccable", "emil-design-eng"):
                 if not any((folder / "skills" / skill / "SKILL.md").is_file() for folder in skills[host]):
                     add(f"{skill} is required for UI work but isn't installed where the " f"{host} worker reads skills.", INSTALL[skill])
@@ -432,12 +435,12 @@ def doctor(args: argparse.Namespace) -> int:
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
               "the merge base with the default branch; the pull request's tests check still runs " "the full test command.")
     if on_codex: print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see " "whether you did.")
-    elif not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
+    elif cfg["tools"] == "both" and not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
               f"trust this one yet.\n  Fix: {trust}")
     if rows:
         if compared: print(compared)
     else:
-        print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
+        print(f"Everything {'checks' if trusted or cfg['tools'] == 'claude' else 'else checks'} out for Forge {cfg['version']}.")
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
     budget = machine.half_cores()
