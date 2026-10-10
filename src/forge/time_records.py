@@ -366,8 +366,16 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "")
                    "published measurements above):\n\n" + current)
     if data.get("rebuilt"):
         current = "Rebuilt from history.\n\n" + current
+    if data.get("truncated"):
+        current = "Older time detail was shortened to fit GitHub; missing time is unknown.\n\n" + current
     saved = {name: checkpoint(rows) for name, rows in records.items()}
-    shared = {**data, "state": {"steps": [s for s in data["state"].get("steps", []) if s.get("step") == "start"]}}
+    # Keep progress dates and rounds, but not tool-command prose or recomputable snapshots.
+    shared = {name: data.get(name) for name in ("ready", "clean_reviews", "rebuilt", "legacy_text", "truncated")}
+    shared.update(events=[{k: e[k] for k in ("id", "item", "event", "at", "round") if k in e}
+                          if e.get("event") == "progress" else e for e in data["events"]],
+                  timings=data["timings"],
+                  state={"steps": [{"step": "start", "at": s.get("at")}
+                                   for s in data["state"].get("steps", []) if s.get("step") == "start"]})
     return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->" + \
         "\n<!-- forge:time-record " + json.dumps(shared, separators=(",", ":")) + " -->"
 
@@ -440,6 +448,7 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
                 else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")))
     data["ready"] = published.get("ready")
     data["legacy_text"] = published.get("legacy_text")
+    data["truncated"] = bool(local.get("truncated") or published.get("truncated"))
     data["clean_reviews"] = list({r.get("id") or r.get("commit"): r for r in
                                   [*published.get("clean_reviews", []), *local.get("clean_reviews", [])]}.values())
     return data

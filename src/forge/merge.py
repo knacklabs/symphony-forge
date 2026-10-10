@@ -95,6 +95,7 @@ def merge(args: argparse.Namespace) -> int:
                         top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
                 outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
                 body += "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
+        body = close._bounded_body(body)
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)

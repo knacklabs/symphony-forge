@@ -626,7 +626,7 @@ def _refresh_record(top: Path, item: str, state: dict[str, Any], pr: dict[str, A
     pr = pr or _pull_request(top, state.get("branch") or repo.current_branch(top))
     if not pr:
         return ""
-    body = time_records.refresh_record(top, item, state, pr.get("body") or "")
+    body = _bounded_body(time_records.refresh_record(top, item, state, pr.get("body") or ""))
     if body != (pr.get("body") or ""):
         path = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
         path.write_bytes(body.encode("utf-8"))
@@ -649,7 +649,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     if pr is None:
         title, why, summary = _title(top, item, state)
         notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
-        body_file.write_bytes(f"Why: {why}\nDone when: {summary}\n\n{notes}{block}\n".encode("utf-8"))
+        body_file.write_bytes(_bounded_body(f"Why: {why}\nDone when: {summary}\n\n{notes}{block}\n").encode("utf-8"))
         create = ("--base", default, "--head", branch, "--title", title, "--body-file",
                   str(body_file))
         url = _draft(top, "pr", "create", "--draft", *create) if draft else ""
@@ -666,11 +666,98 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
            else f"{body.rstrip()}\n\n{block}\n")
     _, _, summary = _title(top, item, state)
     new = re.sub(r"^Done when:.*$", lambda _: f"Done when: {summary}", new, count=1, flags=re.M)
+    new = _bounded_body(new)
     if new != body:
         body_file.write_bytes(new.encode("utf-8"))
         _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
         print("Updated the pull request's review block.")
     return {**pr, "body": new}
+
+
+def _bounded_body(body: str) -> str:
+    """Keep every GitHub write bounded, cutting duplicated and advisory detail before the contract."""
+    limit = 65536  # UTF-8 bytes also bound GitHub's character count, including emoji.
+    note = ("Some detail was shortened to fit GitHub's pull request limit. "
+            "Git holds the full contract and proof; missing time evidence remains unknown.")
+    if len(body.encode("utf-8")) <= limit:
+        return body
+    body = body.replace(note + "\n", "")
+    body = re.sub(r"\n<!-- forge:history .*? -->", "", body)
+    body = re.sub(r"(?m)^([^\n<]+)\n(?:\1\n)+", r"\1\n", body)
+    budget = limit - len((note + "\n\n\n\n").encode("utf-8"))
+
+    def clip(text: str, size: int) -> str:
+        return text.encode("utf-8")[:max(0, size)].decode("utf-8", errors="ignore")
+
+    def cut(match: re.Match[str]) -> str:
+        text = match[0]
+        excess = len(body.encode("utf-8")) - budget
+        if excess <= 0:
+            return text
+        suffix = "\n</details>" if text.startswith("<details>") else ""
+        return clip(text.removesuffix("</details>"), max(256, len(text.encode("utf-8")) - excess - len(suffix))) + suffix
+
+    # These have full source evidence elsewhere, unlike the current contract and blocking status.
+    for pattern in (r"<details>.*?</details>",
+                    r"Proof list:.*?(?=\n(?:## |Functional check:|<!-- forge:)|\Z)",
+                    r"Functional check:.*?(?=\n(?:## |Proof list:|<!-- forge:)|\Z)",
+                    r"## How it went\n.*?(?=\n(?:Proof list:|Functional check:|<!-- forge:)|\Z)"):
+        body = re.sub(pattern, cut, body, flags=re.S)
+
+    # Keep completion metadata valid even when the owner supplied an exceptionally long outcome.
+    def outcome(match: re.Match[str]) -> str:
+        try:
+            data = json.loads(match[1])
+            return "Forge-story-done: " + json.dumps({"key": clip(data["key"], 512),
+                                                       "outcome": clip(data["outcome"], 2048)})
+        except (ValueError, KeyError, TypeError):
+            return ""
+
+    if len(body.encode("utf-8")) > budget:
+        body = re.sub(r"^Forge-story-done: (\{.*\})$", outcome, body, flags=re.M)
+    # Shorten long prose before source history; retain small owner notes and the review state.
+    lines = body.splitlines(keepends=True)
+    protected = ("Why:", "Done when:", "Review:", "The review found", "- Finding ")
+    def prose(minimum: int) -> str:
+        excess = sum(len(line.encode("utf-8")) for line in lines) - budget
+        essential = {next((i for i, line in enumerate(lines) if line.startswith(prefix)), -1)
+                     for prefix in protected[:4]}
+        for index in sorted(range(len(lines)), key=lambda i: (
+                lines[i].startswith(protected), -len(lines[i]) if minimum else i)):
+            if excess <= 0:
+                break
+            line = lines[index]
+            if line.rstrip() in (BEGIN, END) or line.startswith(("<!-- forge:time-record ", "Forge-story-done:")):
+                continue
+            keep = max(minimum, 64 if index in essential else 0)
+            size = len(line.encode("utf-8"))
+            if size > keep:
+                target = max(keep, size - excess)
+                lines[index] = clip(line, target - 1).rstrip() + "\n" if target else ""
+                excess -= size - len(lines[index].encode("utf-8"))
+        return "".join(lines)
+    body = prose(256)
+
+    marker = re.search(r"<!-- forge:time-record (\{.*?\}) -->", body, re.S)
+    if marker and len(body.encode("utf-8")) > budget:
+        record = time_records.from_body(body)
+        before, after = body[:marker.start()], body[marker.end():]
+        if record:
+            record = {k: record.get(k) for k in ("events", "timings", "state", "ready", "rebuilt", "clean_reviews")}
+            record["truncated"] = True
+            while True:
+                body = before + "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->" + after
+                if len(body.encode("utf-8")) <= budget:
+                    break
+                rows = next((record[name] for name in ("events", "timings", "clean_reviews") if record.get(name)), None)
+                if rows is None:
+                    break
+                del rows[:max(1, len(rows) // 4)]
+        else:
+            body = before + after
+    lines = body.splitlines(keepends=True)
+    body = prose(0)
+    return body.rstrip() + "\n\n" + note + "\n"
 
 
 def _block(result: dict[str, Any], check: str) -> str:
