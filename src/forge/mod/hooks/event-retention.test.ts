@@ -24,10 +24,10 @@ test(`skipped-mod: ${rule} across repo moves`, async ($, on) => {
   on('ui.invalidate', () => ({ value: undefined }))
   on('ui.open', () => ({ value: undefined }))
   on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-    e.argv[1] === 'board' ? { version: '1.2.8', repo_root: root, items: [{ title: 'Guide',
+    e.argv[1] === 'board' ? { version: '1.2.9', repo_root: root, items: [{ title: 'Guide',
       occurrences: ids.map(id => ({ id, kind: 'worker_question', title: id })),
       next: { command: 'forge work guide', line: '' } }] } :
-    e.argv[1] === 'next' ? { version: '1.2.8', repo_root: root, next: { command: null, line: '' } } : { version: '1.2.8' },
+    e.argv[1] === 'next' ? { version: '1.2.9', repo_root: root, next: { command: null, line: '' } } : { version: '1.2.9' },
   ) } }))
   on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
   await $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: true })
