@@ -151,7 +151,13 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         for _ in range(11):
             assert repo.forge("work", item).returncode == 0
         ended, board = row(repo, item)
-        assert ended["idle_since"] == board["events"][-1]["time"]
+        # The frozen clock stamps events before the recorded worker duration ends.
+        finished = max(datetime.fromisoformat(timing["start"]) +
+                       timedelta(seconds=timing["seconds"])
+                       for timing in records(repo, "timings.jsonl") if timing["item"] == item)
+        assert finished > datetime.fromisoformat(board["events"][-1]["time"])
+        assert ended["idle_since"] == finished.isoformat()
+        assert ended["idle_seconds"] == 0
         assert ended["stalled"] is False
         assert board["events"][-1]["item"] == item
         assert board["events"][-1]["line"] == "Worker finished"
