@@ -44,9 +44,10 @@ export function laneCounts(data: Data) {
   const agentsRunning = list(agents.entries).filter(e => e.started_at != null).length
   const agentsWaiting = list(agents.entries).filter(e => e.started_at === null).length
   const testsWaiting = list(tests.entries).filter(e => e.started_at === null).length
+  const testsRunning = list(tests.entries).filter(e => e.started_at != null).length
   const test = list(tests.entries).find(e => e.started_at != null)
   const testTitle = test && data.board && test.repo_root === data.board.repo_root ? rows(data.board.items).find(i => i.id === test.item)?.title : undefined
-  return { agentsRunning, agentsWaiting, testsWaiting, test, testTitle, size: agents.size ?? '?' }
+  return { agentsRunning, agentsWaiting, testsRunning, testsWaiting, test, testTitle, size: agents.size ?? '?', testSize: tests.size ?? '?' }
 }
 
 export function itemTime(i: Item, now: number): string {
@@ -61,7 +62,7 @@ export function summary(data: Data, now: number, working = false): string[] {
   const next = !working && data.next?.next.command ? `1: ${data.next.next.command}` : data.next?.next.line ?? 'Loading Forge…'
   const step = data.lanes && record(active.find(i => typeof record(i.worker).step === 'string')?.worker).step
   return [
-    `${data.lanes ? `Agents ${n.agentsRunning}/${n.size} (${n.agentsWaiting} waiting) · Tests: ${n.testTitle ?? n.test?.item ?? 'idle'} (${n.testsWaiting} waiting) · ` : ''}${next}${step ? ` · ${step}` : ''}`,
+    `${data.lanes ? `Agents ${n.agentsRunning}/${n.size} (${n.agentsWaiting} waiting) · Tests ${n.testsRunning}/${n.testSize} (${n.testsWaiting} waiting) · ${n.testTitle ?? n.test?.item ?? 'idle'} · ` : ''}${next}${step ? ` · ${step}` : ''}`,
     ...active.slice(0, active.length > 2 ? 1 : 2).map(i => itemTime(i, now)),
     ...(active.length > 2 ? [`+${active.length - 1} more · /forge for all`] : []),
   ]
