@@ -3,12 +3,14 @@
   "branch": "fix/tests-once-per-round",
   "done_when": "Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise only the test files the change touched and the tests named after its changed source files; CI still runs the full suite and a red CI sends the item back. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T15:16:43+00:00",
       "step": "start"
     }
   ],
-  "why": "Each round runs the same tests twice, on the laptop and in CI, which is most of a round's time"
+  "why": "Each round runs the same tests twice, on the laptop and in CI, which is most of a round's time",
+  "worker": "codex"
 }
