@@ -4,25 +4,26 @@
   "done_when": "The logger template's fatal() writes a fatal-level line; the Playwright template sets testDir to its e2e folder; forge init copies the Node Dockerfile and .dockerignore only into Node repos; the Mac and Windows installers check docker info and print the step to start Docker Desktop when it isn't running; the guide names the Yarn 1 and Yarn 2+ update commands; command tests cover init on Node, Python and Go repos and the templates' contents for a new repo and one adopted on an earlier release",
   "flagged": [
     ".codex/skills/forge/SKILL.md",
+    "src/forge/templates/skill.md",
     "tests/test_installers_explain_docker_start.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "697a323d7db443c5fe4b805b4d9bd29884d0f320d4c1ee67de3fd5ab958971ed",
-    "changed": "7ed44b6953f84fad616f53b10878747050fde2c01f85574ec6a22cac258565b0",
-    "commit": "bcef2ae6c196413f1faa527085da45d65343e00a",
+    "branch_diff": "426d81e216cbb6059d20d7173d6692435205c60008334202d73be4fa8a202bd7",
+    "changed": "03bd59ff99f74eea2465df3dd2747058bedc923ab728d0de5f281fbff24f54f3",
+    "commit": "775185c7dc87c07d2c1a98dba81d595a4f342e5e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The command labelled \u201cYarn 2+\u201d does not work on Yarn 2: `yarn up -R '*'` requires Yarn 3 or later. New evidence beyond the coordinator\u2019s ruling based on current documentation: [Yarn\u2019s official changelog](https://github.com/yarnpkg/berry/blob/master/CHANGELOG.md#300) explicitly records `-R,--recursive` as a new option in 3.0.0. A client pinned to Yarn 2 therefore encounters an unsupported option instead of refreshing dependencies. This affects `src/forge/templates/skill.md` and both `.codex/skills/forge/SKILL.md` and `.claude/skills/forge/SKILL.md`. Distinguish Yarn 2 from Yarn 3+ and provide range-preserving instructions that work for each. The guide test at `tests/test_client_setup_matches_stack.py:63` currently requires the incompatible command, so it must be corrected alongside all three guides.",
-        "file": ".codex/skills/forge/SKILL.md",
-        "line": 623,
+        "body": "Raise: Not done. The guide still labels `yarn up -R '*'` as compatible with Yarn 2+, but Yarn 2 rejects `-R`, preventing the documented dependency refresh. The release-history evidence beyond the ruling's current-command documentation remains unaddressed: [Yarn's official 3.0.0 changelog](https://yarnpkg.com/advanced/changelog#300) identifies `-R,--recursive` as a newly added option. This affects `src/forge/templates/skill.md:627`, `.codex/skills/forge/SKILL.md:623` and `.claude/skills/forge/SKILL.md:623`. The assertion at `tests/test_client_setup_matches_stack.py:63` requires the incompatible instruction, so the passing proof does not establish Yarn 2 compatibility. Distinguish Yarn 2 from Yarn 3+ and correct all three guides and their check.",
+        "file": "src/forge/templates/skill.md",
+        "line": 627,
         "priority": "P1",
         "title": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands"
       }
     ],
-    "id": "2fef2495-9222-486e-a1ee-c5cd86bad522",
+    "id": "7d680f61-94d3-42b0-980f-92a91cdecf98",
     "status": "blocked"
   },
   "round": 4,
@@ -46,6 +47,10 @@
     },
     {
       "at": "2026-10-09T22:58:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:58:01+00:00",
       "step": "review"
     }
   ],
