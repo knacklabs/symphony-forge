@@ -78,11 +78,15 @@ it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
 it after upgrading Forge and syncing. The jobs set up uv and Python, and install
 Node for Node tests, respecting version files or engines with Node 22 as the fallback.
-If the current branch's pull request checks stay queued for at least five minutes and no job
-in this repo using the configured runner has started during that queue, `forge doctor`, close
-and land name the runner setting. Make a matching runner available or correct the setting and
-sync; keep the required checks enabled. If a matching job has started, the pool is busy: close
-and land keep their normal check waits, and doctor gives no missing-runner warning.
+Close and land keep waiting while checks are queued. The wait line shows minutes observed
+queued during this wait: shared runners may be busy or no runner may match the runner setting.
+Only `forge doctor` reports a likely missing runner, when a current check has been queued at
+least five minutes and no matching job started in its sample of this repo's runs created in
+the last seven days. It reads at most 100 newest runs, skips successful runs, and reads one
+page of latest jobs per remaining run, without earlier attempts or older runs. Make a
+matching runner available or correct the setting; run `forge sync` only if you
+change the runner setting. Keep the required checks enabled. New and upgraded repos get the
+same waiting and doctor behaviour from the upgraded Forge commands.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
@@ -947,10 +951,11 @@ round if the check is still red.
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
 loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
-GitHub shows progress, retrying unreadable or failed answers. It stops waiting on green or
-failed checks, or after 30 minutes without a check starting, finishing or being replaced, and
-says which checks are still running, missing, or unreadable. Close on its own still waits at
-most ten minutes. When it stops, follow its refusal and the
+GitHub shows progress or checks remain queued, retrying unreadable or failed answers. It stops
+waiting on green or failed checks, or after 30 minutes without a check starting, finishing or
+being replaced while none are queued, and says which checks are still running, missing, or
+unreadable. Close on its own still waits at most ten minutes while none are queued. When it
+stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
 GitHub reads also retry unreadable answers and server errors three times, pausing for one,
 two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
