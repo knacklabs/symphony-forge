@@ -6,6 +6,7 @@
   "flagged": [
     ".factory/fixes/where-time-went.json",
     "src/forge/checks.py",
+    "src/forge/close.py",
     "src/forge/machine.py",
     "src/forge/merge.py",
     "src/forge/review.py",
@@ -15,20 +16,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "102e814ab59ade36832356b58268c182a8afad8084531e4317ab6b0c6c127d14",
-    "changed": "4f27c02f9074d3b1b45d6f0461c07390978566395c06d45d4500cc80b4e666e6",
-    "commit": "c44e5677b7fb78a5ab5270bce4838f80395e133e",
+    "branch_diff": "e70d903208a22dd87d4516629bb29a9d78edf901217d0520a63ada68b729b7d7",
+    "changed": "ab82d1e6b1a9b0387925ebf9c5fb1dfe51571c7bd6be013170cc7e70c40f07e6",
+    "commit": "644449cad21790837915a57322288fc07ab9e4b4",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. Pressing Ctrl-C during a minutes-long queued or running CI wait leaves `outcome=\"unknown\"`: this handler catches only `repo.Refused`, so `KeyboardInterrupt` reaches the final recorders without recording why the wait ended. The supported cancellation path in `src/forge/cli.py:170` then exits with 130. Consequently, both close and merge histories show `CI unknown` despite having observed the check state and the owner's deliberate cancellation. This particularly affects queued waits, which continuously renew their deadline (`checks.py:97\u201398`). The four-outcome command test covers deadline exhaustion, not this ordinary way of giving up.",
-        "file": "src/forge/checks.py",
-        "line": 37,
+        "body": "Raise: Data loss. Resuming a published task or fix branch in a fresh clone and rerunning `forge close` erases its earlier rounds from the pull request. The logs are uncommitted (`src/forge/repo.py:249`), but this calculation uses only those local logs, and `_publish` replaces the existing managed block (`src/forge/close.py:627`). Consequently, previously published findings and durations disappear even when close reuses the saved review. The refresh in `src/forge/merge.py:86\u201393` has the same problem and can squash the reduced history. New evidence beyond the legacy-unknown ruling: these values are already recorded in the fetched PR body, rather than unrecorded legacy activity. Preserve that published history when local records cannot reconstruct it; the named history tests retain the original local logs throughout.",
+        "file": "src/forge/close.py",
+        "line": 605,
         "priority": "P1",
-        "title": "Record deliberate CI cancellation as a give-up"
+        "title": "Preserve published round history when resuming in a fresh clone"
       }
     ],
-    "id": "39b2e094-e3f3-4036-bf63-92e141355c8e",
+    "id": "ee8466ef-d07d-4457-b766-ce4f1395c820",
     "status": "blocked"
   },
   "round": 11,
@@ -80,6 +81,10 @@
     },
     {
       "at": "2026-10-10T08:07:03.196566+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:20:28.608388+00:00",
       "step": "review"
     }
   ],
