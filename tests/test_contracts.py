@@ -232,6 +232,7 @@ else:
 
 
 def _codex_handler_moved(repo, gh, tmp_path, monkeypatch, request):
+    request.getfixturevalue("claude_session")
     _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
     (tmp_path / "moved").mkdir()
     (tmp_path / "moved" / "sitecustomize.py").write_text(MOVED_LATE, encoding="utf-8")

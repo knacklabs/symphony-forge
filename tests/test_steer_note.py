@@ -6,7 +6,7 @@ from test_codex_worker import _codex_repo, _lines, _sent, sdk_data  # noqa: F401
 STORY = "FORGE-STEER-1"
 
 
-def test_1_note_reaches_one_round_and_empty_note_is_refused(repo, monkeypatch, sdk_data):
+def test_1_note_reaches_one_round_and_empty_note_is_refused(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     blank = repo.forge("work", "BOARD/PAGE", "--note", "  ")
     assert blank.stderr == ('The --note text is empty.\n'

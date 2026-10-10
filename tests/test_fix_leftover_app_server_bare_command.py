@@ -16,7 +16,7 @@ STORY = "pull-requests-keep-failing-ci-on-the-sam"
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows reads a process's image path, never a bare name")
 def test_1_next_work_stops_a_leftover_app_server_recorded_by_its_bare_name(repo, monkeypatch,
-                                                                           sdk_data):
+                                                                           sdk_data, claude_session):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     # Under load, ps reads a just-started app-server's program name only, and Forge records that.
