@@ -52,6 +52,15 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
         conflict_wait(env, monkeypatch)
         return
     client(env, previous)
+    # GitHub only returns requested fields, including for older PRs outside GraphQL's window.
+    gh = env.repo.bin / "gh"
+    gh.write_text(gh.read_text("utf-8").replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]
+        if args[:2] == ["pr", "list"] and "--json" in args:
+            fields = args[args.index("--json") + 1].split(",")
+            state = args[args.index("--state") + 1].upper() if "--state" in args else "ALL"
+            output = json.dumps([{k: v for k, v in pr.items() if k in fields}
+                                 for pr in json.loads(output) if state == "ALL" or pr["state"] == state])
+        sys.stdout.write(output)'''), "utf-8")
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
                'workers = "claude"\ntest = "echo passed"\nchecks = ["tests", "forge-pr-check"]\n'
@@ -101,6 +110,10 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     env.repo.path = machine_a
     on_a = row(env.repo, item)
     assert on_a["stage"] == "ready"
+    next_step = env.repo.forge("next")
+    assert next_step.returncode == 0, next_step.stderr
+    assert any("keep-basket" in line and "is ready" in line
+               for line in next_step.stdout.splitlines())
     for field in ("intervals", "time_breakdown", "rounds", "total_seconds"):
         assert on_a[field] == on_b[field], field
     # A's stale local logs must not erase B's reviews when A publishes next.
@@ -255,7 +268,14 @@ def rebuilt_history(env):
     github_merge(env, f"fix/{item}")
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
-    gh.write_text(source.replace('"isDraft": False', f'"isDraft": False, "body": {text!r}'), "utf-8")
+    source = source.replace('"isDraft": False', f'"isDraft": False, "body": {text!r}')
+    gh.write_text(source.replace('if args[:2] == ["pr", "merge"]:',
+                                 'if args[:2] == ["pr", "merge"]:\n    sys.exit(1)'), "utf-8")
+    refused = env.repo.forge("merge", item)
+    assert refused.returncode == 1
+    published(env, item)
+    assert row(env.repo, item)["stage"] == "ready", "A refused GitHub merge must keep shared readiness"
+    gh.write_text(source, "utf-8")
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stdout + merged.stderr
     assert "Rebuilt from history." in env.repo.git("log", "-1", "--format=%B", "origin/main")

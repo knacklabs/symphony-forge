@@ -82,7 +82,7 @@ def merge(args: argparse.Namespace) -> int:
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
         completion = ["--body-file", "-"]
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
-        body = close._refresh_record(top, item, item_state, pr)
+        body = close._refresh_record(worktree, item, item_state, pr)
         if "/" in item:
             key, tid = item.split("/")
             state = story.json_of(story.show(top, head, repo.state_path(key)))

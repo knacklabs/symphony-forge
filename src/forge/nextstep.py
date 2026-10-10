@@ -188,7 +188,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
-    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,isDraft")
+    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
            if isinstance(pr.get("url"), str)} if trees else {}
     if trees:
         prs.update({pr["headRefName"]: pr for pr in board._machine_prs(top)
