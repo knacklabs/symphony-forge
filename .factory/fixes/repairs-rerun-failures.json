@@ -1,6 +1,13 @@
 {
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/repairs-rerun-failures",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12663-a90d-7851-8740-5e9f2f1c16aa",
+    "head": "dbfc3abb02256b4ab44b1387b4d19e2e3936f212",
+    "start": "485def6b3734dffd3861496da85d45a58fc99bce"
+  },
   "done_when": "After a failed check or test, close's next round runs first the tests that failed, and runs no test again whose files are unchanged since its last pass; CI on the pull request still runs the full suite. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
   "round": 1,
