@@ -60,7 +60,11 @@ def test_2_dependency_guide_names_both_yarn_generations(client_templates):
     for host in (".codex", ".claude"):
         guide = (client / host / "skills/forge/SKILL.md").read_text()
         assert "`yarn upgrade` (Yarn 1)" in guide
-        assert "`yarn up -R '*'` (Yarn 2+)" in guide
+        # Recursive up starts in Yarn 3; Yarn 2 must re-resolve the lockfile
+        # without raising any workspace's dependency ranges.
+        assert "For Yarn 2, remove only `yarn.lock`, then run `yarn install --no-immutable`" in guide
+        assert "keep every `package.json` unchanged" in guide
+        assert "`yarn up -R '*' '@*/*'` (Yarn 3+)" in guide
 
 
 def test_3_backend_logger_fatal_writes_a_fatal_line(tmp_path, client_templates):
