@@ -174,7 +174,8 @@ def _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
     plain = repo.forge("next")
     assert plain.returncode == 0, plain.stderr
     steps = [line for line in plain.stdout.splitlines() if line.startswith("Next: ")]
-    assert steps[0] == 'Next: forge story done BOARD "<outcome sentence>"'
+    # Outcome advice now refreshes remote merges before the command reads them.
+    assert steps[0] == 'Next: git fetch origin, then forge story done BOARD "<outcome sentence>"'
     assert "Next: forge work polish" in steps[1:]
     following = view(repo, "next")["next"]
     assert following["command"] is None
