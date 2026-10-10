@@ -2,13 +2,38 @@
   "base": "4436362fd178474e291311077681bb515dab731e",
   "branch": "fix/plan-six-done-whens",
   "done_when": "forge read refuses a story doc with more than six Done when lines, saying in one line to split it into smaller stories; approved stories already over six are left alone. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/story.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e82c408b88ce8a22214f21e8786ec8d41f6fa19264c36236cdf321190226764",
+    "changed": "ed35c9cf1871b390b1c25303c7ca78e95c0e4f7c3f4eef4c2e1a73292fed2f1a",
+    "commit": "a31507304e50e1071dcdfc740661f2773d7f42db",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. If a story has an earlier cold-read finding without a disposition, then its plan is revised from six to seven Done when items, `forge read` refuses at lines 160\u2013162 before reaching this limit check. It prints the two-line disposition error instead of the required one-line message to split the story. This is a normal planning revision that the fresh-story and approved-story tests do not cover.",
+        "file": "src/forge/story.py",
+        "line": 167,
+        "priority": "P1",
+        "title": "Not done: forge read does not give the split message on a later read"
+      }
+    ],
+    "id": "2ebc7767-667a-424c-9ef0-28089e9a854b",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T14:39:38+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T14:54:53.917093+00:00",
+      "step": "review"
     }
   ],
   "why": "Big plans give readers too much to pick at",
