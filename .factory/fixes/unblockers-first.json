@@ -1,0 +1,14 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/unblockers-first",
+  "done_when": "In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first-come within each group, and its place in line says why. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T15:25:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The machine's agent line is first-come, so a part other work waits on queues behind new fixes"
+}
