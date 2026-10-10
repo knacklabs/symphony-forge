@@ -118,7 +118,8 @@ setting and integration, and write `Cut or defer: <item>` for any that nothing n
 Write only your findings, as a numbered list: each finding starts a line with its number (`1. `,
 `2. `, ...), states the finding in one line, then gives brief evidence on indented lines, starting
 with `Raise: <line>`, and no speculative suggestions. Use no other numbered lines. If there is
-nothing to report, write `No findings.`
+nothing to report, write exactly `No findings.` and nothing else. Do not number it or add a note
+about tests you did not run.
 
 <!-- forge:round -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
