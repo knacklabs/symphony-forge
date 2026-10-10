@@ -991,6 +991,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Failed unchanged-spec reads bind to the upgrade checkout\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 250,
+      "text": "Not done: Failed unchanged-spec reads bind to the upgrade checkout",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1926,6 +1937,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: Persist reader chats before accepting a read\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2274,6 +2296,17 @@
       "text": "Standard: data is protected against loss",
       "from": "blocking",
       "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Earlier-release Codex fallback is mistaken for a Claude round\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 124,
+      "text": "Not done: Earlier-release Codex fallback is mistaken for a Claude round",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -4716,17 +4749,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 256,
-      "text": "New cold-read notes can be lost when a settled note repeats",
-      "from": "blocking",
-      "item": "settled-stays-settled",
       "status": "open",
       "closed_by": null
     }

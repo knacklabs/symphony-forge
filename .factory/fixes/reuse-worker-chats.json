@@ -19,27 +19,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9cc48c7f168f295e1d470d9212c275242e9d2e419cde73ee2ea45c89d9f6827d",
-    "changed": "775e5ffe7d31fe0a83061f2c428d8222bcf0b5a474b4f52f4c2cb9bf8d203a62",
-    "commit": "5eb025c2526754a6093350dc238ae71201925661",
+    "branch_diff": "b774cf0c1505444125c8d7da80f2f306a06191ec86aebfaa2c435feab7ab87b2",
+    "changed": "9a501df388148ffd62f1e97bf4e875ef95231ca1dbbff94ccdc7f86261935992",
+    "commit": "d7ea98be23bc587defcb8b018f9f8020eaa0be3a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done \u2014 a later round can resume an obsolete worker or reader chat and overwrite the current binding. At line 196, local JSON takes precedence over the committed state or read notes. In a normal two-machine flow, machine B may be told that machine A\u2019s chat is gone, start a replacement, and commit its ID. When A updates the branch, its older local JSON still wins. The next round resumes the old ID; a worker round can also commit that ID back over the replacement through `remember()`.",
-        "file": "src/forge/codex.py",
-        "line": 196,
+        "body": "Raise: Not done \u2014 After a v1.2.2 split-design round fails cleanly on Claude and falls back to Codex, the local record contains both chat IDs but no `worker` field (tests/fixtures/forge-v1.2.2/src/forge/worker.py:115, 128\u2013169, 410). This line assumes the configured family, Claude, was the last worker. The first upgraded round therefore resumes the earlier Claude session with a short prompt instead of starting a chat with the full brief and a tool-change reason. Test 15 adds a successful Claude round after fallback, so it does not cover the Codex-last case.",
+        "file": "src/forge/worker.py",
+        "line": 124,
         "priority": "P1",
-        "title": "Not done: A stale local record can replace the current chat"
+        "title": "Not done: Earlier-release Codex fallback is mistaken for a Claude round"
       },
       {
-        "body": "Raise: Not done \u2014 an unmerged spec reader loses its chat after upgrade when that spec also exists on the default branch. If its old owning worktree was removed, line 245 selects the upgrade checkout as owner merely because it contains the spec, before searching the retained work branch. Sync then writes or skips the binding there, leaving the unmerged branch without its reader ID. Recreating that branch after local metadata loss starts a fresh chat. The named moved-owner tests explicitly use a spec absent from the default checkout, so they do not cover this common amendment flow.",
+        "body": "Raise: Not done \u2014 A failed v1.2.2 Codex read of a spec identical to the default copy leaves no branch-local read notes (tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235). If its unmerged owning worktree is removed before upgrade, this comparison excludes its retained branch because both the spec and notes match default. Sync then commits the recoverable log ID in the upgrade checkout. Losing local metadata before that upgrade lands and recreating the owning worktree starts a new reader chat. Test 18's failed-read cases use a spec absent from default; test 22's unchanged-spec cases have successful read notes.",
         "file": "src/forge/codex.py",
-        "line": 245,
+        "line": 250,
         "priority": "P1",
-        "title": "Not done: Upgrade can bind a spec reader to the wrong branch"
+        "title": "Not done: Failed unchanged-spec reads bind to the upgrade checkout"
       }
     ],
-    "id": "ab50c7c9-f825-418f-b840-62727426d70b",
+    "id": "420e0f88-cbba-496c-8f5b-6c5ff40e466f",
     "status": "blocked"
   },
   "round": 17,
@@ -131,6 +131,10 @@
     },
     {
       "at": "2026-10-10T17:49:19.292618+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:38:39.028937+00:00",
       "step": "review"
     }
   ],
