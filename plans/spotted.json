@@ -1805,6 +1805,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tA dependent story's roadmap entry never reaches the default branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 139,
+      "text": "A dependent story's roadmap entry never reaches the default branch",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1812,6 +1823,17 @@
       "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
       "from": "blocking",
       "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 167,
+      "text": "Not done: forge read does not give the split message on a later read",
+      "from": "blocking",
+      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     },
@@ -4496,17 +4518,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 167,
-      "text": "Not done: forge read does not give the split message on a later read",
-      "from": "blocking",
-      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     }

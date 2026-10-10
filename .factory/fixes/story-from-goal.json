@@ -3,25 +3,26 @@
   "branch": "fix/story-from-goal",
   "done_when": "forge story new <KEY> \"<title>\" works for a story that has no spec: the story's own branch adds it to the roadmap, the plan's Why carries the problem, and the story gets one read loop and one approval; stories made from a spec work as today and specs stay optional. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
-    "src/forge/nextstep.py"
+    "src/forge/nextstep.py",
+    "src/forge/story.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "799ba2655596b147cde8a784c1ab22fdc1019cf04980b96ee2284c4e034d59d5",
-    "changed": "b920bce6df978efc1df983603141e8ff6d140dd8527aea0ffa805fe078ede113",
-    "commit": "bcff1a71ca07ca61864dfb0664db33316054c28e",
+    "branch_diff": "592792aa59bc3e33f183662cc42697d9ad55ecc608d2e860af7bdad325987709",
+    "changed": "c3f2f51af0f9afb4c169119ebb732d8dfc5b324b068a633d1f24359eb8e4b927",
+    "commit": "c56e2c9fb5acc714aaa42647476ed4f6cae1f078",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. When a client has any active roadmap item, `_idle` returns at lines 345\u2013349 before reaching the new problem-card path. It tells the agent to run `forge story new` only for an item already on the roadmap. A client with an existing backlog and a newly discovered problem therefore still receives the old roadmap prerequisite as its next step, despite the command now accepting a new key. The discovery test exercises only an empty roadmap.",
-        "file": "src/forge/nextstep.py",
-        "line": 352,
+        "body": "Raise: Functional. For a spec-free story whose first task depends on another story's task, the new entry is committed only on `story/<KEY>` here. `task.start_base` uses the default branch for cross-story dependencies (`src/forge/task.py:288\u2013296`), while `task.start` copies only the plan, read notes, and story state (`src/forge/task.py:280\u2013283`). That task's pull request can therefore merge without the roadmap entry, leaving the completed story absent from the default branch's roadmap. The new test checks creation and approval but stops before task start.",
+        "file": "src/forge/story.py",
+        "line": 139,
         "priority": "P1",
-        "title": "Forge next still directs clients with a populated roadmap to choose an existing item"
+        "title": "A dependent story's roadmap entry never reaches the default branch"
       }
     ],
-    "id": "e5308f97-d7c3-4c7f-a219-7ba9cbd952ff",
+    "id": "6fc20924-f5e0-477e-81ee-0b399956729d",
     "status": "blocked"
   },
   "round": 2,
@@ -33,6 +34,10 @@
     },
     {
       "at": "2026-10-10T16:19:34.187735+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:51:53.924012+00:00",
       "step": "review"
     }
   ],
