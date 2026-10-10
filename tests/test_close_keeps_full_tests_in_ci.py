@@ -9,6 +9,7 @@ import pytest
 
 from conftest import ROOT, _install, patient
 from test_close import env, run  # noqa: F401
+from test_machine_views import github, pull
 from test_setup import _fresh_client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
@@ -83,6 +84,11 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "Checks failed on the pull request: tests." in closed.stderr
     assert f"Next: forge work {item}" in closed.stderr
+    # Next reads GitHub's current PR head through GraphQL, separately from close's check API.
+    failed = pull(7, f"fix/{item}", conclusion="FAILURE")
+    failed["headRefOid"] = env.repo.git("rev-parse", "HEAD", cwd=where)
+    failed["commits"]["nodes"][0]["commit"]["oid"] = failed["headRefOid"]
+    github(env.gh, [failed])
     next_step = env.repo.forge("next")
     assert next_step.returncode == 0, next_step.stderr
     assert f"forge work {item}" in next_step.stdout
