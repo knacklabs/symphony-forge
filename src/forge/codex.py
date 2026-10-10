@@ -264,11 +264,39 @@ def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
     state = repo.read_state(item, top) or {}
     if state.get("kind") == "fix" or state.get("round", 0) > 1:
         return True
-    from forge import board
+    if "/" not in item:
+        return False
+    from forge import nextstep, story, task
 
-    return any(item in part["waits_for"] and part["status"] != "Merged"
-               for plan in board.machine_board(top)["dependency_maps"]
-               for part in plan["parts"])
+    # Tier selection needs current plans and scopes, not board history or GitHub inventory.
+    landed = story.landed_ref(top)
+    listing = repo.git("ls-tree", "-r", "--name-only", landed, "--", ".factory/stories", cwd=top)
+    keys = set(re.findall(r"^\.factory/stories/([^/]+)/story\.json$", listing, re.M))
+    refs = repo.git("for-each-ref", "--format=%(refname)", "refs/heads/story/",
+                    "refs/remotes/origin/story/", cwd=top).splitlines()
+    keys.update(ref.split("/story/", 1)[1] for ref in refs)
+    trees = story.worktrees(top)
+    key, tid = item.split("/", 1)
+    scope = task.cell_list(task.rows(task.sections(story._plan(top, key))).get(tid, {}).get("Scope", ""))
+    for key in sorted(keys):
+        if story.json_of(story.show(top, landed, repo.state_path(key))).get("status") == "done":
+            continue
+        ref = story.plan_ref(top, key)
+        if story.json_of(story.show(top, ref, repo.state_path(key))).get("status") == "done":
+            continue
+        for tid, spec in task.rows(task.sections(story._plan(top, key))).items():
+            other = f"{key}/{tid}"
+            if other == item:
+                continue
+            after = [dep if "/" in dep else f"{key}/{dep}"
+                     for dep in task.cell_list(spec.get("After", ""))]
+            overlaps = any(task._overlap(a, b) for a in scope
+                           for b in task.cell_list(spec.get("Scope", "")))
+            if item in after or overlaps:
+                waiting = nextstep._task(top, key, tid, trees, set())
+                if waiting.get("status") != "merged" and (item in after or not waiting):
+                    return True
+    return False
 
 
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,

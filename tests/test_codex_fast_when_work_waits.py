@@ -93,6 +93,36 @@ def test_2_repair_rounds_use_fast_and_off_clears_it_on_the_same_conversation(
     assert _sent(calls, "thread/resume")
 
 
+@pytest.mark.parametrize("waiter, item, expected", [
+    ("independent", "HELP", "default"),
+    ("explicit dependency", "PAGE", "priority"),
+    ("shared scope", "PAGE", "priority"),
+])
+def test_6_first_work_selects_fast_without_querying_pull_request_inventory(
+        repo, gh, monkeypatch, sdk_data, waiter, item, expected):
+    # Starting Codex must not pay for the board's unrelated completed-item/PR inventory.
+    from test_task import DOC, story
+    _, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    _tiers(repo, [{"id": "priority", "name": "Fast"}])
+    doc = DOC
+    if waiter != "shared scope":
+        doc = doc.replace("web/templates/board.html", "web/style.css")
+    if waiter != "explicit dependency":
+        doc = doc.replace("| `tests/test_words.py` | PAGE |", "| `tests/test_words.py` | none |")
+    story(repo, doc=doc, approved=doc)
+    if item == "HELP":
+        started = repo.forge("task", "start", "BOARD/HELP")
+        assert started.returncode == 0, started.stdout + started.stderr
+    patient(lambda: gh.log.write_text("", encoding="utf-8"))
+
+    worked = repo.forge("work", f"BOARD/{item}")
+
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    assert _sent(calls, "turn/start")[-1].get("serviceTierForTurn") == expected
+    assert not [call for call in gh.calls()
+                if call[:2] in (["pr", "list"], ["api", "graphql"])], gh.calls()
+
+
 @pytest.mark.parametrize("mode, words", [
     ("needed", "on for every fix, after the first repair round, or when other planned work waits"),
     ("off", "off"),
