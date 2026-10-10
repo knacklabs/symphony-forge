@@ -727,6 +727,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tSkip stale spec-reader records before resolving their document paths\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 245,
+      "text": "Skip stale spec-reader records before resolving their document paths",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex_turn.py\tNot done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/codex_turn.py",

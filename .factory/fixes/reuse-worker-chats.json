@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7c7f8b60a8bda2edd3f45a2266761bc6b38cf478c32363ad68bd55ec7fd5c92f",
-    "changed": "da5d4a8667fb3fce046f83df3c9161f82ce2f988ed8f55193d7cb0432059b9d8",
-    "commit": "7a7870fd4e3221b976c51ae24b403db16ab0d529",
+    "branch_diff": "3d742a94c8d3e3c6ac65ec98eef030460bd6a1490992d6e1828a97772165265d",
+    "changed": "715985f378ee1ee9482403839a0dc3b0be60abe2541fe40754e9b0da0ec96b1a",
+    "commit": "29c305460e46f0ba6210fc5ce45f61919552ec35",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Retrying a failed earlier-release read after upgrade starts a fresh chat even though its original conversation remains available. v1.2.2 clears the local JSON's conversation and session fields on failure (tests/fixtures/forge-v1.2.2/src/forge/story.py:232). Upgrade sync recovers the ID from the turn log and commits it into reader notes, but leaves that JSON unchanged. On the next read, the durable ID prevents log recovery, then this merge overwrites it with the local conversation=None. Forge consequently starts a new conversation without attempting resume. This affects failed or discarded story and spec reads. The named test_14 deletes the entire metadata folder immediately after sync (tests/test_worker_and_reader_chats_survive_rounds.py:635), removing the null fields and masking this normal upgrade/retry failure.",
+        "body": "Raise: Functional. Renaming or deleting a previously read spec now blocks `forge sync` and upgrades while its original worktree remains registered. The scan resolves that worktree from the retained reader JSON, then calls `story._paths()` before checking whether the chat already has a durable binding. `src/forge/story.py:771\u2013773` refuses when the old spec document no longer exists, and `src/forge/sync.py:509` runs this scan unconditionally. This affects both providers, including already-preserved chats. The removed-owner proof removes the worktree; it does not cover a live worktree whose spec was renamed or deleted.",
         "file": "src/forge/codex.py",
-        "line": 191,
+        "line": 245,
         "priority": "P1",
-        "title": "Not done: Preserve earlier-release reader chats when local JSON still exists"
+        "title": "Skip stale spec-reader records before resolving their document paths"
       }
     ],
-    "id": "adf3a608-0f8e-4e5f-8668-15b2ee77080d",
+    "id": "17804795-500f-4db6-9d63-d4a3db2338b4",
     "status": "blocked"
   },
   "round": 8,
@@ -72,6 +72,10 @@
     },
     {
       "at": "2026-10-10T04:18:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:43:21+00:00",
       "step": "review"
     }
   ],
