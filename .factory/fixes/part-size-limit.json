@@ -1,0 +1,14 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/part-size-limit",
+  "done_when": "Close stops a story part that changes more than about 400 lines outside tests and says in one line to split it, unless the part was allowed past the limit with a reason, the same way fixes work; and the planning guide tells planners to keep each part's builder notes to its goal, files and one test per rule. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T15:21:42+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Big story parts loop longest in review: the two worst loops were 1,400-line parts"
+}
