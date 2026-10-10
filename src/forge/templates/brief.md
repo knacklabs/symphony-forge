@@ -7,6 +7,9 @@ nothing more.
 
 $review_loop
 
+Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
+line asking you to split them into smaller stories; already approved larger stories stay as they are.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings
