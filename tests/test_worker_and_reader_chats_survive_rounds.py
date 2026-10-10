@@ -808,3 +808,38 @@ def test_19_upgrade_preserves_previous_release_worker_on_forge_branch(
     said = _work(repo, item)
     assert "Starting a new" not in said.stdout
     assert _chat(log, family, resumed=True) == first
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("app", ["codex", "claude"])
+def test_20_returning_reader_tool_starts_fresh_then_resumes_its_replacement(
+        repo, monkeypatch, tmp_path, sdk_data, adopted, app):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
+    reader.ok()
+    original = _reader_chat(reader)
+    claude = (repo.bin / "claude").read_text("utf-8")
+    other = "claude" if app == "codex" else "codex"
+    for unavailable, selected in ((app, other), (other, app)):
+        with monkeypatch.context() as availability:
+            if unavailable == "codex":
+                _no_codex(availability, tmp_path)
+            else:
+                _no_claude(repo, availability, tmp_path)
+            reader.app = selected
+            reader.log = repo.bin / ("codex-app-server.jsonl" if selected == "codex" else
+                                    "claude-calls.jsonl")
+            said = reader.ok()
+            reasons = [line for line in said.splitlines() if line.startswith("Starting a new")]
+            assert len(reasons) == 1, said
+            name = "Codex" if unavailable == "codex" else "Claude Code"
+            assert f"its reader, {name}, is no longer installed" in reasons[0]
+            assert not reader.continued()
+            replacement = _reader_chat(reader)
+            if selected == app:
+                assert replacement != original
+            assert "You are doing the one cold read" in reader.prompt()
+            reader.ok()
+            assert reader.continued()
+            assert _reader_chat(reader, resumed=True) == replacement
+        if unavailable == "claude":
+            _install(repo.bin, "claude", claude)

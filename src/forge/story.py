@@ -185,6 +185,9 @@ def read(args: Any) -> int:
     left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
     config = repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
+    if gone:
+        codex._record(codex._item_file(top, target, ".json", "Grill"),
+                      **{"conversation" if recorded == "codex" else "claude": None})
     first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
                                         (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
