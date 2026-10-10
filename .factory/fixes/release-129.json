@@ -1,0 +1,43 @@
+{
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, sync output and the tests that pin them; close requires the generated host files (.claude/settings.json, .codex/hooks.json, both forge SKILL.md copies) to be exactly what forge sync writes for the new version, so they are refreshed here, carrying template changes already merged on main",
+  "base": "4fb915159b72413def3b8281504371b027ab0381",
+  "branch": "fix/release-129",
+  "done_when": "Forge's version is 1.2.9 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, the plugin marketplace and plugin manifests, sync output and the tests that pin them).",
+  "flagged": [
+    ".claude/settings.json",
+    "tests/test_release_version.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c11488cfef46574dab5ec67fb2ebcd0c486ee4e9a9dbb893979fb0aaec42525e",
+    "changed": "c0105c2ca1e2bd231a2cf7b2fbf1780d5f54a1492b4e4e4cdfa409742b05eedf",
+    "commit": "ec9c57732562bd4eaa10f8e92cd8684198d18b59",
+    "dismissals": [],
+    "findings": [],
+    "id": "81dc34e1-9ddf-4b10-b0a9-26538302fbec",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T00:24:25+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T01:44:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:26:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:38:42+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.9 for the lean reviews, team board, smoother landing and read-only model changes merged since v1.2.8",
+  "worker": "codex"
+}
