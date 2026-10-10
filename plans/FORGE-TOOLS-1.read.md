@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T01:35:23+00:00
-read_hash: 4259d98b3c0d41bc0ffc18fc717daf71610486cc
-round: 3
+read_at: 2026-10-10T11:27:18.445020+00:00
+read_hash: 70c673ecc3c8ea95523e3bd159d7bf905613abf3
+round: 6
 passed: yes
-doc_seen: 4259d98b3c0d41bc0ffc18fc717daf71610486cc
+doc_seen: 70c673ecc3c8ea95523e3bd159d7bf905613abf3
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 39a918c6ffb5cd508ad56a26534f685e501cff50
+notes_seen: f86577e5686f395c155c993287797333c48e0339
 ---
 # Cold read notes
 
@@ -84,5 +84,89 @@ Disposition: cut
 Disposition: cut
 
 ## Round 3
+
+No findings.
+
+## Round 4
+
+13. Native workers are not told which worktree to build in.
+    Raise: Functional. Item 3 prints only “Read <brief path> and follow it.” Today `worker._run` starts with `cwd=top`; `_brief` supplies no checkout path, and its template says to use “the checkout you were started in.” A subagent spawned from the coordinator’s main checkout therefore receives instructions to work there instead of the task or fix worktree.
+
+Disposition: cut
+
+14. Native workers lose the existing settings-commit guard.
+    Raise: Not done. Notes explicitly omit `FORGE_WORKER=1`. `githooks.pre_commit` uses that marker to refuse unauthorized `forge.toml` commits, while `_restore_settings` restores only uncommitted changes from HEAD. A native worker that commits a settings edit bypasses the guard, and handback preserves it. Item 3’s proposed test covers only an uncommitted edit.
+
+Disposition: cut
+
+15. A stopped round’s handback cannot be distinguished from its replacement round.
+    Raise: Plan gap. Items 3–4 record the pending round before spawning, learn the agent id at handback, and accept only `<item> --agent <id>`. After stopping and restarting an item in the same session, the old agent’s first handback supplies no identifier tying it to the stopped round. The promised stopped refusal has no pinned validation rule or test for this case.
+
+Disposition: cut
+
+16. Unproven: item 4: starting a new conversation without ending the app process.
+    Raise: Test. The continuation rule relies on the coordinating process’s identity; the test changes sessions by ending that process. Claude’s `/clear` starts a new conversation in the same process. Such a conversation would still match the recorded process and receive the old subagent’s short brief, although the story promises a fresh whole brief in a new session. [Claude command reference](https://code.claude.com/docs/en/commands)
+
+Disposition: cut
+
+17. Native Codex rounds retain a prerequisite belonging to the kit route.
+    Raise: Plan gap. Items 3 and 5 retain today’s readiness checks. `worker.ready` unconditionally probes the Codex SDK for Codex work and reads, while item 8 describes SDK installation as a kit requirement. A developer coordinating in Codex without Forge’s separate SDK would be refused before a native handout; the proposed native tests do not exercise that setup.
+
+Disposition: cut
+
+18. Native role selection drops Codex’s repair-round model.
+    Raise: Not done. Item 3 assigns every task round to `worker` on the build entry and every fix round to `fixer` on lite. Today `worker.work` selects the fix entry for later Codex rounds. With distinct build, lite and fix models, the printed selection and the generated role diverge; no native repair-round test proves the promised per-kind routing.
+
+Disposition: cut
+
+19. Item 3 puts the status commit before the busy lock.
+    Raise: Functional. Its stated sequence commits status and then takes the item lock and lane place. Today `worker.work` takes both before incrementing and committing the round. Re-running `forge work` while a native round is outstanding could therefore change HEAD and round state before refusing as busy.
+
+Disposition: cut
+
+20. SETTING cannot deliver its no-fallback rule within its Scope.
+    Raise: Plan gap. Item 1 promises that a named tool never falls back, but SETTING excludes `worker.py`. Its existing design-failure branch checks only `config["workers"] == "split"` before launching Codex. With `tools = "claude"` and `workers = "split"`, changing `repo.worker()` alone leaves that fallback active. The proposed test uses `workers = "claude"` and misses it.
+
+Disposition: cut
+
+21. Trap: Windows Node launches: item 4’s session lookup cannot obtain the script name from the named API.
+    Raise: Plan gap. The rule matches a Node launch by its script’s basename, but Windows `codex.identity` returns only the executable image path, such as `node.exe`, with no script arguments. Doctor’s Claude installation command uses npm. The proposed shim named `claude` or `codex` bypasses this supported installation path.
+
+Disposition: cut
+
+22. Split: NATIVE → session lifecycle; native reads and command replacement.
+    Raise: Plan gap. Its Scope includes a new lifecycle module, persistent locks and admissions, stop and continuation behavior, read handout and completion, command replacement, role generation, and four test files plus existing-test changes. That combined production and test change suggests substantially more than the review’s roughly 400-line task limit.
+
+Disposition: cut
+
+23. Split: SDK → SDK runtime and boundary; worker and reader migration.
+    Raise: Plan gap. This task combines an installer and probe, a streaming resumable driver, worker and reader replacements, stop behavior, a new SDK fixture, and migration of every existing Claude worker/read test. Its Scope suggests substantially more than roughly 400 changed lines, with no partition named.
+
+Disposition: cut
+
+24. Unproven: item 3: `forge land` stops at a native handout and resumes after handback.
+    Raise: Test. WORK promises this behavior, but its proposed test calls only work, next and handback. Existing land tests moved to Claude coordination continue exercising Codex’s kit route. They would pass if native land proceeded directly to close while its subagent was still outstanding.
+
+Disposition: cut
+
+## Round 5
+
+25. Doctor omits the SDK needed for a supported run outside a coordinating session.
+    Raise: Functional. The route table sends `tools = "both"` work through the kit when no app coordinates. With only Codex installed and Codex workers, that requires the Codex SDK, but item 8 checks that SDK only when Claude is installed. Doctor therefore neither reports nor installs the missing prerequisite. The symmetric Claude-only setup has the same gap.
+
+Disposition: cut
+
+26. Committed settings recovery can be blocked by the settings it must restore.
+    Raise: Plan gap. Item 3 promises to restore unauthorized committed `forge.toml` changes at handback. When the coordinator hands back from the item's checkout after a worker changes its version pin, `cli._run` calls `repo.check_pin` before the handler. That forwards handback to the pinned release, which may lack the command. No rule or test ensures restoration remains reachable after a pin change.
+
+Disposition: cut
+
+27. Unproven: item 8: a missing review engine before close merges the default branch.
+    Raise: Test. `close.close` calls `_merge_default` before `review.run`. With a named tool missing and new default-branch commits available, checking availability inside `review.run` changes HEAD before refusing, contrary to item 8. CHECKS specifies no earlier close preflight and excludes `close.py`; its test does not name an advanced default branch, so it can pass while this guarantee is broken.
+    This read checked the plan and repository code; runtime behavior was not exercised.
+
+Disposition: cut
+
+## Round 6
 
 No findings.
