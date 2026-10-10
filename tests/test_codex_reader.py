@@ -166,7 +166,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "model" not in written
-    # Lite used to omit helpers; first fix rounds now get Luna max from init's config.
+    # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
         "build": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
                   "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
@@ -175,6 +175,9 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
                            "subagents": "gpt-6-luna", "subagent_effort": "max"},
                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+        "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+                              "subagents": "gpt-6-luna", "subagent_effort": "max"},
+                    "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
                   "claude": {"model": "claude-opus-5-5", "effort": "high"}},
         "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},

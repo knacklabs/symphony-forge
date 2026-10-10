@@ -384,10 +384,10 @@ SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # A release, and nothing else: sync writes the pin into the hooks' shell launcher.
 VERSION = re.compile(r"v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
-# effort is optional); building, fixing and lite work may add their subagents' model and effort,
+# effort is optional); build, fix, lite and explore may add their subagents' model and effort,
 # as a pair.
 # The cold read and design work have one entry per family.
-KINDS = ("build", "fix", "lite", "grill", "design", "review")
+KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
@@ -474,6 +474,8 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """One kind's entry for a family ("codex" or "claude") from forge.toml's [models] table: its
     own entry, or a single entry whose model is that family's; Claude plan reads default to
     Opus at high effort, and other missing entries return {}."""
+    if kind == "explore" and kind not in cfg.get("models", {}):
+        kind = "lite"
     chosen = cfg.get("models", {}).get(kind) or {}
     if "model" not in chosen:
         return chosen.get(family) or (CLAUDE_GRILL_DEFAULT
@@ -530,7 +532,7 @@ def _models_problem(table: Any) -> str:
             if not isinstance(entry, dict):
                 return f"models.{name} must be a table"
             for key, value in entry.items():
-                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix", "lite") else ())):
+                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix", "lite", "explore") else ())):
                     return f"models.{name} can't set {key}"
                 if not isinstance(value, str):
                     return f"models.{name}.{key} must be a string"
