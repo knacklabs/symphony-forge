@@ -245,6 +245,25 @@ def close_tests(base: str) -> int:
                     commands.append(narrow_command(part, excluded, str(machine.half_cores())))
             elif kind == "node-install" or (kind == "node-check" and re.search(r"\b(?:lint|typecheck)\b", part)):
                 commands.append(part)
+            elif part == "go test -v ./...":
+                for directory in sorted({Path(name).parent for name in selected if name.endswith("_test.go")}):
+                    package = "./" + directory.as_posix()
+                    listed = repo.run("go", "list", "-json", package)
+                    if listed.returncode:
+                        print(listed.stdout + listed.stderr, flush=True)
+                        return listed.returncode
+                    info = json.loads(listed.stdout)
+                    active = info.get("TestGoFiles", []) + info.get("XTestGoFiles", [])
+                    names = []
+                    for name in selected:
+                        if Path(name).parent == directory and Path(name).name in active:
+                            source = Path(name).read_text("utf-8")
+                            source = re.sub(r'//[^\n]*|/\*.*?\*/|`[^`]*`|"(?:\\.|[^"\\])*"',
+                                            "", source, flags=re.S)
+                            names += re.findall(r"^func\s+((?:Test|Example|Fuzz)\w*)\s*\(", source, re.M)
+                    if names:
+                        words = ["go", "test", "-v", "-run", "^(?:" + "|".join(names) + ")$", package]
+                        commands.append(subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words))
             else:
                 files = [name for name in selected if not name.endswith(".py")] if kind in ("vitest", "jest") else selected
                 if files:
@@ -252,21 +271,37 @@ def close_tests(base: str) -> int:
                         passthrough = " --"
                     if kind == "jest":
                         passthrough += " --runTestsByPath"
-                        if excluded:
-                            pattern = "(?:" + "|".join(re.escape(name).replace("/", r"[/\\]")
-                                                      for name in excluded) + ")$"
-                            files = ["--testPathIgnorePatterns", pattern] + files
-                    elif kind == "vitest":
-                        files = [argument for name in excluded for argument in ("--exclude", name)] + files
                     words = shlex.split(part)
                     if words[:2] == ["npm", "exec"] and "--" not in words:
                         tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
                         start = tokens[quicktest._npm_runner_index(words)].start()
                         part = part[:start] + "-- " + part[start:]
                     # shortcut: custom launchers must forward file arguments; use fast_test otherwise.
-                    arguments = subprocess.list2cmdline(files) if os.name == "nt" else shlex.join(files)
-                    commands.append(part + passthrough + " " + arguments)
-        return subprocess.run(" && ".join(commands), shell=True, env=environment).returncode if commands else 0
+                    batches = [files]
+                    while batches:
+                        batch = batches.pop(0)
+                        arguments = batch
+                        if kind == "jest":
+                            pattern = r"^(?!.*[/\\](?:" + "|".join(
+                                re.escape(name).replace("/", r"[/\\]") for name in batch) + ")$)"
+                            arguments = ["--testPathIgnorePatterns", pattern] + batch
+                        elif kind == "vitest":
+                            pattern = "!(" + "|".join(re.sub(r"([*?\[\]{}()!+@|\\])", r"\\\1", name)
+                                                       for name in batch) + "|**/)"
+                            arguments = ["--exclude", pattern] + batch
+                        arguments = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
+                        narrowed = part + passthrough + " " + arguments
+                        # Leave room for npm's wrapper within Windows' shell limit.
+                        if kind in ("vitest", "jest") and len(narrowed) > 6000 and len(batch) > 1:
+                            middle = len(batch) // 2
+                            batches[:0] = [batch[:middle], batch[middle:]]
+                        else:
+                            commands.append(narrowed)
+        for command in commands:
+            status = subprocess.run(command, shell=True, env=environment).returncode
+            if status:
+                return status
+        return 0
 
 
 def test(args) -> int:

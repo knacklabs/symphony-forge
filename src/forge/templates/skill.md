@@ -963,7 +963,10 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set; otherwise it runs only changed test files and tests named
 after changed source files. CI runs the full suite.
 The fallback keeps the test command's setup and options, excludes unrelated pytest files,
-and passes selected filenames to other runners. Custom launchers must forward file arguments;
+and passes selected filenames to other runners. Node selection uses compact filters and splits
+large selections into short commands. Forge's default Go command runs the selected test functions
+in their packages, keeping Go's build constraints and shared test helpers.
+Custom launchers must forward file arguments;
 set `fast_test` for runners that need another selection method. If no matching tests exist,
 close runs none locally. A red CI still sends the item back to the worker.
 To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with

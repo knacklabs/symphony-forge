@@ -1,6 +1,7 @@
 """Close runs related tests locally and leaves the full suite to the pull request."""
 import json
 import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -86,9 +87,14 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
         arguments = calls[0][len(prefix):]
         if node_runner == "jest":
             arguments.remove("--runTestsByPath")
-            flag, expected = "--testPathIgnorePatterns", r"(?:checks\ with\ spaces[/\\]unrelated\.test\.ts)$"
+            flag, expected = "--testPathIgnorePatterns", (
+                r"^(?!.*[/\\](?:checks\ with\ spaces[/\\]cart\ page\.spec\.ts|"
+                r"checks\ with\ spaces[/\\]cart\ page\.test\.ts|"
+                r"checks\ with\ spaces[/\\]changed\.spec\.ts)$)")
         else:
-            flag, expected = "--exclude", "checks with spaces/unrelated.test.ts"
+            flag, expected = "--exclude", (
+                "!(checks with spaces/cart page.spec.ts|checks with spaces/cart page.test.ts|"
+                "checks with spaces/changed.spec.ts|**/)")
         index = arguments.index(flag)
         assert arguments[index + 1] == expected
         del arguments[index:index + 2]
@@ -136,3 +142,93 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     full_command = tomllib.loads((client / "forge.toml").read_text("utf-8"))["test"]
     assert "run: " + json.dumps(full_command) in workflow
     assert "fast_test" not in workflow
+
+
+def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default(env, tmp_path):
+    # Forge ships a package-pattern command. Appending test filenames to it mixes
+    # Go's invocation modes; running the whole package also runs unrelated tests.
+    assert shutil.which("go"), "The Go client command regression requires Go."
+    receipts = tmp_path / "go-test-receipts"
+    receipts.mkdir()
+    env.repo.write("go.mod", "module example.com/cart\n\ngo 1.20\n")
+    env.repo.write("helper.go", "package cart\n\nfunc amount() int { return 2 }\n")
+    env.repo.write("cart.go", "package cart\n\nfunc Cart() int { return 1 }\n")
+    for filename, name in (("cart_test.go", "Cart"), ("discount_test.go", "Discount")):
+        env.repo.write(filename, 'package cart\n\nimport ("os"; "testing")\n\n'
+                       f"func Test{name}(t *testing.T) {{\n"
+                       '    if Cart() != sharedAmount() { t.Fatal("wrong amount") }\n'
+                       f"    if err := os.WriteFile({json.dumps(str(receipts / name))}, "
+                       '[]byte("ran"), 0600); err != nil { t.Fatal(err) }\n}\n')
+    env.repo.write("unrelated_test.go", 'package cart\n\nimport "testing"\n\n'
+                   'func sharedAmount() int { return 2 }\n'
+                   'func TestUnrelated(t *testing.T) { t.Fatal("unrelated root test ran") }\n')
+    env.repo.write("other/other.go", "package other\n\nconst Value = 1\n")
+    env.repo.write("other/other_test.go", 'package other\n\nimport "testing"\n\n'
+                   'func TestOther(t *testing.T) { t.Fatal("unrelated package ran") }\n')
+    command = "go test -v ./..."
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.repo.write("forge.toml", config + "test = " + json.dumps(command) + "\n")
+    env.repo.git("add", "-A")
+    env.repo.git("commit", "-q", "-m", "Existing Go client tests")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix({
+        "cart.go": "package cart\n\nfunc Cart() int { return amount() }\n",
+        "discount_test.go": (env.repo.path / "discount_test.go").read_text("utf-8")
+                            + "// Changed discount test\n",
+    })
+
+    closed = env.close(item)
+
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert sorted(path.name for path in receipts.iterdir()) == ["Cart", "Discount"]
+    assert env.review_calls(), "Go's local selection must reach review."
+    assert (where / "forge.toml").read_text("utf-8").endswith(
+        "test = " + json.dumps(command) + "\n")
+
+
+@pytest.mark.parametrize("runner", ["vitest", "jest"])
+def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_path, runner):
+    # The old command grew with every unrelated file. This transparent npm boundary
+    # records transport size and delegates execution to the real installed runner.
+    npm = shutil.which("npm")
+    assert npm, "The Node client regression requires npm."
+    log = tmp_path / "npm-transport.json"
+    _install(env.repo.bin, "npm", f"#!{sys.executable}\n"
+             "import json, os, subprocess, sys\nfrom pathlib import Path\n"
+             f"Path({json.dumps(str(log))}).write_text(json.dumps(sys.argv[1:]), encoding='utf-8')\n"
+             f"words = [{json.dumps(npm)}, *sys.argv[1:]]\n"
+             "sys.exit(subprocess.run(subprocess.list2cmdline(words) if os.name == 'nt' else words, "
+             "shell=os.name == 'nt').returncode)\n")
+    root = "client tests with long names"
+    receipts = tmp_path / "node-receipts"
+    receipts.mkdir()
+    for name in ("cart", "changed"):
+        env.repo.write(f"{root}/{name}.test.js", "const fs = require('node:fs');\n"
+                       f"test('client', () => fs.writeFileSync({json.dumps(str(receipts / name))}, 'ran'));\n")
+    for index in range(250):
+        env.repo.write(f"{root}/unrelated-{index:03}.test.js",
+                       "test('unrelated', () => { throw new Error('unrelated test ran'); });\n")
+    env.repo.write("package.json", '{"name":"client","version":"1.0.0"}\n')
+    env.repo.write("cart.js", "const value = 1;\n")
+    if runner == "vitest":
+        command = ("npm exec --yes --package=vitest@3.2.4 -- vitest run " + json.dumps(root)
+                   + " --globals --maxWorkers=1 --no-file-parallelism")
+    else:
+        command = ("npm exec --yes --package=jest@30.2.0 -- jest "
+                   + json.dumps(f"{root}/unrelated-000.test.js") + " --runInBand")
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.repo.write("forge.toml", config + "test = " + json.dumps(command) + "\n")
+    env.repo.git("add", "-A")
+    env.repo.git("commit", "-q", "-m", "Existing Node client tests")
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix({"cart.js": "const value = 2;\n",
+                            f"{root}/changed.test.js": (env.repo.path / root / "changed.test.js").read_text("utf-8")
+                                                       + "// Changed test\n"})
+
+    closed = env.close(item)
+
+    if log.exists():
+        arguments = json.loads(log.read_text("utf-8"))
+        assert len(subprocess.list2cmdline([npm, *arguments])) < 8191, arguments
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert sorted(path.name for path in receipts.iterdir()) == ["cart", "changed"]
