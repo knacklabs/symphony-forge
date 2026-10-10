@@ -24,6 +24,7 @@
     "id": "f1ddeb1b-7d8e-480e-b737-96491fa67c73",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -35,5 +36,6 @@
       "step": "review"
     }
   ],
-  "why": "The owner wants the board's dependency graph to show every roadmap story and which parts can run in parallel, not only stories being built"
+  "why": "The owner wants the board's dependency graph to show every roadmap story and which parts can run in parallel, not only stories being built",
+  "worker": "codex"
 }
