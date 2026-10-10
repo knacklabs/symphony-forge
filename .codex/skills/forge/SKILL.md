@@ -736,7 +736,11 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
-- Keep tasks small: at most three Done-when items and about 400 changed lines each.
+- Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
+  additions and removals outside tests. Close stops a part over 400 lines before review;
+  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
+  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+- Keep each part's builder notes to its goal, files and one test per rule.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
@@ -774,6 +778,13 @@ the upgrade before Forge can forward the command to the checkout's older release
 story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
+
+**Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
+answers and fixed or dismissed findings, including the coordinator's recorded work notes.
+Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
+they cannot block or start another round. A new defect needs distinct text and new evidence.
+Human acceptance still expires when the accepted version changes. New repos get this on init;
+existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
@@ -885,6 +896,14 @@ Claude and its design entry. New repos get this at init; existing repos get it o
 
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.
+
+Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
+round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
+Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
+The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
+Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy. New repos
+get the default at init; existing repos get it on upgrade without adding a setting, and sync
+refreshes both host guides. The upgrade's sync announces the default in one line.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
@@ -1137,6 +1156,15 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+
+Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
+specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
+recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
+Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
+the current document; later changes need another read. Narrow or split the part as agreed before
+reading again. A clean round or a recorded choice restarts the three-round count.
+For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
+command as a close stop.
 
 When GitHub refuses because the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,

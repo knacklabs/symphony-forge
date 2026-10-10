@@ -352,10 +352,16 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader.dispose(FIRST, "keep because shoppers asked for it")
     notes = reader.text()
 
-    def fresh(why: str, says: str = "No findings.\n") -> str:
+    def fresh(why: str, says: str = "No findings.\n", held: bool = False) -> str:
         """A round that starts a new conversation with the first round's instructions, the whole
         doc and every earlier finding with its disposition, and says why."""
-        out = reader.ok(says)
+        if held:
+            reader.say(says)
+            result = reader.read()
+            assert result.returncode == 1 and "Ask the human to accept, narrow or split" in result.stderr
+            out = result.stdout
+        else:
+            out = reader.ok(says)
         assert FRESH[app].format(why) in out, out
         assert not reader.continued()
         prompt = reader.prompt()
@@ -395,9 +401,11 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.text() == notes
     reader.touch(None)
     (reader.shop / "scratch.txt").unlink()
-    fresh(no_record, "1. Nothing saves offline.\n")
+    fresh(no_record, "1. Nothing saves offline.\n", held=True)
     assert "## Round 3\n\n3. Nothing saves offline.\n" in reader.text()
     reader.dispose("Nothing saves offline.", "cut")
+    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing session recovery")
+    assert chosen.returncode == 0, chosen.stderr
 
     # The app lost the conversation.
     session = (json.loads((repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.json")
@@ -409,7 +417,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
     # Notes written before rounds: no round number and no copy of what was read. That is round 1,
     # and the next round starts fresh with no diff.
-    old = re.sub(r"^(round|passed|doc_seen|spec_seen|notes_seen):.*\n", "", reader.text(), flags=re.M)
+    old = re.sub(r"^(round|passed|doc_seen|spec_seen|notes_seen|blocked_rounds|loop_choice|loop_reason):.*\n",
+                 "", reader.text(), flags=re.M)
     reader.notes.write_text(re.sub(r"^## Round \d+\n\n", "", old, flags=re.M), encoding="utf-8")
     prompt = fresh("Forge has no copy of what its last round read")
     assert "Round 2 of your cold read" in prompt and "(not available)" in prompt
@@ -533,17 +542,26 @@ def test_1_the_same_reader_reads_again(repo, monkeypatch, tmp_path, sdk_data, wa
     walk(repo, monkeypatch, tmp_path, sdk_data, app)
 
 
-def test_6_forge_next_nudges_a_read_that_doesnt_converge(repo, monkeypatch, tmp_path, sdk_data):  # noqa: F811
+def test_6_forge_next_holds_a_read_that_doesnt_converge(repo, monkeypatch, tmp_path, sdk_data):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "claude")
     for number in range(1, 4):
-        reader.ok(f"{number}. Gap number {number}.\n")
+        if number == 3:
+            reader.say(f"{number}. Gap number {number}.\n")
+            held = reader.read()
+            assert held.returncode == 1 and "Ask the human to accept, narrow or split" in held.stderr
+        else:
+            reader.ok(f"{number}. Gap number {number}.\n")
         reader.dispose(f"Gap number {number}.", "cut")
         said = repo.forge("next").stdout.splitlines()[-2:]
-        assert said[0].startswith(f"Planning Shoppers can save a basket: round {number} of its "
-                                  f"cold read had findings, so round {number + 1} is next.")
-        assert said[1] == "Next: forge read SHOP"
-        nudged = said[0].endswith(" It isn't converging: ask the human whether to split the story "
-                                  "instead of reading on.")
-        assert nudged == (number + 1 >= 4)
+        if number == 3:
+            assert "Ask the human to accept, narrow or split" in said[0]
+            assert said[1] == ('Next: forge read SHOP --resolve <accept|narrow|split> '
+                               '--reason "<human\'s choice>"')
+        else:
+            assert said[0].startswith(f"Planning Shoppers can save a basket: round {number} of its "
+                                      f"cold read had findings, so round {number + 1} is next.")
+            assert said[1] == "Next: forge read SHOP"
+    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep this slice")
+    assert chosen.returncode == 0, chosen.stderr
     reader.ok()
     assert "Next: in Claude Code, show plans/SHOP.md in Plan Mode" in repo.forge("next").stdout

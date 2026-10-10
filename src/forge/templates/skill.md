@@ -1157,6 +1157,15 @@ the default branch changed since that review. Close still requires green checks;
 needs another review.
 A clean review clears an unanswered review-loop stop.
 
+Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
+specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
+recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
+Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
+the current document; later changes need another read. Narrow or split the part as agreed before
+reading again. A clean round or a recorded choice restarts the three-round count.
+For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
+command as a close stop.
+
 When GitHub refuses because the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,
 review and checks as close decides, then retry the merge. If that merge selects a different
