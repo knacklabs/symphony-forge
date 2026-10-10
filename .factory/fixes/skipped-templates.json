@@ -10,16 +10,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d48d97c82044730c18e150fd975fc1a1b11e71813a69f7bafca9cf0924804197",
-    "changed": "d94e87ccaf4d624c1ace35ba809151f603eec2e1b3955f949a96a46aa1c3e732",
-    "commit": "5ffa664c6273c1e0163076fb6c52e30fc5c40519",
+    "branch_diff": "56ecc5ce75720f29eeb4a8b29d775eaf42040e07b70fc2b648b013745c25d087",
+    "changed": "b3e3b237e851043b2604dd3ba8f79dc55259b8f0985adbff772f69b33b228771",
+    "commit": "777629e4fd588966e865951508a4af42f8f330e7",
     "dismissals": [],
-    "findings": [],
-    "id": "f1b957a6-14c8-49c2-948e-cfe21db34681",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Test. The Windows installer test cannot pass its three non-check cases, so the newly required Windows check blocks every pull request. Both Forge stubs here (lines 53 and 75) report v1.2.8, while the installers require v1.2.9. On Windows, scripts/install-windows.ps1:90 consequently enters the Forge installation path; the uv.cmd stub at line 52 emits no output, so scripts/install-windows.ps1:99 calls .Trim() on null and terminates before the Docker assertions complete. Match the stub version to the installer pin. The supplied macOS test result does not exercise this failure.",
+        "file": "tests/test_installers_explain_docker_start.py",
+        "line": 53,
+        "priority": "P1",
+        "title": "Not done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows"
+      }
+    ],
+    "id": "99d23095-01e0-42e5-ab23-3f11b99c97e7",
+    "status": "blocked"
   },
   "round": 5,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T18:34:24+00:00",
@@ -51,6 +59,10 @@
     },
     {
       "at": "2026-10-10T02:55:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:36:15+00:00",
       "step": "review"
     }
   ],
