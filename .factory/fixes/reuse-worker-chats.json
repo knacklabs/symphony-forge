@@ -19,16 +19,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8f566b862fed143f3d61d198c1bc89e0221837c46bfe32d80236e4d794a6564d",
-    "changed": "3c3f97587c58f7322c6cedf74f7a2ef68b7b9774cadb3fa9be8ebe7aabaab9af",
-    "commit": "3813c461965777c80adde66c874e42a84e2a36d4",
+    "branch_diff": "7c7f8b60a8bda2edd3f45a2266761bc6b38cf478c32363ad68bd55ec7fd5c92f",
+    "changed": "da5d4a8667fb3fce046f83df3c9161f82ce2f988ed8f55193d7cb0432059b9d8",
+    "commit": "7a7870fd4e3221b976c51ae24b403db16ab0d529",
     "dismissals": [],
-    "findings": [],
-    "id": "4d3fd9df-0c01-4540-8173-a4fefbb844e3",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done. Retrying a failed earlier-release read after upgrade starts a fresh chat even though its original conversation remains available. v1.2.2 clears the local JSON's conversation and session fields on failure (tests/fixtures/forge-v1.2.2/src/forge/story.py:232). Upgrade sync recovers the ID from the turn log and commits it into reader notes, but leaves that JSON unchanged. On the next read, the durable ID prevents log recovery, then this merge overwrites it with the local conversation=None. Forge consequently starts a new conversation without attempting resume. This affects failed or discarded story and spec reads. The named test_14 deletes the entire metadata folder immediately after sync (tests/test_worker_and_reader_chats_survive_rounds.py:635), removing the null fields and masking this normal upgrade/retry failure.",
+        "file": "src/forge/codex.py",
+        "line": 191,
+        "priority": "P1",
+        "title": "Not done: Preserve earlier-release reader chats when local JSON still exists"
+      }
+    ],
+    "id": "adf3a608-0f8e-4e5f-8668-15b2ee77080d",
+    "status": "blocked"
   },
   "round": 7,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T16:42:38+00:00",
@@ -60,6 +68,10 @@
     },
     {
       "at": "2026-10-10T04:06:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:18:33+00:00",
       "step": "review"
     }
   ],
