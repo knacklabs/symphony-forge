@@ -1,21 +1,30 @@
 {
   "branch": "task/FORGE-TOOLS-1-SETTING",
   "flagged": [
+    ".claude/skills/forge/SKILL.md",
     "docs/guide.md",
     "src/forge/repo.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c869bdc7526440ca451ebd325817ca0c121b4e7c4602c9cbe750559a444a81b5",
-    "changed": "a29f02ba0093ec6558f24e57c108ba74c54691658cb8345cb83c5e17b54035d8",
-    "commit": "6804d9ec25d415fd64d1395f079b25c9719bdc8e",
+    "branch_diff": "cc079e86cceebefcbd1b150c93e1c96941204e0a81827388ddc2cecd12c8cdec",
+    "changed": "1d6689f6a382aa55aaecbbd298248d5a0f8e5ef9d78a9cf974d09682eb64961a",
+    "commit": "026b6d1b85d3e2562d2ff56c7b887a24bffe819e",
     "dismissals": [],
-    "findings": [],
-    "id": "10db689d-c7b2-47f4-818d-d1c158f59bbf",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done. Both checked-in host guides differ from the template that `story.ships` writes during `forge sync`. For example, `src/forge/templates/skill.md:210` describes `kind_stage_counts`, while `.claude/skills/forge/SKILL.md:210` and the identical Codex copy retain older board guidance; the copies also omit current task-size and cold-read guidance. The new guide test checks copies generated in a fixture, so it cannot catch this mismatch. Item 9's required synced copies have not been delivered, and the proof list's template-comparison claim is unsupported by the checked-in files.",
+        "file": ".claude/skills/forge/SKILL.md",
+        "line": 221,
+        "priority": "P1",
+        "title": "Not done: synced skill copies match the template"
+      }
+    ],
+    "id": "0611e1cb-c8db-4539-a2b9-6ada755b4a78",
+    "status": "blocked"
   },
   "round": 5,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T11:29:35.863096+00:00",
@@ -39,6 +48,10 @@
     },
     {
       "at": "2026-10-10T17:45:40.164890+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:47:25.872301+00:00",
       "step": "review"
     }
   ],
