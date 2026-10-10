@@ -3,12 +3,14 @@
   "branch": "fix/settled-stays-settled",
   "done_when": "Each cold reader's and reviewer's brief lists earlier rounds' notes with their answers and the findings already fixed or dismissed, and a note or finding that repeats a settled one cannot block or start another round. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T14:39:28+00:00",
       "step": "start"
     }
   ],
-  "why": "Readers and reviewers reopen what earlier rounds already settled"
+  "why": "Readers and reviewers reopen what earlier rounds already settled",
+  "worker": "codex"
 }
