@@ -14,11 +14,16 @@
       "at": "2026-10-10T05:14:40+00:00",
       "because": "Owner (2026-10-10) decisions on a client's board issue",
       "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story plus open fixes in one Fixes row (parts in columns by when each can start, loops sharing a column, arrows within and across stories, running parts marked, finished parts folded, no-plan stories as boxes) and an upgrade backfill of the time story of every open item and every item merged in the last six weeks from git and GitHub, marked as rebuilt; with acceptance criteria; the spec passes a read and is re-confirmed"
+    },
+    {
+      "at": "2026-10-10T08:54:26+00:00",
+      "because": "The owner reversed grouping: no epics and no grouping, keep only stories",
+      "done_when": "docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade backfill, and the client issue's asks (building only once a part started, Needs you listing forge next's blocking problems, a pinned section bar with folding sections, grouping by roadmap epic else spec, story keys beside titles, cold-read rounds in a story's history, rounded times), with acceptance criteria; AGENTS.md's plain-English principle names story keys on the board as its one exception; the spec passes a read and is re-confirmed"
     }
   ],
   "base": "6b555d159667b16e741a73e0f5375fc726839c6a",
   "branch": "fix/spec-graph",
-  "done_when": "docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade backfill, and the client issue's asks (building only once a part started, Needs you listing forge next's blocking problems, a pinned section bar with folding sections, grouping by roadmap epic else spec, story keys beside titles, cold-read rounds in a story's history, rounded times), with acceptance criteria; AGENTS.md's plain-English principle names story keys on the board as its one exception; the spec passes a read and is re-confirmed",
+  "done_when": "docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade backfill, and the client issue's asks (building only once a part started, Needs you listing forge next's blocking problems, a pinned section bar with folding sections, no grouping: only stories, in roadmap order, story keys beside titles, cold-read rounds in a story's history, rounded times), with acceptance criteria; AGENTS.md's plain-English principle names story keys on the board as its one exception, matched in the v1 spec it is copied from; the spec passes a read and is re-confirmed",
   "flagged": [
     ".factory/fixes/spec-graph.json",
     "docs/specs/board-for-the-team.md"
