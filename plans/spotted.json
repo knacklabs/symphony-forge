@@ -4278,6 +4278,28 @@
       "item": "where-time-went",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/spec-graph.json\tNot done: proof list\tspec-graph",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-graph.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-graph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/board-for-the-team.md\tNot done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back\tspec-graph",
+      "kind": "bug",
+      "path": "docs/specs/board-for-the-team.md",
+      "line": 47,
+      "text": "Not done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back",
+      "from": "blocking",
+      "item": "spec-graph",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

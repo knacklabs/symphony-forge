@@ -1,0 +1,72 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-10T03:39:12+00:00",
+      "because": "Owner (2026-10-10): the upgrade's agent backfills missing board details for the last six weeks",
+      "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story: planned stories' parts in columns by when each can start (same column = can run in parallel), arrows for waits within and across stories, running parts marked, finished parts folded into 'N done', and each story with no plan as its own box; with an acceptance criterion; the spec passes a read and is re-confirmed"
+    },
+    {
+      "at": "2026-10-10T03:46:03+00:00",
+      "because": "Owner (2026-10-10): open fixes appear in the dependency graph as one row",
+      "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story (parts in columns by when each can start, loops sharing a column, arrows within and across stories, running parts marked, finished parts folded, no-plan stories as boxes) and an upgrade step in which the agent backfills the time story of every open item and every item merged in the last six weeks from git and GitHub, marked as rebuilt; with acceptance criteria; the spec passes a read and is re-confirmed"
+    },
+    {
+      "at": "2026-10-10T05:14:40+00:00",
+      "because": "Owner (2026-10-10) decisions on a client's board issue",
+      "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story plus open fixes in one Fixes row (parts in columns by when each can start, loops sharing a column, arrows within and across stories, running parts marked, finished parts folded, no-plan stories as boxes) and an upgrade backfill of the time story of every open item and every item merged in the last six weeks from git and GitHub, marked as rebuilt; with acceptance criteria; the spec passes a read and is re-confirmed"
+    },
+    {
+      "at": "2026-10-10T08:54:26+00:00",
+      "because": "The owner reversed grouping: no epics and no grouping, keep only stories",
+      "done_when": "docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade backfill, and the client issue's asks (building only once a part started, Needs you listing forge next's blocking problems, a pinned section bar with folding sections, grouping by roadmap epic else spec, story keys beside titles, cold-read rounds in a story's history, rounded times), with acceptance criteria; AGENTS.md's plain-English principle names story keys on the board as its one exception; the spec passes a read and is re-confirmed"
+    }
+  ],
+  "base": "6b555d159667b16e741a73e0f5375fc726839c6a",
+  "branch": "fix/spec-graph",
+  "done_when": "docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade backfill, and the client issue's asks (building only once a part started, Needs you listing forge next's blocking problems, a pinned section bar with folding sections, no grouping: only stories, in roadmap order, story keys beside titles, cold-read rounds in a story's history, rounded times), with acceptance criteria; AGENTS.md's plain-English principle names story keys on the board as its one exception, matched in the v1 spec it is copied from; the spec passes a read and is re-confirmed",
+  "flagged": [
+    ".factory/fixes/spec-graph.json",
+    "docs/specs/board-for-the-team.md"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ff716d135b3712a436752c6cfccfae0468b651ec8dd245c7749e89031e482bc4",
+    "changed": "0d282bc5a24dac2d9698d1f888ea12573c2a5dfd7ec349c23f4fd7c54638b440",
+    "commit": "a644c12fc5a8072b09c1b46efc5bafae0eada953",
+    "dismissals": [],
+    "findings": [],
+    "id": "2d77627a-6901-4adc-8f2d-47e54621d82d",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T03:02:52+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T03:09:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:28:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T05:07:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:40:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:46:21+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants the board's dependency graph to show every roadmap story and which parts can run in parallel, not only stories being built",
+  "worker": "codex"
+}
