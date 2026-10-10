@@ -193,9 +193,14 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     second, more_count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
     # Active rows and advice still ignore archived inventory. Maps and counts now
     # retain that history; verify their additions separately from the live OS load.
-    changing = {"machine", "dependency_maps", "stage_counts"}
+    changing = {"machine", "dependency_maps", "stage_counts", "kind_stage_counts"}
+    assert rows["LIVE"]["status"] == "In progress: 2 of 3 parts finished"
+    # The progress sentence includes the twelve archived parts in the current plan.
+    expected = {**first, "items": [
+        {**row, "status": "In progress: 14 of 15 parts finished"} if row["id"] == "LIVE" else row
+        for row in first["items"]]}
     assert {key: value for key, value in second.items() if key not in changing} == {
-        key: value for key, value in first.items() if key not in changing}
+        key: value for key, value in expected.items() if key not in changing}
     first_maps = {entry["id"]: entry for entry in first["dependency_maps"]}
     expected_maps = {**first_maps, "LIVE": {
         **first_maps["LIVE"], "parts": first_maps["LIVE"]["parts"] + [
@@ -204,11 +209,14 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     expected_maps.update({f"PAST-{n}": {
         "id": f"PAST-{n}", "title": f"Finished story PAST-{n}", "stage": "done", "parts": [
             {"id": f"PAST-{n}/SAVE", "title": "Save baskets", "status": "Merged", "waits_for": []},
-            {"id": f"PAST-{n}/SHOW", "title": "Show the saved time", "status": "Not started",
+            {"id": f"PAST-{n}/SHOW", "title": "Show the saved time", "status": "Merged",
              "waits_for": [f"PAST-{n}/SAVE"]}]} for n in range(12)})
     assert {entry["id"]: entry for entry in second["dependency_maps"]} == expected_maps
     assert len(second["dependency_maps"]) == len(first["dependency_maps"]) + 12
     assert second["stage_counts"] == {**first["stage_counts"], "done": first["stage_counts"]["done"] + 24}
+    assert second["kind_stage_counts"] == {
+        kind: {**counts, "done": counts["done"] + 12}
+        for kind, counts in first["kind_stage_counts"].items()}
     assert more_count == count, f"Old finished inventory added {more_count - count} git commands"
     # Bulk dependency lookup keeps the real validator and local plan precedence.
     live_plans = [repo.path / "plans/LIVE.md", tmp_path / "old-fix-worktree/plans/LIVE.md",
