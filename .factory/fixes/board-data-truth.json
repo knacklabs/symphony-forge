@@ -10,20 +10,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4ef1ee9ae9acfa5167454ae61d52f313ac87c002ff36c8c183547f2bdd60ed75",
-    "changed": "e095f2b92d7f45dfe3db04ebc7892a1a09aaf71e4624278936a401163a8fac22",
-    "commit": "429f69ca55991857f133ffbae3c3af0f8e8296a0",
+    "branch_diff": "bcac06fb777155501bf5f77a9e340cdf3665ad854aad05a3f0a0ffdd0771850a",
+    "changed": "fabd3f47a73efc125edcf050caaa8a5b3133251c7cb9ac524e65c3a10fa5fb3c",
+    "commit": "f1e8aa69071f8ea5fd32774a56f9a2b5d39b96e1",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The standard requires that \u201ceach commit leaves the build working, so any commit can be reverted alone.\u201d The configured full-suite command still collects tests incompatible with this change. In tests/test_machine_views_recent_finished_items.py:196\u2013198, the comparison excludes stage_counts but retains the new kind_stage_counts, which changes when the fixture adds twelve completed stories and fixes. Its expected maps at lines 205\u2013209 also require an unstarted part inside each completed story, whereas board.py:580 now correctly marks those parts merged. Separately, tests/test_live_status.py:154 requires idle_since to equal the last event timestamp; with that test's frozen clock, the new timing-end calculation at board.py:263\u2013266 produces a later timestamp from the worker's positive recorded duration. Update these retained tests to assert the new contracts while preserving their history, retention and idle checks. Neither file was included in the supplied 77-case run.",
+        "body": "Raise: Scale. Board and next commands now repeatedly parse the entire append-only event log for each unfinished item. `_item()` calls this helper through `_item_readiness()` at nextstep.py:591 and directly at nextstep.py:635; board story aggregation and individual child rows repeat both calls. With 50 unfinished parts and 100,000 historical run/progress events, one board invocation performs approximately 200 full-log parses and 20 million JSON decodes. `forge next --json` additionally evaluates its report before building the board. The helper parses every record before filtering by item, although machine_board already loads the same events once at board.py:251\u2013257. This adds substantial work to every normal refresh as the recorded history grows.",
         "file": "src/forge/board.py",
-        "line": 629,
+        "line": 191,
         "priority": "P1",
-        "title": "Standard: Each commit leaves the build working"
+        "title": "Read the event history once per command"
+      },
+      {
+        "body": "Raise: Gate. The rule requires \u201cno IDs, hashes or jargon on the board, in PR summaries or in questions.\u201d The new stalled-story explanation renders command-facing text containing internal IDs. For an approved story whose completed worker has been idle for more than a day, nextstep.py:447 passes a task ID such as SHOP/SAVE as the display label to `_item()`. This assignment consequently saves \u201cSHOP/SAVE's worker has stopped.\u201d, which the page prints verbatim at board.py:1103 instead of identifying the visible part by its title. Cross-story and scope waits at nextstep.py:473 likewise expose internal IDs through this path. Clients must decode those IDs to understand what their stalled story awaits.",
+        "file": "src/forge/board.py",
+        "line": 497,
+        "priority": "P1",
+        "title": "Standard: Plain English wherever a human looks"
       }
     ],
-    "id": "45946aaf-3d1c-4056-a949-771faf5c3313",
+    "id": "8a94cbae-073d-462f-9532-b7328e495cd9",
     "status": "blocked"
   },
   "round": 9,
@@ -67,6 +74,10 @@
     },
     {
       "at": "2026-10-10T04:02:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:49:39+00:00",
       "step": "review"
     }
   ],
