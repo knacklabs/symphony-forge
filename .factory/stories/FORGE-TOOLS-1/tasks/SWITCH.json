@@ -1,13 +1,45 @@
 {
   "branch": "task/FORGE-TOOLS-1-SWITCH",
+  "flagged": [
+    "tests/test_chatview_start.py",
+    "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "41c69ce1fe13ad02a327ea2efcbcdf0d32393719c888677872ec4c56b1a3d490",
+    "changed": "21aa527d8cf38c13d768d0a37623f4a2f44ffa3f809f95900477be569824e2c8",
+    "commit": "edec70469c04ef2e13c605fc24cb215915d4d699",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Test. The fixture is added to the Codex chat test here, but `tests/test_chatview_attach.py:53`, `tests/test_codex_project_paths_and_pr_links.py:36,88`, and `tests/test_merge_command.py:271` still run Codex workers under the default Codex coordinator (`tests/conftest.py:284`). When the specified same-tool native route lands, those tests will stop exercising the app-server stub and their chat and turn assertions will fail. These existing Codex-worker tests need the same coordinator move.",
+        "file": "tests/test_chatview_start.py",
+        "line": 57,
+        "priority": "P1",
+        "title": "Not done: move the remaining Codex-worker tests to claude_session"
+      },
+      {
+        "body": "Raise: Test. This fixture applies Claude coordination to every timing scenario, including `claude_failed` and the clean cases that run a Claude worker at lines 60 and 76. Once same-tool work becomes native, those cases will no longer run their Claude stub or satisfy their timing assertions. The mixed-worker fallback test has a second route mismatch: `tests/test_which_worker_builds.py:236` switches to Codex coordination for the Claude round, then lines 252\u2013258 expect the fallback Codex round to call the app server. The ruling considered the initial Claude round; the fallback is on the coordinator's tool and will take the native route.",
+        "file": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+        "line": 37,
+        "priority": "P1",
+        "title": "Not done: keep mixed worker tests on their intended routes"
+      }
+    ],
+    "id": "f2f66b5d-c27a-4448-823e-bbdefafc18d4",
+    "status": "blocked"
+  },
   "round": 2,
   "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T11:29:40.863152+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T15:18:54.382256+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest b72357514af01e024b15be89ab7b60712c93a649` exited with status 1 on this machine.\n        other = env.tmp / \"other repo\"\n        env.repo.git(\"clone\", \"-q\", \"--no-hardlinks\", str(env.repo.path), str(other))\n        env.repo.git(\"remote\", \"set-url\", \"origin\", env.repo.git(\"remote\", \"get-url\", \"origin\"),\n                     cwd=other)\n        other_env = Forge(Repo(other, env.repo.bin), env.gh, env.tmp)\n        second, _ = other_env.start(\"other-fix\", \"fix/other-fix\", \".factory/fixes/other-fix.json\",\n                                    {\"kind\": \"fix\", \"why\": \"Other\", \"done_when\": \"Other is done\"},\n                                    {\"other.py\": \"x = 2\\n\"})\n        one = _close(env, first)\n        deadline = time.monotonic() + 30\n        while _runs(log) != [\"start fix-tidy-readme\"]:  # the first close is inside its test run\n            assert time.monotonic() < deadline and one.poll() is None, one.communicate()\n            time.sleep(0.05)\n        two = _close(other_env, second)\n        said = \"\"\n        while \"waits its turn: it is number 1 in line.\" not in said:  # the second close says it waits before its run starts\n            line = two.stdout.readline()\n>           assert line, two.communicate()\nE           AssertionError: ('', 'autoreview done\nE             ')\nE           assert ''\n\ntests/test_fix_close_reruns_the_full_test_command_even.py:101: AssertionError\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n1 failed, 2067 passed, 5 skipped in 3453.60s (0:57:33)",
   "worker": "codex"
 }
