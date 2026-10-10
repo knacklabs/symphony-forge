@@ -35,7 +35,7 @@ def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env,
         shutil.copytree(ROOT / "src/forge", source / "forge",
                         ignore=shutil.ignore_patterns("__pycache__"))
         fixture = ROOT / "tests/fixtures/pr-check-before-branch-diff"
-        for name in ("close.py", "review.py", "prcheck.py", "templates/review.md"):
+        for name in ("close.py", "checks.py", "review.py", "prcheck.py", "templates/review.md"):
             shutil.copy(fixture / name, source / "forge" / name)
         command = env.tmp / "base-forge"
         command.write_text(FORGE_SHIM.format(python=sys.executable, src=str(source)),
