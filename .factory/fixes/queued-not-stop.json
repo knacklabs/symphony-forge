@@ -9,24 +9,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f07b260e2d1b77eed9c6d805d4402f7591393629861002dcc18ba4617ddb6148",
-    "changed": "4bd46f039380d70789d93fdc1e3e404b05fffe7da50abf8095c7e8507e8186b2",
-    "commit": "a4bc910be89f29b2c06af2a5ccc00890d20b4dda",
+    "branch_diff": "d445287ee9727f0fe5a8c12a9837ab0e368041c6698b6259432cf87e98cbaf88",
+    "changed": "9686428ff38f7b61ebd26175bcedeac904c9d82544da977e00983a4457983420",
+    "commit": "2aa5ed640e01e68b6c2b25b5d711dd7905ae6c16",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported P2 remains open. An unassigned attempt that expired ten days ago sets both demand flags even when its retry succeeded eight days ago. That successful job falls outside the seven-day activity window, so doctor reports a likely missing runner despite all current checks being green. The caller in src/forge/doctor.py:380\u2013385 examines open pull requests without requiring pending checks. Resolved attempts can also supply old_demand for a fresh queue. Exclude demand resolved by successful retries, while retaining earlier expired demand when retries remain unmet.",
+        "body": "Raise: Functional. Doctor still diagnoses a missing runner from demand that a successful retry already resolved. An unassigned attempt that expired ten days ago sets both demand flags here, even if its retry succeeded eight days ago and all current checks are green. The successful retry falls outside the activity window and never clears those flags. src/forge/doctor.py:380\u2013385 calls this for open pull requests without requiring pending checks. Resolved history can also supply old_demand for a fresh, short queue, incorrectly treating it as seven days of unmet demand. The previously reported gap remains open: exclude resolved attempts while retaining expired demand whose retries remain unmet.",
         "file": "src/forge/checks.py",
         "line": 141,
-        "priority": "P2",
+        "priority": "P1",
         "title": "Ignore resolved attempts when detecting current runner demand"
+      },
+      {
+        "body": "Raise: Scale. When no recent matching activity exists, doctor now requests jobs serially for every retained workflow run, including old completed workflows using unrelated runners. There is no history cutoff or demand-based guard. Switching a documented runner setting in a repository with 5,000 retained runs therefore requires at least 5,000 job requests plus workflow-list pagination on every doctor invocation, even for a short queue. This creates thousands of network round trips and exceeds a standard authenticated user's hourly request budget if completed within that hour. The previous implementation skipped completed runs predating the queue. Restrict activity lookups to the relevant window and older demand lookups to unresolved candidates. [GitHub rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api).",
+        "file": "src/forge/checks.py",
+        "line": 109,
+        "priority": "P1",
+        "title": "Bound doctor's job-history requests"
       }
     ],
-    "id": "77c7c308-bce9-436c-9de8-3191132880f9",
-    "status": "clean"
+    "id": "df369c96-f9e4-4ac1-abec-11021612e7a9",
+    "status": "blocked"
   },
   "round": 4,
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T12:16:17+00:00",
@@ -71,8 +78,15 @@
     {
       "at": "2026-10-10T00:10:57+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:03:36+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/checks.py"
+  },
   "why": "v1.2.8's 'checks stayed queued for five minutes; no runner has picked them up' stop still fires when the organisation's shared runner pool is only busy (a client's checks queued behind other repos' runs, 2026-10-09), and its advice to run forge sync can't help; one repo can't tell a busy shared pool from a missing runner within five minutes",
   "worker": "codex"
 }
