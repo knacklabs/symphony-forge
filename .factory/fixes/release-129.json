@@ -3,13 +3,46 @@
   "base": "4fb915159b72413def3b8281504371b027ab0381",
   "branch": "fix/release-129",
   "done_when": "Forge's version is 1.2.9 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, the plugin marketplace and plugin manifests, sync output and the tests that pin them).",
+  "flagged": [
+    ".claude/settings.json",
+    "tests/test_release_version.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e1a62f42fbdb11724a37a1019cecbff8a8b86ba71c0b42c4113e885c0757e21",
+    "changed": "3b7a03ca32752ba9a7d59438c12febf00db304f718c8a047f40cb775ecabb3f5",
+    "commit": "f1d529d910b781c5a2dd68911880b7e5bd5012fb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Gate \u2014 the branch also repairs unrelated generated-file drift, exceeding the recorded version-bump allowance. All four hooks in both `.claude/settings.json` and `.codex/hooks.json` now resolve `CLAUDE_PROJECT_DIR`, changing hook behavior; both generated Forge skills also gain unrelated board, routing, merge and claim guidance. New evidence beyond the coordinator's ruling is the verified raw-parent patch of commit `f1d529d910b781c5a2dd68911880b7e5bd5012fb`, which introduces these changes after the ruling explicitly kept unrelated sync drift outside this release. These edits address additional problems rather than recorded version consistency.",
+        "file": ".claude/settings.json",
+        "line": 8,
+        "priority": "P1",
+        "title": "Allowance does not match the version-only change"
+      },
+      {
+        "body": "Raise: Gate \u2014 the latest commit supplies no proof list for Forge to copy into the pull request. Its complete message is `Refresh generated host files for v1.2.9`. The earlier release commit contains a proof list, but the required latest-commit handoff omits it, including evidence for the subsequently refreshed host files. The supplied successful close test run does not satisfy this separate proof-list requirement.",
+        "file": "tests/test_release_version.py",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "3e9c7030-eaea-41f4-aa82-0e756578e51a",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T00:24:25+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T01:44:49+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients and this repo need v1.2.9 for the lean reviews, team board, smoother landing and read-only model changes merged since v1.2.8",
