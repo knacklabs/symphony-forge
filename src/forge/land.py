@@ -34,6 +34,7 @@ def land(args: argparse.Namespace) -> int:
     close.check_stop(item, state)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
     rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0"))
+    conflict_retry = False
     try:
         merged = _merged(top, branch)
         status = state.get("status", "started")
@@ -52,6 +53,9 @@ def land(args: argparse.Namespace) -> int:
             try:
                 close.close(step)
             except repo.Refused as error:
+                if error.entry is checks.REFUSALS["conflict"] and not conflict_retry:
+                    conflict_retry = True
+                    continue
                 red = error.entry is checks.REFUSALS["red"]
                 if red and _rerun(top, item, branch):
                     continue
@@ -69,19 +73,25 @@ def land(args: argparse.Namespace) -> int:
                 worker.work(step)
                 continue
             # Merged since close looked: close again, so its merged path reports and tidies.
-            if merged or not (merged := _merged(top, branch)):
-                break
-        if merged:  # Forge's tidy-up, where the agent merges and the item was recorded ready
-            ready = repo.ready_path(item, top)
-            receipt = json.loads(ready.read_text(encoding="utf-8")) if ready.is_file() else {}
-            if receipt.get("review") != "clean" or receipt.get("tidied") or close.merger(top, state) != "agent":
+            if not merged and _merged(top, branch):
+                merged = True
+                continue
+            if merged:  # Forge's tidy-up, where the agent merges and the item was recorded ready
+                ready = repo.ready_path(item, top)
+                receipt = json.loads(ready.read_text(encoding="utf-8")) if ready.is_file() else {}
+                if receipt.get("review") != "clean" or receipt.get("tidied") or close.merger(top, state) != "agent":
+                    return 0
+            elif close.merger(top, state) != "agent":
+                url = json.loads(close._gh(top, "pr", "view", branch, "--json", "url"))["url"]
+                say(f"{item} is ready; a human merges its pull request: {url}")
                 return 0
-        elif close.merger(top, state) != "agent":
-            url = json.loads(close._gh(top, "pr", "view", branch, "--json", "url"))["url"]
-            say(f"{item} is ready; a human merges its pull request: {url}")
-            return 0
-        say(f"Merging {item}.")
-        return merge.merge(step)
+            say(f"Merging {item}.")
+            try:
+                return merge.merge(step)
+            except repo.Refused as error:
+                if error.entry is not checks.REFUSALS["conflict"] or conflict_retry:
+                    raise
+                conflict_retry = True
     except repo.Refused:
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")

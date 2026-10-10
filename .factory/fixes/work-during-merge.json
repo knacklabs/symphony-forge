@@ -1,0 +1,61 @@
+{
+  "base": "58fd944d4d383807318db51b727e00fc15c810fa",
+  "branch": "fix/work-during-merge",
+  "done_when": "forge work on a branch with an unfinished merge either hands the worker the conflicts to resolve and records its start without a partial commit (so the record lands with the merge commit), or, if that can't be done safely, refuses with a plain next step (resolve and commit the merge, then rerun) instead of a git error and a doctor hint; command tests cover a conflicted default-branch merge on a task and a fix, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/worker.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8eec6ccb6c64ca7afa35a8757d71959bb3efc295ddebb47d033b2ca64bb55c84",
+    "changed": "ee428af66ceb957d6e1826206b949106989ff84d86ba2e780367c231eaa7e28e",
+    "commit": "9a887c9a76b30cb16dbbbb5a7dbcf45d9457bb11",
+    "dismissals": [],
+    "findings": [],
+    "id": "53c2ef29-4e86-4f37-9dab-a7807cc8bc96",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T13:06:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T18:40:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T19:52:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:47:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:22:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:15:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:06:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:00:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:49:05+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge work fails before the worker starts on a branch with a merge in progress ('git commit failed: fatal: cannot do a partial commit during a merge. Next: forge doctor'), because its 'is working' record is a partial commit; this traps branches whose default-branch merge left conflicts for a worker to resolve (reported by a client session on v1.2.8)",
+  "worker": "codex"
+}
