@@ -52,11 +52,8 @@ REFUSALS = {
 }
 
 
-def work(args: argparse.Namespace) -> None:
-    item = args.item
-    note = getattr(args, "note", None)
-    if note is not None and not note.strip():
-        refuse(REFUSALS["empty_note"], item=item)
+def checkout(item: str) -> tuple[re.Match[str], Path]:
+    """Find a work checkout and refuse its unfinished merge before parsing any settings."""
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -67,6 +64,15 @@ def work(args: argparse.Namespace) -> None:
         refuse(REFUSALS["no_checkout"], item=item)
     if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
         refuse(REFUSALS["merge"], item=item, top=top)
+    return match, top
+
+
+def work(args: argparse.Namespace) -> None:
+    item = args.item
+    note = getattr(args, "note", None)
+    if note is not None and not note.strip():
+        refuse(REFUSALS["empty_note"], item=item)
+    match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:
