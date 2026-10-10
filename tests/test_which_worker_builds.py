@@ -68,9 +68,9 @@ def test_2_workers_split_builds_user_facing_on_claude_and_the_rest_on_codex(repo
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "high"]
+    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
     assert _sent(codex_log, "turn/start") == []
-    assert ("Building BOARD/PAGE with Claude (claude-opus-5-5, high) because it is user-facing "
+    assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because it is user-facing "
             "(workers = split)") in page.stdout
 
     _help(repo, "split")
@@ -88,9 +88,9 @@ def test_3_workers_claude_builds_user_facing_and_plain_tasks_on_claude(repo, mon
     _workers(repo, folder, "claude", CLAUDE_BUILD)
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
-                                                 "--effort", "high"]
-    assert ("Building BOARD/PAGE with Claude (claude-opus-5-5, high) because workers = claude, "
+    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
+                                                 "--effort", "xhigh"]
+    assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because workers = claude, "
             "with the design model as it is user-facing") in page.stdout
 
     _help(repo, "claude", CLAUDE_BUILD)
@@ -190,16 +190,15 @@ def test_6_workers_claude_never_falls_back_to_codex(repo, monkeypatch, sdk_data)
 
 def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, monkeypatch,
                                                                      sdk_data):
-    # Like a new repo's forge.toml: build, fix and lite name only gpt models, so Claude has no
-    # entry of its own.
+    # Earlier settings name only gpt models: omitted Claude entries now use Sonnet at xhigh.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     _help(repo, "claude")
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
-                                                 "--effort", "medium"]
-    assert ("Building BOARD/HELP with Claude (claude-opus-5-5, medium) because workers = claude"
+    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
+                                                 "--effort", "xhigh"]
+    assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, xhigh) because workers = claude"
             in plain.stdout)
 
     # Codex with no models at all runs, and names, Forge's Codex default.

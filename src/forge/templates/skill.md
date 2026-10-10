@@ -178,12 +178,22 @@ dependencies omitted from active rows. Arrows point to the waiting part; labels 
 distinguish merged, running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 `stage_counts` counts each roadmap story and fix once, including recorded completed items;
-parts belong to their parent story's count. The page shows those six totals in one line:
+`kind_stage_counts` separates those totals into `stories` and `fixes`. Parts belong to their
+parent story's count. The page labels the two groups separately, with six totals each:
 needs a spec, planning, waiting for approval, building, ready to merge and done.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
-get it after upgrading Forge and syncing.
+get it after upgrading Forge and syncing. Cards and JSON use the same `status` and `took`
+derivation; running stages include their elapsed time. Roadmap completion marks the story
+and its parts finished. Finished items never stall; idle items past one day expose
+`stalled`, `idle_seconds`, and `waits_on`. A story's idle clock includes its parts' activity;
+a running part keeps the story active and a finished part resets its idle clock, including
+a merge reported by GitHub before its commit is fetched. An older
+worker round or a worker whose recorded lock is demonstrably dead is not a live run.
+Live readers, workers and reviews take precedence
+over a saved status, including in `forge next`. Approval history uses one display name per
+Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
@@ -555,17 +565,18 @@ our default or the agent, so record each as the client, salesperson or developer
 run the strict sign-off review before anyone asks for sign-off: write `forge decision new
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded; it runs the strict review alone and stops. That review always runs
-on `gpt-6.1-sol` at high effort, whatever `forge.toml` says, and refuses a run on any other model
-or effort. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
+before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
+repo's tool and its own model and effort defaults. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
 records.
 
-On Codex, every other review runs on `[models.review]` in `forge.toml`, which `forge init` sets
-to `gpt-6.1-sol` at high effort; a prototype fix before sign-off gets a light review on
-`gpt-6.1-sol` at medium effort that blocks only on P0 findings.
+Every normal, light and sign-off review runs through the external Autoreview program:
+Claude when `workers = "claude"`, Codex when `workers = "codex"`. With split workers,
+it uses Codex when installed and Claude otherwise. Forge pins no review model or effort,
+including when an older `forge.toml` still has `[models.review]` entries. A prototype fix
+before sign-off gets a light review that blocks only on P0 findings.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
@@ -702,6 +713,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
   code names, file paths or test names. "Code exists" is not a result.
+- Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
+  line asking you to split them into smaller stories; already approved larger stories stay as they are.
 - Each item's evidence, edge cases and the test or check that proves it go under the same number in
   `### Done-when details`, the first section under `## For the builders`. Workers and reviewers
   get the entries of the items their task covers. An item with nothing to add has no entry.
@@ -823,9 +836,31 @@ discards the answer.
 
 Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
-tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
-review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
-Claude workers use model and effort and ignore the Codex-only subagents and subagent_effort keys.
+tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry,
+and `forge ask` Codex's. Workers and Claude plan readers with no entry use Forge's defaults.
+Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses its design default.
+Claude workers use model and effort
+and ignore the Codex-only subagents and subagent_effort keys.
+
+Claude implementation (build, fix, lite and design, including frontend) defaults to
+`claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) default to
+`claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
+`forge init` writes these Claude entries explicitly; omitted entries use the same built-in
+defaults. Claude planner and architect roles use the plan-read entry; debugger, security
+and performance roles use Opus 5.5 at high effort. Autoreview owns every review's model
+and effort, including prototype sign-off.
+
+Existing model entries stay unchanged on upgrade. To opt in, set each of
+`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]`,
+`[models.design.claude]` to Sonnet at xhigh. Set `[models.grill.claude]` to Opus at high.
+For a missing implementation entry,
+add a top-level line before the first table, replacing `build` with each kind:
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+For plan reads, use this line:
+`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+If build, fix or lite has a single entry, move it to its family's table before adding the
+Claude entry. Then run `forge sync` to refresh subagent roles. Legacy review entries stay
+in existing settings but no longer override Autoreview's defaults.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
@@ -845,9 +880,12 @@ For a side job inside your own session, hand it to one of Forge's subagent roles
 `planner` and `architect` for planning and design choices; `debugger`, `security` and
 `performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
 The diagnosing and planning roles change no files. Building an item still goes through
-`forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
-Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
-from the other tool is omitted so the role uses the session's model.
+`forge work`. To change a building or planning role's model or effort, change `forge.toml`
+and run `forge sync`; Claude diagnostic roles keep Opus at high effort.
+Codex roles use their host's entry when the kind has per-tool entries. With a single entry, a model
+from the other tool is omitted so the Codex role uses the session's model. Claude building
+roles use their implementation entry or Sonnet xhigh; Claude planning uses grill or Opus high,
+and Claude diagnosing always uses Opus high.
 
 The explorer role and `forge ask` use the read-only `explore` kind; `lite` keeps a fix's first
 build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
@@ -916,8 +954,8 @@ When a worker round or close's merge changes the item's Forge pin, land and clos
 line and continue through uv under that release before reading its new settings.
 Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
 before the original land or close command continues.
-Next lets failed pull request checks choose the next step only when that pull request's head
-matches the local branch head; after a local repair, follow the current local step.
+The board and next use failed pull request checks only when they belong to that pull request's
+current head, including branches that exist only on the remote or are ahead of the local branch.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -976,6 +1014,9 @@ or low value. Dismiss only a finding outside the boundary or factually wrong, wi
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
+Before reusing serious findings, close also checks the reviewed files and contract against the
+current head. A repair brought in from the default branch needs a new review, even if the branch
+diff stayed the same. Land uses the same check through close.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates

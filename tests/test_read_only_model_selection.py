@@ -56,7 +56,7 @@ def test_1_init_gives_read_only_work_explore_defaults(repo, gh, tmp_path):
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     models = tomllib.loads((client / "forge.toml").read_text("utf-8"))["models"]
     assert models["explore"]["claude"] == {"model": "claude-haiku-5-5", "effort": "high"}
-    assert models["explore"]["codex"] == models["lite"]
+    assert models["explore"]["codex"] == models["lite"]["codex"]
     assert _settings(client, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
 
@@ -89,7 +89,7 @@ def test_3_forge_ask_selects_explore_instead_of_lite(repo, monkeypatch, sdk_data
 def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
         unsynced_up, monkeypatch, sdk_data):
     # Upgrade starts from the text fixture's actual earlier-adoption files, rather than a
-    # current sync given an old version string. The old lite-only contract stays intact.
+    # current sync given an old version string. Codex keeps lite; Claude gets its default.
     up = unsynced_up
     _repo_adopted_on_the_previous_release(up)
     toml = up.folder / "forge.toml"
@@ -99,7 +99,8 @@ def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
     synced = up.repo.forge("sync", cwd=up.folder)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert toml.read_bytes() == before
-    assert _settings(up.folder, "explorer") == (("gpt-6.1-sol", "medium"), (None, "medium"))
+    assert _settings(up.folder, "explorer") == (
+        ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "xhigh"))
     log = _sdk(up.repo, monkeypatch, sdk_data, up.folder)
     asked = up.repo.forge("ask", "Where is the parser?", cwd=up.folder)
     assert asked.returncode == 0, asked.stdout + asked.stderr

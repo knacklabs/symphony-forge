@@ -402,6 +402,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     """A story's lines, and its tasks' states."""
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
+    if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
+        return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], []
     ref = story.plan_ref(top, key, history)
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
@@ -577,7 +579,9 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
 
 
 def _item_readiness(item: str, state: dict[str, Any], top: Path,
-                    checks: str = "unknown", pr: dict[str, Any] | None = None) -> tuple[str | None, dict[str, Any]]:
+                    checks: str = "unknown", runs: list[dict[str, Any]] | None = None,
+                    pr: dict[str, Any] | None = None
+                    ) -> tuple[str | None, dict[str, Any]]:
     """A matching close receipt grants readiness unless the current checks failed."""
     try:
         receipt = json.loads(repo.ready_path(item, top).read_text(encoding="utf-8"))
@@ -596,15 +600,18 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
             "git", "merge-base", "--is-ancestor", head, local_head, cwd=top).returncode == 0
         if ahead:
             receipt = {}
-            if checks == "fail":
-                checks = "unknown"
         elif shared.get("commit") == head and shared.get("review") == "clean":
             receipt = shared
             local_head = head
         elif record or receipt.get("commit") != head:
             receipt = {}
     if status not in ("merged", "done", "hotspot"):
-        if checks == "fail":
+        live = [run for run in (runs if runs is not None else board.active_runs(top, item, round_number=state.get("round")))
+                if run.get("kind") in ("work", "worker", "review")
+                and ("round" not in state or run.get("round") == state["round"])]
+        if live:
+            status = "reviewing" if live[-1]["kind"] == "review" else "working"
+        elif checks == "fail":
             status = "checks failed"
         elif (branch and receipt.get("review") == "clean"
               and local_head == receipt.get("commit")):
@@ -619,12 +626,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     pr = (prs or {}).get(state.get("branch", "")) or {}
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
-    if checks == "fail":
-        local_head = repo.run("git", "rev-parse", "--verify", state.get("branch", ""), cwd=top).stdout.strip()
-        if not pr.get("headRefOid") or (pr["headRefOid"] != local_head and local_head and repo.run(
-                "git", "merge-base", "--is-ancestor", pr["headRefOid"], local_head, cwd=top).returncode == 0):
-            checks = "unknown"
-    status, receipt = _item_readiness(item, state, top, checks, pr)
+    status, receipt = _item_readiness(item, state, top, checks, pr=pr)
     status = status or "started"
     if statuses is not None:
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
@@ -648,8 +650,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
-    if status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False):
+    runs = board.active_runs(top, item, round_number=state.get("round"))
+    if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
+            and not any(run.get("kind") in ("work", "worker") for run in runs)):
         sentence, step = "{label}'s worker has stopped.", "forge close {item}"
+    if (status not in ("merged", "done") and any(run.get("kind") == "test" for run in runs)
+            and not any(run.get("kind") in ("work", "worker", "review") for run in runs)
+            and (not lock.exists() or codex._alive(codex._json(lock)) is False)):
+        sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch
             and repo.merge_setting(top) == "agent"):
