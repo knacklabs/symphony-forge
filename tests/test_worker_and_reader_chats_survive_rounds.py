@@ -622,6 +622,38 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert _reader_chat(reader, resumed=True) == first
 
 
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("family", ["codex", "claude"])
+@pytest.mark.parametrize("change", ["rename", "delete"])
+def test_16_sync_skips_stale_spec_reader_in_registered_worktree(
+        repo, monkeypatch, tmp_path, sdk_data, adopted, family, change):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted=adopted)
+    started = repo.forge("fix", "start", "Keep invoice plan", "--done", "The plan is read")
+    assert started.returncode == 0, started.stdout + started.stderr
+    owner = worktree(repo, "fix/keep-invoice-plan")
+    spec = owner / "docs/specs/invoices.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text(SPEC, encoding="utf-8")
+    saved = repo.forge("spec", "save", "invoices", cwd=owner)
+    assert saved.returncode == 0, saved.stdout + saved.stderr
+    reader.say("No findings.\n")
+    if adopted:
+        _old_round(repo, tmp_path, owner, "read", "invoices")
+    else:
+        read = repo.forge("read", "invoices", cwd=owner)
+        assert read.returncode == 0, read.stdout + read.stderr
+    if change == "rename":
+        repo.git("mv", "docs/specs/invoices.md", "docs/specs/billing.md", cwd=owner)
+    else:
+        repo.git("rm", "docs/specs/invoices.md", cwd=owner)
+    repo.git("commit", "-qam", "Retire the earlier spec", cwd=owner)
+    before = repo.git("rev-parse", "HEAD", cwd=owner)
+    _, synced = _sync_elsewhere(repo, tmp_path)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert repo.git("rev-parse", "HEAD", cwd=owner) == before
+    assert repo.git("status", "--porcelain", cwd=owner) == ""
+
+
 @pytest.mark.parametrize("erase_metadata", [False, True], ids=["retained-record", "lost-record"])
 def test_14_failed_previous_release_codex_reader_keeps_its_logged_chat(
         repo, monkeypatch, tmp_path, sdk_data, erase_metadata):

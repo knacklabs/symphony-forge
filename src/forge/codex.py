@@ -242,6 +242,8 @@ def preserve_chats(top: Path) -> None:
             try:
                 kind = "Grill" if folder == "read" else "Fix"
                 if folder == "read":
+                    if not branch and not (owner / "docs/specs" / f"{item}.md").is_file():
+                        continue  # A renamed or deleted spec no longer owns this reader record.
                     _, _, notes, _ = story._paths(item, owner)
                     fields, _ = story._record(sync.read(notes))
                     if fields.get("conversation") or fields.get("session"):
