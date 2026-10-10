@@ -1,7 +1,7 @@
 param([switch]$Check)
 
 $ErrorActionPreference = 'Stop'
-$ForgeVersion = '1.2.8'
+$ForgeVersion = '1.2.9'
 
 function Has-Tool($Name) { return [bool](Get-Command $Name -ErrorAction SilentlyContinue) }
 function Missing($Name) { Write-Output "Missing: $Name" }
