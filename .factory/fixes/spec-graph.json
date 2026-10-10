@@ -20,16 +20,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "13145f749ac8dd4bab426a67615e3c8fa950ac227744902f90895ad2ea9d3b12",
-    "changed": "1908bacb3e425abd5766f48844d521875694661c5c3aab989b7d3ffb4359145c",
-    "commit": "d929bcd22d3e4f4ad03f6224db4febd774620a10",
+    "branch_diff": "7bfca21a8a0aed0be967ff162587a65810a179c87b209a32938bcbca4898c9cd",
+    "changed": "5e25fa97f9ae295513abe0bc6ca163f8fbaef3d6db8dc5c84ac97a86b98e33da",
+    "commit": "cfb75e2f1e158cdfaf8a93923d4b79238e7fc52e",
     "dismissals": [],
-    "findings": [],
-    "id": "7221125a-bb89-4e17-bbc6-b7055454df19",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Gate. The supplied latest-worker proof list is explicitly missing. There are no entries mapping the graph requirements, upgrade backfill, acceptance criteria, passing read and re-confirmation to their named evidence. The updated spec and read notes do not satisfy the separately required proof-list gate.",
+        "file": ".factory/fixes/spec-graph.json",
+        "line": 16,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "03d0592d-dd86-4469-93d6-a07b9765ca80",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T03:02:52+00:00",
@@ -41,6 +49,10 @@
     },
     {
       "at": "2026-10-10T03:28:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T05:07:09+00:00",
       "step": "review"
     }
   ],
