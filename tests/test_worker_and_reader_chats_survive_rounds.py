@@ -593,7 +593,11 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert amended.returncode == 0, amended.stdout + amended.stderr
     amendment = worktree(repo, "fix/amend-invoice-plan")
 
-    upgrade, _ = _sync_elsewhere(repo, tmp_path)
+    upgrading = repo.forge("fix", "start", "Chat upgrade", "--done", "Reader chats survive upgrade")
+    assert upgrading.returncode == 0, upgrading.stdout + upgrading.stderr
+    upgrade = worktree(repo, "fix/chat-upgrade")
+    synced = repo.forge("sync", cwd=upgrade)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
     if repo.git("status", "--porcelain", cwd=upgrade):
         repo.git("add", "-A", cwd=upgrade)
         repo.git("commit", "-qm", "Keep the generated upgrade files", cwd=upgrade)
