@@ -2,31 +2,25 @@
   "branch": "task/FORGE-TOOLS-1-SWITCH",
   "flagged": [
     "tests/test_chatview_start.py",
+    "tests/test_fix_close_reruns_the_full_test_command_even.py",
     "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "41c69ce1fe13ad02a327ea2efcbcdf0d32393719c888677872ec4c56b1a3d490",
-    "changed": "21aa527d8cf38c13d768d0a37623f4a2f44ffa3f809f95900477be569824e2c8",
-    "commit": "edec70469c04ef2e13c605fc24cb215915d4d699",
+    "branch_diff": "6d4997a60afb8685ad2a79113bc054277a9c899366e1e5bbabb416c9557b5fc3",
+    "changed": "525c962384e1c83b4d649e8aba0423bdf3f526689961b72c784dd545a2b0235a",
+    "commit": "881281b0a8d3929ce0d867d1d0793a1848be8869",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Test. The fixture is added to the Codex chat test here, but `tests/test_chatview_attach.py:53`, `tests/test_codex_project_paths_and_pr_links.py:36,88`, and `tests/test_merge_command.py:271` still run Codex workers under the default Codex coordinator (`tests/conftest.py:284`). When the specified same-tool native route lands, those tests will stop exercising the app-server stub and their chat and turn assertions will fail. These existing Codex-worker tests need the same coordinator move.",
-        "file": "tests/test_chatview_start.py",
-        "line": 57,
+        "body": "Raise: Gate. The standard requires that \u201cTests own and clean up every process they start, even after a crash.\u201d Removing the suite's deadline makes it wait indefinitely for `release`, while `test_3_one_slot_machine_runs_only_one_close_test_command_at_a_time` has no cleanup if its queue assertion fails before creating that file. That can leave the close process and its test command running after a failed test. This close-test change also does not involve a Codex worker and is outside SWITCH's scope.",
+        "file": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+        "line": 23,
         "priority": "P1",
-        "title": "Not done: move the remaining Codex-worker tests to claude_session"
-      },
-      {
-        "body": "Raise: Test. This fixture applies Claude coordination to every timing scenario, including `claude_failed` and the clean cases that run a Claude worker at lines 60 and 76. Once same-tool work becomes native, those cases will no longer run their Claude stub or satisfy their timing assertions. The mixed-worker fallback test has a second route mismatch: `tests/test_which_worker_builds.py:236` switches to Codex coordination for the Claude round, then lines 252\u2013258 expect the fallback Codex round to call the app server. The ruling considered the initial Claude round; the fallback is on the coordinator's tool and will take the native route.",
-        "file": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
-        "line": 37,
-        "priority": "P1",
-        "title": "Not done: keep mixed worker tests on their intended routes"
+        "title": "Standard: Tests own and clean up every process they start"
       }
     ],
-    "id": "f2f66b5d-c27a-4448-823e-bbdefafc18d4",
+    "id": "d78ea7ce-60a3-48b8-a1d7-c80fa62089be",
     "status": "blocked"
   },
   "round": 3,
@@ -38,6 +32,10 @@
     },
     {
       "at": "2026-10-10T15:18:54.382256+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:05:15.930183+00:00",
       "step": "review"
     }
   ],
