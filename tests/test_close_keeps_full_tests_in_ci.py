@@ -21,7 +21,7 @@ RULE = (
 )
 
 
-@pytest.mark.parametrize("runner", ["pytest", "vitest", "jest"])
+@pytest.mark.parametrize("runner", ["pytest", "vitest", "jest", "exec-vitest", "exec-jest"])
 def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the_item(
         env, tmp_path, runner):
     # Old contract ran test in full without fast_test. The new contract keeps the full
@@ -51,12 +51,13 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
                  "import json, sys\nfrom pathlib import Path\n"
                  f"with Path({json.dumps(str(log))}).open('a', encoding='utf-8') as out:\n"
                  "    out.write(json.dumps(sys.argv[1:]) + '\\n')\n")
-        env.repo.write("package.json", json.dumps({"scripts": {
-            "test": "vitest run" if runner == "vitest" else "jest"}}))
+        node_runner = runner.removeprefix("exec-")
+        script = "vitest run 'checks with spaces'" if node_runner == "vitest" else "jest"
+        env.repo.write("package.json", json.dumps({"scripts": {"test": script}}))
         env.repo.write("src/cart page.ts", "export const value = 1;\n")
         for name in ("cart page.test.ts", "cart page.spec.ts", "changed.spec.ts", "unrelated.test.ts"):
             env.repo.write("checks with spaces/" + name, "// Existing test\n")
-        command = "npm test"
+        command = "npm exec " + script if runner.startswith("exec-") else "npm test"
         changes = {"src/cart page.ts": "export const value = 2;\n",
                    "checks with spaces/changed.spec.ts": "// Changed test\n"}
     config = (env.repo.path / "forge.toml").read_text("utf-8")
@@ -75,7 +76,12 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
     else:
         calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
         assert len(calls) == 1, calls
-        prefix = ["test", "--"] + (["--runTestsByPath"] if runner == "jest" else [])
+        # Vitest unions filename filters with inherited script roots; the explicit exclusion
+        # keeps an existing broad root from bringing the unrelated file back into the run.
+        prefix = (["exec", "--", node_runner] + (["run", "checks with spaces"] if node_runner == "vitest" else [])
+                  if runner.startswith("exec-") else ["test", "--"])
+        prefix += (["--runTestsByPath"] if node_runner == "jest" else [
+            "--exclude", "checks with spaces/unrelated.test.ts"])
         assert calls[0][:len(prefix)] == prefix
         assert sorted(calls[0][len(prefix):]) == [
             "checks with spaces/cart page.spec.ts", "checks with spaces/cart page.test.ts",

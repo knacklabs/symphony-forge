@@ -252,6 +252,13 @@ def close_tests(base: str) -> int:
                         passthrough = " --"
                     if kind == "jest":
                         passthrough += " --runTestsByPath"
+                    elif kind == "vitest":
+                        files = [argument for name in excluded for argument in ("--exclude", name)] + files
+                    words = shlex.split(part)
+                    if words[:2] == ["npm", "exec"] and "--" not in words:
+                        tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
+                        start = tokens[quicktest._npm_runner_index(words)].start()
+                        part = part[:start] + "-- " + part[start:]
                     # shortcut: custom launchers must forward file arguments; use fast_test otherwise.
                     arguments = subprocess.list2cmdline(files) if os.name == "nt" else shlex.join(files)
                     commands.append(part + passthrough + " " + arguments)
