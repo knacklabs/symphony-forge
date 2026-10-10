@@ -2,13 +2,28 @@
   "base": "4436362fd178474e291311077681bb515dab731e",
   "branch": "fix/read-blocking-only",
   "done_when": "A cold read passes when none of its notes is blocking (the plan is wrong, contradicts itself, or a builder could not act on it); other notes are recorded and do not trigger another round, and the reader brief says which notes block. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "29f1d2b0e21b22aa9b369522c03f6f69f025531c35a94dcab80c343f36d4743f",
+    "changed": "c6b8b0c30f69c8519e1e650a462c6cafc4d4e1d8f14114da9a38af7deab29c07",
+    "commit": "7f3307799e50f5731bd010b9ae369dbe7a48af2f",
+    "dismissals": [],
+    "findings": [],
+    "id": "33368ec0-c255-4d1f-baaa-394db34ca339",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T14:39:24+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T15:44:48.266010+00:00",
+      "step": "review"
     }
   ],
   "why": "Plan reads loop for many rounds on wording notes because a read passes only when a round finds nothing",
