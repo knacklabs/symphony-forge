@@ -52,9 +52,11 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         assert result.returncode == (1 if number == 3 else 0), result.stdout + result.stderr
         if number < 3:
             dispose_all(notes)
-    assert "Ask the human to accept, narrow or split" in result.stderr
     resolution = f'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'
-    assert resolution in result.stderr
+    assert result.stderr == (
+        f"Three consecutive cold-read rounds of {target} still have blocking notes. "
+        "Ask the human to accept, narrow or split before reading again.\n"
+        f"Next: {resolution}\n")
     calls = repo.bin / "claude-calls.jsonl"
     assert len(calls.read_text("utf-8").splitlines()) == 3
     # Even edited documents and missing dispositions cannot spend a fourth reader.
@@ -65,7 +67,10 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         assert resolution in repo.forge("next", cwd=where).stdout
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
-    assert invalid.returncode == 1 and "non-empty --reason" in invalid.stderr
+    assert invalid.returncode == 1
+    assert invalid.stderr == (
+        "Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.\n"
+        f"Next: {resolution}\n")
     reason = "The human chose this scope after reading the remaining notes"
     if choice == "accept":
         # The owner's supplied reason must also settle an unfinished latest disposition.
