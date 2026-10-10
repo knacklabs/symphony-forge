@@ -7,24 +7,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6d4997a60afb8685ad2a79113bc054277a9c899366e1e5bbabb416c9557b5fc3",
-    "changed": "525c962384e1c83b4d649e8aba0423bdf3f526689961b72c784dd545a2b0235a",
-    "commit": "881281b0a8d3929ce0d867d1d0793a1848be8869",
+    "branch_diff": "1d04db543be089e6495276ab27dbbef88358aacd03e7b56c0158de0aea85c10f",
+    "changed": "931942b3c4d129883cee21d1ea09147f6aa59bf95b110af9031cd0ba55b745b2",
+    "commit": "7286de1e730a088ad845836e349c8ee68dd8a0a9",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The standard requires that \u201cTests own and clean up every process they start, even after a crash.\u201d Removing the suite's deadline makes it wait indefinitely for `release`, while `test_3_one_slot_machine_runs_only_one_close_test_command_at_a_time` has no cleanup if its queue assertion fails before creating that file. That can leave the close process and its test command running after a failed test. This close-test change also does not involve a Codex worker and is outside SWITCH's scope.",
-        "file": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-        "line": 23,
-        "priority": "P1",
-        "title": "Standard: Tests own and clean up every process they start"
+        "body": "The fixture changes test coordination, but this branch does not add the `tools` setting, `repo.worker()` selection, `repo.route()`, or the command-level proof required by Done-when 1. The story assigns that runtime work and its test to the separate SETTING task, so it remains a dependency rather than a blocking defect in this test-only slice.",
+        "file": "tests/conftest.py",
+        "line": 328,
+        "priority": "P2",
+        "title": "Later: SETTING must implement the tools setting and routing"
       }
     ],
-    "id": "d78ea7ce-60a3-48b8-a1d7-c80fa62089be",
-    "status": "blocked"
+    "id": "c2b19863-ad56-4afa-97fc-d67160ee2dff",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T11:29:40.863152+00:00",
@@ -36,6 +36,10 @@
     },
     {
       "at": "2026-10-10T17:05:15.930183+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:49:28.292297+00:00",
       "step": "review"
     }
   ],
