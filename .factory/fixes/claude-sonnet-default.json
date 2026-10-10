@@ -40,9 +40,9 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "503f27e8f4a9a987d323c3d783ad1305f5a08a135c834602b99c1a2338cf2397",
-    "changed": "c8202e3ec789c0c03d8435f5e4913bb4b53c5a215d332382d80b450532d80786",
-    "commit": "b1e443444988f858d08e06a755874d6df6728a04",
+    "branch_diff": "dd734b3d1e39d91bd0d63f95b7e33a0fe66559de7dd95da04be83e6f335b6142",
+    "changed": "a7fccc5f8e5698e86f2594f58d03850bc6b82072bc4c5dbc67c2468e5612cb7b",
+    "commit": "791f19423fb7c14798fc7f944ebeee66ef8d248a",
     "dismissals": [
       {
         "because": "plans/spotted.json:310 Already repaired: the latest commit restores closed_by to worker-no-settings for the three workers-split findings, and the branch's diff against main no longer changes any closed_by value",
@@ -52,14 +52,14 @@
     ],
     "findings": [
       {
-        "body": "Raise: Data loss. The raw-parent diff changes `closed_by` from `worker-no-settings` to `claude-sonnet-default` for three already-done `workers-split` findings at lines 310, 321, and 332. This overwrites their recorded resolution history even though this fix leaves `forge.toml` unchanged. `src/forge/spotted.py:160-166` changes `closed_by` only when an open finding is resolved. The standard says, \u201cEvery changed line should trace to the task.\u201d Restore the prior values.",
+        "body": "Raise: Gate. The standard says, \u201cEvery changed line should trace to the task.\u201d The diff removes unrelated `where-time-went` finding records from their original positions in `plans/spotted.json` and adds them back starting here; it also relocates `upgrade-stale-fix` records. These changes do not serve the Claude defaults fix. The earlier dismissal verified that three `closed_by` values were restored, but did not address this remaining unrelated churn.",
         "file": "plans/spotted.json",
-        "line": 310,
+        "line": 4096,
         "priority": "P1",
         "title": "Standard: Touch only what the task needs"
       }
     ],
-    "id": "77a6df47-38a8-4990-be0a-9021980fd866",
+    "id": "fb62c780-990a-4dd5-9175-1055aa5fbd7c",
     "status": "clean"
   },
   "round": 15,
@@ -123,6 +123,10 @@
     },
     {
       "at": "2026-10-10T10:06:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:59:37.970988+00:00",
       "step": "review"
     }
   ],
