@@ -26,7 +26,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:18:21+00:00",
@@ -46,7 +46,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/story.py",
+    "reason": "Owner chose narrow: a fix promoted to a story keeps today's roadmap route; only brand-new stories start from a one-line goal",
     "wait_id": "2631ba4f-09c4-419a-a219-e31ab01f848f"
   },
   "why": "A new story needs a spec, its own read loop, a confirmation and a roadmap fix before its plan can even start",
