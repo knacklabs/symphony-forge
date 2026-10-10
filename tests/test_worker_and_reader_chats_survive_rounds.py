@@ -19,6 +19,7 @@ from test_codex_resume import RESUMING, _resuming
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_fix_claude_workers_start_a_fresh_session_eve import _session
 from test_readloop_rounds import CODEX, FIRST, _no_claude, _no_codex, _setup
+from test_records import SPEC
 from test_setup import _fresh_client
 from test_story import worktree
 from test_worker import calls, install_claude
@@ -90,15 +91,62 @@ def _work(repo, item):
     return done
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
+def _previous_release(repo, tmp_path):
+    old = tmp_path / "previous-release"
+    shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
+    (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
+    # The text fixture omits transport and prompts; the old command owners are unchanged.
+    for rel in ("codex_turn.py", "templates/cold-read.md", "templates/brief.md"):
+        shutil.copy2(ROOT / "src/forge" / rel, old / "src/forge" / rel)
+    _install(repo.bin, "old-forge", FORGE_SHIM.format(python=sys.executable, src=(old / "src").as_posix()))
+
+
+def _old_round(repo, tmp_path, folder, *command):
+    _previous_release(repo, tmp_path)
+    config = folder / "forge.toml"
+    current = config.read_text("utf-8")
+    version = repo.forge("--version").stdout.split()[-1]
+    config.write_text(current.replace(f'version = "{version}"', 'version = "v1.2.2"'), encoding="utf-8")
+    # Status commits run the installed release's real hooks too.
+    installed = (repo.bin / "forge").read_text("utf-8")
+    _install(repo.bin, "forge", (repo.bin / "old-forge").read_text("utf-8"))
+    # Its snapshot copies the index stat cache; refresh it for the just-written inputs.
+    repo.git("add", "-A", cwd=folder)
+    try:
+        done = subprocess.run([sys.executable, str(repo.bin / "old-forge"), *command],
+                              cwd=folder, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    finally:
+        _install(repo.bin, "forge", installed)
+        config.write_text(current, encoding="utf-8")
+        repo.git("restore", "--staged", ".", cwd=folder)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return done
+
+
+def _sync_elsewhere(repo, tmp_path, expect_success=True):
+    other = tmp_path / "upgrade checkout with spaces"
+    repo.git("worktree", "add", "-qb", "fix/chat-upgrade", str(other), "main")
+    synced = repo.forge("sync", cwd=other)
+    if expect_success:
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+    return other, synced
+
+
 @pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("kind", ["task", "fix"])
-@pytest.mark.parametrize("change", ["model-and-effort", "record-missing", "machine-restart", "fresh-worktree"])
+@pytest.mark.parametrize("adopted,kind,change", [
+    (adopted, kind, change) for adopted in (False, True) for kind in ("task", "fix")
+    for change in ("model-and-effort", "record-missing", "machine-restart", "fresh-worktree")
+] + [("previous-release-round", "fix", change) for change in ("record-missing", "machine-restart")])
 def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_path,
                                              adopted, app, kind, change):
     folder, item, log, record = _worker(repo, monkeypatch, sdk_data, app, kind, adopted)
-    assert "Starting a new" not in _work(repo, item).stdout
+    if adopted == "previous-release-round":
+        _old_round(repo, tmp_path, folder, "work", item)
+    else:
+        assert "Starting a new" not in _work(repo, item).stdout
     first = _chat(log, app)
+    if adopted == "previous-release-round":
+        _sync_elsewhere(repo, tmp_path)
     if change == "model-and-effort":
         config = folder / "forge.toml"
         config.write_text(config.read_text("utf-8").replace("gpt-6-sol", "gpt-6-nova")
@@ -139,17 +187,43 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
             assert calls(log)[-1]["args"][:5] == ["-p", "--model", "sonnet", "--effort", "low"]
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
 @pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("change", ["model-and-effort", "record-missing", "seen-blobs-missing",
-                                   "machine-restart", "fresh-worktree"])
+@pytest.mark.parametrize("adopted,change", [
+    (adopted, change) for adopted in (False, True)
+    for change in ("model-and-effort", "record-missing", "seen-blobs-missing", "machine-restart", "fresh-worktree")
+] + [("previous-release-round", change) for change in ("record-missing", "machine-restart")])
 def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path, sdk_data,
                                                 adopted, app, change):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
-    reader.ok(f"1. {FIRST}\n")
+    if adopted == "previous-release-round":
+        reader.say(f"1. {FIRST}\n")
+        _old_round(repo, tmp_path, reader.shop, "read", "SHOP")
+    else:
+        reader.ok(f"1. {FIRST}\n")
     first = (_sent(reader.log, "turn/start")[-1]["threadId"] if app == "codex" else
              _session(calls(reader.log)[-1], "--session-id"))
-    reader.dispose(FIRST, "cut")
+    if adopted == "previous-release-round":
+        repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)
+        repo.git("commit", "-qm", "Keep earlier reader findings", "--", "plans/SHOP.read.md", cwd=reader.shop)
+        if app == "claude" and change == "record-missing":
+            reader.dispose(FIRST, "cut")
+            dirty = reader.text()
+            other, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
+            assert refused.returncode != 0
+            assert "has uncommitted changes, so sync left it alone." in refused.stderr
+            assert "Next: commit or undo those changes, then forge sync" in refused.stderr
+            assert reader.text() == dirty
+            repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)
+            repo.git("commit", "-qm", "Keep the reader disposition", "--", "plans/SHOP.read.md", cwd=reader.shop)
+        accepted = _accepted_read(reader.text())
+        if app == "claude" and change == "record-missing":
+            synced = repo.forge("sync", cwd=other)
+            assert synced.returncode == 0, synced.stdout + synced.stderr
+        else:
+            _sync_elsewhere(repo, tmp_path)
+        assert _accepted_read(reader.text()) == accepted
+    if not (adopted == "previous-release-round" and app == "claude" and change == "record-missing"):
+        reader.dispose(FIRST, "cut")
     if change == "model-and-effort":
         config = reader.shop / "forge.toml"
         config.write_text(config.read_text("utf-8").replace("gpt-6-sol", "gpt-6-nova")
@@ -253,7 +327,10 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Later rounds resume it after model or effort changes, restarts, missing local records or a fresh worktree.",
                 "Plan reads keep their reader chat across rounds too.",
                 "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
-                "Other resume errors stop the round and keep its chat."):
+                "Other resume errors stop the round and keep its chat.",
+                "Upgrade's sync commits earlier-release chat bindings in their owning work branches",
+                "Keep `.git/forge` until the upgrade finishes.",
+                "uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying."):
             assert sentence in " ".join(guide.split()), sentence
 
 
@@ -469,25 +546,11 @@ def test_12_archived_previous_release_reader_starts_one_replacement_chat(
         save(threads)
         if method != "turn/start":''', 1)
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{archiving}")
-    old = tmp_path / "previous-release"
-    shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
-    (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
-    # The adoption fixture omits transport and reader text; its old story/archive code is unchanged.
-    shutil.copy2(ROOT / "src/forge/codex_turn.py", old / "src/forge/codex_turn.py")
-    shutil.copy2(ROOT / "src/forge/templates/cold-read.md", old / "src/forge/templates/cold-read.md")
-    _install(repo.bin, "old-forge", FORGE_SHIM.format(python=sys.executable, src=(old / "src").as_posix()))
-    config = reader.shop / "forge.toml"
-    current = config.read_text("utf-8")
-    version = repo.forge("--version").stdout.split()[-1]
-    config.write_text(current.replace(f'version = "{version}"', 'version = "v1.2.2"'), encoding="utf-8")
-    read = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "read", "SHOP"],
-                          cwd=reader.shop, capture_output=True, text=True, encoding="utf-8", timeout=60)
-    assert read.returncode == 0, read.stdout + read.stderr
+    _old_round(repo, tmp_path, reader.shop, "read", "SHOP")
     first = _reader_chat(reader)
     assert _sent(reader.log, "thread/archive") == [{"threadId": first}]
     assert "passed: yes" in reader.text()
 
-    config.write_text(current, encoding="utf-8")
     said = reader.ok()
     assert [line for line in said.splitlines() if line.startswith("Starting a new")] == [
         "Starting a new Codex conversation, because the earlier Codex conversation was archived."]
@@ -501,3 +564,43 @@ def test_12_archived_previous_release_reader_starts_one_replacement_chat(
     assert _reader_chat(reader) == replacement
     assert _sent(reader.log, "thread/resume")[-1]["threadId"] == replacement
     assert len(_sent(reader.log, "thread/start")) == 2
+
+
+def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
+        repo, monkeypatch, tmp_path, sdk_data):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "claude", adopted=True)
+    started = repo.forge("fix", "start", "Keep invoice plan", "--done", "The plan is read")
+    assert started.returncode == 0, started.stdout + started.stderr
+    owner = worktree(repo, "fix/keep-invoice-plan")
+    spec = owner / "docs/specs/invoices.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text(SPEC, encoding="utf-8")
+    saved = repo.forge("spec", "save", "invoices", cwd=owner)
+    assert saved.returncode == 0, saved.stdout + saved.stderr
+    reader.say("No findings.\n")
+    _old_round(repo, tmp_path, owner, "read", "invoices")
+    first = _reader_chat(reader)
+    # The old passing read committed its notes; restore the current release's pin for landing.
+    if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
+        repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
+    repo.git("merge", "-q", "--ff-only", "fix/keep-invoice-plan")
+    repo.git("worktree", "remove", str(owner))
+    repo.git("branch", "--unset-upstream", "fix/keep-invoice-plan")
+    repo.git("branch", "-d", "fix/keep-invoice-plan")
+    repo.git("push", "-q", "origin", "main")
+    # This in-flight amendment still has the old notes when the upgrade lands.
+    amended = repo.forge("fix", "start", "Amend invoice plan", "--done", "The plan is read again")
+    assert amended.returncode == 0, amended.stdout + amended.stderr
+    amendment = worktree(repo, "fix/amend-invoice-plan")
+
+    upgrade, _ = _sync_elsewhere(repo, tmp_path)
+    if repo.git("status", "--porcelain", cwd=upgrade):
+        repo.git("add", "-A", cwd=upgrade)
+        repo.git("commit", "-qm", "Keep the generated upgrade files", cwd=upgrade)
+    repo.git("merge", "-q", "--ff-only", "fix/chat-upgrade")
+    repo.git("push", "-q", "origin", "main")
+    shutil.rmtree(repo.path / ".git/forge")
+    read = repo.forge("read", "invoices", cwd=amendment)
+    assert read.returncode == 0, read.stdout + read.stderr
+    assert "Starting a new" not in read.stdout
+    assert _reader_chat(reader, resumed=True) == first

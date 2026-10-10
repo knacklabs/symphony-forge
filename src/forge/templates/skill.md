@@ -784,6 +784,10 @@ after model or effort changes, restarts, missing local records or a fresh worktr
 keep their reader chat across rounds too. Forge starts a new chat only when the tool reports
 the old chat gone or archived or the item changes tools, and says why in one line. Other resume
 errors stop the round and keep its chat.
+Upgrade's sync commits earlier-release chat bindings in their owning work branches, without
+accepting reader findings. A landed spec's binding travels in the upgrade fix's existing notes.
+Keep `.git/forge` until the upgrade finishes. If those chat records have
+uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;

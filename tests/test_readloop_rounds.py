@@ -125,8 +125,9 @@ with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
 store = here / "claude-sessions.json"
 sessions = json.loads(store.read_text(encoding="utf-8")) if store.exists() else {}
 if "--resume" in args and args[args.index("--resume") + 1] not in sessions:
-    print(f"No conversation found with session ID: {args[args.index('--resume') + 1]}",
-          file=sys.stderr)
+    print(json.dumps({"type": "result", "subtype": "error_during_execution",
+                      "is_error": True, "result": "Resume failed", "errors": ["Could not load the requested session.",
+                          f"No conversation found with session ID: {args[args.index('--resume') + 1]}"]}))
     sys.exit(1)
 if "--session-id" in args:
     sessions[args[args.index("--session-id") + 1]] = os.getcwd()

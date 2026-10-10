@@ -193,12 +193,7 @@ def read(args: Any) -> int:
         nonlocal before
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
-        fields, body = _record(_text(notes))
-        identity = {"conversation": chat if reader == "codex" else "",
-                    "session": chat if reader == "claude" else ""}
-        if any(fields.get(key, "") != value for key, value in identity.items()):
-            _write(notes, _notes({**fields, **identity}, body))
-            repo.commit_state("Keep the reader conversation", _rel(top, notes), top=top)
+        if keep_reader_chat(top, target, reader, chat):
             before = _snapshot(top)
 
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
@@ -818,7 +813,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                     if isinstance(event, dict):
                         line = repo.claude_output(top, target, ran["run_id"], event)
                         if event.get("type") == "result":
-                            final = line
+                            final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)
                 reader.wait()
                 errors.seek(0)
@@ -829,7 +824,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     if resume:
         on_thread(resume)
         done = run("--resume", resume, text=prompt)
-        if not done.returncode or not done.stderr.startswith("No conversation found"):
+        if not done.returncode or "No conversation found" not in done.stdout + done.stderr:
             return done
         why = f"Claude couldn't continue session {resume}"
     if why:
@@ -882,6 +877,18 @@ def _record(notes: str) -> tuple[dict[str, str], str]:
     fields = {key.strip(): value.strip().strip("\"'")
               for key, colon, value in (line.partition(":") for line in match[1].splitlines()) if colon}
     return fields, notes[match.end():]
+
+
+def keep_reader_chat(top: Path, target: str, reader: str, chat: str) -> bool:
+    """Commit a reader identity without accepting its read or changing its findings."""
+    top, _, notes, _ = _paths(target, top)
+    fields, body = _record(_text(notes))
+    identity = {"conversation": chat if reader == "codex" else "",
+                "session": chat if reader == "claude" else ""}
+    if all(fields.get(key, "") == value for key, value in identity.items()):
+        return False
+    _write(notes, _notes({**fields, **identity}, body))
+    return repo.commit_state("Keep the reader conversation", _rel(top, notes), top=top)
 
 
 def _notes(record: dict[str, str], findings: str) -> str:
