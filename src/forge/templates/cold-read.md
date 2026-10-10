@@ -22,14 +22,14 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-## What counts
-Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
-
 A note blocks only when the plan is wrong, contradicts itself, or a builder could not act on it.
 Start each blocking finding with `Blocking:` after its number. Wording, style and optional
 improvements do not block: if you record one, start it with `Advisory:` after its number.
 Advisory notes are recorded but need no disposition or another round. A read passes when none
 of its notes is blocking. Unmarked findings are treated as blocking.
+
+## What counts
+Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
 
 Raise, under one of these lines:
 - Functional: a defect on a path people or agents normally hit, such as setup, upgrade, switching
