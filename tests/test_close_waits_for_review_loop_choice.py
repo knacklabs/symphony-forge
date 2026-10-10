@@ -38,8 +38,8 @@ def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, 
                      (ROOT / "tests/stubs/autoreview").read_text())
     item, where = stopped(env, kind)
     for call in env.review_calls():
-        assert call["args"][call["args"].index("--engine") + 1] == (
-            "claude" if kind == "fix-claude" else "codex")
+        # This fixture configures Claude, even when Codex is installed.
+        assert call["args"][call["args"].index("--engine") + 1] == "claude"
     before = len(env.review_calls())
     env.commit(where, "app.py", "print('changed after stop')\n")
     head = env.repo.git("rev-parse", "HEAD", cwd=where)

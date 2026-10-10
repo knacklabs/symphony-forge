@@ -83,7 +83,8 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
-    assert args[:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
+    # Omitted Claude entries now default to Sonnet at xhigh, rather than Opus at medium.
+    assert args[:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
     assert "gpt-6-nova" not in args
 
 
@@ -103,7 +104,7 @@ def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, s
     assert ask(f"[models.lite]\n{OPUS}") == QUIET
 
 
-def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
+def test_4_legacy_review_entries_do_not_override_autoreview_defaults(env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review.codex]\nmodel = "gpt-6-sol"\neffort = "xhigh"\n'
@@ -121,5 +122,5 @@ def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert {name: options[name] for name in ("--engine", "--model", "--thinking")} == {
-        "--engine": "claude", "--model": "claude=sonnet", "--thinking": "claude=medium"}
+    assert options["--engine"] == "claude"
+    assert "--model" not in options and "--thinking" not in options

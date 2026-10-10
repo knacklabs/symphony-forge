@@ -33,7 +33,7 @@ def _claude_only(tmp_path: Path, monkeypatch, bin_dir: Path, helper: str = "") -
     monkeypatch.setenv("USERPROFILE", str(home))
 
 
-def test_1_close_without_codex_reviews_with_claude_on_the_grill_claude_model(
+def test_1_close_without_codex_reviews_with_claude_and_autoreview_defaults(
         env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
@@ -52,8 +52,8 @@ def test_1_close_without_codex_reviews_with_claude_on_the_grill_claude_model(
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [call] = env.review_calls()  # the helper found under ~/.claude/skills ran
     options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert {name: options[name] for name in ("--engine", "--model", "--thinking")} == {
-        "--engine": "claude", "--model": "claude=opus", "--thinking": "claude=high"}
+    assert options["--engine"] == "claude"
+    assert "--model" not in options and "--thinking" not in options
     assert "--codex-bin" not in call["args"]
 
 

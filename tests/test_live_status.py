@@ -20,6 +20,7 @@ from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_machine_views import github, pull, state, view
 from test_run_records import configure, records
 
+# Review selection is reported by Autoreview; legacy pins do not set live defaults.
 STORY = "FORGE-MOD-1"
 
 
@@ -111,7 +112,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             monkeypatch.setenv("STUB_SAY", "No findings.")
             model = "gpt-6-sol"
         if "default" in case:
-            model, effort = ("gpt-6.1-sol", "medium") if case.endswith("codex") else ("claude-sonnet-4-6", "medium")
+            model, effort = ("gpt-6.1-sol", "medium") if case.endswith("codex") else ("claude-opus-5-5", "high")
         assert repo.forge("read", item).returncode == 0
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
     elif case == "codex":
@@ -121,11 +122,15 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         model, effort = "gpt-6-sol", "medium"
     else:
         configure(env)
-        if case.startswith("review") and "default" not in case:
+        if case.startswith("review"):
             config = repo.path / "forge.toml"
-            env.commit(repo.path, "forge.toml", config.read_text("utf-8") +
-                       'models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
-                       'models.review.claude = { model = "opus", effort = "high" }\n')
+            family = case.split()[-1]
+            settings = config.read_text("utf-8").replace('workers = "claude"', f'workers = "{family}"')
+            if "default" not in case:
+                settings += ('models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
+                             'models.review.claude = { model = "opus", effort = "high" }\n')
+            if settings != config.read_text("utf-8"):
+                env.commit(repo.path, "forge.toml", settings)
         item, folder = env.start_fix()
         model, effort = "sonnet", "medium"
     number = 1
@@ -135,9 +140,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         if case.endswith("claude"):
             from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
             _claude_only(env.tmp, monkeypatch, repo.bin, (env.tmp / "autoreview/scripts/autoreview").read_text("utf-8"))
-        model, effort = ("gpt-6-sol", "xhigh") if case.endswith("codex") else ("opus", "high")
-        if "default" in case:
-            model, effort = None, None
+        # Legacy pins no longer seed status; Autoreview's live reports supply selection.
+        model, effort = None, None
     if case == "restart":
         assert repo.forge("work", item).returncode == 0
         assert row(repo, item)[0]["idle_since"] is not None
