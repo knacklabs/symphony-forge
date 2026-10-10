@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f1b930f9002c3427ebc280251e4ce81154011eeb77666480e70232b0c0bcb82b",
-    "changed": "3fb46c32d42383361525177d686f38614c6404e78579a9096d5e138ca3c74d0a",
-    "commit": "54f7ffd507256182867be502d416e6005afb1f3f",
+    "branch_diff": "13145f749ac8dd4bab426a67615e3c8fa950ac227744902f90895ad2ea9d3b12",
+    "changed": "1908bacb3e425abd5766f48844d521875694661c5c3aab989b7d3ffb4359145c",
+    "commit": "d929bcd22d3e4f4ad03f6224db4febd774620a10",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate. The supplied proof list is missing, and none of the branch's commit messages contains a `Proof list:` paragraph. The required item-by-item evidence for the graph details, acceptance criterion, passing read and re-confirmation therefore cannot be audited through the mandatory proof list, even though the changed documents provide supporting evidence.",
-        "file": ".factory/fixes/spec-graph.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "f1ddeb1b-7d8e-480e-b737-96491fa67c73",
-    "status": "blocked"
+    "findings": [],
+    "id": "7221125a-bb89-4e17-bbc6-b7055454df19",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T03:02:52+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-10T03:09:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:28:35+00:00",
       "step": "review"
     }
   ],
