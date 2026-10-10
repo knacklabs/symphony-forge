@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-10T03:39:12+00:00",
+      "because": "Owner (2026-10-10): the upgrade's agent backfills missing board details for the last six weeks",
+      "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story: planned stories' parts in columns by when each can start (same column = can run in parallel), arrows for waits within and across stories, running parts marked, finished parts folded into 'N done', and each story with no plan as its own box; with an acceptance criterion; the spec passes a read and is re-confirmed"
+    }
+  ],
   "base": "6b555d159667b16e741a73e0f5375fc726839c6a",
   "branch": "fix/spec-graph",
-  "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story: planned stories' parts in columns by when each can start (same column = can run in parallel), arrows for waits within and across stories, running parts marked, finished parts folded into 'N done', and each story with no plan as its own box; with an acceptance criterion; the spec passes a read and is re-confirmed",
+  "done_when": "docs/specs/board-for-the-team.md describes a dependency graph of every roadmap story (parts in columns by when each can start, loops sharing a column, arrows within and across stories, running parts marked, finished parts folded, no-plan stories as boxes) and an upgrade step in which the agent backfills the time story of every open item and every item merged in the last six weeks from git and GitHub, marked as rebuilt; with acceptance criteria; the spec passes a read and is re-confirmed",
   "flagged": [
     ".factory/fixes/spec-graph.json"
   ],
