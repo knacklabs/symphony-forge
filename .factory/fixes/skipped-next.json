@@ -1,0 +1,73 @@
+{
+  "base": "180774000df7984107d51cb798b1337760a63019",
+  "branch": "fix/skipped-next",
+  "done_when": "forge next lets a failed check decide the next step only when the pull request head equals the local head; upgrade advice names origin/<default>; next fetches before recommending story done or says to fetch; blank answers count as unanswered; the approval hook prints its pin notice only after recording succeeds and names the pinned release when it is newer; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "tests/test_next_local_progress.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bf10eb81938e347cda2372449fe9f92966ddc6d50d870f414882925a974ff569",
+    "changed": "9c063b9d2b1d07142ad3783a763f124c4e032864384d8d8b64594cfe9e10d5dc",
+    "commit": "b01a3f441d29cdd716d65b4fe1e18fe3dee27c1d",
+    "dismissals": [],
+    "findings": [],
+    "id": "78e81d0a-a329-4338-a3d3-8d20dc66e263",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T18:34:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:38:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:35:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:17:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:44:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:48:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:55:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:54:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:04:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:31:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:10:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:17:11+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Real issues the coordinator skipped, still in forge next and its advice (audit, 2026-10-09): a failed pull request check overrides the next step even after a local repair, upgrade advice says to merge the local default branch instead of origin's, next recommends story done before the fetch it needs, an answer with only whitespace counts as settled, and the approval hook says recorded anyway before sign-off can still refuse and gives wrong advice when the repo pins a newer release",
+  "worker": "codex"
+}

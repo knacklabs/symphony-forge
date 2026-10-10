@@ -436,7 +436,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
-                f'Next: forge story done {key} "<outcome sentence>"'], list(states.values())
+                f'Next: git fetch origin, then forge story done {key} "<outcome sentence>"'], list(states.values())
     lines: list[str] = cleanup
     part_statuses: dict[str, str] = {}
     for task in doc["tasks"]:
@@ -603,6 +603,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     pr = (prs or {}).get(state.get("branch", "")) or {}
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
+    if checks == "fail" and (not pr.get("headRefOid") or pr["headRefOid"] != repo.run(
+            "git", "rev-parse", "--verify", state.get("branch", ""), cwd=top).stdout.strip()):
+        checks = "unknown"
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
     if statuses is not None:
