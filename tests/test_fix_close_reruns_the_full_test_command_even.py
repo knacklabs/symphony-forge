@@ -13,14 +13,13 @@ from test_close import CLEAN, FAILED, Forge, env  # noqa: F401
 STORY = "FIX-CLOSE-RERUNS-THE-FULL-TEST-COMMAND-EVEN"
 
 # The repo's test command: it logs each run's start and end, and ends when the test lets it (or at
-# once when there is no gate), exiting with the code in the exit file. Pytest's timeout
-# bounds a broken test; a timer here must not release the lane before a waiter arrives.
+# once when there is no gate), exiting with the code in the exit file.
 SUITE = '''import os, pathlib, sys, time
 tmp = pathlib.Path({tmp!r})
 with (tmp / "runs.log").open("a") as log:
     log.write("start " + os.path.basename(os.getcwd()) + "\\n")
-gate = tmp / "release"
-while (tmp / "gated").exists() and not gate.exists():
+gate, deadline = tmp / "release", time.monotonic() + 30
+while (tmp / "gated").exists() and not gate.exists() and time.monotonic() < deadline:
     time.sleep(0.05)
 with (tmp / "runs.log").open("a") as log:
     log.write("end\\n")
