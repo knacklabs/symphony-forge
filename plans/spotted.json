@@ -4025,6 +4025,39 @@
       "item": "skipped-close",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tStandard: data is protected against loss\tupgrade-stale-fix",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 97,
+      "text": "Standard: data is protected against loss",
+      "from": "blocking",
+      "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tAnonymous Docker Hub image pulls can block the cleanup test on both the default branch and pull requests.",
+      "kind": "bug",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "Anonymous Docker Hub image pulls can block the cleanup test on both the default branch and pull requests.",
+      "from": "worker",
+      "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tDocker registry authentication timeouts can stop the prototype cleanup test before cleanup runs.",
+      "kind": "bug",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "Docker registry authentication timeouts can stop the prototype cleanup test before cleanup runs.",
+      "from": "worker",
+      "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
