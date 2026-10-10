@@ -47,6 +47,9 @@ REFUSALS = {
     "fix_roadmap": ("The fix {fix} has no roadmap entry for {key}.",
                     "add {key} to plans/roadmap.json in {path}, commit it, then "
                     "forge story new {key} --from-fix {fix}"),
+    "uncommitted_roadmap": ("The roadmap in fix {fix} has uncommitted changes.",
+                            "commit plans/roadmap.json in {path}, then "
+                            "forge story new {key} --from-fix {fix}"),
     "no_story": ("There is no story {key} here.", 'forge story new {key} "<title>"'),
     "no_spec": ("docs/specs/{slug}.md does not exist.", "forge spec save {slug}"),
     "bad_doc": ("{doc} is malformed: {problem}.", "edit {doc}, then run forge next"),
@@ -123,6 +126,8 @@ def new(args: Any) -> int:
             repo.refuse(REFUSALS["no_fix"], fix=fix)
         if key not in {item["key"] for item in repo.roadmap(fix_top)}:
             repo.refuse(REFUSALS["fix_roadmap"], fix=fix, key=key, path=fix_top)
+        if show(fix_top, "HEAD", "plans/roadmap.json") != _text(fix_top / "plans/roadmap.json"):
+            repo.refuse(REFUSALS["uncommitted_roadmap"], fix=fix, key=key, path=fix_top)
         why = fix_state.get("why") or why
         done = fix_state.get("done_when") or done  # the promoted task covers Done-when item 1
         # The task's Scope is what the fix changed since it left the default branch.

@@ -696,6 +696,7 @@ section. Run the story's one cold-read loop, then get its one approval. A story 
 to a confirmed spec keeps that link and follows the same story read and approval as before.
 Promotion keeps the fix's existing roadmap entry: before using `--from-fix`, put that entry
 on the fix's branch and commit it. Promotion adds no entry or separate roadmap copy.
+Forge refuses promotion while the fix's roadmap has uncommitted changes.
 New repos get this guide at init; existing repos get it after upgrading Forge and running sync.
 
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also

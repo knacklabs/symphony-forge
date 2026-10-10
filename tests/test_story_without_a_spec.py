@@ -217,15 +217,18 @@ def test_4_a_dependent_story_delivers_its_roadmap_entry_with_its_first_task(
     assert json.loads((repo.path / "plans/roadmap.json").read_text("utf-8")) == delivered
 
 
-@pytest.mark.parametrize("roadmap_location", ["missing", "inherited", "default-only"])
+@pytest.mark.parametrize("roadmap_location", [
+    "missing", "inherited", "default-only", "untracked", "unstaged", "staged",
+])
 def test_5_promotion_keeps_its_existing_roadmap_route(client, roadmap_location):
     # Promotion renames the fix branch: unlike a new story, its roadmap must already travel
     # with that branch. A newer entry on default alone cannot protect an older fix.
     repo = client
     roadmap = {"owner_note": "Keep the existing promotion route", "items": [
         {"key": "BASKET", "title": "Saved baskets", "order": 3, "status": "pending"}]}
-    if roadmap_location == "inherited":
-        _land(repo, {"plans/roadmap.json": json.dumps(roadmap)})
+    if roadmap_location in {"inherited", "unstaged", "staged"}:
+        committed = roadmap if roadmap_location == "inherited" else {"items": []}
+        _land(repo, {"plans/roadmap.json": json.dumps(committed)})
     started = repo.forge("fix", "start", "Keep baskets", "--done", "A basket survives signing out")
     assert started.returncode == 0, started.stdout + started.stderr
     fix = worktree(repo, "fix/keep-baskets")
@@ -235,23 +238,44 @@ def test_5_promotion_keeps_its_existing_roadmap_route(client, roadmap_location):
     fixed = repo.git("rev-parse", "HEAD", cwd=fix)
     if roadmap_location == "default-only":
         _land(repo, {"plans/roadmap.json": json.dumps(roadmap)})
+    if roadmap_location in {"untracked", "unstaged", "staged"}:
+        if roadmap_location == "untracked":
+            repo.git("rm", "--ignore-unmatch", "plans/roadmap.json", cwd=fix)
+            repo.git("commit", "--allow-empty", "-qm", "Remove the old roadmap", cwd=fix)
+            fixed = repo.git("rev-parse", "HEAD", cwd=fix)
+        patient(lambda: (fix / "plans").mkdir(parents=True, exist_ok=True))
+        patient(lambda: (fix / "plans/roadmap.json").write_text(json.dumps(roadmap), "utf-8"))
+        if roadmap_location == "staged":
+            repo.git("add", "plans/roadmap.json", cwd=fix)
     default = repo.git("rev-parse", "main")
     branches = repo.git("branch", "--list")
     trees = repo.git("worktree", "list", "--porcelain")
     fix_files = repo.git("ls-tree", "-r", "HEAD", cwd=fix)
+    local_status = repo.git("status", "--porcelain", cwd=fix)
+    roadmap_path = fix / "plans/roadmap.json"
+    local_roadmap = roadmap_path.read_bytes() if roadmap_path.is_file() else None
 
     promoted = repo.forge("story", "new", "BASKET", "--from-fix", "keep-baskets")
 
     if roadmap_location != "inherited":
         assert promoted.returncode == 1, promoted.stdout + promoted.stderr
-        assert "The fix keep-baskets has no roadmap entry for BASKET." in promoted.stderr
-        assert "add BASKET to plans/roadmap.json" in promoted.stderr
-        assert "commit it, then forge story new BASKET --from-fix keep-baskets" in promoted.stderr
+        if roadmap_location in {"untracked", "unstaged", "staged"}:
+            assert "The roadmap in fix keep-baskets has uncommitted changes." in promoted.stderr
+            assert "commit plans/roadmap.json" in promoted.stderr
+            assert "then forge story new BASKET --from-fix keep-baskets" in promoted.stderr
+        else:
+            assert "The fix keep-baskets has no roadmap entry for BASKET." in promoted.stderr
+            assert "add BASKET to plans/roadmap.json" in promoted.stderr
+            assert "commit it, then forge story new BASKET --from-fix keep-baskets" in promoted.stderr
         assert repo.git("branch", "--list") == branches
         assert repo.git("worktree", "list", "--porcelain") == trees
         assert repo.git("rev-parse", "HEAD", cwd=fix) == fixed
         assert repo.git("ls-tree", "-r", "HEAD", cwd=fix) == fix_files
-        assert repo.git("status", "--porcelain", cwd=fix) == ""
+        assert repo.git("status", "--porcelain", cwd=fix) == local_status
+        if local_roadmap is None:
+            assert not roadmap_path.exists()
+        else:
+            assert roadmap_path.read_bytes() == local_roadmap
     else:
         assert promoted.returncode == 0, promoted.stdout + promoted.stderr
         assert repo.git("merge-base", fixed, "task/BASKET-SPEC") == fixed
