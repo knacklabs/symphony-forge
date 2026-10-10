@@ -69,6 +69,7 @@ def test_2_repair_rounds_use_fast_and_off_clears_it_on_the_same_conversation(
     # The next plan has no waiting work, so only the repair round can enable Fast.
     from test_task import DOC, story
     doc = DOC.replace("| `tests/test_words.py` | PAGE |", "| `tests/test_words.py` | none |")
+    doc = doc.replace("web/templates/board.html", "web/style.css")
     story(repo, doc=doc, approved=doc)
     first = repo.forge("work", "BOARD/PAGE")
     assert first.returncode == 0, first.stdout + first.stderr
