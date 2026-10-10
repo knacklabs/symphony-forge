@@ -332,6 +332,15 @@ def _overlap(a: str, b: str) -> bool:
     return a.startswith(b) or b.startswith(a)
 
 
+def waits_for(key: str, after: list[str], scope: list[str] | None = None,
+              busy: dict[str, list[str]] | None = None) -> list[str]:
+    """Published prerequisites and started parts whose scopes block this part."""
+    waits = [item if "/" in item else f"{key}/{item}" for item in after]
+    blockers = [item for item, owned in (busy or {}).items()
+                if any(_overlap(a, b) for a in (scope or []) for b in owned)]
+    return list(dict.fromkeys(waits + blockers))
+
+
 # --- forge fix start / forge fix allow-large -------------------------------------------
 
 

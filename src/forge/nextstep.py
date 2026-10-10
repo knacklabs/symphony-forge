@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
-from forge.task import _overlap, _started, developer, github_login, start_base
+from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
     {
@@ -453,14 +453,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         return lines + [behind], list(states.values())
     merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
                and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
-    waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
-                          if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
+    waits = {task["id"]: waits_for(key, [after for after in task["after"] if after not in merged])
+             for task in doc["tasks"] if not states[task["id"]]}
     busy = _started(story.landed_ref(top), top, history)
     overlapping: set[str] = set()
     for task in doc["tasks"]:
         if task["id"] in waits:
-            blockers = [item for item, scope in busy.items()
-                        if any(_overlap(a, b) for a in task["scope"] for b in scope)]
+            blockers = waits_for(key, [], task["scope"], busy)
             if blockers:
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]

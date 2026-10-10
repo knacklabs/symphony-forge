@@ -77,19 +77,39 @@ def remember(top: Path) -> None:
         pass
 
 
+def _unblocks(top: Path, item: str) -> bool:
+    """Read current plans and merge state locally; admission needs no board or GitHub history."""
+    from forge import story, task
+
+    landed = story.landed_ref(top)
+    paths = set(repo.git("ls-tree", "-r", "--name-only", landed, "--", ".factory/stories", cwd=top).splitlines())
+    keys = {path.split("/")[2] for path in paths if path.endswith("/story.json")}
+    keys.update(story.stories_here(top))
+    keys.update(ref.split("/story/", 1)[1] for ref in repo.git(
+        "for-each-ref", "--format=%(refname)", "refs/heads/story/",
+        "refs/remotes/origin/story/", cwd=top).splitlines())
+    busy = task._started(landed, top)
+    for key in keys:
+        if story.json_of(story.show(top, landed, repo.state_path(key))).get("status") == "done":
+            continue
+        for tid, part in task.rows(task.sections(story._plan(top, key))).items():
+            dependent = f"{key}/{tid.strip('` ')}"
+            if repo.state_path(dependent) in paths:
+                continue
+            waits = task.waits_for(key, task.cell_list(part.get("After", "")),
+                                   task.cell_list(part.get("Scope", "")) if dependent not in busy else [], busy)
+            if item in waits:
+                return True
+    return False
+
+
 def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
     """Join a lane; prerequisite agents go first, with arrival order within each group."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
     root = main_checkout(repo)
-    unblocks = False
-    if kind != "test" and item and "/" in item:
-        from forge import board
-
-        unblocks = any(item in part["waits_for"] and part["status"] != "Merged"
-                       for plan in board.machine_board(repo)["dependency_maps"]
-                       for part in plan["parts"])
+    unblocks = bool(kind != "test" and item and "/" in item and _unblocks(repo, item))
     title = None
     round_number = None
     if item and (match := repository.ITEM.fullmatch(item)):
