@@ -38,7 +38,7 @@ REFUSALS = {
                    '--by "<client name>"'),
 }
 OTHER_VERSION = ("{repo} pins Forge {pinned}, but {installed} is installed; the approval is recorded "
-                 "anyway. Ask your agent to upgrade {repo} to {installed}.")
+                 "anyway. {advice}")
 
 TOOLS = {"claude": "ExitPlanMode", "codex": "request_user_input"}
 QUESTIONS = ("AskUserQuestion", "request_user_input")
@@ -118,11 +118,7 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     if len(matches) > 1:
         repo.refuse(REFUSALS["several"], count=len(matches))
     key, path = matches[0]
-    # A version mismatch warns but never blocks the approval.
     pinned = repo.config(path)["version"]
-    if pinned.removeprefix("v") != __version__:
-        print(OTHER_VERSION.format(repo=machine.main_checkout(path), pinned=pinned,
-                                   installed=f"v{__version__}"), file=sys.stderr)
     story_used = repo.forge_dir(path) / "approvals" / marker
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
@@ -144,6 +140,16 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
         used.parent.mkdir(exist_ok=True)
         used.write_text(json.dumps(approval), encoding="utf-8")
     print(f"Recorded the approval of {title}.")
+    # A version mismatch warns only after the approval is recorded.
+    if pinned.removeprefix("v") != __version__:
+        from forge import upgrade
+
+        installed, checkout = f"v{__version__}", machine.main_checkout(path)
+        advice = (f"Ask your agent to install Forge {pinned}."
+                  if upgrade._numbers(pinned) > upgrade._numbers(installed)  # pyright: ignore[reportPrivateUsage]
+                  else f"Ask your agent to upgrade {checkout} to {installed}.")
+        print(OTHER_VERSION.format(repo=checkout, pinned=pinned, installed=installed,
+                                   advice=advice), file=sys.stderr)
     # Tasks start from origin, so the approval must reach it; a failed push never undoes the approval.
     if repo.run("git", "remote", "get-url", "origin", cwd=path).returncode == 0 and repo.run(
             "git", "push", "-q", "origin", f"story/{key}", cwd=path).returncode:
@@ -186,8 +192,19 @@ def _answered(payload: dict[str, Any]) -> bool:
     """The human answered: the call completed with a response, and a question's response holds an
     answer. A plan that ExitPlanMode completed was accepted by the human."""
     response = payload.get("tool_response")
-    return (_completed(payload) and isinstance(response, dict)
-            and (payload.get("tool_name") == "ExitPlanMode" or bool(response.get("answers"))))
+    if not _completed(payload) or not isinstance(response, dict):
+        return False
+    if payload.get("tool_name") == "ExitPlanMode":
+        return True
+    answers = response.get("answers")
+    if not isinstance(answers, dict):
+        return False
+    for answer in answers.values():
+        choices = answer.get("answers") if isinstance(answer, dict) else [answer]
+        if isinstance(choices, list) and any(isinstance(choice, str) and choice.strip()
+                                            for choice in choices):
+            return True
+    return False
 
 
 def _claude_digest(payload: dict[str, Any]) -> str:

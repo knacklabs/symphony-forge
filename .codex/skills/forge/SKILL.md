@@ -65,6 +65,7 @@ uses the story's title. The board and `forge next` read that record from git, so
 extra pull request, review or CI run is needed. Stories already marked done keep their outcome.
 Use `forge story done` only to correct an outcome later, on an existing work branch that carries
 the correction through its own pull request; the command opens no branch or pull request.
+When next says a remotely merged story needs its outcome, fetch origin before recording it.
 
 Give each question one line of context and a header of 12 characters or less. Use 1-5 word options
 that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
@@ -614,7 +615,7 @@ A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
 After it merges, older branches keep their pinned release and its rules. When Forge says the
-default branch already pins the installed release, merge the default branch into your branch to
+default branch already pins the installed release, merge `origin/<default>` into your branch to
 use that release and its rules.
 
 ## Refresh dependencies
@@ -650,6 +651,8 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
 below `## For the builders` needs no new round either; an edit above it does, and that round
 checks only the edit and the sections it touches.
+Blank question replies count as unanswered. The approval hook's pin notice appears only after
+recording succeeds; if the repo pins a newer release, install that pinned release.
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
@@ -868,6 +871,8 @@ When a worker round or close's merge changes the item's Forge pin, land and clos
 line and continue through uv under that release before reading its new settings.
 Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
 before the original land or close command continues.
+Next lets failed pull request checks choose the next step only when that pull request's head
+matches the local branch head; after a local repair, follow the current local step.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -928,9 +933,13 @@ When close merges the latest default branch, an unchanged branch diff keeps the 
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
-review and green checks on the final pushed head. After upgrading, run `forge sync` to receive
+review and green checks on the final pushed head. After `forge fix amend`, close also updates
+the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
+including when it regenerates conflicted Forge files with the newly pinned release.
+If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
+After upgrading, run `forge sync` to receive
 the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
-commit changes Forge's review record and its accompanying state under `.factory/`. Any other
+commit changes Forge's review or test-state record and its accompanying state under `.factory/`. Any other
 change or missing passing parent result runs the suite on the pull request merged into its
 current base. Reuse also requires the parent to include that base; a parent pull request run
 must have tested that same base. A changed base or missing proof runs the suite again.

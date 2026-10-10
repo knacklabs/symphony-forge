@@ -212,8 +212,12 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
     read = repo.forge('read', 'SHOP')
     assert read.returncode == 0, read.stderr
     events = [row for row in records(repo, 'events.jsonl') if row['kind'] == 'read']
-    assert [row['event'] for row in events] == ['run start', 'run end']
-    assert events[1]['run_id'] == events[0]['id']
+    # Agent admission is now recorded alongside the original reader run.
+    assert [row['event'] for row in events] == [
+        'lane joined', 'lane admitted', 'run start', 'run end', 'lane left']
+    assert events[3]['run_id'] == events[2]['id']
+    assert events[0]['lane_id'] == events[1]['lane_id'] == events[4]['lane_id']
+    assert events[4]['end_known'] is True
 
 
 def _failures_keep_run_end_occurrences(env, monkeypatch, failure):
@@ -281,8 +285,13 @@ def _control_requests_do_not_start_agent_runs(env, monkeypatch, request):
     # Attaching the PR uses the SDK but starts no turn; it must not wake the session as a run end.
     runs = [row for row in records(repo, 'events.jsonl')
             if row.get('kind') == 'work']
-    assert [row['event'] for row in runs] == ['run start', 'run end']
-    assert runs[-1]['outcome'] == 'completed'
+    # Joining and leaving the worker lane are lifecycle evidence, not extra SDK turns.
+    assert [row['event'] for row in runs] == [
+        'lane joined', 'lane admitted', 'run start', 'run end', 'lane left']
+    assert runs[3]['outcome'] == 'completed'
+    assert runs[3]['run_id'] == runs[2]['id']
+    assert runs[0]['lane_id'] == runs[1]['lane_id'] == runs[4]['lane_id']
+    assert runs[4]['end_known'] is True
 
 
 def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, question_turn):

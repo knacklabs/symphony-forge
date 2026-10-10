@@ -1,0 +1,79 @@
+{
+  "base": "180774000df7984107d51cb798b1337760a63019",
+  "branch": "fix/skipped-close",
+  "done_when": "An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line after an amend; a commit changing only close's test-state record counts as bookkeeping for CI reuse; story titles are read as UTF-8; an error during close's conflicted-merge handling aborts the merge and says so; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/close.py",
+    "tests/test_close_refreshes_pull_request_contract.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "890b9196e59c1d54497130f25d93216e637ffb8ea550236d378c6c123dae1c08",
+    "changed": "a80045f06ba42b9e137c76fa8a74592508b65f39bc475caac4482c5ba8b09f26",
+    "commit": "ed73a48af8cbf3e498b94ba61102283f05b31c0f",
+    "dismissals": [],
+    "findings": [],
+    "id": "6baa1ea2-3f2f-4432-8d5d-6a6842f83c5e",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T18:34:27+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:35:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:09:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:38:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:35:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:48:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:53:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:06:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:20:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:17:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:15:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:53:59+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/close.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the one remaining finding: conflict regeneration must not rewrite user-owned Husky hooks"
+  },
+  "why": "Real issues the coordinator skipped, still in close (audit, 2026-10-09): an upgrade close's full sync rewrites the real repo's git hooks, an amended Done-when never reaches an existing pull request body, a test-state change forces a full CI rerun instead of reusing the parent's, the story title is read in the platform encoding, and a SyntaxError during a conflicted merge leaves the merge active",
+  "worker": "codex"
+}

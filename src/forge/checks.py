@@ -29,6 +29,28 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
          progress: bool = False) -> None:
     """Wait for green checks on sha; land renews its deadline on observed check progress."""
+    start, clock = repo.now(), time.monotonic()
+    with repo.record_run(top, item, "ci") as result:
+        result.update(outcome="unknown", state="unknown")
+        try:
+            _wait(top, item, sha, names, branch, progress, result)
+        except repo.Refused as error:
+            if error.entry is REFUSALS["red"]:
+                result["outcome"] = "failed"
+            result["reason"] = str(error).split("\n", 1)[0]
+            raise
+        except KeyboardInterrupt:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
+            result["reason"] = "Interrupted by Ctrl-C."
+            raise
+        finally:
+            repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
+            repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
+
+
+def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
+          result: dict[str, Any]) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
@@ -39,6 +61,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         queued = False
         try:
             seen, snapshot = _seen(top, item, sha)
+            result["state"] = ("running" if any(state == PENDING for _, state in seen)
+                               else "queued" if any(state == QUEUED for _, state in seen)
+                               else "unknown")
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
@@ -56,9 +81,11 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
         except repo.Refused as error:
             if not progress or error.entry is not REFUSALS["not_green"]:
                 raise
+            result["state"] = "unknown"
             reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
         else:
             if not reason:
+                result["outcome"] = "passed"
                 return
         if queued:
             now = time.monotonic()
@@ -78,6 +105,8 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             queued_since = printed_minute = None
         left = deadline - time.monotonic()
         if left <= 0:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
             if progress:
                 reason = f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}"
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)

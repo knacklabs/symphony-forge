@@ -9,7 +9,7 @@ import shutil
 import socket
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -174,7 +174,8 @@ def _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
     plain = repo.forge("next")
     assert plain.returncode == 0, plain.stderr
     steps = [line for line in plain.stdout.splitlines() if line.startswith("Next: ")]
-    assert steps[0] == 'Next: forge story done BOARD "<outcome sentence>"'
+    # Outcome advice now refreshes remote merges before the command reads them.
+    assert steps[0] == 'Next: git fetch origin, then forge story done BOARD "<outcome sentence>"'
     assert "Next: forge work polish" in steps[1:]
     following = view(repo, "next")["next"]
     assert following["command"] is None
@@ -220,7 +221,7 @@ def github(gh, prs):
 
 @pytest.mark.parametrize("context", [None, "commit status", "check start", "live worker", "live read",
                                     "plugin checks", "plugin refresh"])
-def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, context):
+def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, context, monkeypatch):
     # CORE adds the packaged plugin boundary to this criterion's existing owner.
     # The old command cases stay; the mod cases prove transport and refresh lifecycle.
     if context in ("plugin checks", "plugin refresh"):
@@ -242,6 +243,8 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     if context is not None:
         _successful_checks_do_not_replace_close_receipts(repo, gh, context)
         return
+    # Elapsed totals are live now; compare repository snapshots at the same instant.
+    monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
     setup(repo)
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() +
                'models.build = { model = "gpt-6.1-sol", effort = "medium" }\n'
@@ -424,13 +427,15 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
     ("reviewing", "human", None), ("", "human", "forge work polish"),
     ("stages passed", "human", None), ("stages failed", "human", None),
     ("stages skipped", "human", None), ("placeholder", "human", None)])
-def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merge, command):
+def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merge, command, monkeypatch):
     if status.startswith("stages "):
         _board_consumes_current_round_times_from_real_runs(request.getfixturevalue("env"), status.split()[1])
         return
     if status == "placeholder":
         _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh)
         return
+    # The two worktrees expose the same state at the same elapsed-time instant.
+    monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + f'merge = "{merge}"\n')
     repo.git("add", "forge.toml")
@@ -503,13 +508,14 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     setup(repo, keys=())
     assert view(repo, "board")["items"] == []
     initial_calls = len([c for c in gh.calls() if c[:2] == ["api", "graphql"]])
+    monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:00+00:00")
     for name in ("first", "second", "older"):
         made = repo.forge("fix", "start", name, "--done", "Reads clearly", "--slug", name)
         assert made.returncode == 0, made.stderr
     prs = [pull(n, "fix/first" if n == 30 else "fix/second" if n == 29 else f"fix/other-{n}")
            for n in range(30, 5, -1)]
     github(gh, prs)
-    gh.respond("pr", "list", stdout=json.dumps([
+    gh.respond("pr", "list", "--state", "open", stdout=json.dumps([
         {"number": n, "headRefName": "fix/older" if n == 1 else f"fix/other-{n}"}
         for n in range(5, 0, -1)]))
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:00+00:00")
@@ -519,7 +525,12 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     prs[0] = pull(30, "fix/first", "FAILURE")
     github(gh, prs)
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:59+00:00")
-    assert snapshot(view(repo, "board")) == snapshot(first)
+    # GitHub checks stay cached, but elapsed item time continues to advance.
+    assert all(row["total_seconds"] == 0 for row in first["items"])
+    expected = json.loads(json.dumps(first))
+    for row in expected["items"]:
+        row["total_seconds"] = 59
+    assert snapshot(view(repo, "board")) == snapshot(expected)
     # The HTML board uses the same cache; it must not refresh the open checks early.
     html = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.html"))
     assert html.returncode == 0, html.stderr
