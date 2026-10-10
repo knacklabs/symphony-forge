@@ -2,13 +2,46 @@
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/unblockers-first",
   "done_when": "In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first-come within each group, and its place in line says why. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/machine.py",
+    "tests/test_agent_lane_prioritizes_dependencies.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "89772ce09aec02de60bb49fd72e896da0d6355c7cf068431669cf333810a594e",
+    "changed": "79be1c92b6a8d94833ec648e847707f71ac5a36ad2887ccb9862eaa57c86f39e",
+    "commit": "d290f58406a82c4e2ed099272df460e2820476a9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Test \u2014 The adopted-v1.2.2 case rewrites `forge.toml` to the current version and calls `forge sync`; it never runs `forge upgrade`. The test and proof list therefore claim coverage of upgrade plus sync while an upgrade that fails to invoke sync would still pass. The required existing-client upgrade path lacks a test through its real command.",
+        "file": "tests/test_agent_lane_prioritizes_dependencies.py",
+        "line": 33,
+        "priority": "P1",
+        "title": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first"
+      },
+      {
+        "body": "Raise: Scale \u2014 Every task work, read, or review run calls `board.machine_board(repo)` before entering the machine queue. That command rebuilds repository-wide history and dependency maps and, on a normal repo with open work, requests open and merged pull requests from GitHub. With dozens of planned parts, this cost recurs on every agent run; GitHub latency delays admission even though the queue only needs dependency relationships.",
+        "file": "src/forge/machine.py",
+        "line": 91,
+        "priority": "P1",
+        "title": "Full board and GitHub reads delay task admission"
+      }
+    ],
+    "id": "c85f8c30-136d-494e-85f3-d6c2c4b33483",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:25:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T17:03:30.931222+00:00",
+      "step": "review"
     }
   ],
   "why": "The machine's agent line is first-come, so a part other work waits on queues behind new fixes",
