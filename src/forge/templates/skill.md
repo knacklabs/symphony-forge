@@ -639,7 +639,7 @@ On a live app, every story and fix also follows these:
 
 On the default branch, `forge doctor --fix` commits its dated Forge-files fix with a proof list
 of its Done-when and the files refreshed by the pinned release's sync. Run `forge close <name>`
-as doctor suggests; close supplies its test run result to the first review. New repos get this
+as doctor suggests; close starts tests alongside the first review and reports both results. New repos get this
 at setup, and existing repos get it when they move to this release.
 
 When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
@@ -657,7 +657,7 @@ also stay in place; only recognized cache directories may be discarded.
 1. Ask which release to move to, recommending the newest.
 2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
-   Its commit includes the upgrade's proof list; close supplies its test run result to the review.
+   Its commit includes the upgrade's proof list; close reports tests and review results together.
    It changes only the version in `forge.toml`.
 3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.

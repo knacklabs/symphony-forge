@@ -11,6 +11,7 @@ import pytest
 
 from conftest import ROOT, Repo
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
+from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
 
 STORY = "FIX-REVIEW-ALONGSIDE-TESTS"
@@ -142,3 +143,33 @@ def test_2_accepting_findings_still_refuses_failed_tests(env):
     result = env.close(item)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Ready:" in result.stdout
+
+
+def test_3_failed_review_keeps_failed_tests_for_the_next_worker(land):
+    from test_close import FAILED
+
+    env = land
+    command = f'"{Path(sys.executable).as_posix()}" verify.py'
+    env.commit(env.repo.path, "verify.py", "import subprocess, sys\n"
+               "actual = subprocess.run([sys.executable, 'app.py'], check=True, "
+               "capture_output=True, text=True)\n"
+               "assert actual.stdout == 'hello\\n', 'client greeting missing'\n")
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix({"app.py": "print('goodbye')\n"})
+    env.reviews(FAILED)
+
+    closed = env.close(item)
+    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert "Autoreview did not finish a review twice in a row" in closed.stderr
+    assert "client greeting missing" in closed.stdout
+    assert "Ready:" not in closed.stdout
+    assert len(env.review_calls()) == 2
+
+    # A review infrastructure failure must still deliver the independently failed tests.
+    worked = env.repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    [worker] = _workers(env)
+    assert "### Tests on the close run" in worker["brief"]
+    assert "client greeting missing" in worker["brief"]

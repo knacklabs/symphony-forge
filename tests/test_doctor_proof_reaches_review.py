@@ -64,6 +64,11 @@ def test_1_doctor_fix_commit_proof_reaches_first_close_review(env, monkeypatch, 
     for rel in written:
         assert rel in proof
     assert f"forge close {name}" in proof and "test run" in proof
+    # Review starts with a pending notice; completed results belong to close's report.
+    assert "reports its test run result alongside the review result" in proof
+    for host in (".codex", ".claude"):
+        guide = (folder / host / "skills/forge/SKILL.md").read_text("utf-8")
+        assert "close supplies its test run result" not in guide
     checked = repo.forge("doctor", cwd=folder)
     assert "differs from what forge sync writes" not in checked.stdout
 

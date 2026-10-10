@@ -59,6 +59,11 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert f"Forge {RELEASE}'s forge sync" in proof
     assert f"forge close {NAME}" in proof
     assert "test run" in proof
+    # Review starts with a pending notice; completed results belong to close's report.
+    assert "reports its test run result alongside the review result" in proof
+    for host in (".codex", ".claude"):
+        guide = up.show(f"{host}/skills/forge/SKILL.md")
+        assert "close supplies its test run result" not in guide
     assert tomllib.loads(up.show("forge.toml"))["version"] == RELEASE
     assert [call["args"] for call in up.uv()][-2:] == [
         release_run(RELEASE, "sync"), release_run(RELEASE, "close", NAME)]
