@@ -325,6 +325,16 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                         if (current["worker"] or {}).get("step") == expected:
                             break
                         assert time.monotonic() < deadline, f"Forge did not report {expected}"
+                if case.startswith("progress"):
+                    # Tests hold their runner; let the concurrent review settle before comparing snapshots.
+                    deadline = time.monotonic() + 30
+                    while True:
+                        snapshot = view(repo, "board")
+                        current = next(r for parent in snapshot["items"]
+                                       for r in [parent, *parent["children"]] if r["id"] == item)
+                        if next(s for s in current["stages"] if s["name"] == "Review")["status"] == "pass":
+                            break
+                        assert time.monotonic() < deadline, "Forge did not finish the concurrent review"
                 result, _ = row(repo, item)
                 activities.append(result["activity"])
                 assert result["idle_since"] is None and result["stalled"] is False

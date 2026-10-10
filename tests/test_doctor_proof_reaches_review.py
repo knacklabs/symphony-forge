@@ -71,6 +71,8 @@ def test_1_doctor_fix_commit_proof_reaches_first_close_review(env, monkeypatch, 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 1
     assert proof in env.prompt()
-    assert "client checks passed" in env.prompt()
-    assert "exited with status 0" in env.prompt()
+    # Proof is available at launch; completed test output is reported when close joins tests.
+    assert "Tests are running alongside this review" in env.prompt()
+    assert "client checks passed" in closed.stdout
+    assert "exited with status 0" in closed.stdout
     assert proof in body(env.gh_calls("pr", "create")[-1])

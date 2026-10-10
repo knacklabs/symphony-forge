@@ -217,7 +217,7 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     assert broken.returncode != 0 and "No module named 'forge'" in broken.stderr
     upgraded = up.run(RELEASE)
     assert upgraded.returncode == 1, upgraded.stdout + upgraded.stderr
-    assert "close stopped before the review" in upgraded.stderr
+    assert "failed on this machine; the next worker round gets its output." in upgraded.stderr
     assert not receipt.exists()
     assert config.read_text("utf-8") == settings
     upgraded_config = up.folder / "forge.toml"

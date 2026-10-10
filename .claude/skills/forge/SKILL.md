@@ -905,8 +905,9 @@ any other file stops close for the worker to resolve. While waiting for checks, 
 if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
 in the default branch. Land retries close once itself, including a conflict during its merge check
 wait; if the merge needs a person, it stops with close's existing conflict next step.
-When the
-test command fails, close stops before the review and keeps the output for the worker: run
+Close's tests and review run at the same time. Close waits for both and reports their results
+together; a red test or a P0/P1 finding still stops the round. When the
+test command fails, close keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus

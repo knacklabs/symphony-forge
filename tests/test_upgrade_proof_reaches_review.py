@@ -66,6 +66,7 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert len(up.env.review_calls()) == 1
     prompt = up.env.prompt()
     assert proof in prompt
-    assert "client checks passed" in prompt
-    assert "exited with status 0" in prompt
+    assert "Tests are running alongside this review" in prompt
+    assert "client checks passed" in upgraded.stdout
+    assert "exited with status 0" in upgraded.stdout
     assert proof in body(up.env.gh_calls("pr", "create")[-1])

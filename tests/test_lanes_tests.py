@@ -166,7 +166,7 @@ def check_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_pa
         assert observed["base"] == other.git("merge-base", "origin/main", "HEAD", cwd=folder)
         connection.sendall(b"x")
         assert second.wait(timeout=60) == 0, close_output.read_text("utf-8")
-        assert "exited with status 0" in env.prompt()
+        assert "exited with status 0" in close_output.read_text("utf-8")
         assert rows(repo) == []
         for status in (0, 7):
             (worker / "test-started.json").unlink()
