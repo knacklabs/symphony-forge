@@ -490,3 +490,18 @@ def test_10_mobile_browser_shows_running_status_and_counts_without_overflow(clie
     assert "10 minutes" in text
     assert "Needs fixes" not in text
     assert "Stories" in text and "Fixes" in text
+
+
+def test_15_review_loop_stop_needs_a_decision_on_the_board_and_next(client, tmp_path):
+    _fix(client, status="hotspot", round=3,
+         stop={"file": "web/basket.py", "reason": "Blocking reviews keep finding the same problem"})
+    next_step = client.forge("next")
+    assert next_step.returncode == 0, next_step.stderr
+    assert "Close stopped" in next_step.stdout
+    assert "Ask the human to narrow the part, split it, or accept the remaining findings." in next_step.stdout
+    data, text, _ = _board(client, tmp_path)
+    row = _row(data, "correct-state")
+    assert row["stage"] == "hotspot"
+    assert row["status"] == "Needs your decision"
+    assert "Readers see the correct state: Needs your decision" in text
+    assert "Readers see the correct state: Not started yet" not in text

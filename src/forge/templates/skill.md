@@ -886,8 +886,8 @@ When a worker round or close's merge changes the item's Forge pin, land and clos
 line and continue through uv under that release before reading its new settings.
 Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
 before the original land or close command continues.
-Next lets failed pull request checks choose the next step only when that pull request's head
-matches the local branch head; after a local repair, follow the current local step.
+The board and next use failed pull request checks only when they belong to that pull request's
+current head, including branches that exist only on the remote or are ahead of the local branch.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once

@@ -1,10 +1,11 @@
-"""Next advice follows the local repair and refreshes merged work before recording outcomes.
+"""Next advice follows current pull request evidence and refreshes merged work before outcomes.
 
 Audit: real Forge commands and git exercise both regressions; only GitHub is faked.
 Existing machine-view tests use a fabricated PR head and a freshly fetched default,
 so neither stale-check nor stale-merge advice was covered.
 """
 import json
+import re
 import shutil
 
 import pytest
@@ -53,13 +54,14 @@ def _client(repo, gh, tmp_path, adopted):
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh, tmp_path, adopted):
+def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(repo, gh, tmp_path, adopted):
     _client(repo, gh, tmp_path, adopted)
     made = repo.forge("fix", "start", "Repair the page", "--done", "The page works", "--slug", "page")
     assert made.returncode == 0, made.stderr
     folder = worktree(repo, "fix/page")
     failed = pull(7, "fix/page", conclusion="FAILURE")
     failed["headRefOid"] = repo.git("rev-parse", "fix/page")
+    failed["commits"]["nodes"][0]["commit"]["oid"] = failed["headRefOid"]
     github(gh, [failed])
     matching = repo.forge("next")
     assert "The fix page's checks failed." in matching.stdout
@@ -71,10 +73,22 @@ def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh,
     (folder / "page.py").write_text("print('repaired')\n", "utf-8")
     repo.git("add", "page.py", cwd=folder)
     repo.git("commit", "-qm", "Repair the page locally", cwd=folder)
-    # A completed local round waits for close; the old failed PR head must not send it back to work.
+    # A local repair does not erase a failure still belonging to GitHub's current head.
     state = folder / ".factory/fixes/page.json"
     state.write_text(json.dumps({**json.loads(state.read_text("utf-8")),
                                  "status": "waiting for checks"}), "utf-8")
+    current = repo.forge("next")
+    assert "The fix page's checks failed." in current.stdout
+    board, text, _ = _board(repo, tmp_path)
+    assert _row(board, "page")["pr"]["checks"] == "fail"
+    assert "Checks failed" in text
+
+    # GitHub now reports the repaired head, but its check evidence still describes
+    # the earlier commit. Those failures must not override the repaired item.
+    failed["headRefOid"] = repo.git("rev-parse", "fix/page")
+    github(gh, [failed])
+    cache = _records(repo, "events.jsonl", []) / "checks-cache.json"
+    cache.unlink()
     plain = repo.forge("next")
     assert plain.returncode == 0, plain.stderr
     assert "Next: forge close page" in plain.stdout
@@ -102,6 +116,7 @@ def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh,
         if checks == "pass":
             passing = pull(7, "fix/page")
             passing["headRefOid"] = repo.git("rev-parse", "fix/page")
+            passing["commits"]["nodes"][0]["commit"]["oid"] = passing["headRefOid"]
             github(gh, [passing])
             # The earlier calls deliberately retained the cached failed push.
             (receipt.parent / "checks-cache.json").unlink()
@@ -121,6 +136,52 @@ def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh,
         assert plain.returncode == 0, plain.stderr
         assert any(phrase in plain.stdout for phrase in (
             "is ready to merge", "ready and waiting for someone to merge"))
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.mark.parametrize("local", ["remote-only", "behind"])
+def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
+        repo, gh, tmp_path, adopted, local):
+    # Only GitHub is faked; real pushes, fetches and branch cleanup reproduce a
+    # teammate's checkout. The earlier owner had only a newer local repair.
+    _client(repo, gh, tmp_path, adopted)
+    made = repo.forge("fix", "start", "Repair the page", "--done", "The page works", "--slug", "page")
+    assert made.returncode == 0, made.stderr
+    folder = worktree(repo, "fix/page")
+    if local == "remote-only":
+        repo.git("worktree", "remove", str(folder))
+        repo.git("branch", "-D", "fix/page")
+    else:
+        writer = tmp_path / "teammate"
+        repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(writer))
+        repo.git("switch", "-q", "fix/page", cwd=writer)
+        (writer / "page.py").write_text("print('teammate repair')\n", "utf-8")
+        repo.git("add", "page.py", cwd=writer)
+        repo.git("commit", "-qm", "Repair the page remotely", cwd=writer)
+        repo.git("push", "-q", "origin", "fix/page", cwd=writer)
+    repo.git("fetch", "-q", "origin")
+    failed = pull(7, "fix/page", conclusion="FAILURE")
+    failed["headRefOid"] = repo.git("rev-parse", "origin/fix/page")
+    failed["commits"]["nodes"][0]["commit"]["oid"] = failed["headRefOid"]
+    github(gh, [failed])
+
+    board, text, _ = _board(repo, tmp_path)
+    machine = repo.forge("next", "--json")
+    assert machine.returncode == 0, machine.stderr
+    for data in (board, json.loads(machine.stdout)):
+        row = _row(data, "page")
+        assert row["stage"] == "checks failed" and row["status"] == "Checks failed"
+        assert row["pr"]["checks"] == "fail" and row["pr"]["failures"]
+        assert any(event["kind"] == "checks_failed" for event in row["occurrences"])
+        assert row["next"]["command"] == "forge work page"
+    assert "Checks failed" in text
+    if local == "behind":
+        plain = repo.forge("next")
+        assert plain.returncode == 0, plain.stderr
+        assert "The fix page's checks failed." in plain.stdout
+        assert "Next: forge work page" in plain.stdout
+    query = next(call for call in gh.calls() if call[:2] == ["api", "graphql"])
+    assert any(re.search(r"commit\s*\{\s*oid\b", argument) for argument in query)
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])

@@ -46,7 +46,7 @@ FORGE_FILES = ("forge.toml", ".claude/", ".codex/", ".github/workflows/forge.yml
 WAITING = "Ready to merge"
 STATUS = {"started": "Waiting to start", "working": "In progress", "reviewing": "Under review",
           "fixing": "Needs fixes", "waiting for checks": "Checks running",
-          "ready": "Ready to merge"}
+          "ready": "Ready to merge", "hotspot": "Needs your decision"}
 
 Item = dict[str, Any]
 
@@ -79,7 +79,7 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
       nodes { number headRefName headRefOid title url isDraft
-        commits(last: 1) { nodes { commit { statusCheckRollup {
+        commits(last: 1) { nodes { commit { oid statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
             ... on CheckRun { databaseId name status conclusion startedAt completedAt }
@@ -136,12 +136,12 @@ def _machine_prs(top: Path) -> list[Item]:
     return prs
 
 
-def _checks(pr: Item | None, required: list[str], *, top: Path,
-            branch: str) -> tuple[str, list[Item], list[Item]]:
+def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
     if not pr:
         return "unknown", [], []
     try:
-        contexts = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]
+        commit = pr["commits"]["nodes"][-1]["commit"]
+        contexts = commit["statusCheckRollup"]["contexts"]
         nodes = contexts["nodes"]
         if not isinstance(nodes, list):
             return "unknown", [], []
@@ -172,8 +172,7 @@ def _checks(pr: Item | None, required: list[str], *, top: Path,
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
               "unknown" if not statuses or "unknown" in statuses or missing or
               contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
-    if status == "fail" and (not pr.get("headRefOid") or pr["headRefOid"] != repo.run(
-            "git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()):
+    if status == "fail" and (not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]):
         return "unknown", [], []
     return status, events, failures
 
@@ -296,7 +295,7 @@ def machine_board(top: Path, history: Item | None = None,
         tree = trees.get(branch)
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
-        checks, events, failures = _checks(pr, cfg["checks"], top=top, branch=branch)
+        checks, events, failures = _checks(pr, cfg["checks"])
         plan_text = ""
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
             lines = [f"{title} is finished."]

@@ -610,8 +610,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     pr = (prs or {}).get(state.get("branch", "")) or {}
-    checks = board._checks(pr, _report_config(path or top, refusals)["checks"],
-                           top=top, branch=state.get("branch", ""))[0]
+    checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0]
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
     if statuses is not None:

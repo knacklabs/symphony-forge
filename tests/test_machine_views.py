@@ -3,6 +3,7 @@
 The old HTML/text tests do not exercise JSON, expiry across processes, or GitHub event ids.
 Only GitHub is faked; commands read real repositories and their owned state fixtures.
 """
+import copy
 import json
 import os
 import shutil
@@ -220,6 +221,12 @@ def pull(number, branch, conclusion="SUCCESS", completed="2026-10-04T10:00:00Z")
 
 
 def github(gh, prs):
+    # GraphQL returns the queried commit identity; explicit older check commits
+    # remain intact for stale-evidence cases.
+    prs = [copy.deepcopy(pr) for pr in prs]
+    for pr in prs:
+        for node in pr.get("commits", {}).get("nodes", []):
+            node["commit"].setdefault("oid", pr.get("headRefOid"))
     gh.respond("api", "graphql", stdout=json.dumps(
         {"data": {"repository": {"pullRequests": {"nodes": prs}}}}))
 
