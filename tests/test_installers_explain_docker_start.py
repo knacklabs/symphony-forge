@@ -38,7 +38,7 @@ def test_6_windows_installer_is_a_required_pull_request_check():
 def test_5_installers_check_docker_engine_and_explain_starting_desktop(
         repo, tmp_path, check, running, new_install):
     version = repo.forge("--version").stdout.split()[-1]
-    bin_dir = tmp_path / "bin"
+    bin_dir = tmp_path / "installer-bin"
     bin_dir.mkdir()
     calls = tmp_path / "docker-calls"
     env = os.environ | {"HOME": str(tmp_path), "LOCALAPPDATA": str(tmp_path),
