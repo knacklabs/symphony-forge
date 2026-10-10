@@ -30,6 +30,7 @@ export function stageText(s: Stage, now: number): string {
 }
 
 export function total(i: Item, now: number): string {
+  if (i.time_breakdown != null) return i.total_seconds == null ? 'unknown' : seconds(i.total_seconds)
   // Build includes the worker's own tests; concurrent stages must not double time.
   const live = Math.max(0, ...stages(i).filter(s => s.status === 'running' && s.started_at).map(s => elapsed(s.started_at!, now)))
   return i.total_seconds == null ? 'unknown' : seconds(i.total_seconds + live)
@@ -76,6 +77,8 @@ export function itemLines(i: Item, now: number): [string, string] {
   const findings = list(f.items).length ? list(f.items).map(f => `${f.priority ?? ''} ${f.title ?? ''}`.trim()) : i.findings?.titles ?? []
   const failures = list(record(i.pr).failures).map(f => `${f.job}: ${f.cause}`)
   const tests = record(i.tests)
+  const times = Object.entries(record(i.time_breakdown)).map(([name, value]) => `${name.charAt(0).toUpperCase()}${name.slice(1).replaceAll('_', ' ')} ${typeof value === 'number' ? seconds(value) : 'unknown'}`)
+  const rounds = list(i.rounds).flatMap(r => typeof r.line === 'string' ? [r.line] : [])
   const gates = record(i.gates)
   const gateText = ([['plan_read', 'Plan read'], ['review', 'Review'], ['ci', 'CI']] as const).flatMap(([name, label]) => {
     const gate = record(gates[name])
@@ -83,7 +86,7 @@ export function itemLines(i: Item, now: number): [string, string] {
   })
   return [
     `${i.title} · ${i.stage ?? 'unknown'}${activity ? ` · ${activity}` : ''}${worker}${pr} · ${i.findings?.count ?? 0} open findings${typeof f.dismissed === 'number' ? ` · ${f.dismissed} dismissed` : ''}`,
-    [stages(i).map(s => stageText(s, now)).join(' → '), `round ${i.round ?? 'unknown'} · total ${total(i, now)}`, ...(tests.done != null && tests.total != null ? [`Tests ${tests.done}/${tests.total}`] : []), ...gateText, ...failures, ...findings].join(' · '),
+    [stages(i).map(s => stageText(s, now)).join(' → '), `round ${i.round ?? 'unknown'} · total ${total(i, now)}`, ...(tests.done != null && tests.total != null ? [`Tests ${tests.done}/${tests.total}`] : []), ...gateText, ...failures, ...findings, ...times, ...rounds].join(' · '),
   ]
 }
 

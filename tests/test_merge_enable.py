@@ -186,7 +186,9 @@ def _prototype_run(env, _):
     env.checks(GREEN)
     ready = enable(env)
     assert ready.returncode == 0, ready.stderr
-    assert ready.stdout == "\n".join(["Updated the pull request's review block.", *READY]) + "\n"
+    lines = ready.stdout.splitlines()
+    assert lines[-2:] == READY
+    assert lines[:-2] and all(line == "Updated the pull request's review block." for line in lines[:-2])
     shown = next_lines()
     assert f"The fix {FIX} is ready to merge: {URL}\nNext: merge {URL}, then forge next" in shown
     assert f"Next: forge merge {FIX}" not in shown

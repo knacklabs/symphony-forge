@@ -458,6 +458,25 @@ def _sweep() -> None:
                 shutil.rmtree(folder, ignore_errors=True)
 
 
+def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:
+    """Review attempts advance even when another review runs without a worker turn."""
+    from forge import time_records
+
+    steps = state.get("steps")
+    finished = sum(step.get("step") == "review" for step in steps or [])
+    events = [event for event in time_records.read(top, "events")
+              if event.get("item") == item and event.get("event") == "review result"]
+    recorded = [event["review_round"] for event in events
+                if isinstance(event.get("review_round"), int)]
+    timed = sum(timing.get("item") == item and timing.get("step") == "review"
+                for timing in time_records.read(top, "timings"))
+    if timed > len(events):
+        return None  # An earlier timing-only attempt cannot establish an absolute ordinal.
+    if not recorded and (finished or events or not isinstance(steps, list) and state.get("round") != 1):
+        return None
+    return max([finished, *recorded]) + 1
+
+
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "") -> dict[str, Any]:
@@ -535,8 +554,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             serious = [f for f in findings if f["priority"] in SERIOUS]
             repo.record_event(top, item, "review result", commit=head,
+                review_round=round_number(top, item, state),
                 outcome="failed" if reason or selected.get("model") != "gpt-6.1-sol"
-                or selected.get("effort") != "high" else "blocked" if serious else "clean")
+                or selected.get("effort") != "high" else "blocked" if serious else "clean",
+                findings=None if reason else [{key: finding[key] for key in
+                    ("title", "priority", "file")} for finding in findings])
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
@@ -556,8 +578,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     identity = repo.record_event(top, item, "review result", commit=head,
+                                 review_round=round_number(top, item, state),
                                  outcome="blocked" if any(f["priority"] in
-                                 (("P0",) if light else SERIOUS) for f in findings) else "clean")
+                                 (("P0",) if light else SERIOUS) for f in findings) else "clean",
+                                 findings=[{key: finding[key] for key in ("title", "priority", "file")}
+                                           for finding in findings])
     return {"id": identity, "commit": head, "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1",
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,

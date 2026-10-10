@@ -225,7 +225,7 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
 def machine_board(top: Path, history: Item | None = None,
                   prs_snapshot: list[Item] | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
-    from forge import nextstep
+    from forge import nextstep, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -252,6 +252,7 @@ def machine_board(top: Path, history: Item | None = None,
                   if (not complete or p.get("state") == "MERGED")
                   and isinstance(p.get("headRefName"), str)} if trees else {}
     merged_prs = set(merged_details)
+    merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
     readiness: dict[str, Item] = {}
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
     completed = {key: state for key, state in history["stories"].items() if state.get("status") == "done"}
@@ -259,15 +260,7 @@ def machine_board(top: Path, history: Item | None = None,
     completed.update({STATE.fullmatch(rel)["key"]: state for rel, (state, _) in best.items()
                       if rel.endswith("/story.json") and state.get("status") == "done"})
     recorded, by_item = _event_history(top)
-    timings = []
-    path = repo.forge_dir(top) / "timings.jsonl"
-    for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-        try:
-            value = json.loads(line)
-            if isinstance(value, dict):
-                timings.append(value)
-        except ValueError:
-            continue
+    timings = time_records.read(top, "timings")
 
     branch_dates = dict(line.split("\0", 1) for line in repo.git(
         "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)",
@@ -515,9 +508,11 @@ def machine_board(top: Path, history: Item | None = None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                "total_seconds": sum(r.get("seconds") or 0 for r in timings
-                                     if r.get("item") == item and r.get("round") is not None)
-                                 if round_number is not None else None,
+                **(time_records.item(top, item, state, events=recorded, timings=timings,
+                                     ended_at=merged_dates.get(branch)) if kind != "story" else {
+                    "total_seconds": sum(r.get("seconds") or 0 for r in timings
+                                         if r.get("item") == item and r.get("round") is not None)
+                                     if round_number is not None else None}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 
