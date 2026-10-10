@@ -130,7 +130,7 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     # The round it passed, so the story keeps needing a passing round even if its notes go.
     approval = {"by": f"human-via-{runtime.capitalize()}", "at": repo.now(), "hash": digest,
                 "runtime": runtime, "session": session, "event": event,
-                "round": int(notes.get("round") or 1)}
+                "round": int(notes.get("round") or 1), "part_line_limit": 400}
     state.update(status="approved", approval=approval, touches=state.get("touches", 0) + 1)
     rel = repo.write_state(key, repo.add_step(state, "approved"), path)
     title = state.get("title") or key

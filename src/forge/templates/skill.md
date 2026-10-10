@@ -722,7 +722,11 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
-- Keep tasks small: at most three Done-when items and about 400 changed lines each.
+- Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
+  additions and removals outside tests. Close stops a part over 400 lines before review;
+  split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
+  in the part's folder, the same way fixes work. Stories approved before this limit keep working.
+- Keep each part's builder notes to its goal, files and one test per rule.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
@@ -759,6 +763,13 @@ the upgrade before Forge can forward the command to the checkout's older release
 story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
+
+**Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
+answers and fixed or dismissed findings, including the coordinator's recorded work notes.
+Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
+they cannot block or start another round. A new defect needs distinct text and new evidence.
+Human acceptance still expires when the accepted version changes. New repos get this on init;
+existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
