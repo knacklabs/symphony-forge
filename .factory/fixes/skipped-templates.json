@@ -10,24 +10,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "426d81e216cbb6059d20d7173d6692435205c60008334202d73be4fa8a202bd7",
-    "changed": "03bd59ff99f74eea2465df3dd2747058bedc923ab728d0de5f281fbff24f54f3",
-    "commit": "775185c7dc87c07d2c1a98dba81d595a4f342e5e",
+    "branch_diff": "2554a61ea10e19008ce9eefbb15d1d594a147d6636a44615daf862b690618c2a",
+    "changed": "0f34d320e14e7168a57b2f02cfde5e73ae9ae2d4a2edcf14ffeb282488960fbb",
+    "commit": "6df7f27ed703b31c12e99ff521afc1618baa2456",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The guide still labels `yarn up -R '*'` as compatible with Yarn 2+, but Yarn 2 rejects `-R`, preventing the documented dependency refresh. The release-history evidence beyond the ruling's current-command documentation remains unaddressed: [Yarn's official 3.0.0 changelog](https://yarnpkg.com/advanced/changelog#300) identifies `-R,--recursive` as a newly added option. This affects `src/forge/templates/skill.md:627`, `.codex/skills/forge/SKILL.md:623` and `.claude/skills/forge/SKILL.md:623`. The assertion at `tests/test_client_setup_matches_stack.py:63` requires the incompatible instruction, so the passing proof does not establish Yarn 2 compatibility. Distinguish Yarn 2 from Yarn 3+ and correct all three guides and their check.",
-        "file": "src/forge/templates/skill.md",
-        "line": 627,
-        "priority": "P1",
-        "title": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands"
-      }
-    ],
-    "id": "7d680f61-94d3-42b0-980f-92a91cdecf98",
-    "status": "blocked"
+    "findings": [],
+    "id": "aaa1096c-d659-42dd-abfc-a125f251a7a4",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:24+00:00",
@@ -51,6 +43,10 @@
     },
     {
       "at": "2026-10-10T00:58:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:48:47+00:00",
       "step": "review"
     }
   ],
