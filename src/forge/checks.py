@@ -19,11 +19,15 @@ from forge import repo
 REFUSALS = {
     "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
+    "conflict": ("GitHub runs no checks on a conflicting pull request. "
+                 "Merge the default branch through close before waiting for checks.",
+                 "forge close {item}"),
 }
 PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
 
 
-def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = False) -> None:
+def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
+         progress: bool = False) -> None:
     """Wait for green checks on sha; land renews its deadline on observed check progress."""
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
@@ -36,6 +40,15 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = F
                 previous = snapshot
                 deadline = time.monotonic() + timeout
             reason = _pending(item, names, seen)
+            if reason:
+                shown = repo.run("gh", "pr", "view", branch, "--json", "mergeable,headRefOid", cwd=top)
+                try:
+                    pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
+                except ValueError:
+                    pr = {}
+                if (isinstance(pr, dict) and pr.get("headRefOid") == sha
+                        and pr.get("mergeable") == "CONFLICTING"):
+                    repo.refuse(REFUSALS["conflict"], item=item)
             queued = ""
             if (any(state == QUEUED for _, state in seen)
                     or any(not any(name == want or name.startswith(want + " (")
