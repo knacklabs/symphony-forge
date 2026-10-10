@@ -23,39 +23,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: command tests for explore defaults, selection and earlier-adopted clients\texplore-kind",
-      "kind": "bug",
-      "path": ".factory/fixes/explore-kind.json",
-      "line": 12,
-      "text": "Not done: command tests for explore defaults, selection and earlier-adopted clients",
-      "from": "blocking",
-      "item": "explore-kind",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: explore kind for read-only work\texplore-kind",
-      "kind": "bug",
-      "path": ".factory/fixes/explore-kind.json",
-      "line": 12,
-      "text": "Not done: explore kind for read-only work",
-      "from": "blocking",
-      "item": "explore-kind",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: proof list\texplore-kind",
-      "kind": "bug",
-      "path": ".factory/fixes/explore-kind.json",
-      "line": 12,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "explore-kind",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\t.factory/fixes/release-127.json\tNot done: Forge's version is 1.2.7 everywhere it is recorded\trelease-127",
       "kind": "bug",
       "path": ".factory/fixes/release-127.json",
@@ -107,17 +74,6 @@
       "text": "Not done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation",
       "from": "blocking",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
-      "kind": "bug",
-      "path": ".factory/fixes/spec-trends.json",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "spec-trends",
       "status": "open",
       "closed_by": null
     },
@@ -207,7 +163,7 @@
       "from": "blocking",
       "item": "workers-split",
       "status": "done",
-      "closed_by": "explore-kind"
+      "closed_by": "worker-no-settings"
     },
     {
       "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
@@ -218,7 +174,7 @@
       "from": "blocking",
       "item": "workers-split",
       "status": "done",
-      "closed_by": "explore-kind"
+      "closed_by": "worker-no-settings"
     },
     {
       "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
@@ -229,7 +185,7 @@
       "from": "blocking",
       "item": "workers-split",
       "status": "done",
-      "closed_by": "explore-kind"
+      "closed_by": "worker-no-settings"
     },
     {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
@@ -562,6 +518,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tCI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 628,
+      "text": "CI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
+      "from": "worker",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -789,6 +756,17 @@
       "text": "Keep Forge checks reachable and preserve pre-push input",
       "from": "blocking",
       "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tNot done: Keep coordinator commits and release upgrades working outside worker runs\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 128,
+      "text": "Not done: Keep coordinator commits and release upgrades working outside worker runs",
+      "from": "blocking",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
@@ -1449,6 +1427,28 @@
       "text": "Not done: one identical written boundary in review and cold read",
       "from": "blocking",
       "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Explain temporary settings edits and direct extra-suite commands in worker briefs\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 33,
+      "text": "Not done: Explain temporary settings edits and direct extra-suite commands in worker briefs",
+      "from": "blocking",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Restore unauthorized forge.toml edits when a worker round ends\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 32,
+      "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
+      "from": "blocking",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
@@ -2340,6 +2340,17 @@
       "text": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence",
       "from": "blocking",
       "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_workers_leave_settings_to_coordinator.py\tNot done: proof list\tworker-no-settings",
+      "kind": "bug",
+      "path": "tests/test_workers_leave_settings_to_coordinator.py",
+      "line": 83,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
@@ -3517,6 +3528,50 @@
       "text": "Keep expanded compact counts within the prompt width",
       "from": "review",
       "item": "two-test-slots",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-trends.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-trends",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: command tests for explore defaults, selection and earlier-adopted clients\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: command tests for explore defaults, selection and earlier-adopted clients",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: explore kind for read-only work\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: explore kind for read-only work",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: proof list\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "explore-kind",
       "status": "open",
       "closed_by": null
     }
