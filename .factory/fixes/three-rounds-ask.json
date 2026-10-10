@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-10T18:54:00.836087+00:00",
+      "because": "Worker asked which rule governs; the earlier wording contradicted itself since a round with nothing blocking already passes",
+      "done_when": "After three read or review rounds in a row with no blocking note or real finding, Forge stops the loop and asks the human to accept or narrow, and that choice can always be recorded, whichever command stopped the loop. New and existing client repos get it on init or upgrade plus sync, and a test covers both."
+    }
+  ],
   "base": "4436362fd178474e291311077681bb515dab731e",
   "branch": "fix/three-rounds-ask",
-  "done_when": "After three read or review rounds in a row with no blocking note or real finding, Forge stops the loop and asks the human to accept or narrow, and that choice can always be recorded, whichever command stopped the loop. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "done_when": "After three cold-read rounds or three review rounds of one item that each still have a blocking note or serious finding, Forge stops the loop and asks the human to accept, narrow or split, and that choice can always be recorded, whichever command stopped the loop (read, close or land). New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
   "round": 1,
   "status": "working",
