@@ -664,9 +664,9 @@ Blank question replies count as unanswered. The approval hook's pin notice appea
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
 - Done when: a few results the client or their user can observe, each answering the plan's Why
-  and, when linked to a spec, tracing to its behaviour or success measure. Each item is one bold
-  plain sentence and nothing more, with no code names, file paths or test names. "Code exists"
-  is not a result.
+  and, when linked to a spec, tracing to its behaviour or success measure.
+  Each item is one bold plain sentence and nothing more, with no code names, file paths or
+  test names. "Code exists" is not a result.
 - Each item's evidence, edge cases and the test or check that proves it go under the same number in
   `### Done-when details`, the first section under `## For the builders`. Workers and reviewers
   get the entries of the items their task covers. An item with nothing to add has no entry.

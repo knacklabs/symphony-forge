@@ -154,6 +154,7 @@ def _unknown_setting(repo, gh, tmp_path, monkeypatch, request):
 
 
 def _roadmap_without_items(repo, gh, tmp_path, monkeypatch, request):
+    # A malformed local roadmap must be refused before story creation changes any worktree.
     repo.write("plans/roadmap.json", "[]\n")
     return (("story", "new", "SHOP", "Shoppers can save a basket"), None, "",
             "plans/roadmap.json is not usable: it needs an items list where every item has a key.\n"
@@ -320,12 +321,19 @@ def test_3_every_refusal_is_tested(repo, gh, tmp_path, monkeypatch, request, cas
         assert not untested, "refusals no test triggers:\n" + "\n".join(untested)
         return
     args, cwd, stdin, expected = case(repo, gh, tmp_path, monkeypatch, request)
+    if case is _roadmap_without_items:
+        worktrees = repo.git("worktree", "list", "--porcelain")
+        branches = repo.git("branch", "--list")
     done = repo.forge(*args, input=stdin, cwd=cwd)
     assert done.returncode != 0, done.stdout
     if isinstance(expected, re.Pattern):
         assert expected.fullmatch(done.stderr), done.stderr
     else:
         assert done.stderr == expected
+    if case is _roadmap_without_items:
+        assert repo.git("worktree", "list", "--porcelain") == worktrees
+        assert repo.git("branch", "--list") == branches
+        assert (repo.path / "plans/roadmap.json").read_text("utf-8") == "[]\n"
 
 
 # --- criterion 6: third-party contracts ------------------------------------------------------

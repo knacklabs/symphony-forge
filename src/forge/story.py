@@ -129,6 +129,7 @@ def new(args: Any) -> int:
         repo.refuse(REFUSALS["no_title"], key=key)
     if not fix:
         why = title
+    repo.roadmap(top)  # Validate local input before starting from the default branch.
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))

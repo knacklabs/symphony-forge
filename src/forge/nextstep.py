@@ -345,7 +345,7 @@ def _idle(top: Path) -> list[str]:
     if isinstance(items, list) and any(
             not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
         return ["No story or fix is in progress.",
-                'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+                'Next: forge story new <KEY> "<title>"',
                 'Next: forge fix start "<why>" --done "<done when>"']
     fields = CARD_FIELD.findall(story.show(top, ref, DISCOVERY) or "")
     if any(value.strip().lower() not in ("", "unknown") for value in fields):
