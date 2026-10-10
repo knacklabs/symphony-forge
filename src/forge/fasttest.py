@@ -252,6 +252,10 @@ def close_tests(base: str) -> int:
                         passthrough = " --"
                     if kind == "jest":
                         passthrough += " --runTestsByPath"
+                        if excluded:
+                            pattern = "(?:" + "|".join(re.escape(name).replace("/", r"[/\\]")
+                                                      for name in excluded) + ")$"
+                            files = ["--testPathIgnorePatterns", pattern] + files
                     elif kind == "vitest":
                         files = [argument for name in excluded for argument in ("--exclude", name)] + files
                     words = shlex.split(part)

@@ -52,7 +52,8 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
                  f"with Path({json.dumps(str(log))}).open('a', encoding='utf-8') as out:\n"
                  "    out.write(json.dumps(sys.argv[1:]) + '\\n')\n")
         node_runner = runner.removeprefix("exec-")
-        script = "vitest run 'checks with spaces'" if node_runner == "vitest" else "jest"
+        script = ("vitest run 'checks with spaces'" if node_runner == "vitest" else
+                  "jest 'checks with spaces/unrelated.test.ts'")
         env.repo.write("package.json", json.dumps({"scripts": {"test": script}}))
         env.repo.write("src/cart page.ts", "export const value = 1;\n")
         for name in ("cart page.test.ts", "cart page.spec.ts", "changed.spec.ts", "unrelated.test.ts"):
@@ -76,14 +77,22 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
     else:
         calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
         assert len(calls) == 1, calls
-        # Vitest unions filename filters with inherited script roots; the explicit exclusion
-        # keeps an existing broad root from bringing the unrelated file back into the run.
-        prefix = (["exec", "--", node_runner] + (["run", "checks with spaces"] if node_runner == "vitest" else [])
+        # Runner exclusions keep inherited roots or explicit test paths from bringing
+        # the unrelated file back into the run. Verify the protocol, not flag ordering.
+        prefix = (["exec", "--", node_runner] + (["run", "checks with spaces"] if node_runner == "vitest" else [
+            "checks with spaces/unrelated.test.ts"])
                   if runner.startswith("exec-") else ["test", "--"])
-        prefix += (["--runTestsByPath"] if node_runner == "jest" else [
-            "--exclude", "checks with spaces/unrelated.test.ts"])
         assert calls[0][:len(prefix)] == prefix
-        assert sorted(calls[0][len(prefix):]) == [
+        arguments = calls[0][len(prefix):]
+        if node_runner == "jest":
+            arguments.remove("--runTestsByPath")
+            flag, expected = "--testPathIgnorePatterns", r"(?:checks\ with\ spaces[/\\]unrelated\.test\.ts)$"
+        else:
+            flag, expected = "--exclude", "checks with spaces/unrelated.test.ts"
+        index = arguments.index(flag)
+        assert arguments[index + 1] == expected
+        del arguments[index:index + 2]
+        assert sorted(arguments) == [
             "checks with spaces/cart page.spec.ts", "checks with spaces/cart page.test.ts",
             "checks with spaces/changed.spec.ts",
         ]

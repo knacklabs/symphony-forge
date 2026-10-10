@@ -251,8 +251,9 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     cfg = repo.config(top)
     command = cfg["fast_test"] or cfg["test"]
     if closing and command and not cfg["fast_test"] and "tests" in cfg["checks"]:
+        merge_base = repo.git("merge-base", base, "HEAD", cwd=top)
         code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
-                f"from forge.fasttest import close_tests; sys.exit(close_tests({base!r}))")
+                f"from forge.fasttest import close_tests; sys.exit(close_tests({merge_base!r}))")
         words = [sys.executable, "-c", code]
         return subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
