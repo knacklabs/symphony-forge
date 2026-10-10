@@ -70,6 +70,9 @@ def test_5_bookkeeping_is_absent_from_outside_scope(env):
 
 
 def test_6_reviewer_can_read_git_history(env):
+    settings = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", settings.read_text("utf-8").replace(
+        'workers = "claude"', 'workers = "codex"'))
     probe = '''#!{python}
 import json, pathlib, subprocess, sys
 folder = pathlib.Path(sys.argv[sys.argv.index("-C") + 1])
@@ -88,6 +91,9 @@ path.write_text(json.dumps({{"git_directory": (folder / ".git").is_dir(),
 
 
 def test_7_review_base_is_fetched_remote_commit_when_local_main_lags(env):
+    settings = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", settings.read_text("utf-8").replace(
+        'workers = "claude"', 'workers = "codex"'))
     item, _ = env.start_fix()
     other = env.tmp / "other-clone"
     remote = env.repo.git("config", "--get", "remote.origin.url")
