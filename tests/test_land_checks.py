@@ -225,13 +225,14 @@ def _codex_workers(env, monkeypatch, sdk_data):
     env.repo.git("push", "-q", "origin", "main")
 
 
-@pytest.mark.parametrize("workers", ["claude", "codex"])
-@pytest.mark.parametrize("host", ["CLAUDECODE", "CODEX_THREAD_ID"])
+@pytest.mark.parametrize("host,workers", [("CLAUDECODE", "codex"), ("CODEX_THREAD_ID", "claude")])
 def test_5_same_run_under_either_host_and_workers(request, land, monkeypatch, host, workers):
+    # Kit workers run on the other tool; same-tool rounds belong to the native session flow.
     monkeypatch.delenv("CLAUDECODE", raising=False)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv(host, "1" if host == "CLAUDECODE" else "thr-test-coordinator")
     if workers == "codex":
+        request.getfixturevalue("claude_session")
         _codex_workers(land, monkeypatch, request.getfixturevalue("sdk_data"))
     _agent(land)
     _fix(land, "working", worked=True)
