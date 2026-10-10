@@ -31,31 +31,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "62e4be587edc61bc1c27cf0aa18d4e4eb28dde61a17609a767b562dc4a02d871",
-    "changed": "e32523a1394091d8da979fee71aa848db660751b918a299ca57e7714c618c0a5",
-    "commit": "04be816706ff383a199e9ff1c90d178860d46f78",
+    "branch_diff": "ff716d135b3712a436752c6cfccfae0468b651ec8dd245c7749e89031e482bc4",
+    "changed": "0d282bc5a24dac2d9698d1f888ea12573c2a5dfd7ec349c23f4fd7c54638b440",
+    "commit": "a644c12fc5a8072b09c1b46efc5bafae0eada953",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The current Done-when requires grouping by roadmap epic, otherwise by spec. Behaviour 4 instead explicitly says \u201cStories are not grouped\u201d; line 52 repeats \u201cno grouping of stories (no epics)\u201d, and acceptance criterion 9 contains no grouping requirement. A builder following this spec would omit a required client ask. This contradicts the latest amended contract recorded in .factory/fixes/spec-graph.json:21; the supplied coordinator rulings do not waive that requirement.",
-        "file": "docs/specs/board-for-the-team.md",
-        "line": 47,
-        "priority": "P1",
-        "title": "Not done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back"
-      },
-      {
-        "body": "Raise: Gate. The supplied latest-worker proof list remains explicitly missing. Commit 1fb3bf4f contains an older list for the graph, backfill and round-15 confirmation, but it predates the client-issue additions and does not cover their requirements, the AGENTS.md exception, or the final round-20 read and re-confirmation. It therefore does not satisfy the complete current proof-list gate; the previous blocking finding remains open.",
-        "file": ".factory/fixes/spec-graph.json",
-        "line": 21,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "2bc19b4a-d6a4-4f99-be2f-e06bd31370a9",
-    "status": "blocked"
+    "findings": [],
+    "id": "2d77627a-6901-4adc-8f2d-47e54621d82d",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T03:02:52+00:00",
@@ -75,6 +60,10 @@
     },
     {
       "at": "2026-10-10T07:40:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:46:21+00:00",
       "step": "review"
     }
   ],
