@@ -3,7 +3,7 @@
   "branch": "fix/no-bare-flip",
   "done_when": "No test and no Forge command can change the real repository's git settings through an inherited git environment: an autouse fixture clears GIT_* variables for every test, not only tests using the repo fixture; Forge's own temporary-repository git calls (migrate's source fetch) run without GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE; one command test runs those paths with GIT_DIR pointing at a separate sentinel repository and checks its core.bare stays false; new and existing client repos get the migrate change on upgrade",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
