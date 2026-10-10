@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-10T05:15:48+00:00
-read_hash: b18b7e5e62cf7e7e56711d003178c7e1da407f1c
-round: 16
+read_at: 2026-10-10T07:37:27+00:00
+read_hash: e30cd6f8b5ac67a845554b3b32ce991fc92eda48
+round: 20
 passed: yes
-doc_seen: b18b7e5e62cf7e7e56711d003178c7e1da407f1c
+doc_seen: e30cd6f8b5ac67a845554b3b32ce991fc92eda48
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 709c2b81f5e4c6903e35164f423aab8db26fe736
+notes_seen: 621af5f824f04c5061e6121c74f7a4bc51b19b1e
 ---
 # Cold read notes
 
@@ -164,5 +164,30 @@ No findings.
 No findings.
 
 ## Round 16
+
+No findings.
+
+## Round 17
+
+25. The graph now has contradictory story-ordering rules.
+    Raise: Plan gap. Behaviour 4 says “the graph shows them in roadmap order,” while Behaviour 2 puts every unplanned story “after the planned stories.” When an unplanned story precedes a planned story in the roadmap, builders cannot satisfy both.
+    Only the changed sections were checked; the conflicting rules leave the intended graph order unresolved.
+   Disposition: keep: behaviour 4 now matches behaviour 2: planned stories in roadmap order, then stories with no plan in roadmap order.
+
+## Round 18
+
+26. No findings.
+
+Runtime and visual checks were not run; this was a document-only review.
+   Disposition: keep: not a finding; the reader reported none (its unnumbered note is not a finding; fix read-notes-ignored).
+
+## Round 19
+
+27. No findings.
+
+Runtime and visual checks were not run; this was a document-only review.
+   Disposition: keep: not a finding; the reader reported none (its unnumbered note is not a finding; fix read-notes-ignored).
+
+## Round 20
 
 No findings.
