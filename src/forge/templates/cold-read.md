@@ -130,16 +130,18 @@ about tests you did not run.
 <!-- forge:round -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
 
-The agent gave your last round's findings a disposition and changed the doc. Do not change any
-file. This read is discarded if any file in the repository changes. Open `$path` and read the
+The agent gave your last round's blocking findings a disposition and changed the doc. Do not
+change any file. This read is discarded if any file in the repository changes. Open `$path` and read the
 whole doc again yourself. Its diff since your last round:
 
 $diff
 
-Your last round's findings, and any older finding whose disposition changed since then, each
-with its disposition:
+Your last round's blocking findings, and any older blocking finding whose disposition changed
+since then, each with its disposition:
 
 $dispositions
+
+Previous advisory notes are recorded only; do not reassess or close them.
 
 For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
 

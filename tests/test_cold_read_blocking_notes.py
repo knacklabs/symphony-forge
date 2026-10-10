@@ -75,3 +75,30 @@ def test_1_only_blocking_notes_need_another_round(
     for rule in ("the plan is wrong", "contradicts itself", "builder could not act on it",
                  "Blocking:", "Advisory:"):
         assert rule in prompt
+    if blocking is not None:
+        note_path = shop / "plans/SHOP.read.md"
+        note_path.write_text(notes.rstrip() + "\n   Disposition: keep because sign-in is out of scope\n",
+                             encoding="utf-8")
+        if blocking == "":
+            # Model session loss exercises the fresh follow-up prompt as well as resume.
+            reader = READER.replace("prompt = io.TextIOWrapper", "if '--resume' in args:\n"
+                "    sys.stderr.write('No conversation found\\n')\n    sys.exit(1)\n"
+                "prompt = io.TextIOWrapper")
+            _install(repo.bin, "claude", reader.format(python=sys.executable))
+        (repo.bin / "claude-says.md").write_text("3. Advisory: Prefer a shorter title.\n", encoding="utf-8")
+        follow_up = repo.forge("read", "SHOP")
+        assert follow_up.returncode == 0, follow_up.stdout + follow_up.stderr
+        call = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])
+        assert ("--resume" in call["args"]) == bool(blocking)
+        dispositions = call["prompt"].split("with its disposition:\n", 1)[1].split(
+            "For a story,", 1)[0]
+        assert "2. " + blocking + "Saving requires an account" in dispositions
+        assert "Disposition: keep because sign-in is out of scope" in dispositions
+        assert "Use a shorter heading" not in dispositions
+        assert "Previous advisory notes are recorded only; do not reassess or close them." in call["prompt"]
+        recorded = note_path.read_text("utf-8")
+        assert advisory in recorded and "3. Advisory: Prefer a shorter title." in recorded
+        assert "passed: yes\n" in recorded
+        assert "forge read SHOP" not in repo.forge("next").stdout
+        approved = hook(repo, claude_plan(claude_payload, DOC))
+        assert approved.returncode == 0, approved.stderr

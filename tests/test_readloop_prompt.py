@@ -75,7 +75,7 @@ def test_3_kept_findings_are_settled_not_argued(repo, gh, tmp_path):
         assert gone not in round_part, gone
     for rule in ("you are continuing your own earlier read",
                  "Open `$path` and read the whole doc again yourself",
-                 "Your last round's findings, and any older finding whose disposition changed "
+                 "Your last round's blocking findings, and any older blocking finding whose disposition changed "
                  "since then, each with its disposition: $dispositions",
                  "the confirmed spec's diff since your last round, empty when it is unchanged: "
                  "$spec_diff When that diff is not empty, check the plan still matches the "

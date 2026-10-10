@@ -216,10 +216,12 @@ def read(args: Any) -> int:
                     ", ".join(touched) or "the title")
         if passed(record, findings):  # only an edit since a passing round: read just that edit
             again = edit
-        fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()))
+        blocking = {n: block for n, block in blocks.items()
+                    if not ADVISORY.match(block.split(". ", 1)[1])}
+        fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
         # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
         prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
-            block for n, block in blocks.items() if saw.get(n, "").split() != block.split()) or "None.")
+            block for n, block in blocking.items() if saw.get(n, "").split() != block.split()) or "None.")
     session = codex.record(top, target, "Grill").get("claude") if later and not why else None
     if reader == "claude":
         if later and not why and not session:
