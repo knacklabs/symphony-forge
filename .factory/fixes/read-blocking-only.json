@@ -1,6 +1,13 @@
 {
   "base": "4436362fd178474e291311077681bb515dab731e",
   "branch": "fix/read-blocking-only",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12641-a47e-7003-8437-8b8ce1090b54",
+    "head": "2ce2fe1db8d3f2b2ec9631785a944838f3ad529a",
+    "start": "86840df1ea2f6360a2679996e5a27cbe300967b0"
+  },
   "done_when": "A cold read passes when none of its notes is blocking (the plan is wrong, contradicts itself, or a builder could not act on it); other notes are recorded and do not trigger another round, and the reader brief says which notes block. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
     "src/forge/templates/cold-read.md"
