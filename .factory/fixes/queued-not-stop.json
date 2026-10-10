@@ -33,7 +33,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T12:16:17+00:00",
@@ -85,7 +85,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/checks.py"
+    "choice": "narrow",
+    "file": "src/forge/checks.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed doctor's missing-runner diagnosis to one bounded rule: at most 100 workflow runs from the last 7 days, ignoring runs that ended successfully"
   },
   "why": "v1.2.8's 'checks stayed queued for five minutes; no runner has picked them up' stop still fires when the organisation's shared runner pool is only busy (a client's checks queued behind other repos' runs, 2026-10-09), and its advice to run forge sync can't help; one repo can't tell a busy shared pool from a missing runner within five minutes",
   "worker": "codex"
