@@ -233,7 +233,6 @@ def preserve_chats(top: Path) -> None:
                 added = True
             if owner is None and folder == "read" and not branch and (
                     top / "docs/specs" / f"{item}.md").is_file():
-                repo._work_branch(top)
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
             if owner is None:
                 continue
@@ -263,6 +262,7 @@ def preserve_chats(top: Path) -> None:
                         chat = (saved.get("conversation") if reader == "codex" else
                                 (saved.get("claude") or {}).get("id"))
                         if chat:
+                            repo._work_branch(owner)
                             story.keep_reader_chat(owner, item, reader, chat)
                     else:
                         remember(owner, item)

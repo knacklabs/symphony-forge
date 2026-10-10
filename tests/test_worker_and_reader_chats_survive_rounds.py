@@ -569,9 +569,10 @@ def test_12_archived_previous_release_reader_starts_one_replacement_chat(
     assert len(_sent(reader.log, "thread/start")) == 2
 
 
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
 def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
-        repo, monkeypatch, tmp_path, sdk_data):
-    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "claude", adopted=True)
+        repo, monkeypatch, tmp_path, sdk_data, adopted):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "claude", adopted=adopted)
     started = repo.forge("fix", "start", "Keep invoice plan", "--done", "The plan is read")
     assert started.returncode == 0, started.stdout + started.stderr
     owner = worktree(repo, "fix/keep-invoice-plan")
@@ -608,6 +609,12 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     # GitHub lands the upgrade; the freshly installed hooks correctly refuse a main push.
     remote = Path(repo.git("remote", "get-url", "origin"))
     repo.git("fetch", "-q", str(repo.path), "main:main", cwd=remote)
+    before = repo.git("rev-parse", "HEAD")
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert "Nothing to change" in synced.stdout
+    assert repo.git("rev-parse", "HEAD") == before
+    assert repo.git("status", "--porcelain") == ""
     shutil.rmtree(repo.path / ".git/forge")
     read = repo.forge("read", "invoices", cwd=amendment)
     assert read.returncode == 0, read.stdout + read.stderr
