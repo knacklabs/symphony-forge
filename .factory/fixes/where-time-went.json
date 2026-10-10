@@ -14,24 +14,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "04fa6914f503cf02311a442d2574e7a8f1a9992131869e2fd9aff3697fb0172e",
-    "changed": "af43121b8328e38be5de7951c35c1c2b04772e12d803430f4fa7e82a165aa1d8",
-    "commit": "446eb44703622ada4c99adc3fac4f7f084b24691",
+    "branch_diff": "401c189835a40ab7b34ce44d4355db5d5517e4e0f3211f06b5c8488f268dee46",
+    "changed": "29225bd6cf738c1cc05d11a0e7a29b51536d7154b7040de6a3636f4b348f5899",
+    "commit": "6dfd5c160ce7ecfebc72b6924c8f9c4574871b32",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Without a recorded work phase, round 1 is unconditionally classified as building. A first worker turn can instead fix findings: the raw base worker.py:125\u2013145 reads existing findings and sets status to fixing while assigning worker round 1, without recording a work phase. The unchanged _fix_round implementation at src/forge/worker.py:316\u2013328 confirms this path after manual edits and a blocked close. After upgrade, this helper labels that observed fixing time as building in both the breakdown and round line, which also reaches How it went. This is new evidence beyond the rulings about unknown legacy gaps: a recorded worker ordinal does not establish its activity category. Keep the category unknown unless the phase is recorded or independently established; apply this to worker run events, worker timings and round labels.",
-        "file": "src/forge/time_records.py",
-        "line": 76,
-        "priority": "P1",
-        "title": "Not done: keep unrecorded legacy worker phases unknown"
-      }
-    ],
-    "id": "06f9c229-0048-4ad0-b666-be17be793488",
-    "status": "blocked"
+    "findings": [],
+    "id": "0ab19270-6328-4531-a940-7ca29c71ced7",
+    "status": "clean"
   },
   "round": 10,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T11:28:56+00:00",
@@ -72,6 +64,10 @@
     {
       "at": "2026-10-09T23:12:32+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:52:39.853235+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -80,7 +76,6 @@
     "reason": "Owner chose narrow: review only the committed change that keeps time from before the upgrade unknown instead of counting it as nothing running; older items' data is filled later by the upgrade backfill fix.",
     "round": 4
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest a729e9f3e557f8a555eb9171ff8ed13119beb34e` exited with status 1 on this machine.\ntests/test_item_time_history.py:192: AssertionError\n_ test_2_ci_round_distinguishes_giving_up_from_red_tests[in_progress-None-words1] _\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-where-time-went/.venv/bin/python\n\nenv = <test_close.Forge object at 0x1095999d0>, status = 'in_progress'\nconclusion = None, words = ('gave up', 'running')\n\n    @pytest.mark.parametrize(\"status,conclusion,words\", [\n        (\"queued\", None, (\"gave up\", \"queued\")),\n        (\"in_progress\", None, (\"gave up\", \"running\")),\n        (\"completed\", \"failure\", (\"failed\",)),\n        (\"completed\", \"success\", (\"passed\",)),\n    ])\n    def test_2_ci_round_distinguishes_giving_up_from_red_tests(env, status, conclusion, words):\n        item, _ = env.start_fix(round=1)\n        env.checks([run(\"tests\", conclusion, status), run(\"forge-pr-check\")])\n        closed = env.close(item)\n        assert closed.returncode == (0 if conclusion == \"success\" else 1), closed.stderr\n        timing = [record for record in records(env.repo, \"timings.jsonl\")\n                  if record[\"step\"] == \"CI wait\"][-1]\n>       assert timing[\"outcome\"] == (\"passed\" if conclusion == \"success\" else\n                                      \"failed\" if conclusion == \"failure\" else\n                                      \"gave_up_queued\" if status == \"queued\" else \"gave_up_running\")\nE       AssertionError: assert 'unknown' == 'gave_up_running'\nE\nE         - gave_up_running\nE         + unknown\n\ntests/test_item_time_history.py:192: AssertionError\n7 failed, 234 passed in 537.89s (0:08:57)",
   "why": "When a task or fix loops through review rounds, CI waits and queues, nobody can see where its time went: the board and pane show only the current round, the latest findings and a total that double-counts a worker's tests and leaves out idle time; earlier rounds' findings are overwritten, CI giving up is recorded the same as red tests, lane waits and waits for the owner are invisible, and after the squash merge only bare 'Review of X: blocked' lines remain (owner request 2026-10-09, after a review of real long-running items)",
   "worker": "codex"
 }
