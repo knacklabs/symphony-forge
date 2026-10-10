@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-10T03:44:48+00:00
-read_hash: f0f25bce4be841ab371d76e7b1f53aaa11530022
-round: 13
+read_at: 2026-10-10T05:04:23+00:00
+read_hash: 9e83fe28d06d25508d82d89edb489bd5ac27c051
+round: 15
 passed: yes
-doc_seen: f0f25bce4be841ab371d76e7b1f53aaa11530022
+doc_seen: 9e83fe28d06d25508d82d89edb489bd5ac27c051
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 228d50bf3945388cac5f44c0852ca0a9291df582
+notes_seen: 4e8f883ea535d15324f8454fef20c541fa6623f1
 ---
 # Cold read notes
 
@@ -150,5 +150,15 @@ No findings.
    Disposition: keep: nothing is stored on the upgrading machine; an open item with no pull request is rebuilt from git and GitHub by its first close, on whichever machine runs it, so any teammate's close publishes it.
 
 ## Round 13
+
+No findings.
+
+## Round 14
+
+24. Fix arrows contradict the graph’s meaning of an arrow.
+    Raise: Plan gap — Behaviour 2 says arrows show “what waits on what,” but adds an arrow from a story part to a fix solely because the fix started on that branch, while declaring fixes wait on nothing. A fix started during a part therefore appears dependent despite sitting in the first column. The builder has no rule distinguishing branch provenance from a dependency.
+   Disposition: keep: arrows now mean only waits; a fix started on a part's branch is labelled "started on" that part instead of drawn with an arrow.
+
+## Round 15
 
 No findings.
