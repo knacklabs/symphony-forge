@@ -1,0 +1,53 @@
+{
+  "allow_large": "Owner asked (2026-10-09): a new explore kind in forge.toml for read-only work (explorer role and forge ask), on Haiku 4.5 high by default",
+  "amendments": [
+    {
+      "at": "2026-10-09T17:26:36+00:00",
+      "because": "Owner (2026-10-09): the read-only model is Haiku 5.5 (claude-haiku-5-5), not 4.5",
+      "done_when": "forge.toml has an explore kind for read-only work, used by the explorer role on both hosts and by forge ask, separate from lite (which keeps a fix's first build round); forge init writes its Claude entry as claude-haiku-4-5-20251001 at high effort and its Codex entry as the current lite Codex entry, and this repo sets the same; a repo without an explore entry keeps using lite for these as today; sync writes the explorer role from it; the coordinator guide describes it; command tests cover a new repo, an earlier-adopted repo without the entry (unchanged behaviour), and the explorer role and forge ask picking the explore entry"
+    }
+  ],
+  "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
+  "branch": "fix/explore-kind",
+  "done_when": "forge.toml has an explore kind for read-only work, used by the explorer role on both hosts and by forge ask, separate from lite (which keeps a fix's first build round); forge init writes its Claude entry as claude-haiku-5-5 at high effort and its Codex entry as the current lite Codex entry, and this repo sets the same; a repo without an explore entry keeps using lite for these as today; sync writes the explorer role from it; the coordinator guide describes it; command tests cover a new repo, an earlier-adopted repo without the entry (unchanged behaviour), and the explorer role and forge ask picking the explore entry",
+  "flagged": [
+    ".factory/fixes/explore-kind.json"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f98e027ec8d6e3d44489270674ec8c8be7704391c8fdc8bca04bfec48ed19ab3",
+    "changed": "1c0e4b347a0f12961e8740b6c9cce399b936431855adcc5eefefdab848ec72d2",
+    "commit": "80a71f3ae18712ca66a66d8e6a8cb58151583629",
+    "dismissals": [],
+    "findings": [],
+    "id": "4c49f034-284c-481a-93e8-65df6afc2a76",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T17:26:01+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T17:58:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:15:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:48:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:49:29+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Read-only Claude work (the explorer subagent role and quick forge ask questions) should run on Haiku 4.5 at high effort (owner, 2026-10-09), but both share forge.toml's lite setting with the first build round of every fix, so it can't change without moving fix implementation to Haiku",
+  "worker": "codex"
+}

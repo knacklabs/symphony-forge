@@ -43,7 +43,7 @@ runpy.run_path(str(here / "app.py"))
     owner.commit(repo.path, "app.py", 'print("client passed")\n', "Add the client app")
     cfg = (repo.path / "forge.toml").read_text("utf-8")
     cmd = shell([sys.executable, "run_check.py", str(server.getsockname()[1]), "{base}"])
-    owner.commit(repo.path, "forge.toml", cfg + 'test = "exit 99"\nfast_test = ' + json.dumps(cmd) + '\n',
+    owner.commit(repo.path, "forge.toml", 'test = "exit 99"\nfast_test = ' + json.dumps(cmd) + '\n' + cfg,
                  "Use related client tests")
     repo.git("push", "-q", "origin", "main")
 
@@ -199,7 +199,9 @@ def check_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_pa
 def check_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path, release_server):
     server, connections = release_server
     repo = env.repo
-    machine_cores(repo, 8)
+    # Orphan retention needs a full lane. The new four-core lane still has one
+    # place; eight cores deliberately allow a second run alongside the orphan.
+    machine_cores(repo, 4)
     configure(env, server)
     _, folder = env.start_fix()
     # Kill the Forge interpreter, including when a venv redirector starts it.
@@ -220,7 +222,7 @@ def check_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path
         processes.append(first)
         connection, observed = accepted(server, connections, folder, first, output)
         child_pid = observed["pid"]
-        assert observed["cpus"] == observed["xdist"] == "4"
+        assert observed["cpus"] == observed["xdist"] == "2"
         forge_pid = int(parent_pid.read_text("utf-8"))
         assert forge_pid != first.pid and forge_pid != child_pid
         # The client can connect before Forge records the child that owns its lane.
