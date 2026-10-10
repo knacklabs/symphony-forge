@@ -25,7 +25,6 @@ INSTALL = {"git": "install git from https://git-scm.com/downloads", "gh": "insta
     "impeccable": "npx skills add pbakaus/impeccable -g", "emil-design-eng": "install emil-design-eng where the worker reads skills",
     "autoreview": (f"install skills/autoreview from https://github.com/openclaw/agent-skills at "
                    f"{review.AUTOREVIEW_PIN} into {review.HELPERS[0].parents[1]} or " f"{review.HELPERS[1].parents[1]}")}
-CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
 REPAIR = "forge doctor --fix"
 WHY = "Bring the files Forge writes for Claude Code and Codex up to date"
 DONE = "The files match what forge sync writes for the pinned Forge"
@@ -73,7 +72,7 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
         if not state or any(pr.get("state") == "OPEN" for pr in prs): continue
         status = repo.run("git", "status", "--porcelain", "--ignored", "--untracked-files=normal", cwd=path)
         if status.returncode == 0 and all(line[3:] == "uv.lock" or (
-                line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in CACHES)
+                line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in repo.CACHES)
                 for line in status.stdout.splitlines()): found.append((path, branch, state))
     return found
 def _contents(top: Path, specs: list[str]) -> dict[str, str]:

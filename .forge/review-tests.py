@@ -1,4 +1,4 @@
-"""CI may reuse a successful parent workflow for a commit changing only review records."""
+"""CI may reuse a successful parent workflow for a commit changing only close records."""
 import json
 import os
 import re
@@ -34,11 +34,13 @@ def reuse() -> bool:
                          for rev in (parent, head))
         if not isinstance(before, dict) or not isinstance(after, dict):
             return False
-        if not isinstance(after.get("review"), dict) or before.get("review") == after["review"]:
+        review_changed = before.get("review") != after.get("review")
+        if (review_changed and not isinstance(after.get("review"), dict)
+                or not review_changed and before.get("tests") == after.get("tests")):
             return False
         # Close saves these alongside its review. The change's contract and all other state
         # must remain identical; a .factory path alone is not enough to skip testing.
-        bookkeeping = {"review", "status", "steps", "flagged", "stop"}
+        bookkeeping = {"review", "tests", "status", "steps", "flagged", "stop"}
         if ({k: v for k, v in before.items() if k not in bookkeeping}
                 != {k: v for k, v in after.items() if k not in bookkeeping}):
             return False
@@ -64,4 +66,4 @@ except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError)
     passed = False
 with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"reuse={str(passed).lower()}\n")
-print("Parent tests passed; only the review record changed." if passed else "Run the test suite.")
+print("Parent tests passed; only the close record changed." if passed else "Run the test suite.")
