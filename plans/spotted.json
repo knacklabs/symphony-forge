@@ -3948,6 +3948,50 @@
       "item": "read-notes-ignored",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 458,
+      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 459,
+      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tSelect Forge's Python when regenerating under a changed pin\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 466,
+      "text": "Select Forge's Python when regenerating under a changed pin",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_refreshes_pull_request_contract.py\tNot done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale\tskipped-close",
+      "kind": "bug",
+      "path": "tests/test_close_refreshes_pull_request_contract.py",
+      "line": 46,
+      "text": "Not done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

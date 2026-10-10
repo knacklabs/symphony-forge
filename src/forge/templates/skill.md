@@ -943,9 +943,13 @@ When close merges the latest default branch, an unchanged branch diff keeps the 
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
-review and green checks on the final pushed head. After upgrading, run `forge sync` to receive
+review and green checks on the final pushed head. After `forge fix amend`, close also updates
+the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
+including when it regenerates conflicted Forge files with the newly pinned release.
+If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
+After upgrading, run `forge sync` to receive
 the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
-commit changes Forge's review record and its accompanying state under `.factory/`. Any other
+commit changes Forge's review or test-state record and its accompanying state under `.factory/`. Any other
 change or missing passing parent result runs the suite on the pull request merged into its
 current base. Reuse also requires the parent to include that base; a parent pull request run
 must have tested that same base. A changed base or missing proof runs the suite again.
