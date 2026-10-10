@@ -169,7 +169,8 @@ def close(args: argparse.Namespace) -> int:
     fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
     if switch:
         fresh = fresh and result.get("mechanical") is True and not review.blocking(result)
-    if choice != "accept" and any(d.get("accepted") for d in result.get("dismissals", [])):
+    if choice != "accept" and (review.blocking(result) or
+                               any(d.get("accepted") for d in result.get("dismissals", []))):
         fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
                            result.get("branch_diff") != branch_diff)
