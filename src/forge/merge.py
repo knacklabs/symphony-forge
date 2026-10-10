@@ -79,7 +79,7 @@ def merge(args: argparse.Namespace) -> int:
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
         checks.wait(worktree, item, head, config["checks"],
-                    progress=getattr(args, "wait_for_progress", False))
+                    branch=branch, progress=getattr(args, "wait_for_progress", False))
         completion = ["--body-file", "-"]
         body = pr.get("body") or ""
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))

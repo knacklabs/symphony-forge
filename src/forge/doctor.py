@@ -384,7 +384,7 @@ def doctor(args: argparse.Namespace) -> int:
             try:
                 if reason := checks.queued_reason(top, pr["headRefOid"]):
                     add(reason, "make a matching runner available or correct runner in forge.toml, "
-                        "then run forge sync")
+                        "then run forge sync only if you change the runner setting")
             except repo.Refused as error:
                 add(str(error).partition("\nNext: ")[0], "check gh auth status and GitHub access, "
                     "then run forge doctor")

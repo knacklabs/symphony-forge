@@ -1,0 +1,67 @@
+{
+  "base": "180774000df7984107d51cb798b1337760a63019",
+  "branch": "fix/skipped-templates",
+  "done_when": "The logger template's fatal() writes a fatal-level line; the Playwright template sets testDir to its e2e folder; forge init copies the Node Dockerfile and .dockerignore only into Node repos; the Mac and Windows installers check docker info and print the step to start Docker Desktop when it isn't running; the guide names the Yarn 1 and Yarn 2+ update commands; command tests cover init on Node, Python and Go repos and the templates' contents for a new repo and one adopted on an earlier release",
+  "flagged": [
+    ".codex/skills/forge/SKILL.md",
+    "src/forge/templates/skill.md",
+    "tests/test_installers_explain_docker_start.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "222bd8b570d789c3d49c7cb72b885ce4a598eff0958a7c60c6b9343be160e68e",
+    "changed": "441c438fd6689a823755a08f29263927d2bd31191e06ca0d8d09691eb6b4e325",
+    "commit": "171dd55d17e3f46d9c3b0983c5f7d49351c10a46",
+    "dismissals": [],
+    "findings": [],
+    "id": "0ce56a9d-aa93-4540-9e9c-5865f3ddd14a",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T18:34:24+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:32:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:38:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:58:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:58:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:48:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:55:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:36:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:11:06+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Real issues reviews raised and the coordinator skipped, still in Forge's client templates and setup (audit of dismissed findings, 2026-10-09): the backend logger template has no fatal(), the Playwright config has no testDir and collects Vitest files, forge init copies the Node Dockerfile and .dockerignore into Python and Go repos, the installers never say to start Docker Desktop, and the guide's dependency refresh names yarn upgrade, which Yarn 2+ lacks",
+  "worker": "codex"
+}

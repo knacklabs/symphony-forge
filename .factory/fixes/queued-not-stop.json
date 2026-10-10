@@ -1,0 +1,87 @@
+{
+  "base": "49e6b9ab810cebe9b5537cde92238e2535e7d187",
+  "branch": "fix/queued-not-stop",
+  "done_when": "forge land and forge close never stop just because checks are queued: land keeps waiting, and close's wait line says plainly that the checks are queued, for how long, and that the shared runners may be busy or no runner may match the runner setting; only forge doctor reports a likely missing runner, and only when no job of this repo needing that runner has run in the last several days; the no-runner advice no longer tells people to run forge sync unless they changed the runner setting; command tests with a faked GitHub cover a long busy queue that then passes and a repo whose runner never picks anything up, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/checks.py",
+    "src/forge/templates/skill.md"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2faa34e4f8308653ea6944df5d4b411692fe925a449c2bc1a3d3268017051c32",
+    "changed": "fbfb18d70c118594ee9c3a5e72540130e91b6fe24a8368e1e13e6636a50db0ec",
+    "commit": "4a77b0be1ad501fb9d2c70349ee0b9a2dcc158fb",
+    "dismissals": [],
+    "findings": [],
+    "id": "130a8bb6-8cc6-4d2c-8172-31fb5d5ea3f5",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T12:16:17+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T13:44:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T14:15:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T15:29:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:30:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:41:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T19:54:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:55:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:24:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:27:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:10:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:03:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:21:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:15:13+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/checks.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed doctor's missing-runner diagnosis to one bounded rule: at most 100 workflow runs from the last 7 days, ignoring runs that ended successfully"
+  },
+  "why": "v1.2.8's 'checks stayed queued for five minutes; no runner has picked them up' stop still fires when the organisation's shared runner pool is only busy (a client's checks queued behind other repos' runs, 2026-10-09), and its advice to run forge sync can't help; one repo can't tell a busy shared pool from a missing runner within five minutes",
+  "worker": "codex"
+}

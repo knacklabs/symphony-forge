@@ -1,0 +1,49 @@
+{
+  "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
+  "branch": "fix/conflict-no-ci",
+  "done_when": "While waiting for checks, close and land notice that the pull request is not mergeable because of conflicts and stop waiting at once: land merges the default branch through close (or stops with close's existing conflict next step when the merge needs a person), and close says plainly that GitHub runs no checks on a conflicting pull request; command tests with a faked GitHub cover a conflicting pull request with missing checks (no long wait) and a clean one (normal wait), for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "tests/test_conflicting_pull_requests_stop_check_waits.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b83c6623517d0dde32f8ac4b33aa2cd5c3fbdda26f91a646aa975a9760117a56",
+    "changed": "e878d92b41e8c18167fe742ee95ab6f456fc00cd04ea470e26e17811c850d1e1",
+    "commit": "62e486bc73e9736fab32da79027b9f4a66cb6f17",
+    "dismissals": [],
+    "findings": [],
+    "id": "9ef38859-11c7-48a1-9fec-2b0bab0d7c5c",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T17:50:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T20:33:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:31:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:45:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:57:43+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:57:55+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "When a pull request conflicts with the default branch, GitHub starts no pull_request workflows for its head, so close and land wait up to 30 minutes for checks that can never run and then report 'tests has not reported' (seen on two Forge fixes and a client item on 2026-10-09)",
+  "worker": "codex"
+}

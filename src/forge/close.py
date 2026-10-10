@@ -298,7 +298,7 @@ def close(args: argparse.Namespace) -> int:
     try:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
-                    progress=getattr(args, "wait_for_progress", False))
+                    branch=branch, progress=getattr(args, "wait_for_progress", False))
     finally:
         pr = _publish(top, item, state, branch, default, pr, result, evidence)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
