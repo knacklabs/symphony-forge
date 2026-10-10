@@ -959,6 +959,12 @@ wait; if the merge needs a person, it stops with close's existing conflict next 
 When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
+For pytest commands, the next close runs failed tests first and reuses passing tests whose
+committed test files and shared inputs have not changed. Shared setup, production code and
+configuration changes expire those passes; uncommitted files disable reuse. A repair with
+failures runs them in order even when pytest-xdist is configured. Worker `forge test` runs and
+the pull request's CI still run their configured command without this reuse. Other test runners
+retain whole-command reuse only after the complete command passes.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it

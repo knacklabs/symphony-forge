@@ -236,6 +236,12 @@ def test(args) -> int:
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
+    failed = set()
+    if cache := environment.get("FORGE_REPAIR_CACHE"):
+        for record in Path(cache).glob("*.json"):
+            for node, result in json.loads(record.read_text("utf-8")).items():
+                if result.get("outcome") == "failed":
+                    failed.add(node.split("::", 1)[0])
     shared = [name for name in changed
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
@@ -263,7 +269,7 @@ def test(args) -> int:
                 modules.append((".".join(parts), path))
         selected = []
         for path in tests:
-            if (path.as_posix() in changed
+            if (path.as_posix() in changed or path.as_posix() in failed
                     or any(mentions(path, module, source)
                            for module, source in modules)):
                 selected.append(path.as_posix())
