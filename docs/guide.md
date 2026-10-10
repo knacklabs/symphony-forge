@@ -177,10 +177,14 @@ existing settings but no longer override Autoreview's defaults.
 A story task marked User-facing or a client fix allowed as "Prototype before sign-off"
 uses its selected tool's design entry: `[models.design.codex]` on Codex and
 `[models.design.claude]` on Claude. Claude's default is
-`claude-sonnet-5-5` at xhigh effort. With `tools = "both"` and `workers = "split"`, if the `claude` command is missing, or Claude fails before changing the checkout,
+`claude-sonnet-5-5` at xhigh effort. With `tools = "both"` and `workers = "split"`, the
+fallback applies only to Claude design rounds run through its kit. If the `claude` command
+is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. With one tool selected, Forge reports the failure without a Codex retry.
+failure without a Codex retry. When Claude Code coordinates the round, design work runs as
+its native `frontend` subagent; a failed native round gets no automatic Codex retry.
+With one tool selected, Forge reports the failure without a Codex retry.
 Split routing also applies to User-facing story tasks in
 Forge's own repo. Other work keeps its usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
 to change that choice.
