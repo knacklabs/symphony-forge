@@ -37,6 +37,8 @@ def test_1_doctor_fix_commit_proof_reaches_first_close_review(env, monkeypatch, 
         if key in config:
             settings = settings.replace(f'{key} = {json.dumps(config[key])}',
                                         f'{key} = {json.dumps(command)}')
+    if "fast_test" not in config:
+        settings = f'fast_test = {json.dumps(command)}\n' + settings
     if "test" not in config:
         settings += f'\ntest = {json.dumps(command)}\n'
     _land(repo, client, "Set the current release and client check",

@@ -133,6 +133,8 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     for host in (".claude", ".codex"):
         guide = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert RULE in " ".join(guide.split())
+        assert "expands compound npm test scripts to select files in each workspace and in Playwright" in guide
+        assert "NestJS `.e2e-spec` files count" in guide
     # This shipped workflow is an independent GitHub runner contract, not a source detail.
     workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
     full_command = tomllib.loads((client / "forge.toml").read_text("utf-8"))["test"]
@@ -267,3 +269,86 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(
             assert len(subprocess.list2cmdline([npm, *arguments])) < 8191, arguments
         assert len(calls) == 1 if selected_count == 2 else len(calls) > 1
     assert sorted(path.name for path in receipts.iterdir()) == sorted(selected)
+
+
+@pytest.mark.timeout(300)
+def test_5_close_selects_tests_through_the_documented_workspace_and_playwright_command(env, tmp_path, monkeypatch):
+    npm = shutil.which("npm")
+    assert npm
+    for name in list(os.environ):
+        if name.lower().startswith("npm_config_"):
+            monkeypatch.delenv(name)
+    for kind in ("user", "global"):
+        config = env.repo.write(f"npm-{kind}.rc", "")
+        monkeypatch.setenv(f"NPM_CONFIG_{kind.upper()}CONFIG", config.as_posix())
+    receipts = tmp_path / "workspace-receipts"
+    receipts.mkdir()
+    env.repo.write(".gitignore", "node_modules/\ntest-results/\nplaywright-report/\n")
+    setup = tmp_path / "setup.jsonl"
+    for tool, allowed in (("npx", [["playwright", "install", "--with-deps", "chromium"]]),
+                          ("docker", [["compose", "-p", "forge-tests", "-f", "compose.test.yml", "down", "--volumes"],
+                                      ["compose", "-p", "forge-tests", "-f", "compose.test.yml", "up", "-d", "--build", "--wait"]])):
+        # Only external service/browser installation is faked; every test runner is real.
+        _install(env.repo.bin, tool, f"#!{sys.executable}\nimport json, sys\nfrom pathlib import Path\n"
+                 f"assert sys.argv[1:] in {allowed!r}, sys.argv\n"
+                 f"with Path({json.dumps(str(setup))}).open('a', encoding='utf-8') as out:\n"
+                 f"    out.write(json.dumps([{tool!r}, *sys.argv[1:]]) + '\\n')\n")
+    script = ("npm run lint --workspaces --if-present && npm run typecheck --workspaces --if-present && "
+              "npm run test --workspaces --if-present && playwright test")
+    env.repo.write("package.json", json.dumps({"name": "client", "workspaces": ["frontend", "backend"],
+                   "scripts": {"test": script}, "devDependencies": {"@playwright/test": "1.51.1"}}))
+    for folder, runner in (("frontend", "vitest"), ("backend", "jest")):
+        runner_script = ("npm exec --yes --package=vitest@3.2.4 -- vitest run --globals --maxWorkers=1 --pool=threads --no-isolate"
+                         if runner == "vitest" else "npm exec --yes --package=jest@30.2.0 -- jest --runInBand")
+        env.repo.write(f"{folder}/package.json", json.dumps({"name": folder, "scripts": {"test": runner_script}}))
+        env.repo.write(f"{folder}/cart.test.js", "const fs = require('node:fs');\n"
+                       f"test('selected', () => fs.writeFileSync({json.dumps(str(receipts / folder))}, 'ran'));\n")
+        env.repo.write(f"{folder}/unrelated.test.js", "test('unrelated', () => { throw new Error('unrelated workspace ran'); });\n")
+    env.repo.write("playwright.config.js", "module.exports = { testDir: './e2e', workers: 1 };\n")
+    for name in ("cart", "unrelated"):
+        action = (f"require('node:fs').writeFileSync({json.dumps(str(receipts / 'browser'))}, 'ran');"
+                  if name == "cart" else "throw new Error('unrelated browser test ran');")
+        env.repo.write(f"e2e/{name}.spec.js", "const {test} = require('@playwright/test');\n"
+                       f"test('client', () => {{ {action} }});\n")
+    env.repo.write("cart.js", "const value = 1;\n")
+    locked = subprocess.run([npm, "install", "--package-lock-only", "--ignore-scripts"],
+                            cwd=env.repo.path, capture_output=True, text=True, shell=os.name == "nt")
+    assert locked.returncode == 0, locked.stdout + locked.stderr
+    command = ("npm ci && npx playwright install --with-deps chromium && "
+               "docker compose -p forge-tests -f compose.test.yml down --volumes && "
+               "docker compose -p forge-tests -f compose.test.yml up -d --build --wait && npm test")
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.repo.write("forge.toml", config + "test = " + json.dumps(command) + "\n")
+    env.repo.git("add", "-A")
+    env.repo.git("commit", "-q", "-m", "Existing workspace client")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix({"cart.js": "const value = 2;\n"})
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert sorted(path.name for path in receipts.iterdir()) == ["backend", "browser", "frontend"]
+    assert len(setup.read_text('utf-8').splitlines()) == 3
+    assert (where / "forge.toml").read_text('utf-8').endswith("test = " + json.dumps(command) + "\n")
+
+
+@pytest.mark.parametrize("change", ["touched-test", "source-named"])
+def test_6_close_runs_conventional_nest_end_to_end_test_files(env, tmp_path, change):
+    receipts = tmp_path / "nest-receipts"
+    receipts.mkdir()
+    env.repo.write("package.json", '{"name":"client"}\n')
+    env.repo.write("app.ts", "const value = 1;\n")
+    for name in ("app", "unrelated"):
+        action = (f"require('node:fs').writeFileSync({json.dumps(str(receipts / 'app'))}, 'ran');"
+                  if name == "app" else "throw new Error('unrelated e2e test ran');")
+        env.repo.write(f"tests/{name}.e2e-spec.ts", f"test('client', () => {{ {action} }});\n")
+    env.repo.write("jest.config.json", json.dumps({"testRegex": "[.]e2e-spec[.]ts$", "transform": {}}))
+    command = 'npm exec --yes --package=jest@30.2.0 -- jest --runInBand --config=jest.config.json'
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.repo.write("forge.toml", config + "test = " + json.dumps(command) + "\n")
+    env.repo.git("add", "-A")
+    env.repo.git("commit", "-q", "-m", "Existing Nest client")
+    env.repo.git("push", "-q", "origin", "main")
+    changed = "tests/app.e2e-spec.ts" if change == "touched-test" else "app.ts"
+    item, _ = env.start_fix({changed: (env.repo.path / changed).read_text('utf-8') + "// Changed\n"})
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert [path.name for path in receipts.iterdir()] == ["app"], env.prompt()

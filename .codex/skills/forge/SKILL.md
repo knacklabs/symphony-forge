@@ -913,8 +913,11 @@ test command fails, close stops before the review and keeps the output for the w
 When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
 Close runs `fast_test` when set; otherwise it runs only changed test files and tests named
 after changed source files. CI runs the full suite.
-The fallback keeps the test command's setup and options, excludes unrelated pytest files,
-and passes selected filenames to other runners. Node selection uses compact filters and splits
+The fallback keeps the test command's setup and options and excludes unrelated pytest files.
+It expands compound npm test scripts to select files in each workspace and in Playwright.
+Browser installation and Compose setup keep their arguments. NestJS `.e2e-spec` files count
+as tests for both touched-file and source-name selection.
+It passes selected filenames to other runners. Node selection uses compact filters and splits
 large selections into short commands. Forge's default Go command runs the selected test functions
 in their packages, keeping Go's build constraints and shared test helpers.
 Custom launchers must forward file arguments;

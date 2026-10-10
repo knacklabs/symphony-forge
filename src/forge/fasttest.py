@@ -214,23 +214,62 @@ def close_tests(base: str) -> int:
     changed = git_files("diff", "--no-renames", "--name-only", f"{base}...HEAD")
     changed += git_files("ls-files", "--others", "--exclude-standard")
     tests = [name for name in git_files("ls-files", "--cached", "--others", "--exclude-standard")
-             if Path(name).is_file() and re.search(r"^test_|_test\.|[.]test[.]|[.]spec[.]|_spec[.]",
+             if Path(name).is_file() and re.search(r"^test_|_test\.|[.]test[.]|[.]spec[.]|_spec[.]|[.]e2e-spec[.]",
                                                   Path(name).name)]
     stems = {Path(name).stem for name in changed if name not in tests}
     selected = [name for name in tests if name in changed or any(
         re.match(r"^(?:test_" + re.escape(stem) + r"(?:_|\.)|" + re.escape(stem)
-                 + r"(?:_test\.|_spec\.|\.test\.|\.spec\.))", Path(name).name)
+                 + r"(?:_test\.|_spec\.|\.test\.|\.spec\.|\.e2e-spec\.))", Path(name).name)
         for stem in stems)]
     if not selected:
         print("No changed or source-named test files to run.", flush=True)
         return 0
     print("Related tests: " + ", ".join(sorted(selected)), flush=True)
     command = repo.config(Path.cwd())["test"]
-    parts = quicktest.test_parts(Path.cwd(), command)
+    root = Path.cwd().resolve()
+
+    def expand(directory, command):
+        package = directory / "package.json"
+        config = json.loads(package.read_text("utf-8")) if package.is_file() else {}
+        scripts = config.get("scripts", {})
+        for kind, part, passthrough in quicktest.test_parts(directory, command):
+            words = shlex.split(part)
+            script = words[2] if words[:2] in (["npm", "run"], ["npm", "run-script"]) else (
+                words[1] if words[:1] == ["npm"] and len(words) > 1 else "")
+            if script == "test" and "--workspaces" in words:
+                workspaces = config.get("workspaces", [])
+                if isinstance(workspaces, dict):
+                    workspaces = workspaces.get("packages", [])
+                for workspace in sorted({path for pattern in workspaces for path in directory.glob(pattern)
+                                         if (path / "package.json").is_file()}):
+                    if "test" in json.loads((workspace / "package.json").read_text("utf-8")).get("scripts", {}):
+                        yield from expand(workspace, "npm test")
+            elif script == "test" and "&&" in scripts.get(script, ""):
+                if "pretest" in scripts:
+                    yield directory, "setup", "npm run pretest", ""
+                yield from expand(directory, scripts[script])
+                if "posttest" in scripts:
+                    yield directory, "setup", "npm run posttest", ""
+            else:
+                runner = shlex.split(scripts.get(script, part))
+                if "playwright" in runner:
+                    index = runner.index("playwright")
+                    if runner[index + 1:index + 2] == ["test"]:
+                        kind = "playwright"
+                        if words[:1] == ["playwright"]:
+                            part = "npm exec -- " + part
+                    else:
+                        kind = "setup"
+                if words[:2] == ["docker", "compose"]:
+                    kind = "setup"
+                yield directory, kind, part, passthrough
+
+    parts = list(expand(root, command))
+    all_selected = selected
     commands = []
     environment = dict(os.environ)
     with tempfile.TemporaryDirectory(prefix="forge-close-tests-") as folder:
-        excluded = [name for name in tests if name not in selected]
+        excluded = [(root / name).as_posix() for name in tests if name not in selected]
         selection = Path(folder) / "_forge_pytest_selection.py"
         selection.write_text("from pathlib import Path\n"
                              "def pytest_configure(config):\n"
@@ -239,7 +278,7 @@ def close_tests(base: str) -> int:
                              "    config.option.ignore = (config.option.ignore or []) + " + json.dumps(excluded) + "\n",
                              "utf-8")
         environment["PYTHONPATH"] = os.pathsep.join([folder, environment.get("PYTHONPATH", "")])
-        if any(kind == "vitest" for kind, _, _ in parts):
+        if any(kind == "vitest" for _, kind, _, _ in parts):
             preload = Path(folder) / "vitest-config.cjs"
             preload.write_text("const prefix = " + json.dumps(Path(folder).as_posix() + "/selection-") + ";\n" + r"""
 if (/(?:^|[\\/])(?:vitest(?:\.m?js)?|cli\.js)$/.test(process.argv[1] || '') &&
@@ -259,16 +298,18 @@ if (/(?:^|[\\/])(?:vitest(?:\.m?js)?|cli\.js)$/.test(process.argv[1] || '') &&
 """, "utf-8")
             environment["NODE_OPTIONS"] = (environment.get("NODE_OPTIONS", "") + " --require "
                                            + json.dumps(preload.as_posix(), ensure_ascii=False)).strip()
-        for kind, part, passthrough in parts:
+        for directory, kind, part, passthrough in parts:
+            selected = [(root / name).relative_to(directory).as_posix() for name in all_selected
+                        if (root / name).is_relative_to(directory)]
             if kind == "python":
                 if any(name.endswith(".py") for name in selected):
-                    commands.append(narrow_command(part, excluded, str(machine.half_cores())))
-            elif kind == "node-install" or (kind == "node-check" and re.search(r"\b(?:lint|typecheck)\b", part)):
-                commands.append(part)
+                    commands.append((narrow_command(part, excluded, str(machine.half_cores())), directory))
+            elif kind in ("node-install", "setup") or (kind == "node-check" and re.search(r"\b(?:lint|typecheck)\b", part)):
+                commands.append((part, directory))
             elif part == dict(init.STACKS).get("go.mod"):
-                for directory in sorted({Path(name).parent for name in selected if name.endswith("_test.go")}):
-                    package = "./" + directory.as_posix()
-                    listed = repo.run("go", "list", "-json", package)
+                for package_dir in sorted({Path(name).parent for name in selected if name.endswith("_test.go")}):
+                    package = "./" + package_dir.as_posix()
+                    listed = repo.run("go", "list", "-json", package, cwd=directory)
                     if listed.returncode:
                         print(listed.stdout + listed.stderr, flush=True)
                         return listed.returncode
@@ -276,21 +317,23 @@ if (/(?:^|[\\/])(?:vitest(?:\.m?js)?|cli\.js)$/.test(process.argv[1] || '') &&
                     active = info.get("TestGoFiles", []) + info.get("XTestGoFiles", [])
                     names = []
                     for name in selected:
-                        if Path(name).parent == directory and Path(name).name in active:
-                            source = Path(name).read_text("utf-8")
+                        if Path(name).parent == package_dir and Path(name).name in active:
+                            source = (directory / name).read_text("utf-8")
                             source = re.sub(r'//[^\n]*|/\*.*?\*/|`[^`]*`|"(?:\\.|[^"\\])*"'
                                             r"|'(?:\\.|[^'\\])*'", "", source, flags=re.S)
                             names += re.findall(r"^\s*func\s+((?:Test|Example|Fuzz)\w*)\s*\(", source, re.M)
                     if names:
                         words = ["go", "test", "-v", "-run", "^(?:" + "|".join(names) + ")$", package]
-                        commands.append(subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words))
+                        commands.append((subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words), directory))
             else:
-                files = [name for name in selected if not name.endswith(".py")] if kind in ("vitest", "jest") else selected
+                files = [name for name in selected if not name.endswith(".py")] if kind in ("vitest", "jest", "playwright") else selected
                 if files:
                     if kind == "node-check" and shlex.split(part)[0] == "npm" and "--" not in shlex.split(part):
                         passthrough = " --"
                     if kind == "jest":
                         passthrough += " --runTestsByPath"
+                    if kind == "playwright":
+                        passthrough += " --pass-with-no-tests"
                     words = shlex.split(part)
                     if words[:2] == ["npm", "exec"] and "--" not in words:
                         tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
@@ -300,11 +343,12 @@ if (/(?:^|[\\/])(?:vitest(?:\.m?js)?|cli\.js)$/.test(process.argv[1] || '') &&
                     batches = [files]
                     while batches:
                         batch = batches.pop(0)
-                        arguments = batch
+                        arguments = ([re.escape((directory / name).resolve().as_posix()).replace("/", r"[/\\]") + "$"
+                                      for name in batch] if kind == "playwright" else batch)
                         if kind in ("vitest", "jest"):
                             selection = Path(folder) / (f"selection-{len(commands)}" + (
                                 ".mjs" if kind == "vitest" else ".cjs"))
-                            paths = json.dumps([Path(name).resolve().as_posix() for name in batch])
+                            paths = json.dumps([(directory / name).resolve().as_posix() for name in batch])
                             if kind == "jest":
                                 selection.write_text("const {resolve} = require('node:path');\n"
                                     "const selected = new Set(" + paths + ".map(p => resolve(p)));\n"
@@ -346,13 +390,13 @@ export default async env => {
                         arguments = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
                         narrowed = part + passthrough + " " + arguments
                         # Leave room for npm's wrapper within Windows' shell limit.
-                        if kind in ("vitest", "jest") and len(narrowed) > 6000 and len(batch) > 1:
+                        if kind in ("vitest", "jest", "playwright") and len(narrowed) > 6000 and len(batch) > 1:
                             middle = len(batch) // 2
                             batches[:0] = [batch[:middle], batch[middle:]]
                         else:
-                            commands.append(narrowed)
-        for command in commands:
-            status = subprocess.run(command, shell=True, env=environment).returncode
+                            commands.append((narrowed, directory))
+        for command, directory in commands:
+            status = subprocess.run(command, shell=True, env=environment, cwd=directory).returncode
             if status:
                 return status
         return 0

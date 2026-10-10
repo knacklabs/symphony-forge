@@ -20,7 +20,7 @@ LINK = "https://github.com/acme/shop/actions/runs/5/job/{}"
 RERUN = ("Re-running {} once: its failure names none of this change's files and the tests "
          "passed here.")
 FIX_ROUND = "Fix round 1 of 3: the worker fixes the failing checks."
-PASSING = 'merge = "agent"\ntest = "true"\n'  # close runs it, so this machine's tests pass
+PASSING = 'merge = "agent"\ntest = "true"\nfast_test = "true"\n'  # close runs it, so this machine's tests pass
 
 
 def _failing(env, *checks: tuple[str, str, str], attempts: tuple[str, ...] = ('{"attempt": 1}',
