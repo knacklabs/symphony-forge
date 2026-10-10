@@ -42,6 +42,8 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("6. No findings. The required proof is missing.", False),
     ("6. No test covers this bug.", False),
     ("6. No findings.\nThe required proof is missing.", False),
+    ("6. No findings (required proof is missing).", False),
+    ("6. No bugs are covered by the proposed regression test.", False),
 ])
 def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
         repo, gh, tmp_path, previous, reply, clean):

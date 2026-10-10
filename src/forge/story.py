@@ -253,8 +253,10 @@ def read(args: Any) -> int:
                      said, flags=re.M | re.I)
     lines = [" ".join(part.split()).strip(" *`_.!?,:;").lower()
              for part in parts if part.strip()]
-    empty = re.compile(r"(?!.*[.!?])(?!.*\b(?:but|however|except)\b)"
-                       r".*\bno(?:\s+\w+)?\s+(?:finding|issue|problem|bug|defect)s?\b.*")
+    empty = re.compile(r"(?!.*\b(?:but|however|except)\b)"
+                       r"(?:(?:there (?:are|were)|i (?:have|found)|found) )?no (?:\w+ )?"
+                       r"(?:finding|issue|problem|bug|defect)s?"
+                       r"(?: (?:found|reported|identified|detected|to report))?")
     note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
                       r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)
     clean = any(empty.fullmatch(line) for line in lines) and all(
