@@ -243,6 +243,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/guide.md\tNot done: Guide promises Codex fallback for Claude-only workers\tclaude-sonnet-default",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 167,
+      "text": "Not done: Guide promises Codex fallback for Claude-only workers",
+      "from": "blocking",
+      "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "kind": "bug",
       "path": "docs/guide.md",

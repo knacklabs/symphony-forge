@@ -39,24 +39,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c2efa510988b8ef24ec0497a99ab6eb731cc3466065f2efc5a555b50cc45372",
-    "changed": "a99a3a1916b4862497afb4c7f40a60972128d9fbadb1a951c8d9d4bd984fdad4",
-    "commit": "437fe6a4b6d3f3212a06359d7de6912a47e9f051",
+    "branch_diff": "bdf535e69944e0e6f2dd015206725da4d7882f4590938a204ae5d28a433f6bb0",
+    "changed": "1b3fb2d80db6587cd0504617f8d1d974ef928a1edb78079f3c31aaec56dbe3b5",
+    "commit": "5b718f41423b057f9f8395592d442031bc1df6dd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate \u2014 Both `.claude/skills/forge/SKILL.md:628` and `.codex/skills/forge/SKILL.md:628` revert unrelated dependency-refresh guidance: the selected diff removes the Yarn 1 qualifier, the Yarn 3+ recursive command and the Yarn 2 lockfile procedure. The shipped template still contains these instructions at `src/forge/templates/skill.md:632\u2013636`, leaving the checked-in coordinator guides inconsistent with it. This breaks \u201cTouch only what the task needs\u201d and removes existing version-specific instructions without any connection to Claude defaults. This is new evidence distinct from the earlier ruling about inherited board/merge guidance; the latest proof's claim that Yarn drift is excluded does not match this diff. Preserve the baseline Yarn guidance in both host guides.",
-        "file": ".claude/skills/forge/SKILL.md",
-        "line": 628,
+        "body": "Raise: Gate \u2014 The supplied proof list covers only the Yarn guide correction. It has no entries for the Done-when proof of Claude init defaults, synced role models, normal/light/sign-off review routing without model pins, or an earlier-adopted repo retaining its settings on upgrade. Those tests exist, but the list copied into the pull request omits their evidence.",
+        "file": "tests/test_claude_implementation_defaults.py",
+        "line": 20,
         "priority": "P1",
-        "title": "Standard: Touch only what the task needs"
+        "title": "Not done: proof list"
+      },
+      {
+        "body": "Raise: Not done \u2014 The changed guide now includes `workers = \"claude\"` among the cases using the Claude design entry, then says a missing or early-failing Claude command falls back to Codex. In normal Claude-only use, `src/forge/worker.py:175\u2013179` explicitly permits that fallback only for split workers and instead propagates the failure. The delivered guide therefore gives Claude-only repos an incorrect recovery path. This is distinct from the earlier ruling about Codex-only user-facing routing.",
+        "file": "docs/guide.md",
+        "line": 167,
+        "priority": "P1",
+        "title": "Not done: Guide promises Codex fallback for Claude-only workers"
       }
     ],
-    "id": "fb8717d7-ae94-4709-9698-da7b0eba7f21",
+    "id": "07afeae8-e852-471f-bc42-409567be9f6f",
     "status": "blocked"
   },
   "round": 7,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
@@ -85,8 +92,15 @@
     {
       "at": "2026-10-10T05:39:02+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T05:48:42+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "docs/guide.md"
+  },
   "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
   "worker": "codex"
 }
