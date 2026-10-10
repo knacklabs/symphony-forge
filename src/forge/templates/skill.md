@@ -640,8 +640,8 @@ fix's folder:
 ## Planning a story
 
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
-accepts replies whose numbered items all say there are no findings, ignoring unnumbered notes;
-without numbered items, it requires one no-findings sentence. A numbered real finding still
+accepts replies with at least one no-findings line when every numbered or bulleted item says
+there are no findings, ignoring other note lines. A numbered or bulleted real finding still
 needs a disposition and another round.
 
 Use one framing line before showing a story in Plan Mode:

@@ -1,8 +1,8 @@
 """Cold reads tolerate no-findings formatting without hiding actual findings.
 
-Numbered no-findings items pass regardless of unnumbered notes; an unnumbered
-reply must be one no-findings sentence. The reader fake supplies only external
-output; real read and next decide the gate.
+At least one no-findings line is required, and every numbered or bulleted item
+must say there are no findings; other lines are notes. The reader fake supplies
+only external output; real read and next decide the gate.
 """
 import json
 import shutil
@@ -36,7 +36,11 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("no findings", True),
     ("1. No actionable findings.\n2. No issues found.\n3. No findings to report.\nTests not run.", True),
     ("1) No findings.\n2) No remaining findings identified.", True),
-    ("**No findings.**\nNote: tests weren't run.", False),
+    ("**No findings.**\nNote: tests weren't run.", True),
+    ("- No findings.\n- No issues found.", True),
+    ("No findings.\nRuntime and visual checks were not run; this was a document-only review.", True),
+    ("No findings.\n- The required proof is missing.", False),
+    ("Runtime and visual checks were not run; this was a document-only review.", False),
     ("No findings.\n6. The saved time has no time zone.", False),
     ("6. No findings.\n7. Tests were not run, so the required proof is missing.", False),
     ("1. No findings.\nTests were not run; runtime behaviour remains unverified.\nThe required proof is missing.", True),
