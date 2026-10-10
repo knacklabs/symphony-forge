@@ -249,18 +249,16 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
-    parts = re.split(r"^[ \t]*(?:\d+[.)]|[-*])\s+|\n(?=\s*(?:note:\s*)?tests\b)",
-                     said, flags=re.M | re.I)
-    lines = [" ".join(part.split()).strip(" *`_.!?,:;").lower()
-             for part in parts if part.strip()]
+    item = r"^[ \t]*(?:\d+[.)]|[-*])[ \t]+"
+    parts = re.split(r"\n|" + item, said, flags=re.M)
+    lines = [" ".join(part.split()).strip(" *`_.!?,:;").lower() for part in parts]
     empty = re.compile(r"(?!.*\b(?:but|however|except)\b)"
                        r"(?:(?:there (?:are|were)|i (?:have|found)|found) )?no (?:\w+ )?"
                        r"(?:finding|issue|problem|bug|defect)s?"
                        r"(?: (?:found|reported|identified|detected|to report))?")
-    note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
-                      r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)
     clean = any(empty.fullmatch(line) for line in lines) and all(
-        empty.fullmatch(line) or note.fullmatch(line) for line in lines)
+        empty.fullmatch(" ".join(part.split()).strip(" *`_.!?,:;").lower())
+        for part in re.findall(item + r"(.*)", said, flags=re.M))
     if clean:
         # Keep one canonical passing reply so every downstream gate sees the same result.
         said = "No findings."

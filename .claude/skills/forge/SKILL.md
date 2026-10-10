@@ -65,6 +65,7 @@ uses the story's title. The board and `forge next` read that record from git, so
 extra pull request, review or CI run is needed. Stories already marked done keep their outcome.
 Use `forge story done` only to correct an outcome later, on an existing work branch that carries
 the correction through its own pull request; the command opens no branch or pull request.
+When next says a remotely merged story needs its outcome, fetch origin before recording it.
 
 Give each question one line of context and a header of 12 characters or less. Use 1-5 word options
 that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
@@ -164,6 +165,8 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
+task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
 external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
 parts, plain titles, labelled states and `waits_for` item references, including old merged
@@ -612,7 +615,7 @@ A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
 After it merges, older branches keep their pinned release and its rules. When Forge says the
-default branch already pins the installed release, merge the default branch into your branch to
+default branch already pins the installed release, merge `origin/<default>` into your branch to
 use that release and its rules.
 
 ## Refresh dependencies
@@ -622,13 +625,20 @@ lists a refresh fix with its `forge fix start` command; start it like any ready 
 fix's folder:
 
 1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
-   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `yarn upgrade` (Yarn 1), `yarn up -R '*' '@*/*'` (Yarn 3+), `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
    `go get -u=patch ./... && go mod tidy`); never raise a range.
+   For Yarn 2, remove only `yarn.lock`, then run `yarn install --no-immutable`;
+   keep every `package.json` unchanged. This re-resolves the whole dependency tree within its
+   declared ranges; recursive `yarn up -R` starts in Yarn 3.
 2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
    same tag, and rebuild the image.
 3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
 
 ## Planning a story
+
+Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
+accepts numbered no-findings statements with separate notes that tests were not run; a real
+finding still needs a disposition and another round.
 
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
@@ -641,6 +651,8 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
 below `## For the builders` needs no new round either; an edit above it does, and that round
 checks only the edit and the sections it touches.
+Blank question replies count as unanswered. The approval hook's pin notice appears only after
+recording succeeds; if the repo pins a newer release, install that pinned release.
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
@@ -716,6 +728,11 @@ trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
+Before `forge work` can start a worker, resolve any unfinished merge in the item's checkout
+and commit the merge, then rerun `forge work <item>`. Work refuses before changing its start
+record or the index, so both conflicted and resolved but uncommitted merges stay intact.
+New repos get this guidance at init; existing repos get it after upgrading and running sync.
+
 Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff
 and any question. Forge sets these for each thread, including resumed threads; neither
@@ -763,6 +780,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+Claude workers use model and effort and ignore the Codex-only subagents and subagent_effort keys.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
@@ -770,6 +788,9 @@ model and effort it starts with, and why; `forge next` names the worker beside e
 - `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
 - `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
 - `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
+
+Split routing also applies in Forge's source repo: a task row's `User-facing: yes` selects
+Claude and its design entry. New repos get this at init; existing repos get it on upgrade.
 
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.
@@ -792,6 +813,7 @@ separate read-only settings there, add the explore entries in a fix and run `for
 ## Build simple
 
 Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+Edits to different fields of an item merge; competing edits to the same field need a manual resolution.
 New repos get this rule at init; existing repos get it with `forge sync` or
 `forge doctor --fix`. The shared rule keeps working after a worktree is removed.
 Doctor repairs both paths in Git's shared local attributes, including when an older
@@ -849,6 +871,8 @@ When a worker round or close's merge changes the item's Forge pin, land and clos
 line and continue through uv under that release before reading its new settings.
 Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
 before the original land or close command continues.
+Next lets failed pull request checks choose the next step only when that pull request's head
+matches the local branch head; after a local repair, follow the current local step.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -909,9 +933,13 @@ When close merges the latest default branch, an unchanged branch diff keeps the 
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
-review and green checks on the final pushed head. After upgrading, run `forge sync` to receive
+review and green checks on the final pushed head. After `forge fix amend`, close also updates
+the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
+including when it regenerates conflicted Forge files with the newly pinned release.
+If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
+After upgrading, run `forge sync` to receive
 the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
-commit changes Forge's review record and its accompanying state under `.factory/`. Any other
+commit changes Forge's review or test-state record and its accompanying state under `.factory/`. Any other
 change or missing passing parent result runs the suite on the pull request merged into its
 current base. Reuse also requires the parent to include that base; a parent pull request run
 must have tested that same base. A changed base or missing proof runs the suite again.
@@ -965,7 +993,9 @@ new branch to GitHub after committing its start. The author of that start commit
 who started the work; the board page and `forge board --json` show them next to the plan's
 approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
 record. Git keeps a start tag pointing at the original commit, so its author survives squash
-merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+merges and work-branch cleanup. A retained fix start tag reserves its name even after its
+branch is abandoned; another start says the name is taken and uses the next numbered name.
+Close also publishes retained start commits when an earlier
 start push failed. A second checkout's
 task start names the person who already started that part on GitHub. A failed push says so
 and leaves the work local: teammates cannot see that claim until its branch is pushed.
@@ -1010,9 +1040,12 @@ the default branch changed since that review. Close still requires green checks;
 needs another review.
 A clean review clears an unanswered review-loop stop.
 
-When `forge merge` fails because the pull request no longer merges cleanly, run
-`forge close <item>` again, which merges the default branch with Forge's own rule for the spotted
-list and the roadmap.
+When GitHub refuses because the branch is behind the default branch, `forge merge` and
+`forge land` say so in one line, run close again to merge the default branch and run the tests,
+review and checks as close decides, then retry the merge. If that merge selects a different
+Forge release, close finishes under that release before the original command continues.
+A real conflict stops with close's existing resolution steps. Other GitHub refusals keep their
+next action.
 
 ## Check-back
 

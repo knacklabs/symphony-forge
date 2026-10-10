@@ -27,6 +27,7 @@ os.environ["UV_FROZEN"] = "1"
 # Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
 TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
               ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
+CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
 
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
@@ -572,6 +573,9 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     On the default branch a newer Forge runs while an upgrade fix waits: the default branch as last
     fetched still pins an older one, and a fix worktree pins the installed one.
     """
+    if words == "work":
+        from forge.worker import checkout
+        checkout(item)  # A conflicted forge.toml cannot supply a release pin yet.
     done = run("git", "rev-parse", "--show-toplevel", cwd=cwd)
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
@@ -605,7 +609,7 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
                pinned=f"v{pinned}", words=words)
     # Run the pinned release through uv instead, unless this already is that run (no loop).
     if shutil.which("uv") and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
-        advice = (f" Merge {default_branch(top)} into this branch to use Forge v{__version__} "
+        advice = (f" Merge origin/{default_branch(top)} into this branch to use Forge v{__version__} "
                   "and its rules." if _older(pinned) and landed == __version__
                   and landed_ref == f"origin/{default_branch(top)}"
                   and branch and branch != default_branch(top) else "")
@@ -746,7 +750,7 @@ def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str
 def now() -> str:
     """The current UTC time. FORGE_NOW overrides it, so tests can drive dated steps."""
     # ponytail: an env override is the whole clock seam.
-    return os.environ.get("FORGE_NOW") or datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return os.environ.get("FORGE_NOW") or datetime.now(timezone.utc).isoformat()
 
 
 def add_step(data: dict[str, Any], step: str) -> dict[str, Any]:

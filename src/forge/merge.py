@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, repo, story, task
+from forge import checks, close, codex, githooks, repo, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -78,10 +78,21 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
-        checks.wait(top, item, head, config["checks"],
+        checks.wait(worktree, item, head, config["checks"],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
-        completion = []
-        body = None
+        completion = ["--body-file", "-"]
+        body = pr.get("body") or ""
+        item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
+        history = time_records.how_it_went(top, item, item_state, body)
+        def refresh_history(block: re.Match[str]) -> str:
+            text, count = time_records.HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
+            return text if count else text.replace(close.END, "\n" + history + "\n" + close.END, 1)
+        body = re.sub(re.escape(close.BEGIN) + ".*?" + re.escape(close.END),
+                      refresh_history, body, count=1, flags=re.S)
+        if body != (pr.get("body") or ""):
+            body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
+            body_file.write_bytes(body.encode("utf-8"))
+            close._gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
         if "/" in item:
             key, tid = item.split("/")
             state = story.json_of(story.show(top, head, repo.state_path(key)))
@@ -93,8 +104,7 @@ def merge(args: argparse.Namespace) -> int:
                     and all(row["id"] == tid or story.merged_at(
                         top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
                 outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
-                body = (pr.get("body") or "") + "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
-                completion = ["--body-file", "-"]  # stdin survives Windows .cmd wrappers
+                body += "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
@@ -123,6 +133,7 @@ def merge(args: argparse.Namespace) -> int:
                         return merge(args)
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
+        repo.record_event(top, item, "item finished", round=item_state.get("round"))
     main_checkout = repo.forge_dir(top).parent.parent
     pending = receipt.get("pending_archives")
     if pending is None:

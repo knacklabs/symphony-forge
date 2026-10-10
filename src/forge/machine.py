@@ -8,7 +8,7 @@ import uuid
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from subprocess import Popen
+from subprocess import CalledProcessError, Popen
 from typing import Any
 
 from forge import __version__, repo
@@ -80,8 +80,13 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
     root = main_checkout(repo)
     title = None
+    round_number = None
     if item and (match := repository.ITEM.fullmatch(item)):
         state = repository.read_state(item, repo) or {}
+        round_number = state.get("round", 0 if kind in ("test", "review") else None)
+        if kind == "work":
+            round_number = (round_number + 1 if isinstance(round_number, int)
+                            else 1 if state.get("status") == "started" else None)
         title = state.get("why") if match["fix"] else state.get("title")
         if match["task"] or (not title and kind == "read"):
             from forge import task
@@ -96,11 +101,12 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
-             "agent": None,
+             "agent": None, "round": round_number,
              "output_path": None, "progress": None}
     size = test_slots() if kind == "test" else half_cores()
     with _queue() as runs:
         runs.append(entry)
+    _lane_event(entry, "lane joined", at=entry["joined_at"])
     try:
         said = 0
         while True:
@@ -111,6 +117,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 place = position - size + 1
             if place <= 0:
+                _lane_event(entry, "lane admitted")
                 return entry
             if place != said:
                 print(f"{size} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
@@ -150,6 +157,18 @@ def leave(entry: dict[str, Any]) -> None:
     with _queue() as runs:
         runs[:] = [run for run in runs if run["id"] != entry["id"] or
                    (run["process"]["pid"] != os.getpid() and _running(run["process"]))]
+
+
+def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
+    """Lane history belongs in the item's existing log, not the machine queue."""
+    if entry.get("item") and entry.get("checkout_root"):
+        try:
+            repo.record_event(Path(entry["checkout_root"]), entry["item"], event,
+                              lane_id=entry["id"], kind=entry["kind"],
+                              lane="tests" if entry["kind"] == "test" else "agents",
+                              round=entry.get("round"), **fields)
+        except (OSError, CalledProcessError):
+            pass  # A removed checkout must not prevent release of its machine place.
 
 
 def entries() -> list[dict[str, Any]]:
@@ -319,6 +338,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
         # A work round can launch a commit nudge, and a review can retry. Between those model
         # calls its live Forge process holds the admission. Tests hold only their command once
         # started. A reused child pid is dropped, never reassigned to its new owner.
+        before = list(runs)
         retained = []
         for run in runs:
             recorded = run["process"]
@@ -338,6 +358,11 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
         yield runs
         path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
         os.replace(path.with_suffix(".new"), path)
+        remaining = {run["id"] for run in runs}
+        live = {run["id"] for run in retained}
+        for run in before:
+            if run["id"] not in remaining:
+                _lane_event(run, "lane left", end_known=run["id"] in live)
 
 
 def _running(process: dict[str, Any] | None) -> bool:

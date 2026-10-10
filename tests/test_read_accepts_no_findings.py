@@ -1,6 +1,8 @@
 """Cold reads tolerate no-findings formatting without hiding actual findings.
 
-The reader fake supplies only external output; real read and next decide the gate.
+At least one no-findings line is required, and every numbered or bulleted item
+must say there are no findings; other lines are notes. The reader fake supplies
+only external output; real read and next decide the gate.
 """
 import json
 import shutil
@@ -18,6 +20,8 @@ STORY = "FIX-READ-NO-FINDINGS"
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 @pytest.mark.parametrize("reply, clean", [
     ("6. No findings.\n\nTests were not run (read-only review).", True),
+    ("1. No findings.\nTests were not run; runtime behaviour remains unverified.", True),
+    ("1. No findings.\nRuntime and visual checks were not run; this was a document-only review.", True),
     ("6. No issues detected.", True),
     ("6. There are no findings.", True),
     ("6. No bugs found.", True),
@@ -33,15 +37,20 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("1. No actionable findings.\n2. No issues found.\n3. No findings to report.\nTests not run.", True),
     ("1) No findings.\n2) No remaining findings identified.", True),
     ("**No findings.**\nNote: tests weren't run.", True),
+    ("- No findings.\n- No issues found.", True),
+    ("No findings.\nRuntime and visual checks were not run; this was a document-only review.", True),
+    ("No findings.\n- The required proof is missing.", False),
+    ("Runtime and visual checks were not run; this was a document-only review.", False),
     ("No findings.\n6. The saved time has no time zone.", False),
     ("6. No findings.\n7. Tests were not run, so the required proof is missing.", False),
-    ("6. No findings.\nTests were not run (required proof is missing).", False),
+    ("1. No findings.\nTests were not run; runtime behaviour remains unverified.\nThe required proof is missing.", True),
+    ("6. No findings.\nTests were not run (required proof is missing).", True),
     ("6. No findings but the required proof is missing.", False),
     ("6. No findings however the required proof is missing.", False),
     ("6. No findings except the required proof is missing.", False),
     ("6. No findings. The required proof is missing.", False),
     ("6. No test covers this bug.", False),
-    ("6. No findings.\nThe required proof is missing.", False),
+    ("6. No findings.\nThe required proof is missing.", True),
     ("6. No findings (required proof is missing).", False),
     ("6. No bugs are covered by the proposed regression test.", False),
 ])

@@ -1,0 +1,95 @@
+{
+  "allow_large": "Owner chose this change (2026-10-09): new fields on review, CI-wait and lane records, a per-item time breakdown and round lines in forge board --json, and a How it went section in the pull request, across the recorders, a new records module, the board view and close",
+  "base": "174309504707d88f8a475eed5ec52dc38b24158a",
+  "branch": "fix/where-time-went",
+  "done_when": "Forge records, in its existing event and timing logs (no new files), each review result's finding titles, severities and files, why each CI wait ended (passed, failed, or gave up while queued or running), and when an item joins and leaves a lane; one place outside board.py works out, per task and fix, where its time went (building, its own tests, reviewing, fixing findings, waiting for CI, waiting in line, waiting for the owner, nothing running) and one plain line per round (what the round did, how long each step took, and how many findings were new versus repeats of an earlier round's); forge board --json carries both per item, and its total no longer counts a worker's test runs twice or leaves out idle time; the pull request body gains a short 'How it went' section from the same data that survives the squash merge; the coordinator guide says how to read and quote them; unrecorded values show as unknown, never invented; command tests cover a looping item with a CI give-up, a lane wait, an owner wait and a repeat finding, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    ".factory/fixes/where-time-went.json",
+    "src/forge/checks.py",
+    "src/forge/close.py",
+    "src/forge/machine.py",
+    "src/forge/merge.py",
+    "src/forge/review.py",
+    "src/forge/time_records.py",
+    "tests/test_item_time_history.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd4081e0f245808f409eff51ebb492730d3024e62b72df43923c73a379c76304",
+    "changed": "7ee498c398ea4e4c25ba0aa01ace45b94a8929c2253101631ac8e8132d14240e",
+    "commit": "0510ece768655e97419621a62c3db5ead3dc0879",
+    "dismissals": [],
+    "findings": [],
+    "id": "ff6bd22a-0a40-4ada-aa1e-8c37f7ba0e64",
+    "status": "clean"
+  },
+  "round": 12,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T11:28:56+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T11:30:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T14:03:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T14:50:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T15:44:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:16:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:38:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:29:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:23:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:12:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:52:39.853235+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:07:03.196566+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:20:28.608388+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:03:38.132298+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/time_records.py",
+    "reason": "Owner chose narrow: review only the committed change that keeps time from before the upgrade unknown instead of counting it as nothing running; older items' data is filled later by the upgrade backfill fix.",
+    "round": 4
+  },
+  "why": "When a task or fix loops through review rounds, CI waits and queues, nobody can see where its time went: the board and pane show only the current round, the latest findings and a total that double-counts a worker's tests and leaves out idle time; earlier rounds' findings are overwritten, CI giving up is recorded the same as red tests, lane waits and waits for the owner are invisible, and after the squash merge only bare 'Review of X: blocked' lines remain (owner request 2026-10-09, after a review of real long-running items)",
+  "worker": "codex"
+}

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -29,13 +29,41 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
          progress: bool = False) -> None:
     """Wait for green checks on sha; land renews its deadline on observed check progress."""
+    start, clock = repo.now(), time.monotonic()
+    with repo.record_run(top, item, "ci") as result:
+        result.update(outcome="unknown", state="unknown")
+        try:
+            _wait(top, item, sha, names, branch, progress, result)
+        except repo.Refused as error:
+            if error.entry is REFUSALS["red"]:
+                result["outcome"] = "failed"
+            result["reason"] = str(error).split("\n", 1)[0]
+            raise
+        except KeyboardInterrupt:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
+            result["reason"] = "Interrupted by Ctrl-C."
+            raise
+        finally:
+            repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
+            repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
+
+
+def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
+          result: dict[str, Any]) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
     previous = None
+    queued_since = None
+    printed_minute = None
     while True:
+        queued = False
         try:
             seen, snapshot = _seen(top, item, sha)
+            result["state"] = ("running" if any(state == PENDING for _, state in seen)
+                               else "queued" if any(state == QUEUED for _, state in seen)
+                               else "unknown")
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
@@ -49,22 +77,36 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
                 if (isinstance(pr, dict) and pr.get("headRefOid") == sha
                         and pr.get("mergeable") == "CONFLICTING"):
                     repo.refuse(REFUSALS["conflict"], item=item)
-            queued = ""
-            if (any(state == QUEUED for _, state in seen)
-                    or any(not any(name == want or name.startswith(want + " (")
-                                   for name, _ in seen) for want in names)):
-                queued = queued_reason(top, sha, item)
+            queued = any(state == QUEUED for _, state in seen)
         except repo.Refused as error:
             if not progress or error.entry is not REFUSALS["not_green"]:
                 raise
+            result["state"] = "unknown"
             reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
         else:
             if not reason:
+                result["outcome"] = "passed"
                 return
-            if queued:
-                repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
+        if queued:
+            now = time.monotonic()
+            if queued_since is None:
+                queued_since = now
+            minute = int((now - queued_since) / 60)
+            if minute != printed_minute:
+                print(f"Waiting: checks queued for {minute} minutes during this wait; "
+                      "shared runners may be busy or no runner may match the runner setting "
+                      "in forge.toml.", flush=True)
+                printed_minute = minute
+            # A repo cannot tell a busy shared pool from an absent runner. Zero is
+            # the explicit one-look override; ordinary queue time never ends a wait.
+            if timeout > 0:
+                deadline = now + timeout
+        else:
+            queued_since = printed_minute = None
         left = deadline - time.monotonic()
         if left <= 0:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
             if progress:
                 reason = f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}"
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
@@ -97,49 +139,64 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
-    """Diagnose an old queue only when this repo shows no matching runner activity."""
-    runs = _ask(top, item, ".workflow_runs",
-                "repos/{owner}/{repo}/actions/runs?per_page=100")
+    """Doctor samples recent runner activity only for a five-minute queued check."""
     now = datetime.fromisoformat(repo.now())
-    for run in runs:
-        heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
-        if run.get("status") != "queued" or sha not in [run.get("head_sha"), *heads]:
+    queued = False
+    untimed_suites = set()
+    for check in _ask(top, item, ".check_runs",
+                      f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100"):
+        if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
             continue
         try:
-            # A rerun can queue an old workflow; age its latest update, not the original run.
-            queued = max(datetime.fromisoformat(run[key]) for key in ("created_at", "updated_at")
-                         if run.get(key))
-            old = (now - queued).total_seconds() >= 300
-        except (ValueError, TypeError):
+            queued |= datetime.fromisoformat(check["started_at"]) <= now - timedelta(minutes=5)
+        except (KeyError, ValueError, TypeError):
+            if suite := check.get("check_suite", {}).get("id"):
+                untimed_suites.add(suite)
+    if not queued and not untimed_suites:
+        return ""
+    since = now - timedelta(days=7)
+    cutoff = since.isoformat(timespec="seconds").replace("+00:00", "Z")
+    until = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+    # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
+    runs = _ask(top, item, ".workflow_runs",
+                "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                "--raw-field", "per_page=100", "--raw-field", f"created={cutoff}..{until}",
+                paginate=False)
+    # Queued checks may have no start time; their linked current workflow attempt has one.
+    for run in runs[:100]:
+        if run.get("check_suite_id") not in untimed_suites or run.get("status") != "queued":
             continue
-        if old:
-            runner = repo.config(top)["runner"]
-            for candidate in runs:
-                try:
-                    # A running workflow need not update its timestamp for each job start.
-                    if (candidate.get("status") == "completed"
-                            and datetime.fromisoformat(candidate["updated_at"]) < queued):
-                        continue
-                except (KeyError, ValueError, TypeError):
-                    pass
-                jobs = _ask(top, item, ".jobs",
-                            f"repos/{{owner}}/{{repo}}/actions/runs/{candidate['id']}/jobs?filter=all")
-                for job in jobs:
-                    if (not any(runner.casefold() == label.casefold()
-                                for label in job.get("labels") or []) or not job.get("runner_id")
-                            or job.get("status") not in ("in_progress", "completed")):
-                        continue
-                    try:
-                        started = datetime.fromisoformat(job["started_at"])
-                    except (KeyError, ValueError, TypeError):
-                        continue
-                    if queued <= started <= now:
-                        return ""
-            return ("Pull request checks have stayed queued for at least five minutes; "
-                    "no runner has picked up a job for this repo using "
-                    f"runner = {json.dumps(runner)} in forge.toml during that time. "
-                    "Check that a matching runner is available, then run forge sync")
-    return ""
+        try:
+            queued |= since <= datetime.fromisoformat(run["run_started_at"]) <= now - timedelta(minutes=5)
+        except (KeyError, ValueError, TypeError):
+            pass
+    if not queued:
+        return ""
+    runner = repo.config(top)["runner"]
+    # One newest-first page of runs and one page of latest jobs per run bound the lookup.
+    for run in runs[:100]:
+        if run.get("conclusion") == "success":
+            continue
+        try:
+            if not since <= datetime.fromisoformat(run["created_at"]) <= now:
+                continue
+        except (KeyError, ValueError, TypeError):
+            continue
+        jobs = _ask(top, item, ".jobs",
+                    f"repos/{{owner}}/{{repo}}/actions/runs/{run['id']}/jobs?per_page=100",
+                    paginate=False)
+        for job in jobs:
+            if not job.get("runner_id") or not any(
+                    runner.casefold() == label.casefold() for label in job.get("labels") or []):
+                continue
+            try:
+                if datetime.fromisoformat(job["started_at"]) <= now:
+                    return ""
+            except (KeyError, ValueError, TypeError):
+                pass
+    return ("Checks have been queued for at least five minutes: likely missing runner; "
+            "no matching job started in this repo's sampled non-successful runs from the "
+            f"last seven days using runner = {json.dumps(runner)} in forge.toml")
 
 
 def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str]]:
@@ -165,9 +222,11 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
     return seen, snapshot
 
 
-def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]]:
+def _ask(top: Path, item: str, field: str, endpoint: str, *options: str,
+         paginate: bool = True) -> list[dict[str, Any]]:
     # --paginate with "<field>[]" prints one JSON object per line across all pages.
-    done = repo.run("gh", "api", "--paginate", "--jq", f"{field}[]", endpoint, cwd=top)
+    done = repo.run("gh", "api", *(["--paginate"] if paginate else []),
+                    "--jq", f"{field}[]", *options, endpoint, cwd=top)
     try:
         text = done.stdout.strip()
         found = (json.loads(text) if text.startswith("[")

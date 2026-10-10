@@ -42,6 +42,8 @@ COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review ca
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
+    "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
+              "forge work {item}"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
@@ -54,11 +56,8 @@ REFUSALS = {
 }
 
 
-def work(args: argparse.Namespace) -> None:
-    item = args.item
-    note = getattr(args, "note", None)
-    if note is not None and not note.strip():
-        refuse(REFUSALS["empty_note"], item=item)
+def checkout(item: str) -> tuple[re.Match[str], Path]:
+    """Find a work checkout and refuse its unfinished merge before parsing any settings."""
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -67,6 +66,17 @@ def work(args: argparse.Namespace) -> None:
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
+    if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
+        refuse(REFUSALS["merge"], item=item, top=top)
+    return match, top
+
+
+def work(args: argparse.Namespace) -> None:
+    item = args.item
+    note = getattr(args, "note", None)
+    if note is not None and not note.strip():
+        refuse(REFUSALS["empty_note"], item=item)
+    match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:
@@ -98,12 +108,17 @@ def work(args: argparse.Namespace) -> None:
     _, chosen, why = repo.worker(config, kind.lower(), design)
     print(f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
           f"because {why}", flush=True)
+    if note is not None and (pending := codex.record(top, item).get("question_id")):
+        repo.record_event(top, item, "owner wait end", wait_id=pending)
+    from forge import time_records
+    if pending_merge := time_records.pending_merge_wait(top, item):
+        repo.record_event(top, item, "owner wait end", wait_id=pending_merge["id"])
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
     # The round then waits for one of the machine's agent slots.
     with codex.hold(top, item, kind), machine.agent_slot(top, "work", item,
-            chosen.get("model"), chosen.get("effort")):
+            chosen.get("model"), chosen.get("effort")) as admission:
         if on_codex:
             codex.recover(top, item)
         question = codex.record(top, item).get("question")
@@ -147,8 +162,11 @@ def work(args: argparse.Namespace) -> None:
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
+        admission["round"] = round_number
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
+        repo.record_event(top, item, "work phase", lane_id=admission["id"],
+                          phase="fixing_findings" if findings or failing else "building")
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE
         outcome = "failed"
