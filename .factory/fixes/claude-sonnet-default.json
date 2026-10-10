@@ -31,6 +31,7 @@
   "branch": "fix/claude-sonnet-default",
   "done_when": "For repos whose workers are claude, Forge's defaults are: implementation (build, fix, lite and design, frontend included) claude-sonnet-5-5 at xhigh; plan reads (grill) claude-opus-5-5 at high; the planner and architect roles use the plan-read entry and the debugger, security and performance roles claude-opus-5-5 at high; Autoreview stays the external program and runs every review (normal, light and the prototype sign-off review) on the repo's own tool, Claude for Claude-only repos and Codex for Codex-only repos, with Autoreview's own default model and effort (Forge pins none); forge init writes these and Forge's built-in defaults match; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults; the coordinator guide states them; command tests cover forge init for a new Claude-only repo, the roles' models after sync, reviews running on Claude with no pinned model, and an earlier-adopted repo left unchanged on upgrade",
   "flagged": [
+    ".claude/skills/forge/SKILL.md",
     ".factory/fixes/claude-sonnet-default.json",
     "docs/guide.md",
     "tests/test_claude_implementation_defaults.py"
@@ -38,27 +39,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "79838881c59316d83d328498008d7b0d680e6c20c0e1f59ff451922df9e4fbf4",
-    "changed": "8d67eae2cfe50abb1c3aec20ca0a595c9afd2df4325fbaa37451ac4ed9b08e14",
-    "commit": "2b3e9b451023dae4bc2684835743c925f25e8e9e",
+    "branch_diff": "8c2efa510988b8ef24ec0497a99ab6eb731cc3466065f2efc5a555b50cc45372",
+    "changed": "a99a3a1916b4862497afb4c7f40a60972128d9fbadb1a951c8d9d4bd984fdad4",
+    "commit": "437fe6a4b6d3f3212a06359d7de6912a47e9f051",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate \u2014 The allowance says this is one Claude-defaults correction without an interface change. The diff also adds coordinator guidance about board rows, roadmap merges, retained start tags and behind-default merges in src/forge/templates/skill.md. Separately, src/forge/review.py stops honoring the documented [models.review] setting for existing clients, changing that setting's behavior. Those changes exceed the recorded reason for the allowance.",
-        "file": ".factory/fixes/claude-sonnet-default.json",
-        "line": 2,
+        "body": "Raise: Gate \u2014 Both `.claude/skills/forge/SKILL.md:628` and `.codex/skills/forge/SKILL.md:628` revert unrelated dependency-refresh guidance: the selected diff removes the Yarn 1 qualifier, the Yarn 3+ recursive command and the Yarn 2 lockfile procedure. The shipped template still contains these instructions at `src/forge/templates/skill.md:632\u2013636`, leaving the checked-in coordinator guides inconsistent with it. This breaks \u201cTouch only what the task needs\u201d and removes existing version-specific instructions without any connection to Claude defaults. This is new evidence distinct from the earlier ruling about inherited board/merge guidance; the latest proof's claim that Yarn drift is excluded does not match this diff. Preserve the baseline Yarn guidance in both host guides.",
+        "file": ".claude/skills/forge/SKILL.md",
+        "line": 628,
         "priority": "P1",
-        "title": "Recorded allowance does not match the whole change"
-      },
-      {
-        "body": "Raise: Not done \u2014 The changed guide paragraph says a client user-facing task uses [models.design.claude] even with workers = \"codex\". In src/forge/repo.py:504-505, that setting selects Codex and [models.design.codex] for every task; the changed test_design_route.py:15-16 explicitly confirms this routing. A client following the guide would edit the wrong model entry and would not get the promised Claude worker.",
-        "file": "docs/guide.md",
-        "line": 161,
-        "priority": "P1",
-        "title": "Guide promises Claude for Codex-only user-facing work"
+        "title": "Standard: Touch only what the task needs"
       }
     ],
-    "id": "42b9c4f1-78e9-48c9-8da4-29b868b64ab9",
+    "id": "fb8717d7-ae94-4709-9698-da7b0eba7f21",
     "status": "blocked"
   },
   "round": 7,
@@ -87,9 +81,12 @@
     {
       "at": "2026-10-10T01:45:54+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T05:39:02+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest a729e9f3e557f8a555eb9171ff8ed13119beb34e` exited with status 1 on this machine.\n=================================== FAILURES ===================================\n____ test_3_forge_s_own_repo_has_the_roles_sync_writes_from_its_forge_toml _____\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-claude-sonnet-default/.venv/bin/python\n\nrepo = <conftest.Repo object at 0x10967e190>\n\n    def test_3_forge_s_own_repo_has_the_roles_sync_writes_from_its_forge_toml(repo):\n        own = (ROOT / \"forge.toml\").read_text(encoding=\"utf-8\")\n        models = own[own.index(\"[models.\"):]\n\n        assert _synced(repo, models).returncode == 0\n\n        for name in ROLES:\n            for rel in (f\".codex/agents/{name}.toml\", f\".claude/agents/{name}.md\"):\n>               assert (ROOT / rel).read_text(encoding=\"utf-8\") == (repo.path / rel).read_text(\n                    encoding=\"utf-8\"), rel\nE               AssertionError: .claude/agents/planner.md\nE               assert '---\\n# Forge...lding role.\\n' == '---\\n# Forge...lding role.\\n'\nE\nE                 Skipping 221 identical leading characters in diff, use -v to show\nE\nE                 - effort: \"high\"\nE                 ?          ^ ^^\nE                 + effort: \"medium\"\nE                 ?          ^^^ ^^...\nE\nE                 ...Full output truncated (3 lines hidden), use '-vv' to show\n\ntests/test_subagent_roles.py:144: AssertionError\n1 failed, 200 passed in 373.93s (0:06:13)",
   "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
   "worker": "codex"
 }
