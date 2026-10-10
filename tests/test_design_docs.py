@@ -33,6 +33,8 @@ def test_5_guide_explains_design_models_and_fallback():
     # The guide names the current default; decision 0097 keeps the model it was decided with.
     assert "gpt-6.1-sol` at high effort" in models
     assert "User-facing" in models and "Prototype before sign-off" in models
+    assert ('`[models.design.codex]` with `workers = "codex"`, and '
+            '`[models.design.claude]` with `workers = "claude"` or `"split"`') in models
     assert "`claude` command is missing" in models
     assert "Claude fails before changing the checkout" in models
     assert "prints and logs the fallback reason" in models
