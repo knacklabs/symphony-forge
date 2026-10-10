@@ -3,12 +3,14 @@
   "branch": "fix/plan-six-done-whens",
   "done_when": "forge read refuses a story doc with more than six Done when lines, saying in one line to split it into smaller stories; approved stories already over six are left alone. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T14:39:38+00:00",
       "step": "start"
     }
   ],
-  "why": "Big plans give readers too much to pick at"
+  "why": "Big plans give readers too much to pick at",
+  "worker": "codex"
 }
