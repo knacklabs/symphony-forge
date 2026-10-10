@@ -7,6 +7,9 @@ This pins the checker that CI installs from the PR base, rather than the new che
 The review template is pinned with its renderer: current templates can require inputs the
 old renderer does not supply.
 
+The checks module is pinned with close: current check waiting requires the pull request's
+branch, which this earlier close does not supply.
+
 ponytail: only these owners are pinned because the other libraries match this base;
 if a later refactor changes an API these old modules call, pin that dependency from
 the same base here as well, rather than changing the old checker to fit new code.
