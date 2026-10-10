@@ -1,6 +1,13 @@
 {
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/review-alongside-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12665-4f06-7fc2-8d43-9a622fea4921",
+    "head": "f1fc53fb70515ef7f1f4e22520da197cdabef95c",
+    "start": "71fe349a28f880d2d3e6af321966f922306de2de"
+  },
   "done_when": "Close starts the review at the same time as its tests, so a round takes about as long as the slower of the two; a red test or a P0/P1 finding still stops the round, and both results are reported together. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
     "src/forge/close.py"
