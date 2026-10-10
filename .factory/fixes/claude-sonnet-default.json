@@ -31,18 +31,35 @@
   "branch": "fix/claude-sonnet-default",
   "done_when": "For repos whose workers are claude, Forge's defaults are: implementation (build, fix, lite and design, frontend included) claude-sonnet-5-5 at xhigh; plan reads (grill) claude-opus-5-5 at high; the planner and architect roles use the plan-read entry and the debugger, security and performance roles claude-opus-5-5 at high; Autoreview stays the external program and runs every review (normal, light and the prototype sign-off review) on the repo's own tool, Claude for Claude-only repos and Codex for Codex-only repos, with Autoreview's own default model and effort (Forge pins none); forge init writes these and Forge's built-in defaults match; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults; the coordinator guide states them; command tests cover forge init for a new Claude-only repo, the roles' models after sync, reviews running on Claude with no pinned model, and an earlier-adopted repo left unchanged on upgrade",
   "flagged": [
+    ".factory/fixes/claude-sonnet-default.json",
+    "docs/guide.md",
     "tests/test_claude_implementation_defaults.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "16efa3c72f24539581cc6e9306ec385c12f9f76f1e678f83840d7f8a52c1e5a0",
-    "changed": "6f43da9e0823a2892fccf6ef79e8159af5a46c2a26c0fff81909f0e41de9749c",
-    "commit": "b061a1b1053afc18fc5d66931a9175761bc435fb",
+    "branch_diff": "79838881c59316d83d328498008d7b0d680e6c20c0e1f59ff451922df9e4fbf4",
+    "changed": "8d67eae2cfe50abb1c3aec20ca0a595c9afd2df4325fbaa37451ac4ed9b08e14",
+    "commit": "2b3e9b451023dae4bc2684835743c925f25e8e9e",
     "dismissals": [],
-    "findings": [],
-    "id": "533f3628-cfba-497c-991d-371a213c740f",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Gate \u2014 The allowance says this is one Claude-defaults correction without an interface change. The diff also adds coordinator guidance about board rows, roadmap merges, retained start tags and behind-default merges in src/forge/templates/skill.md. Separately, src/forge/review.py stops honoring the documented [models.review] setting for existing clients, changing that setting's behavior. Those changes exceed the recorded reason for the allowance.",
+        "file": ".factory/fixes/claude-sonnet-default.json",
+        "line": 2,
+        "priority": "P1",
+        "title": "Recorded allowance does not match the whole change"
+      },
+      {
+        "body": "Raise: Not done \u2014 The changed guide paragraph says a client user-facing task uses [models.design.claude] even with workers = \"codex\". In src/forge/repo.py:504-505, that setting selects Codex and [models.design.codex] for every task; the changed test_design_route.py:15-16 explicitly confirms this routing. A client following the guide would edit the wrong model entry and would not get the promised Claude worker.",
+        "file": "docs/guide.md",
+        "line": 161,
+        "priority": "P1",
+        "title": "Guide promises Claude for Codex-only user-facing work"
+      }
+    ],
+    "id": "42b9c4f1-78e9-48c9-8da4-29b868b64ab9",
+    "status": "blocked"
   },
   "round": 4,
   "status": "fixing",
@@ -66,9 +83,12 @@
     {
       "at": "2026-10-09T23:40:01+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:45:54+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 4fb915159b72413def3b8281504371b027ab0381` exited with status 1 on this machine.\n            repo, gh, tmp_path, models, planning):\n        # Building stays on Sonnet. Planning follows grill rather than design, while diagnostic\n        # roles use Opus independently of obsolete review pins owned by the external reviewer.\n        top = repo.path\n        if models is None:\n            top, initialized = _fresh_client(repo, gh, tmp_path)\n            assert initialized.returncode == 0, initialized.stdout + initialized.stderr\n            settings = top / \"forge.toml\"\n            settings.write_text(settings.read_text(encoding=\"utf-8\").replace(\n                'workers = \"codex\"', 'workers = \"claude\"').replace(\n                'workers = \"split\"', 'workers = \"claude\"'), encoding=\"utf-8\")\n            result = repo.forge(\"sync\", cwd=top)\n        else:\n            repo.git(\"checkout\", \"-q\", \"-b\", \"fix/role-defaults\")\n            version = repo.forge(\"--version\").stdout.split()[-1]\n            repo.write(\"forge.toml\", f'version = \"{version}\"\\nworkers = \"claude\"\\n'\n                                    f'test = \"make check\"\\n{models}')\n            result = repo.forge(\"sync\")\n        assert result.returncode == 0, result.stdout + result.stderr\n\n        for name in (\"worker\", \"coder\", \"frontend\", \"tester\", \"refactorer\", \"explorer\"):\n>           assert _settings(top, name)[1] == (\"claude-sonnet-5-5\", \"xhigh\"), name\nE           AssertionError: explorer\nE           assert ('claude-haiku-5-5', 'high') == ('claude-sonnet-5-5', 'xhigh')\nE\nE             At index 0 diff: 'claude-haiku-5-5' != 'claude-sonnet-5-5'\nE             Use -v to get more diff\n\ntests/test_claude_subagent_defaults.py:71: AssertionError\n1 failed, 200 passed in 378.63s (0:06:18)",
   "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
   "worker": "codex"
 }
