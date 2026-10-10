@@ -172,3 +172,46 @@ def test_2_a_story_from_a_confirmed_spec_preserves_its_roadmap_and_read_context(
     assert "Next: forge task start SHOP/SAVE" in repo.forge("next").stdout
     assert (story / "docs/specs/baskets.md").read_text("utf-8") == spec
     assert repo.git("rev-parse", "main") == default
+
+
+def test_4_a_dependent_story_delivers_its_roadmap_entry_with_its_first_task(
+        client, claude_payload):
+    repo = client
+    roadmap = {"owner_note": "Keep the current backlog", "items": [
+        {"key": "TURN", "title": "Save turns", "order": 1, "status": "pending"},
+        {"key": "LATER", "title": "Later work", "order": 2, "status": "pending"}]}
+    _land(repo, {"plans/roadmap.json": json.dumps(roadmap)})
+    for key, plan in (("TURN", DOC), ("BASKET", DOC.replace(
+            "`tests/test_basket.py` | none |", "`tests/test_basket.py` | TURN/SAVE |"))):
+        story = new_story(repo, key)
+        patient(lambda: (story / f"plans/{key}.md").write_text(plan, "utf-8"))
+        read = repo.forge("read", key)
+        assert read.returncode == 0, read.stdout + read.stderr
+        approved = hook(repo, claude_plan(claude_payload, plan, cwd=story))
+        assert approved.returncode == 0, approved.stdout + approved.stderr
+
+    # The dependency lands newer backlog edits after the dependent story was planned.
+    started = repo.forge("task", "start", "TURN/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+    turn = worktree(repo, "task/TURN-SAVE")
+    roadmap["items"][1]["title"] = "Later work has changed"
+    roadmap["items"].append({"key": "FRESH", "title": "A newly found problem",
+                             "order": 9, "status": "pending"})
+    patient(lambda: (turn / "plans/roadmap.json").write_text(json.dumps(roadmap), "utf-8"))
+    repo.git("add", "-A", cwd=turn)
+    repo.git("commit", "-qm", "Keep the updated backlog", cwd=turn)
+    _merge_fixture(repo, turn, "task/TURN-SAVE")
+    assert json.loads((repo.path / "plans/roadmap.json").read_text("utf-8")) == roadmap
+
+    # Cross-story dependencies branch from main; copying only plan artifacts lost this entry.
+    started = repo.forge("task", "start", "BASKET/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+    basket = worktree(repo, "task/BASKET-SAVE")
+    delivered = json.loads((basket / "plans/roadmap.json").read_text("utf-8"))
+    assert delivered["owner_note"] == roadmap["owner_note"]
+    assert delivered["items"][:-1] == roadmap["items"]
+    assert delivered["items"][-1] == {"key": "BASKET", "title": "Shoppers can save a basket",
+                                       "status": "pending", "order": 10}
+    assert repo.git("status", "--porcelain", cwd=basket) == ""
+    _merge_fixture(repo, basket, "task/BASKET-SAVE")
+    assert json.loads((repo.path / "plans/roadmap.json").read_text("utf-8")) == delivered

@@ -136,6 +136,12 @@ def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[st
         # Copying files alone would lose the story's starter and approval after cleanup.
         git("update-ref", f"refs/tags/forge-plan/{branch}", carry[0], "", cwd=path)
         git("checkout", carry[0], "--", *carry[1], cwd=path)
+        key = item.split("/")[0]
+        entries = json.loads(show(carry[0], "plans/roadmap.json") or "{}").get("items", [])
+        entry = next((entry for entry in entries if entry["key"] == key), None)
+        if entry and key not in {entry["key"] for entry in repo.roadmap(path)}:
+            from forge import story
+            carry[1].extend(story.add_to_roadmap(path, [entry]))
         repo.commit_state(f"Bring in the approved plan from {carry[0]}", *carry[1], top=path)
     repo.commit_state(message, rel, top=path)
     publish_start(path, branch)

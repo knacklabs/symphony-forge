@@ -690,6 +690,7 @@ fix's folder:
 
 Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
+The entry travels with its tasks to the default branch, including tasks waiting on another story.
 Write the problem, today's workaround and its cost in the plan's Why; the title seeds that
 section. Run the story's one cold-read loop, then get its one approval. A story already linked
 to a confirmed spec keeps that link and follows the same story read and approval as before.
