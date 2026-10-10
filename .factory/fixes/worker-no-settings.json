@@ -1,0 +1,62 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-09T13:59:07+00:00",
+      "because": "A client worker repeatedly edited forge.toml temporarily mid-run to make forge test run an extra suite (2026-10-09)",
+      "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml and should report a needed settings change in their last message instead; command tests cover a refused worker commit, an allowed settings fix, and a coordinator commit outside a worker run, for a new repo and one adopted on an earlier release"
+    }
+  ],
+  "base": "58fd944d4d383807318db51b727e00fc15c810fa",
+  "branch": "fix/worker-no-settings",
+  "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml, not even temporarily, and that to run an extra suite they run its command directly alongside forge test; when a worker round ends with forge.toml changed but uncommitted, Forge restores it from the branch and says so in the round's hand-back, unless the Done-when names forge.toml; command tests cover a refused worker commit, an allowed settings fix, a coordinator commit outside a worker run, and a round that leaves forge.toml edited, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/githooks.py",
+    "src/forge/worker.py",
+    "tests/test_workers_leave_settings_to_coordinator.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5c4e52f583307125c0751b0ab252e64ddd78fe9a22c4026a700015f94117c7c0",
+    "changed": "181be2f64bd30602932c17f4d0b69042da94807910a56bd64359a34c86ec6e57",
+    "commit": "b7b5b3429c2098b106559ef2b38975565bd5fe7a",
+    "dismissals": [],
+    "findings": [],
+    "id": "0738d2a4-17eb-4fb4-9a41-92385c9fc134",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T12:58:57+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T17:11:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:42:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:27:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:36:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:40:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:23:36+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers sometimes edit forge.toml while building an unrelated task or fix (a client worker added a command to fast_test because a note mentioned it; earlier a worker moved the version pin), though forge.toml is the coordinator's to change, through a settings fix the owner asked for (reported by a client session, 2026-10-09)",
+  "worker": "codex"
+}
