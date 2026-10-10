@@ -237,20 +237,25 @@ def preserve_chats(top: Path) -> None:
             owner = trees.get(branch) if branch else next((tree for tree in trees.values()
                                                            if str(tree) == recorded), None)
             added = False
-            if owner is None and branch in refs:
-                owner = Path(temporary) / "item"
-                repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
-                added = True
             if owner is None and folder == "read" and not branch and (
                     top / "docs/specs" / f"{item}.md").is_file():
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
             if owner is None and folder == "read" and not branch:
-                matches = [tree for tree in trees.values()
+                matches = [name for name, tree in trees.items()
                            if (tree / "docs/specs" / f"{item}.md").is_file()
                            and (tree / "docs/specs" / f"{item}.read.md").is_file()]
+                matches += [name for name in sorted(refs - trees.keys())
+                            if name.startswith(("fix/", "forge/", "story/", "task/"))
+                            and story.show(top, name, f"docs/specs/{item}.md") is not None
+                            and story.show(top, name, f"docs/specs/{item}.read.md") is not None]
                 if len(matches) > 1:
                     repo.refuse(REFUSALS["chat_owner"], item=item)
-                owner = matches[0] if matches else None
+                branch = matches[0] if matches else ""
+                owner = trees.get(branch)
+            if owner is None and branch in refs:
+                owner = Path(temporary) / "item"
+                repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
+                added = True
             if owner is None:
                 continue
             try:

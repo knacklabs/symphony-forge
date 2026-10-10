@@ -723,7 +723,8 @@ def test_17_upgrade_recovers_previous_release_codex_chat_without_local_json(
 
 @pytest.mark.parametrize("family,change", [
     (family, change) for family in ("codex", "claude") for change in ("move", "recreate")
-] + [("codex", "log-only"), ("codex", "ambiguous")])
+] + [("codex", "log-only"), ("codex", "ambiguous"),
+     ("codex", "removed"), ("claude", "removed")])
 def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
         repo, monkeypatch, tmp_path, sdk_data, family, change):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted=True)
@@ -736,9 +737,12 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     spec.write_text(SPEC, encoding="utf-8")
     saved = repo.forge("spec", "save", "invoices", cwd=owner)
     assert saved.returncode == 0, saved.stdout + saved.stderr
-    reader.say("No findings.\n")
+    reader.say(f"1. {FIRST}\n" if change == "removed" else "No findings.\n")
     _old_round(repo, tmp_path, owner, "read", "invoices")
     first = _reader_chat(reader)
+    if change == "removed":
+        repo.git("add", "docs/specs/invoices.read.md", cwd=owner)
+        repo.git("commit", "-qm", "Keep earlier reader findings", cwd=owner)
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
         repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
     relocated = tmp_path / "relocated spec owner with spaces"
@@ -746,7 +750,8 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
         repo.git("worktree", "move", str(owner), str(relocated))
     else:
         repo.git("worktree", "remove", str(owner))
-        repo.git("worktree", "add", "-q", str(relocated), branch)
+        if change != "removed":
+            repo.git("worktree", "add", "-q", str(relocated), branch)
     if change == "log-only":
         (repo.path / ".git/forge/threads/read/invoices.json").unlink()
     assert not (repo.path / "docs/specs/invoices.md").exists()
@@ -766,6 +771,12 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     else:
         _sync_elsewhere(repo, tmp_path)
     shutil.rmtree(repo.path / ".git/forge")
+    if change == "removed":
+        repo.git("worktree", "add", "-q", str(relocated), branch)
+        notes = relocated / "docs/specs/invoices.read.md"
+        text = notes.read_text("utf-8")
+        notes.write_text(text.replace(FIRST, FIRST + "\n   Disposition: cut"), encoding="utf-8")
+        reader.say("No findings.\n")
     read = repo.forge("read", "invoices", cwd=relocated)
     assert read.returncode == 0, read.stdout + read.stderr
     assert "Starting a new" not in read.stdout
