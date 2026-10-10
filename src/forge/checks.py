@@ -39,6 +39,11 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
                 result["outcome"] = "failed"
             result["reason"] = str(error).split("\n", 1)[0]
             raise
+        except KeyboardInterrupt:
+            if result["state"] in ("queued", "running"):
+                result["outcome"] = "gave_up_" + result["state"]
+            result["reason"] = "Interrupted by Ctrl-C."
+            raise
         finally:
             repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
