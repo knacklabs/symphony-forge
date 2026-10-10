@@ -1145,6 +1145,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips touched NestJS end-to-end test files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 287,
+      "text": "Not done: Close still runs the full client test command locally",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -1816,6 +1838,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1823,6 +1856,17 @@
       "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
       "from": "blocking",
       "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 167,
+      "text": "Not done: forge read does not give the split message on a later read",
+      "from": "blocking",
+      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     },
@@ -3730,6 +3774,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 338,
+      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "from": "worker",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
       "kind": "edge",
       "path": "src/forge/githooks.py",
@@ -4507,28 +4562,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 256,
-      "text": "New cold-read notes can be lost when a settled note repeats",
-      "from": "blocking",
-      "item": "settled-stays-settled",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 167,
-      "text": "Not done: forge read does not give the split message on a later read",
-      "from": "blocking",
-      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     }
