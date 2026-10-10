@@ -12,6 +12,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/settings.json\tAllowance does not match the version-only change\trelease-129",
+      "kind": "bug",
+      "path": ".claude/settings.json",
+      "line": 8,
+      "text": "Allowance does not match the version-only change",
+      "from": "blocking",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.codex/skills/forge/SKILL.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
+      "kind": "bug",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 623,
+      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
       "kind": "bug",
       "path": ".factory/fixes/board-spec.json",
@@ -448,61 +470,6 @@
       "text": "Preserve commit-status timestamps when adapting the GraphQL rollup",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/checks.py\tBound doctor's job-history requests\tqueued-not-stop",
-      "kind": "bug",
-      "path": "src/forge/checks.py",
-      "line": 109,
-      "text": "Bound doctor's job-history requests",
-      "from": "blocking",
-      "item": "queued-not-stop",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand\tqueued-not-stop",
-      "kind": "bug",
-      "path": "src/forge/checks.py",
-      "line": 141,
-      "text": "Ignore resolved attempts when detecting current runner demand",
-      "from": "blocking",
-      "item": "queued-not-stop",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks anything up\tqueued-not-stop",
-      "kind": "bug",
-      "path": "src/forge/checks.py",
-      "line": 121,
-      "text": "Not done: doctor detects a runner that never picks anything up",
-      "from": "blocking",
-      "item": "queued-not-stop",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks up jobs\tqueued-not-stop",
-      "kind": "bug",
-      "path": "src/forge/checks.py",
-      "line": 113,
-      "text": "Not done: doctor detects a runner that never picks up jobs",
-      "from": "blocking",
-      "item": "queued-not-stop",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/checks.py\tPreserve the history query through Windows command shims\tqueued-not-stop",
-      "kind": "bug",
-      "path": "src/forge/checks.py",
-      "line": 129,
-      "text": "Preserve the history query through Windows command shims",
-      "from": "blocking",
-      "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
     },
@@ -1596,13 +1563,13 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tqueued-not-stop",
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
-      "line": 86,
-      "text": "Standard: Delete before adding",
+      "line": 627,
+      "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
       "from": "blocking",
-      "item": "queued-not-stop",
+      "item": "skipped-templates",
       "status": "open",
       "closed_by": null
     },
@@ -1636,6 +1603,17 @@
       "text": "Not done: the item's round number on every timing record",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: unfinished merges with a conflicted forge.toml still produce a doctor hint\twork-during-merge",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 68,
+      "text": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint",
+      "from": "blocking",
+      "item": "work-during-merge",
       "status": "open",
       "closed_by": null
     },
@@ -1812,6 +1790,17 @@
       "text": "The process-cleanup test exceeds its timeout on the default branch too.",
       "from": "worker",
       "item": "windows-ci-jobs-keep-failing-with-permis",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tLinux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 337,
+      "text": "Linux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "from": "worker",
+      "item": "work-during-merge",
       "status": "open",
       "closed_by": null
     },
@@ -2032,6 +2021,28 @@
       "text": "Not done: launcher routing and generated-runtime exclusion proofs",
       "from": "blocking",
       "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
+      "kind": "bug",
+      "path": "tests/test_installers_explain_docker_start.py",
+      "line": 53,
+      "text": "Not done: test_5_installers_check_docker_engine_and_explain_starting_desktop on Windows",
+      "from": "blocking",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_installers_explain_docker_start.py\tNot done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows\tskipped-templates",
+      "kind": "bug",
+      "path": "tests/test_installers_explain_docker_start.py",
+      "line": 26,
+      "text": "Not done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows",
+      "from": "blocking",
+      "item": "skipped-templates",
       "status": "open",
       "closed_by": null
     },
@@ -2388,6 +2399,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-129",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "tests/test_review_record_reuses_parent_tests.py",
@@ -2703,17 +2725,6 @@
       "text": "Diagnose queued checks outside the configured check names",
       "from": "review",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand",
-      "kind": "edge",
-      "path": "src/forge/checks.py",
-      "line": 141,
-      "text": "Ignore resolved attempts when detecting current runner demand",
-      "from": "review",
-      "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
     },
@@ -3488,6 +3499,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/templates/skill.md\tInclude scoped packages in the recursive Yarn refresh",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 623,
+      "text": "Include scoped packages in the recursive Yarn refresh",
+      "from": "review",
+      "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
       "kind": "edge",
       "path": "src/forge/templates/skill.md",
@@ -3506,6 +3528,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tCheck for a pending merge before parsing a conflicted forge.toml",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 68,
+      "text": "Check for a pending merge before parsing a conflicted forge.toml",
+      "from": "review",
+      "item": "work-during-merge",
       "status": "open",
       "closed_by": null
     },
@@ -3598,6 +3631,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tCI container setup can fail when Docker Hub limits unauthenticated pulls.",
+      "kind": "edge",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "CI container setup can fail when Docker Hub limits unauthenticated pulls.",
+      "from": "worker",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_lanes_tests.py\tKill the Forge interpreter rather than its Windows launcher",
       "kind": "edge",
       "path": "tests/test_lanes_tests.py",
@@ -3642,6 +3686,28 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.claude/settings.json\tGenerated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
+      "kind": "improve",
+      "path": ".claude/settings.json",
+      "line": 8,
+      "text": "Generated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
+      "from": "worker",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.claude/skills/forge/SKILL.md\tBoth generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 167,
+      "text": "Both generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
+      "from": "worker",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
       "kind": "improve",
       "path": ".codex/skills/forge/SKILL.md",
@@ -3671,6 +3737,17 @@
       "text": "Checked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
       "from": "worker",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 56,
+      "text": "The baseline generated guides omit existing merge guidance from their source template; this unrelated drift was left unchanged.",
+      "from": "worker",
+      "item": "skipped-templates",
       "status": "open",
       "closed_by": null
     },
@@ -3719,90 +3796,79 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/worker.py\tNot done: unfinished merges with a conflicted forge.toml still produce a doctor hint\twork-during-merge",
+      "key": "bug\tsrc/forge/checks.py\tBound doctor's job-history requests\tqueued-not-stop",
       "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 68,
-      "text": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint",
+      "path": "src/forge/checks.py",
+      "line": 109,
+      "text": "Bound doctor's job-history requests",
       "from": "blocking",
-      "item": "work-during-merge",
+      "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_codex_resume.py\tLinux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "key": "bug\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand\tqueued-not-stop",
       "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 337,
-      "text": "Linux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
-      "from": "worker",
-      "item": "work-during-merge",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
+      "from": "blocking",
+      "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/worker.py\tCheck for a pending merge before parsing a conflicted forge.toml",
+      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks anything up\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 121,
+      "text": "Not done: doctor detects a runner that never picks anything up",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks up jobs\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 113,
+      "text": "Not done: doctor detects a runner that never picks up jobs",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tPreserve the history query through Windows command shims\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 129,
+      "text": "Preserve the history query through Windows command shims",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 86,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand",
       "kind": "edge",
-      "path": "src/forge/worker.py",
-      "line": 68,
-      "text": "Check for a pending merge before parsing a conflicted forge.toml",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
       "from": "review",
-      "item": "work-during-merge",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tCI container setup can fail when Docker Hub limits unauthenticated pulls.",
-      "kind": "edge",
-      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
-      "line": 34,
-      "text": "CI container setup can fail when Docker Hub limits unauthenticated pulls.",
-      "from": "worker",
-      "item": "work-during-merge",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.claude/settings.json\tAllowance does not match the version-only change\trelease-129",
-      "kind": "bug",
-      "path": ".claude/settings.json",
-      "line": 8,
-      "text": "Allowance does not match the version-only change",
-      "from": "blocking",
-      "item": "release-129",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-129",
-      "kind": "bug",
-      "path": "tests/test_release_version.py",
-      "line": 12,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "release-129",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.claude/settings.json\tGenerated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
-      "kind": "improve",
-      "path": ".claude/settings.json",
-      "line": 8,
-      "text": "Generated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
-      "from": "worker",
-      "item": "release-129",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.claude/skills/forge/SKILL.md\tBoth generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
-      "kind": "improve",
-      "path": ".claude/skills/forge/SKILL.md",
-      "line": 167,
-      "text": "Both generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
-      "from": "worker",
-      "item": "release-129",
+      "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
     }
