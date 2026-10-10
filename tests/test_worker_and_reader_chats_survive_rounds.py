@@ -622,8 +622,9 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert _reader_chat(reader, resumed=True) == first
 
 
+@pytest.mark.parametrize("erase_metadata", [False, True], ids=["retained-record", "lost-record"])
 def test_14_failed_previous_release_codex_reader_keeps_its_logged_chat(
-        repo, monkeypatch, tmp_path, sdk_data):
+        repo, monkeypatch, tmp_path, sdk_data, erase_metadata):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted=True)
     reader.fail(True)
     failed = _old_round(repo, tmp_path, reader.shop, "read", "SHOP", expect_success=False)
@@ -632,7 +633,8 @@ def test_14_failed_previous_release_codex_reader_keeps_its_logged_chat(
     record = repo.path / ".git/forge/threads/read/SHOP.json"
     assert json.loads(record.read_text("utf-8"))["conversation"] is None
     _sync_elsewhere(repo, tmp_path)
-    shutil.rmtree(repo.path / ".git/forge")
+    if erase_metadata:
+        shutil.rmtree(repo.path / ".git/forge")
     reader.fail(False)
     said = reader.ok()
     assert "Starting a new" not in said

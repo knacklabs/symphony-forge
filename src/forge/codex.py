@@ -188,6 +188,9 @@ def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
             saved.update({key: logged[key] for key in ("conversation", "claude", "head")
                          if logged.get(key)})
             saved["start"] = logged.get("start") or repo.git("rev-parse", "HEAD", cwd=checkout)
+    if kind == "Grill" and not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
+        # Earlier readers cleared their local identities on failure; notes retain the binding.
+        saved.update({key: value for key, value in chat.items() if value})
     return {**chat, **saved}
 
 
