@@ -236,7 +236,10 @@ details. The pull request's short **How it went** section comes from the same lo
 earlier findings after later reviews. Forge keeps the pull request body in an agent squash
 merge; when the human merges, keep this section in the squash commit body too. New repos get
 this guide and the recording behaviour at init; previously adopted repos get them on upgrade
-and sync. Their earlier unrecorded history remains unknown.
+and sync. Their earlier unrecorded history remains unknown. If a fresh clone or missing local
+logs cannot reconstruct already published measurements, How it went retains them and shows
+the current checkout's observations separately. Quote each snapshot separately; do not add
+their totals, because their intervals may overlap.
 
 Live rows add `activity` (status and a running action), `idle_since` and `stalled`
 after 24 idle hours. A recorded worker adds tool, model, effort, round, start,

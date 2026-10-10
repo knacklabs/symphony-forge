@@ -83,11 +83,9 @@ def merge(args: argparse.Namespace) -> int:
         completion = ["--body-file", "-"]
         body = pr.get("body") or ""
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
-        history = time_records.how_it_went(top, item, item_state)
-        history_section = re.compile(
-            r"## How it went\n.*?(?=\n(?:## |Proof list:|Functional check:|<!-- forge:end -->)|\Z)", re.S)
+        history = time_records.how_it_went(top, item, item_state, body)
         def refresh_history(block: re.Match[str]) -> str:
-            text, count = history_section.subn(lambda _: history + "\n", block[0], count=1)
+            text, count = time_records.HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
             return text if count else text.replace(close.END, "\n" + history + "\n" + close.END, 1)
         body = re.sub(re.escape(close.BEGIN) + ".*?" + re.escape(close.END),
                       refresh_history, body, count=1, flags=re.S)

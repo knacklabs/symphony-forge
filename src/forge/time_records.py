@@ -1,5 +1,7 @@
 """An item's elapsed time and review history, derived from its existing diagnostic logs."""
 import json
+import hashlib
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -10,6 +12,13 @@ CATEGORIES = ("building", "own_tests", "reviewing", "fixing_findings", "waiting_
               "waiting_in_line", "waiting_for_owner", "nothing_running")
 LABELS = ("building", "own tests", "reviewing", "fixing findings", "waiting for CI",
           "waiting in line", "waiting for the owner", "nothing running")
+HISTORY_SECTION = re.compile(
+    r"## How it went\n.*?(?=\n(?:## |Proof list:|Functional check:|<!-- forge:end -->)|\Z)", re.S)
+RESUMED = "<!-- forge:history-resumed -->"
+
+
+def checkpoint(rows: list[dict[str, Any]]) -> list[Any]:
+    return [len(rows), hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()]
 
 
 def read(top: Path, name: str) -> list[dict[str, Any]]:
@@ -284,8 +293,36 @@ def item(top: Path, key: str, state: dict[str, Any], *,
             "total_seconds": round((end - start).total_seconds(), 3) if start and end and end >= start else None}
 
 
-def how_it_went(top: Path, key: str, state: dict[str, Any]) -> str:
-    data = item(top, key, state)
+def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "") -> str:
+    records = {name: [row for row in read(top, name) if row.get("item") == key]
+               for name in ("events", "timings")}
+    data = item(top, key, state, **records)
     times = "; ".join(f"{label}: {duration(data['time_breakdown'][category])}"
                       for category, label in zip(CATEGORIES, LABELS))
-    return "## How it went\n\n" + times + "\n\n" + "\n".join(r["line"] for r in data["rounds"])
+    current = times + "\n\n" + "\n".join(r["line"] for r in data["rounds"])
+    managed = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", published, re.S)
+    previous = HISTORY_SECTION.search(managed[0]) if managed else None
+    retained = ""
+    if previous:
+        text = previous[0].removeprefix("## How it went\n").strip()
+        marker = re.search(r"\n<!-- forge:history (\{.*\}) -->\s*$", text)
+        complete = False
+        if marker:
+            try:
+                saved = json.loads(marker[1])
+                complete = all(isinstance(saved[name][0], int) and saved[name][0] >= 0
+                               and checkpoint(records[name][:saved[name][0]]) == saved[name]
+                               for name in records)
+            except (ValueError, KeyError, TypeError, IndexError):
+                pass
+            text = text[:marker.start()].rstrip()
+        # Old rendered totals have no interval boundaries: retain them, never add them.
+        retained = text.rsplit(RESUMED, 1)[0].rstrip() if complete else text
+        if complete and RESUMED not in text:
+            retained = ""
+    if retained:
+        current = (retained + "\n\n" + RESUMED + "\n\n"
+                   "Observed after resuming in this checkout (totals are separate from the "
+                   "published measurements above):\n\n" + current)
+    saved = {name: checkpoint(rows) for name, rows in records.items()}
+    return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->"

@@ -602,7 +602,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     """Open the pull request, or refresh its contract and Forge's block. While the review is
     blocked, the pull request is a draft."""
     check, proof = evidence
-    history = time_records.how_it_went(top, item, state)
+    history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
