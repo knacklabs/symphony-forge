@@ -73,14 +73,26 @@ def dependencies(stories: list[dict]) -> str:
             + _svg("Roadmap dependencies", ". ".join(descriptions), height, ''.join(drawing)))
 
 
-def _duration(seconds: float | None) -> str:
+def duration(seconds: float | None) -> str:
     if seconds is None:
         return "unknown"
-    hours, remainder = divmod(seconds, 3600)
+    days, remainder = divmod(seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
     minutes, seconds = divmod(remainder, 60)
-    values = [(hours, "hour"), (minutes, "minute"), (seconds, "second")]
+    values = [(days, "day"), (hours, "hour"), (minutes, "minute"), (seconds, "second")]
     return " ".join(f'{value:g} {unit}{"" if value == 1 else "s"}'
                     for value, unit in values if value) or "0 seconds"
+
+
+def stage_seconds(stage: dict) -> float | None:
+    seconds = stage.get("seconds")
+    if stage.get("status") == "running" and stage.get("elapsed") is not None:
+        seconds = (seconds or 0) + stage["elapsed"]
+    return seconds
+
+
+def stage_duration(stage: dict) -> str:
+    return duration(stage_seconds(stage))
 
 
 def timeline(item: dict) -> str:
@@ -92,15 +104,15 @@ def timeline(item: dict) -> str:
     if current is None:
         current = {"working": "Build", "fixing": "Build", "started": "Build", "reviewing": "Review",
                    "waiting for checks": "CI", "checks failed": "CI", "ready": "Merge"}.get(item["stage"])
-    largest = max((s["seconds"] or 0 for s in stages), default=0)
+    largest = max((stage_seconds(s) or 0 for s in stages), default=0)
     drawing, descriptions = [], []
     for index, stage in enumerate(stages):
-        name, seconds = stage["name"], stage["seconds"]
-        duration = _duration(seconds)
-        label = name + ": " + duration + ("; current" if name == current else "")
+        name, seconds = stage["name"], stage_seconds(stage)
+        shown = stage_duration(stage)
+        label = name + ": " + shown + ("; current" if name == current else "")
         descriptions.append(label)
         y = index * 78
-        text = wrap(duration, 32)
+        text = wrap(shown, 32)
         drawing.append(f'<g class="stage-row" transform="translate(0 {y})"><title>{escape(label)}</title>'
                        f'<text x="0" y="18">{escape("Checks" if name == "CI" else name)}'
                        f'{" — current" if name == current else ""}</text>'
