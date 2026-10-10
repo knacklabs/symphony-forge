@@ -3,12 +3,14 @@
   "branch": "fix/review-alongside-tests",
   "done_when": "Close starts the review at the same time as its tests, so a round takes about as long as the slower of the two; a red test or a P0/P1 finding still stops the round, and both results are reported together. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T15:16:47+00:00",
       "step": "start"
     }
   ],
-  "why": "Close waits for tests to finish before it starts the review"
+  "why": "Close waits for tests to finish before it starts the review",
+  "worker": "codex"
 }
