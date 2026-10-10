@@ -1,0 +1,14 @@
+{
+  "base": "b72357514af01e024b15be89ab7b60712c93a649",
+  "branch": "fix/ci-six-groups",
+  "done_when": "Pull request runs split the Linux tests into 6 groups instead of 3, so each group finishes well inside the job limit; nothing else in the workflow changes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T12:49:49+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Pull request test runs on Linux now take 10 minutes per group and GitHub cancels them at its 10-minute limit while still passing, so fixes stop with failed checks"
+}
