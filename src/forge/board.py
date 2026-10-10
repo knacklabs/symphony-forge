@@ -528,7 +528,9 @@ def machine_board(top: Path, history: Item | None = None,
         elif match["task"]:
             key, tid = match["key"], match["task"]
             plan_where = trees.get(f"story/{key}") or best.get(repo.state_path(key), ({}, where))[1]
-            names = task.rows(task.sections(_read(top, plan_where, f"plans/{key}.md", history)))
+            text = (_read(top, plan_where, f"plans/{key}.md", history)
+                    if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+            names = task.rows(task.sections(text))
             names = {cell.strip("` "): spec for cell, spec in names.items()}
             title = (names.get(tid) or {}).get("Name") or "A part with no name yet"
             children.setdefault(key, []).append(row(f"{key}/{tid}", "task", title, state, where))

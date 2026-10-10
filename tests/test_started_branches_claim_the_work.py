@@ -239,8 +239,10 @@ def test_9_published_reassignment_reaches_teammate_commands_without_losing_local
     teammate.git("worktree", "add", "-q", str(local_plan), "story/SHOP")
     local_doc = local_plan / "plans/SHOP.md"
     local_doc.write_text(_developer_doc(show="local-page-dev") + "\nLocal builder note.\n", "utf-8")
-    # The lead changes another row after the teammate has a local branch and unsaved edits.
-    (plan / "plans/SHOP.md").write_text(_developer_doc(save="replacement-dev"), "utf-8")
+    # Published assignments and a started part's new name reach an older local plan.
+    published = _developer_doc(save="replacement-dev").replace(
+        "Show the saved time", "Show when the basket was saved")
+    (plan / "plans/SHOP.md").write_text(published, "utf-8")
     client.git("add", "plans/SHOP.md", cwd=plan)
     client.git("commit", "-qm", "Reassign the basket part", cwd=plan)
     client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
@@ -255,16 +257,23 @@ def test_9_published_reassignment_reaches_teammate_commands_without_losing_local
     assert "Next: forge task start SHOP/SAVE" in listing.stdout
     listing = teammate.forge("board", "--json")
     assert listing.returncode == 0, listing.stdout + listing.stderr
-    story = next(row for row in json.loads(listing.stdout)["items"] if row["id"] == "SHOP")
+    board = json.loads(listing.stdout)
+    story = next(row for row in board["items"] if row["id"] == "SHOP")
     parts = {row["id"]: row for row in story["children"]}
     assert parts["SHOP/SAVE"]["developer"] == "replacement-dev"
     assert parts["SHOP/SHOW"]["developer"] == "local-page-dev"
+    assert parts["SHOP/SHOW"]["title"] == "Show when the basket was saved"
+    dependency_map = next(row for row in board["dependency_maps"] if row["id"] == "SHOP")
+    assert next(row for row in dependency_map["parts"] if row["id"] == "SHOP/SHOW")[
+        "title"] == "Show when the basket was saved"
     page = teammate.forge("board")
     assert page.returncode == 0, page.stdout + page.stderr
     words = seen(teammate.path / ".git" / "forge" / "board.html")
     assert "Assigned to replacement-dev." in words, words
     assert "Assigned to local-page-dev." in words, words
     assert "Assigned to basket-dev." not in words, words
+    assert "Show when the basket was saved" in words, words
+    assert "Show the saved time" not in words, words
     gh.respond("api", "user", "--jq", ".login", stdout="another-dev\n")
     started = teammate.forge("task", "start", "SHOP/SAVE")
     assert started.returncode == 0, started.stdout + started.stderr
