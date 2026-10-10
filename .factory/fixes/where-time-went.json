@@ -5,6 +5,7 @@
   "done_when": "Forge records, in its existing event and timing logs (no new files), each review result's finding titles, severities and files, why each CI wait ended (passed, failed, or gave up while queued or running), and when an item joins and leaves a lane; one place outside board.py works out, per task and fix, where its time went (building, its own tests, reviewing, fixing findings, waiting for CI, waiting in line, waiting for the owner, nothing running) and one plain line per round (what the round did, how long each step took, and how many findings were new versus repeats of an earlier round's); forge board --json carries both per item, and its total no longer counts a worker's test runs twice or leaves out idle time; the pull request body gains a short 'How it went' section from the same data that survives the squash merge; the coordinator guide says how to read and quote them; unrecorded values show as unknown, never invented; command tests cover a looping item with a CI give-up, a lane wait, an owner wait and a repeat finding, for a new repo and one adopted on an earlier release",
   "flagged": [
     ".factory/fixes/where-time-went.json",
+    "src/forge/checks.py",
     "src/forge/machine.py",
     "src/forge/merge.py",
     "src/forge/review.py",
@@ -14,16 +15,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "401c189835a40ab7b34ce44d4355db5d5517e4e0f3211f06b5c8488f268dee46",
-    "changed": "29225bd6cf738c1cc05d11a0e7a29b51536d7154b7040de6a3636f4b348f5899",
-    "commit": "6dfd5c160ce7ecfebc72b6924c8f9c4574871b32",
+    "branch_diff": "102e814ab59ade36832356b58268c182a8afad8084531e4317ab6b0c6c127d14",
+    "changed": "4f27c02f9074d3b1b45d6f0461c07390978566395c06d45d4500cc80b4e666e6",
+    "commit": "c44e5677b7fb78a5ab5270bce4838f80395e133e",
     "dismissals": [],
-    "findings": [],
-    "id": "0ab19270-6328-4531-a940-7ca29c71ced7",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Functional. Pressing Ctrl-C during a minutes-long queued or running CI wait leaves `outcome=\"unknown\"`: this handler catches only `repo.Refused`, so `KeyboardInterrupt` reaches the final recorders without recording why the wait ended. The supported cancellation path in `src/forge/cli.py:170` then exits with 130. Consequently, both close and merge histories show `CI unknown` despite having observed the check state and the owner's deliberate cancellation. This particularly affects queued waits, which continuously renew their deadline (`checks.py:97\u201398`). The four-outcome command test covers deadline exhaustion, not this ordinary way of giving up.",
+        "file": "src/forge/checks.py",
+        "line": 37,
+        "priority": "P1",
+        "title": "Record deliberate CI cancellation as a give-up"
+      }
+    ],
+    "id": "39b2e094-e3f3-4036-bf63-92e141355c8e",
+    "status": "blocked"
   },
   "round": 10,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T11:28:56+00:00",
@@ -67,6 +76,10 @@
     },
     {
       "at": "2026-10-10T06:52:39.853235+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:07:03.196566+00:00",
       "step": "review"
     }
   ],
