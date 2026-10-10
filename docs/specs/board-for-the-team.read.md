@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-10T03:07:02+00:00
-read_hash: ee66620d08c255c7472cecf320be3f3a4515f77c
-round: 10
+read_at: 2026-10-10T03:44:48+00:00
+read_hash: f0f25bce4be841ab371d76e7b1f53aaa11530022
+round: 13
 passed: yes
-doc_seen: ee66620d08c255c7472cecf320be3f3a4515f77c
+doc_seen: f0f25bce4be841ab371d76e7b1f53aaa11530022
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 17d359d2b8a4d73e030854c3d77df798ad2156c6
+notes_seen: 228d50bf3945388cac5f44c0852ca0a9291df582
 ---
 # Cold read notes
 
@@ -134,5 +134,21 @@ No findings.
    Disposition: keep: behaviour 2 and criterion 7 now say parts waiting on each other in a loop share the earliest column they could otherwise take, labelled as waiting on each other.
 
 ## Round 10
+
+No findings.
+
+## Round 11
+
+22. Backfill has no publication rule for open items that have no pull request.
+    Raise: Plan gap. Behaviour 6 requires rebuilding every open item's history into its pull request; acceptance criterion 9 requires teammates to see it immediately after upgrade. A normally started task or fix has a pushed start commit but no pull request until close (`src/forge/task.py:126`, `src/forge/close.py:573`). The unknown-span rule handles missing evidence, but does not specify where available history is published when the required destination does not exist.
+   Disposition: keep: behaviour 6 and criterion 9 now say an open item with no pull request keeps its rebuilt story on the upgrading machine until its first close publishes it.
+
+## Round 12
+
+23. Disputed keep 22: another teammate's first close cannot publish history stored only on the upgrading machine.
+    Raise: Plan gap. Behaviour 6 keeps rebuilt history locally until first close. In normal team use, Alice upgrades while Bob has an open task without a pull request; Bob then closes it on his machine. No transfer or reconstruction rule gives Bob's close Alice's rebuilt history, so criterion 9's promised publication remains unspecified.
+   Disposition: keep: nothing is stored on the upgrading machine; an open item with no pull request is rebuilt from git and GitHub by its first close, on whichever machine runs it, so any teammate's close publishes it.
+
+## Round 13
 
 No findings.
