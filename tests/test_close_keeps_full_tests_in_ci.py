@@ -78,7 +78,7 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
     else:
         calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
         assert len(calls) == 1, calls
-        # Runner exclusions keep inherited roots or explicit test paths from bringing
+        # Runner file filters keep inherited roots or explicit test paths from bringing
         # the unrelated file back into the run. Verify the protocol, not flag ordering.
         prefix = (["exec", "--", node_runner] + (["run", "checks with spaces"] if node_runner == "vitest" else [
             "checks with spaces/unrelated.test.ts"])
@@ -87,16 +87,11 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
         arguments = calls[0][len(prefix):]
         if node_runner == "jest":
             arguments.remove("--runTestsByPath")
-            flag, expected = "--testPathIgnorePatterns", (
-                r"^(?!.*[/\\](?:checks\ with\ spaces[/\\]cart\ page\.spec\.ts|"
-                r"checks\ with\ spaces[/\\]cart\ page\.test\.ts|"
-                r"checks\ with\ spaces[/\\]changed\.spec\.ts)$)")
+            flag, suffix = "--filter", ".cjs"
         else:
-            flag, expected = "--exclude", (
-                "!(checks with spaces/cart page.spec.ts|checks with spaces/cart page.test.ts|"
-                "checks with spaces/changed.spec.ts|**/)")
+            flag, suffix = "--sequence.sequencer", ".mjs"
         index = arguments.index(flag)
-        assert arguments[index + 1] == expected
+        assert arguments[index + 1].endswith(suffix)
         del arguments[index:index + 2]
         assert sorted(arguments) == [
             "checks with spaces/cart page.spec.ts", "checks with spaces/cart page.test.ts",
@@ -189,7 +184,7 @@ def test_3_close_runs_source_named_and_touched_go_tests_with_the_shipped_default
 
 
 @pytest.mark.parametrize("runner", ["vitest", "jest"])
-@pytest.mark.parametrize("selected_count", [2, 120], ids=["small-change", "large-change"])
+@pytest.mark.parametrize("selected_count", [2, 250], ids=["small-change", "large-change"])
 def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_path, runner, selected_count):
     # The old command grew with every unrelated file. This transparent npm boundary
     # records transport size and delegates execution to the real installed runner.

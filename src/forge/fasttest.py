@@ -258,9 +258,9 @@ def close_tests(base: str) -> int:
                     for name in selected:
                         if Path(name).parent == directory and Path(name).name in active:
                             source = Path(name).read_text("utf-8")
-                            source = re.sub(r'//[^\n]*|/\*.*?\*/|`[^`]*`|"(?:\\.|[^"\\])*"',
-                                            "", source, flags=re.S)
-                            names += re.findall(r"^func\s+((?:Test|Example|Fuzz)\w*)\s*\(", source, re.M)
+                            source = re.sub(r'//[^\n]*|/\*.*?\*/|`[^`]*`|"(?:\\.|[^"\\])*"'
+                                            r"|'(?:\\.|[^'\\])*'", "", source, flags=re.S)
+                            names += re.findall(r"^\s*func\s+((?:Test|Example|Fuzz)\w*)\s*\(", source, re.M)
                     if names:
                         words = ["go", "test", "-v", "-run", "^(?:" + "|".join(names) + ")$", package]
                         commands.append(subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words))
@@ -281,14 +281,25 @@ def close_tests(base: str) -> int:
                     while batches:
                         batch = batches.pop(0)
                         arguments = batch
-                        if kind == "jest":
-                            pattern = r"^(?!.*[/\\](?:" + "|".join(
-                                re.escape(name).replace("/", r"[/\\]") for name in batch) + ")$)"
-                            arguments = ["--testPathIgnorePatterns", pattern] + batch
-                        elif kind == "vitest":
-                            pattern = "!(" + "|".join(re.sub(r"([*?\[\]{}()!+@|\\])", r"\\\1", name)
-                                                       for name in batch) + "|**/)"
-                            arguments = ["--exclude", pattern] + batch
+                        if kind in ("vitest", "jest"):
+                            selection = Path(folder) / (f"selection-{len(commands)}" + (
+                                ".mjs" if kind == "vitest" else ".cjs"))
+                            paths = json.dumps([Path(name).resolve().as_posix() for name in batch])
+                            if kind == "jest":
+                                selection.write_text("const {resolve} = require('node:path');\n"
+                                    "const selected = new Set(" + paths + ".map(p => resolve(p)));\n"
+                                    "module.exports = paths => ({filtered: paths.filter(p => selected.has(resolve(p)))});\n",
+                                    "utf-8")
+                                arguments = ["--filter", selection.as_posix()] + batch
+                            else:
+                                selection.write_text("import {resolve} from 'node:path';\n"
+                                    "import {createRequire} from 'node:module';\n"
+                                    "const {BaseSequencer} = await import(createRequire(process.argv[1]).resolve('vitest/node'));\n"
+                                    "const selected = new Set(" + paths + ".map(p => resolve(p)));\n"
+                                    "export default class extends BaseSequencer {\n"
+                                    "  async sort(specs) { return super.sort(specs.filter(s => selected.has(resolve(s.moduleId || s[1])))); }\n"
+                                    "}\n", "utf-8")
+                                arguments = ["--sequence.sequencer", selection.as_posix()] + batch
                         arguments = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
                         narrowed = part + passthrough + " " + arguments
                         # Leave room for npm's wrapper within Windows' shell limit.
