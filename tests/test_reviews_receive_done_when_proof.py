@@ -20,7 +20,6 @@ def flat(text):
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "sync-after-earlier-adoption"])
 def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypatch, adopted):
     log = install_claude(repo)
-    monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "1")
     version = repo.forge("--version").stdout.split()[-1]
     if adopted:
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
@@ -56,6 +55,8 @@ def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypat
         skill = flat((where / host / "skills/forge/SKILL.md").read_text("utf-8"))
         assert WORKER_RULE in skill
         assert REVIEW_RULE in skill
+    repo.git("add", "-A", cwd=where)
+    repo.git("commit", "-q", "-m", "Configure proof guidance", cwd=where)
     built = repo.forge("work", "check-proof-guidance", cwd=where)
     assert built.returncode == 0, built.stdout + built.stderr
     brief = flat(calls(log)[-1]["brief"])
