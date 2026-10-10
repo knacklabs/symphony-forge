@@ -1,11 +1,36 @@
 {
   "branch": "task/FORGE-TOOLS-1-SETTING",
+  "flagged": [
+    "docs/guide.md"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "124e3fa69e8e1431eb9fd663653313e6cf03ba03ab9b9dd6b418a586bcefc6a0",
+    "changed": "00a2d488494c94395af71d4a0a03a26629e3ff69d7904940f8ebe7bdb020bb45",
+    "commit": "28d4f22c1ab4676d56f75b651d07185b5dbff2d1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. The guide says a failed Claude design round with `tools = \"both\"` and `workers = \"split\"` falls back to Codex. But it also says a round on the coordinator's tool runs as a native subagent, and the recorded decision limits this fallback to Claude kit runs. When Claude Code coordinates that round, a failed native subagent will not trigger the promised Codex retry. This gives the coordinator the wrong recovery instruction for a normal split setup.",
+        "file": "docs/guide.md",
+        "line": 180,
+        "priority": "P1",
+        "title": "Not done: the guide describes the split design fallback correctly"
+      }
+    ],
+    "id": "81c63e05-1f07-45a7-87b7-e38c7da5bf0c",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T11:29:35.863096+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T14:16:30.523803+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
