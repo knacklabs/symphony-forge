@@ -216,6 +216,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
     assert len(calls) == 12
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
+    assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
     assert "Sign-off person" in options["--prompt"]
     assert "docs/product/BRIEF.md" in options["--prompt"]

@@ -77,7 +77,8 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
         **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
-    assert args[:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
+    # Omitted Claude entries now default to Sonnet at xhigh, rather than Opus at medium.
+    assert args[:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
     assert "gpt-6-nova" not in args
 
 

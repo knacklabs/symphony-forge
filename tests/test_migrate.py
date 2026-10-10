@@ -490,6 +490,7 @@ CASES = {
         and os.name == "nt",
         reason="making a symlink needs extra rights on Windows")) for name in CASES])
 def test_30_migrate(repo, gh, tmp_path, monkeypatch, case):
+    # Migration bootstraps shipped roles before a models table exists.
     monkeypatch.setenv("FORGE_NOW", "2026-09-25T12:00:00+00:00")
     _copied_client(repo, tmp_path, monkeypatch)
     CASES[case](repo, gh, tmp_path, monkeypatch)

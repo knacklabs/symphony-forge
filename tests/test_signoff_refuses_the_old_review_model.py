@@ -27,4 +27,7 @@ def test_2_the_skill_explains_autoreviews_defaults(env):
     synced = env.repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     skill = " ".join((env.repo.path / ".claude/skills/forge/SKILL.md").read_text("utf-8").split())
-    assert "Autoreview" in skill and "default model and effort" in skill
+    assert "Every normal, light and sign-off review" in skill
+    assert 'Claude when `tools = "claude"`, Codex when `tools = "codex"`' in skill
+    assert "Forge pins no review model or effort" in skill
+    assert "light review that blocks only on P0 findings" in skill

@@ -25,4 +25,5 @@ def test_2_signoff_review_uses_autoreviews_defaults(repo, tmp_path, monkeypatch)
     assert "status: accepted" in page.read_text()
     call = json.loads(queue.with_suffix(".calls.jsonl").read_text().splitlines()[-1])
     options = dict(zip(call["args"][::2], call["args"][1::2]))
+    assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options

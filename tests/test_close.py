@@ -457,7 +457,7 @@ def test_18_close(env, kind):
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
     env.repo.git("push", "-q", "origin", "main")
-    toml = env.repo.path / "forge.toml"  # the review kind's model and effort go to Autoreview
+    toml = env.repo.path / "forge.toml"  # legacy pins remain valid but Autoreview owns selection
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()

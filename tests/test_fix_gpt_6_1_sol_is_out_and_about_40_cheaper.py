@@ -1,4 +1,5 @@
-"""Workers, fixes, design and the cold reader default to GPT-6.1 Sol; Autoreview owns review defaults.
+"""Workers, fixes, design and the Codex cold reader use GPT-6.1 Sol.
+New review settings are left to Autoreview; existing repository settings remain unchanged.
 
 Sign-off defaults, the light prototype review and the SDK install are proven by their own tests:
 test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py, test_aha_review.py and test_codex_setup.py.
@@ -18,8 +19,8 @@ def test_1_forge_init_defaults_work_to_gpt_6_1_sol_and_leaves_reviews_to_autorev
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     models = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]
-    assert models["build"] == models["fix"] == {"model": NEW, "effort": "medium"}
-    assert models["lite"] == {"model": NEW, "effort": "medium", **HELPERS}
+    assert models["build"]["codex"] == models["fix"]["codex"] == {"model": NEW, "effort": "medium"}
+    assert models["lite"]["codex"] == {"model": NEW, "effort": "medium", **HELPERS}
     assert models["grill"]["codex"] == models["design"]["codex"] == {"model": NEW, "effort": "high"}
     assert "review" not in models
 

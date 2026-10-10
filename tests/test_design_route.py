@@ -30,7 +30,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     result = repo.forge("work", "BOARD/PAGE")
     assert result.returncode == 0, result.stdout + result.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "high"]
+    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
     assert call["cwd"] == str(folder)
     assert "| PAGE | The page |" in call["brief"]
     assert _sent(codex_log, "turn/start") == []
