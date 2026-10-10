@@ -89,7 +89,7 @@ def test_1_close_runs_only_touched_and_source_named_tests_and_red_ci_returns_the
             arguments.remove("--runTestsByPath")
             flag, suffix = "--filter", ".cjs"
         else:
-            flag, suffix = "--sequence.sequencer", ".mjs"
+            flag, suffix = "--config", ".mjs"
         index = arguments.index(flag)
         assert arguments[index + 1].endswith(suffix)
         del arguments[index:index + 2]
@@ -191,13 +191,17 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_pa
     npm = shutil.which("npm")
     assert npm, "The Node client regression requires npm."
     log = tmp_path / "npm-transport.jsonl"
+    output = tmp_path / "npm-output.txt"
     _install(env.repo.bin, "npm", f"#!{sys.executable}\n"
              "import json, os, subprocess, sys\nfrom pathlib import Path\n"
              f"with Path({json.dumps(str(log))}).open('a', encoding='utf-8') as out:\n"
              "    out.write(json.dumps(sys.argv[1:]) + '\\n')\n"
              f"words = [{json.dumps(npm)}, *sys.argv[1:]]\n"
-             "sys.exit(subprocess.run(subprocess.list2cmdline(words) if os.name == 'nt' else words, "
-             "shell=os.name == 'nt').returncode)\n")
+             "ran = subprocess.run(subprocess.list2cmdline(words) if os.name == 'nt' else words, "
+             "shell=os.name == 'nt', capture_output=True, text=True, encoding='utf-8')\n"
+             f"with Path({json.dumps(str(output))}).open('a', encoding='utf-8') as out:\n"
+             "    out.write(ran.stdout + ran.stderr)\n"
+             "print(ran.stdout, end='')\nprint(ran.stderr, end='', file=sys.stderr)\nsys.exit(ran.returncode)\n")
     root = "client tests with long names"
     receipts = tmp_path / "node-receipts"
     receipts.mkdir()
@@ -211,9 +215,12 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_pa
     env.repo.write("package.json", '{"name":"client","version":"1.0.0"}\n')
     env.repo.write("cart.js", "const value = 1;\n")
     if runner == "vitest":
-        env.repo.write("vitest.config.mjs", "export default { root: " + json.dumps(root) + " };\n")
+        config_file = "vitest.config.mjs" if selected_count == 2 else "client-vitest.config.mjs"
+        env.repo.write(config_file, "export default { root: " + json.dumps(root) + " };\n")
         command = ("npm exec --yes --package=vitest@3.2.4 -- vitest run " + json.dumps(root)
                    + " --globals --maxWorkers=1 --no-file-parallelism")
+        if selected_count > 2:
+            command += " --config=" + config_file
     else:
         command = ("npm exec --yes --package=jest@30.2.0 -- jest "
                    + json.dumps(f"{root}/unrelated-000.test.js") + " --runInBand")
@@ -230,10 +237,11 @@ def test_4_close_keeps_node_selection_within_the_windows_shell_limit(env, tmp_pa
 
     closed = env.close(item)
 
+    assert closed.returncode == 0, (closed.stdout + closed.stderr
+                                   + (output.read_text('utf-8') if output.exists() else ""))
     if log.exists():
         calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
         for arguments in calls:
             assert len(subprocess.list2cmdline([npm, *arguments])) < 8191, arguments
         assert len(calls) == 1 if selected_count == 2 else len(calls) > 1
-    assert closed.returncode == 0, closed.stdout + closed.stderr
     assert sorted(path.name for path in receipts.iterdir()) == sorted(selected)

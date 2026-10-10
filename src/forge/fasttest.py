@@ -292,14 +292,37 @@ def close_tests(base: str) -> int:
                                     "utf-8")
                                 arguments = ["--filter", selection.as_posix()] + batch
                             else:
-                                selection.write_text("import {resolve} from 'node:path';\n"
-                                    "import {createRequire} from 'node:module';\n"
-                                    "const {BaseSequencer} = await import(createRequire(process.argv[1]).resolve('vitest/node'));\n"
-                                    "const selected = new Set(" + paths + ".map(p => resolve(p)));\n"
-                                    "export default class extends BaseSequencer {\n"
-                                    "  async sort(specs) { return super.sort(specs.filter(s => selected.has(resolve(s.moduleId || s[1])))); }\n"
-                                    "}\n", "utf-8")
-                                arguments = ["--sequence.sequencer", selection.as_posix()] + batch
+                                selection.write_text("""import {resolve, dirname} from 'node:path';
+import {existsSync, realpathSync} from 'node:fs';
+import {createRequire} from 'node:module';
+const require = createRequire(process.argv[1]);
+const {BaseSequencer} = await import(require.resolve('vitest/node'));
+const {loadConfigFromFile} = await import(require.resolve('vite'));
+const selected = new Set(SELECTED.map(p => resolve(p)));
+export default async env => {
+  const args = process.argv.slice(2);
+  const values = flags => args.flatMap((arg, i) => flags.includes(arg) ? [args[i + 1]] :
+    flags.some(flag => arg.startsWith(flag + '=')) ? [arg.slice(arg.indexOf('=') + 1)] : []);
+  const root = resolve(values(['--root', '-r']).at(-1) || process.cwd());
+  let original = values(['--config', '-c']).map(p => resolve(root, p))
+    .filter(p => realpathSync(p) !== realpathSync(WRAPPER)).at(-1);
+  const names = ['vitest.config', 'vite.config'].flatMap(name =>
+    ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs'].map(ext => name + '.' + ext));
+  for (let dir = root; !original; dir = dirname(dir)) {
+    original = names.map(name => resolve(dir, name)).find(existsSync);
+    if (dir === dirname(dir)) break;
+  }
+  const config = original ? (await loadConfigFromFile(env, original, root)).config : {};
+  config.test ||= {};
+  config.test.sequence ||= {};
+  const Sequencer = config.test.sequence.sequencer || BaseSequencer;
+  config.test.sequence.sequencer = class extends Sequencer {
+    async sort(specs) { return super.sort(specs.filter(s => selected.has(resolve(s.moduleId || s[1])))); }
+  };
+  return config;
+};
+""".replace("WRAPPER", json.dumps(selection.as_posix()), 1).replace("SELECTED", paths, 1), "utf-8")
+                                arguments = ["--config", selection.as_posix()] + batch
                         arguments = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
                         narrowed = part + passthrough + " " + arguments
                         # Leave room for npm's wrapper within Windows' shell limit.
