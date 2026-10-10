@@ -247,10 +247,11 @@ def close(args: argparse.Namespace) -> int:
                     continue
                 finding = previous["findings"][number - 1]
                 dismissed[(finding["file"], finding["title"])] = dismissal
-            result["dismissals"] = [dict(dismissed[(finding["file"], finding["title"])],
+            carried = {d["finding"] for d in result.get("dismissals", [])}
+            result["dismissals"] = result.get("dismissals", []) + [dict(dismissed[(finding["file"], finding["title"])],
                                          finding=number)
                                     for number, finding in enumerate(result["findings"], 1)
-                                    if (finding["file"], finding["title"]) in dismissed]
+                                    if number not in carried and (finding["file"], finding["title"]) in dismissed]
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
             if outcome == "failed":
