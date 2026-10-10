@@ -610,7 +610,7 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
                pinned=f"v{pinned}", words=words)
     # Run the pinned release through uv instead, unless this already is that run (no loop).
     if shutil.which("uv") and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
-        advice = (f" Merge {default_branch(top)} into this branch to use Forge v{__version__} "
+        advice = (f" Merge origin/{default_branch(top)} into this branch to use Forge v{__version__} "
                   "and its rules." if _older(pinned) and landed == __version__
                   and landed_ref == f"origin/{default_branch(top)}"
                   and branch and branch != default_branch(top) else "")

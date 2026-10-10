@@ -152,7 +152,7 @@ def test_42_story_done(env, claude_payload, monkeypatch):
     assert seen["close"].stdout.splitlines()[-2:] == [
         "Every part of CART is merged.", 'Next: forge story done CART "<outcome>"']
     assert ("Every part of Shoppers can share a cart is merged; record its outcome.\n"
-            'Next: forge story done CART "<outcome sentence>"') in seen["next"]
+            'Next: git fetch origin, then forge story done CART "<outcome sentence>"') in seen["next"]
     # It retains outcome and date recording on the caller's existing correction branch.
     assert seen["done"].stdout.splitlines()[-1] == "Next: forge next"
     made = repo.git("log", "-1", "--format=%H", "--grep=Record the outcome", "fix/cart-done")
