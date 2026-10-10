@@ -39,31 +39,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bdf535e69944e0e6f2dd015206725da4d7882f4590938a204ae5d28a433f6bb0",
-    "changed": "1b3fb2d80db6587cd0504617f8d1d974ef928a1edb78079f3c31aaec56dbe3b5",
-    "commit": "5b718f41423b057f9f8395592d442031bc1df6dd",
+    "branch_diff": "d2e6795b57ed2a730a3ee816f0d7053160898b15779757161d893bec0f742a5c",
+    "changed": "68842cfa0c5c2112a1697d622f3a8abc08423cabce9a2aa902ad4d2336b7da91",
+    "commit": "39a77d8bc6187dc4036799a34510b3533759ca1f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate \u2014 The supplied proof list covers only the Yarn guide correction. It has no entries for the Done-when proof of Claude init defaults, synced role models, normal/light/sign-off review routing without model pins, or an earlier-adopted repo retaining its settings on upgrade. Those tests exist, but the list copied into the pull request omits their evidence.",
-        "file": "tests/test_claude_implementation_defaults.py",
-        "line": 20,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      },
-      {
-        "body": "Raise: Not done \u2014 The changed guide now includes `workers = \"claude\"` among the cases using the Claude design entry, then says a missing or early-failing Claude command falls back to Codex. In normal Claude-only use, `src/forge/worker.py:175\u2013179` explicitly permits that fallback only for split workers and instead propagates the failure. The delivered guide therefore gives Claude-only repos an incorrect recovery path. This is distinct from the earlier ruling about Codex-only user-facing routing.",
-        "file": "docs/guide.md",
-        "line": 167,
-        "priority": "P1",
-        "title": "Not done: Guide promises Codex fallback for Claude-only workers"
-      }
-    ],
-    "id": "07afeae8-e852-471f-bc42-409567be9f6f",
-    "status": "blocked"
+    "findings": [],
+    "id": "e2b07a41-639a-4ae1-8f95-c70602872d67",
+    "status": "clean"
   },
   "round": 8,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
@@ -95,6 +80,10 @@
     },
     {
       "at": "2026-10-10T05:48:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:46:31+00:00",
       "step": "review"
     }
   ],
