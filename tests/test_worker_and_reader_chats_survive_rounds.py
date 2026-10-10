@@ -332,6 +332,7 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
                 "Other resume errors stop the round and keep its chat.",
                 "Upgrade's sync commits earlier-release chat bindings in their owning work branches",
+                "without guessing the owner",
                 "Keep `.git/forge` until the upgrade finishes.",
                 "uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying."):
             assert sentence in " ".join(guide.split()), sentence
@@ -691,3 +692,95 @@ def test_15_previous_release_split_worker_keeps_last_successful_claude_chat(
     assert "Starting a new" not in said.stdout
     assert _chat(claude, "claude", resumed=True) == first
     assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1
+
+
+@pytest.mark.parametrize("kind", ["worker", "reader"])
+def test_17_upgrade_recovers_previous_release_codex_chat_without_local_json(
+        repo, monkeypatch, tmp_path, sdk_data, kind):
+    # The earlier release's turn log is the only remaining binding before sync.
+    if kind == "worker":
+        folder, item, log, record = _worker(repo, monkeypatch, sdk_data, "codex", "fix", adopted=True)
+        _old_round(repo, tmp_path, folder, "work", item)
+        first = _chat(log, "codex")
+    else:
+        reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted=True)
+        _old_round(repo, tmp_path, reader.shop, "read", "SHOP")
+        first = _reader_chat(reader)
+        log = reader.log
+        record = repo.path / ".git/forge/threads/read/SHOP.json"
+    record.unlink()
+    _sync_elsewhere(repo, tmp_path)
+    shutil.rmtree(repo.path / ".git/forge")
+    if kind == "worker":
+        said = _work(repo, item).stdout
+    else:
+        said = reader.ok()
+    assert "Starting a new" not in said
+    assert _chat(log, "codex", resumed=True) == first
+    assert _sent(log, "thread/resume")[-1]["threadId"] == first
+    assert len(_sent(log, "thread/start")) == 1
+
+
+@pytest.mark.parametrize("family,change", [
+    (family, change) for family in ("codex", "claude") for change in ("move", "recreate")
+] + [("codex", "log-only"), ("codex", "ambiguous")])
+def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
+        repo, monkeypatch, tmp_path, sdk_data, family, change):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted=True)
+    started = repo.forge("fix", "start", "Keep invoice plan", "--done", "The plan is read")
+    assert started.returncode == 0, started.stdout + started.stderr
+    branch = "fix/keep-invoice-plan"
+    owner = worktree(repo, branch)
+    spec = owner / "docs/specs/invoices.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text(SPEC, encoding="utf-8")
+    saved = repo.forge("spec", "save", "invoices", cwd=owner)
+    assert saved.returncode == 0, saved.stdout + saved.stderr
+    reader.say("No findings.\n")
+    _old_round(repo, tmp_path, owner, "read", "invoices")
+    first = _reader_chat(reader)
+    if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
+        repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
+    relocated = tmp_path / "relocated spec owner with spaces"
+    if change == "move":
+        repo.git("worktree", "move", str(owner), str(relocated))
+    else:
+        repo.git("worktree", "remove", str(owner))
+        repo.git("worktree", "add", "-q", str(relocated), branch)
+    if change == "log-only":
+        (repo.path / ".git/forge/threads/read/invoices.json").unlink()
+    assert not (repo.path / "docs/specs/invoices.md").exists()
+    if change == "ambiguous":
+        copied = tmp_path / "copied spec owner"
+        repo.git("worktree", "add", "-qb", "fix/copied-spec", str(copied), branch)
+        upgrade, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
+        assert refused.returncode == 1
+        assert refused.stderr.endswith(
+            "More than one worktree contains docs/specs/invoices.md, so sync cannot locate its earlier reader chat.\n"
+            "Next: run forge read invoices in its owning checkout, then forge sync\n")
+        selected = repo.forge("read", "invoices", cwd=relocated)
+        assert selected.returncode == 0, selected.stdout + selected.stderr
+        assert _reader_chat(reader, resumed=True) == first
+        synced = repo.forge("sync", cwd=upgrade)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+    else:
+        _sync_elsewhere(repo, tmp_path)
+    shutil.rmtree(repo.path / ".git/forge")
+    read = repo.forge("read", "invoices", cwd=relocated)
+    assert read.returncode == 0, read.stdout + read.stderr
+    assert "Starting a new" not in read.stdout
+    assert _reader_chat(reader, resumed=True) == first
+
+
+@pytest.mark.parametrize("family", ["codex", "claude"])
+def test_19_upgrade_preserves_previous_release_worker_on_forge_branch(
+        repo, monkeypatch, tmp_path, sdk_data, family):
+    folder, item, log, _ = _worker(repo, monkeypatch, sdk_data, family, "fix", adopted=True)
+    repo.git("branch", "-m", "forge/" + item, cwd=folder)
+    _old_round(repo, tmp_path, folder, "work", item)
+    first = _chat(log, family)
+    _sync_elsewhere(repo, tmp_path)
+    shutil.rmtree(repo.path / ".git/forge")
+    said = _work(repo, item)
+    assert "Starting a new" not in said.stdout
+    assert _chat(log, family, resumed=True) == first

@@ -72,6 +72,8 @@ FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
 REFUSALS = {
     "chat_dirty": ("The chat record at {path} has uncommitted changes, so sync left it alone.",
                    "commit or undo those changes, then forge sync"),
+    "chat_owner": ("More than one worktree contains docs/specs/{item}.md, so sync cannot locate its earlier reader chat.",
+                   "run forge read {item} in its owning checkout, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
                   "no Codex turn here.", "forge doctor"),
@@ -217,26 +219,38 @@ def preserve_chats(top: Path) -> None:
     threads = repo.forge_dir(top) / "threads"
     trees = {branch: tree for branch, tree in story.worktrees(top).items()
              if branch != repo.default_branch(top)}
+    refs = set(repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
     with tempfile.TemporaryDirectory(prefix="forge-chats-") as temporary:
-        for path in sorted(threads.rglob("*.json")):
+        for path in sorted({path.with_suffix(".json") for path in threads.rglob("*")
+                            if path.suffix in (".json", ".log")}):
             folder, item = path.relative_to(threads).as_posix().removesuffix(".json").split("/", 1)
             if folder not in ("fix", "task", "read"):
                 continue
             saved = _json(path)
             branch = (f"story/{item}" if folder == "read" and story.KEY.fullmatch(item) else
                       f"{folder}/{item.replace('/', '-')}" if folder != "read" else "")
+            if folder == "fix":
+                choices = [branch, f"forge/{item}"]
+                branch = next((name for name in choices if name in trees),
+                              next((name for name in choices if name in refs), branch))
             recorded = saved.get("checkout") or (saved.get("claude") or {}).get("checkout")
             owner = trees.get(branch) if branch else next((tree for tree in trees.values()
                                                            if str(tree) == recorded), None)
             added = False
-            if owner is None and branch and repo.run("git", "rev-parse", "--verify", "-q",
-                    f"refs/heads/{branch}", cwd=top).returncode == 0:
+            if owner is None and branch in refs:
                 owner = Path(temporary) / "item"
                 repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
                 added = True
             if owner is None and folder == "read" and not branch and (
                     top / "docs/specs" / f"{item}.md").is_file():
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
+            if owner is None and folder == "read" and not branch:
+                matches = [tree for tree in trees.values()
+                           if (tree / "docs/specs" / f"{item}.md").is_file()
+                           and (tree / "docs/specs" / f"{item}.read.md").is_file()]
+                if len(matches) > 1:
+                    repo.refuse(REFUSALS["chat_owner"], item=item)
+                owner = matches[0] if matches else None
             if owner is None:
                 continue
             try:
