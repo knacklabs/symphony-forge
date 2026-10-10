@@ -70,7 +70,8 @@ if args[:2] == ["pr", "merge"]:
         path = args[args.index("--body-file") + 1]
         message += "\\n\\n" + (sys.stdin.read() if path == "-" else
                                   pathlib.Path(path).read_text(encoding="utf-8"))
-    subprocess.run(["git", "-c", "user.name=GitHub Merger", "commit", "-q", "-m", message],
+    subprocess.run(["git", "-c", "user.name=GitHub Merger", "-c", "user.email=merger@example.test",
+                    "commit", "-q", "-m", message],
                    cwd=checkout, check=True)
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     marker.write_text(branch, encoding="utf-8")
@@ -119,17 +120,21 @@ def test_15_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     doc = DOC.replace("2. The basket page says when it was saved.\n", "")
     doc = "\n".join(line for line in doc.splitlines() if not line.startswith("| SHOW |")) + "\n"
     client.git("config", "user.name", "Original Story Starter")
+    client.git("config", "user.email", "story-starter@example.test")
     plan = _start(client, "story/SHOP", ("story", "new", "SHOP", "Shoppers can save a basket"),
                   rejected)
     (plan / "plans/SHOP.md").write_text(doc, "utf-8")
     read = client.forge("read", "SHOP")
     assert read.returncode == 0, read.stdout + read.stderr
     client.git("config", "user.name", "Plan Approver")
+    client.git("config", "user.email", "plan-approver@example.test")
     approved = hook(client, claude_plan(claude_payload, doc, cwd=plan))
     assert approved.returncode == 0, approved.stdout + approved.stderr
     client.git("config", "user.name", "Original Part Starter")
+    client.git("config", "user.email", "part-starter@example.test")
     part = _start(client, "task/SHOP-SAVE", ("task", "start", "SHOP/SAVE"), rejected)
     client.git("config", "user.name", "Later Contributor")
+    client.git("config", "user.email", "later-contributor@example.test")
     flow.commit(part, "src/basket.py", "saved = True\n", "Save the basket")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
     gh.respond("pr", "edit")
@@ -154,9 +159,11 @@ def test_15_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     _install(client.bin, "gh", GH_STUB.format(python=sys.executable))
     gh.respond("pr", "list", stdout="[]")
     client.git("config", "user.name", "Original Fix Starter")
+    client.git("config", "user.email", "fix-starter@example.test")
     fix = _start(client, "fix/greeting", ("fix", "start", "Readers see a greeting", "--done",
                                           "The greeting is visible", "--slug", "greeting"), rejected)
     client.git("config", "user.name", "Later Contributor")
+    client.git("config", "user.email", "later-contributor@example.test")
     flow.commit(fix, "greeting.txt", "Hello readers\n", "Greet readers")
     closed = client.forge("close", "greeting")
     assert closed.returncode == 0, closed.stdout + closed.stderr

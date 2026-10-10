@@ -86,12 +86,14 @@ def _observer(client, tmp_path):
 
 def _plan(client, claude_payload, key, doc, rejected=False):
     client.git("config", "user.name", "Original Story Starter")
+    client.git("config", "user.email", "story-starter@example.test")
     where = _start(client, f"story/{key}",
                    ("story", "new", key, "Shoppers can save a basket"), rejected)
     (where / "plans" / f"{key}.md").write_text(doc, "utf-8")
     read = client.forge("read", key)
     assert read.returncode == 0, read.stdout + read.stderr
     client.git("config", "user.name", "Plan Approver")
+    client.git("config", "user.email", "plan-approver@example.test")
     approved = hook(client, claude_plan(claude_payload, doc, cwd=where))
     assert approved.returncode == 0, approved.stdout + approved.stderr
     return where
@@ -112,6 +114,7 @@ def test_12_ownership_after_rejected_stacked_start_close_replay_and_cleanup(
                     "Parent is repaired", "--slug", "parent"), False)
     flow.commit(parent, "parent.txt", "Parent repaired\n", "Repair the parent")
     client.git("config", "user.name", "Original Followup Starter")
+    client.git("config", "user.email", "followup-starter@example.test")
     # This real start uses the parent's unmerged checkout; its publication is rejected.
     remote = client.git("remote", "get-url", "origin")
     reject = Path(remote) / "hooks/pre-receive"
@@ -128,6 +131,7 @@ def test_12_ownership_after_rejected_stacked_start_close_replay_and_cleanup(
     original_start = client.git("rev-parse", "fix/followup")
     assert client.git("ls-remote", "origin", "refs/tags/forge-start/fix/followup") == ""
     client.git("config", "user.name", "Later Contributor")
+    client.git("config", "user.email", "later-contributor@example.test")
     flow.commit(followup, "followup.txt", "Follow-up repaired\n", "Repair the follow-up")
     _finish(client, gh, tmp_path, "parent", "fix/parent")
     replayed = _finish(client, gh, tmp_path, "followup", "fix/followup")
@@ -156,8 +160,10 @@ def test_13_ownership_after_copied_plan_first_part_cleanup(
     plan = _plan(client, claude_payload, "CHECK", copied, rejected=True)
     assert client.git("ls-remote", "origin", "refs/tags/forge-start/story/CHECK") == ""
     client.git("config", "user.name", "Original Part Starter")
+    client.git("config", "user.email", "part-starter@example.test")
     part = _start(client, "task/CHECK-SAVE", ("task", "start", "CHECK/SAVE"), True)
     client.git("config", "user.name", "Later Contributor")
+    client.git("config", "user.email", "later-contributor@example.test")
     flow.commit(part, "src/checkout.py", "checkout = True\n", "Save the checkout")
     _finish(client, gh, tmp_path, "CHECK/SAVE", "task/CHECK-SAVE")
     _remove_plan(client, "CHECK", plan)
