@@ -1,5 +1,5 @@
 {
-  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, sync output and the tests that pin them",
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, sync output and the tests that pin them; close requires the generated host files (.claude/settings.json, .codex/hooks.json, both forge SKILL.md copies) to be exactly what forge sync writes for the new version, so they are refreshed here, carrying template changes already merged on main",
   "base": "4fb915159b72413def3b8281504371b027ab0381",
   "branch": "fix/release-129",
   "done_when": "Forge's version is 1.2.9 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, the plugin marketplace and plugin manifests, sync output and the tests that pin them).",
