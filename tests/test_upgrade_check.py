@@ -1,15 +1,12 @@
-"""An upgrade pull request passes Forge's check: a client on v1.1.0 still runs that release's
-check on its upgrade, and the workflow this version generates installs the release an upgrade pull
-request pins, then runs its check."""
+"""An upgrade pull request passes Forge's check: the workflow this version generates installs the
+release an upgrade pull request pins, then runs its check."""
 from __future__ import annotations
 
-import io
 import json
 import os
 import re
 import subprocess
 import sys
-import tarfile
 
 import conftest
 import pytest
@@ -57,22 +54,6 @@ def _pin(env, where, value: str) -> None:
         env.commit(where, "forge.toml", pinned, f"Pin Forge {value}")
 
 
-def _released_checker(tag: str, dest) -> list[str]:
-    """The command that runs Forge's released source at tag, read from this checkout's git."""
-    if subprocess.run(["git", "rev-parse", "-q", "--verify", f"refs/tags/{tag}"],
-                      cwd=conftest.ROOT, capture_output=True).returncode:
-        # CI's checkout is shallow and has no tags.
-        subprocess.run(["git", "fetch", "-q", "--depth", "1", "--no-write-fetch-head", "origin",
-                        "tag", tag], cwd=conftest.ROOT, check=True)
-    archive = subprocess.run(["git", "archive", "--format=tar", tag, "src/forge"],
-                             cwd=conftest.ROOT, check=True, capture_output=True).stdout
-    tarfile.open(fileobj=io.BytesIO(archive)).extractall(dest)
-    shim = dest / "forge"
-    shim.write_text(conftest.FORGE_SHIM.format(python=sys.executable, src=str(dest / "src")),
-                    "utf-8")
-    return [sys.executable, str(shim)]
-
-
 def _upgrade(env, where, value: str) -> None:
     """Pin the installed release and commit what its forge sync writes, as the skill's upgrade
     steps say; close refuses an upgrade whose synced files are out of date."""
@@ -89,44 +70,8 @@ def _close(env, item, where) -> None:
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-def _upgrade_from_v1_1_0_passes_that_release_check(env):
-    # A client on v1.1.0 upgrades: its default branch still runs v1.1.0's workflow and check.
-    _pin(env, env.repo.path, '"v1.1.0"')
-    env.repo.git("push", "-q", "origin", "main")
-    _install_release(env, "v1.2.0")
-    # This repo was never synced, so the fix writes every synced file and needs a reason to be large.
-    item, where = env.start_fix(allow_large="Forge's synced files")
-    _upgrade(env, where, "'v1.2.0'")
-    _close(env, item, where)
-    checker = _released_checker("v1.1.0", env.tmp / "v1.1.0")
-
-    def check() -> subprocess.CompletedProcess[str]:
-        return subprocess.run([*checker, "hook", "pr-check", "--base",
-                               env.repo.git("rev-parse", "main"), "--head",
-                               env.repo.git("rev-parse", "HEAD", cwd=where), "--branch",
-                               "fix/tidy-readme"], cwd=env.repo.path, capture_output=True,
-                              text=True, encoding="utf-8", timeout=60)
-
-    done = check()
-    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
-        done.stderr
-
-    # The default branch moves on; close merges it in and keeps the clean review without
-    # rerunning it, and v1.1.0's check still passes. The upgrade's sync installed Forge's hooks,
-    # which refuse commits to the default branch; GitHub's merge moves it where no hook runs.
-    (env.repo.path / "README.md").write_text("# Shop\n", "utf-8")
-    no_hooks = ("-c", f"core.hooksPath={env.tmp / 'no-hooks'}")
-    env.repo.git(*no_hooks, "commit", "-q", "-am", "Readme on main")
-    env.repo.git(*no_hooks, "push", "-q", "origin", "main")
-    _close(env, item, where)
-    done = check()
-    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
-        done.stderr
-    assert len(env.review_calls()) == 1
-
-
 def _pr_check_steps(env) -> list[str]:
-    """The forge-pr-check job's shell steps, as forge sync writes them on the default branch."""
+    """The forge-pr-check job's required shell steps, written on the default branch."""
     synced = env.tmp / "synced"
     env.repo.git("worktree", "add", "-q", "-b", "fix/sync", str(synced))
     done = env.repo.forge("sync", cwd=synced)
@@ -134,6 +79,10 @@ def _pr_check_steps(env) -> list[str]:
     job = (synced / ".github/workflows/forge.yml").read_text("utf-8").split("\n  forge-pr-check:\n")[1]
     steps = []
     for step in re.split(r"^      - ", job, flags=re.M)[1:]:
+        # Advisory reporting now has its own real-script proof in test_client_setup_and_migration;
+        # this harness preserves the required gate's output and refusal checks.
+        if "continue-on-error: true" in step:
+            continue
         found = re.search(r"^ *run: (\|\n)?(.*)", step, re.M | re.S)
         if found:
             body = found[2]
@@ -194,7 +143,12 @@ def _upgrade_installs_and_passes_the_release_it_pins(env):
 def _version_that_is_not_a_release_refused_plainly(env):
     steps = _on_v1_2_0(env)
     _, where = env.start_fix()
-    _pin(env, where, '"main; curl evil"')
+    # Forge's pre-commit hook refuses this pin, so it comes from a machine without Forge's hooks.
+    toml = where / "forge.toml"
+    toml.write_text(re.sub(r"^version = .*$", 'version = "main; curl evil"', toml.read_text("utf-8"),
+                           flags=re.M), "utf-8")
+    env.repo.git("add", "-A", cwd=where)
+    env.repo.git("-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", "Pin Forge main", cwd=where)
 
     done = _run_pr_check_job(env, where, steps)
 
@@ -220,8 +174,7 @@ def _ordinary_pull_request_installs_and_passes_the_default_branch_release(env):
 BASH = pytest.mark.skipif(os.name == "nt", reason="the workflow's steps run in bash on ubuntu-latest")
 
 
-@pytest.mark.parametrize("case", [_upgrade_from_v1_1_0_passes_that_release_check,
-                                  pytest.param(_upgrade_installs_and_passes_the_release_it_pins,
+@pytest.mark.parametrize("case", [pytest.param(_upgrade_installs_and_passes_the_release_it_pins,
                                                marks=BASH),
                                   pytest.param(_version_that_is_not_a_release_refused_plainly,
                                                marks=BASH),

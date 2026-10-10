@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
 with STUB_CLAUDE_EXIT (0 by default). With STUB_CLAUDE_LEAVE set, it writes that file in its folder
-and leaves it uncommitted. Like claude, it keeps each --session-id it starts, for its
+and leaves it uncommitted; with STUB_CLAUDE_COMMIT_FROM=<n>, from its nth call it commits
+everything in its folder, as a worker does. Like claude, it keeps each --session-id it starts, for its
 folder, in claude-sessions.json beside it, and refuses to --resume one it doesn't have there."""
 import io
 import json
@@ -10,9 +11,21 @@ import pathlib
 import sys
 
 here = pathlib.Path(__file__).resolve().parent
+args = sys.argv[1:]
+# Plugin maintenance and version queries do not start a model turn.
+if args == ["--version"]:
+    print("2.1.291 (Claude Code)")
+    sys.exit(0)
+if args[:1] == ["plugin"]:
+    if args == ["plugin", "marketplace", "list", "--json"]:
+        print(json.dumps([{"name": "forge", "source": {
+            "source": "github", "repo": "knacklabs/symphony-forge"}}]))
+    elif args == ["plugin", "list", "--json"]:
+        print(json.dumps([{"id": "forge@forge", "scope": "user", "enabled": True,
+                           "version": "1.2.6"}]))
+    sys.exit(0)
 # The brief arrives as UTF-8 whatever the console code page (Windows would read it as cp1252).
 brief = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
-args = sys.argv[1:]
 call = {"args": args, "cwd": os.getcwd(), "brief": brief}
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(call) + "\n")
@@ -28,5 +41,10 @@ if "--session-id" in args:
     store.write_text(json.dumps(sessions), encoding="utf-8")
 if os.environ.get("STUB_CLAUDE_LEAVE"):
     pathlib.Path(os.environ["STUB_CLAUDE_LEAVE"]).write_text("half done\n", encoding="utf-8")
+if len((here / "claude-calls.jsonl").read_text(encoding="utf-8").splitlines()) >= int(
+        os.environ.get("STUB_CLAUDE_COMMIT_FROM") or 0) > 0:
+    import subprocess
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
 print("stub claude: built it")
 sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))

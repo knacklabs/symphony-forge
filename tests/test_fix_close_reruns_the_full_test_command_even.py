@@ -7,7 +7,8 @@ import sys
 import time
 from pathlib import Path
 
-from test_close import CLEAN, FAILED, env  # noqa: F401
+from conftest import Repo
+from test_close import CLEAN, FAILED, Forge, env  # noqa: F401
 
 STORY = "FIX-CLOSE-RERUNS-THE-FULL-TEST-COMMAND-EVEN"
 
@@ -57,13 +58,13 @@ def test_1_close_skips_a_test_command_that_passed_on_the_same_committed_tree(env
 
 
 def test_2_close_reruns_a_test_command_that_failed_on_the_same_committed_tree(env):
+    # A failing test command stops close before the review, so each close here stops on it.
     log = _with_test_command(env)
     (env.tmp / "exit").write_text("1", "utf-8")
     item, _ = env.start_fix()
-    env.reviews(FAILED, FAILED, CLEAN)
     assert env.close(item).returncode != 0
     closed = env.close(item)
-    assert closed.returncode == 0, closed.stderr
+    assert closed.returncode != 0
     assert _runs(log) == ["start fix-tidy-readme", "end"] * 2
     assert "already passed" not in closed.stdout
 
@@ -78,17 +79,24 @@ def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
     log = _with_test_command(env)
     (env.tmp / "gated").touch()
     first, _ = env.start_fix()
-    second, _ = env.start("other-fix", "fix/other-fix", ".factory/fixes/other-fix.json",
-                          {"kind": "fix", "why": "Other", "done_when": "Other is done"},
-                          {"other.py": "x = 2\n"})
+    # The lane is machine-wide; independent repos also avoid concurrent pushes
+    # rewriting the same Git config while another close reads it on Windows.
+    other = env.tmp / "other repo"
+    env.repo.git("clone", "-q", "--no-hardlinks", str(env.repo.path), str(other))
+    env.repo.git("remote", "set-url", "origin", env.repo.git("remote", "get-url", "origin"),
+                 cwd=other)
+    other_env = Forge(Repo(other, env.repo.bin), env.gh, env.tmp)
+    second, _ = other_env.start("other-fix", "fix/other-fix", ".factory/fixes/other-fix.json",
+                                {"kind": "fix", "why": "Other", "done_when": "Other is done"},
+                                {"other.py": "x = 2\n"})
     one = _close(env, first)
     deadline = time.monotonic() + 30
     while _runs(log) != ["start fix-tidy-readme"]:  # the first close is inside its test run
         assert time.monotonic() < deadline and one.poll() is None, one.communicate()
         time.sleep(0.05)
-    two = _close(env, second)
+    two = _close(other_env, second)
     said = ""
-    while "waits for it" not in said:  # the second close says it waits before its run starts
+    while "waits its turn: it is number 1 in line." not in said:  # the second close says it waits before its run starts
         line = two.stdout.readline()
         assert line, two.communicate()
         said += line
@@ -97,7 +105,7 @@ def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
     out_one, out_two = one.communicate(timeout=60), two.communicate(timeout=60)
     assert one.returncode == 0 and two.returncode == 0, (out_one, out_two)
     assert _runs(log) == ["start fix-tidy-readme", "end", "start fix-other-fix", "end"]
-    assert "waits for it" not in out_one[0]
+    assert "waits its turn" not in out_one[0]
 
 
 def test_4_a_repeat_close_that_keeps_its_green_review_says_the_tests_already_passed(env):

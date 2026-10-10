@@ -68,6 +68,9 @@ def main():
             send(id=message["id"], result={"userAgent": "codex_app_server/0.159.2",
                                            "serverInfo": {"name": "codex", "version": "0.159.2"}})
             continue
+        if method in ("hooks/list", "model/list"):  # no pending hooks or model metadata here
+            send(id=message["id"], result={"data": []})
+            continue
         threads = json.loads(STORE.read_text("utf-8")) if STORE.exists() else {}
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"
         saved = threads.setdefault(id, {"cwd": params.get("cwd")}) \
@@ -113,6 +116,10 @@ import io, json, os, pathlib, sys
 here = pathlib.Path(__file__).resolve().parent
 prompt = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
 args = sys.argv[1:]
+if "--input-format" in args and args[args.index("--input-format") + 1] == "stream-json":
+    # Record the message Claude reads, not its JSON transport with escaped newlines.
+    prompt = next(event["message"]["content"] for event in map(json.loads, prompt.splitlines())
+                  if event["type"] == "user")
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps({"args": args, "cwd": os.getcwd(), "prompt": prompt}) + "\n")
 store = here / "claude-sessions.json"
@@ -228,6 +235,9 @@ def _setup(repo, monkeypatch, tmp_path, sdk_data, app: str) -> Reader:  # noqa: 
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     (tmp_path / "codex-home").mkdir()
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    ((tmp_path / "codex-home") / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     monkeypatch.setenv("FORGE_NOW", "2026-09-29T10:00:00+00:00")
     new_story(repo, "SHOP")
     reader = Reader(repo, monkeypatch, app)

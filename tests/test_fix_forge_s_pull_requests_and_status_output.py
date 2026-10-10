@@ -40,8 +40,9 @@ def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review
     env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
     assert env.close(item).returncode == (1 if blocked_review else 0)
     review = body(env.gh_calls("pr", "create")[-1]).split("<!-- forge:begin -->\n", 1)[1]
+    # A clean review now opens with one count line instead of "The review found no serious problems."
     verdict = ("The review found serious problems." if blocked_review
-               else "The review found no serious problems.")
+               else "Review: clean, 0 dismissed, 0 advice.")
     assert review.startswith(f"{verdict}\n")
     assert reviewed[:12] not in review
 
@@ -78,11 +79,14 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
                "headRefName,state,title,body,mergedAt,url", stdout=json.dumps([{
                    "headRefName": "fix/tidy-up", "state": "OPEN", "title": "Tidy up",
                    "url": "https://github.com/acme/shop/pull/7"}]))
-    gh.respond("pr", "list", "--state", "all", "--limit", "25", "--json",
-               "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup",
-               stdout=json.dumps([{"headRefName": "fix/tidy-up",
-                                   "statusCheckRollup": [{"name": "tests", "conclusion": "SUCCESS",
-                                                          "completedAt": "2026-09-27T10:00:00Z"}]}]))
+    # Open checks now come from the cached GraphQL query (FORGE-MOD-1), rather than
+    # the old latest-25-of-all-states request. Links and ready-to-merge remain required.
+    gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
+        "pullRequests": {"nodes": [{"headRefName": "fix/tidy-up", "commits": {
+            "nodes": [{"commit": {"statusCheckRollup": {"contexts": {"nodes": [
+                {"__typename": "CheckRun", "databaseId": 7, "name": "tests",
+                 "status": "COMPLETED", "conclusion": "SUCCESS",
+                 "completedAt": "2026-09-27T10:00:00Z"}]}}}}]}}]}}}}))
     gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
                "headRefName,state,title,body,mergedAt,files,statusCheckRollup", exit=1,
                stderr="GitHub timed out on the detailed bulk request")
@@ -93,10 +97,12 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in page
     assert "Ready to merge" in page
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
+    # SVG and text share the board snapshot; neither doubles the bulk requests.
     assert len(calls) == 2
+    assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
 
 
-def test_6_next_names_ready_pr_and_close_findings(repo, gh):
+def test_6_next_requires_a_close_receipt_and_names_findings(repo, gh):
     setup(repo)
     fix = repo.path.parent / "repo-fix-tidy-up"
     repo.git("worktree", "add", "-q", "-b", "fix/tidy-up", str(fix), "main")
@@ -108,7 +114,10 @@ def test_6_next_names_ready_pr_and_close_findings(repo, gh):
         "headRefName": "fix/tidy-up", "url": "https://github.com/acme/shop/pull/7"}]))
     result = repo.forge("next")
     assert result.returncode == 0, result.stderr
-    assert "ready to merge: https://github.com/acme/shop/pull/7" in result.stdout
+    # A saved ready label formerly granted readiness. The coordinator now requires
+    # a matching close receipt; successful close is exercised by test_7 below.
+    assert "The fix tidy-up is waiting for its checks.\nNext: forge close tidy-up" in result.stdout
+    assert "ready to merge" not in result.stdout
     state.write_text(json.dumps({"branch": "fix/tidy-up", "why": "Tidy up", "status": "fixing",
                                  "review": {"findings": [{"priority": "P1", "title": "Missing greeting"}],
                                             "dismissals": []}}))

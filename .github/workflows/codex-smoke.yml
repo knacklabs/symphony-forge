@@ -15,6 +15,10 @@ on:
       - tests/conftest.py
       - .github/workflows/codex-smoke.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+
 permissions:
   contents: read
 
@@ -24,6 +28,7 @@ jobs:
     timeout-minutes: 15
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      FORGE_LIVE_CODEX: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
@@ -37,4 +42,4 @@ jobs:
           python="$HOME/.local/share/forge/codex-sdk/openai-codex-0.159.2/bin/python"
           printenv OPENAI_API_KEY | "$("$python" -c 'import codex_cli_bin; print(codex_cli_bin.bundled_codex_path())')" login --with-api-key
       - if: env.OPENAI_API_KEY != ''
-        run: uv run --python 3.11 pytest tests/test_fix_codex_test_home.py -v -s
+        run: uv run --python 3.11 pytest tests/test_codex_smoke.py tests/test_fix_codex_test_home.py -v -s

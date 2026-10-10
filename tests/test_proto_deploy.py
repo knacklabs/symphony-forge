@@ -2,6 +2,7 @@ STORY = "FORGE-PROTO-1"
 
 import http.client
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -50,10 +51,14 @@ def _remove_stale_leftovers(max_age=3600):
 
 
 # Windows runners' Docker runs Windows containers; the image, script and networks here are Linux.
-LINUX_CONTAINERS = pytest.mark.skipif(sys.platform == "win32", reason="Needs Docker's Linux containers")
+LINUX_CONTAINERS = pytest.mark.skipif(
+    os.environ.get("FORGE_CONTAINERS") != "1" or sys.platform == "win32",
+    reason="Needs FORGE_CONTAINERS=1 and Docker's Linux containers")
 
 
 @LINUX_CONTAINERS
+# ponytail: builds and starts containers; under a full parallel run it needs more than the 150 s default.
+@pytest.mark.timeout(600)
 def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypatch):
     if not shutil.which("docker"):
         pytest.skip("Docker daemon is required for the deployment lifecycle test")

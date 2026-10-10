@@ -17,6 +17,8 @@ COMMANDS = [{
     "words": "init", "run": "init", "changes_state": False,
     "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
     "args": [(("--test",), {"help": "a repo with history: the test command CI runs"}),
+             (("--runner",), {"default": "ubuntu-latest",
+                              "help": "GitHub Actions runner label (default: ubuntu-latest)"}),
              (("--checks",), {"action": "append", "metavar": "CHECK",
                               "help": "a repo with history: a check branch protection requires"}),
              (("--interfaces",), {"action": "append", "metavar": "GLOB",
@@ -74,6 +76,16 @@ effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
+[models.explore.codex]
+model = "gpt-6.1-sol"
+effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
+
+[models.explore.claude]
+model = "claude-haiku-5-5"
+effort = "high"
+
 [models.grill.codex]
 model = "gpt-6.1-sol"
 effort = "high"
@@ -104,24 +116,27 @@ ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, c
 
 
 def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
-              merge: str = "") -> str:
+              merge: str = "", runner: str = "ubuntu-latest") -> str:
     return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
-            + (f'merge = "{merge}"\n' if merge else "") + 'workers = "codex"\n'
+            + (f'merge = "{merge}"\n' if merge else "") + 'workers = "split"\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(checks)}\n"
+            f"runner = {json.dumps(runner)}\n"
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
 
 
-def _scaffold(top: Path) -> dict[str, str]:
+def _scaffold(top: Path, runner: str = "ubuntu-latest") -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"
     test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
     return {
-        "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES),
+        "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES,
+                                runner=runner),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
-           for path in sorted(skeleton.rglob("*")) if path.is_file()},
+           for path in sorted(skeleton.rglob("*")) if path.is_file()
+           and (test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
         "plans/roadmap.json": ROADMAP,
     }
 
@@ -259,7 +274,7 @@ def init(args: argparse.Namespace) -> None:
         return _adopt(top, args)
     repo.check_pin(top)
     branch = repo.current_branch(top)
-    scaffold = _scaffold(top)
+    scaffold = _scaffold(top, args.runner)
     for rel, text in scaffold.items():
         if not (top / rel).exists():  # init never overwrites a file that is already there
             sync.write_file(top, rel, text)
@@ -295,7 +310,7 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["adopting"])
     # Forge's own check gates each pull request once Forge is on the default branch.
     checks = [*args.checks, *(["forge-pr-check"] if "forge-pr-check" not in args.checks else [])]
-    toml = _settings("live", args.test, checks, args.interfaces, merge="human")
+    toml = _settings("live", args.test, checks, args.interfaces, merge="human", runner=args.runner)
     cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]
     # Files sync merges into keep the team's lines; any other file Forge writes whole, so one
     # already there with other text is the team's, and adoption stops before changing anything.

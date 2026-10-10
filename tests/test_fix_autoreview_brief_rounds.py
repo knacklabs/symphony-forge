@@ -52,8 +52,8 @@ def test_4_edge_case_advice_is_next_to_blocking_rules(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0
     prompt = env.prompt()
-    blocking = prompt.split("## What blocks the merge", 1)[1].split("## Test audit", 1)[0]
-    assert blocking.index("an edge case the Done-when doesn't ask for") < blocking.index(
+    blocking = prompt.split("## What counts", 1)[1].split("## Test audit", 1)[0]
+    assert blocking.index("An edge case is inside the boundary only when") < blocking.index(
         "A `Not done` finding")
     assert "P2" in blocking
 

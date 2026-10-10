@@ -1,39 +1,92 @@
 name: forge-next
 
-# The new Forge's own suite (src/forge, tests/) on every platform Forge supports.
+# Full suite: Linux on pull requests, all platforms on main and release tags; Windows installer checks on every event.
 
 on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        # Windows runs the suite 2-3x slower than Linux, so it takes three runners, each a third of the tests,
-        # and twice the time limit.
-        include:
-          - {os: ubuntu-latest, group: 1, groups: 1, timeout: 10}
-          - {os: macos-latest, group: 1, groups: 2, timeout: 10}
-          - {os: macos-latest, group: 2, groups: 2, timeout: 10}
-          - {os: windows-latest, group: 1, groups: 3, timeout: 20}
-          - {os: windows-latest, group: 2, groups: 3, timeout: 20}
-          - {os: windows-latest, group: 3, groups: 3, timeout: 20}
-    runs-on: ${{ matrix.os }}
-    # Give the suite time to finish and pytest-timeout time to name a slow test.
-    timeout-minutes: ${{ matrix.timeout }}
+  windows-installers:
+    runs-on: windows-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
+      - run: uv run --frozen --python 3.11 pytest tests/test_installers_explain_docker_start.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+
+  plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global @anthropic-ai/claude-code@2.1.291
+      - uses: astral-sh/setup-uv@v6
+      - name: Check and reload the plugin through the repository test entry
+        run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+
+  tests:
+    env:
+      FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Slower platforms need more runners as the suite grows.
+        include: >-
+          ${{ github.event_name == 'pull_request' &&
+            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
+            {"os":"ubuntu-latest","group":2,"groups":3},
+            {"os":"ubuntu-latest","group":3,"groups":3}]') ||
+            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
+            {"os":"ubuntu-latest","group":2,"groups":3},
+            {"os":"ubuntu-latest","group":3,"groups":3},
+            {"os":"macos-latest","group":1,"groups":6},
+            {"os":"macos-latest","group":2,"groups":6},
+            {"os":"macos-latest","group":3,"groups":6},
+            {"os":"macos-latest","group":4,"groups":6},
+            {"os":"macos-latest","group":5,"groups":6},
+            {"os":"macos-latest","group":6,"groups":6},
+            {"os":"windows-latest","group":1,"groups":8},
+            {"os":"windows-latest","group":2,"groups":8},
+            {"os":"windows-latest","group":3,"groups":8},
+            {"os":"windows-latest","group":4,"groups":8},
+            {"os":"windows-latest","group":5,"groups":8},
+            {"os":"windows-latest","group":6,"groups":8},
+            {"os":"windows-latest","group":7,"groups":8},
+            {"os":"windows-latest","group":8,"groups":8}]') }}
+    runs-on: ${{ matrix.os }}
+    # Give the suite time to finish and pytest-timeout time to name a slow test.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: parent-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python .forge/review-tests.py
+      - uses: astral-sh/setup-uv@v6
+        if: steps.parent-tests.outputs.reuse != 'true'
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }}
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path .test_durations
+        if: steps.parent-tests.outputs.reuse != 'true'
 
   net-lines:
     if: github.event_name == 'pull_request'

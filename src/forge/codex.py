@@ -16,11 +16,11 @@ import signal
 import subprocess
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-from forge import repo, sync
+from forge import machine, repo, sync
 
 if os.name == "nt":
     import msvcrt
@@ -58,9 +58,24 @@ GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "n
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
              "subagents": "agents.default_subagent_model",
              "subagent_effort": "agents.default_subagent_reasoning_effort"}
+# Every Forge-owned thread stays quiet, regardless of user or project Codex settings.
+QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
+         "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
+# Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
+# leaves out included: the driver trusts a hook only when its whole definition is one of these.
+FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
+                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
+               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
 
 REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
+    "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
+                  "no Codex turn here.", "forge doctor"),
+    # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
+    "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
+             "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
+             "again.", ""),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
     "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",
@@ -106,7 +121,8 @@ def sdk_problem() -> str:
     if not installed():
         return f"The Codex SDK {SDK_PIN} isn't installed in {env}."
     done = repo.run(str(_python(env)), "-c", PROBE)
-    said = (done.stdout.strip() or done.stderr.strip() or "it printed nothing").splitlines()[-1]
+    said = (done.stdout.strip() or done.stderr.strip()
+            or f"it exited with status {done.returncode} without output").splitlines()[-1]
     if done.returncode or not GOOD.fullmatch(said):
         return f"The Codex SDK in {env} should be {WANTED}, but its Python says: {said}"
     return ""
@@ -130,12 +146,14 @@ def install() -> None:
 
 
 def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
-    """The kind's models from forge.toml, as the Codex settings its conversation starts with.
+    """The kind's models from forge.toml, as the Codex settings its conversation starts with; a
+    worker's (Build, Fix, Lite) fall back to Forge's default when forge.toml has none for Codex.
 
-    Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
+    Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
-    return {OVERRIDES[key]: value for key, value in repo.models(
-        cfg, "lite" if kind == "Ask" else kind.lower(), "codex").items()}
+    chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
+              else repo.models(cfg, "explore" if kind == "Ask" else kind.lower(), "codex"))
+    return {OVERRIDES[key]: value for key, value in chosen.items()}
 
 
 def installed() -> bool:
@@ -229,12 +247,22 @@ def recover(checkout: Path, item: str) -> None:
           "as lost.", flush=True)
 
 
+def require_trust(top: Path) -> None:
+    """Refuse unless the user's Codex config trusts the checkout or its main repo: in a project it
+    doesn't trust, Codex lists and runs no project hook, Forge's own included."""
+    from forge import doctor  # doctor imports codex
+    config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(REFUSALS["untrusted"])
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
         archive_thread: bool = False, model: str | None = None,
         effort: str | None = None, fresh_prompt: str | None = None,
-        design: bool = False, attach_request: dict[str, Any] | None = None) -> dict[str, Any]:
+        design: bool = False, attach_request: dict[str, Any] | None = None,
+        round_number: int | None = None) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. A new one gets `fresh_prompt`
     when supplied. `fresh` says why it starts, and the conversation is recorded with the story's
@@ -255,16 +283,21 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
+    if not (read or archive_thread or attach_request):  # every turn: work, read and ask
+        require_trust(checkout)
     root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
                          cwd=checkout)).resolve().parent
     config = repo.config(checkout)
     chosen = (repo.design_models(config, "codex") if design else None)
     request = {"cwd": str(checkout), "root": str(root), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": ({} if archive_thread or attach_request else
-                          {OVERRIDES[key]: value for key, value in chosen.items()} if chosen else
+                          {**settings(config, kind),
+                           **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
-               "ephemeral": kind == "Ask"}
+               "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+    if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
+        request["config"]["features.multi_agent"] = True
     if attach_request is not None:
         request.update(attach=True, **attach_request)
     if fresh_prompt is not None:
@@ -273,6 +306,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         request["config"]["model"] = model
     if effort is not None:
         request["config"]["model_reasoning_effort"] = effort
+    request["config"].update(QUIET)
     log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
            repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
@@ -281,14 +315,21 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
-    refused, server = "", None
+    refused, server, untrusted = "", None, {}
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    with log.open("a", encoding="utf-8") as out, subprocess.Popen(
+    activity = (contextlib.nullcontext({}) if read or archive_thread or attach_request is not None
+                else repo.record_run(checkout, item, command, family="codex",
+                                     model=request["config"].get("model"),
+                                     effort=request["config"].get("model_reasoning_effort"),
+                                     **({"round": round_number} if round_number is not None else {})))
+    with activity as ran, \
+            log.open("a", encoding="utf-8", buffering=1) as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", **GROUP) as driver:
+            errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
+        machine.agent_started(driver.pid, log)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
 
@@ -330,13 +371,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     recorded()
                     text = f"Codex app-server: process {server}"
                 elif "refused" in said:
-                    refused, text = said["refused"], ""
-                elif "read" in said:
-                    result["read"], text = said["read"], ""
-                elif "archived" in said:
-                    result["archived"], text = said["archived"], ""
-                elif "attached" in said:
-                    result["attached"], text = said["attached"], ""
+                    refused, text, untrusted = said["refused"], "", said
+                elif control := next((key for key in ("read", "archived", "attached") if key in said), None):
+                    result[control], text = said[control], ""
                 elif "attachment_failed" in said:
                     text = f"Could not attach the pull request to the Codex chat: {said['attachment_failed']}"
                 elif "project" in said:
@@ -345,6 +382,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"project_skipped={said['project_skipped']}"
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
+                elif "selection" in said:
+                    if ran.get("run_id"):
+                        repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
+                    text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     continued = {"continued": said["continued"],
@@ -392,6 +433,17 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"Codex ended the turn: {said['status']}"
                     text += f" ({said['error']})" if said.get("error") else ""
                 else:
+                    if said.get("event") in ("item/started", "item/completed") and ran.get("run_id"):
+                        tool = (said.get("params") or {}).get("item") or {}
+                        if tool.get("type") in ("commandExecution", "fileChange", "webSearch", "mcpToolCall",
+                                                "dynamicToolCall", "collabAgentToolCall", "imageView",
+                                                "imageGeneration", "sleep", "subAgentActivity",
+                                                "enteredReviewMode", "exitedReviewMode", "contextCompaction"):
+                            inputs = tool if tool["type"] != "fileChange" else {
+                                "path": ", ".join(c.get("path", "") for c in tool.get("changes", []))}
+                            tool_name = ".".join(str(v) for v in (tool.get("server") or tool.get("namespace"), tool.get("tool")) if v)
+                            repo.record_progress(checkout, item, ran["run_id"],
+                                                 step=repo.worker_step(tool_name or tool["type"], inputs))
                     text = _event(said)
                 if text:
                     if echo:
@@ -420,9 +472,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     stuck = True  # thirty seconds on, a member still runs: don't claim it ended
                 if stuck:
                     repo.refuse(REFUSALS["leftover"], pid=driver.pid, item=item, command=command)
+            ran["outcome"] = result.get("status") or "failed"
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
-                    pid=driver.pid if refused == "driver" else server)
+                    pid=driver.pid if refused == "driver" else server,
+                    hook=untrusted.get("hook"), path=untrusted.get("path"))
     return result
 
 
@@ -524,7 +578,8 @@ def identity(pid: int) -> dict[str, Any] | None:
             return {"pid": pid, "started": started, "command": path.value}
         finally:
             kernel32.CloseHandle(handle)
-    done = repo.run("ps", "-ww", "-o", "lstart=,command=", "-p", str(pid))  # -ww: whole command
+    done = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-ww", "-o",
+                    "lstart=,command=", "-p", str(pid))  # -ww: whole command
     gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
     *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
     started = " ".join(start)
@@ -532,7 +587,13 @@ def identity(pid: int) -> dict[str, Any] | None:
         return None
     if done.returncode or not started.strip() or not command.strip():
         return {"pid": pid}
-    return {"pid": pid, "started": started.strip(), "command": command.strip()}
+    return {"pid": pid, "started": "UTC " + started.strip(), "command": command.strip()}
+
+
+def _legacy_identity(recorded: dict[str, Any]) -> bool:
+    # Older POSIX text has no timezone: it cannot prove a PID was reused or is safe to signal.
+    started = str(recorded.get("started", ""))
+    return os.name != "nt" and len(started.split()) == 5
 
 
 def _alive(recorded: dict[str, Any]) -> bool | None:
@@ -542,7 +603,7 @@ def _alive(recorded: dict[str, Any]) -> bool | None:
     command, so a record made right after it started must still match once it runs."""
     pid = recorded.get("pid")
     now = identity(pid) if isinstance(pid, int) else {}
-    if now is not None and "command" not in now:
+    if now is not None and ("command" not in now or _legacy_identity(recorded)):
         return None
     return now is not None and now["started"] == recorded.get("started")
 
@@ -569,10 +630,83 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     return stopped, unknown
 
 
-def _stop(recorded: dict[str, Any], group: bool) -> None:
+def _group_alive(pid: int) -> bool | None:
+    """A group is ended only when every non-zombie member has ended, not just its leader."""
+    listed = repo.run("ps", "-axo", "pgid=,stat=")
+    if listed.returncode:
+        return None
+    return any(int(fields[0]) == pid and not fields[1].startswith("Z")
+               for line in listed.stdout.splitlines() if len(fields := line.split()) == 2)
+
+
+def _stop_tree(recorded: dict[str, Any]) -> bool:
+    """Stop an ungrouped run without signalling the terminal's shared process group."""
+    targets = {recorded["pid"]: recorded}
+    frozen = []
+    try:
+        deadline = time.monotonic() + 5
+        while True:
+            for pid, process in targets.items():
+                if pid not in frozen:
+                    live = _alive(process)
+                    if live is None:
+                        return False
+                    if live:
+                        os.kill(pid, signal.SIGSTOP)
+                        frozen.append(pid)
+            listed = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-axo",
+                              "pid=,ppid=,lstart=,stat=")
+            if listed.returncode:
+                return False
+            rows = [parts for line in listed.stdout.splitlines()
+                    if len(parts := line.split()) == 8 and not parts[7].startswith("Z")]
+            parents = {int(parts[0]) for parts in rows if int(parts[0]) in targets
+                       and "UTC " + " ".join(parts[2:7]) == targets[int(parts[0])].get("started")}
+            children = [parts for parts in rows if int(parts[1]) in parents and int(parts[0]) not in targets]
+            if not children:
+                break
+            if time.monotonic() > deadline:
+                return False
+            for parts in children:
+                targets[int(parts[0])] = {"pid": int(parts[0]), "started": "UTC " + " ".join(parts[2:7])}
+        # Keep identities after parents exit and their descendants are reparented.
+        # Kill while frozen: a termination handler must not fork an untracked child.
+        for pid, process in reversed(list(targets.items())):
+            if _alive(process) is True:
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(pid, signal.SIGKILL)
+        for _ in range(50):
+            listed = repo.run("ps", "-axo", "pid=,stat=")
+            if listed.returncode:
+                return False
+            live = {int(parts[0]) for line in listed.stdout.splitlines()
+                    if len(parts := line.split()) == 2 and not parts[1].startswith("Z")}
+            if all(pid not in live or _alive(process) is False for pid, process in targets.items()):
+                return True
+            time.sleep(0.1)
+        return False
+    except OSError:
+        return False
+    finally:
+        for pid in frozen:
+            if _alive(targets[pid]) is True:
+                with contextlib.suppress(OSError):
+                    os.kill(pid, signal.SIGCONT)
+
+
+def _stop(recorded: dict[str, Any], group: bool) -> bool:
     """Stop a process, with its process group when `group`, and wait until it has gone: SIGTERM,
     then SIGKILL five seconds on. On Windows taskkill ends it and everything it started."""
     pid = recorded["pid"]
+    if os.name != "nt":
+        try:
+            group = group and os.getpgid(pid) == pid
+        except ProcessLookupError:
+            pass  # A dedicated group can outlive its leader.
+        except OSError:
+            return False
+        if not group:
+            return _stop_tree(recorded)
     for sig in (signal.SIGTERM, getattr(signal, "SIGKILL", signal.SIGTERM)):
         with contextlib.suppress(OSError):  # it may have ended on its own meanwhile
             if os.name == "nt":
@@ -583,9 +717,10 @@ def _stop(recorded: dict[str, Any], group: bool) -> None:
             else:
                 os.kill(pid, sig)
         for _ in range(50):
-            if _alive(recorded) is False:
-                return
+            if (_group_alive(pid) if group and os.name != "nt" else _alive(recorded)) is False:
+                return True
             time.sleep(0.1)
+    return False
 
 
 @contextlib.contextmanager
@@ -629,36 +764,89 @@ def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] 
 
 
 @contextlib.contextmanager
-def _one_at_a_time(lock: Path, waiting: str = "") -> Iterator[None]:
+def _one_at_a_time(lock: Path) -> Iterator[None]:
     """Hold the lock's guard file while a call checks, clears or takes the lock, so two calls that
     find one stale lock never both clear it, and one clears another's new lock. The system lets
-    go of the guard when its holder ends, however it ends, so it is never stale itself. Prints
-    `waiting`, if given, when another holder makes this call wait."""
+    go of the guard when its holder ends, however it ends, so it is never stale itself."""
     with lock.with_suffix(".guard").open("ab") as guard:
         if os.name != "nt":
-            try:
-                fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError:
-                if waiting:
-                    print(waiting, flush=True)
-                fcntl.flock(guard, fcntl.LOCK_EX)
+            fcntl.flock(guard, fcntl.LOCK_EX)
             yield
             return
         guard.seek(0)
-        mode = msvcrt.LK_NBLCK
         while True:  # LK_LOCK gives up after ten seconds
             try:
-                msvcrt.locking(guard.fileno(), mode, 1)
+                msvcrt.locking(guard.fileno(), msvcrt.LK_LOCK, 1)
                 break
             except OSError:
-                if waiting and mode == msvcrt.LK_NBLCK:
-                    print(waiting, flush=True)
-                mode = msvcrt.LK_LOCK
+                pass
         try:
             yield
         finally:
             guard.seek(0)
             msvcrt.locking(guard.fileno(), msvcrt.LK_UNLCK, 1)
+
+
+@contextlib.contextmanager
+def in_line(folder: Path, waiting: Callable[[int], str]) -> Iterator[None]:
+    """Wait for this call's turn in `folder`'s line, first come, first served, then hold the turn
+    while the body runs. Each place is a numbered ticket file its holder keeps locked; the system
+    lets go of a dead holder's lock, and the next call that looks drops its ticket. Prints
+    `waiting(places ahead)` when the wait starts and each time that number changes."""
+    folder.mkdir(parents=True, exist_ok=True)
+    with _one_at_a_time(folder / "line"):
+        tickets = sorted(folder.glob("*.ticket"))
+        mine = folder / f"{int(tickets[-1].stem) + 1 if tickets else 1:012d}.ticket"
+        handle = mine.open("ab")
+        _try_lock(handle)  # a new number, so no one else holds it
+    try:
+        said = 0
+        while True:
+            with _one_at_a_time(folder / "line"):
+                ahead = [ticket for ticket in sorted(folder.glob("*.ticket"))
+                         if ticket < mine and not _dropped_if_dead(ticket)]
+            if not ahead:
+                break
+            if len(ahead) != said:
+                said = len(ahead)
+                print(waiting(said), flush=True)
+            # ponytail: polls the line four times a second; fine for a few dozen closes
+            time.sleep(0.25)
+        yield
+    finally:  # under the guard, so no one drops this ticket and reuses its number meanwhile
+        with _one_at_a_time(folder / "line"):
+            _unlock(handle)
+            handle.close()
+            mine.unlink(missing_ok=True)
+
+
+def _dropped_if_dead(ticket: Path) -> bool:
+    """Delete a ticket whose holder has ended, which is when its lock is free. True if deleted."""
+    with ticket.open("ab") as handle:
+        if not _try_lock(handle):
+            return False
+        _unlock(handle)
+    ticket.unlink(missing_ok=True)
+    return True
+
+
+def _try_lock(handle: Any) -> bool:
+    try:
+        if os.name == "nt":
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def _unlock(handle: Any) -> None:
+    """Windows wants its lock let go before the file closes; elsewhere closing lets go."""
+    if os.name == "nt":
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def tidy(checkout: Path) -> list[str]:

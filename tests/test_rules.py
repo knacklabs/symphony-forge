@@ -9,7 +9,6 @@ import os
 import re
 import shutil
 import subprocess
-import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,7 +25,7 @@ def test_4_one_test_per_rule():
     cited: dict[tuple[str, int], str] = {}
     for path in sorted((ROOT / "tests").glob("test_*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        # A story's own test file sets STORY = "<key>"; its numbers cite that story's Done when.
+        # Story and fix files set STORY = "<key>"; numbers stay unique across that item's files.
         story = next((node.value.value for node in tree.body if isinstance(node, ast.Assign)
                       and isinstance(node.value, ast.Constant)
                       and [getattr(target, "id", "") for target in node.targets] == ["STORY"]),
@@ -42,6 +41,7 @@ def test_4_one_test_per_rule():
             assert not (isinstance(node, ast.ClassDef) and node.name.startswith("Test")), (
                 f"{path.name}: {node.name} hides tests in a class; use test functions")
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test"):
+                # A fix's command renderer test carries its own numbered criterion too.
                 match = re.fullmatch(r"test_(\d+)_\w+", node.name)
                 assert match, f"{path.name}: {node.name} cites no criterion; name it test_<n>_<rule>"
                 number = (story, int(match[1]))
@@ -58,18 +58,16 @@ def test_4_one_test_per_rule():
 
 
 def test_5_forge_stays_small(repo):
-    ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["forge"][
-        "line_ceiling"]
+    # Decision 0106 removes the total ceiling; module and command limits still apply.
     files = (ROOT / "src" / "forge").rglob("*.py")
     lines = {p.relative_to(ROOT).as_posix(): p.read_bytes().count(b"\n") for p in files}
     too_long = {path: n for path, n in lines.items() if n > 1200}
     assert not too_long, f"modules over 1,200 lines: {too_long}"
-    assert sum(lines.values()) <= ceiling, (
-        f"src/forge/ has {sum(lines.values())} lines, over the {ceiling} ceiling in pyproject.toml")
 
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
-    assert len(commands) <= 20, f"{len(commands)} commands: {commands}"
+    # Decisions 0104/0105 add test/stop; approved FORGE-MOD-1 item 6 adds lanes.
+    assert len(commands) <= 23, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 
@@ -126,5 +124,5 @@ def test_31_speed():
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]
     # The suite's five-minute cap was replaced by ten when passing Ubuntu runs hit the limit.
     assert timeouts and max(timeouts) <= 10, f"job timeouts over ten minutes: {timeouts}"
-    windows = re.findall(r"os: windows-latest, group: (\d), groups: (\d)", workflow)
-    assert sorted(windows) == [("1", "3"), ("2", "3"), ("3", "3")], f"Windows isn't in groups 1-3 of 3: {windows}"
+    # Complete platform group sequences and effective budgets have one owner:
+    # test_ci_job_budgets.py.

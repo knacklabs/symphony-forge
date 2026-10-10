@@ -1,0 +1,48 @@
+{
+  "approval": {
+    "at": "2026-10-01T01:18:42+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_018LTVAVXe41NifzdoAY4UQA",
+    "hash": "c003407a518170a3e4d86bef1c9a63af67f1991e38bb6fb5799ed69d33ba1948",
+    "round": 3,
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-UPGRADECMD-1.md",
+  "finished": "2026-10-03T20:10:17+00:00",
+  "merged": {
+    "GUIDE": "2026-10-01T03:27:51+00:00",
+    "UPGRADE": "2026-10-03T20:10:17+00:00",
+    "VERSION": "2026-10-01T22:39:15+00:00"
+  },
+  "outcome": "forge upgrade <release> moves a repo to a new Forge release in one step: it edits the pin in a fix, syncs Forge's files with the new release and lands, and it is tested on a repo adopted on the previous release",
+  "status": "done",
+  "steps": [
+    {
+      "at": "2026-09-30T13:44:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T20:12:46+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T20:20:50+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:10:09+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:18:42+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-10-03T20:10:39+00:00",
+      "step": "done"
+    }
+  ],
+  "title": "One command upgrades Forge in a repo",
+  "touches": 1
+}

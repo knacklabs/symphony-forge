@@ -39,8 +39,9 @@ def _isolated_home(isolated_codex_home):
     pass
 
 
-@pytest.mark.skipif(not (ENV / "forge-sdk-ready").is_file(),
-                    reason=f"the Codex SDK {PIN} isn't installed in {ENV}; forge doctor --fix installs it")
+@pytest.mark.skipif(os.environ.get("FORGE_LIVE_CODEX") != "1" or not (ENV / "forge-sdk-ready").is_file(),
+                    reason=f"calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK {PIN} "
+                           f"installed in {ENV} (forge doctor --fix installs it)")
 def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
     real_home = REAL_CODEX_HOME
     test_home = Path(os.environ["CODEX_HOME"])
@@ -66,6 +67,9 @@ def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
         env={**os.environ, "HOME": str(other_user_home), "CODEX_HOME": str(configured_home),
              "XDG_DATA_HOME": str(ENV.parents[2])})
     assert smoke.returncode == 0 and "1 passed" in smoke.stdout, smoke.stdout + smoke.stderr
+    # Codex runs project hooks only in a project it trusts, so Forge asks only there.
+    (test_home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     asked = repo.forge("ask", "Reply with just OK.")
     assert asked.returncode == 0, asked.stdout + asked.stderr
     assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})) == real_before

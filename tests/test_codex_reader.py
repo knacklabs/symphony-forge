@@ -14,7 +14,7 @@ from pathlib import Path
 
 from conftest import _install
 from test_codex_record import _crash, _down, _held
-from test_codex_worker import MODELS_REFUSAL, NOW, ROOT, _lines, _sent, _stub, _toml
+from test_codex_worker import MODELS_REFUSAL, NOW, QUIET, ROOT, _lines, _sent, _stub, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_setup import _fresh_client
 from test_story import DOC, new_story, setup
@@ -35,10 +35,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    # Codex trusts no project here: a read-only turn with approvals "never" can't write, so a read
-    # needs no trust.
     (tmp_path / "codex-home").mkdir()
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    ((tmp_path / "codex-home") / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     stub, claude = repo.bin / "codex-app-server.jsonl", repo.bin / "claude-calls.jsonl"
     version = repo.forge("--version").stdout.split()[-1]
     shop = new_story(repo, "SHOP")
@@ -61,15 +62,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert repo.forge("read", "SHOP").stderr == COORDINATOR
     assert unchanged() and not stub.exists() and not claude.exists()
 
-    # Under Claude Code the reader is Codex, and the grill kind needs Codex's own entry; the grill
-    # kind has one entry per family.
+    # Under Claude Code the reader is Codex; the grill kind has one entry per family.
     monkeypatch.delenv("CODEX_THREAD_ID")
-    for models, problem in (
-            ({"grill.claude": GRILL["grill.claude"]}, "it has no [models.grill.codex], which this work uses"),
-            ({"grill": GRILL["grill.claude"]},
-             "models.grill has one entry per family, codex and claude, so it can't set model")):
-        toml.write_text(_toml(version, "claude", models), encoding="utf-8")
-        assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(problem)
+    toml.write_text(_toml(version, "claude", {"grill": GRILL["grill.claude"]}), encoding="utf-8")
+    assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(
+        "models.grill has one entry per family, codex and claude, so it can't set model")
     toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     assert unchanged() and not stub.exists()
 
@@ -106,7 +103,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     starts, turns = _sent(stub, "thread/start"), _sent(stub, "turn/start")
     assert len(starts) == len(turns) == 3
     assert all((start["sandbox"], start["approvalPolicy"]) == ("read-only", "never")
-               and start["config"] == {"model": "gpt-6-sol", "model_reasoning_effort": "high"}
+               and start["config"] == {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)
     assert all((turn["sandboxPolicy"]["type"], turn["approvalPolicy"]) == ("readOnly", "never")
                for turn in turns)
@@ -117,8 +114,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
     assert data.decode("utf-8") in turns[-1]["input"][0]["text"]
     for fact in (f"read_hash: {blob}", "reader: codex (gpt-6-sol)", f"read_at: {NOW}",
-                 '1. stub codex: built it with {"model": "gpt-6-sol", "model_reasoning_effort": '
-                 '"high"}'):
+                 '1. stub codex: built it with ' + json.dumps(
+                     {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}, sort_keys=True)):
         assert fact in written, written
     assert json.loads(state.read_text("utf-8"))["status"] == "read"
     turn_log = repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.log"
@@ -150,9 +147,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert repo.forge("read", "WISH").returncode == 0
     [call] = claude_calls(claude)
     # The old contract ran claude with no session; FORGE-READLOOP-1 starts it with a known session
-    # id, so the next round can continue it.
+    # id, so the next round can continue it. Live status now consumes streamed tool events;
+    # Streaming input also requests applied settings for live status; the read-only mode,
+    # model, effort and known session remain part of this CLI contract.
     assert call["args"][:-1] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode",
-                                 "plan", "--session-id"]
+                                 "plan", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--session-id"]
     assert Path(call["cwd"]).resolve() == wish.resolve()
     wished = (wish / "plans" / "WISH.read.md").read_text("utf-8")
     assert "reader: claude (opus)" in wished and "see /docs/b.md" in wished
@@ -161,17 +160,20 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
-    # an old one refuses. Work and reviews run on GPT-6.1 Sol.
+    # an old one gets the ordinary unknown-key refusal. Work and reviews run on GPT-6.1 Sol.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "model" not in written
-    # Lite used to omit helpers; first fix rounds now get Luna max from init's config.
+    # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
         "build": {"model": "gpt-6.1-sol", "effort": "medium"},
         "fix": {"model": "gpt-6.1-sol", "effort": "medium"},
         "lite": {"model": "gpt-6.1-sol", "effort": "medium",
                  "subagents": "gpt-6-luna", "subagent_effort": "max"},
+        "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+                              "subagents": "gpt-6-luna", "subagent_effort": "max"},
+                    "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
                   "claude": {"model": "opus", "effort": "high"}},
         "design": {"claude": {"model": "claude-opus-5-5", "effort": "high"},
@@ -179,5 +181,5 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         "review": {"model": "gpt-6.1-sol", "effort": "high"}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
-    assert old.stderr == ("forge.toml's model setting is now the [models] table.\n"
-                          "Next: ask your agent to move it into forge.toml's [models] table\n")
+    assert old.stderr == ("forge.toml is not usable: 'model' is not a forge.toml key.\n"
+                          "Next: forge doctor\n")

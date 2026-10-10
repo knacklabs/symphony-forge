@@ -1,0 +1,70 @@
+{
+  "allow_large": "Owner asked for this change (2026-10-08): a new forge.toml runner setting and a forge init option, written into the generated workflow and reported by doctor and close",
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/runner-setting",
+  "done_when": "forge.toml has a runner setting (default ubuntu-latest, so nothing changes for repos that don't set it) that forge sync writes into every runs-on line of the generated forge.yml; forge init takes it as an option; the generated jobs' steps work on a plain self-hosted Linux runner (uv and Node installed by their setup actions, nothing assumed from GitHub's hosted image); forge doctor and close's check wait say plainly when a pull request's checks have stayed queued with no runner picking them up for several minutes, naming the runner setting; the coordinator guide documents the setting; command tests cover a new repo initialised with a self-hosted runner and an existing repo adopted on an earlier release that sets it and syncs, plus the queued-without-a-runner message with a faked GitHub",
+  "flagged": [
+    ".factory/fixes/runner-setting.json"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a17b601f805d3e20e0c9657155990968de91a4ec43b46de5b487290fc46aa118",
+    "changed": "94a72bbb923c89494ec38246824cf7d475ca6b6ce89b15b31be707b5c099e630",
+    "commit": "27aa071cf5fcae7b236e9dcfa2d6e7729d32b0fe",
+    "dismissals": [],
+    "findings": [],
+    "id": "fc15afb5-d53d-4da8-a01b-5e22b8ef5c57",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T15:06:42+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T15:09:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T15:37:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T21:08:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T21:31:43+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T21:54:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:12:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:27:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T23:21:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T23:47:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T01:16:58+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The CI workflow Forge generates hard-codes runs-on: ubuntu-latest for both jobs, so in an organisation whose repos can only use self-hosted runners every new client repo's tests and forge-pr-check jobs stay queued forever, forge close waits on them indefinitely and no item can become ready; checks = [] is no way out because close refuses with no checks (owner report, 2026-10-08)",
+  "worker": "codex"
+}

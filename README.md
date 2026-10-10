@@ -82,7 +82,7 @@ developer can take over using the discovery notes and answers page. To start one
 | 7. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
 | 8. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
 | 9. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
-| 10. Close the loop | The story gets a one-line outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge story done`, `forge spec measure` |
+| 10. Close the loop | The last task's merge records the story's outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge merge --outcome`, `forge spec measure` |
 
 Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
 Each still goes through tests, review and a pull request. The agent confirms specs during this
@@ -120,7 +120,7 @@ where things are in one sentence and gives the exact next step.
 ### Install
 
 ```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.1"
+uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.9"
 ```
 
 Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge
@@ -138,10 +138,11 @@ prints the exact install line if yours doesn't match.
 
 ### Upgrade a project
 
-Tell your agent "upgrade Forge to v1.2.1" (or whichever version). It does it as a small fix:
-changes the version in `forge.toml`, installs that release, runs `forge sync` to refresh Forge's
-own files (your own text stays), checks with `forge doctor`, and opens the pull request. Always
-name a released version, not "main".
+Tell your agent "upgrade Forge". It asks which release, recommending the newest, then runs
+`forge upgrade <release>` from the main branch with nothing uncommitted. That one command
+installs the release, has it refresh Forge's files for Claude Code and Codex (your own text and
+settings stay), and opens the upgrade's pull request, which merges like any other change. If it
+stops, its `Next:` line says what to do; running it again picks up where it stopped.
 
 ### Start working
 
@@ -153,6 +154,18 @@ Then describe the change you want.
 Clone this repository, then run `uv sync` and `uv run pytest` to run the tests. The Codex SDK is
 not needed for the tests. Start fixes with `forge fix start "<why>" --done "<done when>"` so the
 pull request uses a Forge branch; the pull-request check accepts only Forge branches.
+
+Forge's own CI balances its test groups using the committed `.test_durations` file.
+Refresh it from the repository root after changes to slow tests:
+
+```sh
+uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --store-durations --clean-durations
+```
+
+Commit the refreshed file after the full run passes. Check the latest CI run on all three
+platforms: each group, including setup, must finish within seven minutes on Ubuntu and macOS,
+and fourteen minutes on Windows (70% of its job limit). These settings affect only Forge's
+own repository; new and existing client repositories get no change.
 
 ## Commands you'll see
 

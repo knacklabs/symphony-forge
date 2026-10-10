@@ -82,15 +82,18 @@ def test_1_work_and_close_append_step_timings(env, request, monkeypatch, scenari
     assert closed.returncode == 0, closed.stderr
 
     lines = [json.loads(line) for line in timings.read_text("utf-8").splitlines()]
+    # Close now also records its test stage, even when no command is configured. The worker,
+    # review and CI durations retain the original contract; a skipped stage has no minimum.
     assert [(line["item"], line["step"], line["outcome"]) for line in lines] == [
-        (item, "worker round", "completed"), (item, "review", "clean"),
+        (item, "worker round", "completed"), (item, "test run", "skipped"), (item, "review", "clean"),
         (item, "CI wait", "passed")]
     assert [(line.get("model"), line.get("effort")) for line in lines] == [
-        ("sonnet", "medium"), (review_model, "high"), (None, None)]
-    for line, earliest, latest in zip(lines, [work_start, close_start, close_start],
-                                      [work_end, close_end, close_end]):
+        ("sonnet", "medium"), (None, None), (review_model, "high"), (None, None)]
+    for line, earliest, latest in zip(lines, [work_start, close_start, close_start, close_start],
+                                      [work_end, close_end, close_end, close_end]):
         assert earliest - timedelta(seconds=1) <= datetime.fromisoformat(line["start"]) <= latest
-        assert 0.15 <= line["seconds"] <= (latest - earliest).total_seconds()
+        assert (0 if line["step"] == "test run" else 0.15) <= line["seconds"] <= (
+            latest - earliest).total_seconds()
     assert not repo.git("status", "--porcelain", cwd=repo.path)
 
 
@@ -105,6 +108,8 @@ def _codex_rounds(repo, monkeypatch, sdk_data):
     (folder / "forge.toml").write_text(_toml(version, "codex", {
         "build": {"model": "gpt-6-sol", "effort": "medium"},
         "fix": {"model": "gpt-6-luna", "effort": "high"}}), "utf-8")
+    repo.git("add", "forge.toml", cwd=folder)
+    repo.git("commit", "-q", "-m", "Configure the next worker round", cwd=folder)
     second = repo.forge("work", item)
     assert second.returncode == 0, second.stderr
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
@@ -137,7 +142,7 @@ def _failed_close(env, failure):
     assert closed.returncode != 0
     lines = [json.loads(line) for line in timings.read_text("utf-8").splitlines()]
     assert [(line["item"], line["step"], line["outcome"]) for line in lines] == [
-        (item, step, outcome) for step, outcome in expected]
+        (item, step, outcome) for step, outcome in [("test run", "skipped"), *expected]]
 
 
 def test_2_timing_write_failure_does_not_fail_work(env):

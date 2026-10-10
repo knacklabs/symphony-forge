@@ -63,8 +63,10 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     shop = new_story(repo, "SHOP")
     doc, notes = shop / "plans" / "SHOP.md", shop / "plans" / "SHOP.read.md"
     doc.write_text(DOC, encoding="utf-8")
-    # Near misses are rounds with findings, each numbered after the earlier rounds'.
-    for number, near in enumerate(["No findings", "no findings.", "**No findings.**",
+    # No-findings formatting now passes; substantive text still fails and numbers on.
+    for number, near in enumerate(["No findings, except missing recovery.",
+                                   "No issues? The time has no time zone.",
+                                   "**Finding:** required proof is missing.",
                                    "No findings.\n1. The saved time has no time zone.",
                                    "No findings. The page is fine.",
                                    "1. A gap.\n\n## Round 99\n\nNo findings."], start=1):
@@ -272,12 +274,24 @@ def _old_story_keeps_todays_rules(repo, claude_payload, monkeypatch, tmp_path,
     assert started.returncode == 0, started.stderr
     repo.git("merge", "-q", "--squash", "task/SHOP-SAVE")
     repo.git("commit", "-q", "-m", "Save baskets (#1)")
-    # Its Tasks table changes on the default branch, with no new read.
+    # Its Tasks table changes on the default branch, with no new read; forge next asks for the same
+    # change on the story branch before the next task starts.
+    # Fixed, distinct dates: forge next compares the two edits' times, and a real clock can tie them.
     repo.write("plans/SHOP.md", TASKS)
+    monkeypatch.setenv("GIT_COMMITTER_DATE", "2030-01-01T00:00:00")
     repo.git("commit", "-q", "-am", "Rename a task")
     repo.git("push", "-q", "origin", "main")
+    assert repo.forge("next").stdout.splitlines()[-1].startswith(
+        "The default branch has changes to plans/SHOP.md that story/SHOP lacks")
+    repo.git("checkout", "-q", "story/SHOP")
+    repo.write("plans/SHOP.md", TASKS)
+    monkeypatch.setenv("GIT_COMMITTER_DATE", "2031-01-01T00:00:00")
+    repo.git("commit", "-q", "-am", "Rename a task")
+    monkeypatch.delenv("GIT_COMMITTER_DATE")
+    repo.git("checkout", "-q", "main")
 
-    assert repo.forge("next").stdout.splitlines()[-1] == "Next: forge task start SHOP/SHOW"
+    assert (repo.forge("next").stdout.splitlines()[-1] ==
+            "Next: forge task start SHOP/SHOW  # Codex builds it")
     started = repo.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stderr
     assert repo.git("rev-parse", "task/SHOP-SHOW~1") == repo.git("rev-parse", "origin/main")

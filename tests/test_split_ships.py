@@ -8,6 +8,7 @@ from pathlib import Path
 
 import conftest
 import pytest
+from test_setup import ROLE_FILES
 
 STORY = "FORGE-SPLIT-1"
 
@@ -19,18 +20,20 @@ SOURCES = {
     **{f"{host}/{rel}": source for host in (".claude", ".codex") for rel, source in {
         "skills/forge/SKILL.md": "src/forge/templates/skill.md",
         "skills/forge/standards.md": "src/forge/standards.md",
+        "skills/forge/migrate-skill.md": "src/forge/templates/migrate-skill.md",
         "skills/forge/fde.md": ".codex/skills/forge/fde.md",
         "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
         "skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
         "skills/test-audit/SKILL.md": ".codex/skills/test-audit/SKILL.md",
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
+    ".forge/review-tests.py": "src/forge/templates/review-tests.py",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".gitattributes", ".claude/settings.json", ".codex/hooks.json",
+GENERATED = {"plain": {".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
-                       "git-hook/pre-push"}}
+                       "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
 # Asks the checkout's forge, in its own process, what sync should write for this repo.
 EXPECTED = """
@@ -48,7 +51,8 @@ print(json.dumps(wanted))
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
-    repo.write("forge.toml", 'version = "v1.2.1"\ntest = "echo ok"\n'
+    # Exercise this checkout's sync, rather than routing to a historical release.
+    repo.write("forge.toml", 'version = "v1.2.9"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")
@@ -68,10 +72,13 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
     for path, source in SOURCES.items():
         assert files[path].read_bytes() == (ROOT / source).read_bytes(), path
     agents = (ROOT / "src/forge/templates/adapters/AGENTS.md").read_text(encoding="utf-8")
+    # The team's CLAUDE.md line moves into AGENTS.md after Forge's block, and CLAUDE.md goes.
+    moved = "\n# Team notes\n" if case == "claude_node" else ""
     assert files["AGENTS.md"].read_text(encoding="utf-8") == (
-        f"<!-- forge:begin -->\n{agents.rstrip()}\n<!-- forge:end -->\n")
+        f"<!-- forge:begin -->\n{agents.rstrip()}\n<!-- forge:end -->\n{moved}")
     for path in GENERATED[case]:
-        assert files[path].read_text(encoding="utf-8") == expected[path], path
+        text = files[path].read_text(encoding="utf-8") if files[path].exists() else ""
+        assert text == expected[path], path
     if case != "plain":
         return
 

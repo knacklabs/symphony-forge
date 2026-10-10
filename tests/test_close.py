@@ -152,6 +152,8 @@ class Forge:
         lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
         self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
+        # No old queued workflow unless the case supplies one explicitly.
+        self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
 
     def open_pr(self, body: str, state: str = "OPEN", draft: bool = False) -> None:
         self.gh.respond("pr", "list", "--head", stdout=json.dumps(
@@ -297,9 +299,10 @@ def _skipped_named_check(env):
 
 
 def _pending_check_not_named(env):
+    # A queued check has not started running; close now preserves that distinction.
     env.checks([run("tests"), run("forge-pr-check"), run("lint", None, "queued")])
     return {"draft": True, "item": env.start_fix()[0],
-            "problem": "The checks are not green yet: lint is still running.",
+            "problem": "The checks are not green yet: lint is still queued.",
             "next": "forge close tidy-readme"}
 
 
@@ -320,7 +323,8 @@ def _missing_required_check(env):
 def _github_api_error(env):
     env.gh.respond("api", stdout="HTTP 502: Bad Gateway", exit=1)
     return {"draft": True, "item": env.start_fix()[0],
-            "problem": "The checks are not green yet: GitHub did not answer: HTTP 502: Bad Gateway.",
+            # A lasting server outage now has a bounded retry and a plain rerun instruction.
+            "problem": "The checks are not green yet: GitHub did not answer. Rerun the command.",
             "next": "forge close tidy-readme"}
 
 
@@ -349,7 +353,9 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            "next": re.compile(r"Next: git -C .+ merge origin/main, fix the conflicts and commit, "
+            # Recovery now points to the shipped recipe before committing the resolved merge.
+            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
+                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
                                r"then forge close tidy-readme")}
 
 
@@ -497,8 +503,8 @@ def test_18_close(env, kind):
     # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
     assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
-    assert "1. P1 Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
-    assert "2. P2 Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
+    assert "- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
+    assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
         "rev-parse", "HEAD", cwd=where)
@@ -514,7 +520,7 @@ def test_18_close(env, kind):
     second = env.close(item, "--dismiss", "1", "--because", "app.py:1 the basket is saved here")
     assert second.returncode == 0, second.stderr
     assert len(env.review_calls()) == 1
-    assert ("1. P1 Not done: A shopper can save a basket (app.py:1): dismissed because app.py:1 "
+    assert ("- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): dismissed because app.py:1 "
             "the basket is saved here") in body(env.gh_calls("pr", "edit")[-1])
     assert second.stdout.splitlines()[-1] == (
         f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
@@ -626,7 +632,9 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert env.close(item).returncode == 0
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
-    assert "--draft" not in create  # a clean review opens ready for review
+    # Close now opens a draft before review, then makes it ready after both gates pass.
+    assert "--draft" in create
+    assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
     assert body(create).splitlines()[1] == f"Done when: {summary}"
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
@@ -634,7 +642,8 @@ def test_27_title_and_summary(env, kind, title, summary):
     env.open_pr(edited)
     env.commit(where, "app.py", "print('tidied')\n")
     assert env.close(item).returncode == 0
-    [edit] = env.gh_calls("pr", "edit")
+    assert len(env.gh_calls("pr", "edit")) == 3  # first result, then running and finished review
+    edit = env.gh_calls("pr", "edit")[-1]  # running review, then its finished block
     assert "--title" not in edit
     begin, end = "<!-- forge:begin -->", "<!-- forge:end -->"
     assert body(edit).split(begin)[0] == edited.split(begin)[0]

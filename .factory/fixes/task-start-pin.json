@@ -1,0 +1,37 @@
+{
+  "base": "ecc16b99c816cee1e17ae60d53d9311309a6d8bf",
+  "branch": "fix/task-start-pin",
+  "done_when": "forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the default branch into the story branch (stopping with a plain next step on a conflict) so the new task starts on the current release; it changes nothing when the pins match; a command test covers a repo adopted on an earlier release that upgrades with an open story, then starts a task, plus the conflict case",
+  "flagged": [
+    "src/forge/task.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7f95be0ee43f48e02c6153604d43157e8d6d0e0f8f21f82bb0ca5e597f94de66",
+    "changed": "862537d1a241e2d02d3945b168b807fff07035ac4c4bcc3d42edfab2b34e8caf",
+    "commit": "5b3d095de86b77779b83cbef8f87b7ba75534a8a",
+    "dismissals": [],
+    "findings": [],
+    "id": "d942615e-aed0-47df-b2d5-5eda2089bde3",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T05:59:55+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T06:14:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T06:28:15+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "After a client repo upgrades Forge, new tasks are cut from story branches that still pin the old release, so every new task silently runs the old Forge (old review rules, no fast_test) until someone merges the default branch into each story branch by hand (reported by a client session after upgrading to v1.2.7)",
+  "worker": "codex"
+}

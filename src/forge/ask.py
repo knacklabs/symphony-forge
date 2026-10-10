@@ -43,5 +43,5 @@ COMMANDS = [{
              (('--model',), {"metavar": "MODEL", "help": "Codex model for this answer"}),
              (('--effort',), {"metavar": "EFFORT", "help": "reasoning effort for this answer"})],
     "position": 140,
-    "listing": '| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |',
+    "listing": '| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.explore]`, or lite when absent) |',
 }]

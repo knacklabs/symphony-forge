@@ -1,0 +1,54 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/merge-enable-stale",
+  "done_when": "When forge merge enable finds its earlier fix whose only change is forge.toml's merge setting and the default branch has moved on, it rebuilds that change on the current default branch (same fix, the default branch's forge.toml with only merge set to agent) instead of merging, so no conflict appears; it still never merges the change itself; a command test covers a repo adopted on an earlier release that upgraded after an interrupted merge enable",
+  "flagged": [
+    "src/forge/merge.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "69b41a8ee7c7daa62f2e2ee5a233b1bfbc38673fafcf08a57ca7a1c55e145220",
+    "changed": "c43cd7258da130e6bda5ae6bacc299bd73853957f75bb4992d1941b6f576aef3",
+    "commit": "f64524d8b51c52c42c9b3740bee46c7515fb646f",
+    "dismissals": [],
+    "findings": [],
+    "id": "bd137b56-040a-40e8-b64e-d2ad33d7d774",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T15:00:42+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T15:20:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:01:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:13:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:35:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T19:51:06+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/merge.py",
+    "reason": "Owner chose narrow: decide 'only the merge setting changed' by comparing the parsed forge.toml settings (every key except the top-level merge must be equal), locally and for each remote revision, with a command test where a multiline setting's text contains 'merge ='; nothing else changes in this round."
+  },
+  "why": "forge merge enable resumes a fix branch made before the repo upgraded Forge (its forge.toml still pins the old release plus merge = agent), so merging the default branch always conflicts on forge.toml's version line (reported by a client session after upgrading to v1.2.7)",
+  "worker": "codex"
+}

@@ -27,6 +27,9 @@ def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
         {"priority": "P1", "title": "Greeting missing", "body": "Show it on the page.",
          "file": "built.py", "line": 1}]}
     state_file.write_text(json.dumps(state), encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("add", "-A", cwd=fix)
+    repo.git("commit", "-qm", "Coordinator change", cwd=fix)
     gh.respond("pr", "checks", state["branch"], stdout=json.dumps([
         {"name": "tests", "bucket": "fail", "link": "https://example.test/job/123"}]))
     gh.respond("run", "view", "--job", "123", stdout="FAILED greeting check\n")

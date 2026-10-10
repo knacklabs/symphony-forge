@@ -88,9 +88,14 @@ def _review_and_checks(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
     monkeypatch.delenv("CODEX_BIN", raising=False)
     conftest._install(repo.bin, "codex", CODEX_STUB.format(python=sys.executable))
+    # The client's npm test command passes here: close stops before the review on a failing one.
+    conftest._install(repo.bin, "npm", f"#!{sys.executable}\n")
     (tmp_path / "reviews.json").write_text(json.dumps([CLEAN]), "utf-8")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
+    # Close opens before review, then publishes its result and makes the draft ready.
+    gh.respond("pr", "edit")
+    gh.respond("pr", "ready")
     gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=json.dumps(run("tests")) + "\n")
     gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout="")
 
@@ -200,15 +205,16 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     records = {path for path in _files(FIXTURE / "client")
                if path.startswith((".factory/", ".gstack/", "plans/quickfixes/", "plans/lessons",
                                    "plans/deferrals"))}
-    sync_rewrites = {".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md"}
+    sync_rewrites = {".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md",
+                     ".codex/agents/worker.toml"}
     assert {path for path, status in changed.items() if status == "D"} == (
         (_files(FIXTURE / "source") - sync_rewrites - SHARED) | set(KEPT) | records
-        | {"constitution/VENDORED_FROM", ".envrc", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})
+        | {"constitution/VENDORED_FROM", ".envrc", "CLAUDE.md", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})
     added = {path for path, status in changed.items() if status != "D"}
     written = {*(f".forge-migrate/kept/{path}" for path in KEPT), ".forge-migrate/replan/SHIP-1.md",
                ".forge-migrate/replan/TIDY-UP.md", "plans/SEARCH-1.md", "plans/SIGNIN-1.md",
                ".forge-migrate/replan/DRAFT-1.md", f"docs/context/{DESIGN}", ".gitignore",
-               ".gitattributes", "forge.toml", "CLAUDE.md", *LISTED}
+               ".gitattributes", "forge.toml", *LISTED}
     assert written <= added and all(path.startswith(".factory/") for path in added - written)
     assert not set(OWN) & set(changed)
     for path in KEPT:
@@ -219,21 +225,21 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Only the old Forge's gstack lines go; the client's own stay.
     assert repo.git("show", "forge/migrate-v1:.gitignore") == (
         "node_modules/\n.env\n.gstack/slug-cache/")
-    # ... and sync adds the roadmap's merge rule after them.
+    # ... and sync adds the roadmap's and the spotted list's merge rules after them.
     assert repo.git("show", "forge/migrate-v1:.gitattributes") == (
-        "*.png binary\nplans/roadmap.json merge=forge-roadmap")
+        "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
+        "plans/spotted.json merge=forge-roadmap")
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     assert f'version = "{version}"' in toml and f"\ntest = {json.dumps(TEST)}\n" in toml
     # The client's sign-off record, pinned in harness.yaml, is pinned in forge.toml.
     assert '\nsignoff = "docs/decisions/0001-client-signoff.md"\n' in toml
     # AGENTS.md was the old Forge's word for word, so only the Forge block is left; CLAUDE.md
-    # keeps its own lines but no longer imports the deleted old Claude adapter, and Forge adds
-    # no block of its own to it.
+    # goes, its own line moved into AGENTS.md without its imports of AGENTS.md or the deleted
+    # old Claude adapter.
     agents = repo.git("show", "forge/migrate-v1:AGENTS.md")
     assert agents.startswith("<!-- forge:begin -->") and "The old Forge contract" not in agents
-    claude = repo.git("show", "forge/migrate-v1:CLAUDE.md")
-    assert "@.claude/CLAUDE.md" not in claude and "@AGENTS.md" in claude
-    assert "<!-- forge:begin -->" not in claude
+    assert agents.endswith("<!-- forge:end -->\n\n# Claude Code entrypoint")
+    assert "@.claude/CLAUDE.md" not in agents and "@AGENTS.md" not in agents
 
     # A converted plan keeps its sections word for word and the old tasks as rows.
     doc = repo.git("show", "forge/migrate-v1:.forge-migrate/replan/SHIP-1.md")

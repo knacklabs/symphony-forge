@@ -120,8 +120,11 @@ def _rerun(env, stage):
     assert stopped.returncode != 0
     edited = b'merge = "agent"' in (worktree(env) / "forge.toml").read_bytes()
     assert edited == (stage != "before the edit")
-    pushed = env.repo.git("ls-remote", "origin", BRANCH)
-    assert bool(pushed) == (stage in ("after the push", "after the pull request"))
+    # Start publishes its claim before the settings edit; later publication still waits for commit.
+    pushed = env.repo.git("ls-remote", "origin", f"refs/heads/{BRANCH}")
+    assert bool(pushed) == (stage in ("before the commit", "after the push", "after the pull request"))
+    if stage == "before the commit":
+        assert raw(env, f"origin/{BRANCH}") == raw(env, "origin/main")
     if stage in ("before the edit", "before the commit", "after the commit"):
         hook(env, "pre-push" if stage == "after the commit" else "pre-commit", None)
     elif stage == "after the push":
@@ -142,7 +145,8 @@ def _rerun(env, stage):
 def _prototype_run(env, _):
     prototype(env)
     main = env.repo.git("rev-parse", "origin/main")
-    rollup = [{"name": name, "conclusion": "SUCCESS", "completedAt": "2026-09-29T10:00:00Z"}
+    rollup = [{"name": name, "status": "COMPLETED", "conclusion": "SUCCESS",
+               "completedAt": "2026-09-29T10:00:00Z"}
               for name in ("tests", "forge-pr-check")]
 
     def next_lines():
@@ -163,10 +167,19 @@ def _prototype_run(env, _):
     env.checks([run("tests", None, "in_progress"), run("forge-pr-check")])
     assert enable(env).returncode != 0
     env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps(
-        [{"headRefName": BRANCH, "url": URL, "statusCheckRollup": rollup, "isDraft": False}]))
+        [{"headRefName": BRANCH, "url": URL, "isDraft": False}]))
+    # The old pr-list rollup lacks completeness and head evidence. Readiness now reads
+    # the cached GraphQL result; keep the same owner-only merge assertions below.
+    env.gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
+        "pullRequests": {"nodes": [{"headRefName": BRANCH, "url": URL, "isDraft": False,
+            "headRefOid": env.repo.git("rev-parse", BRANCH),
+            "commits": {"nodes": [{"commit": {"statusCheckRollup": {"contexts": {
+                "nodes": rollup, "pageInfo": {"hasNextPage": False}}}}}]}}]}}}}))
     shown = next_lines()
-    assert f"The fix {FIX} is ready to merge: {URL}\nNext: merge {URL}, then forge next" in shown
-    assert f"Next: forge close {FIX}" not in shown
+    # Green checks alone formerly advertised a merge; the coordinator now requires
+    # close's receipt. The owner-only merge advice appears after enable finishes below.
+    assert f"The fix {FIX} is waiting for its checks.\nNext: forge close {FIX}" in shown
+    assert "ready to merge" not in shown
 
     # Ready: the whole output names only the owner's merge.
     env.open_pr("")
@@ -179,6 +192,10 @@ def _prototype_run(env, _):
     assert f"Next: forge merge {FIX}" not in shown
 
     # forge merge refuses it, though a prototype otherwise merges by agent.
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main",
+        "headRefOid": env.repo.git("rev-parse", BRANCH), "headRefName": BRANCH,
+        "title": "Let the agent merge", "isDraft": False}))
     refused = env.repo.forge("merge", FIX)
     assert refused.returncode != 0
     assert refused.stderr == OWNER_MERGES
@@ -208,6 +225,10 @@ def _other_fix_changes_merge(env, _):
     item, where = env.start_fix({"forge.toml": text + 'merge = "agent"\n'})
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main",
+        "headRefOid": env.repo.git("rev-parse", "HEAD", cwd=where),
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
     refused = env.repo.forge("merge", item)
     assert refused.stderr == OWNER_MERGES.replace(FIX, item, 1)
     assert not env.gh_calls("pr", "merge")

@@ -6,7 +6,6 @@ read through git and never run, imported or checked out.
 from __future__ import annotations
 
 import argparse
-import importlib
 import json
 import re
 from fnmatch import fnmatch
@@ -43,8 +42,13 @@ on:
   pull_request:
   pull_request_target:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+
 permissions:
   contents: read
+  actions: read
 
 jobs:
   tests:
@@ -52,22 +56,39 @@ jobs:
     # skipped job would otherwise pass a required check of the same name.
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
-    runs-on: ubuntu-latest
+    runs-on: <runner>
+    env:
+      UV_FROZEN: '1'
 <tests-timeout>    steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
+      - id: parent-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python .forge/review-tests.py
 <node>      - run: <test>
+        if: steps.parent-tests.outputs.reuse != 'true'
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
     name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
-    runs-on: ubuntu-latest
+    runs-on: <runner>
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
       - env:
           PR: ${{ github.event.pull_request.number }}
@@ -82,6 +103,15 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+      - name: Report pull request size
+        if: always()
+        continue-on-error: true
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          stats=$(git diff --numstat "$BASE_SHA...$HEAD_SHA")
+          echo "$stats" | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\\n", a - d, a, d}' >> "$GITHUB_STEP_SUMMARY"
 """
 
 # A client's check runs the Forge release its default branch pins. A pull request that changes
@@ -111,17 +141,18 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
     node = ""
-    if (top / "package.json").is_file():
-        node = "      - uses: actions/setup-node@v7\n"
+    if (top / "package.json").is_file() or re.search(r"\b(?:npm|npx|pnpm|yarn|node)\b", cfg["test"]):
+        node = ("      - uses: actions/setup-node@v7\n"
+                "        if: steps.parent-tests.outputs.reuse != 'true'\n")
         version_file = next((name for name in (".nvmrc", ".node-version")
                              if (top / name).is_file()), None)
         if version_file:
             node += f"        with:\n          node-version-file: {version_file}\n"
         else:
-            package = json.loads(sync.read(top / "package.json"))
+            package = json.loads(sync.read(top / "package.json") or "{}")
             version = package.get("engines", {}).get("node")
-            if isinstance(version, str) and version.strip():
-                node += f"        with:\n          node-version: {json.dumps(version)}\n"
+            version = version if isinstance(version, str) and version.strip() else "22"
+            node += f"        with:\n          node-version: {json.dumps(version)}\n"
     source = cfg.get("repo") == "forge-source"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
@@ -131,12 +162,14 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<node>", node)
-                .replace("<test>", json.dumps(cfg["test"])))
+                .replace("<test>", json.dumps(cfg["test"]))
+                .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if "tests" not in cfg.get("checks", []):
         start = workflow.index("  tests:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
-    return {WORKFLOW_PATH: workflow}
+    return {WORKFLOW_PATH: workflow,
+            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
 
 
 def pr_check(args: argparse.Namespace) -> int:
@@ -158,17 +191,17 @@ def pr_check(args: argparse.Namespace) -> int:
                    if not str(state.get(key) or "").strip()]
         if missing:
             repo.refuse(REFUSALS["fix_line"], branch=branch, line=" or ".join(missing))
-        problem = "" if state.get("allow_large") else promote_problem(changed, cfg["interfaces"])
+        from forge import githooks
+
+        fix_base = githooks.fix_base(top, state, base, head)
+        own = repo.git("diff", "--name-only", "--no-renames", fix_base, head, cwd=top).splitlines()
+        problem = "" if state.get("allow_large") else promote_problem(
+            own, cfg["interfaces"], top, fix_base, head)
         if problem:
             repo.refuse(REFUSALS["promote"], branch=branch, problem=problem, fix=item)
-    try:
-        story = importlib.import_module("forge.story")
-    except ModuleNotFoundError as exc:
-        if exc.name != "forge.story":
-            raise
-        # ponytail: STORY builds story.py in parallel; its story-doc checks run once it lands.
-        story = None
-    doc_problem = story.check_pr_docs(top, head, changed) if story else None
+    from forge import story
+
+    doc_problem = story.check_pr_docs(top, head, changed)
     if doc_problem:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
     _check_specs(top, head, changed)
@@ -191,25 +224,36 @@ def pr_check(args: argparse.Namespace) -> int:
 def _check_specs(top: Path, head: str, changed: list[str]) -> None:
     """Refuse an unconfirmed spec at head whose latest round of cold read had findings or which
     changed after it. A draft with no cold read yet, and a confirmed spec, keep today's rules."""
-    from forge import records, story
+    from forge import story
 
     for path in dict.fromkeys(re.sub(r"\.read\.md$", ".md", path) for path in changed):
         slug = re.fullmatch(r"docs/specs/([a-z0-9]+(?:-[a-z0-9]+)*)\.md", path)
         text = story.show(top, head, path) if slug else None
         notes = story.show(top, head, f"docs/specs/{slug[1]}.read.md") if text is not None else None
-        if notes is not None and records._front(text)[0].get("status") != "confirmed":
+        if notes is not None and story._record(text)[0].get("status") != "confirmed":
             story.gate(slug[1], path, notes, repo.git("rev-parse", f"{head}:{path}", cwd=top))
 
 
-def promote_problem(changed: list[str], interfaces: list[str]) -> str:
+def promote_problem(changed: list[str], interfaces: list[str], top: Path, base: str,
+                    head: str) -> str:
     """Why a fix must become a story, or "": it touches an interfaces path, or more than five code
-    files. Markdown, .factory/ and plans/ never count."""
+    files. Markdown, .factory/, plans/, test files and forge sync's own output never count toward
+    the five."""
     code = [path for path in changed
             if not path.lower().endswith(".md") and not path.startswith(review.BOOKKEEPING)]
     for path in code:
         # "/" + path lets "**/routes/**" match a top-level routes/ folder too.
         if any(fnmatch(path, pattern) or fnmatch("/" + path, pattern) for pattern in interfaces):
             return f"changes the interface path {path}"
+    from forge import story, sync, worker
+
+    tests = repo.git("diff", "--name-only", "--no-renames", base, head, "--", *worker.TEST_PATHS, cwd=top)
+    code = [path for path in code if path not in tests.splitlines()]
+    if len(code) > CODE_LIMIT:
+        # Sync's output for the forge.toml the change pins: an upgrade's check runs that release.
+        cfg = repo._config_text(story.show(top, head, "forge.toml") or "")
+        output = sync.synced(top, cfg, base, head, code)
+        code = [path for path in code if path not in output]
     if len(code) > CODE_LIMIT:
         return f"changes {len(code)} code files, over the limit of {CODE_LIMIT}"
     return ""
@@ -226,6 +270,8 @@ def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
     """The task or fix whose state at head names this branch."""
     # ponytail: reads every task and fix state at the head, one git call each; batch them
     # (git cat-file --batch) when a repo holds thousands.
+    from forge import story
+
     listing = repo.git("ls-tree", "-r", "-z", "--name-only", head, "--", ".factory/stories",
                        ".factory/fixes", cwd=top)
     for path in listing.split("\0"):
@@ -233,11 +279,8 @@ def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
                              path)
         if not match:
             continue
-        try:
-            state = json.loads(repo.git("show", f"{head}:{path}", cwd=top))
-        except ValueError:
-            continue
-        if isinstance(state, dict) and state.get("branch") == branch:
+        state = story.json_of(story.show(top, head, path))
+        if state.get("branch") == branch:
             return (f"{match[1]}/{match[2]}" if match[1] else match[3]), state
     repo.refuse(REFUSALS["not_started"], branch=branch)
 

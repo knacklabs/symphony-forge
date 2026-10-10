@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import sys
 from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
-from forge import repo, task
+from forge import __version__, repo, task
 from forge.repo import git, refuse, run
 
 LIMIT = 5  # code files a fix may change before it has to become a story
@@ -46,10 +48,19 @@ exit 1
 """
 
 
+def husky_folder(top: Path) -> Path | None:
+    folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
+    if folder.name == "_" and folder.parent.name == ".husky":
+        return folder.parent
+    return None
+
+
 def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     """The two git hook shims, in the hooks folder every worktree shares."""
     from forge import sync
 
+    if husky_folder(top):
+        return {}
     folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
     wanted = {}
     for hook, what in (("pre-commit", "commit"), ("pre-push", "push")):
@@ -69,9 +80,25 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
+    hooks = {}
+    if folder := husky_folder(top):
+        if not folder.resolve().is_relative_to(top.resolve()):
+            repo.refuse(sync.REFUSALS["outside"], path=folder)
+        for hook in ("pre-commit", "pre-push"):
+            path = folder / hook
+            current = sync.read(path)
+            command = (f'. "$(git rev-parse --show-toplevel)/{sync.LAUNCHER}" && '
+                       f'forge_husky "$0" {hook} <start> "$@"; exit $?')
+            owned = {sync.command(hook), *(command.replace("<start>", str(start)) for start in (2, 3))}
+            lines = [line for line in current.splitlines(keepends=True) if line.rstrip("\r\n") not in owned]
+            header = lines.pop(0).rstrip("\n") + "\n" if lines and lines[0].startswith("#!") else ""
+            check = command.replace("<start>", "3" if header else "2") + "\n"
+            hooks[(folder.resolve().relative_to(top.resolve()) / hook).as_posix()] = header + check + "".join(lines)
     return {
-        "AGENTS.md": sync._block(top, "AGENTS.md", "adapters/AGENTS.md"),
-        **({"CLAUDE.md": sync._claude(top)} if (top / "CLAUDE.md").exists() else {}),
+        **hooks,
+        "AGENTS.md": sync._agents(top),
+        **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() or (top / "CLAUDE.md").is_symlink()
+           else {}),  # a dangling link counts too
         **{rel: sync._hooks(top, rel, events, ALLOW.get(rel, [])) for rel, events in HOSTS.items()},
         ".codex/config.toml": sync._codex_config(top),
     }
@@ -83,6 +110,9 @@ REFUSALS = {
                 "with forge fix allow-large.", "forge story new <KEY> --from-fix {fix}"),
     "push_default": ("{branch} changes only through a merged pull request, so this push is refused.",
                      "forge close <item>"),
+    "worker_settings": ("Workers leave forge.toml to the coordinator; settings change in their own "
+                        "fix whose Done-when names forge.toml.",
+                        "report the needed settings change in your last message."),
 }
 
 
@@ -95,10 +125,20 @@ def pre_commit(args: argparse.Namespace) -> None:
     if found is None:
         refuse(REFUSALS["not_forge"], branch=branch or "A detached HEAD")
     item, state = found
+    if os.environ.get("FORGE_WORKER") and git(
+            "diff", "--cached", "--name-only", "--no-renames", "--", "forge.toml", cwd=top):
+        if not task.settings_allowed(item, top, state):
+            refuse(REFUSALS["worker_settings"])
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []
-        _promote(item, state, repo.config(top)["interfaces"], "--cached", _base("HEAD", *merging))
+        # A merge may change the pin before this process can read its new settings.
+        if merging:
+            release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+            if (release != f"v{__version__}" and repo.VERSION.fullmatch(release)
+                    and os.environ.get("FORGE_PINNED_RUN") != release):
+                sys.exit(repo.run_release(release, sys.argv[1:], top))
+        _promote(item, state, repo.config(top), _base(state, "HEAD", *merging), "")
 
 
 def pre_push(args: argparse.Namespace) -> None:
@@ -114,24 +154,46 @@ def pre_push(args: argparse.Namespace) -> None:
         match = repo.ITEM.fullmatch(fix)
         state = task.show(sha, repo.state_path(fix)) if match and match["fix"] else None
         # The pushed commit's own state decides; without one there is no allow-large reason.
-        _promote(fix, json.loads(state) if state else {}, repo.config()["interfaces"],
-                 _base(sha), sha)
+        state = json.loads(state) if state else {}
+        _promote(fix, state, repo.config(), _base(state, sha), sha)
 
 
-def _base(*tips: str) -> str:
-    """Where a fix's own changes start: its merge base with the default branch."""
+def _base(state: dict[str, Any], *tips: str) -> str:
+    """Where a fix's own changes start, including an in-progress default-branch merge."""
     default = repo.default_branch()
     remote = f"origin/{default}"
     main = remote if run("git", "rev-parse", "-q", "--verify", remote).returncode == 0 else default
+    return fix_base(repo.root(), state, main, *tips)
+
+
+def fix_base(top: Path, state: dict[str, Any], base: str, *tips: str) -> str:
+    """Exclude the unmerged parent and incoming default changes from a stacked fix's size."""
     # With several tips, git takes the merge base with a merge of all of them.
-    return git("merge-base", main, *tips)
+    fork = git("merge-base", base, *tips, cwd=top)
+    start, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
+    if not (repo.ITEM.fullmatch(parent) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", start)
+            and run("git", "merge-base", "--is-ancestor", start, tips[0], cwd=top).returncode == 0
+            and not task._merged(fork, parent, top)):
+        return fork
+    if run("git", "merge-base", "--is-ancestor", fork, start, cwd=top).returncode == 0:
+        return start
+    # Default-only merges need both inherited trees; conflict resolutions count as own changes.
+    # shortcut: this merge order needs Git 2.38+, add a fallback if older Git clients need it.
+    merged = run("git", "merge-tree", "--write-tree", start, fork, cwd=top)
+    if merged.returncode not in (0, 1):
+        merged.check_returncode()
+    return git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
+               "commit-tree", merged.stdout.splitlines()[0], "-m", "Fix size baseline", cwd=top)
 
 
-def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str) -> None:
-    """Refuse a fix over the limit or touching an interface, unless the human allowed it."""
+def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, head: str) -> None:
+    """Refuse a fix over the limit or touching an interface, unless the human allowed it.
+    head "" means the staged changes."""
     if state.get("allow_large"):
         return
+    diff = (base, head) if head else ("--cached", base)
     changed = git("diff", "--name-only", "--no-renames", "-z", *diff).split("\0")
+    interfaces = cfg["interfaces"]
     # Markdown, state and planning documents never count.
     code = [path for path in changed if path and not (
         path.lower().endswith(".md") or path.startswith((".factory/", "plans/")))]
@@ -140,6 +202,14 @@ def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str)
         fnmatchcase(path, glob) or fnmatchcase(path, glob.replace("**/", "")) for glob in interfaces)]
     if touched:
         refuse(REFUSALS["promote"], fix=fix, problem=f"changes the interface {touched[0]}")
+    # Test files and forge sync's own output don't count toward the size.
+    tests = git("diff", "--name-only", "--no-renames", "-z", *diff, "--", *repo.TEST_PATHS)
+    code = [path for path in code if path not in tests.split("\0")]
+    if len(code) > LIMIT:
+        from forge import sync
+
+        output = sync.synced(repo.root(), cfg, base, head, code)
+        code = [path for path in code if path not in output]
     if len(code) > LIMIT:
         refuse(REFUSALS["promote"], fix=fix,
                problem=f"changes {len(code)} code files, over the limit of {LIMIT}")

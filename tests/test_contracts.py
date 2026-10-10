@@ -102,9 +102,10 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     conftest._install(repo.bin, "uv", f"#!{sys.executable}\nimport sys\n"
                                       "sys.stderr.write('uv: the network is down\\n')\nsys.exit(1)\n")
-    return (("doctor", "--fix"), None, "",
-            "uv venv failed while installing the Codex SDK: uv: the network is down\n"
-            "Next: forge doctor --fix\n")
+    # FORGE-DOCTORFIX-1: the failed install is a row (tests/test_doctor_fix.py checks it), and
+    # doctor goes on with its other repairs, so it ends with the problems refusal.
+    return (("doctor", "--fix"), None, "", re.compile(
+        r"forge doctor found \d+ problem\(s\); each row above gives its fix\.\nNext: forge doctor\n"))
 
 
 def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):
@@ -196,7 +197,9 @@ def _no_spec(repo, gh, tmp_path, monkeypatch, request):
 def _reader_fails(repo, gh, tmp_path, monkeypatch, request):
     setup(repo)
     assert repo.forge("story", "new", "SHOP", "Shoppers can save a basket").returncode == 0
-    (worktree(repo, "story/SHOP") / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
+    # Exceed the pipe buffer so an early provider exit deterministically rejects stdin.
+    (worktree(repo, "story/SHOP") / "plans" / "SHOP.md").write_text(
+        DOC + "\n" + "The reader must report its failure.\n" * 4096, encoding="utf-8")
     conftest._install(repo.bin, "claude", f"#!{sys.executable}\nimport sys\n"
                       "sys.stderr.write('claude: the model is unavailable\\n')\nsys.exit(1)\n")
     return (("read", "SHOP"), None, "",
@@ -341,7 +344,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         closed = env.close(env.start_fix()[0])
         assert closed.returncode == 0, closed.stdout + closed.stderr
         [create] = env.gh_calls("pr", "create")
-        assert "1. P2 Simpler: drop the cache (app.py:1): advisory" in body(create)
+        assert "- Finding 1 (P2): Simpler: drop the cache (app.py:1): advisory" in body(create)
         # Its version is pinned: forge doctor reports a helper at any other version.
         assert "Autoreview" not in repo.forge("doctor").stdout
         helper = Path(os.environ["AUTOREVIEW"])
@@ -405,7 +408,10 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
             log = install_claude(repo)
             worked = repo.forge("work", "WISH/SAVE")
             assert worked.returncode == 0 and "stub claude: built it" in worked.stdout
-            assert calls(log)[-1]["args"][:2] == ["-p", "--model"]
+            # forge init's build entry is a gpt model, which is Codex's, so Claude takes Forge's
+            # default (once its own settings; forge work now names the model it runs).
+            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
+                                                  "--effort", "medium"]
 
 
 # --- criterion 7: the same result on both hosts ------------------------------------------------
@@ -512,21 +518,40 @@ def test_8_plain_english(env):
                  "Finished on 25 September 2026. The readme opens with a greeting"):
         assert line in text, text
     assert not _not_plain(text), (_not_plain(text), text)
+    # Inline SVG geometry also preserves the page's no-hash contract.
     assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
 
     # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits
     # stands in for a slow step. ponytail: POSIX only; Windows has no SIGINT to send one process.
     if os.name != "nt":
-        slow, started = env.tmp / "slow", env.tmp / "gh-started"
+        slow, started, gh_pid = env.tmp / "slow", env.tmp / "gh-started", env.tmp / "gh-pid"
         slow.mkdir()
-        _executable(slow / "gh", f'#!/bin/sh\ntouch "{started}"\nsleep 30\n')
+        _executable(slow / "gh", f'''#!{sys.executable}
+import os, signal
+from pathlib import Path
+Path({json.dumps(str(gh_pid))}).write_text(str(os.getpid()), encoding="utf-8")
+Path({json.dumps(str(started))}).touch()
+signal.pause()
+''')
         doctor = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "doctor"], cwd=repo.path,
                                env={**os.environ, "PATH": f"{slow}{os.pathsep}{os.environ['PATH']}"},
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        while not started.exists() and doctor.poll() is None:
-            time.sleep(0.05)
-        doctor.send_signal(signal.SIGINT)
-        out, err = doctor.communicate(timeout=30)
+        try:
+            deadline = time.monotonic() + 60
+            while not started.exists():
+                assert doctor.poll() is None and time.monotonic() < deadline, "doctor never reached gh"
+                time.sleep(0.05)
+            doctor.send_signal(signal.SIGINT)
+            doctor.wait(timeout=60)
+        finally:  # the SIGINT reached forge alone, so the waiting gh is still running
+            if doctor.poll() is None:
+                doctor.kill()
+            if gh_pid.exists():
+                try:
+                    os.kill(int(gh_pid.read_text("utf-8")), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            out, err = doctor.communicate(timeout=60)
         assert (doctor.returncode, err) == (130, ""), (out, err)
 
 
@@ -570,10 +595,12 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
-                 ("fix", "allow-large", "It touches six files"), ("spec", "save", "carts"),
+                 ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
+                 ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
-                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts")):
+                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
+                 ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         repo.forge(*args)
     changing = {words for words, changes in commands.items() if changes}
     assert not changing - ran, f"state-changing commands not run: {sorted(changing - ran)}"

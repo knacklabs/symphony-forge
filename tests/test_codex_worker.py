@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import REAL_UV, _install
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -29,8 +29,12 @@ ACCEPT = {"decision": "accept"}
 KNOWN, UNKNOWN = "item/commandExecution/requestApproval", "item/stubFuture/requestSomething"
 SOL = {"model": "gpt-6-sol", "effort": "medium", "subagents": "gpt-6-luna", "subagent_effort": "max"}
 MODELS = {"build": SOL, "fix": SOL, "lite": {"model": "gpt-6-sol", "effort": "low"}}
+# The output policy is now mandatory alongside each kind's model settings.
+QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
+         "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # What [models.build] becomes on the new conversation: Codex's own names for those settings.
-BUILD = {"model": "gpt-6-sol", "model_reasoning_effort": "medium",
+# Workers now explicitly enable delegation as well as selecting their models.
+BUILD = {**QUIET, "features.multi_agent": True, "model": "gpt-6-sol", "model_reasoning_effort": "medium",
          "agents.default_subagent_model": "gpt-6-luna",
          "agents.default_subagent_reasoning_effort": "max"}
 MODELS_REFUSAL = ("forge.toml's [models] table is not usable: {}.\n"
@@ -67,7 +71,7 @@ else:
 def sdk_data(pytestconfig: pytest.Config) -> Path:
     """An XDG_DATA_HOME holding Forge's SDK environment: the pinned SDK and the libraries its
     METADATA requires, but not its Codex program. Built once, then kept in pytest's cache."""
-    uv = shutil.which("uv")
+    uv = REAL_UV
     if uv is None:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")
@@ -132,7 +136,7 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path,
     story(repo)
     started = repo.forge("task", "start", "BOARD/PAGE")
     assert started.returncode == 0, started.stderr
-    return repo.path.parent / "repo-BOARD-PAGE", repo.bin / "codex-app-server.jsonl"
+    return repo.path.parent / f"{repo.path.name}-BOARD-PAGE", repo.bin / "codex-app-server.jsonl"
 
 
 def _stub(log: Path) -> list[dict]:
@@ -245,7 +249,7 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert state["status"] == "working"
     # Forge leaves nothing behind; the files are what the stub's accepted requests wrote.
     assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == (
-        "?? ran-stub-ask-1\n?? ran-stub-ask-2")
+        "!! ran-stub-ask-1\n!! ran-stub-ask-2")
 
     # A fix gets a Lite conversation named after the fix and its why.
     fixed = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
@@ -306,8 +310,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
             ({**MODELS, "fix": {**lite, "subagents": "gpt-6-luna"}},
              "models.fix sets only one of subagents and subagent_effort; set both or neither"),
             ({**MODELS, "debug": lite},
-             "debug is not a kind of work; the kinds are build, fix, lite, grill, design and review"),
-            ({"lite": lite}, "it has no [models.build], which this work uses")):
+             "debug is not a kind of work; the kinds are build, fix, lite, explore, grill, design and review")):
         toml.write_text(_toml(version, "codex", models), encoding="utf-8")
         refused = repo.forge("work", "BOARD/PAGE")
         assert refused.stderr == MODELS_REFUSAL.format(problem), refused.stderr
@@ -324,7 +327,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     toml.write_text(_toml(version, "codex", {"build": nova, "fix": nova}), encoding="utf-8")
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
-    config = {"model": "gpt-6-nova", "model_reasoning_effort": "high"}
+    config = {**QUIET, "features.multi_agent": True, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
     assert _sent(calls, "thread/start")[-1]["config"] == config
     assert f"stub codex: built it with {json.dumps(config, sort_keys=True)}" in again.stdout
     assert "gpt-6-nova" not in (repo.path / "forge.toml").read_text(encoding="utf-8")
@@ -332,21 +335,23 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     # A fix uses the lite kind.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
     assert repo.forge("work", "fix-the-login-typo").returncode == 0
-    assert _sent(calls, "thread/start")[-1]["config"] == {"model": "gpt-6-sol",
+    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
+                                                          "model": "gpt-6-sol",
                                                           "model_reasoning_effort": "low"}
 
-    # Claude workers take the kind's model and effort, and refuse subagents.
+    # Claude workers take the kind's model and effort; Codex-only subagent settings are ignored.
     claude = install_claude(repo)
-    toml.write_text(_toml(version, "claude", MODELS), encoding="utf-8")
-    refused = repo.forge("work", "BOARD/PAGE")
-    assert refused.stderr == MODELS_REFUSAL.format(
-        "Claude workers take model and effort, so [models.build] can't set subagents")
-    assert claude_calls(claude) == []
-    toml.write_text(_toml(version, "claude", {"build": {"model": "opus", "effort": "high"}}),
-                    encoding="utf-8")
+    toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus", "effort": "high"}}),
+                   encoding="utf-8")
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
-    assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
+    sent = claude_calls(claude)
+    assert sent
+    # This test leaves forge.toml uncommitted, so the commit nudge uses the same settings too.
+    for call in sent:
+        assert call["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
+        assert SOL["subagents"] not in call["args"]
+        assert SOL["subagent_effort"] not in call["args"]
 
 
 def test_4_turn_log(repo, monkeypatch, sdk_data):

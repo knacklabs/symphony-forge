@@ -1,0 +1,74 @@
+{
+  "branch": "task/FORGE-MOD-1-MACHINE",
+  "flagged": [
+    "src/forge/mod/hooks/machine.test.ts",
+    "src/forge/mod/hooks/machine.ts"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "068827d5cba9b5ba398ae0782891b22299aff7be65cfbbca82144084438c069f",
+    "changed": "2fad0c27e189bf0a344553a65f3f95855f064c78f21c27575f1c582d69b9da60",
+    "commit": "c0ae4a90f36fd9a9dccfcf805b6cdc9b609f62a5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previously reported gap remains: legitimate progress with done=0 and total=0 fails this validator. src/forge/review.py:301\u2013305 accepts zero-item pytest collection, and lines 311\u2013332 publish zero-length TAP progress. This rejects the entire Machine refresh and also prevents confirmed stops while that snapshot persists. Accept zero totals and display elapsed time without a bar, guarding label() against division by zero.",
+        "file": "src/forge/mod/hooks/machine.ts",
+        "line": 30,
+        "priority": "P2",
+        "title": "Accept zero-test progress without rejecting the entire snapshot"
+      },
+      {
+        "body": "The previously reported gap remains: a run can finish after the fresh lanes read but before stop executes. src/forge/machine.py:286\u2013287 then returns zero with \"There is nothing to stop.\", but this line discards that outcome and displays \"Run stopped.\" Preserve the command's no-target result and show the ended/replaced message with its next action. Existing stale-target tests remove the entry before the fresh read, so they do not exercise this window.",
+        "file": "src/forge/mod/hooks/machine.ts",
+        "line": 183,
+        "priority": "P2",
+        "title": "Preserve the stop command's no-target outcome"
+      }
+    ],
+    "id": "416e1ba5-0146-4367-beab-bd029347d801",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-07T17:39:11+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-07T18:44:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T19:04:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T19:30:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T02:54:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T03:13:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T03:38:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T04:03:11+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "accept",
+    "file": "src/forge/mod/hooks/machine.ts",
+    "reason": "Owner accepts: the spinner's place-in-line ships as a separate small fix next; the extra drawing-test coverage is dismissed per the one-test-per-rule direction."
+  },
+  "worker": "codex"
+}

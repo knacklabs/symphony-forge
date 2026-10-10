@@ -1,4 +1,4 @@
-"""A ready pull request merges through Forge, and Codex reads leave no active chat."""
+"""src/forge/merge.py merges ready pull requests, preserves local work and archives chats."""
 from __future__ import annotations
 
 import json
@@ -103,6 +103,9 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
     home = tmp_path / "codex-home"
     home.mkdir()
     monkeypatch.setenv("CODEX_HOME", str(home))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    (home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     return repo.bin / "codex-app-server.jsonl"
 
 

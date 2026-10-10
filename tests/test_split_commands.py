@@ -12,9 +12,14 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 
 # forge --help, each group and each command on main before COLLECTOR, with COLUMNS=80.
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
+# Git's list merger used a Python snippet; its PATH command now appears as merge-roadmap.
+# forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
+# Machine views deliberately add --json to next and board (FORGE-MOD-1).
+# forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
+# Test adds the machine lane and pytest picker; stop adds person-only cancellation after board.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -25,17 +30,23 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
      '                        the pinned version\n'
      '    doctor              Check tools, versions, hooks, adapter drift and the\n'
      '                        named CI checks\n'
+     "    test                Run related tests in the machine test lane, or pick\n"
+     "                        pytest tests with --pytest\n"
      '    migrate             Move a client from the copied-in Forge to v1 in one\n'
      '                        pull request\n'
+     '    upgrade             Upgrade Forge in this repo to a release, or the\n'
+     '                        newest, through one fix\n'
      '    next                Say where things stand and give the exact next command\n'
      '    board               Write and open the plain-English board page\n'
+     "    lanes               Show this release's machine-wide runs\n"
+     '    stop                Stop a running or waiting run (only a person)\n'
      '    story               Start a story, or record its outcome\n'
      '    read                Run a round of the cold read of a story doc or spec\n'
      '    task                Start a task\n'
@@ -45,10 +56,11 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    ask                 Ask Codex a read-only question about this checkout\n'
      '    close               Close a task or fix by the close rule\n'
      '    merge               Merge a ready item when this repo allows it\n'
+     '    land                Build, close, fix and merge a task or fix\n'
      '    spec                Save and confirm specs, weigh whether a build pays\n'
      '                        back, and record its result\n'
      '    decision            Write and accept decisions\n'
-     '    roadmap             Add roadmap items\n'
+     '    roadmap             Add and retire roadmap items\n'
      '    hook                Internal: the one entry point that git hooks, host\n'
      '                        hooks and CI call\n',
  'decision': 'usage: forge decision [-h] {new,accept} ...\n'
@@ -78,7 +90,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         "    amend               Replace a fix's done-when, keeping the old text and\n"
         '                        the reason in its record\n',
  'hook': 'usage: forge hook [-h]\n'
-         '                  {context,handoff,approval,deny,pre-commit,pre-push,pr-check}\n'
+         '                  {context,handoff,approval,deny,pre-commit,pre-push,merge-roadmap,pr-check}\n'
          '                  ...\n'
          '\n'
          'Internal: the one entry point that git hooks, host hooks and CI call\n'
@@ -87,7 +99,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '  -h, --help            show this help message and exit\n'
          '\n'
          'commands:\n'
-         '  {context,handoff,approval,deny,pre-commit,pre-push,pr-check}\n'
+         '  {context,handoff,approval,deny,pre-commit,pre-push,merge-roadmap,pr-check}\n'
          '    context             Session start: print forge next and the story state\n'
          '    handoff             Before compaction: save forge next beside the agent\'s\n'
          '                        decisions and lessons\n'
@@ -97,17 +109,20 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '                        --no-verify and gh pr merge\n'
          '    pre-commit          The git pre-commit rules\n'
          '    pre-push            The git pre-push rules\n'
+         '    merge-roadmap       Merge the roadmap or spotted list for git\n'
          '    pr-check            The required forge-pr-check, run from the base branch\n',
- 'roadmap': 'usage: forge roadmap [-h] {add} ...\n'
+ 'roadmap': 'usage: forge roadmap [-h] {add,retire} ...\n'
             '\n'
-            'Add roadmap items\n'
+            'Add and retire roadmap items\n'
             '\n'
             'options:\n'
-            '  -h, --help  show this help message and exit\n'
+            '  -h, --help    show this help message and exit\n'
             '\n'
             'commands:\n'
-            '  {add}\n'
-            '    add       Add roadmap items from a confirmed spec\n',
+            '  {add,retire}\n'
+            '    add         Add roadmap items from a confirmed spec\n'
+            '    retire      Mark a pending roadmap item superseded by the spec that\n'
+            '                replaces it\n',
  'spec': 'usage: forge spec [-h] {save,confirm,measure,payback} ...\n'
          '\n'
          'Save and confirm specs, weigh whether a build pays back, and record its result\n'
@@ -144,15 +159,17 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          'commands:\n'
          '  {start}\n'
          '    start     Start a task in its own branch and worktree\n',
- # FORGE-LIVE-1 adds the answers forge init takes when it adopts a repo with history.
- 'init': 'usage: forge init [-h] [--test TEST] [--checks CHECK] [--interfaces GLOB]\n'
-         '                  [--approver APPROVER] [--merger MERGER] [--never-touch PATH]\n'
+ # Runner selection adds --runner to the public init help; keep the remaining CLI contract.
+ 'init': 'usage: forge init [-h] [--test TEST] [--runner RUNNER] [--checks CHECK]\n'
+         '                  [--interfaces GLOB] [--approver APPROVER] [--merger MERGER]\n'
+         '                  [--never-touch PATH]\n'
          '\n'
          'Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync\n'
          '\n'
          'options:\n'
          '  -h, --help           show this help message and exit\n'
          '  --test TEST          a repo with history: the test command CI runs\n'
+         '  --runner RUNNER      GitHub Actions runner label (default: ubuntu-latest)\n'
          '  --checks CHECK       a repo with history: a check branch protection requires\n'
          '  --interfaces GLOB    a repo with history: its route or migration folders\n'
          '  --approver APPROVER  a repo with history: who approves stories\n'
@@ -170,8 +187,9 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
            '\n'
            'options:\n'
            '  -h, --help  show this help message and exit\n'
-           '  --fix       with Codex workers, install the pinned Codex SDK if it is\n'
-           '              missing or wrong\n',
+           '  --fix       repair what doctor safely can: the pinned Forge, the Codex SDK,\n'
+           '              the git hooks, the folders of finished work and the files forge\n'
+           '              sync writes\n',
  'migrate': 'usage: forge migrate [-h] [--dry-run]\n'
             '\n'
             'Move a client from the copied-in Forge to v1 in one pull request\n'
@@ -179,18 +197,29 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
             'options:\n'
             '  -h, --help  show this help message and exit\n'
             '  --dry-run   print the full plan and change nothing\n',
- 'next': 'usage: forge next [-h]\n'
+ 'upgrade': 'usage: forge upgrade [-h] [release]\n'
+            '\n'
+            'Upgrade Forge in this repo to a release, or the newest, through one fix\n'
+            '\n'
+            'positional arguments:\n'
+            '  release     such as v1.3.0; the newest when left out\n'
+            '\n'
+            'options:\n'
+            '  -h, --help  show this help message and exit\n',
+ 'next': 'usage: forge next [-h] [--json]\n'
          '\n'
          'Say where things stand and give the exact next command\n'
          '\n'
          'options:\n'
-         '  -h, --help  show this help message and exit\n',
- 'board': 'usage: forge board [-h] [--out PATH]\n'
+         '  -h, --help  show this help message and exit\n'
+         '  --json      Print the machine view\n',
+ 'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
           'Write and open the plain-English board page\n'
           '\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
+          '  --json      Print the machine view\n'
           '  --out PATH  write the page here instead of .git/forge/board.html\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'
@@ -283,7 +312,9 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         '  -h, --help       show this help message and exit\n'
         '  --model MODEL    Codex model for this answer\n'
         '  --effort EFFORT  reasoning effort for this answer\n',
- 'close': 'usage: forge close [-h] [--dismiss N] [--because FILE:LINE_REASON] item\n'
+ 'close': 'usage: forge close [-h] [--dismiss N] [--because FILE:LINE_REASON]\n'
+          '                   [--resolve {narrow,split,accept}] [--reason REASON]\n'
+          '                   item\n'
           '\n'
           'Close a task or fix by the close rule\n'
           '\n'
@@ -293,8 +324,10 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           'options:\n'
           '  -h, --help            show this help message and exit\n'
           '  --dismiss N\n'
-          '  --because FILE:LINE_REASON\n',
- 'merge': 'usage: forge merge [-h] item\n'
+          '  --because FILE:LINE_REASON\n'
+          '  --resolve {narrow,split,accept}\n'
+          "  --reason REASON       The human's choice after a review loop stop\n",
+ 'merge': 'usage: forge merge [-h] [--outcome OUTCOME] item\n'
           '\n'
           'Merge a ready item when this repo allows it\n'
           '\n'
@@ -302,7 +335,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           '  item\n'
           '\n'
           'options:\n'
-          '  -h, --help  show this help message and exit\n',
+          '  -h, --help         show this help message and exit\n'
+          '  --outcome OUTCOME  outcome for a story\'s last task; defaults to its title\n',
  'spec save': 'usage: forge spec save [-h] slug\n'
               '\n'
               'Save a spec as a draft\n'
@@ -384,6 +418,16 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                 '\n'
                 'options:\n'
                 '  -h, --help  show this help message and exit\n',
+ 'roadmap retire': 'usage: forge roadmap retire [-h] --by SPEC key\n'
+                   '\n'
+                   'Mark a pending roadmap item superseded by the spec that replaces it\n'
+                   '\n'
+                   'positional arguments:\n'
+                   '  key\n'
+                   '\n'
+                   'options:\n'
+                   '  -h, --help  show this help message and exit\n'
+                   '  --by SPEC\n',
  'hook context': 'usage: forge hook context [-h]\n'
                  '\n'
                  'Session start: print forge next and the story state\n'
@@ -433,7 +477,7 @@ def _copy_forge(repo, tmp_path):
     return package
 
 
-def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch):
+def commands_keep_their_help_and_register_a_new_owner(repo, tmp_path, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     for words, expected in HELP_GOLDEN.items():
         result = repo.forge(*words.split(), "--help")
@@ -450,6 +494,9 @@ def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatc
         '"listing": "| `forge probe` | A newly owned command |"}]\n',
         encoding="utf-8",
     )
+    # Names are registered without scanning implementations; declarations still own all options.
+    with (package / "cli.py").open("a", encoding="utf-8") as file:
+        file.write('\nROUTES["probe"] = "probe"\n')
     assert "probe" in repo.forge("--help").stdout
     assert repo.forge("probe", "--dismiss", "7", "--dismiss", "8").stdout == "int:[7, 8]\n"
     assert "invalid int value" in repo.forge("probe", "--dismiss", "seven").stderr
@@ -460,10 +507,14 @@ def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatc
         '"listing": "| `forge probe run` | Run the probe |"}]\n',
         encoding="utf-8",
     )
+    with (package / "cli.py").open("a", encoding="utf-8") as file:
+        file.write('\nROUTES.pop("probe")\nROUTES["probe run"] = "probe"\n'
+                   'GROUP_OWNERS["probe"] = "probe"\n')
     assert "group help missing: probe" in repo.forge("--help").stderr
     with owner.open("a", encoding="utf-8") as file:
         file.write('GROUP_HELP = {"probe": "Probe commands"}\n')
     assert repo.forge("probe", "run").stdout == "group command ran\n"
     (package / "other.py").write_text('GROUP_HELP = {"probe": "Duplicate"}\n',
                                       encoding="utf-8")
-    assert "group help declared twice: probe" in repo.forge("--help").stderr
+    # Unregistered files no longer participate in command discovery or group ownership.
+    assert repo.forge("probe", "run").stdout == "group command ran\n"

@@ -24,7 +24,7 @@ def _commit_roadmap(repo, items: list[dict], message: str) -> None:
 
 def _synced(repo, items: list[dict]) -> None:
     repo.git("checkout", "-q", "-b", "fix/roadmap")
-    repo.write("forge.toml", 'version = "v1.2.1"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.6"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     repo.write("plans/roadmap.json", json.dumps({"items": items}, indent=2) + "\n")
     synced = repo.forge("sync")
@@ -56,17 +56,17 @@ def test_1_two_branches_that_each_add_an_item_merge_without_a_conflict(repo):
     assert items == [first, _item("A-1", "pending", 2), _item("B-1", "pending", 2)]
 
 
-def test_2_two_branches_that_change_the_same_item_keep_the_latest_status(repo):
+def test_2_two_branches_that_change_different_items_keep_both_statuses(repo):
     base = [_item("ONE-1", "pending", 1), _item("TWO-1", "pending", 2)]
     _synced(repo, base)
     repo.git("branch", "finishes")
     repo.git("checkout", "-q", "-b", "starts")
-    _commit_roadmap(repo, [_item("ONE-1", "started", 1), _item("TWO-1", "started", 2)], "Start")
+    _commit_roadmap(repo, [base[0], _item("TWO-1", "started", 2)], "Start")
     repo.git("checkout", "-q", "finishes")
     _commit_roadmap(repo, [_item("ONE-1", "done", 1), base[1]], "Finish")
     repo.git("branch", "finishes-again")
 
-    # Whichever side git calls ours, the status further along wins; a side's lone change is kept.
+    # Competing edits to the same status now conflict; distinct items still merge in either order.
     wanted = [_item("ONE-1", "done", 1), _item("TWO-1", "started", 2)]
     assert _merge(repo, "starts", "finishes") == wanted
     assert _merge(repo, "finishes-again", "starts") == wanted

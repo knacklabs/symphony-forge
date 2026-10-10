@@ -32,6 +32,9 @@ START = 120  # the seconds Codex gets to start: Codex() waits on initialize with
 STARTING = threading.Lock()  # end() never falls between the app-server starting and SERVER
 SERVER: list[int] = []  # the app-server's process id once it has started, for end() on Windows
 RECORDED = threading.Semaphore(0)  # a release per line Forge sends once it has recorded an id
+# The fields of a hooks/list entry that say where the hook is and its state, not what it runs.
+PLACE = {"key", "sourcePath", "source", "pluginId", "displayOrder", "enabled", "isManaged",
+         "currentHash", "trustStatus"}
 RETRIES = 3  # the times a turn Codex ends as at capacity is sent again, each wait twice the last
 # ponytail: the tests' seam, like FORGE_CHECKS_WAIT
 RETRY_WAIT = float(os.environ.get("FORGE_CODEX_RETRY_WAIT", "30"))
@@ -134,7 +137,7 @@ def main() -> int:
             try:
                 client._request_raw("thread/attachment/add", {
                     "threadId": request["thread"], "attachmentType": "pull_request",
-                    "identityKey": request["identity"],
+                    "identityKey": json.dumps(request["identity"]),
                     "payload": request["payload"]})
                 emit(attached=True)
             except Exception as error:
@@ -156,6 +159,40 @@ def main() -> int:
         # automatic reviewer isn't used. The SDK's only other mode, auto_review, uses it.
         settings = {"approval_mode": ApprovalMode.deny_all, "sandbox": sandbox,
                     "cwd": request["cwd"], "config": request["config"] or None}
+        # Codex skips a project hook it doesn't trust, and any change to one un-trusts it. Forge
+        # trusts its own hooks for this thread by their current hash (decision 0102) and starts
+        # nothing while any other project hook waits for the user's review.
+        state = {}
+        for entry in client._request_raw("hooks/list", {"cwds": [request["cwd"]]})["data"]:
+            for hook in entry["hooks"]:
+                if hook["source"] != "project" or hook["trustStatus"] in ("trusted", "managed"):
+                    continue
+                # The whole definition, every field but where and how Codex found it, so a field
+                # Forge doesn't know (or a changed timeout) makes the hook not Forge's.
+                if {key: value for key, value in hook.items()
+                        if key not in PLACE} not in request["hooks"]:
+                    emit(refused="hook", hook=f'{hook["eventName"]} hook "{hook.get("command")}"',
+                         path=hook["sourcePath"])
+                    return 3
+                state[hook["key"]] = {"trusted_hash": hook["currentHash"]}
+        if state:  # nested: a hook's key holds dots, which a dotted override would split
+            settings["config"] = {**(settings["config"] or {}), "hooks": {"state": state}}
+        # The SDK's high-level Thread discards these settings; null effort follows the model.
+        request_raw = client._request_raw
+        def selected_request(method, params=None):
+            response = request_raw(method, params)
+            if method in ("thread/start", "thread/resume"):
+                effort, cursor = response.get("reasoningEffort"), None
+                while effort is None:
+                    page = request_raw("model/list", {"includeHidden": True, "cursor": cursor})
+                    effort = next((model["defaultReasoningEffort"] for model in page["data"]
+                                   if model["model"] == response["model"]), None)
+                    cursor = page.get("nextCursor")
+                    if not cursor:
+                        break
+                emit(selection={"model": response["model"], "effort": effort})
+            return response
+        client._request_raw = selected_request
         resumed = None
         if request.get("thread"):
             try:
@@ -183,8 +220,14 @@ def main() -> int:
                 while True:
                     page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
                     for project in page["data"]:
-                        if any(Path(path).resolve() == root for path in project.get("roots", [])):
-                            matches.add(project["id"])
+                        if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
+                                or not project["id"] or not isinstance(project.get("roots"), list)):
+                            continue
+                        for path in project["roots"]:
+                            path = path.get("path") if isinstance(path, dict) else path
+                            if isinstance(path, str) and path and Path(path).resolve() == root:
+                                matches.add(project["id"])
+                                break
                     cursor = page.get("nextCursor")
                     if not cursor:
                         break

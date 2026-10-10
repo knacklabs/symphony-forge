@@ -27,17 +27,17 @@ import itertools
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import tempfile
 import uuid
 from datetime import datetime, timezone
-from fnmatch import fnmatch
 from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, repo, worker
+from forge import codex, machine, repo, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -62,6 +62,8 @@ REFUSALS = {
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
+    "prototype": ("Stories wait for the customer's sign-off. Build and demo the prototype first.",
+                  "forge next"),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -72,6 +74,7 @@ RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
+BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
                          r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
@@ -90,6 +93,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **{f"{host}/skills/forge/standards.md":
            (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
            for host in (".claude", ".codex")},
+        **{f"{host}/skills/forge/migrate-skill.md":
+           (TEMPLATES / "migrate-skill.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
         **{f"{host}/skills/forge/fde.md":
            sync._synced_text(".codex/skills/forge/fde.md", "fde.md")
            for host in (".claude", ".codex")},
@@ -104,8 +110,7 @@ def new(args: Any) -> int:
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
     if (top / "forge.toml").is_file() and repo.is_prototype(top):
-        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
-                     "forge next"))
+        repo.refuse(REFUSALS["prototype"])
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
     done = "Something anyone can observe once this is done."
     if fix:
@@ -129,10 +134,13 @@ def new(args: Any) -> int:
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
     _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
-    changed = [doc, *(_add_to_roadmap(path, key, title) if fix else [])]
+    changed = [doc]
+    if fix and key not in {item["key"] for item in repo.roadmap(path)}:
+        changed += add_to_roadmap(path, [{"key": key, "title": title}])
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))
     repo.commit_state(f"Start the story: {title}", *changed, top=path)
+    task.publish_start(path, f"story/{key}")
     print(f"Started the story {key} in {path}.")
     if fix_top:
         print(_promote(fix_top, fix, key, fix_state))
@@ -152,7 +160,7 @@ def read(args: Any) -> int:
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
     if is_story:
-        _parsed(doc, rel)
+        _parsed(_text(doc), rel)
     apps = [app for variable, app in COORDINATORS.items() if os.environ.get(variable)]
     if len(apps) != 1:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
@@ -171,8 +179,8 @@ def read(args: Any) -> int:
     left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
     config = repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
-    first, again, head = re.split(r"<!-- forge:(?:round|notes) -->\n",
-                                  (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
+    first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
+                                        (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = _store(top, text, rel)
@@ -194,7 +202,14 @@ def read(args: Any) -> int:
             why = why or "Forge has no copy of what its last round read"
             diff = spec_diff = "(not available)"
         saw = _findings(_record(seen["notes_seen"].stdout)[1])
-        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1)
+        old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
+        touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
+                   if old_sections.get(name) != new_sections.get(name)]
+        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
+                    touched="(not available)" if diff == "(not available)" else
+                    ", ".join(touched) or "the title")
+        if passed(record, findings):  # only an edit since a passing round: read just that edit
+            again = edit
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()))
         # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
         prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
@@ -205,12 +220,16 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
-        done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"], why)
+        with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
+            done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
+                                why, round_number)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
         thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
-        with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
+        # One read per item, nothing left running, and one of the machine's agent slots.
+        with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read", target,
+                **repo.models(config, "grill", reader)):
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -218,7 +237,7 @@ def read(args: Any) -> int:
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
-                            fresh=why or "first turn", fresh_prompt=fresh_prompt)
+                            fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number)
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
@@ -230,24 +249,42 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
-    passed = said == "No findings."
-    if not passed:
+    note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
+                      r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)
+    unnumbered_note = re.compile(note.pattern + r"(?:\s*[;,—–-]\s*.*)?", re.I)
+    # Recognize note clauses before stripping numbers or joining separate lines.
+    parts = re.split(r"^[ \t]*(?:\d+[.)]|[-*])\s+|\n(?=\s*(?:note:\s*)?tests\b)",
+                     "\n".join("Tests not run" if unnumbered_note.fullmatch(
+                         line.strip().strip(" *`_.!?,:;")) else line for line in said.splitlines()),
+                     flags=re.M | re.I)
+    lines = [" ".join(part.split()).strip(" *`_.!?,:;").lower()
+             for part in parts if part.strip()]
+    empty = re.compile(r"(?!.*\b(?:but|however|except)\b)"
+                       r"(?:(?:there (?:are|were)|i (?:have|found)|found) )?no (?:\w+ )?"
+                       r"(?:finding|issue|problem|bug|defect)s?"
+                       r"(?: (?:found|reported|identified|detected|to report))?")
+    clean = any(empty.fullmatch(line) for line in lines) and all(
+        empty.fullmatch(line) or note.fullmatch(line) for line in lines)
+    if clean:
+        # Keep one canonical passing reply so every downstream gate sees the same result.
+        said = "No findings."
+    if not clean:
         # ponytail: unstructured output is one finding, so it still needs a disposition. Findings
         # number on from earlier rounds', whatever numbers the reader used.
         numbers = itertools.count(max(blocks, default=0) + 1)
         said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
                            said if FINDING.search(said) else f"1. {said}")
-    model = repo.models(config, "grill", reader)["model"]
+    model = repo.models(config, "grill", reader).get("model", "its own default model")
     record = {"reader": f"{reader} ({model})" + (
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
                   if reader == here else ""),
               "read_at": repo.now(), "read_hash": read_hash,
-              "round": str(round_number), "passed": "yes" if passed else "no",
+              "round": str(round_number), "passed": "yes" if clean else "no",
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8"))}
     kept = findings.rstrip("\n") if later else head.strip()
     _write(notes, _notes(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"))
-    if reader == "codex" and passed and ran.get("conversation"):
+    if reader == "codex" and clean and ran.get("conversation"):
         try:
             archived = codex.archive(top, target, "Grill", ran["conversation"])
         except Exception:
@@ -255,7 +292,7 @@ def read(args: Any) -> int:
         if not archived:
             print(f"Forge could not archive the cold read's Codex conversation for {target}; "
                   "archive it in Codex when it is available.")
-    if passed and left:
+    if clean and left:
         print(f"The cold read's earlier {NAMES[recorded]} conversation for {target}, {left}, is left "
               f"as it is, because {NAMES[recorded]} is no longer installed.")
     changed = [rel, _rel(top, notes)]
@@ -264,10 +301,10 @@ def read(args: Any) -> int:
         if (state.get("approval") or {}).get("hash") != approval_hash(text.decode("utf-8")):
             state["status"] = "read"
         changed.append(repo.write_state(target, repo.add_step(state, "read"), top))
-    if passed:  # a passing round is committed, so tasks and pull requests carry what passed
+    if clean:  # a passing round is committed, so tasks and pull requests carry what passed
         repo.commit_state(f"Round {round_number} of the cold read of {rel} found nothing", *changed,
                           top=top)
-    print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if passed else
+    print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every finding a disposition, amend the doc, then forge read {target}")
     return 0
@@ -279,27 +316,18 @@ def done(args: Any) -> int:
     text = show(top, ref, doc)
     if text is None:
         repo.refuse(REFUSALS["not_finished"], key=key, problem="its story doc isn't on the default branch yet")
-    try:
-        tasks = parse(text)["tasks"]
-    except ValueError as exc:
-        repo.refuse(REFUSALS["bad_doc"], doc=doc, problem=exc)
+    tasks = _parsed(text, doc)["tasks"]
     dates = {task["id"]: merged_at(top, ref, repo.state_path(f"{key}/{task['id']}")) for task in tasks}
     waiting = [task for task, date in dates.items() if not date]
     if not tasks or waiting:
         repo.refuse(REFUSALS["not_finished"], key=key,
                     problem=f"{', '.join(waiting)} not merged yet" if waiting else "it has no tasks")
     state = json_of(show(top, ref, repo.state_path(key)))
-    title, slug = state.get("title") or key, f"{key.lower()}-done"
-    path = add_worktree(top, f"fix/{slug}", ref)
+    title = state.get("title") or key
     state.update(status="done", outcome=args.outcome, merged=dates, finished=max(dates.values()))
-    fix = {"kind": "story-done", "why": f"Record that {title} is finished, and what it achieved.",
-           "done_when": "The board shows the story as finished, with its outcome.", "outcome": args.outcome,
-           "branch": f"fix/{slug}", "base": repo.git("rev-parse", ref, cwd=top), "status": "started",
-           "touches": 0}
-    changed = [repo.write_state(key, repo.add_step(state, "done"), path),
-               repo.write_state(slug, repo.add_step(fix, "start"), path)]
-    repo.commit_state(f"Record the outcome of {title}", *changed, top=path)
-    print(f"Opened the fix that records the outcome of {title} in {path}.\nNext: forge close {slug}")
+    changed = repo.write_state(key, repo.add_step(state, "done"), top)
+    repo.commit_state(f"Record the outcome of {title}", changed, top=top)
+    print(f"Recorded the outcome of {title} on this work branch.\nNext: forge next")
     return 0
 
 
@@ -315,8 +343,11 @@ def sections(text: str) -> dict[str, str]:
     return found
 
 
-def parse(text: str) -> dict[str, Any]:
-    """A story doc's title, sections, Done-when items, task rows and `New moving parts:` line.
+def parse(text: str, top: Path | None = None, ref: str | None = None,
+          history: dict[str, Any] | None = None) -> dict[str, Any]:
+    """A story doc's Done-when items, their details and its task rows, once its shape is sound.
+    With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
+    first at the commit `ref` when given.
 
     Raises ValueError naming what is malformed, and the task row when a row is wrong.
     """
@@ -359,17 +390,105 @@ def parse(text: str) -> dict[str, Any]:
         if not scope:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
-                       "tests": _cell_paths(row["Tests"]),
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*", row["After"]),
-                       "user_facing": row["User-facing"].lower() in ("yes", "true")}
+                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])}
     for task in tasks.values():
-        unknown = [after for after in task["after"] if after not in tasks]
+        unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
             raise ValueError(f"Tasks row {task['id']}: After {unknown[0]} is not a task in this table")
+        for other in (after for after in task["after"] if "/" in after and top):
+            key, _, name = other.partition("/")
+            if name not in _task_ids(_plan(top, key, ref, history)):
+                raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
     _no_cycle(tasks)
-    title = re.search(r"^# (.+)$", text, re.M)
-    return {"title": title[1].strip() if title else "", "sections": found, "done": done,
-            "details": notes, "tasks": list(tasks.values()), "moving_parts": moving[0]}
+    return {"done": done, "details": notes, "tasks": list(tasks.values())}
+
+
+def plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
+    """The published story unless the local story already includes it."""
+    local, remote = f"story/{key}", f"origin/story/{key}"
+    landed = landed_ref(top)
+    rel = f"plans/{key}.md"
+    local_doc = history["docs"].get(f"{local}:{rel}") if history is not None else show(top, local, rel)
+    remote_doc = history["docs"].get(f"{remote}:{rel}") if history is not None else show(top, remote, rel)
+    source = local if local_doc is not None else landed
+    if remote_doc is not None:
+        if local_doc is None or repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
+            source = remote
+    def state_at(ref: str) -> dict[str, Any]:
+        if history is None:
+            return json_of(show(top, ref, repo.state_path(key)))
+        full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+        return history["ref_states"].get(full, {}).get(repo.state_path(key), {})
+    state = state_at(source)
+    # A failed approval push leaves the initial claim behind the first merged part.
+    if (not state.get("approval") and all(step.get("step") == "start" for step in state.get("steps", []))
+            and state_at(landed).get("approval")):
+        return landed
+    return source
+
+
+def _with_developers(text: str, assignments: dict[str, str | None], include: bool) -> str:
+    """Normalize the optional column so independent row assignments merge independently."""
+    lines, column, table = [], None, False
+    for line in text.splitlines(keepends=True):
+        if line.startswith("## "):
+            table = line.strip() == "## Tasks"
+        if table and line.lstrip().startswith("|"):
+            cells = line.strip().strip("|").split("|")
+            if cells[0].strip() == "ID":
+                column = next((i for i, cell in enumerate(cells) if cell.strip() == "Developer"), None)
+            if column is not None and column < len(cells):
+                cells.pop(column)
+            if include:
+                value = ("Developer" if cells[0].strip() == "ID" else "---"
+                         if set(cells[0].strip()) <= set("-: ") else assignments.get(cells[0].strip()) or "")
+                cells.append(f" {value} ")
+            line = "|" + "|".join(cells) + "|\n"
+        lines.append(line)
+    return "".join(lines)
+
+
+def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] | None = None) -> str:
+    """Read the published plan with local edits, without changing either checkout."""
+    rel = f"plans/{key}.md"
+    def read(one: str) -> str | None:
+        return history["docs"].get(f"{one}:{rel}") if history is not None else show(top, one, rel)
+    if ref and (text := read(ref)) is not None:
+        return text
+    if plan_ref(top, key, history) == landed_ref(top):
+        return read(landed_ref(top)) or ""
+    tree = ((history["worktrees"].get(f"story/{key}") if KEY.fullmatch(key) else None)
+            if history is not None else stories_here(top).get(key))
+    local_ref, remote = f"story/{key}", f"origin/story/{key}"
+    local = _text(tree / rel) if tree and (tree / rel).is_file() else read(local_ref)
+    published = read(remote)
+    if local is None or published is None or local == published:
+        return local if local is not None else published or read(landed_ref(top)) or ""
+    base_ref = repo.git("merge-base", local_ref, remote, cwd=top)
+    base = show(top, base_ref, rel) or ""
+    tables = [task.rows(task.sections(text)) for text in (base, local, published)]
+    before, ours, theirs = tables
+    assignments = {tid: task.developer(ours.get(tid, {}))
+                   if task.developer(ours.get(tid, {})) != task.developer(before.get(tid, {}))
+                   else task.developer(theirs.get(tid, {})) for tid in ours.keys() | theirs.keys()}
+    columns = [any("Developer" in row for row in table.values()) for table in tables]
+    include = columns[1] if columns[1] != columns[0] else columns[2]
+    with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
+        files = [Path(folder) / name for name in ("local", "base", "published")]
+        for file, text in zip(files, (local, base, published)):
+            file.write_text(_with_developers(text, assignments, include), encoding="utf-8")
+        merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
+    if merged.returncode:
+        raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
+                           f"git diff story/{key} origin/story/{key} -- plans/{key}.md")
+    return merged.stdout
+
+
+def _task_ids(text: str) -> set[str]:
+    try:
+        return {task["id"] for task in parse(text)["tasks"]}
+    except ValueError:
+        return set()
 
 
 def details(text: str) -> dict[int, str]:
@@ -407,14 +526,6 @@ def approval_hash(text: str) -> str | None:
     return hashlib.sha256("\n".join(found[name].strip() for name in APPROVED).encode("utf-8")).hexdigest()
 
 
-def overlaps(scope: list[str], other: list[str]) -> bool:
-    """Whether two Scope lists share a path: the same path, one inside the other, or a glob match."""
-    def one(a: str, b: str) -> bool:
-        a, b = a.rstrip("/"), b.rstrip("/")
-        return a == b or a.startswith(b + "/") or b.startswith(a + "/") or fnmatch(a, b) or fnmatch(b, a)
-    return any(one(a, b) for a in scope for b in other)
-
-
 # --- the cold read gate and forge-pr-check -------------------------------------------------
 
 
@@ -424,13 +535,15 @@ def check_read(target: str, top: Path | None = None) -> None:
     Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
-    gate(target, rel, _text(notes), _hash(top, doc))
+    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
     if is_story:
-        _parsed(doc, rel)
+        _parsed(_text(doc), rel)
 
 
-def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
-    """check_read on a doc's notes text and the doc's git hash (a worktree file or a commit's)."""
+def gate(target: str, rel: str, notes: str, doc_hash: str, text: str | None = None,
+         top: Path | None = None) -> None:
+    """check_read on a doc's notes text and the doc's git hash (a worktree file or a commit's).
+    With the doc's `text`, an edit only below `## For the builders` needs no round."""
     record, findings = _record(notes)
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], doc=rel, target=target)
@@ -439,8 +552,23 @@ def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=rel.removesuffix(".md") + ".read.md")
     if not passed(record, findings):
         repo.refuse(REFUSALS["not_passed"], doc=rel, target=target, round=record.get("round") or 1)
-    if doc_hash != record["read_hash"]:
+    if changed_since_read(record["read_hash"], doc_hash, text, top):
         repo.refuse(REFUSALS["changed"], doc=rel, target=target)
+
+
+def above_builders(text: str) -> str:
+    """What an approval shows: the doc from its title down to `## For the builders`, or all of it."""
+    return BUILDERS.split(text.replace("\r\n", "\n"), 1)[0]
+
+
+def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = None,
+                       top: Path | None = None) -> bool:
+    """Whether a doc changed since the round that read `read_hash`: any change without its `text`,
+    else only one above `## For the builders`, which needs no new approval and so no new round."""
+    if doc_hash == read_hash or text is None:
+        return doc_hash != read_hash
+    old = repo.run("git", "cat-file", "blob", read_hash or "-", cwd=top)
+    return old.returncode != 0 or above_builders(old.stdout) != above_builders(text)
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
@@ -478,7 +606,7 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
         if text is None:
             continue
         try:
-            parse(text)
+            parse(text, top, head)
         except ValueError as exc:
             return f"The story doc {path} is malformed: {exc}."
         notes = show(top, head, f"plans/{match[1]}.read.md")
@@ -490,7 +618,8 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
             return f'The approval of {path} doesn\'t match its "What changes for you" and "Done when".'
         if rounds(notes, show(top, head, repo.state_path(match[1]))):
             try:
-                gate(match[1], path, notes or "", repo.git("rev-parse", f"{head}:{path}", cwd=top))
+                gate(match[1], path, notes or "", repo.git("rev-parse", f"{head}:{path}", cwd=top),
+                     text, top)
             except repo.Refused as refusal:
                 return str(refusal).partition("\nNext: ")[0]
     return None
@@ -536,10 +665,33 @@ def add_worktree(top: Path, branch: str, start: str) -> Path:
 
 def landed_ref(top: Path) -> str:
     """Where merged work lands: origin/<default> as last fetched; the local default with no remote."""
-    default = repo.default_branch(top)
-    fetched = f"origin/{default}"
-    found = repo.run("git", "rev-parse", "-q", "--verify", f"{fetched}^{{commit}}", cwd=top).returncode
-    return default if found else fetched
+    def read():
+        default = repo.default_branch(top)
+        fetched = f"origin/{default}"
+        found = repo.run("git", "rev-parse", "-q", "--verify", f"{fetched}^{{commit}}", cwd=top).returncode
+        return default if found else fetched
+    return repo.command_fact("landed ref", top, read)
+
+
+def plan_behind(top: Path, key: str, ref: str) -> str:
+    """One line with the command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs
+    from the story branch's content history, as when a fix edits the plan; else ""."""
+    branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
+    theirs = show(top, ref, doc)
+    if theirs is None or show(top, branch, doc) in (None, theirs):
+        return ""
+    blob = repo.git("rev-parse", f"{ref}:{doc}", cwd=top)
+    history = repo.git("rev-list", "--objects", branch, "--", doc, cwd=top)
+    if blob in {line.split()[0] for line in history.splitlines()}:
+        return ""
+    folder = stories_here(top).get(key)
+    add = ""
+    if not folder:
+        main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
+        folder = main.parent / f"{main.name}-story-{key}"
+        add = f"git worktree add {shlex.quote(str(folder))} story/{key} && "
+    return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
+            f"{add}git -C {shlex.quote(str(folder))} merge {ref}")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
@@ -553,6 +705,37 @@ def merged_at(top: Path, ref: str, path: str) -> str:
     date = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", ref, "--", path,
                     cwd=top)
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
+
+
+def completed(top: Path, key: str, ref: str, history: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Read completion from the last task's squash message; older saved outcomes win."""
+    state = (history["stories"].get(key, {}) if history is not None else
+             json_of(show(top, ref, repo.state_path(key))))
+    if state.get("status") == "done":
+        return state
+    text = (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None else
+            show(top, ref, f"plans/{key}.md") or "")
+    try:
+        tasks = parse(text)["tasks"]
+    except ValueError:
+        return state
+    dates = {row["id"]: (history["dates"].get(repo.state_path(f"{key}/{row['id']}"), "")
+                         if history is not None else merged_at(top, ref, repo.state_path(f"{key}/{row['id']}")))
+             for row in tasks}
+    if not dates or not all(dates.values()):
+        return state
+    # The file's first appearance identifies its merge, even after later edits to task state.
+    for tid in dates:
+        message = (history["messages"][repo.state_path(f"{key}/{tid}")] if history is not None else
+                   repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%B",
+                            ref, "--", repo.state_path(f"{key}/{tid}"), cwd=top))
+        for line in reversed(message.splitlines()):
+            if line.startswith("Forge-story-done: "):
+                record = json_of(line.removeprefix("Forge-story-done: "))
+                if record.get("key") == key and isinstance(record.get("outcome"), str):
+                    return {**state, "status": "done", "outcome": record["outcome"],
+                            "merged": dates, "finished": max(dates.values())}
+    return state
 
 
 def json_of(text: str | None) -> dict[str, Any]:
@@ -594,12 +777,7 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
             if not re.fullmatch(r"docs/specs/[a-z0-9]+(?:-[a-z0-9]+)*\.md", path):
                 continue
             spec = show(top, ref, path) or ""
-            match = FRONTMATTER.match(spec)
-            if not match:
-                continue
-            fields = dict(line.partition(":")[::2] for line in match[1].splitlines() if ":" in line)
-            fields = {name.strip(): value.strip().strip('"\'') for name, value in fields.items()}
-            body = spec[match.end():]
+            fields, body = _record(spec)
             if (fields.get("status") == "confirmed"
                     and fields.get("confirmed_hash") == hashlib.sha256(body.encode("utf-8")).hexdigest()
                     and (path == linked or re.search(rf"^- {re.escape(key)}: ", body, re.M))):
@@ -608,11 +786,48 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 
 
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
-                 resume: str | None, why: str) -> subprocess.CompletedProcess[str]:
+                 resume: str | None, why: str, round_number: int) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
-    command = ["claude", "-p", *models, "--permission-mode", "plan"]
+    exe = shutil.which("claude")
+    if exe is None:
+        repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
+
+    def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
+        with repo.record_run(top, target, "read", family="claude", round=round_number,
+                             model=models[models.index("--model") + 1] if models else None,
+                             effort=models[models.index("--effort") + 1] if "--effort" in models else None) as ran:
+            with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errors, subprocess.Popen(
+                                  [exe, "-p", *models, "--permission-mode", "plan",
+                                   "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", *args],
+                                  cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=errors, text=True, encoding="utf-8",
+                                  errors="replace",
+                                  env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as reader, \
+                    machine.agent_process(reader):
+                events = ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
+                          {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
+                          {"type": "user", "message": {"role": "user", "content": text}})
+                # communicate's writer handles a provider closing stdin, including Windows EINVAL.
+                reader._stdin_write("".join(json.dumps(event) + "\n" for event in events))
+                lines, final = [], None
+                for line in reader.stdout:
+                    try:
+                        event = json.loads(line)
+                    except ValueError:
+                        event = None
+                    if isinstance(event, dict):
+                        line = repo.claude_output(top, target, ran["run_id"], event)
+                        if event.get("type") == "result":
+                            final = line
+                    lines.append(line)
+                reader.wait()
+                errors.seek(0)
+                out, err = final if final is not None else "".join(lines), errors.read()
+            ran["outcome"] = "completed" if reader.returncode == 0 else "failed"
+        return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
+
     if resume:
-        done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
+        done = run("--resume", resume, text=prompt)
         if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
         why = f"Claude couldn't continue session {resume}"
@@ -621,7 +836,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
-    return repo.run(*command, "--session-id", session, cwd=top, input=fresh_prompt)
+    return run("--session-id", session, text=fresh_prompt)
 
 
 def _store(top: Path, data: bytes, path: str = "") -> str:
@@ -648,9 +863,9 @@ def agents_section(top: Path, heading: str) -> str:
     return sections(text).get(heading, "").strip()
 
 
-def _parsed(doc: Path, rel: str) -> dict[str, Any]:
+def _parsed(text: str, rel: str) -> dict[str, Any]:
     try:
-        return parse(_text(doc))
+        return parse(text, repo.root())  # checks After entries that name another story's task
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 
@@ -692,19 +907,14 @@ def _snapshot(top: Path) -> str:
     return done.stdout + repo.run("git", "rev-parse", "-q", "--verify", "HEAD", cwd=top).stdout
 
 
-def _hash(top: Path, doc: Path) -> str:
-    return repo.git("hash-object", "--", str(doc), cwd=top)
-
-
-def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
+def add_to_roadmap(top: Path, entries: list[dict[str, str]]) -> list[str]:
+    """Append pending roadmap items after the last one; the file's other top-level keys stay."""
     items = repo.roadmap(top)  # refuses a roadmap it can't read
-    if key in {item["key"] for item in items}:
-        return []
-    path = top / "plans" / "roadmap.json"
-    data = json_of(_text(path)) if path.is_file() else {}
+    data = json_of(_text(top / "plans" / "roadmap.json"))
     last = max((item["order"] for item in items if isinstance(item.get("order"), int)), default=0)
-    data["items"] = items + [{"key": key, "title": title, "status": "pending", "order": last + 1}]
-    _write(path, json.dumps(data, indent=2) + "\n")
+    data["items"] = items + [{**entry, "status": "pending", "order": last + n}
+                             for n, entry in enumerate(entries, 1)]
+    _write(top / "plans" / "roadmap.json", json.dumps(data, indent=2) + "\n")
     return ["plans/roadmap.json"]
 
 
@@ -730,7 +940,9 @@ def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
             raise ValueError(f"Tasks row {task}: its After list makes a cycle ({loop})")
         if task not in checked:
             for after in tasks[task]["after"]:
-                visit(after, path + [task])
+                # ponytail: a cycle across stories isn't caught; its tasks just wait in forge next
+                if "/" not in after:
+                    visit(after, path + [task])
             checked.add(task)
 
     for task in tasks:
@@ -764,7 +976,7 @@ COMMANDS = [
     {"words": "story done", "run": "done", "changes_state": True,
      "help": "Record a finished story's outcome sentence and dates",
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
-     "listing": '| `forge story done <KEY> "<outcome>"` | Records a finished story\'s outcome sentence and dates |'},
+     "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
      "help": "Run a round of the cold read of a story doc or spec",
      "args": [(('target',), {"help": "a story key or a spec slug"})],

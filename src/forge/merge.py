@@ -4,14 +4,15 @@ import argparse
 import json
 import os
 import re
+import tomllib
 from pathlib import Path
-from forge import checks, close, codex, repo, story, task
+from forge import checks, close, codex, githooks, repo, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
     "help": "Merge a ready item when this repo allows it",
-    "args": [(('item',), {})], "position": 160,
-    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |\n"
+    "args": [(('item',), {}), (('--outcome',), {"help": "outcome for a story's last task; defaults to its title"})], "position": 160,
+    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |\n"
                "| `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |",
 }]
 ENABLE = "let-the-agent-merge"
@@ -50,14 +51,13 @@ def merge(args: argparse.Namespace) -> int:
     if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
             or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
         repo.refuse(REFUSALS["not_ready"], item=item)
-    shown = repo.run("git", "show", f"{head}:forge.toml", cwd=top)  # a change to the agent's own gate
-    if shown.returncode == 0 and repo._config_text(shown.stdout)["merge"] != config["merge"]:
-        repo.refuse(REFUSALS["owner_merges"], item=item)
     worktree = close._worktree(item)
     branch = repo.current_branch(worktree)
     default = repo.default_branch(top)
     shown = repo.run("gh", "pr", "view", branch, "--json",
-                     "number,state,baseRefName,headRefName,headRefOid,title,isDraft", cwd=top)
+                     "number,state,baseRefName,headRefName,headRefOid,title,isDraft,body", cwd=top)
+    if shown.returncode and shown.stderr.strip() == repo.REFUSALS["no_github"][0]:
+        repo.refuse(repo.REFUSALS["no_github"])
     try:
         pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
     except ValueError:
@@ -69,14 +69,58 @@ def merge(args: argparse.Namespace) -> int:
     if pr.get("headRefOid") != head:
         repo.refuse(REFUSALS["changed"], item=item)
     if pr["state"] == "OPEN":
+        base = repo.git("merge-base", head, f"origin/{default}", cwd=top)
+        before = story.show(top, base, "forge.toml")
+        after = story.show(top, head, "forge.toml")
+        before_merge = repo._config_text(before)["merge"] if before is not None else "human"
+        after_merge = repo._config_text(after)["merge"] if after is not None else "human"
+        if before_merge != after_merge:
+            repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
-        checks.wait(top, item, head, config["checks"])
+        checks.wait(top, item, head, config["checks"],
+                    branch=branch, progress=getattr(args, "wait_for_progress", False))
+        completion = []
+        body = None
+        if "/" in item:
+            key, tid = item.split("/")
+            state = story.json_of(story.show(top, head, repo.state_path(key)))
+            landed = story.completed(top, key, f"origin/{default}")
+            doc = story.show(top, head, f"plans/{key}.md") or ""
+            tasks = story.parse(doc)["tasks"]
+            if (state.get("status") != "done" and landed.get("status") != "done"
+                    and any(row["id"] == tid for row in tasks)
+                    and all(row["id"] == tid or story.merged_at(
+                        top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
+                outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
+                body = (pr.get("body") or "") + "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
+                completion = ["--body-file", "-"]  # stdin survives Windows .cmd wrappers
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
-                        "--subject", pr["title"], "--match-head-commit", head, cwd=top)
+                        "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
+        if after.returncode and after.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
         if not merged:
+            if done.returncode:
+                shown = repo.run("gh", "pr", "view", str(pr["number"]), "--json",
+                                 "mergeStateStatus,headRefOid", cwd=top)
+                try:
+                    current = json.loads(shown.stdout) if shown.returncode == 0 else {}
+                except ValueError:
+                    current = {}
+                if (isinstance(current, dict) and current.get("headRefOid") == head
+                        and current.get("mergeStateStatus") in ("BEHIND", "DIRTY")):
+                    repo.git("fetch", "-q", "origin", default, cwd=top)
+                    if repo.run("git", "merge-base", "--is-ancestor", f"origin/{default}",
+                                head, cwd=top).returncode == 1:
+                        print(f"{default} moved; Forge is merging it into this branch, running "
+                              "close again and retrying the merge.", flush=True)
+                        close.close(argparse.Namespace(item=item, dismiss=None, because=None,
+                                    wait_for_progress=getattr(args, "wait_for_progress", False),
+                                    land_rounds=getattr(args, "land_rounds", None),
+                                    pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
+                        return merge(args)
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
     main_checkout = repo.forge_dir(top).parent.parent
@@ -105,7 +149,12 @@ def merge(args: argparse.Namespace) -> int:
             "git", "push", f"--force-with-lease={remote_ref}:{head}", "origin", "--delete", branch, cwd=top).returncode):
         repo.refuse(REFUSALS["remote_branch"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
-    dirty = bool(repo.git("status", "--porcelain", cwd=worktree))
+    status = repo.git("status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=worktree).split("\0")
+    untracked = {worktree / entry[3:] for entry in status if entry.startswith("?? ")}
+    generated = {path for path, text in githooks.shims(worktree, repo.config(worktree)).items()
+                 if path in untracked and not path.is_symlink() and path.read_text(encoding="utf-8") == text}
+    dirty = any(entry and worktree / entry[3:] not in generated for entry in status)
     advanced = repo.git("rev-parse", branch, cwd=worktree) != head
     if advanced:
         print(f"Merged {item}. Its worktree at {worktree} has local commits outside the merged pull request, so Forge left it and its local branch in place.")
@@ -114,6 +163,8 @@ def merge(args: argparse.Namespace) -> int:
     else:
         if top == worktree:
             os.chdir(main_checkout)
+        for shim in generated:
+            shim.unlink()
         removed = repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout)
         if removed.returncode:
             repo.refuse(REFUSALS["worktree"], item=item)
@@ -142,11 +193,37 @@ def _enable(top: Path) -> int:
     path = story.worktrees(top).get(branch) or task._new_checkout(
         ENABLE, branch, f"fix-{ENABLE}", ref, {"kind": "fix", "why": close.WHY, "done_when": close.DONE},
         f"Start the fix: {close.WHY}")
-    diff = repo.git("diff", "-U0", repo.git("merge-base", "HEAD", ref, cwd=path), "--", ".", f":!{rel}", cwd=path)
+    base = repo.git("merge-base", "HEAD", ref, cwd=path)
+    files = set(repo.git("diff", "--name-only", base, cwd=path).splitlines())
+    files.update(repo.git("diff", "--cached", "--name-only", base, cwd=path).splitlines())
     state = repo.read_state(ENABLE, path) or {}
-    if (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
-            r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)", diff, re.M):  # anything but the merge line
+    settings = _other_settings(repo.git("show", f"{base}:forge.toml", cwd=path))
+    if (files - {rel, "forge.toml"} or (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE)
+            or _other_settings((path / "forge.toml").read_bytes().decode("utf-8")) != settings
+            or _other_settings(repo.git("show", ":forge.toml", cwd=path)) != settings):
         repo.refuse(REFUSALS["taken"])
+    remote_ref = f"refs/heads/{branch}"
+    remote_tip = None
+    if repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=path):
+        repo.git("fetch", "-q", "origin", remote_ref, cwd=path)
+        remote_tip = repo.git("rev-parse", "FETCH_HEAD", cwd=path)
+        remote_base = repo.git("merge-base", remote_tip, ref, cwd=path)
+        history = f"{remote_base}..{remote_tip}"
+        remote_state = story.json_of(story.show(path, remote_tip, rel))
+        remote_files = repo.git("log", "-m", "--format=", "--name-only", history,
+                                "--", ".", f":!{rel}", ":!forge.toml", cwd=path)
+        remote_settings = _other_settings(repo.git("show", f"{remote_base}:forge.toml", cwd=path))
+        if (remote_files or (remote_state.get("why"), remote_state.get("done_when"),
+                             remote_state.get("kind"), remote_state.get("branch")) !=
+                (close.WHY, close.DONE, "fix", branch) or any(
+                    _other_settings(repo.git("show", f"{revision}:forge.toml", cwd=path)) != remote_settings
+                    for revision in repo.git("rev-list", history, cwd=path).splitlines())):
+            repo.refuse(REFUSALS["taken"])
+    if base != repo.git("rev-parse", ref, cwd=path):
+        # Save an interrupted edit before reset --keep, which refuses to overwrite local work.
+        repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+        repo.git("reset", "--keep", ref, cwd=path)
+        repo.write_state(ENABLE, {**state, "base": repo.git("rev-parse", ref, cwd=path)}, path)
     text = re.sub(r"""\A(?:(.*?^[ \t]*(?:merge|"merge"|'merge')[ \t]*=[ \t]*)(?:"[^"\n]*"|'[^'\n]*'|[^\s#]*)|((?:\#[^\n]*\n)*))""",
                   lambda m: m[1] + '"agent"' if m[1] else m[2] + 'merge = "agent"' + ("\r\n" if "\r\n" in m.string else "\n"),
                   (path / "forge.toml").read_bytes().decode("utf-8"), count=1, flags=re.S | re.M)  # bytes keep line endings
@@ -154,9 +231,18 @@ def _enable(top: Path) -> int:
         repo.refuse(repo.REFUSALS["bad_config"], problem='Forge could not set merge = "agent" in it, so it left it alone')
     (path / "forge.toml").write_bytes(text.encode("utf-8"))
     repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+    if remote_tip and repo.run("git", "merge-base", "--is-ancestor", remote_tip, "HEAD", cwd=path).returncode:
+        repo.git("push", f"--force-with-lease={remote_ref}:{remote_tip}", "origin", branch, cwd=path)
     close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
     print("Next: merge its pull request to switch on agent merges.")
     return 0
+
+
+def _other_settings(text: str) -> dict:
+    try:
+        return {key: value for key, value in tomllib.loads(text).items() if key != "merge"}
+    except tomllib.TOMLDecodeError as exc:
+        repo.refuse(repo.REFUSALS["bad_config"], problem=exc)
 
 
 def _save_ready(path: Path, receipt: dict) -> None:

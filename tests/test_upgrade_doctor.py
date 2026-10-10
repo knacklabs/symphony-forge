@@ -4,12 +4,15 @@ STORY = "FORGE-UPGRADE-1"
 Each test is named test_<n>_ after the story's Done-when item it proves.
 """
 import json
-import os
 import re
+import sys
 
 import pytest
 
-from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
+from conftest import _install, machine_cores
+
+from test_doctor_fix_files import _land, _set
+from test_setup import _autoreview, _fresh_client, _stub_forge, _version
 
 INSTALL = "uv tool install git+https://github.com/knacklabs/symphony-forge@{pin}"
 
@@ -30,6 +33,7 @@ def _compared(installed: str, pinned: str) -> str:
                                   "all is well", "can't compare"])
 def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, monkeypatch,
                                                             case):
+    machine_cores(repo, 6)
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")
@@ -37,17 +41,21 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
     installed = "v" + _version(repo).removeprefix("v")
     toml = client / "forge.toml"
     pinned = "v0.0.1" if case.startswith("old pin") else installed
-    toml.write_text(re.sub(r'version = ".*"', f'version = "{pinned}"',
-                           toml.read_text(encoding="utf-8"), count=1), encoding="utf-8")
     drift = case.endswith("drifted")
-    if drift:
-        (client / ".claude/skills/remote-approval/SKILL.md").write_text("old\n", encoding="utf-8")
+    if drift:  # an older Forge's file on the default branch; a change by hand would be held back
+        _land(repo, client, "Upgrade Forge", lambda folder: _set(
+            folder, ".claude/skills/remote-approval/SKILL.md", "old\n"), forge=True)
+    # Land before the local pin edit: Windows writes CRLF, so the helper's remote pin commits
+    # can change forge.toml's bytes even when the final version is unchanged.
+    toml.write_text(re.sub(r'version = ".*"', f'version = "{pinned}"',
+                           toml.read_text(encoding="utf-8"), count=1), encoding="utf-8",
+                    newline="\r\n")
     if case == "can't compare":  # a broken Forge block stops forge sync working out its files
         (client / "AGENTS.md").write_text("<!-- forge:end -->\nOurs.\n<!-- forge:begin -->\n",
                                           encoding="utf-8")
     if case == "all is well":
         toml.write_text(toml.read_text(encoding="utf-8").replace(
-            'workers = "codex"', 'workers = "claude"', 1), encoding="utf-8")
+            'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
         (tmp_path / "home").mkdir()
         monkeypatch.setenv("HOME", str(tmp_path / "home"))
         monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
@@ -56,9 +64,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         monkeypatch.setenv("CODEX_HOME", str(codex_home))
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
-        _executable(repo.bin / "claude", "#!/bin/sh\n")
-        if os.name == "nt":
-            (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
+        _install(repo.bin, "claude", f"#!{sys.executable}\nprint('2.1.291 (Claude Code)')\n")
         _stub_forge(tmp_path, monkeypatch)
     else:
         gh.respond("auth", "status", exit=1)  # another check fails too
@@ -67,9 +73,10 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
 
     if case == "all is well":
         assert done.returncode == 0, done.stdout + done.stderr
-        # The verdict leads; the comparison line follows it.
+        # The verdict still leads; comparison and the new machine split follow it.
         assert done.stdout == (f"Everything checks out for Forge {installed}.\n"
-                               + _compared(installed, installed)), done.stdout
+                               + _compared(installed, installed)
+                               + "This machine: 6 cores, so 3 agents at once and 1 test runs at once, each on 3 cores.\n"), done.stdout
         return
     assert done.returncode == 1, done.stdout + done.stderr
     assert "- gh is not signed in to GitHub.\n  Fix: gh auth login\n" in done.stdout, done.stdout
@@ -81,6 +88,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         assert "differs from what forge sync writes" not in done.stdout, done.stdout
         return
     assert _compared(installed, pinned) in done.stdout, done.stdout
+    # Old contract: the drift row's fix was forge sync. New: doctor --fix repairs it.
     row = (f".claude/skills/remote-approval/SKILL.md differs from what forge sync writes for "
-           f"the installed Forge {installed}.")
+           f"the installed Forge {installed}.\n  Fix: forge doctor --fix\n")
     assert (row in done.stdout) == drift, done.stdout

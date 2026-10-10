@@ -7,24 +7,42 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
+import signal
 import subprocess
 import sys
+import threading
+import time
 import uuid
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 import pytest
+import _pytest.pathlib
+import _pytest.tmpdir
 
 ROOT = Path(__file__).resolve().parents[1]
+REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
-import sys
+import signal, sys
+signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
 """
+
+
+def machine_cores(repo, count, system_count=None):
+    """Report a machine's CPU count at the command boundary, without a production test flag."""
+    shim = repo.bin / "forge"
+    source = shim.read_text("utf-8")
+    shim.write_text(source.replace("from forge.cli import main",
+        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
@@ -53,6 +71,87 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
                                              encoding="utf-8")
 
 
+T = TypeVar("T")
+
+
+_inside = threading.local()
+
+
+def patient(action: Callable[[], T]) -> T:
+    """Run a file action, retrying a PermissionError for up to five seconds: on Windows a process
+    renaming a file over this one, or a moment late to exit, holds it briefly. An action inside
+    another's retry runs once, since the outer one retries it."""
+    if getattr(_inside, "retrying", False):
+        return action()
+    _inside.retrying = True
+    try:
+        for _ in range(100):
+            try:
+                return action()
+            except PermissionError:
+                time.sleep(0.05)
+        return action()
+    finally:
+        _inside.retrying = False
+
+
+def _patiently(owner: Any, name: str) -> None:
+    real = getattr(owner, name)
+
+    def retried(*args: Any, **kwargs: Any) -> Any:
+        return patient(lambda: real(*args, **kwargs))
+    setattr(owner, name, retried)
+
+
+# Every test helper reads, writes, copies and deletes files through these, so each one waits out a
+# lock. copytree copies each file with the retried copy2 instead of retrying the whole tree.
+for _owner, _names in ((Path, ("read_text", "read_bytes", "write_text", "write_bytes", "touch",
+                               "unlink", "rename", "replace", "chmod")),
+                       (shutil, ("copy", "copy2", "copyfile", "move")),
+                       (os, ("unlink", "remove", "rename", "replace", "chmod"))):
+    for _name in _names:
+        _patiently(_owner, _name)
+_copytree = shutil.copytree
+
+
+def _copy_tree(src: Any, dst: Any, *args: Any, **kwargs: Any) -> Any:
+    if len(args) < 3:  # copytree passes copy_function by position to its subfolders
+        kwargs.setdefault("copy_function", shutil.copy2)
+    return _copytree(src, dst, *args, **kwargs)
+
+
+shutil.copytree = _copy_tree
+
+
+_rmtree = shutil.rmtree
+
+
+def _remove_tree(path: Any, ignore_errors: bool = False, *args: Any, **kwargs: Any) -> Any:
+    if not ignore_errors:
+        return patient(lambda: _rmtree(path, ignore_errors, *args, **kwargs))
+    # Best-effort cleanup must not wait five seconds for every read-only or locked file.
+    nested = getattr(_inside, "retrying", False)
+    _inside.retrying = True
+    try:
+        return _rmtree(path, ignore_errors, *args, **kwargs)
+    finally:
+        _inside.retrying = nested
+
+
+shutil.rmtree = _pytest.tmpdir.rmtree = _remove_tree
+_rm_error = _pytest.pathlib.on_rm_rf_error
+
+
+def _skip_locked(func: Any, path: Any, excinfo: Any, **kwargs: Any) -> Any:
+    try:
+        return _rm_error(func, path, excinfo, **kwargs)
+    except PermissionError:
+        # Pytest already retries read-only files after chmod; a persistent lock is skipped.
+        return False
+
+
+_pytest.pathlib.on_rm_rf_error = _skip_locked
+
 class Repo:
     """A git repo on main whose origin is a bare remote, with forge and a stub gh on PATH."""
 
@@ -60,8 +159,12 @@ class Repo:
         self.path, self.bin = path, bin_dir
 
     def git(self, *args: str, cwd: Path | None = None) -> str:
-        return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
-                              text=True, encoding="utf-8").stdout.strip()
+        try:
+            return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
+                                  text=True, encoding="utf-8").stdout.strip()
+        except subprocess.CalledProcessError as error:
+            error.add_note(error.stdout + error.stderr)
+            raise
 
     def forge(self, *args: str, input: str = "", cwd: Path | None = None,
               ) -> subprocess.CompletedProcess[str]:
@@ -104,15 +207,76 @@ def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
                        str(tmp_path / "config"))
 
 
+def _left(tmp_path: Path) -> list[str]:
+    """This test's processes still running or stopped: every process a test starts names its temp
+    folder in its command or its environment, which holds the XDG_CONFIG_HOME set above."""
+    listed = subprocess.run(["ps", "axeww", "-o", "pid=,stat=,command="], capture_output=True,
+                            text=True, env={"PATH": "/bin:/usr/bin"}).stdout  # ps's own env is clean
+    mark = f"{tmp_path}{os.sep}"
+    return [" ".join(line.split()[:1] + line.split()[2:]) for line in listed.splitlines()
+            if mark in line and not line.split()[1].startswith("Z")
+            and int(line.split()[0]) != os.getpid()]
+
+
+def _end_left(path: Path) -> list[str]:
+    """Wait for the processes that name path to go, end any still there, and return those."""
+    for _ in range(20):  # a process the test just ended may take a moment to go
+        left = _left(path)
+        if not left:
+            return []
+        time.sleep(0.5)
+    for line in left:
+        try:
+            os.kill(int(line.split()[0]), signal.SIGKILL)  # SIGKILL ends a stopped process too
+        except ProcessLookupError:
+            pass
+    return left
+
+
+@pytest.fixture(autouse=True)
+def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
+    # Autouse, so it runs its check after the test's own fixtures have cleaned up.
+    yield
+    if os.name == "nt":  # ponytail: no ps on Windows; add a process-tree walk if leaks show there
+        return
+    left = _end_left(tmp_path)
+    if left:
+        pytest.fail(f"{request.node.name} left processes running: "
+                    + "; ".join(line[:200] for line in left), pytrace=False)
+
+
+def pytest_sessionfinish(session: pytest.Session) -> None:
+    """At the end of the run, once more over every test's temp folder: a test whose worker crashed
+    never reached its own check. Each folder is named after its test."""
+    if os.name == "nt" or hasattr(session.config, "workerinput"):  # the controller checks once
+        return
+    base = session.config._tmp_path_factory.getbasetemp()  # type: ignore[attr-defined]
+    left = _end_left(base)
+    if not left:
+        return
+    folder = re.compile(re.escape(f"{base}{os.sep}") + r"(?:popen-gw\d+/)?([^/\s]+)")
+    report = session.config.pluginmanager.get_plugin("terminalreporter")
+    report.line("")
+    for line in left:
+        found = folder.search(line)
+        report.line(f"The test with temp folder {found[1] if found else base} left processes "
+                    f"running: {line[:200]}")
+    session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
 @pytest.fixture
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.
         if name.startswith("GIT_"):
             monkeypatch.delenv(name)
     monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
+    monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
     gitconfig = tmp_path / "gitconfig"
+    # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
+    # a helper removes a temporary clone; detached maintenance can still write its objects.
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
-                         "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n",
+                         "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n"
+                         "[gc]\n\tautoDetach = false\n",
                          encoding="utf-8")
     # The cold read runs on the family that isn't coordinating, which Forge tells from the variable
     # each app sets. Tests run as if Codex coordinates, so a read runs on the stub claude.
@@ -124,12 +288,29 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     bin_dir.mkdir()
     _install(bin_dir, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
     _install(bin_dir, "gh", GH_STUB.format(python=sys.executable))
+    # Sync manages Claude's user-scope plugins. Never let a command test touch
+    # the developer's real plugin install or contact its marketplace.
+    _install(bin_dir, "claude", f'''#!{sys.executable}
+import sys
+args = sys.argv[1:]
+if args == ["--version"]:
+    print("2.1.291 (Claude Code)")
+elif args == ["plugin", "marketplace", "list", "--json"]:
+    print('[{{"name":"forge"}}]')
+elif args == ["plugin", "list", "--json"]:
+    print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
+''')
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    # Host hooks find forge through uv's tool folders, so those name this one too.
+    monkeypatch.setenv("XDG_BIN_HOME", str(bin_dir))
+    monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True)
     made = Repo(path, bin_dir)
+    # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
+    (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")
     made.write("README.md", "# A test repo\n")
     made.git("add", "README.md")
     made.git("commit", "-q", "-m", "First commit")

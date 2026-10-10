@@ -1,0 +1,61 @@
+{
+  "branch": "task/FORGE-MOD-1-RUNS",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/worker.py",
+    "tests/test_run_records.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7f7d56a0b2baef61d15713747e62e15db33993c59726f069a13e7008312310be",
+    "changed": "9bd866566bfd22d3fae76d50a0996ac0c535c1ccd250f354bf4e2212b29bbed2",
+    "commit": "687a162fb6dbeb73999940da7abc9f0a99f2b8bf",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previously reported interruption defect remains. If SIGINT reaches Forge alone, this finally block publishes a `run end` while its agent can remain alive. The reviewer has no interruption cleanup around its output loop and wait (`review.py:545\u2013561`). Claude workers and readers rely on Popen context cleanup (`worker.py:474\u2013490`, `story.py:704\u2013713`), but [CPython's implementation](https://github.com/python/cpython/blob/v3.11.11/Lib/subprocess.py#L993-L1018) only waits briefly on KeyboardInterrupt; it does not terminate the child. The Codex sibling also reaches this finally block when its cleanup explicitly refuses because a process-group member remains alive (`codex.py:447\u2013455`). Consumers consequently receive a completion occurrence before completion, with no subsequent occurrence when the surviving process exits. Terminate and reap the processes before recording the end, or keep the run open until its actual exit is observed.",
+        "file": "src/forge/repo.py",
+        "line": 152,
+        "priority": "P2",
+        "title": "Record run ends only after the child has stopped"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T07:05:58+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T08:54:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T09:53:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T10:25:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T12:09:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T12:44:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:25:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:59:21+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}

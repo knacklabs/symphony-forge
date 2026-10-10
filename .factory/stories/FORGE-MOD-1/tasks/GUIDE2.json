@@ -1,0 +1,27 @@
+{
+  "branch": "task/FORGE-MOD-1-GUIDE2",
+  "flagged": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c0eeaca1e43b82c6bb6cc17c94c40831b116fea795c594cf79cd12651a4a646e",
+    "changed": "e8cc04610f52a07470da269017a46bdcd836af56b63ab6e08d30e37350a80de4",
+    "commit": "fce9f7cd40ae94e12a45ba05a338bddd2788d548",
+    "dismissals": [],
+    "findings": [],
+    "id": "7f44d685-e078-4a0b-ae16-338141f9bdc7",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T04:35:16+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T04:39:46+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}

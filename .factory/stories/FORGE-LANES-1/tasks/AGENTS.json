@@ -1,0 +1,120 @@
+{
+  "branch": "task/FORGE-LANES-1-AGENTS",
+  "flagged": [
+    "src/forge/machine.py",
+    "src/forge/repo.py",
+    "tests/test_close_runs_only_related_tests.py",
+    "tests/test_lanes_agents.py",
+    "tests/test_lanes_view.py",
+    "tests/test_machine_views_recent_finished_items.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fc2a54c59d5a023aca19c4516f453c27fd7e819c9637342e672e151c4184a33d",
+    "changed": "c61135e6e4429800946c98d355e602daf6ffb6dee1d5a3912d27f7346535759c",
+    "commit": "7bfcc62a40e895d8eae2b845420cd1a7cdf5493e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous metadata defect remains open. Provider-confirmed selections update activity records here, but the lane keeps the initial `chosen` snapshot from review.py:509. The same problem affects worker.py:165 when a design worker falls back to Codex, and both reader paths at story.py:222\u2013231 when settings are omitted. repo.py:411\u2013419 allows an empty selection; confirmed settings at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Consequently, running entries in board JSON can report null or obsolete model and effort values. Refresh the shared lane entry when a provider confirms or changes its selection.",
+        "file": "src/forge/review.py",
+        "line": 604,
+        "priority": "P2",
+        "title": "Refresh lane metadata when the provider selects its model and effort"
+      },
+      {
+        "body": "The deferred integration remains outstanding. fasttest.py:271\u2013272 launches tests directly, while review.py:279\u2013288 uses the separate ticket queue; neither registers shared test entries. These selectors therefore cannot stop running or waiting tests, stop an item's worker and test together, or expose test output and progress in board JSON. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level proofs to TESTS. Complete it there; this remains advice rather than an AGENTS blocker.",
+        "file": "src/forge/machine.py",
+        "line": 224,
+        "priority": "P2",
+        "title": "Later: connect test entries and cancellation in TESTS"
+      }
+    ],
+    "id": "83c5d5b4-1bd0-4916-9975-7a4fc5b09375",
+    "status": "clean"
+  },
+  "round": 27,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-05T12:36:08+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-05T15:11:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T16:14:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T17:53:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T00:04:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T01:49:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:48:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T06:40:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T03:30:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:00:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T06:33:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T08:05:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T08:54:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T09:45:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T10:42:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T11:54:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T12:51:27+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "done": "src/forge/machine.py is simpler and behaves as it did before",
+    "file": "src/forge/machine.py",
+    "reason": "Owner accepted the finding; the worker had already reverted the unrelated lockfile test change at 12:11, so the part now leaves that test alone. Close again for a fresh review.",
+    "why": "Simplify src/forge/machine.py before FORGE-LANES-1/AGENTS carries on"
+  },
+  "worker": "codex"
+}

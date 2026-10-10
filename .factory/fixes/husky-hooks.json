@@ -1,0 +1,65 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/husky-hooks",
+  "done_when": "When core.hooksPath is husky's folder, forge sync puts one line that runs Forge's pre-commit and pre-push checks (through .forge/hooks.sh) into the repo's committed .husky/pre-commit and .husky/pre-push, keeping their existing lines, and writes no shims into the folder husky rebuilds; the checks still run after npm install rebuilds that folder, in every worktree and a fresh clone; doctor reports the hooks installed in that setup; repos without husky keep today's shims; command tests cover a new husky repo and a husky repo adopted on an earlier release (including its earlier .pre-forge shims cleaned up)",
+  "flagged": [
+    "src/forge/githooks.py",
+    "tests/test_husky_hooks_survive_install.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "10eb7933116722622b36d0441cc5aea8584336651bae093bf2ed6d5f04e5d18f",
+    "changed": "b2d5349050d66308e65a2a28199a1c75cc4067a8850fc31982f986e2563c9ab7",
+    "commit": "163550544cc03c86a38db384609f939f61c1cd2c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This previously reported issue remains open for both hooks. The generated line at src/forge/githooks.py:88\u201389 sources the launcher before calling forge_husky. The launcher prepends installation directories at src/forge/sync.py:78\u201381, and this child shell inherits that modified PATH. Husky puts node_modules/.bin first (tests/fixtures/husky-v9.1.7/husky:16), so an existing `eslint .` hook can now run a globally installed executable instead of the repository's pinned version. This command-resolution evidence is separate from the ruling permitting isolation of exit/exec and stdin. Preserve the incoming PATH for user checks and apply the launcher PATH only to Forge.",
+        "file": "src/forge/sync.py",
+        "line": 97,
+        "priority": "P2",
+        "title": "Preserve Husky's PATH when running existing user hooks"
+      },
+      {
+        "body": "This previously reported issue remains open. An absolute core.hooksPath pointing to the original checkout's .husky/_ is recognized there, but linked worktrees inherit that configuration and fail this containment guard. Evidence beyond the absolute-path detection ruling is the actual worktree-based callers: src/forge/upgrade.py:99 creates the upgrade checkout and :146 runs sync there; src/forge/close.py:387\u2013389 creates its verification checkout and runs sync. Conflict inventory at src/forge/close.py:348 and oversized-fix inventory at src/forge/sync.py:371 also call sync.files in another checkout and encounter the same rejection. Consequently, this accepted configuration prevents these upgrade, close and commit workflows. Resolve absolute Husky configuration for linked worktrees while preserving protection against writes outside the checkout.",
+        "file": "src/forge/githooks.py",
+        "line": 83,
+        "priority": "P2",
+        "title": "Handle absolute Husky paths during worktree-based upgrade and close"
+      }
+    ],
+    "id": "b55f5f3c-120b-40b3-8cf8-c57f7728f04b",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T13:24:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T13:52:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T14:28:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T16:33:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T17:57:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T21:28:12+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "In client repos that use husky, every npm install rebuilds husky's hooks folder (core.hooksPath .husky/_) and wipes Forge's pre-commit and pre-push shims, so doctor reports the git hooks missing in every worktree after install (reported by a client session on v1.2.7). Owner decision 2026-10-08: add Forge to husky's own committed hooks",
+  "worker": "codex"
+}

@@ -43,7 +43,7 @@ IDS = ("SHOP", "WISH", "SAVE", "SHOW", "SHARE", "shop-done", "upgrade-forge", "r
 
 
 class _Text(HTMLParser):
-    """The words a person sees on the page: everything outside <style>."""
+    """Painted words, excluding styles and SVG accessibility metadata."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -51,10 +51,10 @@ class _Text(HTMLParser):
         self.hidden = 0
 
     def handle_starttag(self, tag, attrs):
-        self.hidden += tag == "style"
+        self.hidden += tag in ("style", "title", "desc")
 
     def handle_endtag(self, tag):
-        self.hidden -= tag == "style"
+        self.hidden -= tag in ("style", "title", "desc")
 
     def handle_data(self, data):
         if not self.hidden:
@@ -129,9 +129,13 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     merge("fix/upgrade-forge", "16T15:00")
     merge("task/SHOP-SHARE", "18T11:00")
 
-    # The outcome, recorded by the real command; its state then lives only on a remote branch.
+    # An existing legacy outcome branch remains readable after its worktree is removed.
+    # story done now corrects the outcome in this branch rather than creating another one.
+    work("fix/shop-done", ".factory/fixes/shop-done.json", "main", [("start", "18T11:30")],
+         kind="story-done", why="Correct the outcome", done_when="The board describes baskets")
     monkeypatch.setenv("FORGE_NOW", "2026-09-18T12:00:00+00:00")
-    done = repo.forge("story", "done", "SHOP", "Shoppers keep their basket between visits.")
+    done = repo.forge("story", "done", "SHOP", "Shoppers keep their basket between visits.",
+                      cwd=worktree(repo, "fix/shop-done"))
     assert done.returncode == 0, done.stderr
     repo.git("push", "-q", "origin", "fix/shop-done")
     repo.git("worktree", "remove", "--force", str(worktree(repo, "fix/shop-done")))
@@ -170,13 +174,15 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     for line in (
             "Shoppers can save a basket Finished on 18 September 2026.",
             "Planning took 1 hour. A person stepped in 3 times, plus accepting 3 finished parts.",
-            "Save a basket : Finished on 14 September 2026. Built in 1 hour 10 minutes; reviewed and "
-            "checked in 20 minutes; waited 30 minutes to be accepted.",
-            "Show when it was saved : Finished on 15 September 2026. Built in 1 hour; reviewed and checked "
-            "in 50 minutes; waited 10 minutes to be accepted. Reviewing and checking this part took 50 "
+            "Save a basket : Finished on 14 September 2026. Approved by Forge Test. Built in 1 hour "
+            "10 minutes; reviewed and checked in 20 minutes; waited 30 minutes to be accepted.",
+            "Show when it was saved : Finished on 15 September 2026. Approved by Forge Test. Built in "
+            "1 hour; reviewed and checked in 50 minutes; waited 10 minutes to be accepted. "
+            "Reviewing and checking this part took 50 "
             "minutes, which is slow.",
-            "Share a basket : Finished on 18 September 2026. Built in 3 days; reviewed and checked in 20 "
-            "minutes; waited 40 minutes to be accepted. This part was open for 3 working days, which is "
+            "Share a basket : Finished on 18 September 2026. Approved by Forge Test. Built in 3 days; "
+            "reviewed and checked in 20 minutes; waited 40 minutes to be accepted. This part was open "
+            "for 3 working days, which is "
             "slow.",
             "Shoppers can keep a wish list Not started yet.",
             "Readme greets new readers : In progress. This fix has been open for 3 working days, which "
@@ -210,8 +216,8 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     offline = seen(out)
     assert "GitHub couldn't be reached, so the list of finished work isn't available." in offline
     for line in ("Shoppers can save a basket Finished on 18 September 2026.",
-                 "Share a basket : Finished on 18 September 2026. Built in 3 days. This part was open "
-                 "for 3 working days, which is slow.",
+                 "Share a basket : Finished on 18 September 2026. Approved by Forge Test. Built in "
+                 "3 days. This part was open for 3 working days, which is slow.",
                  "14 September 2026 Forge Test approved the plan. 18 September 2026 The story was "
                  "finished. Shoppers keep their basket between visits."):
         assert line in offline, f"{line!r} is not on the page:\n{offline}"

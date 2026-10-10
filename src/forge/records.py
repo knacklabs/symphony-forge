@@ -33,7 +33,8 @@ import re
 from datetime import date
 from pathlib import Path
 
-from forge import repo
+from forge import repo, story
+from forge.story import FRONTMATTER, _record as _front, _text, _write  # pyright: ignore[reportPrivateUsage]
 
 REFUSALS = {
     "bad_slug": ("{slug!r} is not a slug; a slug is lowercase words joined by hyphens.", "{next}"),
@@ -49,9 +50,6 @@ REFUSALS = {
     "not_draft": ("docs/specs/{slug}.md is not a saved draft (status: {status}).",
                   "forge spec save {slug}"),
     "no_read": ("docs/specs/{slug}.md has no cold read.", "forge read {slug}"),
-    "changed": ("docs/specs/{slug}.md changed after its last round of cold read.", "forge read {slug}"),
-    "not_passed": ("Round {round} of the cold read of docs/specs/{slug}.md hasn't passed, so it "
-                   "needs another round.", "forge read {slug}"),
     "no_disposition": ("Finding {number} in docs/specs/{slug}.read.md has no disposition: cut, "
                        "defer, or keep with a reason.", 'forge spec confirm {slug} --by "{by}"'),
     "unconfirmed": ("docs/specs/{slug}.md is not confirmed (status: {status}); only a confirmed "
@@ -76,16 +74,15 @@ REFUSALS = {
                  'forge decision accept {slug} --by "{by}"'),
     "no_superseded": ("{rel} supersedes {old}, but there is no such decision.",
                       'forge decision accept {slug} --by "{by}"'),
+    "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).",
+                       "forge roadmap retire <KEY> --by {spec}"),
+    "not_pending": ("{key} is {status}, and only a pending roadmap item can be retired.", "forge next"),
 }
 
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 LANE = re.compile(r"fix/(?P<fix>[a-z0-9][a-z0-9-]*)|story/(?P<key>[A-Z][A-Z0-9-]*)")
-FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 SPEC_SECTIONS = ("Why", "Behaviour", "Acceptance criteria")
 DECISION_SECTIONS = ("Context", "Decision", "Consequences")
-FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
-DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
-                         r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
 MEASURE_LINE = re.compile(r"^-[ \t]*(Metric|Baseline|Target|Check date|Result):(.*(?:\n[ \t]+\S.*)*)",
                           re.M)  # a field wraps onto indented lines
 MEASURE_FIELDS = {"Metric": "- Metric:", "Baseline": "- Baseline:", "Target": "- Target:",
@@ -132,8 +129,8 @@ def spec_save(args: argparse.Namespace) -> None:
                     missing=", ".join(([] if title else ["a # title"]) + missing))
     _check_measure(args.slug, body)
     _roadmap_items(args.slug, body)  # a malformed Roadmap section fails here, before the read
-    _write(top, rel, _set(text, slug=args.slug, title=title[1], status="draft", saved=repo.now(),
-                          confirmed_by=None, confirmed_hash=None))
+    _write(top / rel, _set(text, slug=args.slug, title=title[1], status="draft", saved=repo.now(),
+                           confirmed_by=None, confirmed_hash=None))
     repo.commit_state(f"Save the {args.slug} spec as a draft", rel, top=top)
     print(f"Saved {rel} as a draft. Next: forge read {args.slug}")
 
@@ -150,22 +147,17 @@ def spec_confirm(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["not_draft"], slug=args.slug, status=status)
     _check_measure(args.slug, body)
     notes = f"docs/specs/{args.slug}.read.md"
-    record, findings = _front(_text(top, notes))
+    read = _text(top / notes)
+    record, findings = _front(read)
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], slug=args.slug)
-    parts = FINDING.split(findings)
-    for number, finding in zip(parts[1::2], parts[2::2]):
-        found = DISPOSITION.search(finding)
-        if not found or (found[1].lower() == "keep" and not found[2]):
-            repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
-    from forge import story
-
-    if not story.passed(record, findings):  # notes written before rounds count as round 1
-        repo.refuse(REFUSALS["not_passed"], slug=args.slug, round=record.get("round") or 1)
-    if repo.git("hash-object", "--", rel, cwd=top) != record["read_hash"]:
-        repo.refuse(REFUSALS["changed"], slug=args.slug)
-    _write(top, rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
-                          confirmed_hash=_digest(body)))
+    number = story.undisposed(findings)
+    if number:
+        repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
+    # The rest of the cold read's gate: its latest round passed and the spec is unchanged since.
+    story.gate(args.slug, rel, read, repo.git("hash-object", "--", rel, cwd=top))
+    _write(top / rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
+                           confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)
     print(f"{rel} is confirmed by {by}. Next: forge roadmap add {args.slug}")
 
@@ -190,7 +182,7 @@ def spec_measure(args: argparse.Namespace) -> None:
     end = heading[at + 1].start() if at + 1 < len(heading) else len(body)
     cut = heading[at].end() + len(body[heading[at].end():end].rstrip())
     body = body[:cut] + f"\n- Result: {result} ({repo.now()[:10]})" + body[cut:]
-    _write(top, rel, _set(front + body, confirmed_hash=_digest(body)))
+    _write(top / rel, _set(front + body, confirmed_hash=_digest(body)))
     repo.commit_state(f"Record the result of the {args.slug} spec's success measure", rel, top=top)
     print(f"Added the result to the Success measure of {rel}; it stays confirmed.")
 
@@ -230,7 +222,7 @@ def decision_new(args: argparse.Namespace) -> None:
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
         text += "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n"
-    _write(top, rel, text)
+    _write(top / rel, text)
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
     print(f"Wrote {rel}; no branch has a higher decision number. Fill it in, then once the human "
           f'confirms in chat: forge decision accept {args.slug} --by "<name>"')
@@ -242,7 +234,7 @@ def decision_accept(args: argparse.Namespace) -> None:
     rel = _decision(top, args.slug, f'forge decision accept NNNN-{args.slug} --by "{by}"')
     if not rel:
         repo.refuse(REFUSALS["no_decision"], slug=args.slug)
-    text = _text(top, rel)
+    text = _text(top / rel)
     fields, body = _front(text)
     status = fields.get("status") or "proposed"
     if status == "accepted":
@@ -274,7 +266,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         except ValueError:
             repo.refuse((f"{rel} needs a real approved_on date.",
                          f"correct {rel}, then {next_step}"))
-        brief = _text(top, "docs/product/BRIEF.md")
+        brief = _text(top / "docs/product/BRIEF.md")
         quote = _answer_section(body)
         if not brief or not quote or quote != _answer_section(brief):
             repo.refuse((f"{rel}'s Answers must quote docs/product/BRIEF.md word for word.",
@@ -303,10 +295,10 @@ def decision_accept(args: argparse.Namespace) -> None:
                             f"supersedes: {old} in {rel}")
         if not old_rel or old_rel == rel:
             repo.refuse(REFUSALS["no_superseded"], rel=rel, old=old, slug=args.slug, by=by)
-        _write(top, old_rel, _set(_text(top, old_rel), status="superseded",
-                                  superseded_by=Path(rel).stem))
+        _write(top / old_rel, _set(_text(top / old_rel), status="superseded",
+                                   superseded_by=Path(rel).stem))
         changed.append(old_rel)
-    _write(top, rel, _set(text, status="accepted", confirmed_by=f'"{by}"'))
+    _write(top / rel, _set(text, status="accepted", confirmed_by=f'"{by}"'))
     repo.commit_state(f"Accept the {args.slug} decision", *changed, top=top)
     also = f"; {changed[1]} is now superseded" if old else ""
     print(f"Accepted {rel}, confirmed by {by}{also}.")
@@ -319,8 +311,7 @@ def roadmap_add(args: argparse.Namespace) -> None:
     slug = args.spec
     top = _start(args, slug)
     if (top / "forge.toml").is_file() and repo.is_prototype(top):
-        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
-                     "forge next"))
+        repo.refuse(story.REFUSALS["prototype"])
     rel, _, fields, body = _spec(top, slug)
     if fields.get("status") != "confirmed":
         repo.refuse(REFUSALS["unconfirmed"], slug=slug, status=fields.get("status") or "none")
@@ -339,13 +330,32 @@ def roadmap_add(args: argparse.Namespace) -> None:
     if not new:
         print(f"{ROADMAP} already has every item in {rel}.")
         return
-    data = json.loads(_text(top, ROADMAP) or "{}")  # the other top-level keys stay as they are
-    last = max((item["order"] for item in items if isinstance(item.get("order"), int)), default=0)
-    data["items"] = items + [{"key": key, "title": wanted[key], "spec": rel, "status": "pending",
-                              "order": last + n} for n, key in enumerate(new, 1)]
-    _write(top, ROADMAP, json.dumps(data, indent=2) + "\n")
+    story.add_to_roadmap(top, [{"key": key, "title": wanted[key], "spec": rel} for key in new])
     repo.commit_state(f"Add {', '.join(new)} to the roadmap from the {slug} spec", ROADMAP, top=top)
     print(f"Added {', '.join(new)} to {ROADMAP} from {rel}.")
+
+
+def roadmap_retire(args: argparse.Namespace) -> None:
+    key, slug = args.key, args.by
+    top = _start(args, slug)
+    rel = _spec(top, slug)[0]
+    items = repo.roadmap(top)  # refuses a roadmap it can't read
+    item = next((item for item in items if item["key"] == key), None)
+    if item is None:
+        repo.refuse(REFUSALS["not_on_roadmap"], key=key, spec=slug)
+    started = repo.read_state(key, top) is not None or repo.git(
+        "for-each-ref", f"refs/heads/story/{key}", f"refs/remotes/origin/story/{key}", cwd=top)
+    status = "started" if started and item.get("status") == "pending" else item.get("status")
+    if status != "pending":
+        repo.refuse(REFUSALS["not_pending"], key=key, status=status or "without a status")
+    if not (top / rel).is_file():
+        repo.refuse(REFUSALS["no_spec"], slug=slug)
+    item.update(status="superseded", superseded_by=rel)
+    data = story.json_of(_text(top / ROADMAP))
+    data["items"] = items
+    _write(top / ROADMAP, json.dumps(data, indent=2) + "\n")
+    repo.commit_state(f"Retire {key} from the roadmap; the {slug} spec replaces it", ROADMAP, top=top)
+    print(f"{key} is retired on {ROADMAP}, superseded by {rel}.")
 
 
 # --- helpers ---------------------------------------------------------------------------
@@ -376,7 +386,7 @@ def _name(args: argparse.Namespace, slug: str) -> str:
 def _spec(top: Path, slug: str) -> tuple[str, str, dict[str, str], str]:
     """A spec's path, text, frontmatter and body; the text is empty when there is no spec."""
     rel = f"docs/specs/{slug}.md"
-    text = _text(top, rel)
+    text = _text(top / rel)
     return (rel, text, *_front(text))
 
 
@@ -438,19 +448,6 @@ def _decision_numbers(top: Path) -> set[int]:
     return {int(match[1]) for name in names if (match := re.match(r"(\d{4})-", Path(name).name))}
 
 
-def _front(text: str) -> tuple[dict[str, str], str]:
-    """A doc's frontmatter fields and the body after them."""
-    match = FRONTMATTER.match(text)
-    if not match:
-        return {}, text
-    fields = {}
-    for line in match[1].splitlines():
-        key, colon, value = line.partition(":")
-        if colon:
-            fields[key.strip()] = value.strip().strip("\"'")
-    return fields, text[match.end():]
-
-
 def _set(text: str, **changes: str | None) -> str:
     """The doc with these frontmatter fields set (None removes one); other lines stay as they are."""
     match = FRONTMATTER.match(text)
@@ -476,17 +473,6 @@ def _sections(body: str) -> dict[str, str]:
 def _answer_section(body: str) -> str:
     match = re.search(r"(?ms)^## Answers\r?\n.*?(?=^## |\Z)", body)
     return match[0] if match else ""
-
-
-def _text(top: Path, rel: str) -> str:
-    path = top / rel
-    return path.read_text(encoding="utf-8") if path.is_file() else ""
-
-
-def _write(top: Path, rel: str, text: str) -> None:
-    path = top / rel
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(text.encode("utf-8"))  # bytes, so Windows writes the same LF file
 
 
 COMMANDS = [
@@ -515,10 +501,15 @@ COMMANDS = [
      "help": "Add roadmap items from a confirmed spec", "args": [(('spec',), {})],
      "position": 230,
      "listing": "| `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |"},
+    {"words": "roadmap retire", "run": "roadmap_retire", "changes_state": True,
+     "help": "Mark a pending roadmap item superseded by the spec that replaces it",
+     "args": [(('key',), {}), (('--by',), {"required": True, "metavar": "SPEC"})],
+     "position": 235,
+     "listing": "| `forge roadmap retire <KEY> --by <spec>` | Marks a pending roadmap item superseded by the spec that replaces it; `forge next` and the board stop showing it |"},
 ]
 
 GROUP_HELP = {
     "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
     "decision": "Write and accept decisions",
-    "roadmap": "Add roadmap items",
+    "roadmap": "Add and retire roadmap items",
 }

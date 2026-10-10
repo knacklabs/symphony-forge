@@ -28,7 +28,10 @@ def test_1_close_never_counts_a_check_result_from_an_earlier_head(env):
             "forge-pr-check has not reported.") in done.stdout + done.stderr
     pushed = env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
     assert pushed != earlier
-    assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
+    # Missing current-head checks also query queued workflows, which have no commit URL.
+    for field in (".check_runs[]", ".statuses[]"):
+        calls = env.gh_calls("api", "--paginate", "--jq", field)
+        assert calls and all(f"/commits/{pushed}/" in call[-1] for call in calls)
 
 
 def test_2_close_retries_a_failed_push_before_giving_up(env):
@@ -44,7 +47,8 @@ def test_2_close_retries_a_failed_push_before_giving_up(env):
 
     assert done.returncode == 0, done.stderr
     assert "Ready: tidy-readme" in done.stdout
-    assert len(tries.read_text("utf-8").splitlines()) == 3
+    # Two retries, the pre-review push, then the committed review's final push.
+    assert len(tries.read_text("utf-8").splitlines()) == 4
     assert (env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
             == env.repo.git("rev-parse", "HEAD", cwd=where))
 
@@ -66,6 +70,8 @@ def test_3_close_gives_up_after_the_bounded_push_attempts_with_growing_waits(env
     times = [float(line) for line in tries.read_text("utf-8").splitlines()]
     assert len(times) == 4
     gaps = [later - earlier for earlier, later in zip(times, times[1:])]
-    # A normal close waits 1, 2 and 4 seconds between its four attempts.
-    assert gaps[0] >= 1 and gaps[1] >= 2 and gaps[2] >= 4 and gaps[0] < gaps[1] < gaps[2], gaps
+    # A normal close waits 1, 2 and 4 seconds between its four attempts. Each gap also holds the
+    # push's own time, which on a loaded runner can swamp the waits, so each gap is checked against
+    # its own planned wait instead of against the other gaps.
+    assert gaps[0] >= 1 and gaps[1] >= 2 and gaps[2] >= 4, gaps
     assert not env.gh_calls("pr", "create")  # nothing was published after the failed push

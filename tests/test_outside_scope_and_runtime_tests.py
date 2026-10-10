@@ -54,7 +54,8 @@ def test_2_review_reports_only_outside_scope_files_the_work_does_not_need(env):
     # the reviewer judges whether the work needed it.
     assert "- tests/test_old.py" in scope
     assert "Report only the files outside Scope that the work doesn't need" in scope
-    assert "Check the worker's handoff names each such file and why" in scope
+    # Close never passes the worker's handoff, so the reviewer is not told to check it.
+    assert "handoff" not in scope
 
 
 def test_3_brief_asks_end_to_end_only_for_runtime_behaviour(repo):

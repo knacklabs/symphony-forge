@@ -5,9 +5,20 @@ $summary
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
+$review_loop
+
+$delegation
 - Edit files only inside this checkout.
+- $settings
+- Never run `forge stop`: only a person can stop a run, after confirmation in the host.
+- Forge workers, readers and reviewers never act on mod events; those turns belong to the
+  interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
+- `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
+  in your next round. If you need CI evidence, commit and stop instead of asking the coordinator
+  to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
+  waiting for CI results or timings.
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
   started still runs in the background. Commit your work before your turn ends: the review reads
   only what is committed.
@@ -19,6 +30,8 @@ nothing more.
   existing test it breaks; name each such file and why in your handoff.
 - When finishing needs a choice this item does not settle, end your final message with a
   paragraph starting `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
+  Forge records that question on both Codex and Claude and pauses work and close until the
+  coordinator answers with `forge work <item> --note "<answer>"`.
 
 <!-- if coordinator -->
 ## From the coordinator
@@ -83,7 +96,8 @@ Why: $why
 Done when: $done
 
 A fix stays small: at most five code files and no interface changes unless a recorded allowance
-says otherwise. If it needs more, stop and say so; it has to become a story.
+says otherwise; test files and files whose content is exactly what `forge sync` writes don't count.
+If it needs more, stop and say so; it has to become a story.
 
 Interface globs in forge.toml: $interfaces. Recorded allowance: $allowance.
 
@@ -96,15 +110,33 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 <!-- end -->
 ## Tests first
 
-A real-Codex or process-cleanup test that fails locally but passes when run alone is machine load from parallel workers: commit, say so in your handoff, and let CI judge it; don't stop for it.
+One command-level test per rule is enough.
+
+Windows checklist:
+- A path written into a file or compared as text goes through `json.dumps` or `as_posix`.
+- Tests never assume a drive letter or a '/' separator.
+- File operations in tests use the repo's lock-safe helpers where it has them.
+
+Test fixtures are plain text files, never archives or other binary files. Build an old repo for
+an upgrade test in the test from a text fixture folder.
+
+A test that fails in the suite but passes alone is flaky; its failure stays unresolved.
+Report both results without guessing the cause.
 
 For each Done-when item you cover that changes runtime behaviour, write one end-to-end test at the
 boundary the user touches, named for the item; a settings, docs, deletion or test-only item is
 proven by the check the item names. Name a new test file after the behaviour it proves, never
 after the fix's slug. Run each test and watch it fail, then build until it passes. Never edit or
 delete a test to make it pass; if a test is wrong, say so. A test whose result a stub or fake
-decides proves nothing. Use the test-audit skill whenever you write or change a test. Run the
-repo's test command before you stop.
+decides proves nothing. Use the test-audit skill whenever you write or change a test. Before you
+stop, commit your work first, then run the change's related tests through `forge test` in the
+foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
+`fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
+base with `origin/<default branch>`. It always runs, including uncommitted changes. Then commit
+any fixes. CI runs the full suite.
+For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
+test command without installing Forge in the project. This picker belongs in `fast_test`;
+workers run bare `forge test` to enter the lane.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
@@ -120,7 +152,6 @@ When changing a user-facing flow, add or update its Playwright test, including a
 touches for the first time.
 
 Add every test your task's Tests column names, even when the change is documentation only.
-In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
 
 <!-- if user-facing -->
 ## Functional check
@@ -179,9 +210,21 @@ conventions apply only to a repo on the default stack.
 
 ## When you finish
 
+Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
+cover and every detail next to the test or check that proves it, or marked `missing`. Include the
+test's file and case name, or the named check and its result. Keep the whole list current in every
+round, not only the entries you changed. Forge copies it into the pull request and gives it to
+the reviewer. The first review checks every entry and reports every missing case it finds in
+that one round.
+
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Note anything you spot outside your item instead of fixing it: end a commit message's body with
+one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
+widen this change for one, and never edit `plans/spotted.json`; Forge keeps it. The one
+exception is a bug that stops your item from working: fix it and name it in your handoff.
 
 <!-- if standards -->
 ## Standards
