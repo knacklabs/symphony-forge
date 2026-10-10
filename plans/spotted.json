@@ -298,6 +298,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 423,
+      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -1361,6 +1372,17 @@
       "text": "Not done: include merge-ready stories in the stage totals",
       "from": "blocking",
       "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tPublished story state can hide locally recorded question touches in the context hook.",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 393,
+      "text": "Published story state can hide locally recorded question touches in the context hook.",
+      "from": "worker",
+      "item": "skipped-next",
       "status": "open",
       "closed_by": null
     },
@@ -2494,6 +2516,17 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_local_progress.py\tNumber all three new tests to satisfy the full-suite gate\tskipped-next",
+      "kind": "bug",
+      "path": "tests/test_next_local_progress.py",
+      "line": 55,
+      "text": "Number all three new tests to satisfy the full-suite gate",
+      "from": "blocking",
+      "item": "skipped-next",
       "status": "open",
       "closed_by": null
     },
@@ -3829,6 +3862,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tDocker Hub authorization timed out before the cleanup test could create its fixture.",
+      "kind": "edge",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "Docker Hub authorization timed out before the cleanup test could create its fixture.",
+      "from": "worker",
+      "item": "skipped-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_lanes_tests.py\tKill the Forge interpreter rather than its Windows launcher",
       "kind": "edge",
       "path": "tests/test_lanes_tests.py",
@@ -3979,39 +4023,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tPublished story state can hide locally recorded question touches in the context hook.",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 393,
-      "text": "Published story state can hide locally recorded question touches in the context hook.",
-      "from": "worker",
-      "item": "skipped-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_next_local_progress.py\tNumber all three new tests to satisfy the full-suite gate\tskipped-next",
-      "kind": "bug",
-      "path": "tests/test_next_local_progress.py",
-      "line": 55,
-      "text": "Number all three new tests to satisfy the full-suite gate",
-      "from": "blocking",
-      "item": "skipped-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tDocker Hub authorization timed out before the cleanup test could create its fixture.",
-      "kind": "edge",
-      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
-      "line": 34,
-      "text": "Docker Hub authorization timed out before the cleanup test could create its fixture.",
-      "from": "worker",
-      "item": "skipped-next",
       "status": "open",
       "closed_by": null
     }
