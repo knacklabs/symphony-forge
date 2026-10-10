@@ -8,8 +8,10 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 ## Install
 
-You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, Claude Code and Codex.
-Either agent can coordinate the work; the first cold read of a story or spec runs on the other one.
+You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
+repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
+the first cold read uses the other agent when installed, otherwise a separate conversation
+of the coordinating agent.
 `forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
@@ -134,21 +136,44 @@ Ask your agent to set `workers = "codex"` in `forge.toml` if you want Codex to b
 The same file holds a `[models]` table: `[models.build]` for the first task build,
 `[models.fix]` for later fix rounds, `[models.lite]` for a fix's first build round,
 `[models.explore]` for the explorer role on both hosts and quick read-only questions,
-`[models.grill.codex]` and `[models.grill.claude]` for cold reads, and `[models.review]` for
-Autoreview. Build, fix, lite, explore and grill set a model and reasoning effort; review sets its model.
-Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite, explore and review may
+`[models.grill.codex]` and `[models.grill.claude]` for cold reads.
+Build, fix, lite, explore and grill set a model and reasoning effort.
+Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite and explore may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no entry for a family, that tool runs on its own settings, except that a review on Claude
-uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
+kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
+Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
+installed tool. Claude planner and architect roles use that plan-read entry; debugger,
+security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
+no entry use Forge's `gpt-6.1-sol` at medium effort; Codex design uses its design default.
+Ask your agent to change these settings in a fix.
+
+`forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),
+and Opus at high for Claude grill. Existing model entries stay unchanged on
+upgrade. To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those
+four implementation entries, and `"claude-opus-5-5"` at `"high"` in grill. A missing implementation entry
+can be added before the first table with one line per kind, replacing `build` below:
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+For plan reads, use this line:
+`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+Move a single build, fix or lite entry to its family's table first. Run `forge sync` after
+changing settings to refresh subagent roles.
+
+Every normal, light and prototype sign-off review runs through the external Autoreview
+program on the repo's tool: Claude with `workers = "claude"`, Codex with `workers = "codex"`.
+Split workers use Codex when installed and Claude otherwise. Autoreview chooses its own
+default model and effort; Forge passes neither. Legacy `[models.review]` entries stay in
+existing settings but no longer override Autoreview's defaults.
 
 In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
-uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at
-high effort. If the `claude` command is missing, or Claude fails before changing the checkout,
+uses its worker's design entry: `[models.design.codex]` with `workers = "codex"`, and
+`[models.design.claude]` with `workers = "claude"` or `"split"`. Claude's default is
+`claude-sonnet-5-5` at xhigh effort. With `workers = "split"`, if the `claude` command is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. Other work, including all work in Forge's own repo, keeps its
-usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
+failure without a Codex retry. Claude-only repos report the failure without a Codex retry.
+Split routing also applies to User-facing story tasks in
+Forge's own repo. Other work keeps its usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
 to change that choice.
 
 Forge names task conversations `Build · <story>/<task> · <task name>` and later turns

@@ -395,10 +395,11 @@ KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
-WORKER_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "medium"},
+WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "medium"}}
-DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
+CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -475,12 +476,14 @@ def ready_path(item: str, top: Path) -> Path:
 
 def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """One kind's entry for a family ("codex" or "claude") from forge.toml's [models] table: its
-    own entry, or a single entry whose model is that family's; {} when the kind has none for it."""
-    if kind == "explore" and kind not in cfg["models"]:
+    own entry, or a single entry whose model is that family's; Claude plan reads default to
+    Opus at high effort, and other missing entries return {}."""
+    if kind == "explore" and kind not in cfg.get("models", {}):
         kind = "lite"
-    chosen = cfg["models"].get(kind) or {}
+    chosen = cfg.get("models", {}).get(kind) or {}
     if "model" not in chosen:
-        return chosen.get(family) or {}
+        return chosen.get(family) or (CLAUDE_GRILL_DEFAULT
+                                     if kind == "grill" and family == "claude" else {})
     # ponytail: gpt models are Codex's and every other model Claude's; name the family's entry
     # when another Codex model family arrives.
     return chosen if chosen["model"].startswith("gpt") == (family == "codex") else {}
