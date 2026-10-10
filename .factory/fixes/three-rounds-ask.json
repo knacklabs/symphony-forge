@@ -9,13 +9,28 @@
   "base": "4436362fd178474e291311077681bb515dab731e",
   "branch": "fix/three-rounds-ask",
   "done_when": "After three cold-read rounds or three review rounds of one item that each still have a blocking note or serious finding, Forge stops the loop and asks the human to accept, narrow or split, and that choice can always be recorded, whichever command stopped the loop (read, close or land). New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "31ac5ea5d46f19b84f6f8b3cc2f6b34144e2c148e9edbfee4ca1f0ca1db2b2ae",
+    "changed": "4f64cc33764b1986d70a859993d5d3605acfb27be96280ae5aac5f540a1c58b6",
+    "commit": "79656a99807a98abdcdf96b9f49e900e8f0fc50a",
+    "dismissals": [],
+    "findings": [],
+    "id": "e293bff0-d419-4210-8a16-8810687bbb06",
+    "status": "clean"
+  },
   "round": 3,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T14:39:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T20:50:06.962969+00:00",
+      "step": "review"
     }
   ],
   "why": "Loops keep going past three rounds with nothing real found and the human's choice cannot always be recorded",
