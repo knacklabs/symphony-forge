@@ -215,3 +215,51 @@ def test_4_a_dependent_story_delivers_its_roadmap_entry_with_its_first_task(
     assert repo.git("status", "--porcelain", cwd=basket) == ""
     _merge_fixture(repo, basket, "task/BASKET-SAVE")
     assert json.loads((repo.path / "plans/roadmap.json").read_text("utf-8")) == delivered
+
+
+@pytest.mark.parametrize("roadmap_location", ["missing", "inherited", "default-only"])
+def test_5_promotion_keeps_its_existing_roadmap_route(client, roadmap_location):
+    # Promotion renames the fix branch: unlike a new story, its roadmap must already travel
+    # with that branch. A newer entry on default alone cannot protect an older fix.
+    repo = client
+    roadmap = {"owner_note": "Keep the existing promotion route", "items": [
+        {"key": "BASKET", "title": "Saved baskets", "order": 3, "status": "pending"}]}
+    if roadmap_location == "inherited":
+        _land(repo, {"plans/roadmap.json": json.dumps(roadmap)})
+    started = repo.forge("fix", "start", "Keep baskets", "--done", "A basket survives signing out")
+    assert started.returncode == 0, started.stdout + started.stderr
+    fix = worktree(repo, "fix/keep-baskets")
+    patient(lambda: (fix / "basket.py").write_text("SAVED = True\n", "utf-8"))
+    repo.git("add", "-A", cwd=fix)
+    repo.git("commit", "-qm", "Keep saved baskets", cwd=fix)
+    fixed = repo.git("rev-parse", "HEAD", cwd=fix)
+    if roadmap_location == "default-only":
+        _land(repo, {"plans/roadmap.json": json.dumps(roadmap)})
+    default = repo.git("rev-parse", "main")
+    branches = repo.git("branch", "--list")
+    trees = repo.git("worktree", "list", "--porcelain")
+    fix_files = repo.git("ls-tree", "-r", "HEAD", cwd=fix)
+
+    promoted = repo.forge("story", "new", "BASKET", "--from-fix", "keep-baskets")
+
+    if roadmap_location != "inherited":
+        assert promoted.returncode == 1, promoted.stdout + promoted.stderr
+        assert "The fix keep-baskets has no roadmap entry for BASKET." in promoted.stderr
+        assert "add BASKET to plans/roadmap.json" in promoted.stderr
+        assert "commit it, then forge story new BASKET --from-fix keep-baskets" in promoted.stderr
+        assert repo.git("branch", "--list") == branches
+        assert repo.git("worktree", "list", "--porcelain") == trees
+        assert repo.git("rev-parse", "HEAD", cwd=fix) == fixed
+        assert repo.git("ls-tree", "-r", "HEAD", cwd=fix) == fix_files
+        assert repo.git("status", "--porcelain", cwd=fix) == ""
+    else:
+        assert promoted.returncode == 0, promoted.stdout + promoted.stderr
+        assert repo.git("merge-base", fixed, "task/BASKET-SPEC") == fixed
+        assert repo.git("branch", "--list", "fix/keep-baskets") == ""
+        assert json.loads(repo.git("show", "task/BASKET-SPEC:plans/roadmap.json")) == roadmap
+        assert json.loads(repo.git("show", "story/BASKET:plans/roadmap.json")) == roadmap
+        assert repo.git("show", "task/BASKET-SPEC:basket.py") == "SAVED = True"
+    assert repo.git("rev-parse", "main") == default
+    for host in (".codex", ".claude"):
+        guide = (repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
+        assert "Promotion keeps the fix's existing roadmap entry" in " ".join(guide.split())

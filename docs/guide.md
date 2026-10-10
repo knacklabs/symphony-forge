@@ -89,7 +89,8 @@ The customer's named person approves the demo and the quoted answers; fill in th
 `forge decision accept` again to record it.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
-use `forge roadmap add` when planning from a confirmed spec. This includes stories promoted from fixes. In a client
+use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
+existing route: its roadmap entry must already be in the fix's branch. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and

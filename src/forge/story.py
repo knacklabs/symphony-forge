@@ -44,6 +44,9 @@ REFUSALS = {
                 'forge story new <KEY> "<title>"'),
     "no_title": ("A new story needs a plain-English title.", 'forge story new {key} "<title>"'),
     "no_fix": ("There is no fix named {fix} in a worktree here.", "forge next"),
+    "fix_roadmap": ("The fix {fix} has no roadmap entry for {key}.",
+                    "add {key} to plans/roadmap.json in {path}, commit it, then "
+                    "forge story new {key} --from-fix {fix}"),
     "no_story": ("There is no story {key} here.", 'forge story new {key} "<title>"'),
     "no_spec": ("docs/specs/{slug}.md does not exist.", "forge spec save {slug}"),
     "bad_doc": ("{doc} is malformed: {problem}.", "edit {doc}, then run forge next"),
@@ -118,6 +121,8 @@ def new(args: Any) -> int:
         fix_state = repo.read_state(fix, fix_top) if fix_top else None
         if not fix_state:
             repo.refuse(REFUSALS["no_fix"], fix=fix)
+        if key not in {item["key"] for item in repo.roadmap(fix_top)}:
+            repo.refuse(REFUSALS["fix_roadmap"], fix=fix, key=key, path=fix_top)
         why = fix_state.get("why") or why
         done = fix_state.get("done_when") or done  # the promoted task covers Done-when item 1
         # The task's Scope is what the fix changed since it left the default branch.
@@ -136,7 +141,7 @@ def new(args: Any) -> int:
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
     _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
     changed = [doc]
-    if key not in {item["key"] for item in repo.roadmap(path)}:
+    if not fix and key not in {item["key"] for item in repo.roadmap(path)}:
         changed += add_to_roadmap(path, [{"key": key, "title": title}])
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))

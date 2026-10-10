@@ -283,7 +283,8 @@ def test_12_cold_read(repo, claude_payload, monkeypatch):
 
 
 def test_22_promote(repo):
-    setup(repo)
+    # The narrowed goal flow is for new stories; promotion keeps an existing roadmap entry.
+    setup(repo, keys=("SHOP", "BASKET"))
     fix = repo.path.parent / "repo-fix-keep-baskets"
     # ponytail: WORK's `forge fix start` isn't in this branch; this builds the same fix by hand.
     repo.git("worktree", "add", "-q", "-b", "fix/keep-baskets", str(fix), "main")
