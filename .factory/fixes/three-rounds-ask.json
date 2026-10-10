@@ -10,7 +10,7 @@
   "branch": "fix/three-rounds-ask",
   "done_when": "After three cold-read rounds or three review rounds of one item that each still have a blocking note or serious finding, Forge stops the loop and asks the human to accept, narrow or split, and that choice can always be recorded, whichever command stopped the loop (read, close or land). New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "round": 2,
+  "round": 3,
   "status": "working",
   "steps": [
     {
