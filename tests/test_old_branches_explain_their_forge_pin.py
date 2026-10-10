@@ -27,7 +27,7 @@ def test_1_old_branches_explain_the_pin_after_a_fetched_upgrade(repo, gh, tmp_pa
         repo.path = client
         for host in (".codex", ".claude"):
             skill = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
-            assert "merge the default branch into" in skill
+            assert "merge `origin/<default>` into" in skill
 
     repo.git("switch", "-q", "-c", "setup")
     settings = (repo.path / "forge.toml").read_text("utf-8")
@@ -42,7 +42,7 @@ def test_1_old_branches_explain_the_pin_after_a_fetched_upgrade(repo, gh, tmp_pa
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")
     repo.git("switch", "-q", "-c", "fix/old-work")
     log = _uv(repo)
-    notice = f"Merge main into this branch to use Forge {version} and its rules."
+    notice = f"Merge origin/main into this branch to use Forge {version} and its rules."
     command = ("fix", "start", "Tidy the readme", "--done", "It reads well")
     before = repo.forge(*command)
     assert before.returncode == 3
@@ -81,7 +81,7 @@ def test_1_old_branches_explain_the_pin_after_a_fetched_upgrade(repo, gh, tmp_pa
         assert notice not in synced.stdout + synced.stderr
         for host in (".codex", ".claude"):
             skill = (repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
-            assert "merge the default branch into" in skill
+            assert "merge `origin/<default>` into" in skill
     assert len(_calls(log)) == calls
 
     repo.write("forge.toml", settings.replace('version = "v1.2.2"', 'version = "v99.0.0"'))
