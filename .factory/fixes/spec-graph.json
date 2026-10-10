@@ -20,25 +20,33 @@
   "branch": "fix/spec-graph",
   "done_when": "docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade backfill, and the client issue's asks (building only once a part started, Needs you listing forge next's blocking problems, a pinned section bar with folding sections, grouping by roadmap epic else spec, story keys beside titles, cold-read rounds in a story's history, rounded times), with acceptance criteria; AGENTS.md's plain-English principle names story keys on the board as its one exception; the spec passes a read and is re-confirmed",
   "flagged": [
-    ".factory/fixes/spec-graph.json"
+    ".factory/fixes/spec-graph.json",
+    "docs/specs/board-for-the-team.md"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7bfca21a8a0aed0be967ff162587a65810a179c87b209a32938bcbca4898c9cd",
-    "changed": "5e25fa97f9ae295513abe0bc6ca163f8fbaef3d6db8dc5c84ac97a86b98e33da",
-    "commit": "cfb75e2f1e158cdfaf8a93923d4b79238e7fc52e",
+    "branch_diff": "62e4be587edc61bc1c27cf0aa18d4e4eb28dde61a17609a767b562dc4a02d871",
+    "changed": "e32523a1394091d8da979fee71aa848db660751b918a299ca57e7714c618c0a5",
+    "commit": "04be816706ff383a199e9ff1c90d178860d46f78",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The supplied latest-worker proof list is explicitly missing. There are no entries mapping the graph requirements, upgrade backfill, acceptance criteria, passing read and re-confirmation to their named evidence. The updated spec and read notes do not satisfy the separately required proof-list gate.",
+        "body": "Raise: Not done. The current Done-when requires grouping by roadmap epic, otherwise by spec. Behaviour 4 instead explicitly says \u201cStories are not grouped\u201d; line 52 repeats \u201cno grouping of stories (no epics)\u201d, and acceptance criterion 9 contains no grouping requirement. A builder following this spec would omit a required client ask. This contradicts the latest amended contract recorded in .factory/fixes/spec-graph.json:21; the supplied coordinator rulings do not waive that requirement.",
+        "file": "docs/specs/board-for-the-team.md",
+        "line": 47,
+        "priority": "P1",
+        "title": "Not done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back"
+      },
+      {
+        "body": "Raise: Gate. The supplied latest-worker proof list remains explicitly missing. Commit 1fb3bf4f contains an older list for the graph, backfill and round-15 confirmation, but it predates the client-issue additions and does not cover their requirements, the AGENTS.md exception, or the final round-20 read and re-confirmation. It therefore does not satisfy the complete current proof-list gate; the previous blocking finding remains open.",
         "file": ".factory/fixes/spec-graph.json",
-        "line": 16,
+        "line": 21,
         "priority": "P1",
         "title": "Not done: proof list"
       }
     ],
-    "id": "03d0592d-dd86-4469-93d6-a07b9765ca80",
+    "id": "2bc19b4a-d6a4-4f99-be2f-e06bd31370a9",
     "status": "blocked"
   },
   "round": 2,
@@ -58,6 +66,10 @@
     },
     {
       "at": "2026-10-10T05:07:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:40:02+00:00",
       "step": "review"
     }
   ],
