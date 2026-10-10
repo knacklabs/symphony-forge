@@ -26,7 +26,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T18:34:27+00:00",
@@ -50,7 +50,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/close.py"
+    "choice": "narrow",
+    "file": "src/forge/close.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the one remaining finding: conflict regeneration must not rewrite user-owned Husky hooks"
   },
   "why": "Real issues the coordinator skipped, still in close (audit, 2026-10-09): an upgrade close's full sync rewrites the real repo's git hooks, an amended Done-when never reaches an existing pull request body, a test-state change forces a full CI rerun instead of reusing the parent's, the story title is read in the platform encoding, and a SyntaxError during a conflicted merge leaves the merge active",
   "worker": "codex"
