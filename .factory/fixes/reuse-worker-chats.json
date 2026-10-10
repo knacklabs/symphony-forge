@@ -19,27 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0218ec3cc5e367e3bd67dcad436498ce934c676743809ed03627d8013470cf2f",
-    "changed": "8e477a1ed189ecf0095ee668623e7475d3b9231b25b0c1b909f92cba75457b69",
-    "commit": "7a8f6c1ae740b1e4449052ed6a98cc85cbb1dcd4",
+    "branch_diff": "fa98a83285ce748fd1c4689bb7589b65fe65a9e38df383caeb0fa0ddb2fd875a",
+    "changed": "5f5d6eda32e183c1b37cfea4e2c81b73e5226dda658a4dfb5c2da841dbd6a46f",
+    "commit": "bb9a2dec3b011f863700a5c361fc524a1bd9b0b4",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done \u2014 A failed v1.2.2 Codex read starts a fresh chat after upgrade despite its original chat remaining resumable. New evidence beyond the earlier upgrade finding: `tests/fixtures/forge-v1.2.2/src/forge/story.py:231` clears the JSON identity to null after a failed read, while `codex.py:389` in that fixture retains the conversation ID in the turn log. This guard treats those null keys as an existing identity and prevents log recovery; `preserve_chats` at current `src/forge/codex.py:223` also skips the record. Consequently, upgrade sync preserves no binding, and the next read never attempts the original ID. Erasing metadata after sync loses even the recoverable log. Proof test 7 starts its failed reads with current Forge, and the native earlier-release reader proofs start with successful reads, so neither covers this case.",
+        "body": "Raise: Functional \u2014 After a spec\u2019s owning fix is merged and its worktree removed, `forge sync` on an already-synced default checkout now refuses unnecessarily. The normal cleanup at `src/forge/merge.py:168\u2013172` removes the owning worktree and branch while retaining reader metadata. This fallback then calls `_work_branch(top)`, which rejects the default branch (`src/forge/repo.py:779\u2013780`), before reaching the already-persisted identity check at `codex.py:245`. Consequently, even current-release specs whose chat binding needs no migration prevent a no-op sync. Check whether preservation is needed before enforcing the write guard. The supplied removed-owner test synchronizes inside an upgrade fix, so it does not cover this rerun.",
         "file": "src/forge/codex.py",
-        "line": 183,
+        "line": 236,
         "priority": "P1",
-        "title": "Not done: Recover earlier-release reader chats after failed reads"
-      },
-      {
-        "body": "Raise: Not done \u2014 An earlier-release task that successfully returned to Claude after a Codex fallback loses its Claude chat on upgrade. The new evidence is that v1.2.2 records can legitimately contain both identities: its worker fallback at `tests/fixtures/forge-v1.2.2/src/forge/worker.py:128` runs Codex, whose `codex.py:360` preserves the Claude field; a subsequent successful Claude round updates that field at `worker.py:414` without removing the Codex identity. That release writes no worker routing field (`worker.py:115`). Upgrade preserves both IDs, but this inference always selects Codex when both exist. Lines 114\u2013116 then clear the still-valid Claude session and start another without attempting to resume it. The tool-change ruling does not cover this case: the last successful round already used Claude, and the configured tool is unchanged. Native earlier-release worker proofs exercise one fix round on one provider, so they miss this normal split-worker recovery sequence.",
-        "file": "src/forge/worker.py",
-        "line": 106,
-        "priority": "P1",
-        "title": "Not done: Preserve the active tool in earlier-release mixed worker records"
+        "title": "Check persisted spec chats before enforcing the work-branch guard"
       }
     ],
-    "id": "5a6cac57-0447-483f-bc12-8b977ef0bd78",
+    "id": "67087bfc-59a5-4123-b3e9-e19c6abbcb52",
     "status": "blocked"
   },
   "round": 6,
@@ -67,6 +60,10 @@
     },
     {
       "at": "2026-10-10T02:24:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:31:18+00:00",
       "step": "review"
     }
   ],
