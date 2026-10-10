@@ -476,11 +476,10 @@ def test_18_close(env, kind):
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     # The old contract passed origin/main, which a clone could resolve to stale local main.
     # The reviewer now gets the exact fetched remote commit.
-    assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority",
-                                             "--model", "--thinking")} == {
+    assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
         "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
-        "--engine": "codex", "--max-priority": "P3",
-        "--model": "codex=gpt-6-astra", "--thinking": "codex=high"}
+        "--engine": "codex", "--max-priority": "P3"}
+    assert "--model" not in options and "--thinking" not in options
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones

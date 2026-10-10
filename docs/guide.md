@@ -130,26 +130,35 @@ merging when the repo allows agent merges.
 
 ## Workers and conversations
 
-Ask your agent to set `workers = "codex"` in `forge.toml` if you want Codex to build tasks and fixes.
+Ask your agent to run everything in Claude, run everything in Codex, or use both. In a settings
+fix it sets `tools = "claude"` with `workers = "claude"`, `tools = "codex"` with
+`workers = "codex"`, or `tools = "both"`. Both is the default when the setting is absent;
+with one tool `workers` is ignored, including for design work. Upgrade Forge before adding
+`tools` to an older repo. The planning, approval, build, review, CI and merge process is the same
+with any choice. A round on the coordinating session's tool runs as its background subagent;
+the other tool uses its kit. Reviews use the repo's tool through Autoreview's own default model
+and effort; with both they use Codex when installed, otherwise Claude. Existing review model
+entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
+
 The same file holds a `[models]` table: `[models.build]` for the first task build,
 `[models.fix]` for later fix rounds, `[models.lite]` for a fix's first build round,
 `[models.explore]` for the explorer role on both hosts and quick read-only questions,
-`[models.grill.codex]` and `[models.grill.claude]` for cold reads, and `[models.review]` for
-Autoreview. Build, fix, lite, explore and grill set a model and reasoning effort; review sets its model.
-Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite, explore and review may
+`[models.grill.codex]` and `[models.grill.claude]` for cold reads.
+Build, fix, lite, explore and grill set a model and reasoning effort.
+Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite and explore may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no entry for a family, that tool runs on its own settings, except that a review on Claude
-uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
+kind has no entry for a family, that tool runs on its own settings.
+Ask your agent to change these settings in a fix.
 
-In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
-uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at
-high effort. If the `claude` command is missing, or Claude fails before changing the checkout,
-Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
-and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. Other work, including all work in Forge's own repo, keeps its
-usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
-to change that choice.
+A story task marked User-facing or a client fix allowed as "Prototype before sign-off" uses
+its selected tool's design model: `[models.design.claude]` defaults to `claude-opus-5-5` at high
+effort; `[models.design.codex]` defaults to `gpt-6.1-sol` at high effort. With `tools = "both"`
+and `workers = "split"`, design work starts on Claude. If the `claude` command is missing, or
+Claude fails before changing the checkout, Forge uses Codex instead and prints and logs the
+fallback reason. If Claude changed the checkout before failing, or one tool is selected, Forge
+reports the failure without a Codex retry. Set either design table's `model` and `effort` in
+`forge.toml` to change that choice.
 
 Forge names task conversations `Build · <story>/<task> · <task name>` and later turns
 `Fix · <story>/<task> · <task name>`. Quick fixes use `Lite · <fix name> · <why>` and cold reads

@@ -97,7 +97,7 @@ def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, s
     assert ask(f"[models.lite]\n{OPUS}") == QUIET
 
 
-def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
+def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review.codex]\nmodel = "gpt-6-sol"\neffort = "xhigh"\n'
@@ -115,5 +115,5 @@ def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert {name: options[name] for name in ("--engine", "--model", "--thinking")} == {
-        "--engine": "claude", "--model": "claude=sonnet", "--thinking": "claude=medium"}
+    assert options["--engine"] == "claude"
+    assert "--model" not in options and "--thinking" not in options

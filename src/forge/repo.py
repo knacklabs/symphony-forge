@@ -371,15 +371,15 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "fast_test": str,
+KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str,
         "merge": str, "checks": list, "interfaces": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
-DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "fast_test": "",
+DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest",
             "merge": "human", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
-           "workers": ("claude", "codex", "split"), "merge": ("agent", "human")}
+           "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -496,15 +496,29 @@ def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]
 
 
 def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
-    """Who builds an item, with which models, and why: workers = codex or claude puts everything on
-    that tool, and split puts user-facing (design) work on Claude and the rest on Codex. Design
-    work uses the family's design model. forge work and forge next both ask this."""
-    family = cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex"
+    """One tool overrides workers; both keeps workers' tool or split's design routing.
+    Design work uses the family's design model. forge work and forge next both ask this."""
+    family = (cfg["tools"] if cfg["tools"] != "both" else
+              cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
-    why = (("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
+    why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
+           if cfg["tools"] != "both" else
+           ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
            if cfg["workers"] == "split" else f"workers = {family}"
            + (", with the design model as it is user-facing" if design else ""))
     return family, chosen, why
+
+
+def coordinator() -> str | None:
+    """The session's app, or None when neither or both app identities are present."""
+    apps = [app for variable, app in (("CLAUDECODE", "claude"), ("CODEX_THREAD_ID", "codex"))
+            if os.environ.get(variable)]
+    return apps[0] if len(apps) == 1 else None
+
+
+def route(cfg: dict[str, Any], tool: str) -> str:
+    """A round runs natively in its coordinating app, otherwise through the tool's kit."""
+    return "native" if tool == coordinator() else "kit"
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:

@@ -134,9 +134,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         if case.endswith("claude"):
             from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
             _claude_only(env.tmp, monkeypatch, repo.bin, (env.tmp / "autoreview/scripts/autoreview").read_text("utf-8"))
-        model, effort = ("gpt-6-sol", "xhigh") if case.endswith("codex") else ("opus", "high")
-        if "default" in case:
-            model, effort = None, None
+        # Autoreview chooses the defaults; model and effort appear only after it reports them.
+        model, effort = None, None
     if case == "restart":
         assert repo.forge("work", item).returncode == 0
         assert row(repo, item)[0]["idle_since"] is not None

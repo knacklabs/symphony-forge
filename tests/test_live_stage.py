@@ -96,7 +96,8 @@ def test_2_live_repo_gets_no_prototype_rules(request, repo, rule):
         assert closed.returncode == 0, closed.stderr
         [call] = forge.review_calls()
         options = dict(zip(call["args"][::2], call["args"][1::2]))
-        assert (options["--model"], options["--max-priority"]) == ("codex=gpt-6-astra", "P3")
+        assert options["--max-priority"] == "P3"
+        assert "--model" not in options and "--thinking" not in options
         # The agent merge before sign-off: a human merges a live repo's pull requests.
         assert closed.stdout.splitlines()[-1] == (
             f"Ready: {item} has a clean review and green checks. A human merges its pull request.")

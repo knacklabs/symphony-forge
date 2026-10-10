@@ -147,25 +147,26 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
 
     queue.write_text(json.dumps([{"report": {"review_status": "scoped-clean", "findings": []}}]))
     missing_selection = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert missing_selection.returncode == 1
-    assert "model and effort" in missing_selection.stderr
-    assert "status: proposed" in page.read_text()
+    assert missing_selection.returncode == 0, missing_selection.stderr
+    assert "status: accepted" in page.read_text()
+    page = _decision(fix, answers)
 
     queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
                                    "codex model gpt-6.1-sol is unavailable for this account; "
                                    "retrying with gpt-6-astra",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert fallback.returncode == 1
-    assert "model and effort" in fallback.stderr
-    assert "status: proposed" in page.read_text()
+    assert fallback.returncode == 0, fallback.stderr
+    assert "status: accepted" in page.read_text()
+    page = _decision(fix, answers)
 
     queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: xhigh",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert other_effort.returncode == 1
-    assert "model and effort" in other_effort.stderr
-    assert "status: proposed" in page.read_text()
+    assert other_effort.returncode == 0, other_effort.stderr
+    assert "status: accepted" in page.read_text()
+    page = _decision(fix, answers)
+    reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {
         "review_status": "incomplete", "findings": [], "scope_rejected_findings": [{
@@ -215,8 +216,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
     assert len(calls) == 12
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
-    assert options["--model"] == "codex=gpt-6.1-sol"
-    assert options["--thinking"] == "codex=high"
+    assert "--model" not in options and "--thinking" not in options
     assert "Sign-off person" in options["--prompt"]
     assert "docs/product/BRIEF.md" in options["--prompt"]
     assert "| Topic | Question | Options (default first) | Before sign-off |" in options["--prompt"]

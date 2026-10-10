@@ -10,6 +10,7 @@ $review_loop
 $delegation
 - Edit files only inside this checkout.
 - $settings
+- A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.

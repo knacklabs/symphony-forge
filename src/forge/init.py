@@ -59,7 +59,7 @@ STACKS = [("pyproject.toml", "uv run pytest"), ("go.mod", "go test -v ./...")]
 # Otherwise the smallest client stack (Node). Before the first story adds the app there is
 # nothing to test, and the tests check passes; after that it runs the app's tests.
 NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
-# The model and effort each kind of work runs on; the review kind's model goes to Autoreview. The
+# The model and effort each kind of work runs on; Autoreview chooses its own defaults. The
 # cold read (grill) runs on the family that isn't coordinating, so it has an entry for each.
 MODELS = """
 [models.build]
@@ -102,9 +102,6 @@ effort = "high"
 model = "gpt-6.1-sol"
 effort = "high"
 
-[models.review]
-model = "gpt-6.1-sol"
-effort = "high"
 """
 
 
