@@ -1,5 +1,6 @@
 """Board cards, counts and durations agree at the real command boundary."""
 import json
+import os
 import re
 import subprocess
 import sys
@@ -22,6 +23,8 @@ OLD = "2026-10-05T12:00:00+00:00"
 def client(repo, gh, tmp_path, monkeypatch, request):
     _client(repo, gh, tmp_path, request.param)
     monkeypatch.setenv("FORGE_NOW", NOW)
+    monkeypatch.setenv("GIT_AUTHOR_DATE", OLD)
+    monkeypatch.setenv("GIT_COMMITTER_DATE", OLD)
     gh.respond("pr", "list", stdout="[]")
     gh.respond("api", "graphql", stdout=json.dumps(
         {"data": {"repository": {"pullRequests": {"nodes": []}}}}))
@@ -29,7 +32,10 @@ def client(repo, gh, tmp_path, monkeypatch, request):
 
 
 def _fix(repo, title="Readers see the correct state", slug="correct-state", **changes):
-    result = repo.forge("fix", "start", title, "--done", "The board agrees", "--slug", slug)
+    with pytest.MonkeyPatch.context() as dated:
+        dated.setenv("GIT_AUTHOR_DATE", os.environ["FORGE_NOW"])
+        dated.setenv("GIT_COMMITTER_DATE", os.environ["FORGE_NOW"])
+        result = repo.forge("fix", "start", title, "--done", "The board agrees", "--slug", slug)
     assert result.returncode == 0, result.stderr
     tree = worktree(repo, f"fix/{slug}")
     path = tree / f".factory/fixes/{slug}.json"
@@ -142,11 +148,15 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
         earlier.setenv("FORGE_NOW", OLD)
         _fix(client, status="fixing", round=1)
         _fix(client, "Finished help text", "finished-help", status="done", round=1)
+        _fix(client, "Recent earlier-release work", "legacy-work", status="working")
         earlier.setenv("FORGE_NOW", "2026-10-08T11:00:00+00:00")
         _fix(client, "Help text waits for fixes", "day-idle", status="fixing", round=1)
     _records(client, "events.jsonl", [
         {"id": f"{item}:end", "event": "run end", "item": item, "kind": "work", "at": OLD}
         for item in ("correct-state", "finished-help")])
+    # 1.2.2 wrote this timing shape without run events or a new dated state step.
+    _records(client, "timings.jsonl", [{"item": "legacy-work", "step": "worker round",
+        "start": "2026-10-09T11:54:00+00:00", "seconds": 60, "outcome": "completed"}])
     data, text, _ = _board(client, tmp_path)
     idle, done = _row(data, "correct-state"), _row(data, "finished-help")
     assert idle["stalled"] and idle["idle_seconds"] == 4 * 86400
@@ -158,9 +168,11 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
     assert day_idle["stalled"] and day_idle["idle_seconds"] == 25 * 3600
     assert day_idle["waits_on"] and day_idle["waits_on"] in text
     assert re.search(r"Help text waits for fixes.*Stalled", text)
+    legacy = _row(data, "legacy-work")
+    assert not legacy["stalled"] and legacy["idle_seconds"] == 300
 
 
-@pytest.mark.parametrize("child_activity", ["running", "recently merged"])
+@pytest.mark.parametrize("child_activity", ["running", "recently merged", "legacy timing", "branch commit"])
 def test_11_story_idle_time_tracks_its_parts(
         client, tmp_path, monkeypatch, claude_payload, gh, child_activity):
     configured = _fix(client)
@@ -186,13 +198,26 @@ def test_11_story_idle_time_tracks_its_parts(
     if child_activity == "running":
         events = [{"event": "run start", "id": "save-work", "item": "SHOP/SAVE",
                    "kind": "work", "round": 1, "at": "2026-10-09T11:50:00Z"}]
-    else:
+    elif child_activity == "recently merged":
         merged = pr("task/SHOP-SAVE", "Save a basket", "Baskets are saved.",
                     "2026-10-09T11:55:00Z", [], ["src/basket.py"])
         gh.respond("pr", "list", stdout=json.dumps([merged]))
         gh.respond("pr", "list", "--state", "open", stdout="[]")
         # A human GitHub merge has no local run event or fetched merge commit.
         events = []
+    else:
+        events = []
+        if child_activity == "legacy timing":
+            _records(client, "timings.jsonl", [{"item": "SHOP/SAVE", "step": "worker round",
+                "start": "2026-10-09T11:54:00+00:00", "seconds": 60, "outcome": "completed"}])
+        else:
+            part = worktree(client, "task/SHOP-SAVE")
+            (part / "basket.txt").write_text("Baskets are saved\n", "utf-8")
+            client.git("add", "basket.txt", cwd=part)
+            with monkeypatch.context() as dated:
+                dated.setenv("GIT_AUTHOR_DATE", "2026-10-09T11:55:00+00:00")
+                dated.setenv("GIT_COMMITTER_DATE", "2026-10-09T11:55:00+00:00")
+                client.git("commit", "-qm", "Save baskets", cwd=part)
     _records(client, "events.jsonl", events)
     data, text, _ = _board(client, tmp_path)
     parent = _row(data, "SHOP")
@@ -205,7 +230,8 @@ def test_11_story_idle_time_tracks_its_parts(
         assert child["worker"]["elapsed"] == 600
     else:
         child = next(row for row in parent["children"] if row["id"] == "SHOP/SAVE")
-        assert child["stage"] == "merged"
+        if child_activity == "recently merged":
+            assert child["stage"] == "merged"
         assert parent["idle_seconds"] == 300
         assert parent["waits_on"]
 

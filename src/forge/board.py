@@ -258,6 +258,16 @@ def machine_board(top: Path, history: Item | None = None,
             except ValueError:
                 continue
 
+    branch_dates = dict(line.split("\0", 1) for line in repo.git(
+        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)",
+        "refs/heads", "refs/remotes/origin", cwd=top).splitlines())
+    timing_dates: dict[str, list[str]] = {}
+    for timing in timings:
+        start = _when(timing.get("start"))
+        if start:
+            end = start + timedelta(seconds=timing.get("seconds") or 0)
+            timing_dates.setdefault(timing.get("item"), []).append(end.isoformat())
+
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if kind == "story" and item in completed:
             state = {**state, **completed[item], "status": "done"}
@@ -349,7 +359,9 @@ def machine_board(top: Path, history: Item | None = None,
         elapsed = lambda at: max(0, (now - _when(at)).total_seconds()) if now and _when(at) else None
         if worker:
             worker["elapsed"] = elapsed(worker.get("started_at"))
-        dates = [e.get("at") for e in activity] + [s.get("at") for s in _steps(state)]
+        dates = ([e.get("at") for e in activity] + [s.get("at") for s in _steps(state)]
+                 + timing_dates.get(item, [])
+                 + [branch_dates.get(branch), branch_dates.get("origin/" + branch)])
         if kind == "story":
             dates.extend(e.get("at") for e in recorded if str(e.get("item", "")).startswith(item + "/"))
             prefix = f".factory/stories/{item}/tasks/"
@@ -360,6 +372,10 @@ def machine_board(top: Path, history: Item | None = None,
             part_branches.update(part.get("branch") or f"task/{item}-{STATE.fullmatch(rel)['task']}"
                                  for rel, (part, _) in best.items() if rel.startswith(prefix))
             dates.extend(merged_details.get(branch, {}).get("mergedAt") for branch in part_branches)
+            dates.extend(at for part, times in timing_dates.items() if str(part).startswith(item + "/")
+                         for at in times)
+            dates.extend(branch_dates.get(ref) for branch in part_branches
+                         for ref in (branch, "origin/" + branch))
         idle_since = (max((at for at in dates if _when(at)), key=_when, default=None)
                       or history["dates"].get(repo.state_path(item))) if not active and not worker and not finished else None
         test_runs = [e for e in active if e.get("kind") == "test"]
@@ -463,6 +479,10 @@ def machine_board(top: Path, history: Item | None = None,
             status = {"build": "Worker", "read": "Plan read", "review": "Review"}.get(worker["kind"], "Worker") + " running"
             if worker.get("elapsed") is not None:
                 status += " for " + board_visuals.duration(worker["elapsed"])
+        elif tests:
+            status = "Tests running"
+            if tests.get("elapsed") is not None:
+                status += " for " + board_visuals.duration(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
                 "started_by": starters.get(repo.state_path(item)),
