@@ -1,0 +1,14 @@
+{
+  "base": "b72357514af01e024b15be89ab7b60712c93a649",
+  "branch": "fix/review-current-head",
+  "done_when": "forge close and forge land never stop on review findings recorded for an older commit than the branch head; they review the current head first, with one command test where a finding fixed in a later commit does not stop close",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-10T11:57:09+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A review loop can stop on findings that were already fixed: close and land judge an older commit than the branch head, so a repaired finding comes back and costs a round"
+}
