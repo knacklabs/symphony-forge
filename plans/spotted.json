@@ -23,6 +23,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: command tests for explore defaults, selection and earlier-adopted clients\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: command tests for explore defaults, selection and earlier-adopted clients",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: explore kind for read-only work\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: explore kind for read-only work",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: proof list\texplore-kind",
+      "kind": "bug",
+      "path": ".factory/fixes/explore-kind.json",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "explore-kind",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/release-127.json\tNot done: Forge's version is 1.2.7 everywhere it is recorded\trelease-127",
       "kind": "bug",
       "path": ".factory/fixes/release-127.json",
@@ -74,6 +107,17 @@
       "text": "Not done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation",
       "from": "blocking",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-trends.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-trends",
       "status": "open",
       "closed_by": null
     },
@@ -507,6 +551,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tSelect Forge's Python when regenerating under a changed pin\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 466,
+      "text": "Select Forge's Python when regenerating under a changed pin",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -536,6 +591,17 @@
       "text": "A hook refusal from forge ask prints forge ask ask as its retry command.",
       "from": "worker",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tCI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 628,
+      "text": "CI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
+      "from": "worker",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
@@ -767,6 +833,17 @@
       "text": "Keep Forge checks reachable and preserve pre-push input",
       "from": "blocking",
       "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tNot done: Keep coordinator commits and release upgrades working outside worker runs\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 128,
+      "text": "Not done: Keep coordinator commits and release upgrades working outside worker runs",
+      "from": "blocking",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
@@ -1321,6 +1398,61 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 255,
+      "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 255,
+      "text": "Not done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 254,
+      "text": "Not done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read still passes substantive findings\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 257,
+      "text": "Not done: forge read still passes substantive findings",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read still rejects common no-findings wording\tread-no-findings",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 254,
+      "text": "Not done: forge read still rejects common no-findings wording",
+      "from": "blocking",
+      "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: running readers' model and effort with default settings\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1442,6 +1574,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Explain temporary settings edits and direct extra-suite commands in worker briefs\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 33,
+      "text": "Not done: Explain temporary settings edits and direct extra-suite commands in worker briefs",
+      "from": "blocking",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Restore unauthorized forge.toml edits when a worker round ends\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 32,
+      "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
+      "from": "blocking",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -1449,6 +1603,17 @@
       "text": "Not done: the item's round number on every timing record",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: unfinished merges with a conflicted forge.toml still produce a doctor hint\twork-during-merge",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 68,
+      "text": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint",
+      "from": "blocking",
+      "item": "work-during-merge",
       "status": "open",
       "closed_by": null
     },
@@ -1640,6 +1805,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_resume.py\tLinux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 337,
+      "text": "Linux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
+      "from": "worker",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably\ttest-codex-resume-s-crash-recovery-test",
       "kind": "bug",
       "path": "tests/test_codex_resume.py",
@@ -1691,6 +1867,17 @@
       "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
       "from": "worker",
       "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_conflicting_pull_requests_stop_check_waits.py\tNot done: test_3_clean_pull_request_keeps_normal_waiting\tconflict-no-ci",
+      "kind": "bug",
+      "path": "tests/test_conflicting_pull_requests_stop_check_waits.py",
+      "line": 169,
+      "text": "Not done: test_3_clean_pull_request_keeps_normal_waiting",
+      "from": "blocking",
+      "item": "conflict-no-ci",
       "status": "open",
       "closed_by": null
     },
@@ -2010,6 +2197,17 @@
       "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "from": "worker",
       "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
+      "kind": "bug",
+      "path": "tests/test_machine_test_lane_capacity.py",
+      "line": 19,
+      "text": "Number both new tests to keep the full suite passing",
+      "from": "blocking",
+      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     },
@@ -2351,6 +2549,17 @@
       "text": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence",
       "from": "blocking",
       "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_workers_leave_settings_to_coordinator.py\tNot done: proof list\tworker-no-settings",
+      "kind": "bug",
+      "path": "tests/test_workers_leave_settings_to_coordinator.py",
+      "line": 83,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
@@ -2927,6 +3136,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 84,
+      "text": "Keep expanded compact counts within the prompt width",
+      "from": "review",
+      "item": "two-test-slots",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -3279,6 +3499,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/worker.py\tCheck for a pending merge before parsing a conflicted forge.toml",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 68,
+      "text": "Check for a pending merge before parsing a conflicted forge.toml",
+      "from": "review",
+      "item": "work-during-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/worker.py\tKeep Claude's structured failure reason in the work log",
       "kind": "edge",
       "path": "src/forge/worker.py",
@@ -3363,6 +3594,17 @@
       "text": "The cleanup test failed in the full parallel run and passed alone.",
       "from": "worker",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tCI container setup can fail when Docker Hub limits unauthenticated pulls.",
+      "kind": "edge",
+      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
+      "line": 34,
+      "text": "CI container setup can fail when Docker Hub limits unauthenticated pulls.",
+      "from": "worker",
+      "item": "work-during-merge",
       "status": "open",
       "closed_by": null
     },
@@ -3484,237 +3726,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tCI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 628,
-      "text": "CI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
-      "from": "worker",
-      "item": "worker-no-settings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/githooks.py\tNot done: Keep coordinator commits and release upgrades working outside worker runs\tworker-no-settings",
-      "kind": "bug",
-      "path": "src/forge/githooks.py",
-      "line": 128,
-      "text": "Not done: Keep coordinator commits and release upgrades working outside worker runs",
-      "from": "blocking",
-      "item": "worker-no-settings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: Explain temporary settings edits and direct extra-suite commands in worker briefs\tworker-no-settings",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 33,
-      "text": "Not done: Explain temporary settings edits and direct extra-suite commands in worker briefs",
-      "from": "blocking",
-      "item": "worker-no-settings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: Restore unauthorized forge.toml edits when a worker round ends\tworker-no-settings",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 32,
-      "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
-      "from": "blocking",
-      "item": "worker-no-settings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_workers_leave_settings_to_coordinator.py\tNot done: proof list\tworker-no-settings",
-      "kind": "bug",
-      "path": "tests/test_workers_leave_settings_to_coordinator.py",
-      "line": 83,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "worker-no-settings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
-      "kind": "bug",
-      "path": "tests/test_machine_test_lane_capacity.py",
-      "line": 19,
-      "text": "Number both new tests to keep the full suite passing",
-      "from": "blocking",
-      "item": "two-test-slots",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
-      "kind": "edge",
-      "path": "src/forge/mod/hooks/pane.ts",
-      "line": 84,
-      "text": "Keep expanded compact counts within the prompt width",
-      "from": "review",
-      "item": "two-test-slots",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
-      "kind": "bug",
-      "path": ".factory/fixes/spec-trends.json",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "spec-trends",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: command tests for explore defaults, selection and earlier-adopted clients\texplore-kind",
-      "kind": "bug",
-      "path": ".factory/fixes/explore-kind.json",
-      "line": 12,
-      "text": "Not done: command tests for explore defaults, selection and earlier-adopted clients",
-      "from": "blocking",
-      "item": "explore-kind",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: explore kind for read-only work\texplore-kind",
-      "kind": "bug",
-      "path": ".factory/fixes/explore-kind.json",
-      "line": 12,
-      "text": "Not done: explore kind for read-only work",
-      "from": "blocking",
-      "item": "explore-kind",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/explore-kind.json\tNot done: proof list\texplore-kind",
-      "kind": "bug",
-      "path": ".factory/fixes/explore-kind.json",
-      "line": 12,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "explore-kind",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: unfinished merges with a conflicted forge.toml still produce a doctor hint\twork-during-merge",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 68,
-      "text": "Not done: unfinished merges with a conflicted forge.toml still produce a doctor hint",
-      "from": "blocking",
-      "item": "work-during-merge",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_resume.py\tLinux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 337,
-      "text": "Linux CI crash recovery refused an unreadable leftover process identity; the failure remains unresolved.",
-      "from": "worker",
-      "item": "work-during-merge",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/worker.py\tCheck for a pending merge before parsing a conflicted forge.toml",
-      "kind": "edge",
-      "path": "src/forge/worker.py",
-      "line": 68,
-      "text": "Check for a pending merge before parsing a conflicted forge.toml",
-      "from": "review",
-      "item": "work-during-merge",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_fix_the_prototype_deploy_test_leaves_its_doc.py\tCI container setup can fail when Docker Hub limits unauthenticated pulls.",
-      "kind": "edge",
-      "path": "tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py",
-      "line": 34,
-      "text": "CI container setup can fail when Docker Hub limits unauthenticated pulls.",
-      "from": "worker",
-      "item": "work-during-merge",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 255,
-      "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
-      "from": "blocking",
-      "item": "read-no-findings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a\tread-no-findings",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 255,
-      "text": "Not done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a",
-      "from": "blocking",
-      "item": "read-no-findings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '\tread-no-findings",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 254,
-      "text": "Not done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '",
-      "from": "blocking",
-      "item": "read-no-findings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read still passes substantive findings\tread-no-findings",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 257,
-      "text": "Not done: forge read still passes substantive findings",
-      "from": "blocking",
-      "item": "read-no-findings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read still rejects common no-findings wording\tread-no-findings",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 254,
-      "text": "Not done: forge read still rejects common no-findings wording",
-      "from": "blocking",
-      "item": "read-no-findings",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_conflicting_pull_requests_stop_check_waits.py\tNot done: test_3_clean_pull_request_keeps_normal_waiting\tconflict-no-ci",
-      "kind": "bug",
-      "path": "tests/test_conflicting_pull_requests_stop_check_waits.py",
-      "line": 169,
-      "text": "Not done: test_3_clean_pull_request_keeps_normal_waiting",
-      "from": "blocking",
-      "item": "conflict-no-ci",
       "status": "open",
       "closed_by": null
     }
