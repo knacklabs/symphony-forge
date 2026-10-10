@@ -882,6 +882,14 @@ Claude and its design entry. New repos get this at init; existing repos get it o
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.
 
+Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
+round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
+Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
+The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
+Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy. New repos
+get the default at init; existing repos get it on upgrade without adding a setting, and sync
+refreshes both host guides. The upgrade's sync announces the default in one line.
+
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
 `planner` and `architect` for planning and design choices; `debugger`, `security` and

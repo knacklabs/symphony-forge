@@ -73,10 +73,11 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
 
     if case == "all is well":
         assert done.returncode == 0, done.stdout + done.stderr
-        # The verdict still leads; comparison and the new machine split follow it.
+        # The verdict still leads; comparison, machine split and the Fast policy follow it.
         assert done.stdout == (f"Everything checks out for Forge {installed}.\n"
                                + _compared(installed, installed)
-                               + "This machine: 6 cores, so 3 agents at once and 1 test runs at once, each on 3 cores.\n"), done.stdout
+                               + "This machine: 6 cores, so 3 agents at once and 1 test runs at once, each on 3 cores.\n"
+                               + "- Codex Fast: on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\n"), done.stdout
         return
     assert done.returncode == 1, done.stdout + done.stderr
     assert "- gh is not signed in to GitHub.\n  Fix: gh auth login\n" in done.stdout, done.stdout

@@ -936,6 +936,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tFull board scan delays every ordinary first Codex work turn\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 270,
+      "text": "Full board scan delays every ordinary first Codex work turn",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -945,6 +956,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 264,
+      "text": "Not done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
@@ -1794,17 +1816,6 @@
       "closed_by": "dismissed"
     },
     {
-      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 256,
-      "text": "New cold-read notes can be lost when a settled note repeats",
-      "from": "blocking",
-      "item": "settled-stays-settled",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1812,6 +1823,17 @@
       "text": "Not done: forge read accepts only some common no-findings wording and test-not-run notes",
       "from": "blocking",
       "item": "read-no-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 167,
+      "text": "Not done: forge read does not give the split message on a later read",
+      "from": "blocking",
+      "item": "plan-six-done-whens",
       "status": "open",
       "closed_by": null
     },
@@ -2351,6 +2373,17 @@
       "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "from": "worker",
       "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_fast_when_work_waits.py\tNot done: first-round fix Fast coverage\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "tests/test_codex_fast_when_work_waits.py",
+      "line": 43,
+      "text": "Not done: first-round fix Fast coverage",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
       "status": "open",
       "closed_by": null
     },
@@ -4456,6 +4489,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 79,
+      "text": "The checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
+      "from": "worker",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -4500,13 +4544,13 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge read does not give the split message on a later read\tplan-six-done-whens",
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
       "kind": "bug",
       "path": "src/forge/story.py",
-      "line": 167,
-      "text": "Not done: forge read does not give the split message on a later read",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
       "from": "blocking",
-      "item": "plan-six-done-whens",
+      "item": "settled-stays-settled",
       "status": "open",
       "closed_by": null
     }
