@@ -29,6 +29,10 @@ REVIEW_LOOP = (
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
+SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It belongs to the "
+            "coordinator, through a settings fix the owner asked for. Report a needed settings "
+            "change in your last message instead. To run an extra suite, run its command directly "
+            "alongside `forge test`.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
@@ -38,6 +42,8 @@ COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review ca
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
+    "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
+              "forge work {item}"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
@@ -50,11 +56,8 @@ REFUSALS = {
 }
 
 
-def work(args: argparse.Namespace) -> None:
-    item = args.item
-    note = getattr(args, "note", None)
-    if note is not None and not note.strip():
-        refuse(REFUSALS["empty_note"], item=item)
+def checkout(item: str) -> tuple[re.Match[str], Path]:
+    """Find a work checkout and refuse its unfinished merge before parsing any settings."""
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -63,6 +66,17 @@ def work(args: argparse.Namespace) -> None:
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
+    if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
+        refuse(REFUSALS["merge"], item=item, top=top)
+    return match, top
+
+
+def work(args: argparse.Namespace) -> None:
+    item = args.item
+    note = getattr(args, "note", None)
+    if note is not None and not note.strip():
+        refuse(REFUSALS["empty_note"], item=item)
+    match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:
@@ -191,6 +205,7 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
+                    _restore_settings(item, top, state)
                     if git("status", "--porcelain", "-uall", cwd=top):
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
@@ -211,6 +226,7 @@ def work(args: argparse.Namespace) -> None:
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
+            _restore_settings(item, top, state)
             if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
@@ -220,6 +236,7 @@ def work(args: argparse.Namespace) -> None:
                 else:
                     nudged = (again.get("text") or "").strip()
         finally:
+            _restore_settings(item, top, state)
             if final is not None:
                 asked = "\n\n".join(dict.fromkeys(match[1] for answer in (final, nudged)
                     if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
@@ -236,6 +253,14 @@ def work(args: argparse.Namespace) -> None:
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+
+
+def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
+    if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
+            and not task.settings_allowed(item, top, state)):
+        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+              flush=True)
 
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
@@ -341,6 +366,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {
+        "settings": SETTINGS,
         "review_loop": REVIEW_LOOP,
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -389,6 +415,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
+        brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "

@@ -17,7 +17,6 @@ STORY = "client-workers-and-reviews-receive-forge"
 @pytest.mark.parametrize("setup", ["new", "previous-release adoption"])
 def test_1_sync_and_worker_briefs_carry_only_general_rules(repo, gh, tmp_path, monkeypatch, setup):
     log = install_claude(repo)
-    monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "1")
     if setup == "new":
         client, made = _fresh_client(repo, gh, tmp_path)
         assert made.returncode == 0, made.stdout + made.stderr
@@ -52,6 +51,8 @@ def test_1_sync_and_worker_briefs_carry_only_general_rules(repo, gh, tmp_path, m
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert config.read_text(encoding="utf-8") == text
+    repo.git("add", "-A", cwd=client)
+    repo.git("commit", "-q", "-m", "Configure general guidance", cwd=client)
 
     built = repo.forge("work", "check-general-rules" if setup == "new" else "adopt-forge",
                        cwd=client)
