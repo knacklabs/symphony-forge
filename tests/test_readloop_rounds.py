@@ -270,7 +270,7 @@ def _no_claude(repo, monkeypatch, tmp_path) -> None:
 def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
     first = reader.ok(f"1. {FIRST}\n2. {SECOND}\n")
-    assert first.endswith("Next: give every finding a disposition, amend the doc, then forge read SHOP\n")
+    assert first.endswith("Next: give every blocking finding a disposition, amend the doc, then forge read SHOP\n")
     notes = reader.text()
     for fact in ("round: 1\n", "passed: no\n", f"## Round 1\n\n1. {FIRST}\n2. {SECOND}\n"):
         assert fact in notes, notes

@@ -71,7 +71,7 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
                                    "No findings. The page is fine.",
                                    "1. A gap.\n\n## Round 99\n\nNo findings."], start=1):
         say(repo, near + "\n")
-        assert "Next: give every finding a disposition" in read(repo)
+        assert "Next: give every blocking finding a disposition" in read(repo)
         text = notes.read_text("utf-8")
         assert f"round: {number}\n" in text and "passed: no\n" in text
         assert f"## Round {number}\n\n" in text and re.search(rf"^{number}\. ", text, re.M), text
