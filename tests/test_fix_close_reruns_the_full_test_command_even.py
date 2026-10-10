@@ -7,19 +7,20 @@ import sys
 import time
 from pathlib import Path
 
-from conftest import Repo
+from conftest import Repo, machine_cores
 from test_close import CLEAN, FAILED, Forge, env  # noqa: F401
 
 STORY = "FIX-CLOSE-RERUNS-THE-FULL-TEST-COMMAND-EVEN"
 
 # The repo's test command: it logs each run's start and end, and ends when the test lets it (or at
-# once when there is no gate), exiting with the code in the exit file.
+# once when there is no gate), exiting with the code in the exit file. Pytest's timeout
+# bounds a broken test; a timer here must not release the lane before a waiter arrives.
 SUITE = '''import os, pathlib, sys, time
 tmp = pathlib.Path({tmp!r})
 with (tmp / "runs.log").open("a") as log:
     log.write("start " + os.path.basename(os.getcwd()) + "\\n")
-gate, deadline = tmp / "release", time.monotonic() + 30
-while (tmp / "gated").exists() and not gate.exists() and time.monotonic() < deadline:
+gate = tmp / "release"
+while (tmp / "gated").exists() and not gate.exists():
     time.sleep(0.05)
 with (tmp / "runs.log").open("a") as log:
     log.write("end\\n")
@@ -76,6 +77,8 @@ def _close(env, item: str) -> subprocess.Popen[str]:
 
 
 def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
+    # Four cores give this serial-lane test one place; larger machines admit more.
+    machine_cores(env.repo, 4)
     log = _with_test_command(env)
     (env.tmp / "gated").touch()
     first, _ = env.start_fix()
