@@ -56,6 +56,7 @@ def client(repo, gh, tmp_path, request):
 def _approve(repo, claude_payload, doc=DOC):
     path = ready(repo, "SHOP", doc)
     repo.git("config", "user.name", "Plan Approver")
+    repo.git("config", "user.email", "approver@example.test")
     approved = hook(repo, claude_plan(claude_payload, doc, cwd=path))
     assert approved.returncode == 0, approved.stdout + approved.stderr
     return path
@@ -178,6 +179,7 @@ def test_7_board_shows_assigned_developers_beside_starters_and_approvers(client,
     _approve(client, claude_payload, _developer_doc())
     gh.respond("api", "user", "--jq", ".login", stdout="basket-dev\n")
     client.git("config", "user.name", "Part Starter")
+    client.git("config", "user.email", "part-starter@example.test")
     started, _ = _start(client, "task")
     assert started.returncode == 0, started.stdout + started.stderr
     listing = client.forge("board", "--json")
@@ -352,15 +354,19 @@ def test_14_board_shows_start_commit_authors_beside_the_plan_approver(client, cl
     client.git("clone", "-q", client.git("remote", "get-url", "origin"), str(observer))
     viewer = Repo(observer, client.bin)
     client.git("config", "user.name", "Story Starter")
+    client.git("config", "user.email", "story-starter@example.test")
     plan = _approve(client, claude_payload)
     client.git("config", "user.name", "Part Starter")
+    client.git("config", "user.email", "part-starter@example.test")
     part, _ = _start(client, "task")
     assert part.returncode == 0, part.stdout + part.stderr
     client.git("config", "user.name", "Fix Starter")
+    client.git("config", "user.email", "fix-starter@example.test")
     fixed, _ = _start(client, "fix")
     assert fixed.returncode == 0, fixed.stdout + fixed.stderr
     # Later contributors change the head, never the starter's identity.
     client.git("config", "user.name", "Later Contributor")
+    client.git("config", "user.email", "contributor@example.test")
     (plan / "README.md").write_text("More story detail\n", "utf-8")
     client.git("add", "README.md", cwd=plan)
     client.git("commit", "-qam", "Explain the story", cwd=plan)
