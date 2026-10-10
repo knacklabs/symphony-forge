@@ -73,7 +73,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     phases = {e.get("round"): e.get("phase") for e in events if e.get("event") == "work phase"}
 
     def work_category(number: int | None) -> str:
-        return phases.get(number, "building" if number == 1 else "unknown")
+        return phases.get(number, "unknown")
 
     run_ends = {e.get("run_id"): e for e in events if e.get("event") == "run end"}
     for index, e in enumerate(events):

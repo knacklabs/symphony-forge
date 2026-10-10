@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from conftest import machine_cores
 from test_close import GREEN, blocked, body, env, finding, report, run  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import client_item
 from test_close_test_runs_wait_in_line import Close, ONE, SUITE, _fix, _release, _running, _with_test_command
@@ -32,6 +33,7 @@ def records(repo, filename):
 
 def queued_first_close(env, item, where):
     # The first test command owns the lane until close has visibly joined its line.
+    machine_cores(env.repo, 4)
     log = env.tmp / "runs.log"
     held = subprocess.Popen([sys.executable, str(env.repo.bin / "forge"), "test"], cwd=where,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
