@@ -97,55 +97,49 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
-    """Doctor diagnoses old unmet demand, including jobs GitHub already expired."""
-    runs = _ask(top, item, ".workflow_runs",
-                "repos/{owner}/{repo}/actions/runs?per_page=100")
+    """Doctor samples recent runner activity only for a five-minute queued check."""
     now = datetime.fromisoformat(repo.now())
+    queued = False
+    for check in _ask(top, item, ".check_runs",
+                      f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100"):
+        if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
+            continue
+        try:
+            queued |= datetime.fromisoformat(check["created_at"]) <= now - timedelta(minutes=5)
+        except (KeyError, ValueError, TypeError):
+            pass
+    if not queued:
+        return ""
     since = now - timedelta(days=7)
+    cutoff = since.isoformat(timespec="seconds").replace("+00:00", "Z")
+    runs = _ask(top, item, ".workflow_runs",
+                f"repos/{{owner}}/{{repo}}/actions/runs?per_page=100&created=%3E%3D{cutoff}",
+                paginate=False)
     runner = repo.config(top)["runner"]
-    old_demand = current_demand = False
-    for run in runs:
-        heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
+    # One newest-first page of runs and one page of latest jobs per run bound the lookup.
+    for run in runs[:100]:
+        if run.get("conclusion") == "success":
+            continue
+        try:
+            if not since <= datetime.fromisoformat(run["created_at"]) <= now:
+                continue
+        except (KeyError, ValueError, TypeError):
+            continue
         jobs = _ask(top, item, ".jobs",
-                    f"repos/{{owner}}/{{repo}}/actions/runs/{run['id']}/jobs?filter=all")
+                    f"repos/{{owner}}/{{repo}}/actions/runs/{run['id']}/jobs?per_page=100",
+                    paginate=False)
         for job in jobs:
-            if not any(runner.casefold() == label.casefold() for label in job.get("labels") or []):
-                continue
-            if job.get("runner_id"):
-                if job.get("status") not in ("in_progress", "completed"):
-                    continue
-                try:
-                    started = datetime.fromisoformat(job["started_at"])
-                    if started <= now and (since <= started or job["status"] == "in_progress"):
-                        return ""
-                    finished = datetime.fromisoformat(job["completed_at"])
-                    if started <= finished <= now and since <= finished:
-                        return ""
-                except (KeyError, ValueError, TypeError):
-                    pass
-                continue
-            if job.get("status") == "queued":
-                # Fresh retries must not inherit the original run's age.
-                observed = job.get("started_at") or run.get(
-                    "updated_at" if run.get("run_attempt", 1) > 1 else "created_at")
-            elif (job.get("status") == "completed"
-                  and job.get("conclusion") in ("failure", "cancelled", "timed_out")):
-                observed = job.get("completed_at")
-            else:
+            if not job.get("runner_id") or not any(
+                    runner.casefold() == label.casefold() for label in job.get("labels") or []):
                 continue
             try:
-                observed = datetime.fromisoformat(observed)
-                if observed > now:
-                    continue
-                old_demand |= observed <= since
-                current_demand |= sha in [run.get("head_sha"), *heads]
-            except (ValueError, TypeError):
-                continue
-    if old_demand and current_demand:
-        return ("Runner demand has gone unmet for at least seven days: "
-                "likely missing runner; no job in this repo using "
-                f"runner = {json.dumps(runner)} in forge.toml has run in the last seven days")
-    return ""
+                if datetime.fromisoformat(job["started_at"]) <= now:
+                    return ""
+            except (KeyError, ValueError, TypeError):
+                pass
+    return ("Checks have been queued for at least five minutes: likely missing runner; "
+            "no matching job started in this repo's sampled non-successful runs from the "
+            f"last seven days using runner = {json.dumps(runner)} in forge.toml")
 
 
 def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str]]:
@@ -171,9 +165,10 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
     return seen, snapshot
 
 
-def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]]:
+def _ask(top: Path, item: str, field: str, endpoint: str, *, paginate: bool = True) -> list[dict[str, Any]]:
     # --paginate with "<field>[]" prints one JSON object per line across all pages.
-    done = repo.run("gh", "api", "--paginate", "--jq", f"{field}[]", endpoint, cwd=top)
+    done = repo.run("gh", "api", *(["--paginate"] if paginate else []),
+                    "--jq", f"{field}[]", endpoint, cwd=top)
     try:
         text = done.stdout.strip()
         found = (json.loads(text) if text.startswith("[")

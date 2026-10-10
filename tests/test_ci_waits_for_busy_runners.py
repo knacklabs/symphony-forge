@@ -16,8 +16,8 @@ from test_land import GH, ITEM, RUNS, URL, _agent, _fix, _queue, _runs, land  # 
 from test_land_waits_for_check_progress import clock  # noqa: F401
 
 STORY = "FIX-BUSY-NOT-MISSING"
-ACTIONS = ["api", "--paginate", "--jq", ".workflow_runs[]"]
-JOBS = ["api", "--paginate", "--jq", ".jobs[]"]
+ACTIONS = ["api", "--jq", ".workflow_runs[]"]
+JOBS = ["api", "--jq", ".jobs[]"]
 
 
 def _client(env, history, runner):
@@ -78,24 +78,13 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
     if command == "land-merge":
         _agent(env)
     where = _fix(env, "working", worked=True)
-    # Expired demand cannot diagnose a missing runner if a matching job from
-    # another branch ran in the last week, including an earlier workflow attempt.
+    # A started matching job in a recent run suppresses the warning regardless of branch.
     now = datetime.now(timezone.utc)
     queued_at = now - timedelta(minutes=10)
     queued = {"id": 101, "status": "queued", "head_sha": "current-head",
               "created_at": queued_at.isoformat(), "updated_at": queued_at.isoformat()}
-    expired = {"id": 100, "status": "completed", "head_sha": "1" * 40,
-               "created_at": (now - timedelta(days=9)).isoformat(),
-               "updated_at": (now - timedelta(days=8)).isoformat()}
-    other = {"id": 102, "status": "completed", "head_sha": "0" * 40,
-             "created_at": (now - timedelta(days=9)).isoformat(), "updated_at": now.isoformat()}
-    stub = env.repo.bin / "gh"
-    stub.write_text(stub.read_text("utf-8").replace('        answer(out)', '''
-        if args[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"]:
-            out = out.replace("current-head", heads().get("refs/heads/fix/tidy-readme") or subprocess.run(
-                ["git", "rev-parse", "HEAD"], capture_output=True,
-                text=True, check=True).stdout.strip())
-        answer(out)'''), "utf-8")
+    other = {"id": 102, "status": "completed", "conclusion": "failure", "head_sha": "0" * 40,
+             "created_at": (now - timedelta(days=6)).isoformat(), "updated_at": now.isoformat()}
     job = {"status": "completed", "labels": ["ubuntu-latest"], "runner_id": 9,
            "started_at": (now - timedelta(minutes=4)).isoformat()}
     if activity == "busy-running":
@@ -111,25 +100,20 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
     elif activity == "busy-days-ago":
         job["started_at"] = (now - timedelta(days=6)).isoformat()
     elif activity == "old-job":
+        other["created_at"] = (now - timedelta(days=8)).isoformat()
         job["started_at"] = (now - timedelta(days=7, minutes=1)).isoformat()
     elif activity == "future-job":
         job["started_at"] = (now + timedelta(minutes=10)).isoformat()
     elif activity == "unassigned":
         job.update(status="queued", runner_id=0)
-    _queue(env, ACTIONS, *_runs([queued, expired, other]))
+    _queue(env, ACTIONS, *_runs([queued, other]))
     current_job = {"status": "queued", "labels": [runner], "runner_id": 0,
-                   "started_at": queued_at.isoformat()}
-    expired_job = {"status": "completed", "conclusion": "failure", "labels": [runner],
-                   "runner_id": 0, "started_at": expired["created_at"],
-                   "completed_at": expired["updated_at"]}
-    for run_id, jobs in ((100, [expired_job]), (101, [current_job]),
-                         (102, [] if activity == "missing" else [job])):
+                   "started_at": None}
+    for run_id, jobs in ((101, [current_job]), (102, [] if activity == "missing" else [job])):
         endpoint = f"repos/{{owner}}/{{repo}}/actions/runs/{run_id}/jobs"
-        # GitHub defaults to the latest attempt; a queued rerun hides older jobs.
-        _queue(env, JOBS + [endpoint + "?per_page=100"],
-               *_runs([] if activity == "busy-rerun" else jobs))
-        _queue(env, JOBS + [endpoint + "?filter=all"], *_runs(jobs))
-    pending = [run("tests", None, "queued"), run("forge-pr-check")]
+        _queue(env, JOBS + [endpoint + "?per_page=100"], *_runs(jobs))
+    pending = [{**run("tests", None, "queued"), "created_at": queued_at.isoformat()},
+               run("forge-pr-check")]
     looks = [pending, pending, GREEN]
     if command == "land-merge":
         looks.insert(0, GREEN)

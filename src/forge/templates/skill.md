@@ -80,10 +80,10 @@ it after upgrading Forge and syncing. The jobs set up uv and Python, and install
 Node for Node tests, respecting version files or engines with Node 22 as the fallback.
 Close and land keep waiting while checks are queued. The wait line shows minutes observed
 queued during this wait: shared runners may be busy or no runner may match the runner setting.
-Only `forge doctor` reports a likely missing runner, when this repo has unmet demand for that
-runner dating back at least seven days, the current pull request still has unassigned queued
-or failed jobs needing it, and no matching job has run in the last seven days. Doctor includes
-expired and cancelled attempts; a fresh retry does not erase earlier unmet demand. Make a
+Only `forge doctor` reports a likely missing runner, when a current check has been queued at
+least five minutes and no matching job started in its sample of this repo's runs created in
+the last seven days. It reads at most 100 newest runs, skips successful runs, and reads one
+page of latest jobs per remaining run, without earlier attempts or older runs. Make a
 matching runner available or correct the setting; run `forge sync` only if you
 change the runner setting. Keep the required checks enabled. New and upgraded repos get the
 same waiting and doctor behaviour from the upgraded Forge commands.

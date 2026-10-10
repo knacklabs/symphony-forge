@@ -33,9 +33,10 @@ the install line to fix it.
   install Node from the repo's version file or engines, defaulting to the client stack's Node 22.
   Close and land keep waiting for queued checks, showing minutes observed queued during the
   wait: shared runners may be busy or no runner may match the setting. Only `forge doctor`
-  reports a likely missing runner: this repo must show unmet demand dating back at least seven
-  days, unassigned queued or failed jobs on the current pull request, and no matching job that
-  ran in the last seven days. Expired or cancelled attempts count, even after a fresh retry.
+  reports a likely missing runner when a current check has been queued at least five minutes
+  and no matching job started in its sample of this repo's runs created in the last seven days.
+  Doctor reads at most 100 newest runs, skips successful runs, and reads one page of latest
+  jobs per remaining run. It does not inspect earlier attempts or older runs.
   Make a matching runner available or correct the setting; run `forge sync` only after changing
   the runner setting. Keep the required checks enabled.
 - **A repo that copied in the old Forge:** `forge migrate` moves it over in one pull request.
