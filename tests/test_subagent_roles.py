@@ -27,6 +27,10 @@ effort = "high"
 model = "gpt-6.1-sol"
 effort = "xhigh"
 
+[models.grill.claude]
+model = "opus"
+effort = "high"
+
 [models.review]
 model = "gpt-6-sol"
 """
@@ -88,12 +92,12 @@ def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
         for rule in rules:
             assert rule in instructions, (name, rule)
     # Every role's (model, effort) on each host, from its kind; None means left out, so the
-    # session's own applies. A model of the other family is left out while its effort stays, and
-    # Codex's ultra becomes max on Claude. Review sets no effort, so none is written.
+    # session's own applies on Codex. Claude implementations default to Sonnet, planning uses
+    # grill, and diagnostics use Opus independently of legacy review settings.
     by_kind = {"build": ((None, "medium"), ("claude-opus-5-5", "medium")),
-               "lite": (("gpt-6-luna", "ultra"), (None, "max")),
+               "lite": (("gpt-6-luna", "ultra"), ("claude-sonnet-5-5", "xhigh")),
                "design": (("gpt-6.1-sol", "xhigh"), ("opus", "high")),
-               "review": (("gpt-6-sol", None), (None, None))}
+               "review": (("gpt-6-sol", None), ("claude-opus-5-5", "high"))}
     for name, kind in ROLES.items():
         assert _settings(repo.path, name) == by_kind[kind], name
 
@@ -141,20 +145,20 @@ def test_3_forge_s_own_repo_has_the_roles_sync_writes_from_its_forge_toml(repo):
                 encoding="utf-8"), rel
 
 
-def test_4_a_kind_missing_from_forge_toml_leaves_model_and_effort_out(repo):
+def test_4_missing_design_leaves_codex_unpinned_and_claude_planning_uses_grill(repo):
     without_design = re.sub(r"\[models\.design\.\w+\]\n[^[]*", "", MODELS)
     assert "design" not in without_design and "[models.review]" in without_design
 
     assert _synced(repo, without_design).returncode == 0
 
     for name in ("planner", "architect"):
-        assert _settings(repo.path, name) == ((None, None), (None, None)), name
+        assert _settings(repo.path, name) == ((None, None), ("opus", "high")), name
     assert _settings(repo.path, "worker") == ((None, "medium"), ("claude-opus-5-5", "medium"))
 
 
-def test_5_a_value_from_forge_toml_stays_one_setting_and_design_keeps_its_own_model(repo):
+def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_model(repo):
     # An escaped newline in a valid TOML string must not add a tools line to a Claude role, and
-    # a design entry's model is used as given, whatever its name looks like.
+    # a plan-read entry's model is used as given, whatever its name looks like.
     models = MODELS.replace('model = "opus"', 'model = "custom-opus"').replace(
         'effort = "medium"', 'effort = "medium\\ntools: Bash"', 1)
 

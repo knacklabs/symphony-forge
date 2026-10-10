@@ -1,0 +1,140 @@
+{
+  "allow_large": "Owner asked (2026-10-09): one set of Claude-only model defaults across init, the review and sign-off engines and the subagent roles",
+  "amendments": [
+    {
+      "at": "2026-10-09T16:50:34+00:00",
+      "because": "Owner (2026-10-09): frontend on Opus 5.5 medium; other Claude implementation and cold reads on Sonnet xhigh",
+      "done_when": "forge init writes claude-sonnet-5-5 at xhigh for the Claude entries of build, fix, lite, design and grill, and Forge's built-in Claude design and read defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new default and the one-line change; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade"
+    },
+    {
+      "at": "2026-10-09T16:56:10+00:00",
+      "because": "Owner (2026-10-09): Forge's default for every client using Claude is Sonnet 5.5 at xhigh, frontend and cold reads included",
+      "done_when": "forge init writes claude-sonnet-5-5 at xhigh for the Claude entries of build, fix, lite and grill, and claude-opus-5-5 at medium for the Claude design entry (user-facing work), and Forge's built-in Claude defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade"
+    },
+    {
+      "at": "2026-10-09T17:28:01+00:00",
+      "because": "Owner (2026-10-09): with only Claude, cold reads and Autoreview use Opus 5.5 high; implementation Sonnet 5.5 xhigh",
+      "done_when": "forge init writes claude-sonnet-5-5 at xhigh for every Claude implementation and plan-read entry (build, fix, lite, design and grill), and Forge's built-in Claude defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade"
+    },
+    {
+      "at": "2026-10-09T17:28:43+00:00",
+      "because": "Owner (2026-10-09): Claude-only defaults for sign-off (Opus high), light review (Sonnet high) and planning/diagnosing roles (Opus high)",
+      "done_when": "For repos whose workers are claude: forge init writes claude-sonnet-5-5 at xhigh for the Claude entries of build, fix, lite and design, and claude-opus-5-5 at high for plan reads (grill) and for Autoreview (review), and Forge's built-in Claude defaults match; sign-off keeps its pinned model; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new Claude-only repo and an earlier-adopted repo left unchanged on upgrade"
+    },
+    {
+      "at": "2026-10-09T17:35:53+00:00",
+      "because": "Owner (2026-10-09): Autoreview stays a program outside our control; use Claude when Claude-only and Codex when Codex-only, with Autoreview's own defaults",
+      "done_when": "For repos whose workers are claude, Forge's defaults are: implementation (build, fix, lite and design, frontend included) claude-sonnet-5-5 at xhigh; plan reads (grill), Autoreview (review) and the prototype sign-off review claude-opus-5-5 at high; the light review of prototype fixes before sign-off claude-sonnet-5-5 at high; the planner and architect roles use the plan-read entry and the debugger, security and performance roles the review entry (so they get Opus 5.5 high while frontend building stays on Sonnet); forge init writes these and Forge's built-in Claude defaults match; Codex repos keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states them; command tests cover forge init's settings for a new Claude-only repo, the roles' models after sync, the sign-off and light review on Claude, and an earlier-adopted repo left unchanged on upgrade"
+    }
+  ],
+  "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
+  "branch": "fix/claude-sonnet-default",
+  "done_when": "For repos whose workers are claude, Forge's defaults are: implementation (build, fix, lite and design, frontend included) claude-sonnet-5-5 at xhigh; plan reads (grill) claude-opus-5-5 at high; the planner and architect roles use the plan-read entry and the debugger, security and performance roles claude-opus-5-5 at high; Autoreview stays the external program and runs every review (normal, light and the prototype sign-off review) on the repo's own tool, Claude for Claude-only repos and Codex for Codex-only repos, with Autoreview's own default model and effort (Forge pins none); forge init writes these and Forge's built-in defaults match; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults; the coordinator guide states them; command tests cover forge init for a new Claude-only repo, the roles' models after sync, reviews running on Claude with no pinned model, and an earlier-adopted repo left unchanged on upgrade",
+  "flagged": [
+    ".claude/skills/forge/SKILL.md",
+    ".factory/fixes/claude-sonnet-default.json",
+    "docs/guide.md",
+    "plans/spotted.json",
+    "tests/test_claude_implementation_defaults.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dd734b3d1e39d91bd0d63f95b7e33a0fe66559de7dd95da04be83e6f335b6142",
+    "changed": "a7fccc5f8e5698e86f2594f58d03850bc6b82072bc4c5dbc67c2468e5612cb7b",
+    "commit": "791f19423fb7c14798fc7f944ebeee66ef8d248a",
+    "dismissals": [
+      {
+        "because": "plans/spotted.json:310 Already repaired: the latest commit restores closed_by to worker-no-settings for the three workers-split findings, and the branch's diff against main no longer changes any closed_by value",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "Raise: Gate. The standard says, \u201cEvery changed line should trace to the task.\u201d The diff removes unrelated `where-time-went` finding records from their original positions in `plans/spotted.json` and adds them back starting here; it also relocates `upgrade-stale-fix` records. These changes do not serve the Claude defaults fix. The earlier dismissal verified that three `closed_by` values were restored, but did not address this remaining unrelated churn.",
+        "file": "plans/spotted.json",
+        "line": 4096,
+        "priority": "P1",
+        "title": "Standard: Touch only what the task needs"
+      }
+    ],
+    "id": "fb62c780-990a-4dd5-9175-1055aa5fbd7c",
+    "status": "clean"
+  },
+  "round": 15,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T16:42:37+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T18:41:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:11:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:39:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:40:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:45:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T05:39:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T05:48:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:46:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:06:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:41:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:11:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:06:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:27:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:06:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:59:37.970988+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "docs/guide.md",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the two remaining findings: a full proof list in the latest commit, and the guide's Codex fallback limited to split workers"
+  },
+  "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
+  "worker": "codex"
+}
