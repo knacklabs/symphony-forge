@@ -18,7 +18,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task
+from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -27,6 +27,8 @@ REFUSALS = {
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
                  "then forge close {item}"),
+    "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
+                     "forge close {item}"),
     "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",
                         "in {path}, run git rebase --rebase-merges=rebase-cousins --onto origin/{default} {base}, "
                         "resolve the conflicts and run git rebase --continue, preserve any earlier "
@@ -103,6 +105,7 @@ def close(args: argparse.Namespace) -> int:
             state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
+            repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
@@ -179,9 +182,14 @@ def close(args: argparse.Namespace) -> int:
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
+        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         check_stop(item, state)
+    evidence = (review.functional_check(top, f"origin/{default}"),
+                review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
     if not fresh:
+        if pending := time_records.pending_merge_wait(top, item):
+            repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
@@ -192,14 +200,15 @@ def close(args: argparse.Namespace) -> int:
         state.pop("tests", None)
         _push(top, branch)
         pr = _publish(top, item, state, branch, default, pr,
-                      {"status": "reviewing", "findings": [], "dismissals": []})
+                      {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
             if switch:
                 head = repo.git("rev-parse", "HEAD", cwd=top)
-                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean")
+                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
+                                             review_round=review.round_number(top, item, state))
                 result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
                           "changed": changed, "branch_diff": branch_diff, "mechanical": True}
             else:
@@ -221,7 +230,8 @@ def close(args: argparse.Namespace) -> int:
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
             if outcome == "failed":
-                repo.record_event(top, item, "review result", outcome=outcome)
+                repo.record_event(top, item, "review result", outcome=outcome, findings=None,
+                                  review_round=review.round_number(top, item, state))
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
     elif (command := review.close_test(top, f"origin/{default}")) and (
@@ -251,6 +261,7 @@ def close(args: argparse.Namespace) -> int:
             if candidates:
                 file = candidates[0]
                 stopped = {"file": file}
+                stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if not switch and spotted.record(
@@ -267,7 +278,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
-    _publish(top, item, state, branch, default, pr, result)
+    pr = _publish(top, item, state, branch, default, pr, result, evidence)
     _attach(top, item, branch)
 
     for number, finding in serious:
@@ -286,21 +297,22 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
-    start, clock = repo.now(), time.monotonic()
-    outcome = "failed"
     try:
-        with repo.record_run(top, item, "ci") as ran:
-            checks.wait(top, item, head, [name for name in cfg["checks"]
-                                          if not (migrating and name == "forge-pr-check")],
-                        branch=branch, progress=getattr(args, "wait_for_progress", False))
-            outcome = ran["outcome"] = "passed"
+        checks.wait(top, item, head, [name for name in cfg["checks"]
+                                     if not (migrating and name == "forge-pr-check")],
+                    branch=branch, progress=getattr(args, "wait_for_progress", False))
     finally:
-        repo.record_timing(top, item, "CI wait", start, clock, outcome)
+        pr = _publish(top, item, state, branch, default, pr, result, evidence)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
+    if merge == "human":
+        pending = time_records.pending_merge_wait(top, item)
+        if not pending:
+            repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
+        _publish(top, item, state, branch, default, pr, result, evidence)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
@@ -432,37 +444,53 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     if not files:
         raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
                                             done.stderr)
-    # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
-    with tempfile.TemporaryDirectory() as folder:
-        base = Path(folder) / "default"
-        repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
-        try:
-            generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
-            if folder := githooks.husky_folder(base):
-                # Sync adds Forge's line, but the rest of these hooks belongs to the user.
-                generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
-                                            for hook in ("pre-commit", "pre-push"))
-            if cfg.get("repo") == "forge-source":
-                generated.add("docs/commands.md")
-        finally:
-            repo.git("worktree", "remove", "-f", str(base), cwd=top)
-    if set(files) <= generated:
-        repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
-                 *files, cwd=top)
-        release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
-        if release != cfg["version"] and repo.VERSION.fullmatch(release):
-            done = subprocess.CompletedProcess(["forge", "sync"],
-                                               repo.run_release(release, ["sync"], top))
-        else:
-            done = repo.run("forge", "sync", cwd=top)
-        if done.returncode:
-            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
-                                                done.stderr)
-        changed = [path for path in synced_changes(top) if path in generated]
-        if changed:
-            repo.git("add", "-A", "--", *changed, cwd=top)
-        repo.git("commit", "-q", "--no-edit", cwd=top)
-        return
+    try:
+        # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder) / "default"
+            repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
+            try:
+                generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+                if folder := githooks.husky_folder(base):
+                    # Sync adds Forge's line, but the rest of these hooks belongs to the user.
+                    generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
+                                                for hook in ("pre-commit", "pre-push"))
+                if cfg.get("repo") == "forge-source":
+                    generated.add("docs/commands.md")
+            finally:
+                repo.git("worktree", "remove", "-f", str(base), cwd=top)
+        if set(files) <= generated:
+            repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
+                     *files, cwd=top)
+            release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+            # Keep argv on one line for uv's Windows .cmd shims.
+            script = ("from forge import repo, sync, githooks; "
+                      "top = repo.root(); cfg = repo.config(top); folder = githooks.husky_folder(top); "
+                      "keep = frozenset((folder.resolve() / hook).relative_to(top.resolve()).as_posix() "
+                      "for hook in ('pre-commit', 'pre-push')) if folder else frozenset(); "
+                      "sync.write(top, cfg, keep); "
+                      "sync.write_file(top, 'docs/commands.md', sync.command_page()) "
+                      "if cfg.get('repo') == 'forge-source' else None")
+            if release != cfg["version"] and repo.VERSION.fullmatch(release):
+                # Isolate Python imports too: the old checkout may have set PYTHONPATH.
+                done = repo.run("uv", "run", "--isolated", "--no-project", "--with",
+                                f"git+https://github.com/knacklabs/symphony-forge@{release}",
+                                "--python", sys.executable, "python", "-I", "-c", script, cwd=top)
+            else:
+                package = json.dumps((top / "src" if cfg.get("repo") == "forge-source"
+                                      else Path(__file__).resolve().parent.parent).as_posix())
+                done = repo.run(sys.executable, "-c",
+                                f"import sys; sys.path.insert(0, {package}); {script}", cwd=top)
+            done.check_returncode()
+            changed = [path for path in synced_changes(top) if path in generated]
+            if changed:
+                repo.git("add", "-A", "--", *changed, cwd=top)
+            repo.git("commit", "-q", "--no-edit", cwd=top)
+            return
+    except Exception as error:
+        repo.git("merge", "--abort", cwd=top)
+        repo.refuse(REFUSALS["merge_failed"], default=default, branch=branch,
+                    problem=(getattr(error, "stderr", "") or str(error)).strip(), item=item)
     repo.git("merge", "--abort", cwd=top)
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
@@ -483,10 +511,10 @@ def _synced(top: Path, item: str) -> None:
     check, branch = Path(tempfile.mkdtemp()) / "sync", f"forge-synced-{os.getpid()}"
     repo.git("worktree", "add", "-q", "-b", branch, str(check), "HEAD", cwd=top)
     try:
-        done = repo.run("forge", "sync", cwd=check)
-        if done.returncode:
-            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
-                                                done.stderr)
+        cfg = repo.config(check)
+        sync.write(check, cfg)
+        if cfg.get("repo") == "forge-source":
+            sync.write_file(check, "docs/commands.md", sync.command_page())
         stale = synced_changes(check)
     finally:
         repo.git("worktree", "remove", "-f", str(check), cwd=top)
@@ -569,12 +597,13 @@ def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
 
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
-             pr: dict[str, Any] | None, result: dict[str, Any]) -> dict[str, Any]:
-    """Open the pull request, or replace only Forge's block in its body. While the review is
+             pr: dict[str, Any] | None, result: dict[str, Any],
+             evidence: tuple[str, str]) -> dict[str, Any]:
+    """Open the pull request, or refresh its contract and Forge's block. While the review is
     blocked, the pull request is a draft."""
-    check = review.functional_check(top, f"origin/{default}")
-    proof = review.commit_paragraph(top, f"origin/{default}", "Proof list:")
-    block = _block(result, "\n\n".join(part for part in (check, proof) if part))
+    check, proof = evidence
+    history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
+    block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
@@ -597,6 +626,8 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     marked = re.compile(re.escape(BEGIN) + ".*?" + re.escape(END), re.S)
     new = (marked.sub(lambda _: block, body, count=1) if marked.search(body)
            else f"{body.rstrip()}\n\n{block}\n")
+    _, _, summary = _title(top, item, state)
+    new = re.sub(r"^Done when:.*$", lambda _: f"Done when: {summary}", new, count=1, flags=re.M)
     if new != body:
         body_file.write_bytes(new.encode("utf-8"))
         _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
@@ -636,7 +667,7 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
     """A short title and the why and done-when lines for a new pull request."""
     if "/" in item:
         _, doc, row = review.task(top, item)
-        story_title = re.search(r"^# (.+)$", (top / "plans" / f"{item.split('/')[0]}.md").read_text(), re.M)
+        story_title = re.search(r"^# (.+)$", (top / "plans" / f"{item.split('/')[0]}.md").read_text(encoding="utf-8"), re.M)
         title = f"{story_title[1]}: {row.get('name', '')}" if story_title else row.get("name", "")
         why, summary = doc.get("Why", ""), row.get("what it delivers", "")
     else:
