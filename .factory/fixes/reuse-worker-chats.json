@@ -19,27 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b774cf0c1505444125c8d7da80f2f306a06191ec86aebfaa2c435feab7ab87b2",
-    "changed": "9a501df388148ffd62f1e97bf4e875ef95231ca1dbbff94ccdc7f86261935992",
-    "commit": "d7ea98be23bc587defcb8b018f9f8020eaa0be3a",
+    "branch_diff": "cfa36fc0b7c791e9f83de7167e079e36e661e4f6c4ad508077efd0e637cbdca9",
+    "changed": "5e4bb97b1578a310852aca195e7f0978ab33c7a71252942a4ce5ee397b8e654c",
+    "commit": "f53dcae4438500d44ed57c779445e27b36c02ac4",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done \u2014 After a v1.2.2 split-design round fails cleanly on Claude and falls back to Codex, the local record contains both chat IDs but no `worker` field (tests/fixtures/forge-v1.2.2/src/forge/worker.py:115, 128\u2013169, 410). This line assumes the configured family, Claude, was the last worker. The first upgraded round therefore resumes the earlier Claude session with a short prompt instead of starting a chat with the full brief and a tool-change reason. Test 15 adds a successful Claude round after fallback, so it does not cover the Codex-last case.",
-        "file": "src/forge/worker.py",
-        "line": 124,
-        "priority": "P1",
-        "title": "Not done: Earlier-release Codex fallback is mistaken for a Claude round"
-      },
-      {
-        "body": "Raise: Not done \u2014 A failed v1.2.2 Codex read of a spec identical to the default copy leaves no branch-local read notes (tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235). If its unmerged owning worktree is removed before upgrade, this comparison excludes its retained branch because both the spec and notes match default. Sync then commits the recoverable log ID in the upgrade checkout. Losing local metadata before that upgrade lands and recreating the owning worktree starts a new reader chat. Test 18's failed-read cases use a spec absent from default; test 22's unchanged-spec cases have successful read notes.",
+        "body": "Raise: Scale \u2014 `forge sync` scans every local branch for each spec reader whose original worktree was removed, even when the landed read notes already contain its durable chat ID. The existing-binding check happens only after this scan. In a client with 40 merged spec reads and 40 work branches, an ordinary sync launches at least 1,600 `git show` calls, and the cost keeps growing as reads accumulate.",
         "file": "src/forge/codex.py",
-        "line": 250,
+        "line": 269,
         "priority": "P1",
-        "title": "Not done: Failed unchanged-spec reads bind to the upgrade checkout"
+        "title": "Sync rescans every branch for already-preserved spec chats"
       }
     ],
-    "id": "420e0f88-cbba-496c-8f5b-6c5ff40e466f",
+    "id": "159a67d2-a660-4439-8dc6-02c0256527b9",
     "status": "blocked"
   },
   "round": 19,
@@ -135,6 +128,10 @@
     },
     {
       "at": "2026-10-10T19:38:39.028937+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:47:58.778050+00:00",
       "step": "review"
     }
   ],
