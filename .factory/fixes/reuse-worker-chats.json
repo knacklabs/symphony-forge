@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3d742a94c8d3e3c6ac65ec98eef030460bd6a1490992d6e1828a97772165265d",
-    "changed": "715985f378ee1ee9482403839a0dc3b0be60abe2541fe40754e9b0da0ec96b1a",
-    "commit": "29c305460e46f0ba6210fc5ce45f61919552ec35",
+    "branch_diff": "da27d8a2a3ff079b22894b1b9c2fa0596ceacf3368e512bff078d2802769dae7",
+    "changed": "3ed1df8dce199d7f1fa0afb7f875291e12b6124f6388578dfabd44129c58a75c",
+    "commit": "10bacd0c2627364da94c7afcf23636348d7aba20",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. Renaming or deleting a previously read spec now blocks `forge sync` and upgrades while its original worktree remains registered. The scan resolves that worktree from the retained reader JSON, then calls `story._paths()` before checking whether the chat already has a durable binding. `src/forge/story.py:771\u2013773` refuses when the old spec document no longer exists, and `src/forge/sync.py:509` runs this scan unconditionally. This affects both providers, including already-preserved chats. The removed-owner proof removes the worktree; it does not cover a live worktree whose spec was renamed or deleted.",
+        "body": "Raise: Functional. Renaming or deleting a previously read spec still blocks `forge sync` and upgrades while its original worktree remains registered. The migration calls `story._paths()` before checking whether the reader already has a durable chat binding. `src/forge/story.py:771\u2013773` refuses when that spec document no longer exists, and `src/forge/sync.py:509` invokes the migration unconditionally. This affects both providers, including already-preserved chats. The previous finding remains open; `test_13_previous_release_spec_reader_survives_removed_owner_and_metadata` removes the owning worktree and does not exercise a renamed or deleted spec in a retained worktree.",
         "file": "src/forge/codex.py",
         "line": 245,
         "priority": "P1",
         "title": "Skip stale spec-reader records before resolving their document paths"
       }
     ],
-    "id": "17804795-500f-4db6-9d63-d4a3db2338b4",
+    "id": "d1820f57-08bc-47fd-b3e4-162bcb32b69c",
     "status": "blocked"
   },
   "round": 8,
@@ -76,6 +76,10 @@
     },
     {
       "at": "2026-10-10T04:43:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:14:26+00:00",
       "step": "review"
     }
   ],
