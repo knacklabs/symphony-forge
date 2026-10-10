@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d20e8a55918fe14d2d2d7fd1b9d0dac8ff80f5872726bddaa67386628cf1166e",
-    "changed": "fbe52f96386b245d00299b8e16d94f61e5ab74874c1e09ac870df6639d25a456",
-    "commit": "0811b64759887b2ec1632180ca143da89322ed95",
+    "branch_diff": "89a5c9b882755200fb5bd7738a49ef0f83bcece3e2a9aa1a11d3c668720cdf98",
+    "changed": "33662e189bed8b1880b32869b1c4f59c44c98076e981df813e5bf31b1de9d8f4",
+    "commit": "ab97ecd7b46fe3d97e3d673eda6b3142050b0fbf",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Upgrade loses a failed earlier-release Codex spec-reader chat when its owning worktree moves, is recreated, or is removed before sync. Both owner searches require `docs/specs/<slug>.read.md` (lines 246 and 250), but a first failed v1.2.2 read clears its local identity and refuses before creating those notes (`tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235`). The native identity remains recoverable from the turn log, yet sync silently skips its owner. Subsequent metadata loss therefore makes the next read start fresh without attempting the available chat. New evidence beyond the previous finding is the absence of notes after a failed read; the repaired removed-owner cases all have accepted notes. `test_14_failed_previous_release_codex_reader_keeps_its_logged_chat` covers a story, whose branch is known directly, while test_18 creates successful spec-read notes. Neither catches this spec-owner recovery gap.",
+        "body": "Raise: Not done. The previous finding remains open: upgrade silently loses a recoverable earlier-release Codex spec-reader chat when its owner moves, is recreated or removed, or its local JSON disappears. Both owner searches require `docs/specs/<slug>.read.md` (lines 246 and 250), but a first failed v1.2.2 read clears the local identity and refuses before creating notes (`tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235`). Although the native ID remains in the turn log, sync skips preservation. Deleting machine metadata after sync then makes the next read start fresh without attempting that chat. `test_14_failed_previous_release_codex_reader_keeps_its_logged_chat` exercises a story with a directly identifiable branch; test_18 exercises successful spec reads that create notes. Neither catches the failed-spec owner case.",
         "file": "src/forge/codex.py",
         "line": 246,
         "priority": "P1",
-        "title": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff"
+        "title": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge"
       }
     ],
-    "id": "35a24ac3-77de-4f95-aa9e-1a97d65db4bd",
+    "id": "efdd13f7-d902-4acb-8bbf-40d326ea8d6f",
     "status": "blocked"
   },
   "round": 11,
@@ -92,6 +92,10 @@
     },
     {
       "at": "2026-10-10T08:42:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:03:59+00:00",
       "step": "review"
     }
   ],
