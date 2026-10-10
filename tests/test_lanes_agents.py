@@ -136,7 +136,7 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
         # The supported base checker really launches an ungrouped reviewer.
         source = tmp_path / "base-src"
         shutil.copytree(ROOT / "src/forge", source / "forge", ignore=shutil.ignore_patterns("__pycache__"))
-        for name in ("close.py", "review.py", "prcheck.py", "templates/review.md"):
+        for name in ("close.py", "checks.py", "review.py", "prcheck.py", "templates/review.md"):
             shutil.copy(ROOT / "tests/fixtures/pr-check-before-branch-diff" / name, source / "forge" / name)
         legacy = tmp_path / "base-forge"
         # Keep the same simulated six-core OS boundary for the older checker.

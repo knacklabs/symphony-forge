@@ -63,8 +63,10 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     shop = new_story(repo, "SHOP")
     doc, notes = shop / "plans" / "SHOP.md", shop / "plans" / "SHOP.read.md"
     doc.write_text(DOC, encoding="utf-8")
-    # Near misses are rounds with findings, each numbered after the earlier rounds'.
-    for number, near in enumerate(["No findings", "no findings.", "**No findings.**",
+    # No-findings formatting now passes; substantive text still fails and numbers on.
+    for number, near in enumerate(["No findings, except missing recovery.",
+                                   "No issues? The time has no time zone.",
+                                   "**Finding:** required proof is missing.",
                                    "No findings.\n1. The saved time has no time zone.",
                                    "No findings. The page is fine.",
                                    "1. A gap.\n\n## Round 99\n\nNo findings."], start=1):
