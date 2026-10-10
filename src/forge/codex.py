@@ -152,7 +152,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
     chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
-              else repo.models(cfg, "lite" if kind == "Ask" else kind.lower(), "codex"))
+              else repo.models(cfg, "explore" if kind == "Ask" else kind.lower(), "codex"))
     return {OVERRIDES[key]: value for key, value in chosen.items()}
 
 
