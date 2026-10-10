@@ -2,6 +2,7 @@
   "branch": "task/FORGE-BOARD-2-RECORD",
   "flagged": [
     ".claude/skills/forge/SKILL.md",
+    "src/forge/board.py",
     "src/forge/nextstep.py",
     "src/forge/story.py",
     "src/forge/time_records.py",
@@ -9,38 +10,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e9418abb289c53260ff790f17f50296a19de909337b865e180701a45ab837e76",
-    "changed": "a0fd60ca9daebe68d896d31afd6e41a842e85c380c1dbf46bde109e8fbb153f1",
-    "commit": "d68757627f9991e304c2871fd7faafdb2108fd51",
+    "branch_diff": "b162afdab583908a70b7de0b623c9718fb5c9596902a7b495a6842eb7b75bef9",
+    "changed": "d0c3121285ab06ce057e1f1ee4755dd51fae41c169612a9dc1eecce8fd2a69b0",
+    "commit": "abb37ee4ea5a4ef36593545e8d91b52de3efdc25",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. This treats a saved review or local PR-body file as proof that a pull request exists. If a first close saves its review but GitHub rejects PR creation, a later `forge work` question or `--note` answer calls `_refresh_record`, which queries GitHub and fails during the same outage. The specified pre-PR question path should remain local. The offline-before-PR test starts without a saved review, so it misses this case.",
+        "body": "Raise: Functional. A blocked PR opened by an earlier Forge release has neither a ready receipt nor the new `pull request published` event, so `published` is false even though the PR exists. `forge work` then publishes neither a worker question nor its answer to the PR record. A teammate's board cannot see the owner wait while the question blocks close. The same gap occurs when work continues in a checkout without either local marker.",
         "file": "src/forge/worker.py",
         "line": 84,
         "priority": "P1",
-        "title": "A failed first PR publish makes a pre-PR worker question depend on GitHub"
+        "title": "Questions on existing pull requests remain local"
       },
       {
-        "body": "Raise: Test. The new `forge read` path writes measured seconds to the read note, but the named board tests insert `seconds` into that note directly or construct the note themselves. They would still pass if `forge read` stopped recording the duration, leaving real plan reads unknown in story runways. The timed read needs command-level proof through `forge read`.",
-        "file": "src/forge/story.py",
-        "line": 290,
+        "body": "Raise: Scale. This `git cat-file` call runs inside the read-round loop for every story on every board read. A client-sized board with roughly 100 stories and 10 cold-read rounds per story launches about 1,000 Git processes for `forge board --json`, and repeats that cost for the HTML page. The existing batched blob reader elsewhere in board.py shows these objects can be read without a process per round.",
+        "file": "src/forge/board.py",
+        "line": 586,
         "priority": "P1",
-        "title": "Not done: forge read records a timed cold-read round"
-      },
-      {
-        "body": "Raise: Gate. Both `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` change instructions for runner diagnosis, upgrade cleanup, read responses and part-size limits. Those changes do not support this part's shared time record or its required shipped guide paragraph, so these outside-Scope files contain work this part does not need.",
-        "file": ".claude/skills/forge/SKILL.md",
-        "line": 82,
-        "priority": "P1",
-        "title": "Unrelated live skill changes exceed this part's scope"
+        "title": "Board launches Git once for every historical plan read"
       }
     ],
-    "id": "00e127aa-ea20-4169-b86b-e45905fa810b",
+    "id": "7caad782-0477-42be-9601-37bbefb5123b",
     "status": "blocked"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -53,7 +47,15 @@
     {
       "at": "2026-10-10T20:47:53.040053+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:03:10.730306+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/worker.py",
+    "wait_id": "9b2780a7-3d24-4d7d-b106-712aada451c7"
+  },
   "worker": "codex"
 }

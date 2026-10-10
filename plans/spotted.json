@@ -408,6 +408,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tBoard launches Git once for every historical plan read\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 586,
+      "text": "Board launches Git once for every historical plan read",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tDerive task titles from the current published story plan\tboard-data-truth",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -2274,6 +2285,17 @@
       "text": "Not done: worker questions on both worker paths",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tQuestions on existing pull requests remain local\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 84,
+      "text": "Questions on existing pull requests remain local",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
       "status": "open",
       "closed_by": null
     },
