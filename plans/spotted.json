@@ -441,6 +441,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: impeccable pass\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1144,
+      "text": "Not done: impeccable pass",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: plan_read from the story's current read record\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",

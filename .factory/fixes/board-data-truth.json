@@ -10,20 +10,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cda4772679559fc48719f651b2ddcffb286ee401c3411ade80e7775aedc4aeff",
-    "changed": "54a4264817c91136c5faf359c934cc39565253e9db24f2a481f37163d3842178",
-    "commit": "3f9ceb74309b471f65daffd52cd4170f561fffad",
+    "branch_diff": "f9244edca942c65ff3c0463a0f3b94df6868da46f23c8df5fa3348eafa9fd352",
+    "changed": "56afb25f175ce0e7c09148715811585f0b8bb7466165e2ca9993d72784d9af3e",
+    "commit": "eecee1feccdc185a4fde1b7887ec5aeb7b27ef4a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The accepted display-name change leaves required ownership tests failing. This line maps each starter to the newest name for their email, but the retained fixtures change only `user.name` while sharing the email configured in tests/conftest.py:277. Their assertions still require different names: tests/test_started_branches_claim_the_work.py:188\u2013189 and 380\u2013386, tests/test_starter_names_survive_branch_cleanup.py:182\u2013184, and tests/test_starters_survive_replay_and_copied_plans.py:140 and 167\u2013169. The proof list explicitly acknowledges these unresolved CI failures. The supplied 129-test selection excludes all three files, while forge.toml:6 runs the entire suite for the required check. This accepts the coordinator\u2019s canonical-name ruling; the gap is that the ownership fixtures were not updated to give distinct simulated people distinct emails while retaining their assertions.",
+        "body": "Raise: Gate. This change alters board status copy, timelines and the grouped header counts, but the cumulative proof list contains no required impeccable shaping, audit and polish pass incorporating the emil-design-eng checklist. The named browser tests verify rendered text and mobile overflow; they do not establish that required UI inspection. Supply the missing pass and its proof-list entry for the changed board.",
         "file": "src/forge/board.py",
-        "line": 1001,
+        "line": 1144,
         "priority": "P1",
-        "title": "Not done: required tests check"
+        "title": "Not done: impeccable pass"
       }
     ],
-    "id": "9dbb75b5-f860-4992-9935-e898709a2e78",
+    "id": "4e07dbb4-7a5f-4457-9d67-911b62c44a37",
     "status": "blocked"
   },
   "round": 16,
@@ -83,6 +83,10 @@
     },
     {
       "at": "2026-10-10T10:57:20.027323+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T11:31:21.230370+00:00",
       "step": "review"
     }
   ],
