@@ -78,7 +78,7 @@ def test_2_a_design_claude_worker_continues_its_session_with_the_short_prompt(
     assert again.returncode == 0, again.stdout + again.stderr
     [_, fixed] = calls(log)
     assert _session(fixed, "--resume") == session and "--session-id" not in fixed["args"]
-    assert fixed["cwd"] == str(folder) and fixed["args"][:3] == ["-p", "--model", "claude-opus-5-5"]
+    assert fixed["cwd"] == str(folder) and fixed["args"][:3] == ["-p", "--model", "claude-sonnet-5-5"]
     assert EARLIER in fixed["brief"] and "Make the heading bigger." in fixed["brief"]
     assert "# Worker brief" not in fixed["brief"]
     assert FRESH not in again.stdout

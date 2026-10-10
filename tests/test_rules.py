@@ -1,6 +1,6 @@
 """The rules that keep Forge itself honest: one test per rule, small, pinned and fast.
 
-Each test is named test_<criterion>_<rule> after the spec's acceptance criterion it proves.
+Each test is named test_<criterion>_<rule>; numbers are unique within its story or fix.
 """
 from __future__ import annotations
 
