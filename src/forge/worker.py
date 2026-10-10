@@ -29,6 +29,10 @@ REVIEW_LOOP = (
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
+SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It belongs to the "
+            "coordinator, through a settings fix the owner asked for. Report a needed settings "
+            "change in your last message instead. To run an extra suite, run its command directly "
+            "alongside `forge test`.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
@@ -191,6 +195,7 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
+                    _restore_settings(item, top, state)
                     if git("status", "--porcelain", "-uall", cwd=top):
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
@@ -211,6 +216,7 @@ def work(args: argparse.Namespace) -> None:
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
+            _restore_settings(item, top, state)
             if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
@@ -220,6 +226,7 @@ def work(args: argparse.Namespace) -> None:
                 else:
                     nudged = (again.get("text") or "").strip()
         finally:
+            _restore_settings(item, top, state)
             if final is not None:
                 asked = "\n\n".join(dict.fromkeys(match[1] for answer in (final, nudged)
                     if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
@@ -238,6 +245,14 @@ def work(args: argparse.Namespace) -> None:
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
 
 
+def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
+    if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
+            and not task.settings_allowed(item, top, state)):
+        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+              flush=True)
+
+
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
           design: bool = False) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
@@ -247,9 +262,6 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
                                                                            "claude")
-        if "subagents" in chosen:
-            refuse(repo.REFUSALS["models"], problem=f"Claude workers take model and effort, so "
-                                                     f"[models.{kind.lower()}] can't set subagents")
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
     if problem:
@@ -344,6 +356,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {
+        "settings": SETTINGS,
         "review_loop": REVIEW_LOOP,
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -392,6 +405,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
+        brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
@@ -447,8 +461,8 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                 return _run(item, top, brief, models, ["--resume", resume])
             except repo.Refused:
                 # Claude refuses a session it doesn't have before the turn starts, with this line.
-                output = log.read_bytes()[size:].decode("utf-8", "replace").split("\n", 1)[-1]
-                if not output.startswith("No conversation found"):
+                output = log.read_bytes()[size:].decode("utf-8", "replace")
+                if "No conversation found" not in output:
                     raise
             why = f"Claude no longer has session {resume}"
         if why:
@@ -490,6 +504,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker._stdin_write(brief)
         for line in worker.stdout:
+            out.write(line)
             try:
                 event = json.loads(line)
             except ValueError:
@@ -501,7 +516,6 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             if line:
                 if not isinstance(event, dict) or event.get("type") == "result":
                     print(line, end="", flush=True)
-                out.write(line)
                 lines.append(line)
         worker.wait()
         ran["outcome"] = "completed" if worker.returncode == 0 else "failed"

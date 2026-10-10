@@ -127,7 +127,9 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
 plan reads and close reviews share a first-come line and say their place while waiting. The test
-lane has one place; tests use the same half-core budget. `forge doctor` shows the split.
+lane has one place per four available cores, at least one: two test runs at once on eight cores,
+one on four. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
+and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
 alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
@@ -162,6 +164,8 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
+task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
 external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
 parts, plain titles, labelled states and `waits_for` item references, including old merged
@@ -307,7 +311,7 @@ and Remote Control from a phone or claude.ai), that text is the status reply.
 It uses the last completed snapshot, including any refresh error.
 
 The strip above the prompt uses at most three lines. Its first line shows
-`Agents N/M (W waiting) · Tests: <running item or idle> (K waiting) · 1: <next command>`.
+`Agents N/M (W waiting) · Tests N/M (K waiting) · <running item or idle> · 1: <next command>`.
 It also shows a recorded current worker step. The other lines show up to two active items
 from this repo, each with Build → Tests → Review → CI → Merge, its round and total
 time. A third active item replaces the last line with `+N more · /forge for all`.
@@ -628,6 +632,10 @@ fix's folder:
 
 ## Planning a story
 
+Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
+accepts numbered no-findings statements with separate notes that tests were not run; a real
+finding still needs a disposition and another round.
+
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
 
@@ -752,7 +760,8 @@ ask the human to review it in Codex's /hooks, then run the command again.
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
-`[models.lite]` in `forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
+`[models.explore]` in `forge.toml`, falling back to `[models.lite]` when explore is absent.
+Its records stay under `.git/forge/`; the conversation is temporary and does not
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
 
@@ -760,6 +769,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+Claude workers use model and effort and ignore the Codex-only subagents and subagent_effort keys.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
@@ -783,9 +793,16 @@ The diagnosing and planning roles change no files. Building an item still goes t
 Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
 from the other tool is omitted so the role uses the session's model.
 
+The explorer role and `forge ask` use the read-only `explore` kind; `lite` keeps a fix's first
+build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
+`[models.explore.codex]` with the same settings as the initial lite Codex entry. Existing repos
+without explore keep using lite for read-only work after upgrading and syncing. To choose
+separate read-only settings there, add the explore entries in a fix and run `forge sync`.
+
 ## Build simple
 
 Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+Edits to different fields of an item merge; competing edits to the same field need a manual resolution.
 New repos get this rule at init; existing repos get it with `forge sync` or
 `forge doctor --fix`. The shared rule keeps working after a worktree is removed.
 Doctor repairs both paths in Git's shared local attributes, including when an older
@@ -845,7 +862,11 @@ Generated-conflict sync and the merge commit check use the new pin too, so the m
 before the original land or close command continues.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
-any other file stops close for the worker to resolve. When the
+any other file stops close for the worker to resolve. While waiting for checks, close stops at once
+if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
+in the default branch. Land retries close once itself, including a conflict during its merge check
+wait; if the merge needs a person, it stops with close's existing conflict next step.
+When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
@@ -932,7 +953,8 @@ Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
 `forge work`, `forge read` and close reviews already queue agent runs across the machine;
-close serializes test runs separately, so no private slot loop is needed.
+close and worker tests share the separate test lane, with one place per four available cores
+(at least one), so no private slot loop is needed.
 
 If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:
 
@@ -954,7 +976,9 @@ new branch to GitHub after committing its start. The author of that start commit
 who started the work; the board page and `forge board --json` show them next to the plan's
 approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
 record. Git keeps a start tag pointing at the original commit, so its author survives squash
-merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+merges and work-branch cleanup. A retained fix start tag reserves its name even after its
+branch is abandoned; another start says the name is taken and uses the next numbered name.
+Close also publishes retained start commits when an earlier
 start push failed. A second checkout's
 task start names the person who already started that part on GitHub. A failed push says so
 and leaves the work local: teammates cannot see that claim until its branch is pushed.

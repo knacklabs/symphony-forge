@@ -59,7 +59,7 @@ def rows(doc: dict[str, str]) -> dict[str, dict[str, str]]:
         return {}
     header = [cell.strip() for cell in lines[0].split("|")]
     table = (dict(zip(header, (cell.strip() for cell in line.split("|")))) for line in lines[2:])
-    return {row.get("ID", ""): row for row in table}
+    return {row.get("ID", "").strip("` "): row for row in table}
 
 
 def cell_list(cell: str) -> list[str]:
@@ -90,6 +90,20 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
                 and (kind != "task" or state.get("branch") == branch)):
             return item, state
     return None
+
+
+def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
+    """Only this item's own Done-when can permit forge.toml edits."""
+    done = state.get("done_when", "")
+    if (match := repo.ITEM.fullmatch(item))["task"]:
+        from forge import story
+
+        text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
+        row = rows(sections(text)).get(match["task"], {})
+        covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
+        parsed = story.parse(text)
+        done = "\n".join(story.item(parsed, n, True) for n in parsed["done"] if n in covers)
+    return "forge.toml" in done
 
 
 def main_ref() -> str:
@@ -334,7 +348,8 @@ def fix_start(args: argparse.Namespace) -> None:
     main = main_ref()
     slug = args.slug or re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
     taken = {ref.split("/fix/", 1)[1] for ref in git(
-        "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/").splitlines()}
+        "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
+        "refs/tags/forge-start/fix/").splitlines()}
     name, n = slug, 1
     while name in taken or _merged(main, name):
         n += 1
@@ -349,6 +364,8 @@ def fix_start(args: argparse.Namespace) -> None:
         state["allow_large"] = "Prototype before sign-off"
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
+    if name != slug:
+        print(f"Fix name {slug} is already taken; using {name}.")
     print(f"Next: forge work {name}")
 
 
