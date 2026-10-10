@@ -185,7 +185,7 @@ def _rollup(pr: Item) -> list[Item]:
 def machine_board(top: Path, history: Item | None = None,
                   prs_snapshot: list[Item] | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
-    from forge import nextstep
+    from forge import nextstep, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -207,21 +207,13 @@ def machine_board(top: Path, history: Item | None = None,
              nextstep._prs(top, "open", "number,headRefName,url,isDraft"))
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
-    merged_prs = {p["headRefName"] for p in (prs_snapshot if complete else
-                  nextstep._prs(top, "merged", "headRefName"))
-                  if (not complete or p.get("state") == "MERGED")
-                  and isinstance(p.get("headRefName"), str)} if trees else set()
+    merged_dates = {p["headRefName"]: p.get("mergedAt") for p in (prs_snapshot if complete else
+                    nextstep._prs(top, "merged", "headRefName,mergedAt"))
+                    if (not complete or p.get("state") == "MERGED")
+                    and isinstance(p.get("headRefName"), str)}
+    merged_prs = set(merged_dates) if trees else set()
     readiness: dict[str, Item] = {}
-    timings, recorded = [], []
-    for name, rows in (("timings", timings), ("events", recorded)):
-        path = repo.forge_dir(top) / f"{name}.jsonl"
-        for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-            try:
-                value = json.loads(line)
-                if isinstance(value, dict):
-                    rows.append(value)
-            except ValueError:
-                continue
+    timings, recorded = time_records.read(top, "timings"), time_records.read(top, "events")
 
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if kind != "story" and repo.state_path(item) in merged:
@@ -402,9 +394,11 @@ def machine_board(top: Path, history: Item | None = None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                "total_seconds": sum(r.get("seconds") or 0 for r in timings
-                                     if r.get("item") == item and r.get("round") is not None)
-                                 if round_number is not None else None,
+                **(time_records.item(top, item, state, events=recorded, timings=timings,
+                                     ended_at=merged_dates.get(branch)) if kind != "story" else {
+                    "total_seconds": sum(r.get("seconds") or 0 for r in timings
+                                         if r.get("item") == item and r.get("round") is not None)
+                                     if round_number is not None else None}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 
