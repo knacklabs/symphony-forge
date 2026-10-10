@@ -19,20 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b9e7278fa751bc191c8be2f90a502ea3764a01cc94c16ccf0da8363b992623bb",
-    "changed": "8bf7800ed00fb6fbb815cae29752b0c355725a2c7d1f22a2e47cf9e3dd726db1",
-    "commit": "3365aa18543c7d9a0a432f77a547971ef0053882",
+    "branch_diff": "d20e8a55918fe14d2d2d7fd1b9d0dac8ff80f5872726bddaa67386628cf1166e",
+    "changed": "fbe52f96386b245d00299b8e16d94f61e5ab74874c1e09ac870df6639d25a456",
+    "commit": "0811b64759887b2ec1632180ca143da89322ed95",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Upgrade silently skips an unmerged spec reader when its worktree has been removed but its branch remains. For spec slugs, `branch` is empty (line 231), so the temporary-worktree recovery cannot run; owner discovery searches only registered worktrees and then continues here. A concrete case is an earlier-release read with findings, committed notes, removal of its clean worktree, upgrade sync, subsequent metadata loss, and recreation of that same branch. Earlier-release notes contain no native identity (`tests/fixtures/forge-v1.2.2/src/forge/story.py:73`), and the unmerged spec is absent from the default branch, so the next read starts fresh without attempting the available Codex or Claude chat. `test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves` recreates the owner before sync; test_13 covers an already-landed spec. Neither covers this promised fresh-worktree continuity case.",
+        "body": "Raise: Not done. Upgrade loses a failed earlier-release Codex spec-reader chat when its owning worktree moves, is recreated, or is removed before sync. Both owner searches require `docs/specs/<slug>.read.md` (lines 246 and 250), but a first failed v1.2.2 read clears its local identity and refuses before creating those notes (`tests/fixtures/forge-v1.2.2/src/forge/story.py:229\u2013235`). The native identity remains recoverable from the turn log, yet sync silently skips its owner. Subsequent metadata loss therefore makes the next read start fresh without attempting the available chat. New evidence beyond the previous finding is the absence of notes after a failed read; the repaired removed-owner cases all have accepted notes. `test_14_failed_previous_release_codex_reader_keeps_its_logged_chat` covers a story, whose branch is known directly, while test_18 creates successful spec-read notes. Neither catches this spec-owner recovery gap.",
         "file": "src/forge/codex.py",
-        "line": 254,
+        "line": 246,
         "priority": "P1",
-        "title": "Not done: Preserve spec-reader chats when their owning worktree is removed"
+        "title": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff"
       }
     ],
-    "id": "91d9a9b2-bab1-4e16-b908-de7a75be8c57",
+    "id": "35a24ac3-77de-4f95-aa9e-1a97d65db4bd",
     "status": "blocked"
   },
   "round": 11,
@@ -88,6 +88,10 @@
     },
     {
       "at": "2026-10-10T07:51:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:42:21+00:00",
       "step": "review"
     }
   ],
