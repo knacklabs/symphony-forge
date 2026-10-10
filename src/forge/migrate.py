@@ -296,9 +296,9 @@ def _touched(plan: dict[str, Any]) -> list[str]:
             *plan["gstack_edits"], *written, "forge.toml", repo.state_path(ITEM)]
 
 
-def _tree(top: Path, ref: str, *paths: str) -> dict[str, str]:
+def _tree(top: Path, ref: str, *paths: str, env: dict[str, str] | None = None) -> dict[str, str]:
     """Each file under these paths at ref, with its blob id."""
-    listing = repo.git("ls-tree", "-r", "-z", ref, "--", *paths, cwd=top)
+    listing = repo.git("ls-tree", "-r", "-z", ref, "--", *paths, cwd=top, env=env)
     return {entry.partition("\t")[2]: entry.split()[2] for entry in listing.split("\0")
             if entry and entry.split()[1] == "blob"}
 
@@ -313,15 +313,17 @@ def _source(top: Path, ref: str) -> dict[str, str]:
     if not commit:
         repo.refuse(REFUSALS["no_source"], problem=f"{FORGE_MADE[0]} names no copied-in commit")
     url = os.environ.get("FORGE_SOURCE_URL", SOURCE)  # ponytail: the tests' seam, like FORGE_NOW
+    env = {key: value for key, value in os.environ.items()
+           if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE")}
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        repo.git("init", "-q", "--bare", tmp)
+        repo.git("init", "-q", "--bare", tmp, env=env)
         # Only the commit and its trees: blob ids are enough to compare files.
         done = repo.run("git", "fetch", "-q", "--depth", "1", "--filter=blob:none", url,
-                        commit[0], cwd=tmp)
+                        commit[0], cwd=tmp, env=env)
         if done.returncode:
             said = (done.stderr.strip().splitlines() or [f"exit code {done.returncode}"])[-1]
             repo.refuse(REFUSALS["no_source"], problem=f"fetching it from {url} failed: {said}")
-        return _tree(Path(tmp), "FETCH_HEAD", *VENDORED, "AGENTS.md")
+        return _tree(Path(tmp), "FETCH_HEAD", *VENDORED, "AGENTS.md", env=env)
 
 
 def _in_flight(top: Path) -> list[str]:
