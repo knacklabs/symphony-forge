@@ -31,9 +31,14 @@ the install line to fix it.
   `.github/workflows/forge.yml`; new repos get it at init and earlier adopted repos get it after
   upgrading Forge and syncing. The jobs install uv and select Python themselves; Node tests
   install Node from the repo's version file or engines, defaulting to the client stack's Node 22.
-  `forge doctor` checks the current branch's open pull request. It and close's check wait report
-  checks queued for at least five minutes without starting and name the runner setting to check.
-  Make a matching runner available or correct the setting, then sync; keep the required checks.
+  Close and land keep waiting for queued checks, showing minutes observed queued during the
+  wait: shared runners may be busy or no runner may match the setting. Only `forge doctor`
+  reports a likely missing runner when a current check has been queued at least five minutes
+  and no matching job started in its sample of this repo's runs created in the last seven days.
+  Doctor reads at most 100 newest runs, skips successful runs, and reads one page of latest
+  jobs per remaining run. It does not inspect earlier attempts or older runs.
+  Make a matching runner available or correct the setting; run `forge sync` only after changing
+  the runner setting. Keep the required checks enabled.
 - **A repo that copied in the old Forge:** `forge migrate` moves it over in one pull request.
 - **Rules for agents:** a repo keeps them in AGENTS.md only, outside Forge's block. Claude Code
   reads AGENTS.md itself, so `forge sync` moves any lines a CLAUDE.md has that AGENTS.md lacks into
