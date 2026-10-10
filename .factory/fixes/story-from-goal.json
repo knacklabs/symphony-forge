@@ -2,13 +2,38 @@
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/story-from-goal",
   "done_when": "forge story new <KEY> \"<title>\" works for a story that has no spec: the story's own branch adds it to the roadmap, the plan's Why carries the problem, and the story gets one read loop and one approval; stories made from a spec work as today and specs stay optional. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/nextstep.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "799ba2655596b147cde8a784c1ab22fdc1019cf04980b96ee2284c4e034d59d5",
+    "changed": "b920bce6df978efc1df983603141e8ff6d140dd8527aea0ffa805fe078ede113",
+    "commit": "bcff1a71ca07ca61864dfb0664db33316054c28e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Functional. When a client has any active roadmap item, `_idle` returns at lines 345\u2013349 before reaching the new problem-card path. It tells the agent to run `forge story new` only for an item already on the roadmap. A client with an existing backlog and a newly discovered problem therefore still receives the old roadmap prerequisite as its next step, despite the command now accepting a new key. The discovery test exercises only an empty roadmap.",
+        "file": "src/forge/nextstep.py",
+        "line": 352,
+        "priority": "P1",
+        "title": "Forge next still directs clients with a populated roadmap to choose an existing item"
+      }
+    ],
+    "id": "e5308f97-d7c3-4c7f-a219-7ba9cbd952ff",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:18:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T16:19:34.187735+00:00",
+      "step": "review"
     }
   ],
   "why": "A new story needs a spec, its own read loop, a confirmation and a roadmap fix before its plan can even start",
