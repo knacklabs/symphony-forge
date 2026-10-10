@@ -210,7 +210,7 @@ not what might be nicer.
 Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the story's doc and its
 read notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
 All earlier reviews' findings and dismissals are below, including findings fixed in later
-rounds; report any still-open gap alongside new ones:
+rounds; recheck them against this branch for still-open gaps and report those alongside new ones:
 $previous
 
 The coordinator's rulings and dismissals on this branch so far, with their reasons:

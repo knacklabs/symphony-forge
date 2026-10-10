@@ -605,15 +605,19 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     settled = _settled(_history(top, item, base, previous))
     findings = [finding for finding in findings
-                if (finding["file"], finding["title"]) not in settled]
+                if not settled.get((finding["file"], finding["title"]), "").startswith("fixed:")]
+    dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because ")}
+                  for number, finding in enumerate(findings, 1)
+                  if (reason := settled.get((finding["file"], finding["title"]), "")).startswith(
+                      "dismissed because ")]
+    result = {"findings": findings, "dismissals": dismissals,
+              "blocking_level": "P0" if light else "P1"}
     identity = repo.record_event(top, item, "review result", commit=head,
                                  review_round=round_number(top, item, state),
-                                 outcome="blocked" if any(f["priority"] in
-                                 (("P0",) if light else SERIOUS) for f in findings) else "clean",
+                                 outcome="blocked" if blocking(result) else "clean",
                                  findings=[{key: finding[key] for key in ("title", "priority", "file")}
                                            for finding in findings])
-    return {"id": identity, "commit": head, "findings": findings,
-            "dismissals": [], "blocking_level": "P0" if light else "P1",
+    return {"id": identity, "commit": head, **result,
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 

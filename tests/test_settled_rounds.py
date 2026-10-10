@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 import conftest
-from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
 from test_readloop_rounds import _setup
 from test_setup import _fresh_client
@@ -15,8 +15,9 @@ STORY = "FIX-SETTLED-STAYS-SETTLED"
 
 
 @pytest.mark.parametrize("app", ["codex", "claude"])
+@pytest.mark.parametrize("repeat_first", [False, True])
 def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
-        repo, monkeypatch, tmp_path, sdk_data, app):
+        repo, monkeypatch, tmp_path, sdk_data, app, repeat_first):
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
     first, second, third = "Saving needs an account.", "The date format is unclear.", "Tax is unclear."
     reader.ok(f"1. {first}\n2. {second}\n")
@@ -37,10 +38,12 @@ def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
     # Editing after a pass starts a fresh review of the change, retaining every old answer.
     reader.doc.write_text(reader.doc.read_text("utf-8") + "\nThe basket includes delivery.\n",
                           encoding="utf-8")
-    new = reader.ok("1. Delivery charges are unclear.\n")
+    notes = ["1. Delivery charges are unclear.\n", f"1. {first}\n"]
+    new = reader.ok("".join(reversed(notes) if repeat_first else notes))
     for answer in (first, second, third, "the owner chose sign-in"):
         assert answer in reader.prompt(), answer
     assert "found nothing" not in new
+    assert "Delivery charges are unclear." in reader.notes.read_text("utf-8")
     refused = reader.read()
     assert refused.returncode == 1 and "has no disposition" in refused.stderr
 
@@ -66,6 +69,9 @@ def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
     done = env.close(item)
     assert done.returncode == 0, done.stdout + done.stderr
     assert len(env.review_calls()) == 3
+    shown = body(env.gh_calls("pr", "edit")[-1])
+    assert dismissed in shown and f"dismissed because {reason}" in shown
+    assert fixed not in shown
     for settled in (dismissed, fixed, reason, "Can guests save?", "Saving requires an account."):
         assert settled in env.prompt(), settled
 
