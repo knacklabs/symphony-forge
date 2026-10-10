@@ -726,6 +726,11 @@ trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
+Before `forge work` can start a worker, resolve any unfinished merge in the item's checkout
+and commit the merge, then rerun `forge work <item>`. Work refuses before changing its start
+record or the index, so both conflicted and resolved but uncommitted merges stay intact.
+New repos get this guidance at init; existing repos get it after upgrading and running sync.
+
 Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff
 and any question. Forge sets these for each thread, including resumed threads; neither
