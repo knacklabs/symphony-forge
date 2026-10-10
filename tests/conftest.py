@@ -325,6 +325,13 @@ elif args == ["plugin", "list", "--json"]:
 
 
 @pytest.fixture
+def claude_session(repo: Repo, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex workers use their kit while the other tool coordinates the session."""
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")
+
+
+@pytest.fixture
 def gh(repo: Repo) -> StubGh:
     return StubGh(repo.bin)
 
