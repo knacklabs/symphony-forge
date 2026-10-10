@@ -170,6 +170,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                   "dismissals": [{"finding": 3, "because": "Already handled"}]}
         state(folder / f".factory/fixes/{item}.json", review=review)
         prs = [pull(7, f"fix/{item}", "CANCELLED")]
+        prs[0]["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
         checks = prs[0]["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
         checks.append({**checks[0], "databaseId": 123, "name": "tests", "conclusion": "FAILURE"})
         checks.append({**checks[0], "databaseId": 124, "name": "manually cancelled"})
@@ -305,6 +306,9 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
+                if case.startswith("ci"):
+                    pr["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
+                    github(env.gh, [pr])
                 # A connection acknowledges emission, not Forge consuming the event.
                 # Hold the producer until the real board exposes this step; only then
                 # compare snapshots. The test and parent cleanup bound the held run.

@@ -136,7 +136,8 @@ def _machine_prs(top: Path) -> list[Item]:
     return prs
 
 
-def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
+def _checks(pr: Item | None, required: list[str], *, top: Path,
+            branch: str) -> tuple[str, list[Item], list[Item]]:
     if not pr:
         return "unknown", [], []
     try:
@@ -171,6 +172,9 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
               "unknown" if not statuses or "unknown" in statuses or missing or
               contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
+    if status == "fail" and (not pr.get("headRefOid") or pr["headRefOid"] != repo.run(
+            "git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()):
+        return "unknown", [], []
     return status, events, failures
 
 
@@ -292,7 +296,7 @@ def machine_board(top: Path, history: Item | None = None,
         tree = trees.get(branch)
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
-        checks, events, failures = _checks(pr, cfg["checks"])
+        checks, events, failures = _checks(pr, cfg["checks"], top=top, branch=branch)
         plan_text = ""
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
             lines = [f"{title} is finished."]

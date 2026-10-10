@@ -416,6 +416,7 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
     made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
     assert made.returncode == 0, made.stderr
     pr = pull(1, "fix/polish")
+    pr["headRefOid"] = repo.git("rev-parse", "fix/polish")
     nodes = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
     name = "forge-pr-check (macos)" if required else "optional preview"
     nodes.append({**nodes[0], "databaseId": 111371488291, "name": name, "conclusion": conclusion})
@@ -526,6 +527,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     assert {r["id"]: r["pr"]["checks"] for r in first["items"]} == {
         "first": "pass", "second": "pass", "older": "unknown"}
     prs[0] = pull(30, "fix/first", "FAILURE")
+    prs[0]["headRefOid"] = repo.git("rev-parse", "fix/first")
     github(gh, prs)
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:59+00:00")
     assert snapshot(view(repo, "board")) == snapshot(first)
@@ -547,6 +549,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     running = {r["id"]: r for r in view(repo, "board")["items"]}["first"]
     assert running["pr"]["checks"] == "running" and running["occurrences"] == []
     prs[0] = pull(30, "fix/first", "FAILURE", "2026-10-04T10:03:00Z")
+    prs[0]["headRefOid"] = repo.git("rev-parse", "fix/first")
     contexts = prs[0]["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
     contexts["nodes"].append(json.loads(FIXTURE.read_text("utf-8"))["github"]["commit_status"])
     github(gh, prs)

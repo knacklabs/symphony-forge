@@ -10,6 +10,7 @@ import shutil
 import pytest
 
 from conftest import ROOT
+from test_board_status_and_times import _board, _records, _row
 from test_machine_views import github, pull
 from test_setup import _fresh_client, _version
 from test_story import setup, worktree
@@ -63,6 +64,9 @@ def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh,
     matching = repo.forge("next")
     assert "The fix page's checks failed." in matching.stdout
     assert "Next: forge work page" in matching.stdout
+    board, text, _ = _board(repo, tmp_path)
+    assert _row(board, "page")["stage"] == "checks failed"
+    assert "Checks failed" in text
 
     (folder / "page.py").write_text("print('repaired')\n", "utf-8")
     repo.git("add", "page.py", cwd=folder)
@@ -77,7 +81,46 @@ def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh,
     assert "Next: forge work page" not in plain.stdout
     machine = repo.forge("next", "--json")
     assert machine.returncode == 0, machine.stderr
-    assert json.loads(machine.stdout)["next"]["command"] == "forge close page"
+    following = json.loads(machine.stdout)
+    assert following["next"]["command"] == "forge close page"
+    board, text, _ = _board(repo, tmp_path)
+    for data in (board, following):
+        row = _row(data, "page")
+        assert row["stage"] == "waiting for checks"
+        assert row["pr"]["checks"] == "unknown" and not row["pr"]["failures"]
+        assert row["gates"]["ci"]["status"] == "none"
+        assert row["next"]["command"] == "forge close page"
+    assert "Checks failed" not in text
+
+    # A clean close receipt for the repaired commit remains ready even while GitHub
+    # still describes the failed previous push, then when it reports the current pass.
+    receipt = _records(repo, "events.jsonl", []) / "ready"
+    receipt.mkdir(exist_ok=True)
+    (receipt / "page.json").write_text(json.dumps({"review": "clean",
+        "commit": repo.git("rev-parse", "fix/page")}), "utf-8")
+    for checks in ("unknown", "pass"):
+        if checks == "pass":
+            passing = pull(7, "fix/page")
+            passing["headRefOid"] = repo.git("rev-parse", "fix/page")
+            github(gh, [passing])
+            # The earlier calls deliberately retained the cached failed push.
+            (receipt.parent / "checks-cache.json").unlink()
+        board, text, _ = _board(repo, tmp_path)
+        machine = repo.forge("next", "--json")
+        assert machine.returncode == 0, machine.stderr
+        for data in (board, json.loads(machine.stdout)):
+            row = _row(data, "page")
+            assert row["stage"] == "ready" and row["status"] == "Ready to merge"
+            assert row["pr"]["checks"] == checks and not row["pr"]["failures"]
+            assert data["kind_stage_counts"]["fixes"]["ready to merge"] == 1
+            assert any(phrase in row["next"]["line"] for phrase in (
+                "is ready to merge", "ready and waiting for someone to merge"))
+        assert "Ready to merge: 1" in text
+        assert "Checks failed" not in text
+        plain = repo.forge("next")
+        assert plain.returncode == 0, plain.stderr
+        assert any(phrase in plain.stdout for phrase in (
+            "is ready to merge", "ready and waiting for someone to merge"))
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])

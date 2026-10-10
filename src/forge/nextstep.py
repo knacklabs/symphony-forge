@@ -610,10 +610,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     pr = (prs or {}).get(state.get("branch", "")) or {}
-    checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
-    if checks == "fail" and (not pr.get("headRefOid") or pr["headRefOid"] != repo.run(
-            "git", "rev-parse", "--verify", state.get("branch", ""), cwd=top).stdout.strip()):
-        checks = "unknown"
+    checks = board._checks(pr, _report_config(path or top, refusals)["checks"],
+                           top=top, branch=state.get("branch", ""))[0]
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
     if statuses is not None:
