@@ -509,7 +509,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         session = {"id": str(uuid.uuid4()), "checkout": str(top),
                    "start": git("rev-parse", "HEAD", cwd=top), "rounds": rounds}
         codex._record(path, claude=session)
-        codex.remember(top, item)
+        codex.remember(top, item, codex._json(path))
         if before_turn is not None:
             before_turn()
         return _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])

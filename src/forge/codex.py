@@ -190,15 +190,17 @@ def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
             saved.update({key: logged[key] for key in ("conversation", "claude", "head")
                          if logged.get(key)})
             saved["start"] = logged.get("start") or repo.git("rev-parse", "HEAD", cwd=checkout)
-    if kind == "Grill" and not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
-        # Earlier readers cleared their local identities on failure; notes retain the binding.
-        saved.update({key: value for key, value in chat.items() if value})
+    if (chat.get("conversation") or (chat.get("claude") or {}).get("id")) and (
+            chat.get("conversation"), (chat.get("claude") or {}).get("id")) != (
+            saved.get("conversation"), (saved.get("claude") or {}).get("id")):
+        # Another machine may have committed a replacement since this local record was written.
+        saved.update(chat)
     return {**chat, **saved}
 
 
-def remember(checkout: Path, item: str) -> None:
+def remember(checkout: Path, item: str, saved: dict[str, Any] | None = None) -> None:
     """Keep the worker's identity in its existing committed state, before it can start work."""
-    saved = record(checkout, item)
+    saved = record(checkout, item) if saved is None else saved
     state = repo.read_state(item, checkout) or {}
     chat = state.get("chat", {})
     if (chat.get("conversation"), (chat.get("claude") or {}).get("id")) == (
@@ -240,15 +242,14 @@ def preserve_chats(top: Path) -> None:
             owner = trees.get(branch) if branch else next((tree for tree in trees.values()
                                                            if str(tree) == recorded), None)
             added = False
-            if owner is None and folder == "read" and not branch and (
-                    top / "docs/specs" / f"{item}.md").is_file():
-                owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
             if owner is None and folder == "read" and not branch:
+                rel = f"docs/specs/{item}.md"
+                landed = story.show(top, repo.default_branch(top), rel)
                 matches = [name for name, tree in trees.items()
-                           if (tree / "docs/specs" / f"{item}.md").is_file()]
+                           if (tree / rel).is_file() and sync.read(tree / rel) != landed]
                 matches += [name for name in sorted(refs - trees.keys())
                             if name.startswith(("fix/", "forge/", "story/", "task/"))
-                            and story.show(top, name, f"docs/specs/{item}.md") is not None]
+                            and (text := story.show(top, name, rel)) is not None and text != landed]
                 if len(matches) > 1:
                     repo.refuse(REFUSALS["chat_owner"], item=item)
                 branch = matches[0] if matches else ""
@@ -257,6 +258,9 @@ def preserve_chats(top: Path) -> None:
                 owner = Path(temporary) / "item"
                 repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
                 added = True
+            if owner is None and folder == "read" and not branch and (
+                    top / "docs/specs" / f"{item}.md").is_file():
+                owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
             if owner is None:
                 continue
             try:
@@ -525,7 +529,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                             approval=approval, pending=pending, **ended,
                             **({"start": begun} if not said["continued"] else {}))
                     if kind in ("Build", "Fix", "Lite"):
-                        remember(checkout, item)
+                        remember(checkout, item, _json(record))
                     if on_thread is not None:
                         on_thread(said["thread"])
                     recorded()
