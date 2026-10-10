@@ -39,24 +39,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "986d6835d4b2529ac10b02ac1dd38efd9266fe699299a378594759b65ef6fd84",
-    "changed": "9ec7ffbda7619a78f703b04c935761905eff919ad7bdf44888bd6ac98c86a798",
-    "commit": "e48a0835278e7cc84ce6ed0674e1457ce06a54ae",
+    "branch_diff": "aa9d5a2a21fc817982d4903e8f9c279d24256af02aa6b61eef023291bc2d7023",
+    "changed": "0ff8165f3cef901b3c90a0cc9836efe4e46c45f4e22c2839b70f6ebd7c7e834c",
+    "commit": "98634e8073ce6d56783125922617e7f42fe45177",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate. The prior dismissal examined the source template, but this selected diff also changes queued-check, runner-diagnosis and CI-wait instructions in both checked-in host guides. Those instructions address a separate problem from the Claude model defaults named by the one-kind allowance, so that allowance does not cover the whole change.",
-        "file": ".claude/skills/forge/SKILL.md",
-        "line": 82,
-        "priority": "P1",
-        "title": "Recorded allowance does not match the whole change"
-      }
-    ],
-    "id": "3028150e-5e34-462c-bc66-9a5adffd14c9",
-    "status": "blocked"
+    "findings": [],
+    "id": "6ffd59ea-846b-47da-bb2e-78c049ce7e7b",
+    "status": "clean"
   },
   "round": 9,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
@@ -96,6 +88,10 @@
     },
     {
       "at": "2026-10-10T07:06:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:41:17+00:00",
       "step": "review"
     }
   ],
