@@ -764,6 +764,13 @@ story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
 
+**Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
+answers and fixed or dismissed findings, including the coordinator's recorded work notes.
+Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
+they cannot block or start another round. A new defect needs distinct text and new evidence.
+Human acceptance still expires when the accepted version changes. New repos get this on init;
+existing repos, including earlier adopted ones, get it on upgrade and sync.
+
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
 - A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
