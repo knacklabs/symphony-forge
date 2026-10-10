@@ -70,8 +70,8 @@ def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
     assert done.returncode == 0, done.stdout + done.stderr
     assert len(env.review_calls()) == 3
     shown = body(env.gh_calls("pr", "edit")[-1])
-    assert dismissed in shown and f"dismissed because {reason}" in shown
-    assert fixed not in shown
+    assert f"- Finding 1 (P1): {dismissed} (app.py:1): dismissed because {reason}" in shown
+    assert not any(line.startswith("- Finding ") and fixed in line for line in shown.splitlines())
     for settled in (dismissed, fixed, reason, "Can guests save?", "Saving requires an account."):
         assert settled in env.prompt(), settled
 
