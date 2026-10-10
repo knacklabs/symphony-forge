@@ -4498,6 +4498,17 @@
       "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Active worker sessions miss the brief update after sync\tworker-no-idle-choice",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 10,
+      "text": "Not done: Active worker sessions miss the brief update after sync",
+      "from": "blocking",
+      "item": "worker-no-idle-choice",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

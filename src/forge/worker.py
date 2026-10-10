@@ -26,7 +26,9 @@ SERIOUS = ("P0", "P1")
 REVIEW_LOOP = (
     "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
     "whatever files they were in. The existing same-file stop still applies from the third round. "
-    "Wait for the coordinator to record the human's narrow, split or accept choice before continuing.")
+    "Wait for a recorded choice only after close has stopped the review loop. "
+    "Otherwise, fix the findings in this round, including new findings after a recorded "
+    "narrow or split; do not ask for another choice unless close stops the loop again.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
