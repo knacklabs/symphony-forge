@@ -514,6 +514,10 @@ def sync(args: argparse.Namespace) -> None:
             changed.append("docs/commands.md")
     for rel in changed:
         print(f"Wrote {rel}")
+    if (cfg["repo"] == "client" and cfg["codex_fast"] == "needed"
+            and ".codex/skills/forge/SKILL.md" in changed):
+        print("Codex Fast is now on when it matters: when other planned work waits "
+              "or after the first repair round.")
     if install_shims(top, cfg):
         print("Installed the git hooks that check each commit and push.")
     elif not changed:

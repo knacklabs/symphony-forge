@@ -256,6 +256,20 @@ def require_trust(top: Path) -> None:
         repo.refuse(REFUSALS["untrusted"])
 
 
+def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
+    if cfg["codex_fast"] != "needed":
+        return cfg["codex_fast"] == "always"
+    if kind not in ("Build", "Fix", "Lite"):
+        return False
+    if (repo.read_state(item, top) or {}).get("round", 0) > 1:
+        return True
+    from forge import board
+
+    return any(item in part["waits_for"] and part["status"] != "Merged"
+               for plan in board.machine_board(top)["dependency_maps"]
+               for part in plan["parts"])
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
@@ -296,6 +310,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
                "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+    if not (read or archive_thread or attach_request):
+        request["fast"] = fast_needed(checkout, item, kind, config)
     if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
         request["config"]["features.multi_agent"] = True
     if attach_request is not None:
