@@ -1629,6 +1629,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tHuman-merge PRs without a local worktree name the wrong merger\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 640,
+      "text": "Human-merge PRs without a local worktree name the wrong merger",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: Developer assignments must be discoverable and current in teammate checkouts\tstart-is-claim",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -1814,6 +1825,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
@@ -2047,6 +2069,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: item time is not split into working, waiting and unknown seconds\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 241,
+      "text": "Not done: item time is not split into working, waiting and unknown seconds",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: keep gaps in legacy timing history unknown\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -2113,6 +2146,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: story runway omits unknown time after the last recorded span\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 471,
+      "text": "Not done: story runway omits unknown time after the last recorded span",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/upgrade.py\tStandard: data is protected against loss\tupgrade-stale-fix",
       "kind": "bug",
       "path": "src/forge/upgrade.py",
@@ -2120,6 +2164,17 @@
       "text": "Standard: data is protected against loss",
       "from": "blocking",
       "item": "upgrade-stale-fix",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tA pre-PR worker question now requires a working GitHub connection\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 265,
+      "text": "A pre-PR worker question now requires a working GitHub connection",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
       "status": "open",
       "closed_by": null
     },
@@ -4540,17 +4595,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 256,
-      "text": "New cold-read notes can be lost when a settled note repeats",
-      "from": "blocking",
-      "item": "settled-stays-settled",
       "status": "open",
       "closed_by": null
     }

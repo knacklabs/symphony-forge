@@ -1,11 +1,59 @@
 {
   "branch": "task/FORGE-BOARD-2-RECORD",
+  "flagged": [
+    "src/forge/nextstep.py",
+    "src/forge/time_records.py",
+    "src/forge/worker.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e3605001186ec58051d972ccc532c1eb2ca36489de400daf020e3cdd187826e",
+    "changed": "c3fbd3e77453522e5c1cbc54acb727a751a87ac93fdac7135682d2a1d9b15f3c",
+    "commit": "bf61c3c4f72282a7e28051c3b147bcd330032146",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. The board copies the merged record's category totals and intervals into each item, but never returns working, waiting or unknown second totals. In time_records.item, unknown intervals are explicitly skipped when totals are accumulated. A teammate can see an unknown interval in `forge board --json` but cannot see its required number of unknown seconds; the named test compares the same incomplete fields on both machines.",
+        "file": "src/forge/time_records.py",
+        "line": 241,
+        "priority": "P1",
+        "title": "Not done: item time is not split into working, waiting and unknown seconds"
+      },
+      {
+        "body": "Raise: Not done. `story()` derives its bounds only from part intervals and read rounds. An approved story with no part started has no interval from its last plan read to the present, so its runway ends at the read and omits that elapsed unknown time. For an older read note without recorded seconds, the code also creates a zero-length unknown span. This is a normal approved-but-not-started story, which item 5 requires to have an honest runway.",
+        "file": "src/forge/time_records.py",
+        "line": 471,
+        "priority": "P1",
+        "title": "Not done: story runway omits unknown time after the last recorded span"
+      },
+      {
+        "body": "Raise: Functional. The new no-worktree branch always says the starter merges from their worktree. In a `merge = \"human\"` repo, a teammate viewing a ready PR without its worktree should be told to merge it on GitHub; no starter worktree is needed. This is the previously identified human-merge case, now evidenced by the implemented unconditional branch, and it gives the owner the wrong next action on the board.",
+        "file": "src/forge/nextstep.py",
+        "line": 640,
+        "priority": "P1",
+        "title": "Human-merge PRs without a local worktree name the wrong merger"
+      },
+      {
+        "body": "Raise: Functional. When a worker asks a question, this new call invokes `close._refresh_record` even before the item has a PR. That function calls `_pull_request`, whose `gh pr list` failure raises instead of leaving the question local. A worker operating during a GitHub outage therefore fails after recording its question, although the specified pre-PR path is local. The same unnecessary lookup occurs for a pre-PR `--note` answer.",
+        "file": "src/forge/worker.py",
+        "line": 265,
+        "priority": "P1",
+        "title": "A pre-PR worker question now requires a working GitHub connection"
+      }
+    ],
+    "id": "8f7f9a0d-d446-44a3-a336-3651744e2fb6",
+    "status": "blocked"
+  },
   "round": 4,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T20:13:52.145955+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
