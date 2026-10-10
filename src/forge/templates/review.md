@@ -8,6 +8,8 @@ AGENTS.md has them. -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
 $delivers
 
+Recorded allowance: $allowance
+
 ## Scope
 This part may change only these paths:
 $scope
@@ -209,14 +211,16 @@ read and, for an edge case, the realistic scenario. No speculative suggestions: 
 not what might be nicer.
 Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the story's doc and its
 read notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
-The previous review's findings and dismissals are below; recheck them against this branch and
-report any still-open gap alongside new ones:
+All earlier reviews' findings and dismissals are below, including findings fixed in later
+rounds; recheck them against this branch for still-open gaps and report those alongside new ones:
 $previous
 
 The coordinator's rulings and dismissals on this branch so far, with their reasons:
 $rulings
 Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
-weigh, and name that evidence in the finding's body.
+weigh, and name that evidence in the finding's body and a distinct title. Settled findings stay
+settled: Forge ignores a finding with the same title and file as a fixed or dismissed finding,
+even if its line or evidence changes. Human acceptance covers only the accepted version.
 
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.

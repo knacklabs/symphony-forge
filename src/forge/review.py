@@ -213,10 +213,15 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
     changed = repo.git("diff", "--name-only", f"{base}...HEAD", cwd=top).splitlines()
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
+    history = _history(top, item, base, previous)
+    settled = _settled(history)
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "allowance": state.get("allow_large") or "No recorded allowance",
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous), "rulings": _rulings(top, item, base),
+              "previous": ("\n\n".join(_previous(result) for result in history) or "- none")
+                          + "\n\nSettled findings:\n" + _bullets(
+                              f"{title} ({file}): {reason}" for (file, title), reason in settled.items()),
+              "rulings": _rulings(top, base, history),
               "test_run": tested,
               "proof_list": commit_paragraph(top, base, "Proof list:") or "missing"}
     if "/" in item:
@@ -386,16 +391,15 @@ def _previous(result: dict[str, Any]) -> str:
         for n, finding in enumerate(findings, 1)) or "- none"
 
 
-def _rulings(top: Path, item: str, base: str) -> str:
+def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
     """Every `Ruling:` line in the branch's commit messages, then evidence-based dismissals with
     their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
     commits = list(reversed(repo.commit_log(top, base)))
     found = [line.strip() for _, message, _ in commits
              for line in message.splitlines() if line.startswith("Ruling:")]
-    path = repo.state_path(item)
-    for sha in repo.git("rev-list", "--reverse", f"{base}..HEAD", "--", path,
-                        cwd=top).split():
-        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+    found += [part.strip() for _, message, _ in commits
+              for part in re.findall(r"^Coordinator note:.*\Z", message, re.M | re.S)]
+    for result in history:
         for dismissal in result.get("dismissals", []):
             if dismissal.get("accepted"):
                 continue  # Human acceptance expires before a subsequent review.
@@ -405,6 +409,39 @@ def _rulings(top: Path, item: str, base: str) -> str:
             if line not in found:
                 found.append(line)
     return _bullets(found)
+
+
+def _history(top: Path, item: str, base: str, previous: dict[str, Any]) -> list[dict[str, Any]]:
+    """Git owns earlier reviews; later dismissals replace that round's original result."""
+    path = repo.state_path(item)
+    rounds = {}
+    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..HEAD", "--", path,
+                        cwd=top).split():
+        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        if result.get("commit"):
+            rounds[result["commit"]] = result
+    if previous.get("commit"):
+        rounds[previous["commit"]] = previous
+    return list(rounds.values())
+
+
+def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
+    settled = {}
+    earlier = set()
+    for result in history:
+        current = {(f["file"], f["title"]) for f in result.get("findings", [])}
+        for key in earlier - current:
+            settled.setdefault(key, "fixed: absent from a later review")
+        accepted = set()
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            key = (finding["file"], finding["title"])
+            if dismissal.get("accepted"):
+                accepted.add(key)
+            else:
+                settled[key] = "dismissed because " + dismissal["because"]
+        earlier = (earlier | current) - accepted
+    return settled
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
@@ -567,14 +604,21 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
+    settled = _settled(_history(top, item, base, previous))
+    findings = [finding for finding in findings
+                if not settled.get((finding["file"], finding["title"]), "").startswith("fixed:")]
+    dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because ")}
+                  for number, finding in enumerate(findings, 1)
+                  if (reason := settled.get((finding["file"], finding["title"]), "")).startswith(
+                      "dismissed because ")]
+    result = {"findings": findings, "dismissals": dismissals,
+              "blocking_level": "P0" if light else "P1"}
     identity = repo.record_event(top, item, "review result", commit=head,
                                  review_round=round_number(top, item, state),
-                                 outcome="blocked" if any(f["priority"] in
-                                 (("P0",) if light else SERIOUS) for f in findings) else "clean",
+                                 outcome="blocked" if blocking(result) else "clean",
                                  findings=[{key: finding[key] for key in ("title", "priority", "file")}
                                            for finding in findings])
-    return {"id": identity, "commit": head, "findings": findings,
-            "dismissals": [], "blocking_level": "P0" if light else "P1",
+    return {"id": identity, "commit": head, **result,
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 
