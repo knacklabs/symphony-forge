@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/settings.json\tAllowance does not match the version-only change\trelease-129",
+      "kind": "bug",
+      "path": ".claude/settings.json",
+      "line": 8,
+      "text": "Allowance does not match the version-only change",
+      "from": "blocking",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
       "kind": "bug",
       "path": ".factory/fixes/board-spec.json",
@@ -459,6 +470,17 @@
       "text": "Preserve commit-status timestamps when adapting the GraphQL rollup",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tStandard: Each commit leaves the build working\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 629,
+      "text": "Standard: Each commit leaves the build working",
+      "from": "blocking",
+      "item": "board-data-truth",
       "status": "open",
       "closed_by": null
     },
@@ -2399,6 +2421,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-129",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "tests/test_review_record_reuses_parent_tests.py",
@@ -3686,6 +3719,28 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.claude/settings.json\tGenerated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
+      "kind": "improve",
+      "path": ".claude/settings.json",
+      "line": 8,
+      "text": "Generated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
+      "from": "worker",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.claude/skills/forge/SKILL.md\tBoth generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 167,
+      "text": "Both generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
+      "from": "worker",
+      "item": "release-129",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
       "kind": "improve",
       "path": ".codex/skills/forge/SKILL.md",
@@ -3759,50 +3814,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.claude/settings.json\tAllowance does not match the version-only change\trelease-129",
-      "kind": "bug",
-      "path": ".claude/settings.json",
-      "line": 8,
-      "text": "Allowance does not match the version-only change",
-      "from": "blocking",
-      "item": "release-129",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-129",
-      "kind": "bug",
-      "path": "tests/test_release_version.py",
-      "line": 12,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "release-129",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.claude/settings.json\tGenerated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
-      "kind": "improve",
-      "path": ".claude/settings.json",
-      "line": 8,
-      "text": "Generated host hooks still omit the project-directory handling already present in the source template; both host configurations retain that unrelated drift.",
-      "from": "worker",
-      "item": "release-129",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.claude/skills/forge/SKILL.md\tBoth generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
-      "kind": "improve",
-      "path": ".claude/skills/forge/SKILL.md",
-      "line": 167,
-      "text": "Both generated coordinator guides lag source-template guidance; their unrelated drift remains outside this release bump.",
-      "from": "worker",
-      "item": "release-129",
       "status": "open",
       "closed_by": null
     }

@@ -10,27 +10,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3d67175870062b651638f88f3bd9e9878255ec742f714570c6360a769e598d77",
-    "changed": "00f0aacfa2bd765ffb1745d1d2de11533a670b912244521527e11a3487a84a32",
-    "commit": "6f6401fed165468371d29dbdfb857c5c8d417649",
+    "branch_diff": "4ef1ee9ae9acfa5167454ae61d52f313ac87c002ff36c8c183547f2bdd60ed75",
+    "changed": "e095f2b92d7f45dfe3db04ebc7892a1a09aaf71e4624278936a401163a8fac22",
+    "commit": "429f69ca55991857f133ffbae3c3af0f8e8296a0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. An upgraded 1.2.2 client can show recently worked items as stalled for days. The idle clock now uses events and saved steps, ignoring both recorded timings and recent branch commits. New evidence from the shipped earlier-release implementation shows why this matters: tests/fixtures/forge-v1.2.2/src/forge/worker.py:115\u2013118 changes the worker status without adding a dated step, and its repo.py:117\u2013126 records timings without run events. Start an item four days ago, complete another worker round five minutes ago on 1.2.2, then upgrade: this derivation reports four days idle despite the recent work. Parent stories inherit the same incorrect clock. The named adoption tests seed current-format events and do not exercise this legacy case.",
+        "body": "Raise: Gate. The standard requires that \u201ceach commit leaves the build working, so any commit can be reverted alone.\u201d The configured full-suite command still collects tests incompatible with this change. In tests/test_machine_views_recent_finished_items.py:196\u2013198, the comparison excludes stage_counts but retains the new kind_stage_counts, which changes when the fixture adds twelve completed stories and fixes. Its expected maps at lines 205\u2013209 also require an unstarted part inside each completed story, whereas board.py:580 now correctly marks those parts merged. Separately, tests/test_live_status.py:154 requires idle_since to equal the last event timestamp; with that test's frozen clock, the new timing-end calculation at board.py:263\u2013266 produces a later timestamp from the worker's positive recorded duration. Update these retained tests to assert the new contracts while preserving their history, retention and idle checks. Neither file was included in the supplied 77-case run.",
         "file": "src/forge/board.py",
-        "line": 363,
+        "line": 629,
         "priority": "P1",
-        "title": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation"
-      },
-      {
-        "body": "Raise: Functional. During a normal first forge close after forge work finishes, the saved status remains working while the close command runs tests. src/forge/review.py:288 records an active test run, and src/forge/close.py:187 runs those tests before publishing the reviewing status. This condition now treats any active run as evidence that the worker is still running, so forge next says \u201cA worker is building\u2026\u201d even though the worker has ended and the board JSON has worker=null with test activity. The fallback must distinguish test activity from a live worker; the existing nested worker/test test does not cover tests running after the worker exits.",
-        "file": "src/forge/nextstep.py",
-        "line": 635,
-        "priority": "P1",
-        "title": "Do not report an exited worker as building while tests run"
+        "title": "Standard: Each commit leaves the build working"
       }
     ],
-    "id": "1538e7a0-6f12-43c8-8ccf-4427101fef01",
+    "id": "45946aaf-3d1c-4056-a949-771faf5c3313",
     "status": "blocked"
   },
   "round": 8,
@@ -70,6 +63,10 @@
     },
     {
       "at": "2026-10-10T03:03:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:02:13+00:00",
       "step": "review"
     }
   ],
