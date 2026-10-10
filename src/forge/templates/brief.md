@@ -59,6 +59,9 @@ $what
 
 $why
 
+The plan's Why carries the problem. A linked spec is optional; build the approved story without
+adding a separate spec, spec read, confirmation or roadmap fix.
+
 ### Done when
 
 $done

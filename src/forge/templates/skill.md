@@ -454,7 +454,7 @@ your recommendation first. Add a one-line `Why I ask:` to each question until th
 they know why. Ask at most two questions for a fix and eight for a story, then write what is
 still unanswered as `unknown`.
 
-**A new project.** On a new project, or an ask no confirmed spec covers, run this discovery
+**A new project.** On a new project, run this discovery
 with the story limit. Before the first meeting, draft a one-page pre-meeting brief in
 `docs/context/` from the prospect's website: their likely jobs, two or three guessed problem cards
 each marked `(guess)`, their terms, and the first five questions to ask. During discovery, keep
@@ -471,7 +471,8 @@ source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off pers
 adding the section to an older file on first use: `### <short problem title>`, then Job,
 Workaround, Cost, Who feels it, How often and Evidence. Write customer notes in `docs/context/`
 into cards and leave the notes where they are. Name the chosen card's heading in the brief's
-Summary and the spec's Why. Costs use rounded rates, never real salaries.
+Summary and the story's Why (or the spec's Why when using a spec). Costs use rounded rates,
+never real salaries.
 
 **Options.** For the chosen problem, offer two to four options, always with `Don't build` and
 `Smallest slice`, plus `Use what they have` (a setting, report or process change in tools they
@@ -479,7 +480,7 @@ already run) whenever one could do the job. Give each option that builds somethi
 `forge spec payback` line, and recommend the one with the fewest months among those answering
 build or smallest slice first; a tie goes to the smaller build. If none does, recommend don't
 build, or find out first when an option's value can't be estimated. The human chooses; write the
-choice and one line of why into the spec's Behaviour.
+choice and one line of why into the story's Why, or the spec's Behaviour when using a spec.
 
 ## Prototype
 
@@ -687,6 +688,13 @@ fix's folder:
 
 ## Planning a story
 
+Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
+its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
+Write the problem, today's workaround and its cost in the plan's Why; the title seeds that
+section. Run the story's one cold-read loop, then get its one approval. A story already linked
+to a confirmed spec keeps that link and follows the same story read and approval as before.
+New repos get this guide at init; existing repos get it after upgrading Forge and running sync.
+
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
 there are no findings, ignoring other note lines. A numbered or bulleted real finding still
@@ -706,9 +714,10 @@ checks only the edit and the sections it touches.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
-- Done when: a few results the client or their user can observe, each tracing to the spec's
-  behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
-  code names, file paths or test names. "Code exists" is not a result.
+- Done when: a few results the client or their user can observe, each answering the plan's Why
+  and, when linked to a spec, tracing to its behaviour or success measure. Each item is one bold
+  plain sentence and nothing more, with no code names, file paths or test names. "Code exists"
+  is not a result.
 - Each item's evidence, edge cases and the test or check that proves it go under the same number in
   `### Done-when details`, the first section under `## For the builders`. Workers and reviewers
   get the entries of the items their task covers. An item with nothing to add has no entry.
@@ -717,7 +726,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - Put Risks right after Done when, then the `## For the builders` heading, so the owner's
   sections come first and everything for the agents sits below.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
-  its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
+  its Tests. A task that covers nothing is cut; work wanted later goes to Notes, or the linked
+  spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each.
@@ -736,7 +746,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 
 **The roadmap.** Order stories by value, not by layer. The first story is the smallest slice, end
 to end and usable by the client; it brings only the setup, sign-in and data it needs. No
-setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
+setup-only, platform or "foundation" stories. Cut a story that answers no problem in its Why;
+when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close

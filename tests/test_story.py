@@ -178,10 +178,7 @@ def test_1_what_changes_first(repo):
 
 def test_11_story_doc_shape(repo):
     setup(repo)
-    refused = repo.forge("story", "new", "NOPE", "Not planned")
-    assert refused.returncode == 1
-    assert refused.stderr == ("NOPE is not on the roadmap (plans/roadmap.json).\n"
-                              "Next: forge roadmap add <spec>\n")
+    # Story creation now adds missing roadmap entries; document validation stays the same.
 
     shop = new_story(repo, "SHOP")
     malformed = {

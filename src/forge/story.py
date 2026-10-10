@@ -42,7 +42,6 @@ from forge import codex, machine, repo, task, worker
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
                 'forge story new <KEY> "<title>"'),
-    "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).", "forge roadmap add <spec>"),
     "no_title": ("A new story needs a plain-English title.", 'forge story new {key} "<title>"'),
     "no_fix": ("There is no fix named {fix} in a worktree here.", "forge next"),
     "no_story": ("There is no story {key} here.", 'forge story new {key} "<title>"'),
@@ -125,17 +124,17 @@ def new(args: Any) -> int:
         scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
                  if not path.startswith(".factory/")]
         row = f"| SPEC | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
-    elif key not in {item["key"] for item in repo.roadmap(top)}:
-        repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")
     if not title:
         repo.refuse(REFUSALS["no_title"], key=key)
+    if not fix:
+        why = title
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
     _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
     changed = [doc]
-    if fix and key not in {item["key"] for item in repo.roadmap(path)}:
+    if key not in {item["key"] for item in repo.roadmap(path)}:
         changed += add_to_roadmap(path, [{"key": key, "title": title}])
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))

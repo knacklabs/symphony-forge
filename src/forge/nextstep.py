@@ -339,7 +339,7 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
 
 
 def _idle(top: Path) -> list[str]:
-    """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
+    """Nothing in progress: discover a problem, then plan its story; specs are optional."""
     ref = story.landed_ref(top)
     items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
     if isinstance(items, list) and any(
@@ -350,10 +350,8 @@ def _idle(top: Path) -> list[str]:
     fields = CARD_FIELD.findall(story.show(top, ref, DISCOVERY) or "")
     if any(value.strip().lower() not in ("", "unknown") for value in fields):
         return ["No story or fix is in progress and the roadmap is empty; the discovery notes hold "
-                "a problem card, so write its spec.",
-                'Next: forge fix start "Write the spec for the chosen problem" --done "A confirmed '
-                'spec whose Why names the problem card"',
-                "Next: forge spec save <slug>"]
+                "a problem card, so plan its story with the problem in Why.",
+                'Next: forge story new <KEY> "<title>"']
     return ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
             "the Forge skill's Discovery section says.",
             'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '

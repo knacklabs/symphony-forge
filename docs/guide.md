@@ -88,8 +88,8 @@ the customer's named person for sign-off.
 The customer's named person approves the demo and the quoted answers; fill in their reply and run
 `forge decision accept` again to record it.
 
-Only after accepted client sign-off, add confirmed specs to the roadmap with `forge roadmap add`
-and create stories with `forge story new`. This includes stories promoted from fixes. In a client
+Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
+use `forge roadmap add` when planning from a confirmed spec. This includes stories promoted from fixes. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
@@ -105,9 +105,12 @@ You never run the hook commands yourself: git, the host hooks and CI call them.
 
 In a client repo, finish the prototype review and customer sign-off above before starting here.
 
-1. Add the story to the roadmap from its confirmed spec with `forge roadmap add <spec>`.
+1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
+   add its stories with `forge roadmap add <spec>` as before.
 2. `forge story new <KEY> "<title>"` makes the story's branch, worktree and doc. The doc says what
    changes for the client, why, when it's done, the tasks, any new moving parts and the risks.
+   Its own branch adds a missing roadmap entry. The title seeds Why; write the problem,
+   today's workaround and its cost there, without a separate spec read or confirmation.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.
