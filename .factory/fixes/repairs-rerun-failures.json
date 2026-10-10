@@ -3,12 +3,14 @@
   "branch": "fix/repairs-rerun-failures",
   "done_when": "After a failed check or test, close's next round runs first the tests that failed, and runs no test again whose files are unchanged since its last pass; CI on the pull request still runs the full suite. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-10T15:16:51+00:00",
       "step": "start"
     }
   ],
-  "why": "A repair round reruns everything even when one test failed"
+  "why": "A repair round reruns everything even when one test failed",
+  "worker": "codex"
 }
