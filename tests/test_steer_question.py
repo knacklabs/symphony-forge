@@ -41,7 +41,7 @@ def _resumable_question(repo, monkeypatch, sdk_data):
 
 @pytest.mark.parametrize("scenario", ("fresh", "resume", "interrupt"))
 def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_data, gh,
-                                                         scenario):
+                                                         scenario, claude_session):
     if scenario == "resume":
         _answer_continues_the_same_conversation(repo, monkeypatch, sdk_data)
         return

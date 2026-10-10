@@ -202,7 +202,7 @@ def _left(work_log: Path, calls: Path) -> bool:
     return _running(int(pid), [call for call in _stub(calls) if "pid" in call][-1]["started"])
 
 
-def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path):
+def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     # Output to a Windows pipe starts in its legacy code page; here on every OS. Forge's output,
     # the names' "·" included, must still reach its reader as UTF-8.
@@ -263,7 +263,7 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert "Why: Fix the login typo" in _sent(calls, "turn/start")[-1]["input"][0]["text"]
 
 
-def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path):
+def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
@@ -296,7 +296,7 @@ def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path):
     assert len(_stub(calls)) == before
 
 
-def test_3_models_per_kind(repo, monkeypatch, sdk_data):
+def test_3_models_per_kind(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     version = repo.forge("--version").stdout.split()[-1]
     toml = folder / "forge.toml"
@@ -344,6 +344,8 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     claude = install_claude(repo)
     toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus", "effort": "high"}}),
                    encoding="utf-8")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
     sent = claude_calls(claude)
@@ -355,7 +357,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
         assert SOL["subagent_effort"] not in call["args"]
 
 
-def test_4_turn_log(repo, monkeypatch, sdk_data):
+def test_4_turn_log(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     turns = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
     work_log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"

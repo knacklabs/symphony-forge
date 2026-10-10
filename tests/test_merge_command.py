@@ -311,12 +311,13 @@ def _check_locked_worktree(env):
 @pytest.mark.parametrize("scenario", ("dirty", "local_commit", "locked_worktree",
                                      "record_without_turn"))
 def test_5_merge_cleans_up_and_preserves_local_work(
-        env, sdk_data, tmp_path, monkeypatch, scenario):
+        env, sdk_data, tmp_path, monkeypatch, scenario, request):
     if scenario == "dirty":
         _check_dirty_merge(env, sdk_data, tmp_path, monkeypatch)
     elif scenario == "local_commit":
         _check_later_local_commit(env)
     elif scenario == "record_without_turn":
+        request.getfixturevalue("claude_session")
         _check_record_without_turn(env, sdk_data, tmp_path, monkeypatch)
     else:
         _check_locked_worktree(env)

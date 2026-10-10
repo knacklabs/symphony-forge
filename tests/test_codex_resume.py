@@ -202,7 +202,7 @@ def _holding(repo, turns: Path) -> tuple[subprocess.Popen, dict]:
 
 
 @pytest.mark.parametrize("reason", ["context", "no-record", "missing-rollout", "moved", "rewritten"])
-def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data, reason):
+def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data, reason, claude_session):
     # One criterion owner, with independent cases so serial rounds do not share a timeout.
     if reason == "context":
         _continued_context(repo, monkeypatch, sdk_data)
@@ -361,7 +361,7 @@ def _fresh_conversation(repo, monkeypatch, sdk_data, reason):
         held["conversation"], True)
 
 
-def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
+def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data, claude_session):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
 
@@ -496,7 +496,7 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
 # Each recovery rule owns a timeout budget; serial SDK starts must not share one.
 @pytest.mark.parametrize("case", ["reported_end", "missing_turn", "unlogged_turn",
                                  "missing_conversation"])
-def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_data, case):
+def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_data, case, claude_session):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     store = repo.bin / "threads.json"
     lock = turns.with_suffix(".lock")

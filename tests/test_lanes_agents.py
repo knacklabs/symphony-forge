@@ -29,8 +29,7 @@ def lane_adapter(env, tmp_path, monkeypatch, request, sdk_data):
     if family == "codex":
         monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
         monkeypatch.setenv("CODEX_BIN", str(env.repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
-        monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
-        monkeypatch.setenv("CLAUDECODE", "1")
+        request.getfixturevalue("claude_session")
         home = tmp_path / "codex-home"
         home.mkdir()
         (home / "config.toml").write_text("\n".join(

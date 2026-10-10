@@ -422,6 +422,7 @@ TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_ch
                          else case.__name__.strip("_"))
 def test_2_fix_rounds_stop_after_three(request, monkeypatch, case):
     if case is _codex_question_stops:
+        request.getfixturevalue("claude_session")
         case(request.getfixturevalue("repo"), monkeypatch, request.getfixturevalue("sdk_data"),
              request.getfixturevalue("gh"))
     elif isinstance(case, tuple):
