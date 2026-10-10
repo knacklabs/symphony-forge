@@ -18,6 +18,7 @@ STORY = "FIX-READ-NO-FINDINGS"
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 @pytest.mark.parametrize("reply, clean", [
     ("6. No findings.\n\nTests were not run (read-only review).", True),
+    ("1. No findings.\nTests were not run; runtime behaviour remains unverified.", True),
     ("6. No issues detected.", True),
     ("6. There are no findings.", True),
     ("6. No bugs found.", True),
