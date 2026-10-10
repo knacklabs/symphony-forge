@@ -258,9 +258,13 @@ def read(args: Any) -> int:
                        r"(?:finding|issue|problem|bug|defect)s?"
                        r"(?: (?:found|reported|identified|detected|to report))?")
     note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
-                      r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)
+                      r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?"
+                      r"(?:\s*[;,—–-]\s*.*)?", re.I)
     clean = any(empty.fullmatch(line) for line in lines) and all(
         empty.fullmatch(line) or note.fullmatch(line) for line in lines)
+    # Only unnumbered notes may carry a trailing clause.
+    clean = clean and not re.search(r"^[ \t]*\d+[.)]\s+" + note.pattern + r"\s*[;,—–-]",
+                                   said, flags=re.M | re.I)
     if clean:
         # Keep one canonical passing reply so every downstream gate sees the same result.
         said = "No findings."
