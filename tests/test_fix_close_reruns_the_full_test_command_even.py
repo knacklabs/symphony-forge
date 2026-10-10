@@ -1,5 +1,5 @@
 """forge close skips a test command that already passed on the same committed tree on this
-machine, and only one close on a machine runs the test command at a time."""
+machine, and a one-slot machine runs only one close test command at a time."""
 from __future__ import annotations
 
 import subprocess
@@ -76,8 +76,8 @@ def _close(env, item: str) -> subprocess.Popen[str]:
                             stdin=subprocess.DEVNULL, text=True, encoding="utf-8")
 
 
-def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
-    # Four cores give this serial-lane test one place; larger machines admit more.
+def test_3_one_slot_machine_runs_only_one_close_test_command_at_a_time(env):
+    # Four usable cores give one slot; larger-machine capacity has its own command test.
     machine_cores(env.repo, 4)
     log = _with_test_command(env)
     (env.tmp / "gated").touch()

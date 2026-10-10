@@ -264,11 +264,15 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
-@pytest.fixture
-def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
+@pytest.fixture(autouse=True)
+def isolated_git_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.
         if name.startswith("GIT_"):
             monkeypatch.delenv(name)
+
+
+@pytest.fixture
+def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
     monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
     gitconfig = tmp_path / "gitconfig"

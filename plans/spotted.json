@@ -4333,6 +4333,193 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tDerive task titles from the current published story plan\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 531,
+      "text": "Derive task titles from the current published story plan",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 333,
+      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 423,
+      "text": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories\u0303",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: impeccable pass\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1144,
+      "text": "Not done: impeccable pass",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: required tests check\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1001,
+      "text": "Not done: required tests check",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tPreserve current failed checks on remote-only and behind branches\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 175,
+      "text": "Preserve current failed checks on remote-only and behind branches",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tRead the event history once per command\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 191,
+      "text": "Read the event history once per command",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tStandard: Each commit leaves the build working\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 629,
+      "text": "Standard: Each commit leaves the build working",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tStandard: Plain English wherever a human looks\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 497,
+      "text": "Standard: Plain English wherever a human looks",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 635,
+      "text": "Do not report an exited worker as building while tests run",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Active worker sessions miss the brief update after sync\tworker-no-idle-choice",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 10,
+      "text": "Not done: Active worker sessions miss the brief update after sync",
+      "from": "blocking",
+      "item": "worker-no-idle-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: required tests check\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 143,
+      "text": "Not done: required tests check",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 135,
+      "text": "Not done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_story_idle_time_tracks_its_parts\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 174,
+      "text": "Not done: test_3_story_idle_time_tracks_its_parts",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tCheck liveness before treating unmatched run starts as running",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 195,
+      "text": "Check liveness before treating unmatched run starts as running",
+      "from": "review",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tDo not use a story's creation date as its completion date",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 455,
+      "text": "Do not use a story's creation date as its completion date",
+      "from": "review",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "from": "worker",
+      "item": "no-bare-flip",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
