@@ -528,8 +528,15 @@ def test_18_close(env, kind):
     pushed = env.repo.git("ls-remote", "origin", branch).split()[0]
     assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
     assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
-    # Right after the checks are green, close marks the draft ready for review.
-    assert env.gh.calls()[-3:] == [*env.gh_calls("api")[-2:], ["pr", "ready", "7"]]
+    # Before, ready was the final call. Close now publishes CI completion before ready and
+    # the human merge wait after it; those body updates must not move ready ahead of checks.
+    checks_and_ready = [call for call in env.gh.calls()
+                        if call[0] == "api" or call[:2] == ["pr", "ready"]]
+    assert checks_and_ready[-3:] == [*env.gh_calls("api")[-2:], ["pr", "ready", "7"]]
+    published = body(env.gh_calls("pr", "edit")[-1])
+    assert "## How it went" in published
+    assert "CI passed" in published
+    assert "waiting for the owner (ongoing)" in published
 
     # A new commit needs a new round. The old contract dropped every dismissal; now a matching
     # file and title keeps it. A different finding still blocks and returns the PR to a draft.
@@ -636,16 +643,24 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert "--draft" in create
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
     assert body(create).splitlines()[1] == f"Done when: {summary}"
+    assert "CI passed" in body(create)
+    assert "waiting for the owner (ongoing)" in body(create)
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
     edited = body(create) + "Checked by hand on the staging shop.\n"
     env.open_pr(edited)
     env.commit(where, "app.py", "print('tidied')\n")
     assert env.close(item).returncode == 0
-    assert len(env.gh_calls("pr", "edit")) == 3  # first result, then running and finished review
-    edit = env.gh_calls("pr", "edit")[-1]  # running review, then its finished block
+    # Before, only review changes updated the body. CI completion and the ongoing owner wait
+    # now refresh How it went too; every refresh must preserve the user's text outside the block.
+    edit = env.gh_calls("pr", "edit")[-1]
     assert "--title" not in edit
     begin, end = "<!-- forge:begin -->", "<!-- forge:end -->"
     assert body(edit).split(begin)[0] == edited.split(begin)[0]
     assert body(edit).split(end)[1] == edited.split(end)[1]
     assert "Simpler (existing): the old loop" in body(edit) and body(edit).count(begin) == 1
+    assert "## How it went" in body(edit)
+    assert "CI passed" in body(edit)
+    assert "waiting for the owner (ongoing)" in body(edit)
+    # This old fixture has no worker-start or earlier review counters to establish ordinals.
+    assert len(re.findall(r"^Round unknown:", body(edit), re.M)) == 2

@@ -160,7 +160,10 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
                 ("SHOP", "Shoppers can save a basket"), ("BASKET/SAVE", "Save baskets")]
             for row in rows[1:]:
                 assert row["repo_root"] == foreign.path.resolve().as_posix()
-                assert "round" not in row and "tool" not in row and "step" not in row
+                # Admission records carry the known worker round; the unread story's
+                # round and unavailable tool/step metadata stay unknown.
+                assert row["round"] == (1 if row["item"] == "BASKET/SAVE" else None)
+                assert "tool" not in row and "step" not in row
         assert len({row["id"] for row in rows}) == len(rows)
         for row in rows[:2 if scenario == "release" else 1]:
             assert row["repo_name"] == repo.path.name
