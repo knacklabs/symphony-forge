@@ -771,6 +771,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA failed review loses the concurrent test failure from the next worker brief\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 240,
+      "text": "A failed review loses the concurrent test failure from the next worker brief",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -855,6 +866,17 @@
       "text": "Not done: merge-enable close must check the final published change",
       "from": "blocking",
       "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: shipped close guidance contradicts concurrent review\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 216,
+      "text": "Not done: shipped close guidance contradicts concurrent review",
+      "from": "blocking",
+      "item": "review-alongside-tests",
       "status": "open",
       "closed_by": null
     },
@@ -2527,6 +2549,17 @@
       "text": "Not done: proof that Forge's own outer uv commands are frozen",
       "from": "blocking",
       "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
+      "from": "worker",
+      "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
     },
@@ -4401,6 +4434,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in host guides have unrelated drift from their source template; this change updates only the concurrent-close rule.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 66,
+      "text": "Both checked-in host guides have unrelated drift from their source template; this change updates only the concurrent-close rule.",
+      "from": "worker",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
       "kind": "improve",
       "path": ".codex/skills/forge/SKILL.md",
@@ -4474,17 +4518,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tBoth full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 101,
-      "text": "Both full-suite runs failed when the second close printed no expected queue notice; its cause remains unresolved.",
-      "from": "worker",
-      "item": "no-bare-flip",
       "status": "open",
       "closed_by": null
     }

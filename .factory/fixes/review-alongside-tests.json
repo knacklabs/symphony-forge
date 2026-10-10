@@ -2,13 +2,45 @@
   "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
   "branch": "fix/review-alongside-tests",
   "done_when": "Close starts the review at the same time as its tests, so a round takes about as long as the slower of the two; a red test or a P0/P1 finding still stops the round, and both results are reported together. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "05cdf90ba12a0651715b05fbd93e8784ca91b700edc07afe602b5a17f7921bf5",
+    "changed": "41912dd1e07677bbefb6dd7d85aa848c4dd8956a136f12cdede78355d781845a",
+    "commit": "b621e25ae331b5221e55e91ebd0222643448f709",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The shipped guidance and generated proof tell clients that the completed test result reaches the reviewer, although the reviewer receives only a pending notice.\nRaise: Not done. The new call at close.py:215-217 passes the command and pending notice. Yet skill.md:642 and :660, both checked-in host guides, and close.py:550 still say close supplies the test result to the review. This evidence is distinct from the ruling that completed results cannot be available at review start: these claims remain in the material delivered to clients and in doctor and upgrade proof lists.",
+        "file": "src/forge/close.py",
+        "line": 216,
+        "priority": "P1",
+        "title": "Not done: shipped close guidance contradicts concurrent review"
+      },
+      {
+        "body": "A red test result is printed but never saved when Autoreview fails, so the next worker round loses its diagnostic output.\nRaise: Functional. If Autoreview fails twice while the test command returns nonzero, review.run raises; this finally block stores the test output only in memory. Execution skips the later _save at close.py:293, while worker.py:346 reads failed-test output from saved state.",
+        "file": "src/forge/close.py",
+        "line": 240,
+        "priority": "P1",
+        "title": "A failed review loses the concurrent test failure from the next worker brief"
+      }
+    ],
+    "id": "7b3dd363-4a75-4425-a97c-14fa4faece2e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:16:47+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-10T16:58:19.428559+00:00",
+      "step": "review"
     }
   ],
   "why": "Close waits for tests to finish before it starts the review",
