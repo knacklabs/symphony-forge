@@ -22,7 +22,7 @@ def matrix_rows(event):
 
 
 @pytest.mark.parametrize("event,counts", [
-    ("pull_request", {"ubuntu-latest": 3}),
+    ("pull_request", {"ubuntu-latest": 6}),
     ("push", {"ubuntu-latest": 3, "macos-latest": 6, "windows-latest": 8}),
 ])
 def test_1_event_runs_every_required_platform_group_once(event, counts):
