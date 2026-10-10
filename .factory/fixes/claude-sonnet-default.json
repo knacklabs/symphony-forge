@@ -43,7 +43,13 @@
     "branch_diff": "503f27e8f4a9a987d323c3d783ad1305f5a08a135c834602b99c1a2338cf2397",
     "changed": "c8202e3ec789c0c03d8435f5e4913bb4b53c5a215d332382d80b450532d80786",
     "commit": "b1e443444988f858d08e06a755874d6df6728a04",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "plans/spotted.json:310 Already repaired: the latest commit restores closed_by to worker-no-settings for the three workers-split findings, and the branch's diff against main no longer changes any closed_by value",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Data loss. The raw-parent diff changes `closed_by` from `worker-no-settings` to `claude-sonnet-default` for three already-done `workers-split` findings at lines 310, 321, and 332. This overwrites their recorded resolution history even though this fix leaves `forge.toml` unchanged. `src/forge/spotted.py:160-166` changes `closed_by` only when an open finding is resolved. The standard says, \u201cEvery changed line should trace to the task.\u201d Restore the prior values.",
@@ -54,10 +60,10 @@
       }
     ],
     "id": "77a6df47-38a8-4990-be0a-9021980fd866",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 15,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
