@@ -76,6 +76,16 @@ effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
+[models.explore.codex]
+model = "gpt-6.1-sol"
+effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
+
+[models.explore.claude]
+model = "claude-haiku-5-5"
+effort = "high"
+
 [models.grill.codex]
 model = "gpt-6.1-sol"
 effort = "high"
