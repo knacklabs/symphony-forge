@@ -45,8 +45,9 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         saved = repo.forge("spec", "save", target, cwd=where)
         assert saved.returncode == 0, saved.stderr
     notes = doc.with_name(doc.stem + ".read.md")
-    say(repo, "1. Basket recovery is missing.\n")
     for number in range(1, 4):
+        # Settled repeats are clean; each round must still find a distinct blocking gap.
+        say(repo, f"1. Basket recovery is missing for case {number}.\n")
         result = repo.forge("read", target, cwd=where)
         assert result.returncode == (1 if number == 3 else 0), result.stdout + result.stderr
         if number < 3:
