@@ -1,0 +1,53 @@
+{
+  "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
+  "branch": "fix/two-test-slots",
+  "done_when": "The shared test lane admits one test run per four available cores, at least one (two on an 8-core machine), each test command still getting half the machine's cores as its worker count; forge doctor, the lanes view and the pane show the test lane's size; the coordinator guide says so; command tests cover an 8-core machine admitting two test runs while a third waits, and a 4-core machine keeping one, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "tests/test_machine_test_lane_capacity.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1946fd805c747b4f61790468296db7c3cc7b8dcabd1b4661e0597e6f56b1b46e",
+    "changed": "9eb5e3e7b17b32c97f2c7e02e439f309c8b8d79166e5e242d5e3c7a68fe5f76e",
+    "commit": "d367448dcaeb16577e4541f3743de3ca1e856641",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous P2 remains open. With two running tests, the expanded counts require 37 columns. An active Tests stage and total time at 100 seconds require another 28 columns. The renderer at pane.ts:137\u2013143 reserves both boxes with flexShrink: 0, requiring 65 columns in a 60-column prompt and clipping timing on both terminal and desktop surfaces. Shorten the compact counts or budget counts and timing together. The command-backed test concatenates node text without checking allocated widths, while the native compact checks cover 79 columns, so the passing tests do not detect this overflow.",
+        "file": "src/forge/mod/hooks/pane.ts",
+        "line": 84,
+        "priority": "P2",
+        "title": "Keep expanded compact counts within the prompt width"
+      }
+    ],
+    "id": "587c1787-83a7-4313-9285-22956a855d27",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T17:43:41+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:15:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:21:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:54:12+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The machine-wide test lane runs one test run at a time, so on an 8-core machine three or more closes and worker test runs often queue behind each other while cores sit idle (owner, 2026-10-09: two test runs at once, each with half the cores)",
+  "worker": "codex"
+}
