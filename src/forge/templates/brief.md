@@ -2,6 +2,11 @@ $summary
 
 # Worker brief
 
+Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
+including findings already fixed or dismissed. Do not reopen them with the same finding text
+(cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
+Forge ignores settled repeats, so they cannot block or start another round.
+
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 

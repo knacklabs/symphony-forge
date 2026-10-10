@@ -206,7 +206,6 @@ def read(args: Any) -> int:
         if any(done.returncode for done in seen.values()):
             why = why or "Forge has no copy of what its last round read"
             diff = spec_diff = "(not available)"
-        saw = _findings(_record(seen["notes_seen"].stdout)[1])
         old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
         touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
                    if old_sections.get(name) != new_sections.get(name)]
@@ -216,9 +215,11 @@ def read(args: Any) -> int:
         if passed(record, findings):  # only an edit since a passing round: read just that edit
             again = edit
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()))
-        # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
-        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
-            block for n, block in blocks.items() if saw.get(n, "").split() != block.split()) or "None.")
+        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()) or "None.")
+    context = "\n\nEarlier rounds' notes and answers:\n" + (findings or "None.")
+    context += "\n\nThe doc's Notes and decisions:\n" + sections(text.decode("utf-8")).get("Notes", "None.")
+    prompt += context
+    fresh_prompt += context
     session = codex.record(top, target, "Grill").get("claude") if later and not why else None
     if reader == "claude":
         if later and not why and not session:
@@ -254,6 +255,13 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
+    settled = {" ".join(FINDING.sub("", block.splitlines()[0]).split()).casefold()
+               for block in blocks.values() if DISPOSITION.search(block)}
+    if settled and FINDING.search(said):
+        new = [block for block in re.split(r"(?=^\d+\.[ \t])", said, flags=re.M) if block.strip()
+               and (not FINDING.match(block) or
+                    " ".join(FINDING.sub("", block.splitlines()[0]).split()).casefold() not in settled)]
+        said = "".join(new) or "No findings."
     item = r"^[ \t]*(?:\d+[.)]|[-*])[ \t]+"
     parts = re.split(r"\n|" + item, said, flags=re.M)
     lines = [" ".join(part.split()).strip(" *`_.!?,:;").lower() for part in parts]
