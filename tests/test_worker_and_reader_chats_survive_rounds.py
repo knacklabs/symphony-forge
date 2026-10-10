@@ -602,7 +602,9 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
         repo.git("add", "-A", cwd=upgrade)
         repo.git("commit", "-qm", "Keep the generated upgrade files", cwd=upgrade)
     repo.git("merge", "-q", "--ff-only", "fix/chat-upgrade")
-    repo.git("push", "-q", "origin", "main")
+    # GitHub lands the upgrade; the freshly installed hooks correctly refuse a main push.
+    remote = Path(repo.git("remote", "get-url", "origin"))
+    repo.git("fetch", "-q", str(repo.path), "main:main", cwd=remote)
     shutil.rmtree(repo.path / ".git/forge")
     read = repo.forge("read", "invoices", cwd=amendment)
     assert read.returncode == 0, read.stdout + read.stderr
