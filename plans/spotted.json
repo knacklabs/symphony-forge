@@ -306,7 +306,7 @@
       "from": "blocking",
       "item": "workers-split",
       "status": "done",
-      "closed_by": "claude-sonnet-default"
+      "closed_by": "worker-no-settings"
     },
     {
       "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
@@ -317,7 +317,7 @@
       "from": "blocking",
       "item": "workers-split",
       "status": "done",
-      "closed_by": "claude-sonnet-default"
+      "closed_by": "worker-no-settings"
     },
     {
       "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
@@ -328,7 +328,7 @@
       "from": "blocking",
       "item": "workers-split",
       "status": "done",
-      "closed_by": "claude-sonnet-default"
+      "closed_by": "worker-no-settings"
     },
     {
       "key": "bug\tplans/spotted.json\tStandard: Touch only what the task needs\tclaude-sonnet-default",
