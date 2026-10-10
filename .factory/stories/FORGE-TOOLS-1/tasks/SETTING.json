@@ -7,24 +7,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cc079e86cceebefcbd1b150c93e1c96941204e0a81827388ddc2cecd12c8cdec",
-    "changed": "1d6689f6a382aa55aaecbbd298248d5a0f8e5ef9d78a9cf974d09682eb64961a",
-    "commit": "026b6d1b85d3e2562d2ff56c7b887a24bffe819e",
+    "branch_diff": "c3534456533c2741aecb1162fa47304806a83267242059994792351273099fdc",
+    "changed": "19c292305387f7afaf67982e9f27494f0cc5490431950e42db590188e018e01e",
+    "commit": "73a848f1a807854cbb71b10213505290be6f6c56",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. Both checked-in host guides differ from the template that `story.ships` writes during `forge sync`. For example, `src/forge/templates/skill.md:210` describes `kind_stage_counts`, while `.claude/skills/forge/SKILL.md:210` and the identical Codex copy retain older board guidance; the copies also omit current task-size and cold-read guidance. The new guide test checks copies generated in a fixture, so it cannot catch this mismatch. Item 9's required synced copies have not been delivered, and the proof list's template-comparison claim is unsupported by the checked-in files.",
-        "file": ".claude/skills/forge/SKILL.md",
-        "line": 221,
-        "priority": "P1",
-        "title": "Not done: synced skill copies match the template"
-      }
-    ],
-    "id": "0611e1cb-c8db-4539-a2b9-6ada755b4a78",
-    "status": "blocked"
+    "findings": [],
+    "id": "898aec75-dbd3-4e6f-9922-7d26b868276d",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T11:29:35.863096+00:00",
@@ -52,6 +44,10 @@
     },
     {
       "at": "2026-10-10T18:47:25.872301+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:06:25.331478+00:00",
       "step": "review"
     }
   ],
