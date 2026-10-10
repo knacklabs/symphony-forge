@@ -155,7 +155,13 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         for _ in range(11):
             assert repo.forge("work", item).returncode == 0
         ended, board = row(repo, item)
-        assert ended["idle_since"] == board["events"][-1]["time"]
+        # The frozen clock stamps events before the recorded worker duration ends.
+        finished = max(datetime.fromisoformat(timing["start"]) +
+                       timedelta(seconds=timing["seconds"])
+                       for timing in records(repo, "timings.jsonl") if timing["item"] == item)
+        assert finished > datetime.fromisoformat(board["events"][-1]["time"])
+        assert datetime.fromisoformat(ended["idle_since"]) == finished
+        assert ended["idle_seconds"] == 0
         assert ended["stalled"] is False
         assert board["events"][-1]["item"] == item
         assert board["events"][-1]["line"] == "Worker finished"
@@ -168,6 +174,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                   "dismissals": [{"finding": 3, "because": "Already handled"}]}
         state(folder / f".factory/fixes/{item}.json", review=review)
         prs = [pull(7, f"fix/{item}", "CANCELLED")]
+        prs[0]["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
         checks = prs[0]["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
         checks.append({**checks[0], "databaseId": 123, "name": "tests", "conclusion": "FAILURE"})
         checks.append({**checks[0], "databaseId": 124, "name": "manually cancelled"})
@@ -303,6 +310,9 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
+                if case.startswith("ci"):
+                    pr["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
+                    github(env.gh, [pr])
                 # A connection acknowledges emission, not Forge consuming the event.
                 # Hold the producer until the real board exposes this step; only then
                 # compare snapshots. The test and parent cleanup bound the held run.

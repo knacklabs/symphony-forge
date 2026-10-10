@@ -962,6 +962,9 @@ or low value. Dismiss only a finding outside the boundary or factually wrong, wi
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
+Before reusing serious findings, close also checks the reviewed files and contract against the
+current head. A repair brought in from the default branch needs a new review, even if the branch
+diff stayed the same. Land uses the same check through close.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates

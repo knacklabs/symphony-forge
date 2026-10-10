@@ -1,0 +1,100 @@
+{
+  "base": "49e6b9ab810cebe9b5537cde92238e2535e7d187",
+  "branch": "fix/board-data-truth",
+  "done_when": "Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories the roadmap marks done count and show as done; items idle past the stalled threshold show as stalled with their idle time and what they wait on, and finished items never do; a running worker or review shows as running with its elapsed time; ready-to-merge, plan-read and waiting-for-approval stages match forge next; a finished story's parts show finished; prose and timeline times agree; header counts are labelled separately for stories and fixes; a person shows under one display name; titles are shortened at a word boundary; command tests reproduce each of these on a board with real-shaped data for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/nextstep.py",
+    "tests/test_board_status_and_times.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "efa1d275d4b000f32f2a75c666fc1bb6592848294c02595d6828a67af75abca4",
+    "changed": "0279ecf459329b79bfb83a451a3703f700ddfe3f4d9adea2dbd3ad4c948ff558",
+    "commit": "bbe3aac4ccd38f9129755e53f19c43a6b1652666",
+    "dismissals": [],
+    "findings": [],
+    "id": "96885267-eba1-48cb-8eb9-f5bbc290268c",
+    "status": "clean"
+  },
+  "round": 18,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T12:16:18+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T13:49:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T14:17:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T15:33:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T16:59:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:44:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:53:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T01:40:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:03:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:02:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:49:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:39:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:59:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:57:20.027323+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T11:31:21.230370+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T12:48:56.253617+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T14:20:51.795709+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/board.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the three remaining findings: distinct test criterion numbers, unknown finish date for roadmap-done stories without completion evidence, a 25-hour stalled assertion"
+  },
+  "why": "The forge board page shows wrong or contradicting data (Opus review of a real client board, 2026-10-09): stories the roadmap marks done show as 'Not started yet' and count as needing a spec; items idle for days aren't shown as stalled while finished stories are flagged stalled; running workers and reviews show as 'Needs fixes'; a card says Ready to merge while the header counts none; a story in a plan-read round shows as 'Waiting for approval'; a finished story's part says 'In progress'; prose times disagree with the timeline; header counts mix stories and fixes unlabelled; one person appears under two names; fix titles are cut mid-word",
+  "worker": "codex"
+}
