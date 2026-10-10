@@ -3849,6 +3849,83 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tBound doctor's job-history requests\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 109,
+      "text": "Bound doctor's job-history requests",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks anything up\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 121,
+      "text": "Not done: doctor detects a runner that never picks anything up",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: doctor detects a runner that never picks up jobs\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 113,
+      "text": "Not done: doctor detects a runner that never picks up jobs",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tPreserve the history query through Windows command shims\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 129,
+      "text": "Preserve the history query through Windows command shims",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tqueued-not-stop",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 86,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
+      "from": "review",
+      "item": "queued-not-stop",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
