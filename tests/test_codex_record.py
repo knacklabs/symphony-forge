@@ -273,15 +273,18 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
 
     if os.name != "nt":
         # Codex waits for Forge to record the app-server: while Forge is slow to read its
-        # identity, no conversation starts.
+        # identity, the existing conversation cannot resume yet.
         seen = repo.path.parent / "seen.jsonl"
-        before = len(_sent(calls, "thread/start"))
+        before = tuple(len(_sent(calls, method)) for method in ("thread/start", "thread/resume"))
         _install(repo.bin, "ps", SLOW_SERVER.format(python=sys.executable, tool=tool,
                                                     calls=str(calls), seen=str(seen)))
         assert repo.forge("work", "BOARD/PAGE").returncode == 0
         (repo.bin / "ps").unlink()
-        assert (len(_sent(seen, "thread/start")), len(_sent(calls, "thread/start"))) == (before,
-                                                                                        before + 1)
+        assert tuple(len(_sent(seen, method)) for method in ("thread/start", "thread/resume")) == before
+        assert (len(_sent(calls, "thread/start")), len(_sent(calls, "thread/resume"))) == (
+            before[0], before[1] + 1)
+        assert _sent(calls, "thread/resume")[-1]["threadId"] == saved["conversation"]
+        assert _saved(record)["conversation"] == saved["conversation"]
 
         # When Forge can't read who holds the lock, the owner counts as running: forge work
         # refuses, naming the lock.
