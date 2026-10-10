@@ -15,20 +15,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7c7846025a7294ee8de25c8ef6587d31cdcb64e79d41c1a7208a038eb7aaa8ba",
-    "changed": "6a0767b6a668b4b70eebe480baf2688ff5f15985d68d4fdda0c5df86879e398a",
-    "commit": "fd1bd386e7ba22a4d58cfe46024b9f136589ad7d",
+    "branch_diff": "2ce93d35844d91ca643b883eaee47580e2b8436e76125bcb12c81f92634e4a49",
+    "changed": "ba829a9df24e101d86d4fa9b8b4b6f2dd1cdbd17c3d3e8fd121bd6d69600b1c8",
+    "commit": "79e016b913f2d2236108c5757e74f557e2902fec",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The classifier discards real findings: `6. No test covers this bug.` matches the unrestricted `no ... bug` expression, so lines 260\u2013262 replace the finding with `No findings.` and record a passing round without a disposition. This substantive missing-test counterexample is new evidence the finite-acceptance ruling did not weigh. Conversely, `6. I have no findings\\nto report.` is one numbered item containing the explicitly promised sentence, but lines 252\u2013259 evaluate its physical lines independently and reject `to report`. Both defects affect the shared story/spec read path for either reader. The command table covers neither scenario, so the supplied 49 passing tests do not detect these failures.",
+        "body": "Raise: Not done. Substantive findings can still be erased, allowing a round to pass without a disposition. For example, `6. No findings (required proof is missing).` and `6. No bugs are covered by the proposed regression test.` both match this expression: they contain the directly negated noun, no internal sentence punctuation, and none of the three excluded conjunctions. Lines 262\u2013264 then replace the entire reply with `No findings.`. This is new evidence beyond the previous missing-test and wrapped-line counterexamples: directly adjacent `no` and a finding noun can still express a real defect. The command table covers neither case, so its passing results do not establish the promised preservation of real findings. This affects both story and spec reads, for new and upgraded clients.",
         "file": "src/forge/story.py",
-        "line": 255,
+        "line": 257,
         "priority": "P1",
-        "title": "Not done: forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by a"
+        "title": "Not done: forge read still passes substantive findings"
       }
     ],
-    "id": "de24712a-a07a-4fad-8eaa-207dc3949c17",
+    "id": "ac312762-4b47-48fc-9f2a-5e2936673fe6",
     "status": "blocked"
   },
   "round": 5,
@@ -60,6 +60,10 @@
     },
     {
       "at": "2026-10-09T23:14:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:13:03+00:00",
       "step": "review"
     }
   ],
