@@ -36,7 +36,8 @@ def test_6_windows_installer_is_a_required_pull_request_check():
     (False, False, False), (False, True, False), (False, False, True),
 ])
 def test_5_installers_check_docker_engine_and_explain_starting_desktop(
-        tmp_path, check, running, new_install):
+        repo, tmp_path, check, running, new_install):
+    version = repo.forge("--version").stdout.split()[-1]
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     calls = tmp_path / "docker-calls"
@@ -50,7 +51,7 @@ def test_5_installers_check_docker_engine_and_explain_starting_desktop(
                 "PATHEXT": ".CMD;.BAT"}
         for name in ("winget", "git", "gh", "node", "uv", "claude", "codex"):
             (bin_dir / f"{name}.cmd").write_text("@echo off\nexit /b 0\n", encoding="utf-8")
-        (bin_dir / "forge.cmd").write_text("@echo forge v1.2.8\n", encoding="utf-8")
+        (bin_dir / "forge.cmd").write_text(f"@echo forge {version}\n", encoding="utf-8")
         (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
         docker = tmp_path / "docker.cmd" if new_install else bin_dir / "docker.cmd"
         docker.write_text(
@@ -72,7 +73,7 @@ def test_5_installers_check_docker_engine_and_explain_starting_desktop(
             path = bin_dir / name
             path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
             path.chmod(0o755)
-        (bin_dir / "forge").write_text('#!/bin/sh\necho "forge v1.2.8"\n', encoding="utf-8")
+        (bin_dir / "forge").write_text(f'#!/bin/sh\necho "forge {version}"\n', encoding="utf-8")
         (bin_dir / "forge").chmod(0o755)
         docker = tmp_path / "docker" if new_install else bin_dir / "docker"
         docker.write_text(
