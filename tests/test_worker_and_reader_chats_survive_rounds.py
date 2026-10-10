@@ -41,7 +41,7 @@ def _adopted(repo):
 def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
     if adopted:
         _adopted(repo)
-    folder, codex, turns = _resuming(repo, monkeypatch, sdk_data, client=True)
+    folder, codex, turns = _resuming(repo, monkeypatch, sdk_data, client=True, start_task=kind == "task")
     claude = install_claude(repo)
     config = folder / "forge.toml"
     with config.open("a", encoding="utf-8") as settings:
@@ -50,13 +50,17 @@ def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
     if app == "claude":
         config.write_text(config.read_text("utf-8").replace('workers = "codex"',
                           'workers = "claude"'), encoding="utf-8")
+        if kind == "fix":
+            config.write_text(config.read_text("utf-8").replace('[models.fix]\nmodel = "gpt-6-sol"\neffort = "medium"',
+                              '[models.fix]\nmodel = "gpt-6-sol"\neffort = "high"'), encoding="utf-8")
     repo.git("commit", "-qam", "Choose client worker models", cwd=folder)
-    if app == "claude":
+    if app == "claude" and kind == "task":
         # Fix start copies the default client settings.
         repo.write("forge.toml", config.read_text("utf-8"))
         repo.git("commit", "-qam", "Choose Claude")
         repo.git("push", "-q", "origin", "main")
     if kind == "fix":
+        repo.git("push", "-q", "origin", "main")
         started = repo.forge("fix", "start", "Keep login context", "--done", "Login works")
         assert started.returncode == 0, started.stdout + started.stderr
         item = "keep-login-context"
@@ -213,7 +217,8 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
             dirty = reader.text()
             other, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
             assert refused.returncode != 0
-            assert "has uncommitted changes, so sync left it alone." in refused.stderr
+            assert (f"The chat record at {reader.shop / 'plans/SHOP.read.md'} has uncommitted changes, "
+                    "so sync left it alone.") in refused.stderr
             assert "Next: commit or undo those changes, then forge sync" in refused.stderr
             assert reader.text() == dirty
             repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)

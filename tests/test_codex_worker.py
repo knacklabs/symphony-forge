@@ -112,7 +112,7 @@ def _toml(version: str, workers: str, models: dict[str, dict],
 
 
 def _codex_repo(repo, monkeypatch, sdk_data: Path,
-                client: bool = False) -> tuple[Path, Path]:
+                client: bool = False, start_task: bool = True) -> tuple[Path, Path]:
     """Codex workers with the models table, a project Codex trusts, story BOARD approved and
     BOARD/PAGE started. Returns the task's folder and the stub app-server's log."""
     _install(repo.bin, "codex-app-server",
@@ -133,6 +133,8 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path,
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge with Codex workers")
     repo.git("push", "-q", "origin", "main")
+    if not start_task:
+        return repo.path, repo.bin / "codex-app-server.jsonl"
     story(repo)
     started = repo.forge("task", "start", "BOARD/PAGE")
     assert started.returncode == 0, started.stderr

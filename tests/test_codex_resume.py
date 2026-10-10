@@ -153,17 +153,18 @@ main()
 '''
 
 
-def _resuming(repo, monkeypatch, sdk_data: Path, client=False) -> tuple[Path, Path, Path]:
+def _resuming(repo, monkeypatch, sdk_data: Path, client=False, start_task=True) -> tuple[Path, Path, Path]:
     """Codex workers with the story approved, BOARD/PAGE started, a fix kind of its own, and the
     stand-in app-server whose conversations outlive it (run by this Python, so the command Forge
     records at its start stays its command). Returns the task's folder, the app-server's log and
     the item's turn log."""
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data, client=client)
+    folder, calls = _codex_repo(repo, monkeypatch, sdk_data, client=client, start_task=start_task)
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{RESUMING}")
-    version = repo.forge("--version").stdout.split()[-1]
-    (folder / "forge.toml").write_text(_toml(version, "codex", MODELS,
-                                           "client" if client else "forge-source"), encoding="utf-8")
-    repo.git("commit", "-q", "-am", "Think harder in fix rounds", cwd=folder)
+    if start_task:
+        version = repo.forge("--version").stdout.split()[-1]
+        (folder / "forge.toml").write_text(_toml(version, "codex", MODELS,
+                                               "client" if client else "forge-source"), encoding="utf-8")
+        repo.git("commit", "-q", "-am", "Think harder in fix rounds", cwd=folder)
     return folder, calls, repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
 
 

@@ -217,12 +217,15 @@ def preserve_chats(top: Path) -> None:
     """Move earlier-release local bindings into their owning branches during upgrade's sync."""
     from forge import story
     threads = repo.forge_dir(top) / "threads"
+    paths = sorted({path.with_suffix(".json") for path in threads.rglob("*")
+                    if path.suffix in (".json", ".log")})
+    if not paths:
+        return
     trees = {branch: tree for branch, tree in story.worktrees(top).items()
              if branch != repo.default_branch(top)}
     refs = set(repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
     with tempfile.TemporaryDirectory(prefix="forge-chats-") as temporary:
-        for path in sorted({path.with_suffix(".json") for path in threads.rglob("*")
-                            if path.suffix in (".json", ".log")}):
+        for path in paths:
             folder, item = path.relative_to(threads).as_posix().removesuffix(".json").split("/", 1)
             if folder not in ("fix", "task", "read"):
                 continue
