@@ -1,0 +1,14 @@
+{
+  "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
+  "branch": "fix/worker-brief-faster",
+  "done_when": "The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate fix?' and 'record a narrow choice' in advance (out-of-scope problems become Spotted lines; fix only findings inside the Done-when and list the rest in the proof), and ends with the reviewer's checklist the worker checks before handing over",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:31:22.979706+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Worker turns take about 22 minutes: workers re-read the 15,000-word guide and search the whole repo, ask the same two questions, and fail 45% of first reviews"
+}
