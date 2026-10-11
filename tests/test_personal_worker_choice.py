@@ -27,14 +27,19 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     for folder in (repo.path, page):
         shown = repo.forge("next", cwd=folder).stdout
         assert ("Next: forge task start BOARD/HELP  # Claude builds it "
-                "(workers and models.build from forge.local.toml)") in shown, shown
+                "(forge.local.toml: workers = claude, models.build; forge.toml: tools = both)") in shown, shown
     shown = repo.forge("next", cwd=other).stdout
     assert "Next: forge task start BOARD/HELP  # Codex builds it\n" in shown, shown
     # A models-only file keeps forge.toml's worker and names its own models.
     (other / "forge.local.toml").write_text('[models.build]\nmodel = "gpt-6-nova"\neffort = "low"\n', "utf-8")
     shown = repo.forge("next", cwd=other).stdout
     assert ("Next: forge task start BOARD/HELP  # Codex builds it "
-            "(models.build from forge.local.toml)") in shown, shown
+            "(forge.local.toml: models.build; forge.toml: tools = both, workers = codex)") in shown, shown
+    # A local tools = "both" is named too, beside forge.toml's workers and models.
+    (other / "forge.local.toml").write_text('tools = "both"\n', "utf-8")
+    shown = repo.forge("next", cwd=other).stdout
+    assert ("Next: forge task start BOARD/HELP  # Codex builds it "
+            "(forge.local.toml: tools = both; forge.toml: workers = codex, models.build)") in shown, shown
 
     claude_log = install_claude(repo)
     started = repo.forge("task", "start", "BOARD/HELP")
@@ -43,7 +48,7 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     assert built.returncode == 0, built.stdout + built.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5", "--effort", "medium"]
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5, medium) because workers = claude; "
-            "workers and models.build from forge.local.toml") in built.stdout
+            "forge.local.toml: workers = claude, models.build; forge.toml: tools = both") in built.stdout
     # A local tools choice overrides forge.toml's Codex workers too.
     (repo.path / "forge.local.toml").write_text('tools = "claude"\n', "utf-8")
     started = repo.forge("task", "start", "BOARD/API")
@@ -51,7 +56,7 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     built = repo.forge("work", "BOARD/API")
     assert built.returncode == 0, built.stdout + built.stderr
     assert len(calls(claude_log)) == 2
-    assert "because tools = claude; tools from forge.local.toml" in built.stdout, built.stdout
+    assert "because tools = claude; forge.local.toml: tools = claude; forge.toml: workers = codex, models.build" in built.stdout, built.stdout
     for folder in (repo.path, page, other):
         assert repo.git("status", "--porcelain", "--untracked-files=no", cwd=folder) == ""
 

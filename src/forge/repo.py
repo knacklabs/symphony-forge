@@ -541,17 +541,24 @@ def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str,
            ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
            if cfg["workers"] == "split" else f"workers = {family}"
            + (", with the design model as it is user-facing" if design else ""))
-    local = local_choices(cfg, kind, design)
-    return family, chosen, why + (f"; {' and '.join(local)} from {LOCAL}" if local else "")
+    return family, chosen, why + (f"; {sources}" if (sources := setting_sources(cfg, kind, design)) else "")
 
 
-def local_choices(cfg: dict[str, Any], kind: str, design: bool) -> list[str]:
-    """The settings choosing this worker and its models that came from forge.local.toml."""
-    local = cfg.get("local", {})
+def setting_sources(cfg: dict[str, Any], kind: str, design: bool) -> str:
+    """With a forge.local.toml, which file set tools, workers and this work's models table, such as
+    "forge.local.toml: tools = both; forge.toml: workers = codex, models.build"; else ""."""
+    local = cfg.get("local")
+    if local is None:
+        return ""  # ponytail: no local file means forge.toml set them all, so output stays as it was
     kind = "design" if design else "lite" if kind == "explore" and "explore" not in cfg["models"] else kind
-    deciding = "tools" if cfg["tools"] != "both" else "workers"
-    return (([deciding] if deciding in local else [])
-            + ([f"models.{kind}"] if kind in local.get("models", {}) else []))
+    files: dict[str, list[str]] = {LOCAL: [], "forge.toml": []}
+    for key in ("tools", "workers"):
+        files[LOCAL if key in local else "forge.toml"].append(f"{key} = {cfg[key]}")
+    if kind in local.get("models", {}):
+        files[LOCAL].append(f"models.{kind}")
+    elif kind in cfg["shared"]["models"]:
+        files["forge.toml"].append(f"models.{kind}")
+    return "; ".join(f"{name}: {', '.join(keys)}" for name, keys in files.items() if keys)
 
 
 def coordinator() -> str | None:

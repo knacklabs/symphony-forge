@@ -496,9 +496,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 cfg = _report_config(top, refusals)
             # The worker beside each task, as a shell comment so the line still pastes as a command.
             design = repo.user_facing(cfg, rows[name])
-            local = repo.local_choices(cfg, "build", design)
+            sources = repo.setting_sources(cfg, "build", design)
             builds[name] = repo.worker(cfg, "build", design)[0].title() + " builds it" + (
-                f" ({' and '.join(local)} from {repo.LOCAL})" if local else "")
+                f" ({sources})" if sources else "")
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}  # {builds[task]}"
