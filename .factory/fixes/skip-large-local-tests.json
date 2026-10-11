@@ -1,0 +1,52 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/skip-large-local-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a129e4-3188-7350-a586-487921098e9a",
+    "head": null,
+    "start": "60cfd9f937a59b25604b56418da38e98422ed247"
+  },
+  "done_when": "When the tests close would pick cover more than a third of the suite, close skips the local run, says so in one line, and relies on the pull request's required checks",
+  "flagged": [
+    "tests/test_close_skips_large_test_selections.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d9e6ba92192ec2258c33fd325861d0c6796fad59dbf08e02f0bad7eead71132e",
+    "changed": "9f1f7ebfa861392c68832d847247c205c220c8e3167f177326032c4ff5cb4669",
+    "commit": "6d50c4d2741ae6bd24f38bc3915e89744b790264",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new threshold applies only to pytest. In a Node client where a shared module change makes Vitest or Jest select most test files, `close_tests` still runs the local selection through `--changed` or `--changedSince` (src/forge/fasttest.py:231-244). That leaves the same long local run for those clients. The Done-when line does not name another language, so this is a non-blocking follow-up.",
+        "file": "src/forge/fasttest.py",
+        "line": 323,
+        "priority": "P2",
+        "title": "Follow-up: large Vitest and Jest selections"
+      }
+    ],
+    "id": "fc9fdf07-734d-4150-b3f2-8c827e9b4480",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:51.424133+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T10:55:24.741854+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:10:23.360249+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "When a change touches many files, close's local tests turn into the full suite, which takes about an hour on a laptop while GitHub runs it anyway",
+  "worker": "codex"
+}

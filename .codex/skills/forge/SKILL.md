@@ -1060,6 +1060,9 @@ The generated `forge.yml` runs that suite as test groups behind the one required
 which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
+When the pytest selection would cover more than a third of the Python test files (shared
+test inputs select them all), close skips the local run, says so in one line, and relies on
+the pull request's required checks. `forge test` still runs its tests.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
@@ -1077,7 +1080,8 @@ do not select tests. It supports root packages and the `src/` layout, and pytest
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
-full command when `conftest.py`, requirements or lock files change.
+full command when `conftest.py`, requirements or lock files change, except for close's
+large-selection skip above.
 For `pyproject.toml`, every change triggers the full command unless all changed lines are
 known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
 `include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
