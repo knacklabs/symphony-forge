@@ -24,5 +24,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 NOTE: This license applies to the text of this skill and to its scripts.
-The word list in references/word-list.md shows words from the ASD-STE100
-dictionary, which is the property of ASD. Refer to NOTICE.md.
+The upstream word list (references/word-list.md) shows words from the ASD-STE100
+dictionary, which is the property of ASD. This bundle leaves it out. Refer to NOTICE.md.

@@ -55,6 +55,11 @@ def test_1_clients_get_the_skill_and_agents_write_people_text_with_it(repo, gh, 
         for name in ("LICENSE", "NOTICE.md"):
             assert (folder / name).read_text(encoding="utf-8").startswith(
                 "Forge note: Forge ships this skill without references/word-list.md"), (host, name)
+            assert "This bundle leaves it out." in " ".join(
+                (folder / name).read_text(encoding="utf-8").split()), (host, name)
+        # The skill's check command works from the repo root.
+        assert f"python3 .claude/{SKILL}/scripts/ste_check.py" in (folder / "SKILL.md").read_text(
+            encoding="utf-8")
         guides.append(rule((client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")))
 
     # The check tool works without the word list and still finds broken rules.

@@ -91,7 +91,7 @@ The two types have different limits. Do not mix the two types in one paragraph.
 
 After you write, check your text. Do these steps:
 
-1. If you can run scripts, run: `python3 scripts/ste_check.py --mode <procedural|descriptive> <file>`.
+1. If you can run scripts, run from the repo root: `python3 .claude/skills/simplified-technical-english/scripts/ste_check.py --mode <procedural|descriptive> <file>` (in Codex, `.codex/skills/...` in place of `.claude/skills/...`).
 2. If you cannot run scripts, do a manual scan of the checklist below.
 3. Correct each error.
 4. Check the text again. Stop only when the text has no errors.

@@ -9,8 +9,8 @@ The specification ASD-STE100, Simplified Technical English, is the property of
 ASD (AeroSpace and Defence Industries Association of Europe), Brussels, Belgium.
 ASD-STE100 is a registered trade mark of ASD.
 
-The word list in `references/word-list.md` shows words from the ASD-STE100
-dictionary (Issue 7, 2017). The list shows only the words, their parts of
+The upstream word list in `references/word-list.md` shows words from the ASD-STE100
+dictionary (Issue 7, 2017). This bundle leaves it out. The list shows only the words, their parts of
 speech, and their forms. The list does not show the approved meanings, the
 definitions, or the examples of the dictionary.
 
