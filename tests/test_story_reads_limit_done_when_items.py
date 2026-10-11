@@ -65,7 +65,7 @@ def test_1_read_refuses_more_than_six_results_in_new_and_upgraded_clients(
     # A later revision must get the split message even with an unanswered finding.
     (repo.bin / "claude-says.md").write_text("1. The saved basket can be lost.\n", encoding="utf-8")
     read = repo.forge("read", "SHOP")
-    assert read.returncode == 0 and "give every finding a disposition" in read.stdout, read.stderr
+    assert read.returncode == 0 and "give every blocking finding a disposition" in read.stdout, read.stderr
     pending = repo.forge("read", "SHOP")
     assert pending.returncode == 1 and "has no disposition" in pending.stderr, pending.stderr
     notes = (shop / "plans/SHOP.read.md").read_bytes()

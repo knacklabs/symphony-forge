@@ -75,7 +75,7 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
             held = repo.forge("read", "SHOP")
             assert held.returncode == 1 and "Ask the human to accept, narrow or split" in held.stderr
         else:
-            assert "Next: give every finding a disposition" in read(repo)
+            assert "Next: give every blocking finding a disposition" in read(repo)
         text = notes.read_text("utf-8")
         assert f"round: {number}\n" in text and "passed: no\n" in text
         assert f"## Round {number}\n\n" in text and re.search(rf"^{number}\. ", text, re.M), text

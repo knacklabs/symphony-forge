@@ -47,7 +47,8 @@ def test_8_the_one_time_amendment_goes(repo, claude_payload, gh, tmp_path):
         assert '| "I\'ve amended it" | `forge read <KEY>` again, for the next round |' in skill
     specs = (client / "docs/specs/README.md").read_text("utf-8")
     assert "one cold read" not in specs
-    assert "run it again until a round\n   finds nothing" in specs
+    assert "answer blocking findings and run it again until no\n   notes block building" in specs
+    assert "Advisory notes are recorded and do not need another round." in specs
     agents = (client / "AGENTS.md").read_text("utf-8")
     assert "one cold read" not in agents and "--amended" not in agents
-    assert "rounds of cold read (`forge read <KEY>`) until one finds nothing" in agents
+    assert "rounds of cold read (`forge read <KEY>`) until no notes block building" in agents

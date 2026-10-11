@@ -22,6 +22,12 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
+A note blocks only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Start each blocking finding with `Blocking:` after its number. Wording, style and optional
+improvements do not block: if you record one, start it with `Advisory:` after its number.
+Advisory notes are recorded but need no disposition or another round. A read passes when none
+of its notes is blocking. Unmarked findings are treated as blocking.
+
 ## What counts
 Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
 
@@ -124,15 +130,17 @@ about tests you did not run.
 <!-- forge:round -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
 
-The agent gave your last round's findings a disposition and changed the doc. Do not change any
-file. This read is discarded if any file in the repository changes. Open `$path` and read the
+The agent gave your last round's blocking findings a disposition and changed the doc. Do not
+change any file. This read is discarded if any file in the repository changes. Open `$path` and read the
 whole doc again yourself. Its diff since your last round:
 
 $diff
 
-All earlier rounds' findings and their answers, each with its disposition:
+All earlier rounds' blocking findings and their answers, each with its disposition:
 
 $dispositions
+
+Previous advisory notes are recorded only; do not reassess or close them.
 
 For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
 
@@ -159,12 +167,15 @@ Check:
 $traps
 
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
+Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
+advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
 
 <!-- forge:edit -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
 
-Your last round found nothing, and the doc changed since. Do not change any file. This read is
+Your last round passed, and the doc changed since. Do not change any file. This read is
 discarded if any file in the repository changes. Its diff since your last round:
 
 $diff
@@ -182,13 +193,17 @@ this repository's own known traps:
 $traps
 
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
+Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
+advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
 
 <!-- forge:notes -->
 # Cold read notes
 
-Written by `forge read`. Under every finding, write one disposition line, amend the doc, then run
-`forge read <doc>` again for the next round, until a round finds nothing:
+Written by `forge read`. Under every blocking finding, write one disposition line, amend the
+doc, then run `forge read <doc>` again until a round has no blocking notes. Notes marked
+`Advisory:` are recorded without requiring a disposition or another round:
 
 - `Disposition: cut` when the doc was edited to remove it;
 - `Disposition: defer` when the item moved to the spec's Out of scope;
