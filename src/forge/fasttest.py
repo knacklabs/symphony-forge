@@ -310,7 +310,8 @@ def pytest_tests(base: str, command: str) -> int:
                 selected.append(path.as_posix())
         selected.sort()
         # Tests that run the program from outside never name its files, so say what local runs miss.
-        gaps = "".join(f"No local test names {source.as_posix()}; GitHub's checks will cover it.\n"
+        from forge.review import GAP  # imported late: review's imports lead back here
+        gaps = "".join(f"{GAP}{source.as_posix()}; GitHub's checks will cover it.\n"
                        for module, source in modules
                        if not any(mentions(path, module, source) for path in tests))
         if not selected:

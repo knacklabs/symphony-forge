@@ -7,33 +7,45 @@ import shlex
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+
+import tomllib
+
+from test_close import env, run  # noqa: F401 (pytest fixture)
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 from test_worker import calls, install_claude
 
 STORY = "test-gap-warning"
 
 
-def test_1_close_names_each_changed_source_file_no_test_mentions(client, tmp_path):
-    command = shlex.join([Path(sys.executable).as_posix(), "-m", "pytest", "tests", "-q"])
-    config = (client.path / "forge.toml").read_text("utf-8")
-    client.write("forge.toml", "test = " + json.dumps(command) + "\n" + "\n".join(
-        line for line in config.splitlines() if not line.startswith("test =")) + "\n")
-    client.write("src/app/named.py", "VALUE = 1\n")
-    client.write("src/app/unnamed.py", "VALUE = 1\n")
-    client.write("tests/test_named.py", "# app/named.py\ndef test_named():\n    assert True\n")
-    client.git("add", "-A")
-    client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m", "Set up tests")
-    base = client.git("rev-parse", "HEAD").strip()
-    client.write("src/app/named.py", "VALUE = 2\n")
-    client.write("src/app/unnamed.py", "VALUE = 2\n")
+def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatch):
+    # Forge's own settings and dependencies; only review and GitHub are faked. A second
+    # runner prints after pytest, as Jest does after the Python part of a mixed command.
+    for rel in ("forge.toml", "pyproject.toml", "uv.lock"):
+        env.repo.write(rel, (ROOT / rel).read_text("utf-8"))
+    settings = tomllib.loads((ROOT / "forge.toml").read_text("utf-8"))
+    later = shlex.join([Path(sys.executable).as_posix(), "-c", "for i in range(40): print(i)"])
+    env.repo.write("forge.toml", (ROOT / "forge.toml").read_text("utf-8").replace(
+        json.dumps(settings["fast_test"]), json.dumps(settings["fast_test"] + " && " + later)))
+    monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", sys.prefix)
+    monkeypatch.setenv("UV_NO_SYNC", "1")  # Reuse the enclosing run's installed test dependencies.
+    for name in ("named", "first", "second"):
+        env.repo.write(f"src/app/{name}.py", "VALUE = 1\n")
+    env.repo.write("tests/test_named.py", "# app/named.py\ndef test_named():\n    assert True\n")
+    env.repo.git("add", "-A")
+    env.repo.git("commit", "-q", "-m", "Use Forge's own test settings")
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix({f"src/app/{name}.py": "VALUE = 2\n"
+                             for name in ("named", "first", "second")})
+    env.checks([run(name) for name in settings["checks"]])
 
-    result = client.forge("test", "--pytest", base)
+    closed = env.close(item)
 
-    assert result.returncode == 0, result.stdout + result.stderr
-    # Last, so close's bounded output tail still shows it.
-    assert result.stdout.splitlines()[-1] == (
-        "No local test names src/app/unnamed.py; GitHub's checks will cover it.")
-    assert "src/app/named.py;" not in result.stdout
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    for name in ("first", "second"):
+        assert (f"No local test names src/app/{name}.py; GitHub's checks will cover it."
+                in closed.stdout), closed.stdout
+    assert "No local test names src/app/named.py" not in closed.stdout
 
 
 def test_2_worker_brief_says_run_the_tests_that_check_changed_printed_text(client):
