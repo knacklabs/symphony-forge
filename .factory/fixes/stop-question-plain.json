@@ -47,6 +47,7 @@
     "id": "c5acc3ba-6220-4b73-8c42-118257fb3cc3",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -58,5 +59,6 @@
       "step": "review"
     }
   ],
-  "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged"
+  "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
+  "worker": "codex"
 }
