@@ -16,24 +16,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "173199f70a4c7e9a7c115bfd59a7b5a1ec43815483737d58c07c62cd7c4d0925",
-    "changed": "d325913df09cdd4dce581f81ee5ef2fde6c86abe7729a301ec345a7a1006299c",
-    "commit": "726f037c61665a940a8385fb958c9aefa7d99801",
+    "branch_diff": "b8242e72f3cec34ab36c3339a4caeb11c60de7a9640818d7412cab5bd0149738",
+    "changed": "625c79ddfb6164363f2b3d7f1de3388a7e83dde35c25786c6329db75b8ab45da",
+    "commit": "2be8f8d1c197e6666c2b59293976e7d0aedd8ecc",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Test. The required end-to-end test fails intermittently in the repository suite. Its 15-second socket timeout also covers preparation and review-lane admission; the proof list records three post-commit timeout failures and about 33 seconds before review-lane admission. Those failures do not show that close ran tests and review sequentially, but they leave the new-client and earlier-adoption cases without reliable suite proof. The direct diagnostic passes do not resolve the full-suite failure.",
-        "file": "tests/test_close_runs_tests_and_review_together.py",
-        "line": 51,
-        "priority": "P1",
-        "title": "Not done: tests/test_close_runs_tests_and_review_together.py::test_1_close_starts_tests_and_review_together_and_reports_both"
-      }
-    ],
-    "id": "84719ec5-4341-40e8-9dee-57c24efd0607",
-    "status": "blocked"
+    "findings": [],
+    "id": "eb1e8feb-4604-4346-8b1a-1b8eb6aa75f2",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:16:47+00:00",
@@ -49,6 +41,10 @@
     },
     {
       "at": "2026-10-11T03:59:35.108704+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:26:34.096266+00:00",
       "step": "review"
     }
   ],
