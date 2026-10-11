@@ -13,25 +13,40 @@
     "src/forge/close.py",
     "src/forge/nextstep.py",
     "src/forge/templates/skill.md",
-    "src/forge/worker.py"
+    "src/forge/worker.py",
+    "tests/test_stop_default_answer.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8454a3f91d66d74a60dcffc4ce66ee7b2dbbd8a5e0e9c7fce598af976a68f7df",
-    "changed": "013f3cf6a329208b01149f45b091e032d7e9fd8607300d878320b21fc5e0961c",
-    "commit": "ca4854bfbec9cf32d9ddcf93c477e36b742d851e",
+    "branch_diff": "a3a6fa91e1a4d7d65e1b97dacf0bdaa33860450728a48cd937f69d13a1748f0f",
+    "changed": "2d5706c99a55d5a7fb43dc07d9ddd152122fd6b4324e6d4b10ef94230a3ffb94",
+    "commit": "0b8aaaf7c9ff0bc22d8e0c77104a671b8ba2230e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. If the default is recorded and the owner then uses `forge close --resolve split --reason ...`, close.py:109 removes `by=\"default\"`. A subsequent `forge land` sends the worker back to fix the original findings, but worker.py:151 supplies a coordinator note only when `by` is still `default`; the owner's split choice and reason are absent from the brief. The worker can continue the original fix instead of the agreed split. The reversal proof tests only `accept`, so it passes with this path broken.",
+        "body": "Raise: Functional. The default-choice note reaches the worker only while `worker_round` equals the current round. After that worker runs, the round increments. If the next review is still blocked, a subsequent worker receives the open findings without the narrowing instruction and can resume fixing work that was assigned to follow-up fixes. The land proof uses a clean review immediately after the first worker round, so it does not cover this normal continuation.",
         "file": "src/forge/worker.py",
-        "line": 151,
+        "line": 154,
         "priority": "P1",
-        "title": "The owner's later split choice does not reach the worker"
+        "title": "Narrowing instruction expires after one worker round"
+      },
+      {
+        "body": "Raise: Not done. The default creates a fix branch for each open finding at close.py:393, but an owner's later `--resolve accept` changes only the stop and review records here. Those fix branches remain open even though the owner has accepted the findings. The reversal test reaches ready without checking the follow-up fixes, so it misses this lasting effect of the default choice.",
+        "file": "src/forge/close.py",
+        "line": 109,
+        "priority": "P1",
+        "title": "Reversing the default leaves its follow-up fixes active"
+      },
+      {
+        "body": "Raise: Gate. The supplied proof list names only `test_5_owner_choice_after_the_default_reaches_the_worker`. It omits the named proofs for the 30-minute default and filing every open finding (`test_1`), unattended land continuation (`test_3`), and new and previously adopted client repos (`test_4`). Those tests exist, but the latest commit's proof list does not cover these Done-when details.",
+        "file": "tests/test_stop_default_answer.py",
+        "line": 154,
+        "priority": "P1",
+        "title": "Not done: proof list"
       }
     ],
-    "id": "95deef80-826f-4b03-8a30-4b8b2b41787e",
+    "id": "cdce8891-fa01-47bb-bc86-bdc0ef18c987",
     "status": "blocked"
   },
   "round": 1,
@@ -51,6 +66,10 @@
     },
     {
       "at": "2026-10-11T15:41:44.269070+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:22:38.950401+00:00",
       "step": "review"
     }
   ],
