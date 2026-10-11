@@ -607,6 +607,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "selection" in said:
                     if ran.get("run_id"):
                         repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
+                        ran.update(said["selection"])
                     text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
@@ -654,6 +655,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         "input_tokens": usage.get("inputTokens"),
                         "cached_input_tokens": usage.get("cachedInputTokens"),
                         "output_tokens": usage.get("outputTokens")})
+                    ran.update(chat=result["conversation"], **result["usage"],
+                               reasoning_output_tokens=usage.get("reasoningOutputTokens"))
                     _append(turns, {**started, **continued, "status": said["status"],
                                     "ended": repo.now(), **result["usage"]})
                     _record(record, head=repo.git("rev-parse", "HEAD", cwd=checkout))
