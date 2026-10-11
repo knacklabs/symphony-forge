@@ -1,0 +1,14 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/stuck-worker-asks",
+  "done_when": "When two rounds in a row leave the same failing test or finding, or the change grows past its size limit, Forge stops the item and prints a ready-to-ask question naming the item, what is stuck and what the worker tried, with the choices: switch this item to the other tool, keep the same tool for one more round, or narrow or split; the owner's choice is recorded and the next round follows it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T13:05:11.609053+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
+}
