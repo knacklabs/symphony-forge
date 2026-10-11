@@ -7,12 +7,35 @@
     "head": null,
     "start": "2a6ab333a4bffc32def95575c80c4d3708fd30ae"
   },
+  "flagged": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "da2d87fc811c2aeee3d1838c1852c331107d787e13c263ca2b864b3dacbc0ae6",
+    "changed": "769ebd880356a0fafaff736d8d93f38879fdcac7670c50bf29eb5f876ea16f0a",
+    "commit": "b8572fa74109e3da3552b16135cef41fa62fc634",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new no-session refusal applies only when a caller uses `repo.route`. `worker.work` does not call it, so `forge work` can still commit item state and start a run in a one-tool repo without a coordinating session. The separate WORK task owns that routing change.",
+        "file": "src/forge/repo.py",
+        "line": 531,
+        "priority": "P2",
+        "title": "Later: route forge work through repo.route in WORK"
+      }
+    ],
+    "id": "ebbacae6-351a-431b-a57b-914230ebed22",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T16:51:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T17:28:21.358260+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
