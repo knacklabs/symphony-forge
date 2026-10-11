@@ -10,27 +10,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b162afdab583908a70b7de0b623c9718fb5c9596902a7b495a6842eb7b75bef9",
-    "changed": "d0c3121285ab06ce057e1f1ee4755dd51fae41c169612a9dc1eecce8fd2a69b0",
-    "commit": "abb37ee4ea5a4ef36593545e8d91b52de3efdc25",
+    "branch_diff": "5c710237ba1590d5863939fdfd8edc9ee4e5bd833d4dcb9ee51aba734d034f54",
+    "changed": "785ef53503b9114c3c2bbd0634d77ecb218abec78cca04010c14645d721593a3",
+    "commit": "df3506cf5659d070afe8705e02d9b02fa50cc0e8",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. A blocked PR opened by an earlier Forge release has neither a ready receipt nor the new `pull request published` event, so `published` is false even though the PR exists. `forge work` then publishes neither a worker question nor its answer to the PR record. A teammate's board cannot see the owner wait while the question blocks close. The same gap occurs when work continues in a checkout without either local marker.",
-        "file": "src/forge/worker.py",
-        "line": 84,
+        "body": "Raise: Functional. After machine B publishes a clean review for a newer PR head, a record refresh from machine A replaces B's published `ready` commit with A's older receipt commit, or with null if A has no receipt. `nextstep._item_readiness` reads only `record.ready`, so teammates then see the unchanged, clean PR as not ready. Worker question and answer refreshes can reach this path without a new close.",
+        "file": "src/forge/time_records.py",
+        "line": 336,
         "priority": "P1",
-        "title": "Questions on existing pull requests remain local"
+        "title": "Refreshing a PR from an older checkout erases newer clean readiness"
       },
       {
-        "body": "Raise: Scale. This `git cat-file` call runs inside the read-round loop for every story on every board read. A client-sized board with roughly 100 stories and 10 cold-read rounds per story launches about 1,000 Git processes for `forge board --json`, and repeats that cost for the HTML page. The existing batched blob reader elsewhere in board.py shows these objects can be read without a process per round.",
-        "file": "src/forge/board.py",
-        "line": 586,
+        "body": "Raise: Functional. A human-merge wait started on machine B exists in the PR record but not in machine A's local events. When A resumes `forge work`, this call searches only local events, so it records no wait end. The shared record continues to show an owner wait after work resumes, and the board can report the item as waiting for a merge that is no longer its next action.",
+        "file": "src/forge/worker.py",
+        "line": 125,
         "priority": "P1",
-        "title": "Board launches Git once for every historical plan read"
+        "title": "Cross-machine rework leaves a published owner wait open"
       }
     ],
-    "id": "7caad782-0477-42be-9601-37bbefb5123b",
+    "id": "17fb3177-369e-4f03-8ba2-697c55599aca",
     "status": "blocked"
   },
   "round": 8,
@@ -50,6 +50,10 @@
     },
     {
       "at": "2026-10-10T21:03:10.730306+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:29:43.225286+00:00",
       "step": "review"
     }
   ],
