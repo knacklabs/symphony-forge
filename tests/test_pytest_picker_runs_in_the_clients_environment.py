@@ -131,6 +131,11 @@ def _client_tests(client, python):
             "utf-8")
     (client / "tests/test_unrelated.py").write_text(
         "def test_unrelated():\n    assert False, 'The picker must exclude this test'\n", "utf-8")
+    # Keep the two selected files at a third so close still proves client execution;
+    # larger selections now intentionally run only in required CI.
+    for number in range(3):
+        (client / "tests" / f"test_other_{number}.py").write_text(
+            "def test_other():\n    assert False, 'The picker must exclude this test'\n", "utf-8")
     return f'"{python.as_posix()}" -m pytest tests -q'
 
 
