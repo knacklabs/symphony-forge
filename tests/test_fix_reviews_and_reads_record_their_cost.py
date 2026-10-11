@@ -13,6 +13,8 @@ from test_story import DOC, new_story, setup, worktree
 from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
                                   unsynced_up)  # noqa: F401
 
+STORY = "record-review-usage"
+
 # The pinned helper names its model and thinking, then runs the engine once per pass of a review
 # it splits in two, keeping its output (Codex always with --json).
 HELPER = '''#!{python}
