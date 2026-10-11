@@ -25,6 +25,8 @@ SUITES = {
     "a then b": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
                  'run.write_text("x")\n'
                  'print("FAILED test_readme.py::test_" + ("a" if first else "b"))\nraise SystemExit(1)\n'),
+    "finding then test": ('import pathlib, sys\nif pathlib.Path("work-1.txt").exists():\n'
+                          '    print("FAILED test_readme.py::test_greeting")\n    sys.exit(1)\n'),
     "jest same": ('import random\nprint(f"  ✕ greets the reader ({{random.randint(2, 99)}} ms)")\n'
                   'raise SystemExit(1)\n'),
     "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
@@ -47,9 +49,9 @@ def question(stuck):
 
 def _rounds(env, case):
     """Start the fix whose every close fails, then run work and close once (twice for a then b)."""
-    if case == "finding":
+    if case in ("finding", "finding then test"):
         env.reviews(blocked(finding("P1", "Saving drops the greeting")))
-    else:
+    if case != "finding":
         script = env.tmp / "suite.py"
         script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
         toml = env.repo.path / "forge.toml"
@@ -65,12 +67,14 @@ def _rounds(env, case):
     return item
 
 
-@pytest.mark.parametrize("case", ["pytest same", "a then b", "jest same", "jest different", "finding"])
+@pytest.mark.parametrize("case", ["pytest same", "a then b", "jest same", "jest different", "finding",
+                                  "finding then test"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
     stuck = env.repo.forge("work", item)
-    if case == "jest different":  # different failing tests are progress, not a stuck worker
+    # Different failing tests, or a fixed finding followed by a failing test, are progress.
+    if case in ("jest different", "finding then test"):
         assert stuck.returncode == 0, stuck.stdout + stuck.stderr
         return
     assert stuck.returncode == 1, stuck.stdout + stuck.stderr
@@ -78,7 +82,8 @@ def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     assert env.close(item).stderr.splitlines()[-5:] == question(STUCK[case])
     shown = env.repo.forge("next").stdout
     assert question(STUCK[case])[0] in shown and NEXT in shown
-    assert env.close(item, "--resolve", "accept", "--reason", "Accept it").returncode == 1
+    refused = env.close(item, "--resolve", "accept", "--reason", "Accept it")
+    assert refused.returncode == 1 and refused.stderr.splitlines()[-1] == NEXT
 
 
 @pytest.mark.parametrize("choice", ["same", "narrow", "split"])

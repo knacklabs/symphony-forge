@@ -97,7 +97,8 @@ def close(args: argparse.Namespace) -> int:
                 not state.get("stop") or (state["stop"].get("choice") and not continued) or
                 args.dismiss or args.because or
                 (choice == "accept" if stuck else choice in ("switch", "same"))):
-            repo.refuse(REFUSALS["bad_choice"], item=item)
+            repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
+                        else REFUSALS["bad_choice"], item=item)
         if not continued:
             if choice == "switch":  # the next forge work runs this item on the other tool
                 state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
@@ -402,7 +403,11 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
     stop = state.get("stop") or {}
     if "question" in stop and not stop.get("choice"):
         repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-    keys = [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings]
+    # A finding counts only from a review since the last round: close stops before reviewing
+    # when the tests fail, leaving the earlier review's findings in place.
+    reviewed = (state.get("review") or {}).get("commit")
+    keys = ([] if state.get("tests") or reviewed == (state.get("stuck") or {}).get("review") else
+            [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings])
     for label, text in failing:
         names = [name for line in text.splitlines() if "FAILED" in line
                  for name in re.findall(r"\S+::\S+", line)]
@@ -420,7 +425,7 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
         state.pop("stop")
     elif same:
         stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
-    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top)}
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "review": reviewed}
 
 
 def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
