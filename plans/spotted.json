@@ -1013,6 +1013,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast waswanted\tfast-mode-visible",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 627,
+      "text": "Not done: Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast waswanted",
+      "from": "blocking",
+      "item": "fast-mode-visible",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: Each task and fix keeps one worker chat per tool from its first round to merge\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/codex.py",

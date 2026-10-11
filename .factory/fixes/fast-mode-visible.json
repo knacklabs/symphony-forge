@@ -1,42 +1,29 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/fast-mode-visible",
-  "chat": {
-    "approval": null,
-    "claude": null,
-    "conversation": "01a12aa3-f1dd-7900-b8ba-3b4d91203966",
-    "head": "7257154286226c7a394e8a22253cc585a11cac50",
-    "start": "00ef47e605a0073f55f0afa35786aafe01081aa5"
-  },
   "done_when": "Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast was wanted but the model does not offer it, and Fast is used whenever the model offers it",
   "flagged": [
+    "src/forge/codex.py",
     "src/forge/codex_turn.py",
     "src/forge/doctor.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "477b110a4655f0c4a0d817ae558b1c3a0dd4d9ae082ffda1284a0a3fd12ab669",
-    "changed": "be3c7da5d1873e7b3aeac61dd61f8cc8989d9b551268df89a719b1da87117698",
-    "commit": "58e8f2b7f934153d4a107cb773bf29ee795d99b5",
+    "branch_diff": "54f18c6ff27a6298661b79eba8830ee07c4df671c7fcaad82246c3223849a5b0",
+    "changed": "91dead5aedc98cb73c70994ede1f7a2bfb29e5989002a8d6da9b7ff219dcecc6",
+    "commit": "6b51a3046c9bc7d616fc154e7fbcd5b11330a185",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. Line 452 overwrites `rows`, which holds doctor's detected problems, with the event history. The final `if rows` at line 471 now fails `forge doctor` after any recorded run, even when all checks pass. Conversely, a repo with a genuine problem and no events exits successfully. `test_7` checks doctor's text but never its exit status.",
-        "file": "src/forge/doctor.py",
-        "line": 452,
-        "priority": "P1",
-        "title": "Doctor treats event history as its problem list"
-      },
-      {
-        "body": "Raise: Not done. The selection at line 207 records a locally chosen tier before `turn/start`; it does not record a tier received from Codex. It is stored against the run ID (`src/forge/codex.py:619`), while capacity retries can start additional turns in that run without another selection. The unavailable-Fast message is also printed after the run's first stdout line (`src/forge/worker.py:108`) and the app-server line (`src/forge/codex.py:602`). `test_7` checks that the message appears somewhere and that doctor repeats it, but does not check first-line position or a requested and received tier for each turn.",
-        "file": "src/forge/codex_turn.py",
-        "line": 207,
+        "body": "Raise: Not done. A normal queued `forge work` run can print the machine-lane wait message before this Fast-unavailable notice. The notice is emitted only after Codex selects a model here, while `machine.join` prints its wait message earlier (`src/forge/machine.py:159`). A split-worker run that falls back from Claude also prints the Claude building and fallback messages first (`src/forge/worker.py:111,209`). In both cases, the run's first stdout line does not explain that Fast was wanted but unavailable. The first-line test covers neither queue contention nor fallback.",
+        "file": "src/forge/codex.py",
+        "line": 627,
         "priority": "P1",
         "title": "Not done: Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast waswanted"
       }
     ],
-    "id": "f79b2efb-4fb5-41df-bf06-2625f97dcfa8",
+    "id": "6a907a6d-ce9c-48a3-b588-71e563007b5f",
     "status": "blocked"
   },
   "round": 1,
@@ -48,6 +35,10 @@
     },
     {
       "at": "2026-10-11T10:36:17.667267+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:05:10.073585+00:00",
       "step": "review"
     }
   ],
