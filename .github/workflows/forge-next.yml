@@ -1,6 +1,6 @@
 name: forge-next
 
-# Full suite: Linux on pull requests, all platforms on main and release tags; Windows installer checks on every event.
+# Full suite on every platform on main and release tags (pull requests run it in forge.yml); Windows installer checks on every event.
 
 on:
   pull_request:
@@ -39,6 +39,9 @@ jobs:
         run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
+    if: github.event_name != 'pull_request'
+    # Not "tests": this job skips on pull requests, and a skipped job would fail the required check.
+    name: full suite on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
       FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
     strategy:
@@ -46,14 +49,7 @@ jobs:
       matrix:
         # Slower platforms need more runners as the suite grows.
         include: >-
-          ${{ github.event_name == 'pull_request' &&
-            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":6},
-            {"os":"ubuntu-latest","group":2,"groups":6},
-            {"os":"ubuntu-latest","group":3,"groups":6},
-            {"os":"ubuntu-latest","group":4,"groups":6},
-            {"os":"ubuntu-latest","group":5,"groups":6},
-            {"os":"ubuntu-latest","group":6,"groups":6}]') ||
-            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
+          ${{ fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
             {"os":"ubuntu-latest","group":2,"groups":3},
             {"os":"ubuntu-latest","group":3,"groups":3},
             {"os":"macos-latest","group":1,"groups":6},
