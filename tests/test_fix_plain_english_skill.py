@@ -43,6 +43,7 @@ def test_1_clients_get_the_skill_and_agents_write_people_text_with_it(repo, gh, 
         synced = repo.forge("sync", cwd=client)
         assert synced.returncode == 0, synced.stdout + synced.stderr
 
+    guides = []
     for host in (".claude", ".codex"):
         folder = client / host / SKILL
         for name in PLAIN_ENGLISH:
@@ -50,18 +51,27 @@ def test_1_clients_get_the_skill_and_agents_write_people_text_with_it(repo, gh, 
         # The standard's own word list belongs to its owner and is never shipped.
         assert not (folder / "references/word-list.md").exists()
         assert "word-list.md" not in (folder / "SKILL.md").read_text(encoding="utf-8")
-        guide = rule((client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8"))
+        # The license and notice say the word list is left out.
+        for name in ("LICENSE", "NOTICE.md"):
+            assert (folder / name).read_text(encoding="utf-8").startswith(
+                "Forge note: Forge ships this skill without references/word-list.md"), (host, name)
+        guides.append(rule((client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")))
 
-    # The check tool works without the word list.
+    # The check tool works without the word list and still finds broken rules.
+    tool = str(client / ".codex" / SKILL / "scripts/ste_check.py")
     draft = client / "draft.md"
     draft.write_text("Run the tests. The board shows the result.\n", encoding="utf-8")
-    checked = subprocess.run([sys.executable, str(client / ".codex" / SKILL / "scripts/ste_check.py"),
-                              str(draft)], capture_output=True, text=True)
+    checked = subprocess.run([sys.executable, tool, str(draft)], capture_output=True, text=True)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert "word list" not in checked.stdout
+    draft.write_text("You shouldn't run the tests; the board has updated.\n", encoding="utf-8")
+    broken = subprocess.run([sys.executable, tool, str(draft)], capture_output=True, text=True)
+    assert broken.returncode == 1, broken.stdout + broken.stderr
+    assert "ERROR" in broken.stdout
 
     brief = rule((ROOT / "src/forge/templates/brief.md").read_text(encoding="utf-8"))
-    for text in (brief, guide):
-        for phrase in ("What changes for you", "Done when", "pull request summar", "question",
-                       "board"):
+    for text in (brief, *guides):
+        for phrase in ("What changes for you", "Why and Done when", "a fix's why and Done when",
+                       "pull request summaries", "questions to the human", "board",
+                       "`forge next` lines"):
             assert phrase in text, phrase
