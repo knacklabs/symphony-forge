@@ -294,10 +294,15 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             if passed and passed.exists():  # the close this one waited for passed the same files
                 print(skipped, flush=True)
                 return 0, skipped
-            workers = str(machine.half_cores())
+            from forge import fasttest
+
+            workers = machine.test_cpus()
+            # A worker's budget also caps a fixed xdist count; the option wins over the command's -n.
+            cap = (f" --maxprocesses={workers}" if os.environ.get("FORGE_TEST_CPUS")
+                   and fasttest.XDIST.search(command) else "")
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
             env.pop("FORGE_CLOSE_TESTS", None)
             if closing and "tests" in repo.config(top)["checks"]:
                 env["FORGE_CLOSE_TESTS"] = "1"
