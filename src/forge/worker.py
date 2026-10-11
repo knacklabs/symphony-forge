@@ -209,6 +209,8 @@ def work(args: argparse.Namespace) -> None:
                     reason = ("claude command missing" if shutil.which("claude") is None else
                               str(error).split("\n", 1)[0].removeprefix("The worker "))
                     chosen = repo.design_models(config, "codex")
+                    building = (f"Building {item} with Codex ({chosen['model']}, "
+                                f"{chosen['effort']}) because Claude {reason}")
                     message = (f"Claude {reason}; fell back to Codex with "
                                f"{chosen['model']} at {chosen['effort']} effort.")
                     print(message, flush=True)
