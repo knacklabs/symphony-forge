@@ -1,6 +1,13 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/second-stop-choice",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a129af-3a90-7bf0-9274-85204e12f329",
+    "head": "95d10030339dc512865c38c80346115af6551fab",
+    "start": "0e2e524090968be0a3383e53d00552f93f459859"
+  },
   "done_when": "When a review loop stops again after an earlier recorded choice, forge close --resolve narrow, split or accept records the new choice and the board and forge next show the item waiting on that choice until it is made",
   "kind": "fix",
   "round": 1,
