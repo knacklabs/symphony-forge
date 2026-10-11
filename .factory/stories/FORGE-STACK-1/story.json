@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-STACK-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-11T07:35:39.399949+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "A story's parts build on each other instead of clashing through main",
+  "touches": 0
+}

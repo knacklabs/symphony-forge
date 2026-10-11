@@ -210,6 +210,12 @@
       "spec": "docs/specs/board-for-the-team.md",
       "status": "pending",
       "order": 75
+    },
+    {
+      "key": "FORGE-STACK-1",
+      "title": "A story's parts build on each other instead of clashing through main",
+      "status": "pending",
+      "order": 76
     }
   ],
   "epics": [
