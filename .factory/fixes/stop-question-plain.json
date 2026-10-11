@@ -2,12 +2,60 @@
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/stop-question-plain",
   "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding as one plain sentence saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
+  "flagged": [
+    "src/forge/nextstep.py",
+    "src/forge/story.py",
+    "tests/test_reads_wait_for_a_loop_choice.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98243f5b476294028c7d75caa361ac7a7cf1ffd85e0492bded6910351b6d9b90",
+    "changed": "83ca8782a9784f50eb1db2510b02096f0562f4216251a73432701b47c4afeb99",
+    "commit": "ad91f526ae0fa0358de2221ee02cdb047adf86f0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. `read_question` takes the delivery summary only from `What changes for you`, but specs use sections such as `Behaviour`. The named spec test accepts a question containing only \u201cInvoices by email,\u201d even though the spec says each invoice is emailed as a PDF. A stopped spec therefore does not tell the owner what it delivers.",
+        "file": "src/forge/story.py",
+        "line": 990,
+        "priority": "P1",
+        "title": "Not done: stopped specs omit what they deliver"
+      },
+      {
+        "body": "Raise: Not done. The new `forge next` question path is inside `_next_round`, which handles story plans; `forge next` has no corresponding path for a stopped spec. Land's own three-fix-round stop also prints a question without recording `state.stop` (`src/forge/land.py:67-72`), while `forge next` repeats review questions only when that field exists (`src/forge/nextstep.py:618`). After either stop, the owner cannot retrieve the promised question with `forge next`.",
+        "file": "src/forge/nextstep.py",
+        "line": 549,
+        "priority": "P1",
+        "title": "Not done: forge next does not repeat every stopped question"
+      },
+      {
+        "body": "Raise: Not done. The shared question says Accept will \u201capprove it\u201d for a cold read or \u201cmerge it\u201d for a review. `forge read --resolve accept` records the choice and marks the read accepted; story approval or spec confirmation is separate. `forge close --resolve accept` accepts the findings and continues through checks; it does not merge the pull request. These ready-to-ask words give the owner an incorrect account of what accepting does.",
+        "file": "src/forge/story.py",
+        "line": 972,
+        "priority": "P1",
+        "title": "Not done: the accept choice describes an action it does not perform"
+      },
+      {
+        "body": "Raise: Gate. The proof list claims `forge next` coverage for stopped reads including specs, but this test calls `forge next` only when `target == \"SHOP\"`; the spec case never checks it. The land three-round proof checks only the question printed by `forge land`, with no `forge next` assertion. The listed proof therefore does not cover those Done-when cases.",
+        "file": "tests/test_reads_wait_for_a_loop_choice.py",
+        "line": 77,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "c5acc3ba-6220-4b73-8c42-118257fb3cc3",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T13:03:06.972700+00:00",
+      "step": "review"
     }
   ],
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged"
