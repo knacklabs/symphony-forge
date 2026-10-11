@@ -5224,6 +5224,94 @@
       "item": "FORGE-TOOLS-1/READS",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Direct pytest calls with named uv options remain serial\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 175,
+      "text": "Not done: Direct pytest calls with named uv options remain serial",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Generated gate fails for Makefile pytest commands\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 174,
+      "text": "Not done: Generated gate fails for Makefile pytest commands",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when it\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 174,
+      "text": "Not done: The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when it",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tforge doctor rejects healthy split workflows\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 179,
+      "text": "forge doctor rejects healthy split workflows",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tSync can stop on an unrelated active worker while preserving chats before it generates files.",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 509,
+      "text": "Sync can stop on an unrelated active worker while preserving chats before it generates files.",
+      "from": "worker",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 32,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list omits the merge-gate and small-suite proofs\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 39,
+      "text": "Not done: proof list omits the merge-gate and small-suite proofs",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: test six split groups at new-client init\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 45,
+      "text": "Not done: test six split groups at new-client init",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
