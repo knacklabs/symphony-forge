@@ -5,25 +5,33 @@ now owns that read; only a cross-tool read calls the external kit.
 """
 import json
 import os
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, machine_cores
+from conftest import ROOT, _install
 from test_codex_reader import GRILL
 from test_codex_worker import _toml
 from test_story import DOC, new_story, setup
 from test_worker import calls
-from test_fix_agent_runs_wait_in_line import _until
+from test_tools_session_hold import Session
 
 STORY = "FORGE-TOOLS-1"
 
 
+@pytest.fixture
+def native_host(repo, monkeypatch, tmp_path, tool):
+    owner = Session(repo, tmp_path / "reader-host", tool + "-session")
+    monkeypatch.setattr(repo, "forge", owner.forge)
+    try:
+        yield owner
+    finally:
+        owner.close()
+
+
 @pytest.mark.parametrize("tool,model", [("codex", "gpt-6-sol"), ("claude", "opus")])
 def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, tmp_path,
-                                                       tool, model):
+                                                       tool, model, native_host):
     setup(repo, keys=("SHOP", "WISH"))
     # An empty SDK home proves native Codex reads do not require the driver SDK.
     data = tmp_path / "data"
@@ -55,11 +63,15 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         return [entry for entry in json.loads(shown.stdout)["agents"]["entries"]
                 if entry["item"] == "SHOP"]
 
+    pending_round = None
+
     def handout(result=None):
+        nonlocal pending_round
         if result is None:
             result = repo.forge("read", "SHOP")
         assert result.returncode == 0, result.stdout + result.stderr
         handed = json.loads(result.stdout)
+        pending_round = handed["round"]
         assert handed["role"] == "reader"
         assert Path(handed["checkout"]).resolve() == shop.resolve()
         assert (handed["tool"], handed["model"], handed["effort"]) == (tool, model, "high")
@@ -70,57 +82,20 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         return handed
 
     def handback(text):
-        result = repo.forge("handback", "SHOP", "--text", text, "--subagent", "reader-chat")
+        result = repo.forge("handback", "SHOP", "--round", str(pending_round),
+                            "--text", text, "--subagent", "reader-chat")
         assert lane() == []
         return result
 
-    # A native read waits behind another session-owned read but still emits one JSON document.
-    machine_cores(repo, 2)
+    # Lane lifetime, queueing, stop and foreign-session safety have one owner in HOLD's test.
     wish = new_story(repo, "WISH")
     (wish / "plans/WISH.md").write_text(DOC, "utf-8")
     (wish / "forge.toml").write_text(config.read_text("utf-8"), "utf-8")
     trusted = home / "config.toml"
     trusted.write_text(trusted.read_text("utf-8") +
                        f'\n[projects.{json.dumps(str(wish))}]\ntrust_level = "trusted"\n', "utf-8")
-    occupied = repo.forge("read", "WISH")
-    assert occupied.returncode == 0, occupied.stdout + occupied.stderr
-    assert json.loads(occupied.stdout)["role"] == "reader"
-    stdout, stderr = tmp_path / "queued-read.out", tmp_path / "queued-read.err"
-    with stdout.open("w", encoding="utf-8") as out, stderr.open("w", encoding="utf-8") as err:
-        queued = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "read", "SHOP"],
-                                  cwd=repo.path, stdin=subprocess.DEVNULL, stdout=out, stderr=err)
-    try:
-        _until(lambda: "in line." in stdout.read_text("utf-8") + stderr.read_text("utf-8"),
-               "native read waiting for an agent place")
-        released = repo.forge("handback", "WISH", "--text", "No findings.",
-                              "--subagent", "wish-reader")
-        assert released.returncode == 0, released.stdout + released.stderr
-        assert queued.wait(timeout=60) == 0
-        initial = handout(subprocess.CompletedProcess(queued.args, queued.returncode,
-                          stdout.read_text("utf-8"), stderr.read_text("utf-8")))
-        assert "in line." in stderr.read_text("utf-8")
-    finally:
-        if queued.poll() is None:
-            queued.kill()
-            queued.wait(timeout=10)
+    initial = handout()
     assert DOC in initial["prompt"]
-    held_id = lane()[0]["id"]
-    duplicate = repo.forge("read", "SHOP")
-    assert duplicate.returncode == 1 and "already running" in duplicate.stderr
-    assert [entry["id"] for entry in lane()] == [held_id]
-    with monkeypatch.context() as another_session:
-        another_session.setenv("CODEX_THREAD_ID" if tool == "codex" else "CLAUDE_SESSION_ID",
-                               "another-coordinating-session")
-        foreign = repo.forge("handback", "SHOP", "--text", "No findings.",
-                             "--subagent", "unrelated-reader")
-        assert foreign.returncode == 1
-        assert "This session has no pending read for that target." in foreign.stderr
-        assert [entry["id"] for entry in lane()] == [held_id]
-    # This command represents the person in a fixture repo, never the worker's real run.
-    stopped = repo.forge("stop", "SHOP")
-    assert stopped.returncode == 1
-    assert "Stop this subagent in the coordinating session" in stopped.stderr
-    assert [entry["id"] for entry in lane()] == [held_id]
     assert not notes.exists()
     scratch = shop / "scratch.txt"
     scratch.write_text("changed during the read\n", "utf-8")
@@ -133,13 +108,14 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     empty = handback("")
     assert empty.returncode == 1 and "cold read" in empty.stderr and "failed" in empty.stderr
     assert not notes.exists()
-    handout()
+    findings_offer = handout()
     findings = handback("1. Missing saved basket ownership.\n2. Missing save failure behavior.")
     assert findings.returncode == 0, findings.stdout + findings.stderr
     written = notes.read_text("utf-8")
     assert f"reader: {tool} ({model}), a subagent of this " in written
     assert f"because forge.toml's tools is {tool}" in written
-    assert "round: 1\n" in written and "passed: no\n" in written
+    # Every handout consumes its round, including failed or stopped reads.
+    assert f"round: {findings_offer['round']}\n" in written and "passed: no\n" in written
     assert "1. Missing saved basket ownership." in written
     assert "2. Missing save failure behavior." in written
     for finding in ("1. Missing saved basket ownership.", "2. Missing save failure behavior."):
@@ -151,13 +127,13 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     assert second["subagent"] == "reader-chat"
     result = handback("1. Advisory: State how long baskets are kept.")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "## Round 2\n\n3. Advisory: State how long baskets are kept." in notes.read_text("utf-8")
+    assert f"## Round {second['round']}\n\n3. Advisory: State how long baskets are kept." in notes.read_text("utf-8")
     doc.write_text(doc.read_text("utf-8") + "\nBaskets last thirty days.\n", "utf-8")
-    handout()
+    clean_offer = handout()
     clean = handback("No findings.")
     assert clean.returncode == 0, clean.stdout + clean.stderr
     assert "passed: yes\n" in notes.read_text("utf-8")
-    assert "## Round 3\n\nNo findings." in notes.read_text("utf-8")
+    assert f"## Round {clean_offer['round']}\n\nNo findings." in notes.read_text("utf-8")
     assert repo.git("show", "HEAD:plans/SHOP.read.md", cwd=shop) == notes.read_text("utf-8").strip()
     assert json.loads((shop / ".factory/stories/SHOP/story.json").read_text("utf-8"))["status"] == "read"
     assert not (repo.bin / "codex-app-server.jsonl").exists()
@@ -189,7 +165,8 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         spec_offer = repo.forge("read", "read-scope", cwd=spec_checkout)
         assert spec_offer.returncode == 0, spec_offer.stdout + spec_offer.stderr
         assert Path(json.loads(spec_offer.stdout)["checkout"]).resolve() == spec_checkout.resolve()
-        spec_result = repo.forge("handback", "read-scope", "--text", "No findings.",
+        spec_result = repo.forge("handback", "read-scope", "--round",
+                                 str(json.loads(spec_offer.stdout)["round"]), "--text", "No findings.",
                                  "--subagent", "spec-reader", cwd=repo.path)
         assert spec_result.returncode == 0, spec_result.stdout + spec_result.stderr
         spec_notes = spec_doc.with_name("read-scope.read.md")
@@ -203,7 +180,8 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         deleted_offer = repo.forge("read", "read-scope", cwd=spec_checkout)
         assert deleted_offer.returncode == 0, deleted_offer.stdout + deleted_offer.stderr
         spec_doc.unlink()
-        deleted_result = repo.forge("handback", "read-scope", "--text", "No findings.",
+        deleted_result = repo.forge("handback", "read-scope", "--round",
+                                    str(json.loads(deleted_offer.stdout)["round"]), "--text", "No findings.",
                                     "--subagent", "spec-reader", cwd=repo.path)
         assert deleted_result.returncode == 1
         assert "A file changed during the cold read" in deleted_result.stderr

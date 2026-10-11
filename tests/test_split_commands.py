@@ -304,7 +304,9 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          'options:\n'
          '  -h, --help   show this help message and exit\n'
          '  --note TEXT  guide this round of work\n',
- 'handback': 'usage: forge handback [-h] [--text TEXT] --subagent SUBAGENT target\n'
+ # Session handbacks name their round so stopped or replaced results cannot be recorded.
+ 'handback': 'usage: forge handback [-h] [--text TEXT] --round ROUND --subagent SUBAGENT\n'
+             '                      target\n'
              '\n'
              'Record the result of a session subagent\n'
              '\n'
@@ -314,6 +316,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
              'options:\n'
              '  -h, --help           show this help message and exit\n'
              '  --text TEXT\n'
+             '  --round ROUND\n'
              '  --subagent SUBAGENT\n',
  'close': 'usage: forge close [-h] [--dismiss N] [--because FILE:LINE_REASON]\n'
           '                   [--resolve {narrow,split,accept}] [--reason REASON]\n'

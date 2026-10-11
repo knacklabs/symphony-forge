@@ -9,6 +9,7 @@ from pathlib import Path
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_setup import _fresh_client
 from test_story import DOC, GRILL, new_story, setup
+from test_tools_session_hold import Session
 from test_worker import calls, install_claude
 from test_upgrade_command import (_repo_adopted_on_the_previous_release,
                                  unsynced_up)  # noqa: F401
@@ -63,22 +64,27 @@ def test_3_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path,
     toml.write_text(toml.read_text("utf-8").replace(GRILL, 'workers = "claude"\n'), "utf-8")
     (shop / "plans/SHOP.md").write_text(DOC, "utf-8")
     log = install_claude(repo)
-    _claude_only(tmp_path, monkeypatch, repo.bin)
-    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
-    monkeypatch.setenv("CLAUDECODE", "1")
-    result = repo.forge("read", "SHOP")
-    assert result.returncode == 0, result.stdout + result.stderr
-    # The same-tool fallback now uses a session reader, with the same built-in defaults.
-    offered = json.loads(result.stdout)
-    assert (offered["role"], offered["tool"], offered["model"], offered["effort"]) == (
-        "reader", "claude", "claude-opus-5-5", "high")
-    assert Path(offered["checkout"]).resolve() == shop.resolve()
-    assert calls(log) == []
-    finished = repo.forge("handback", "SHOP", "--subagent", "default-reader",
-                          "--text", "No findings.")
-    assert finished.returncode == 0, finished.stdout + finished.stderr
-    assert "reader: claude (claude-opus-5-5), a subagent of this Claude Code session" in (
-        (shop / "plans/SHOP.read.md").read_text("utf-8"))
+    # Launch before Claude-only PATH filtering can remove Node's shared command folder.
+    owner = Session(repo, tmp_path / "default-reader-session", "claude-session")
+    try:
+        _claude_only(tmp_path, monkeypatch, repo.bin)
+        monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+        monkeypatch.setenv("CLAUDECODE", "1")
+        result = owner.forge("read", "SHOP")
+        assert result.returncode == 0, result.stdout + result.stderr
+        # The same-tool fallback uses a real session reader, with the same built-in defaults.
+        offered = json.loads(result.stdout)
+        assert (offered["role"], offered["tool"], offered["model"], offered["effort"]) == (
+            "reader", "claude", "claude-opus-5-5", "high")
+        assert Path(offered["checkout"]).resolve() == shop.resolve()
+        assert calls(log) == []
+        finished = owner.forge("handback", "SHOP", "--round", str(offered["round"]),
+                               "--subagent", "default-reader", "--text", "No findings.")
+        assert finished.returncode == 0, finished.stdout + finished.stderr
+        assert "reader: claude (claude-opus-5-5), a subagent of this Claude Code session" in (
+            (shop / "plans/SHOP.read.md").read_text("utf-8"))
+    finally:
+        owner.close()
 
 
 def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):

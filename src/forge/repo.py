@@ -32,6 +32,9 @@ CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),
+    "no_session": ("Forge runs this repo's work inside a Claude Code or Codex session, and none is "
+                   "open here, so nothing ran.",
+                   "open one in this repo and run forge {command} {item} there"),
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
@@ -522,9 +525,12 @@ def coordinator() -> str | None:
     return apps[0] if len(apps) == 1 else None
 
 
-def route(cfg: dict[str, Any], tool: str) -> str:
+def route(cfg: dict[str, Any], tool: str, *, command: str, item: str) -> str:
     """A round runs natively in its coordinating app, otherwise through the tool's kit."""
-    return "native" if tool == coordinator() else "kit"
+    here = coordinator()
+    if cfg["tools"] != "both" and here is None:
+        refuse(REFUSALS["no_session"], command=command, item=item)
+    return "native" if tool == here else "kit"
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
