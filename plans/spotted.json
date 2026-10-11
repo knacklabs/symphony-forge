@@ -430,6 +430,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tAn ongoing story loses older parts from its time runway\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 592,
+      "text": "An ongoing story loses older parts from its time runway",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tBoard launches Git once for every historical plan read\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -837,6 +848,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA large legacy time history can still make PR publication fail\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 758,
+      "text": "A large legacy time history can still make PR publication fail",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1218,6 +1240,94 @@
       "text": "Only remove a fix created by this doctor run",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 391,
+      "text": "Close passes test filenames to Python setup commands",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 260,
+      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 219,
+      "text": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips Jest's default __tests__ files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips Jest's default __tests__ files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips touched NestJS end-to-end test files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 287,
+      "text": "Not done: Close still runs the full client test command locally",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 268,
+      "text": "Not done: Close's default test selection breaks Go clients",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Go test helper edits run no local package check\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 325,
+      "text": "Not done: Go test helper edits run no local package check",
+      "from": "blocking",
+      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     },
@@ -2626,6 +2736,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 80,
+      "text": "Not done: init and upgrade plus sync local-selection test",
+      "from": "blocking",
+      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     },
@@ -4115,6 +4236,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 338,
+      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "from": "worker",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
       "kind": "edge",
       "path": "src/forge/githooks.py",
@@ -4903,116 +5035,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 391,
-      "text": "Close passes test filenames to Python setup commands",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 260,
-      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 219,
-      "text": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips Jest's default __tests__ files\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 217,
-      "text": "Not done: Close skips Jest's default __tests__ files",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 217,
-      "text": "Not done: Close skips touched NestJS end-to-end test files",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 287,
-      "text": "Not done: Close still runs the full client test command locally",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 268,
-      "text": "Not done: Close's default test selection breaks Go clients",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Go test helper edits run no local package check\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 325,
-      "text": "Not done: Go test helper edits run no local package check",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
-      "kind": "bug",
-      "path": "tests/test_close_keeps_full_tests_in_ci.py",
-      "line": 80,
-      "text": "Not done: init and upgrade plus sync local-selection test",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 338,
-      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
-      "from": "worker",
-      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     }

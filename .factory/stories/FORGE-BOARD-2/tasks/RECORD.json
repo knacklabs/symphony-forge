@@ -3,6 +3,7 @@
   "flagged": [
     ".claude/skills/forge/SKILL.md",
     "src/forge/board.py",
+    "src/forge/close.py",
     "src/forge/nextstep.py",
     "src/forge/story.py",
     "src/forge/time_records.py",
@@ -10,20 +11,34 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c9dfb6e1d3c45fb951014ca190ab028e3b60965e23f5b27257db622a90a951b7",
-    "changed": "94fef8a2f426eb0ec6021d12f87e2d87fc8012fcad6f2eb50d64877e92256011",
-    "commit": "422fa12576d0d605865f1a41f34bb0ce259ca271",
+    "branch_diff": "60ba37cf87a47d1529e3c70d1824c8e22a0dbbb12023be7671d2631cb23d8658",
+    "changed": "1112c025d8c96ac4453e197cd01bfc9d429d0503b5b45b2bdd2a63c561e01e82",
+    "commit": "6c26dd993e83794894941fa846790d72d74e5ea0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. This call builds a story's runway only from `current[\"children\"]` and read rounds. `board.py:526` has already excluded parts merged more than seven days ago, so an ongoing story with an older merged part loses that part's recorded working and waiting time. Separately, `time_records.py:481` starts the runway at the first retained part interval or read; a story created before its first cold read loses that earlier unknown time. Both are normal multi-day stories, and the named tests use recent parts and reads. Item 5 requires the story's time split to count its parts and unknown spans.",
+        "body": "Raise: Functional. At line 592, the runway uses only `current[\"children\"]`. The board has already excluded part state files whose last change was more than seven days ago (`board.py:526`, `board.py:803-805`). An ongoing story with an older merged part therefore loses that part's recorded time. The runway also begins at its first retained part interval or cold read, omitting unknown time between the story's start and that first observation.",
         "file": "src/forge/board.py",
         "line": 592,
         "priority": "P1",
-        "title": "Not done: story runway counts its full elapsed history"
+        "title": "An ongoing story loses older parts from its time runway"
+      },
+      {
+        "body": "Raise: Functional. A close of an older PR retains its prior How it went text as `legacy_text` in the new JSON record (`time_records.py:354-381`). For example, 12,000 CJK characters fit in an earlier PR body at roughly 36 KB but expand past 65,536 bytes when JSON escaped. This trimming path retains `legacy_text` and removes only event, timing and clean-review rows. Once those rows are empty, it returns an oversized body, so GitHub refuses the close despite the new body bound. The body-limit test uses records created in the new format and does not exercise this upgrade path.",
+        "file": "src/forge/close.py",
+        "line": 758,
+        "priority": "P1",
+        "title": "A large legacy time history can still make PR publication fail"
+      },
+      {
+        "body": "Item 12 still lacks the approved-but-unstarted count, shared blocking problems in Needs you, the pinned folding sections with story keys and cold-read history, and pane rounding. The story's Tasks table explicitly assigns these to COUNTS, WAITS, NAV and PANE, whose code is not in this branch. The current board still returns its old count fields and card page here.",
+        "file": "src/forge/board.py",
+        "line": 667,
+        "priority": "P2",
+        "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "a640e1b3-eaa3-439c-9d85-5cbc65ba5ddd",
+    "id": "31faf6ac-2ffc-47b9-b28e-4268ce132f42",
     "status": "blocked"
   },
   "round": 11,
@@ -59,6 +74,10 @@
     },
     {
       "at": "2026-10-11T06:36:15.229631+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T07:02:46.710154+00:00",
       "step": "review"
     }
   ],
