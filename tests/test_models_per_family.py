@@ -104,7 +104,7 @@ def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, s
     assert ask(f"[models.lite]\n{OPUS}") == QUIET
 
 
-def test_4_legacy_review_entries_do_not_override_autoreview_defaults(env, tmp_path, monkeypatch):
+def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review.codex]\nmodel = "gpt-6-sol"\neffort = "xhigh"\n'

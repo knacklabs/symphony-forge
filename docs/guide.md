@@ -136,7 +136,16 @@ merging when the repo allows agent merges.
 
 ## Workers and conversations
 
-Ask your agent to set `workers = "codex"` in `forge.toml` if you want Codex to build tasks and fixes.
+Ask your agent to run everything in Claude, run everything in Codex, or use both. In a settings
+fix it sets `tools = "claude"` with `workers = "claude"`, `tools = "codex"` with
+`workers = "codex"`, or `tools = "both"`. Both is the default when the setting is absent;
+with one tool `workers` is ignored, including for design work. Upgrade Forge before adding
+`tools` to an older repo. The planning, approval, build, review, CI and merge process is the same
+with any choice. A round on the coordinating session's tool runs as its background subagent;
+the other tool uses its kit. Reviews use the repo's tool through Autoreview's own default model
+and effort; with both they use Codex when installed, otherwise Claude. Existing review model
+entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
+
 The same file holds a `[models]` table: `[models.build]` for the first task build,
 `[models.fix]` for later fix rounds, `[models.lite]` for a fix's first build round,
 `[models.explore]` for the explorer role on both hosts and quick read-only questions,
@@ -164,18 +173,22 @@ Move a single build, fix or lite entry to its family's table first. Run `forge s
 changing settings to refresh subagent roles.
 
 Every normal, light and prototype sign-off review runs through the external Autoreview
-program on the repo's tool: Claude with `workers = "claude"`, Codex with `workers = "codex"`.
-Split workers use Codex when installed and Claude otherwise. Autoreview chooses its own
+program on the repo's tool: Claude with `tools = "claude"`, Codex with `tools = "codex"`.
+With `tools = "both"`, reviews use Codex when installed and Claude otherwise. Autoreview chooses its own
 default model and effort; Forge passes neither. Legacy `[models.review]` entries stay in
 existing settings but no longer override Autoreview's defaults.
 
-In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
-uses its worker's design entry: `[models.design.codex]` with `workers = "codex"`, and
-`[models.design.claude]` with `workers = "claude"` or `"split"`. Claude's default is
-`claude-sonnet-5-5` at xhigh effort. With `workers = "split"`, if the `claude` command is missing, or Claude fails before changing the checkout,
+A story task marked User-facing or a client fix allowed as "Prototype before sign-off"
+uses its selected tool's design entry: `[models.design.codex]` on Codex and
+`[models.design.claude]` on Claude. Claude's default is
+`claude-sonnet-5-5` at xhigh effort. With `tools = "both"` and `workers = "split"`, the
+fallback applies only to Claude design rounds run through its kit. If the `claude` command
+is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. Claude-only repos report the failure without a Codex retry.
+failure without a Codex retry. When Claude Code coordinates the round, design work runs as
+its native `frontend` subagent; a failed native round gets no automatic Codex retry.
+With one tool selected, Forge reports the failure without a Codex retry.
 Split routing also applies to User-facing story tasks in
 Forge's own repo. Other work keeps its usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
 to change that choice.

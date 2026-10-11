@@ -44,7 +44,7 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
 
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert options["--engine"] == "claude"
+    assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
     assert options["--max-priority"] == (
         "P0" if not signed_off and allowance == "Prototype before sign-off" else "P3")
@@ -84,6 +84,6 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
         assert len(env.review_calls()) == 2
         options = dict(zip(env.review_calls()[-1]["args"][::2],
                            env.review_calls()[-1]["args"][1::2]))
-        assert options["--engine"] == "claude"
+        assert options["--engine"] == "codex"
         assert options["--max-priority"] == "P3"
         assert "--model" not in options and "--thinking" not in options

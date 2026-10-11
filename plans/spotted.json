@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 221,
+      "text": "Not done: synced skill copies match the template",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.claude/skills/forge/SKILL.md\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
       "kind": "bug",
       "path": ".claude/skills/forge/SKILL.md",
@@ -316,6 +327,17 @@
       "text": "Not done: Guide promises Codex fallback for Claude-only workers",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 180,
+      "text": "Not done: the guide describes the split design fallback correctly",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
       "status": "open",
       "closed_by": null
     },
@@ -1717,6 +1739,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 503,
+      "text": "Not done: doctor ignores workers under a one-tool setting",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/repo.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "src/forge/repo.py",
@@ -1792,6 +1825,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
@@ -1977,17 +2021,6 @@
       "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
       "from": "blocking",
       "item": "worker-fast-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
-      "kind": "bug",
-      "path": "src/forge/templates/cold-read.md",
-      "line": 169,
-      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
-      "from": "blocking",
-      "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
     },
@@ -4511,17 +4544,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 256,
-      "text": "New cold-read notes can be lost when a settled note repeats",
-      "from": "blocking",
-      "item": "settled-stays-settled",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/nextstep.py\tForge next still directs clients with a populated roadmap to choose an existing item\tstory-from-goal",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -4650,6 +4672,17 @@
       "text": "Not done: keep mixed worker tests on their intended routes",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 169,
+      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
+      "from": "blocking",
+      "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
     }

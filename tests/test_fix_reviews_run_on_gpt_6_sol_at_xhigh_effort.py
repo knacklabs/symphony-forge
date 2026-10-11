@@ -1,4 +1,4 @@
-"""Init and sign-off leave review model and effort selection to Autoreview."""
+"""Autoreview chooses review defaults; Forge's former model and effort pins are gone."""
 import json
 import tomllib
 
@@ -8,14 +8,14 @@ from test_setup import _fresh_client
 STORY = "FIX-REVIEWS-RUN-ON-GPT-6-SOL-AT-XHIGH-EFFORT"
 
 
-def test_1_forge_init_does_not_pin_autoreview_models(repo, gh, tmp_path):
+def test_1_forge_init_leaves_review_defaults_to_autoreview(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     config = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "review" not in config["models"]
 
 
-def test_2_signoff_review_uses_autoreview_defaults(repo, tmp_path, monkeypatch):
+def test_2_signoff_review_uses_autoreviews_defaults(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers)
     queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: high\nautoreview done",

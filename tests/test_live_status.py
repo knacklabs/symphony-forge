@@ -125,7 +125,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         if case.startswith("review"):
             config = repo.path / "forge.toml"
             family = case.split()[-1]
-            settings = config.read_text("utf-8").replace('workers = "claude"', f'workers = "{family}"')
+            settings = config.read_text("utf-8") + f'tools = "{family}"\n'
             if "default" not in case:
                 settings += ('models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
                              'models.review.claude = { model = "opus", effort = "high" }\n')
@@ -140,7 +140,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         if case.endswith("claude"):
             from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
             _claude_only(env.tmp, monkeypatch, repo.bin, (env.tmp / "autoreview/scripts/autoreview").read_text("utf-8"))
-        # Legacy pins no longer seed status; Autoreview's live reports supply selection.
+        # Autoreview chooses the defaults; model and effort appear only after it reports them.
         model, effort = None, None
     if case == "restart":
         assert repo.forge("work", item).returncode == 0

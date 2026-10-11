@@ -91,8 +91,6 @@ BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
                          r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
-# The variable each coordinating app sets in the commands it runs; Codex's is its conversation's id.
-COORDINATORS = {"CLAUDECODE": "claude", "CODEX_THREAD_ID": "codex"}
 NAMES = {"claude": "Claude Code", "codex": "Codex"}
 
 
@@ -205,10 +203,10 @@ def read(args: Any) -> int:
     number = undisposed(findings) if later else ""
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
-    apps = [app for variable, app in COORDINATORS.items() if os.environ.get(variable)]
-    if len(apps) != 1:  # neither app, or one running inside the other
+    here = repo.coordinator()
+    if here is None:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
-    here, installed = apps[0], {"claude": shutil.which("claude") is not None, "codex": codex.installed()}
+    installed = {"claude": shutil.which("claude") is not None, "codex": codex.installed()}
     other = "claude" if here == "codex" else "codex"
     # The other app reads when it is installed, else a separate conversation of this one. A later
     # round stays with the recorded reader while its app is installed.

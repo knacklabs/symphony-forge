@@ -316,6 +316,7 @@ CASES_1 = [(_normal_run, "absent"), (_normal_run, "human"), (_normal_run, "crlf 
            (_prototype_run, "prototype"), (_other_fix_changes_merge, "other fix"),
            *((_refusal, case) for case in ("elsewhere", "already on", "same name", "other edits"))]
 CASES_2 = [(_agent_refused, "CODEX_THREAD_ID"), (_agent_refused, "CLAUDECODE"),
+           (_agent_refused, "both identities"),
            (_synced_skill, "skill"), (_merge_item, "merge item")]
 
 
@@ -328,5 +329,7 @@ def test_1_owner_switches_on_agent_merges_with_one_command(owner, check, case):
 def test_2_agent_never_switches_and_points_to_the_command(env, monkeypatch, check, case):
     if check is _agent_refused:  # the command run from an agent's shell
         monkeypatch.delenv("CODEX_THREAD_ID")
-        monkeypatch.setenv(case, "1")
+        # Ambiguous coordinator identity is still an agent, never the owner's terminal.
+        for name in (("CODEX_THREAD_ID", "CLAUDECODE") if case == "both identities" else (case,)):
+            monkeypatch.setenv(name, "1")
     check(env, case)
