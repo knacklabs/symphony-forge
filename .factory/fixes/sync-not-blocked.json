@@ -10,21 +10,30 @@
   },
   "done_when": "forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually holds, saying so in one line",
   "flagged": [
+    "src/forge/codex.py",
     "tests/test_sync_not_blocked_by_other_runs.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "dff7fb7cc9808f5e1f102ec7bfbe86674bdcb8aafd3952119b300e355555db03",
-    "changed": "c088e4100daa7280224e8b6151ea73174319d525b6093d60067da3a6f3469fe4",
-    "commit": "b24ee69d4af3e9793b7bdc858fd3ddbbe1e5cb48",
+    "branch_diff": "f8d2630dd0076dd04216e0451ab7320813b1ec53d697c878357a272852032007",
+    "changed": "75360c6c25f5b598e1be1d2c602382f024545ccacf75566edf04b3db16eae040",
+    "commit": "91c1b7be4903e0f5ef6acb19ddbaaa2391224743",
     "dismissals": [],
-    "findings": [],
-    "id": "c54a673d-b05d-4951-b7f5-8a34d7523c20",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Data loss. During an upgrade, an earlier-release `forge work` run can hold this lock, causing sync to skip its chat and say the run will keep it. The v1.2.2 worker takes the same lock (`tests/fixtures/forge-v1.2.2/src/forge/worker.py:80`) but commits only status (`:116`); it never commits the chat binding. Upgrade invokes sync once (`src/forge/upgrade.py:163-165`), so when that worker finishes, the chat remains only in `.git/forge` and is lost if the local record disappears or work moves to another machine. The named proof holds a current-release worker after running the old release sequentially, so it does not catch this case.",
+        "file": "src/forge/codex.py",
+        "line": 329,
+        "priority": "P1",
+        "title": "Old-release runs leave skipped chats only in local records"
+      }
+    ],
+    "id": "147cc6a5-e96d-4f97-83da-53b36f29cf7f",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T10:29:38.316552+00:00",
@@ -36,6 +45,10 @@
     },
     {
       "at": "2026-10-11T15:35:18.799324+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:15:44.399651+00:00",
       "step": "review"
     }
   ],
