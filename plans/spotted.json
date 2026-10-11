@@ -804,17 +804,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 194,
-      "text": "Earlier-release choices can trigger another stop before three new rounds",
-      "from": "blocking",
-      "item": "second-stop-choice",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1937,17 +1926,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
-      "kind": "bug",
-      "path": "src/forge/native.py",
-      "line": 68,
-      "text": "Native read handout stops being valid JSON when the agent line is full",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/READS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2014,6 +1992,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Direct pytest calls with named uv options remain serial\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 175,
+      "text": "Not done: Direct pytest calls with named uv options remain serial",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Generated gate fails for Makefile pytest commands\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 174,
+      "text": "Not done: Generated gate fails for Makefile pytest commands",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when it\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 174,
+      "text": "Not done: The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when it",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -2021,6 +2032,17 @@
       "text": "Preserve merge-result testing when running the full suite",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tforge doctor rejects healthy split workflows\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 179,
+      "text": "forge doctor rejects healthy split workflows",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
       "status": "open",
       "closed_by": null
     },
@@ -2366,6 +2388,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/sync.py\tSync can stop on an unrelated active worker while preserving chats before it generates files.",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 509,
+      "text": "Sync can stop on an unrelated active worker while preserving chats before it generates files.",
+      "from": "worker",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tNot done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task\ttask-start-pin",
       "kind": "bug",
       "path": "src/forge/task.py",
@@ -2417,6 +2450,28 @@
       "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
       "from": "blocking",
       "item": "codex-spawns-subagents-only-when-explici",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 254,
+      "text": "Not done: Resolve conflicting fix-round directions",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 264,
+      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
+      "from": "blocking",
+      "item": "worker-brief-faster",
       "status": "open",
       "closed_by": null
     },
@@ -2615,6 +2670,17 @@
       "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
       "from": "blocking",
       "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 464,
+      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
+      "from": "blocking",
+      "item": "worker-brief-faster",
       "status": "open",
       "closed_by": null
     },
@@ -2868,6 +2934,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     },
@@ -3154,6 +3231,39 @@
       "text": "Not done: keep mixed worker tests on their intended routes",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 32,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list omits the merge-gate and small-suite proofs\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 39,
+      "text": "Not done: proof list omits the merge-gate and small-suite proofs",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: test six split groups at new-client init\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 45,
+      "text": "Not done: test six split groups at new-client init",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
       "status": "open",
       "closed_by": null
     },
@@ -4203,6 +4313,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5138,90 +5259,24 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
       "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 254,
-      "text": "Not done: Resolve conflicting fix-round directions",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
       "from": "blocking",
-      "item": "worker-brief-faster",
+      "item": "second-stop-choice",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
       "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 264,
-      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 464,
-      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
+      "path": "src/forge/native.py",
       "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "text": "Native read handout stops being valid JSON when the agent line is full",
       "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 254,
-      "text": "Not done: Resolve conflicting fix-round directions",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 264,
-      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 464,
-      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
-      "from": "blocking",
-      "item": "worker-brief-faster",
+      "item": "FORGE-TOOLS-1/READS",
       "status": "open",
       "closed_by": null
     }
