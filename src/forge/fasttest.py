@@ -258,10 +258,15 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        status, report = review.test_run(top, review.close_test(top, base, closing=False), base, always=True)
+        status, report = review.test_run(top, review.close_test(top, base, closing=False), base,
+                                        always=True, closing=False)
         print(report)
         return status
     return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
+
+
+LARGE = ("More than a third of the test files selected; skipping local tests and relying on the "
+         "pull request's required checks.")
 
 
 def pytest_tests(base: str, command: str) -> int:
@@ -273,25 +278,26 @@ def pytest_tests(base: str, command: str) -> int:
         command = " && ".join(part for kind, part, _ in parts
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
+    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
     workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
+    tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
+                                            "--exclude-standard")
+             if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
+             and name.endswith(".py") and Path(name).is_file()]
     shared = [name for name in changed
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(not manifest_test_inputs_unchanged(Path(name), base)
+    shared_changed = any(not manifest_test_inputs_unchanged(Path(name), base)
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), base) for name in shared):
-        print("Shared test inputs changed; running " +
-              ("all Python tests." if mixed else "the full test command."), flush=True)
+           or not own_version_only(Path(name), base) for name in shared)
+    if shared_changed:
+        selected = [path.as_posix() for path in tests]
     else:
-        tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
-                                                "--exclude-standard")
-                 if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
-                 and name.endswith(".py") and Path(name).is_file()]
         modules = []
         for name in changed:
             path = Path(name)
@@ -314,6 +320,13 @@ def pytest_tests(base: str, command: str) -> int:
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
+    if closing and len(selected) * 3 > len(tests):
+        print(LARGE, flush=True)
+        return 0
+    if shared_changed:
+        print("Shared test inputs changed; running " +
+              ("all Python tests." if mixed else "the full test command."), flush=True)
+    else:
         print("Related tests: " + ", ".join(selected), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
