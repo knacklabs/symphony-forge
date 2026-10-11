@@ -1189,6 +1189,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: some repair closes skip previously failed pytest tests\trepairs-rerun-failures",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 244,
+      "text": "Not done: some repair closes skip previously failed pytest tests",
+      "from": "blocking",
+      "item": "repairs-rerun-failures",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/githooks.py\tKeep Forge checks reachable and preserve pre-push input\thusky-hooks",
       "kind": "bug",
       "path": "src/forge/githooks.py",
@@ -2065,6 +2076,17 @@
       "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 169,
+      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
+      "from": "blocking",
+      "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
     },
@@ -4661,17 +4683,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
-      "kind": "bug",
-      "path": "src/forge/templates/cold-read.md",
-      "line": 169,
-      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
-      "from": "blocking",
-      "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
     }

@@ -18,32 +18,26 @@
   "done_when": "After a failed test run, close's next round in a pytest repo runs the tests that failed first and skips tests whose files are unchanged since their last pass; other test tools rerun their full command as today; CI on the pull request still runs the full suite. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
     "src/forge/_pytest_repair.py",
+    "src/forge/fasttest.py",
     "tests/test_close_reruns_failed_tests_first.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cf24f18e67cbb8b5717083def10b681073630a955122731399bb38f3580340e5",
-    "changed": "fe496b96fdcde003e74a6c66463a6b14f1883e004683a574dc412c485b0753e5",
-    "commit": "66a368f76e56edaa3e9bfd88d15ad50f89964a2b",
+    "branch_diff": "82a53d3ee6e2ab1f18c90d6d3f7d38d11a74817d3944d49e26806a8ce26ea83a",
+    "changed": "33d4d15f85feb3acdc312c3e2c6e15d94a4d4b680535b6916601b22261b4e940",
+    "commit": "1b69f32225c156f4280b9b5858062c728daad300",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A client with `test = \"cd backend && pytest\"` runs pytest from inside the repository, but this equality check returns before registering the repair hook. No failed-test order or passing-test reuse is recorded, so close's next round reruns every test. The end-to-end cases invoke pytest only from the repository root.",
-        "file": "src/forge/_pytest_repair.py",
-        "line": 18,
+        "body": "Raise: Not done. With `test = \"cd backend && pytest\"` and `fast_test = \"forge test --pytest {base}\"`, pytest records a failed node as `test_z.py::test_failed` (as the new subdirectory test confirms), but this code compares `test_z.py` with Git paths such as `backend/test_z.py`. If a repair restores that test file to its base version and leaves an unrelated code edit, `forge test --pytest` can select no tests and return success without retrying the failure. The tests cover the picker at the repository root and subdirectory pytest without the picker, so they miss this combination. A second normal repair path also misses the retry: if reverting a failed code edit leaves only documentation changes, `review.py:272-276` returns before the new repair hook at `review.py:295` runs.",
+        "file": "src/forge/fasttest.py",
+        "line": 244,
         "priority": "P1",
-        "title": "Not done: subdirectory pytest commands rerun the full suite"
-      },
-      {
-        "body": "Raise: Test. The proof-listed test calls `env.close` only once, with an empty pass cache. Both pytest variants therefore run even if their receipts are incorrectly shared. It never checks the next close after one variant has passed and another has failed, so it cannot detect a repair round that skips the failing variant.",
-        "file": "tests/test_close_reruns_failed_tests_first.py",
-        "line": 178,
-        "priority": "P1",
-        "title": "Not done: test independent pytest invocations across repair rounds"
+        "title": "Not done: some repair closes skip previously failed pytest tests"
       }
     ],
-    "id": "1dd606ad-718d-45b0-8e2b-272e33333635",
+    "id": "e050748b-191d-4419-9730-7a33a625bb26",
     "status": "blocked"
   },
   "round": 4,
@@ -55,6 +49,10 @@
     },
     {
       "at": "2026-10-11T04:29:23.468033+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T05:01:26.485189+00:00",
       "step": "review"
     }
   ],
