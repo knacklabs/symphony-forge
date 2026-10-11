@@ -9,16 +9,55 @@
     "start": "0ea3006cc64e865884c0740fb95776aef9eab262"
   },
   "done_when": "A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it, overrides only which tools run work, the worker split and the model and effort per kind of work; Forge refuses any other key in it; new and upgraded repos ignore the file in git; forge next and forge doctor show which file each of those settings came from",
+  "flagged": [
+    "src/forge/nextstep.py",
+    "tests/test_personal_worker_choice.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "615a082e057fd4903d573cf16dd4c0dc60ea908bd85cd5c2dbf4f18820716219",
+    "changed": "8cbdfdf7d756d05dac8fdcd04ee912c73429c3eddce098ae58205d906bc4ba4c",
+    "commit": "adef214e2f0588ebb374d227012ebfc72d5f23be",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. The required source display is incomplete in `forge next`: it labels a ready task with `forge.local.toml` only when local `tools` or `workers` is present, and never shows where its model or effort came from. With a local model-only override, `forge next` shows no local source. It can also label a Codex choice as local when local `workers = \"claude\"` is overridden by shared `tools = \"codex\"`. The Done-when requirement asks `forge next` to show which file each setting came from.",
+        "file": "src/forge/nextstep.py",
+        "line": 499,
+        "priority": "P1",
+        "title": "Not done: A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it"
+      },
+      {
+        "body": "Raise: Test. The worker execution proof writes a local file containing `workers` and a build model, but no `tools` value. The other test writes local `tools = \"claude\"` only after the work step and checks doctor and sync, never worker execution. A broken local `tools` override at `forge work` would leave every named proof passing, although choosing which tool runs work is a Done-when behavior.",
+        "file": "tests/test_personal_worker_choice.py",
+        "line": 25,
+        "priority": "P1",
+        "title": "Not done: a local tools override runs the selected worker"
+      },
+      {
+        "body": "Raise: Test. This proof checks `.gitignore` only after starting a fix and explicitly running `forge sync`. In the new-repo case it does not check the result of `forge init` before that sync; in the earlier-release case it manually changes the pin and never runs `forge upgrade`. Both cases could pass if the promised init or upgrade flow failed to install the ignore rule.",
+        "file": "tests/test_personal_worker_choice.py",
+        "line": 78,
+        "priority": "P1",
+        "title": "Not done: init and upgrade ignore forge.local.toml at their own entry points"
+      }
+    ],
+    "id": "92537186-9ddd-4594-a411-db270004590f",
+    "status": "blocked"
+  },
   "round": 1,
   "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T13:32:52.443885+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 1ce35517c8f1749740cccad8f680dccbaa0dfdd9` exited with status 1 on this machine.\n                repo.git(\"merge\", \"-q\", \"--no-edit\", \"origin/main\", cwd=folder)\n            log.write_text(\"\", encoding=\"utf-8\")\n            done = repo.forge(\"doctor\", \"--fix\", cwd=folder)\n            calls = [json.loads(line) for line in log.read_text(encoding=\"utf-8\").splitlines()]\n            for rel in paths:\n                subject = (\"Keep our first instructions\" if rel == generated[0]\n                           else f\"Keep our instructions in {rel}\")\n>               assert f\"{rel} was changed by hand ({subject}), so doctor won't overwrite it\" in done.stdout, done.stdout + done.stderr\nE               AssertionError: Installing the Codex SDK 0.159.2 into /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-1953/popen-gw1/test_4_doctor_fix_batches_sepa0/data/forge/codex-sdk/openai-codex-0.159.2 with uv (about 300 MB).\nE                 - uv venv failed while installing the Codex SDK: exit code 1\nE                   Fix: forge doctor --fix\nE                 - Doctor's fix forge-files-20261011-1058 isn't merged yet, so doctor started no new one.\nE                   Fix: finish it with forge close forge-files-20261011-1058, or remove it with git worktree remove --force --force \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-1953/popen-gw1/test_4_doctor_fix_batches_sepa0/repo-fix-forge-files-20261011-1058\" and git branch -D fix/forge-files-20261011-1058, then forge doctor --fix\nE                 - forge.toml checks differ from branch protection's required checks: Forge names forge-pr-check, tests; protection requires none.\nE                   Fix: ask your agent to reconcile checks in forge.toml with branch protection\nE                 - Codex doesn't trust this project, so it would skip Forge's hooks and the project's Codex settings.\nE                   Fix: open Codex here and trust the project, or add [projects.\"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-1953/popen-gw1/test_4_doctor_fix_batches_sepa0/repo\"] with trust_level = \"trusted\" to /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-1953/popen-gw1/test_4_doctor_fix_batches_sepa0/codex-home/config.toml\nE                 - Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.\nE                 - Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see whether you did.\nE                 - Note: doctor compared the synced files with the installed Forge v1.2.9.\nE                 This machine: 8 cores, so 4 agents at once and 2 test runs at once, each on 4 cores.\nE                 - Codex Fast: on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\nE                 forge doctor found 4 problem(s); each row above gives its fix.\nE                 Next: forge doctor\nE\nE               assert \".codex/skills/app-baseline/SKILL.md was changed by hand (Keep our first instructions), so doctor won't overwrite it\" in 'Installing the Codex SDK 0.159.2 into /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvem... on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\\n'\nE                +  where 'Installing the Codex SDK 0.159.2 into /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvem... on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\\n' = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-personal-worker-choice/.venv/bin/python', '/...t Fast run normally.\\n', stderr='forge doctor found 4 problem(s); each row above gives its fix.\\nNext: forge doctor\\n').stdout\n\ntests/test_doctor_batches_file_checks.py:164: AssertionError\n2 failed, 61 passed in 127.41s (0:02:07)",
   "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings",
   "worker": "codex"
 }
