@@ -2,12 +2,44 @@
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/hook-n-flag",
   "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line",
+  "flagged": [
+    "src/forge/deny.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99cef19a68ef6754c7c8a30534f83edc20c49ed0badc69985e46fc4c72a738e1",
+    "changed": "1c61236c50740459a9cb56a0559d758f17062bfdea8f589cd53829bee87801c3",
+    "commit": "908ec4e1abaed1d2d89d2d953ce080e5cbdc4113",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. `git commit -m --no-verify` supplies `--no-verify` as the message, but the unchanged check at deny.py:89 refuses it before the new option parser runs. Also, `_without_heredocs` removes only quoted heredoc bodies, so a message supplied by `git commit -F - <<EOF` that contains the text `git commit -n` is parsed as a command and refused. In both cases the commit itself has neither prohibited option; the named allowed tests cover neither case.",
+        "file": "src/forge/deny.py",
+        "line": 102,
+        "priority": "P1",
+        "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on"
+      },
+      {
+        "body": "Raise: Security. For `cat <<'EOF' | bash` with `git commit -n` in the heredoc body, this check sees only `cat` before the delimiter and removes the body. The shell on the right side of the pipe executes that body, but the hook never inspects the prohibited commit. The blocked test covers a heredoc given directly to `bash`, which does not catch this pipeline.",
+        "file": "src/forge/deny.py",
+        "line": 181,
+        "priority": "P1",
+        "title": "Quoted heredoc piped to a shell bypasses the commit guard"
+      }
+    ],
+    "id": "1e9c3b9a-0000-4dc2-8f76-812c24b1bbb9",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T10:29:43.068718+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T12:57:38.343891+00:00",
+      "step": "review"
     }
   ],
   "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit"
