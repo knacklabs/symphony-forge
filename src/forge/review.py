@@ -266,11 +266,18 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
+        hook = Path(__file__).with_name("_pytest_repair.py")
+        addopts = f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()
+        key = hashlib.sha256((str(top.resolve()) + command + hook.read_text("utf-8")
+                              + addopts).encode()).hexdigest()
+        repair_cache = machine._repos_file().parent / "pytest-passes" / key
         if not always:
             changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                                cwd=top).split("\0")
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
-                   for path in changed if path):
+                   for path in changed if path) and not any(
+                       result.get("outcome") == "failed" for record in repair_cache.glob("*.json")
+                       for result in json.loads(record.read_text("utf-8")).values()):
                 said = DOCS_ONLY.format(command=command)
                 print(said, flush=True)
                 return 0, said
@@ -289,16 +296,13 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             workers = str(machine.half_cores())
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+                   "PYTEST_ADDOPTS": addopts}
             with repo.record_run(top, item, "test") as ran, tempfile.TemporaryDirectory(
                     prefix="forge-repair-") as folder:
                 if passed:
-                    hook = Path(__file__).with_name("_pytest_repair.py")
                     shutil.copyfile(hook, Path(folder) / "_forge_pytest_repair.py")
-                    key = hashlib.sha256((str(top.resolve()) + command + hook.read_text("utf-8")
-                                          + env["PYTEST_ADDOPTS"]).encode()).hexdigest()
-                    env.update(FORGE_REPAIR_ROOT=str(top.resolve()), FORGE_REPAIR_CACHE=str(
-                        machine._repos_file().parent / "pytest-passes" / key))
+                    env.update(FORGE_REPAIR_ROOT=str(top.resolve()),
+                               FORGE_REPAIR_CACHE=str(repair_cache))
                     env["PYTHONPATH"] = os.pathsep.join([folder, env.get("PYTHONPATH", "")])
                     env["PYTEST_PLUGINS"] = ",".join(filter(None, [env.get("PYTEST_PLUGINS"),
                                                                   "_forge_pytest_repair"]))

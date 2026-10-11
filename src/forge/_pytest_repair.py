@@ -73,23 +73,29 @@ class Repair:
                   if path not in tests or Path(path).stem in referenced]
         self.shared = hashlib.sha256("\0".join(shared).encode()).hexdigest()
 
+    def node_key(self, nodeid):
+        name, separator, case = nodeid.partition("::")
+        file = (Path(self.config.rootpath) / name).resolve()
+        return (file.relative_to(self.top).as_posix() + separator + case
+                if file.is_relative_to(self.top) else nodeid)
+
     @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(self, items):
         selected, reused = [], []
-        self.records = {item.nodeid: self.records[item.nodeid] for item in items
-                        if item.nodeid in self.records}
+        nodes = {self.node_key(item.nodeid) for item in items}
+        self.records = {node: result for node, result in self.records.items() if node in nodes}
         for item in items:
             file = Path(str(item.fspath)).resolve()
             path = file.relative_to(self.top).as_posix() if file.is_relative_to(self.top) else None
             # Tests outside the committed tree are never reused.
             key = self.shared + self.files[path] if self.clean and path in self.files else None
             self.keys[item.nodeid] = key
-            old = self.records.get(item.nodeid, {})
+            old = self.records.get(self.node_key(item.nodeid), {})
             if key and old == {"key": key, "outcome": "passed"}:
                 reused.append(item)
             else:
                 selected.append(item)
-        selected.sort(key=lambda item: self.records.get(item.nodeid, {}).get("outcome") != "failed")
+        selected.sort(key=lambda item: self.records.get(self.node_key(item.nodeid), {}).get("outcome") != "failed")
         items[:] = selected
         self.reused = len(reused)
         if reused:
@@ -125,7 +131,7 @@ class Repair:
         # A passing call is insufficient: setup and teardown must pass as well.
         outcome = ("passed" if reports == {"setup": "passed", "call": "passed", "teardown": "passed"}
                    else "failed")
-        self.records[report.nodeid] = {"key": key, "outcome": outcome}
+        self.records[self.node_key(report.nodeid)] = {"key": key, "outcome": outcome}
 
     @pytest.hookimpl(optionalhook=True)
     def pytest_testnodedown(self, node):

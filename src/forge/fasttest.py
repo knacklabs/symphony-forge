@@ -286,7 +286,8 @@ def test(args) -> int:
             selection = Path(folder) / "_forge_pytest_selection.py"
             selection.write_text("def pytest_configure(config):\n"
                                  "    config.option.ignore = (config.option.ignore or []) + "
-                                 + json.dumps(excluded) + "\n", "utf-8")
+                                 + json.dumps([(Path.cwd() / path).resolve().as_posix()
+                                               for path in excluded]) + "\n", "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         return subprocess.run(narrow_command(command, excluded, workers), shell=True,

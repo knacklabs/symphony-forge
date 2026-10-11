@@ -298,3 +298,56 @@ def test_failed():
     assert closed.returncode == 0, closed.stdout + closed.stderr
     rerun = [json.loads(line) for line in log.read_text("utf-8").splitlines()][len(initial):]
     assert rerun == ["test_z_failed.py::test_failed", "test_b_changed.py::test_changed"]
+@pytest.mark.parametrize("mode", ["subdirectory-picker", "docs-only"])
+def test_6_close_retries_failures_after_the_failed_file_returns_to_its_base(env, mode):
+    # A base-equivalent test remains failed until close actually reruns it successfully.
+    log, prerequisite = env.tmp / "retried-prerequisite.jsonl", env.tmp / "prerequisite-ready"
+    test_file = "backend/tests/test_probe.py" if mode == "subdirectory-picker" else "tests/test_probe.py"
+    baseline_test = f'''import json, pathlib
+def test_prerequisite(request):
+    with pathlib.Path({json.dumps(log.as_posix())}).open("a", encoding="utf-8") as log:
+        log.write(json.dumps(request.node.nodeid) + "\\n")
+    assert pathlib.Path({json.dumps(prerequisite.as_posix())}).exists()
+'''
+    command = f'"{sys.executable}" -m pytest tests -q'
+    if mode == "subdirectory-picker":
+        command = "cd backend && " + command
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    config += f"test = {json.dumps(command)}\n"
+    if mode == "subdirectory-picker":
+        config += 'fast_test = "forge test --pytest {base}"\n'
+    env.commit(env.repo.path, "forge.toml", config)
+    ignore = env.repo.path / ".gitignore"
+    env.commit(env.repo.path, ".gitignore", (ignore.read_text("utf-8") if ignore.exists() else "")
+               + "\n__pycache__/\n.pytest_cache/\n")
+    env.commit(env.repo.path, test_file, baseline_test, "Configure the client's prerequisite test")
+    if mode == "subdirectory-picker":
+        env.commit(env.repo.path, "backend/tests/test_unrelated.py", f'''import json, pathlib
+def test_unrelated():
+    with pathlib.Path({json.dumps(log.as_posix())}).open("a", encoding="utf-8") as log:
+        log.write(json.dumps("unrelated") + "\\n")
+    assert 2 + 2 == 4
+''', "Configure an unrelated passing test")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix({test_file: baseline_test + "\n# Check the repair.\n"})
+
+    first = env.close(item)
+    assert first.returncode == 1, first.stdout + first.stderr
+    assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [
+        "tests/test_probe.py::test_prerequisite"]
+
+    env.commit(where, test_file, baseline_test, "Restore the original prerequisite test")
+    if mode == "subdirectory-picker":
+        env.commit(where, "unrelated.py", "VALUE = 1\n", "Change another Python module")
+    else:
+        env.commit(where, "README.md", "# The client's repair notes\n", "Explain the repair")
+    still_failing = env.close(item)
+    assert still_failing.returncode == 1, still_failing.stdout + still_failing.stderr
+    assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [
+        "tests/test_probe.py::test_prerequisite"] * 2
+
+    prerequisite.write_text("ready\n", "utf-8")
+    repaired = env.close(item)
+    assert repaired.returncode == 0, repaired.stdout + repaired.stderr
+    assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [
+        "tests/test_probe.py::test_prerequisite"] * 3

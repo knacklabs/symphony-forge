@@ -1004,6 +1004,8 @@ For pytest commands, the next close runs failed tests first and reuses passing t
 committed test files and shared inputs have not changed, including commands run from a
 repository subdirectory. Shared setup, production code and
 configuration changes expire those passes; uncommitted files disable reuse. A repair with
+failed pytest tests retries them even after reverting their files or leaving only docs changes.
+The picker keeps failed files selected, including tests in repository subdirectories. A repair with
 failures runs them in order even when pytest-xdist is configured. Worker `forge test` runs and
 the pull request's CI still run their configured command without this reuse. Other test tools
 rerun their full configured command unchanged after a failure; existing whole-command reuse
