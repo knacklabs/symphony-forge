@@ -2454,6 +2454,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tRound-three cap downgrades conflicts from changed spec and Answers text\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 208,
+      "text": "Round-three cap downgrades conflicts from changed spec and Answers text",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/templates/review-tests.py",
@@ -2868,6 +2879,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     },
@@ -4203,6 +4225,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5134,28 +5167,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     }

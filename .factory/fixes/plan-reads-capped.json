@@ -16,16 +16,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6584ab7180c56d31667558a6edbb58e25bd86490ac7028646f9507d436764aa2",
-    "changed": "ad5b48c254e8ea7bcf593e30f4c25b42e414e95897ca5d077b9b6cb371e0e908",
-    "commit": "8671746ab45149a96f7fa499d81eb0afb08f58a8",
+    "branch_diff": "d72ec1c5943673f5af81ea1bd2d72785765c18541857e8a20a09f600b1936bbc",
+    "changed": "9f14752edeace897beb3d144aad37f843567097450cdeea8da85ac7a71be6d63",
+    "commit": "c3fd5a44767126305f72656dffe8920463a04463",
     "dismissals": [],
-    "findings": [],
-    "id": "4f1c1425-10f1-4ea7-ab62-8400fdb4c9a2",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Functional. The new cap permits blocking only on the story diff or an unresolved finding. On a third round, the confirmed spec or `docs/product/BRIEF.md` Answers can change between reads while the relevant story text stays unchanged. The same prompt requires the reader to check those changes (lines 145\u2013150), but this cap makes a newly conflicting plan requirement advisory, allowing the read to pass without resolving it. The changed-spec path is exercised in `tests/test_readloop_rounds.py:509`.",
+        "file": "src/forge/templates/cold-read.md",
+        "line": 208,
+        "priority": "P1",
+        "title": "Round-three cap downgrades conflicts from changed spec and Answers text"
+      }
+    ],
+    "id": "573cd380-0df3-42c6-b989-b582e3a3d35b",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:32:02.888915+00:00",
@@ -38,8 +46,16 @@
     {
       "at": "2026-10-11T13:08:05.522025+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:14:31.658043+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/templates/cold-read.md",
+    "wait_id": "52ffb420-a392-4541-ad10-8ee600ede74b"
+  },
   "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner",
   "worker": "codex"
 }
