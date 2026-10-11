@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import sys
 from collections.abc import Iterator
@@ -44,7 +45,7 @@ def hook(args: argparse.Namespace) -> None:
     command = tool_input.get("command") if isinstance(tool_input, dict) else None
     if isinstance(command, list):  # ponytail: an argv-shaped command, should a host send one
         command = shlex.join(map(str, command))
-    command = str(command or "")
+    command = _without_heredocs(str(command or ""))
     # A command that is only rm: nothing before it can change the folder or a variable it uses.
     alone = not set(command) & ALONE_BREAKERS
     for words in _commands(command):
@@ -98,9 +99,9 @@ def _rule(program: str, args: list[str], alone: bool = False) -> str | None:
         checked = args[:len(args) - len(rest)] if sub == "config" and _config_read(rest) else args
         if any("hookspath" in a.lower() for a in checked):
             return "no_verify"
-        short = _short(rest)
-        if sub == "commit" and "n" in short:  # -n is commit's short --no-verify
+        if sub == "commit" and _commit_skips_hooks(rest):
             return "no_verify"
+        short = _short(rest)
         if sub == "reset" and "--hard" in rest:
             return "destructive"
         # --force, --force-with-lease, --force-if-includes, -f, and a +refspec all force.
@@ -144,6 +145,42 @@ def _config_read(args: list[str]) -> bool:
     if options & CONFIG_GETS:
         return options <= CONFIG_GETS | CONFIG_SCOPES and 1 <= len(keys) <= 2
     return options <= CONFIG_SCOPES and len(keys) == 1
+
+
+def _commit_skips_hooks(args: list[str]) -> bool:
+    """Whether git commit's own short options include -n (its short --no-verify), reading them
+    as git does: -m, -F, -C, -c and -t take a value, as the rest of the word or the next word, and
+    -S and -u take the rest of the word, so a message such as -m "-n 2 ..." or -uno doesn't count.
+    ponytail: a long option's separate value (--author "-n x") still counts, which only refuses."""
+    value = False
+    for arg in args:
+        if value:
+            value = False
+        elif arg == "--":
+            return False
+        elif arg[:1] == "-" and arg[:2] != "--":
+            for i, letter in enumerate(arg[1:], 2):
+                if letter == "n":
+                    return True
+                if letter in "mFCctSu":
+                    value = letter in "mFCct" and i == len(arg)
+                    break
+    return False
+
+
+def _without_heredocs(text: str) -> str:
+    """The text without the bodies of quoted heredocs (<<'EOF'), which are data such as a commit
+    message, unless a shell on that line runs them."""
+    lines, end = [], None
+    for line in text.split("\n"):
+        if end is not None:
+            end = None if line.strip() == end else end
+            continue
+        lines.append(line)
+        found = re.search(r"<<-?\s*(['\"])(\w+)\1", line)
+        if found and not SHELLS & {w.rsplit("/", 1)[-1] for w in line[:found.start()].split()}:
+            end = found[2]
+    return "\n".join(lines)
 
 
 def _short(args: list[str]) -> set[str]:

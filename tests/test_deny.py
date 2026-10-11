@@ -33,6 +33,8 @@ BLOCKED = {
     "git commit --no-verify -m 'Fix it'": HOOKS,
     "git push --no-verify origin fix/a": HOOKS,
     "git add -A && git commit -nm 'Fix it'": HOOKS,
+    "uv run pytest -n 2 && git commit -m 'Fix it' -n": HOOKS,
+    "bash <<'EOF'\ngit commit -n -m 'Fix it'\nEOF": HOOKS,
     "git -c core.hooksPath=/dev/null push origin HEAD:main": HOOKS,
     "git -c core.hooksPath=/tmp commit -m 'Fix it'": HOOKS,
     "gh pr merge 12 --squash": MERGE,
@@ -40,7 +42,12 @@ BLOCKED = {
 ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
            "git commit -m 'Turn off -n mode'", "git push origin fix/a", "git push -u origin fix/a",
            "git add -f notes.txt", "gh pr view 12", "rm build/old.txt", "rm -r build",
-           "grep -rf patterns.txt src", "echo 'git push -f is refused'", "pytest -q"]
+           "grep -rf patterns.txt src", "echo 'git push -f is refused'", "pytest -q",
+           # Only git commit's own options count: not another command's, a message, or a heredoc.
+           "uv run pytest -n 2 tests/x.py && git commit -m 'Fix it'",
+           'uv run pytest -n 2 && git commit -m "-n 2 runs two workers"', "git commit -uno -m x",
+           "pytest -n 2 && git commit -F - <<'EOF'\nTests don't need git commit -n\nEOF",
+           "git commit -m \"$(cat <<'EOF'\nProof list: git commit -n isn't run\nEOF\n)\""]
 
 
 def test_23_deny_hook(repo, claude_payload, codex_payload):
