@@ -11,25 +11,26 @@
   "done_when": "A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never asks for another read",
   "flagged": [
     "src/forge/story.py",
-    "src/forge/templates/cold-read.md"
+    "src/forge/templates/cold-read.md",
+    "tests/test_fix_plan_reads_capped.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8f8b51423dba32da0ad128a354a03d94ffb99013e0b54513cd7df4a6925b1380",
-    "changed": "7f93af6969ee3f5d86d1febf984cd946004fe474f2735b389c95ef11922d19a2",
-    "commit": "4fcb9242c033bbd267f2e434b0bd74ee69af0592",
+    "branch_diff": "4e59a76675c3c8ef373bf90cfef696cdba82aee736e324ed6b9d8f7229a2e46f",
+    "changed": "3e0501ba4ad6275cba573ec9c6a277f079df3bdcd8b3ef15212c5cb615261004",
+    "commit": "30f5d0e565ea3a9410b4ea99284b8d2aaf584376",
     "dismissals": [],
     "findings": [
       {
-        "body": "An upgraded story can pass round three without blocking on a newly conflicting Answers entry. Raise: Functional. Earlier-release notes have no `answers_seen` field (see `tests/fixtures/forge-v1.2.2/src/forge/story.py:249`), so this line supplies `(not available)` instead of an Answers diff. The round-three prompt then permits blockers only for changed text shown in the plan, spec, or Answers diffs. If a story has completed two reads before upgrade and its Answers section changes before the next read, the reader has no Answers diff on which to base a blocking note. The new upgrade test creates its read notes after upgrading, so it does not cover this path.",
-        "file": "src/forge/story.py",
-        "line": 268,
+        "body": "The upgrade test creates every read note after upgrading, so it cannot catch a regression in how round three handles changed Answers for stories already being read on an earlier release. Raise: Test. The test calls `_client` before `new_story` and the first `forge read` (lines 57\u201369), while earlier-release notes have no `answers_seen` field (`tests/fixtures/forge-v1.2.2/src/forge/story.py:249`). Removing the new fallback for that missing field would leave all nine named tests passing, yet an upgraded story could miss a blocking conflict in changed Answers text.",
+        "file": "tests/test_fix_plan_reads_capped.py",
+        "line": 58,
         "priority": "P1",
-        "title": "Legacy read notes leave changed Answers text outside the round-three check"
+        "title": "Not done: test the changed Answers rule with pre-upgrade read notes"
       }
     ],
-    "id": "064c206b-248c-4013-a2cd-3d0959a59db4",
+    "id": "4238703c-7e7d-4219-8a20-5fcb1f20cc64",
     "status": "blocked"
   },
   "round": 1,
@@ -54,6 +55,10 @@
     {
       "at": "2026-10-11T17:11:29.391244+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:40:14.793938+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -62,7 +67,6 @@
     "reason": "Coordinator decision under the owner's low-risk rule (risk 2): from round three, a change to the linked spec or the brief's Answers since the last round also counts as changed text that can block",
     "wait_id": "52ffb420-a392-4541-ad10-8ee600ede74b"
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest e0a4a9aa0abb497f7c13dd469c79c4c0ebbfd9d7` exited with status 1 on this machine.\n        notes = spec.with_name(\"invoices.read.md\")\n        for number, gap in enumerate((\"The invoice recipient is unspecified.\",\n                                      \"Failed delivery has no recovery rule.\",\n                                      \"The unchanged PDF rule exposes private invoice data.\"), 1):\n            say(repo, f\"{number}. Blocking: {gap}\\n\")\n            result = repo.forge(\"read\", \"invoices\", cwd=where)\n>           assert result.returncode == (1 if number == 3 else 0), result.stdout + result.stderr\nE           AssertionError: Traceback (most recent call last):\nE               File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2530/popen-gw2/test_3_specs_keep_full_documen1/bin/forge\", line 6, in <module>\nE                 sys.exit(main())\nE                          ^^^^^^\nE               File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-plan-reads-capped/src/forge/cli.py\", line 166, in main\nE                 return _run(argv)\nE                        ^^^^^^^^^^\nE               File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-plan-reads-capped/src/forge/cli.py\", line 149, in _run\nE                 result = function(args) or 0\nE                          ^^^^^^^^^^^^^^\nE               File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-plan-reads-capped/src/forge/story.py\", line 340, in read\nE                 return read_result(top, target, result, said, failed, problem, ran)\nE                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-plan-reads-capped/src/forge/story.py\", line 400, in read_result\nE                 \"answers_seen\": _store(top, answers.encode(\"utf-8\")),\nE                                             ^^^^^^^\nE             NameError: name 'answers' is not defined\nE\nE           assert 1 == 0\nE            +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-plan-reads-capped/.venv/bin/python', '/priva...top, answers.encode(\"utf-8\")),\\n                                ^^^^^^^\\nNameError: name \\'answers\\' is not defined\\n').returncode\n\ntests/test_spec_reads_keep_full_scope.py:32: AssertionError\n8 failed, 1 passed in 27.03s",
   "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner",
   "worker": "codex"
 }
