@@ -2,12 +2,27 @@
   "base": "0fb8d92d5ea211893a3ba416ad68035a63681b48",
   "branch": "fix/proof-list-carries-forward",
   "done_when": "The worker brief tells workers that every commit's Proof list carries the previous one forward and adds to it, so a small repair round never drops earlier Done-when proofs",
+  "flagged": [],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eacb7756c1dd9a2f779a649c6ebfecf44694b16f5ef5dc67a53d4a5160998397",
+    "changed": "75f33c8991db752828ca5382eee1475cd591fb2d377b4b12da3cc63d4c15d66c",
+    "commit": "56606df0018739cfddbd859d740209311e262e82",
+    "dismissals": [],
+    "findings": [],
+    "id": "52b68598-c038-47bf-9991-7f087609aeb0",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T20:05:00.854462+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T20:07:08.884476+00:00",
+      "step": "review"
     }
   ],
   "why": "A small repair commit replaces the proof list, so reviews flag earlier Done-when parts as unproven and add a round"
