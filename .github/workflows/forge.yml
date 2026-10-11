@@ -15,10 +15,12 @@ permissions:
 
 jobs:
   tests:
-    # Each event runs one of the two jobs. The skipped one takes another name, because a
-    # skipped job would otherwise pass a required check of the same name.
     if: github.event_name == 'pull_request'
-    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
+    name: test group ${{ matrix.group }} of 6
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3, 4, 5, 6]
     runs-on: "ubuntu-latest"
     env:
       UV_FROZEN: '1'
@@ -36,8 +38,22 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
-      - run: "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
+      - run: "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration || { status=$?; [ \"$status\" -eq 5 ] && uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --collect-only; }"
         if: steps.parent-tests.outputs.reuse != 'true'
+
+  tests-passed:
+    # The one required tests check: green only when every group passed. Each event runs one of
+    # tests-passed and forge-pr-check. The skipped one takes another name, because a skipped
+    # job would otherwise pass a required check of the same name; always() keeps a failed
+    # group from skipping this one.
+    needs: tests
+    if: always() && github.event_name == 'pull_request'
+    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
+    runs-on: "ubuntu-latest"
+    steps:
+      - env:
+          GROUPS: ${{ needs.tests.result }}
+        run: test "$GROUPS" = success
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'

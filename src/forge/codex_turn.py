@@ -230,42 +230,39 @@ def main() -> int:
                                           f"thread not loaded: {request['thread']}"):
                             raise
                         emit(fresh=f"Codex couldn't resume its conversation: {reason}")
-        if request.get("ephemeral"):
-            settings["ephemeral"] = True
         thread = resumed or codex.thread_start(**settings)
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
-        if not request.get("ephemeral"):
-            try:
-                matches = set()
-                cursor = None
-                root = Path(request["root"]).resolve()
-                while True:
-                    page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
-                    for project in page["data"]:
-                        if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
-                                or not project["id"] or not isinstance(project.get("roots"), list)):
-                            continue
-                        for path in project["roots"]:
-                            path = path.get("path") if isinstance(path, dict) else path
-                            if isinstance(path, str) and path and Path(path).resolve() == root:
-                                matches.add(project["id"])
-                                break
-                    cursor = page.get("nextCursor")
-                    if not cursor:
-                        break
-                if len(matches) == 1:
-                    project_id = next(iter(matches))
-                    client._request_raw("thread/metadata/update", {
-                        "threadId": thread.id, "projectId": project_id})
-                    emit(project=project_id)
-                else:
-                    emit(project_skipped="no matching project" if not matches else
-                         "several matching projects")
-            except Exception as error:
-                emit(project_skipped=f"Codex could not update the chat project: {error}. "
-                     "Check Codex and try again")
-        if not request.get("ephemeral") and resumed is None:
+        try:
+            matches = set()
+            cursor = None
+            root = Path(request["root"]).resolve()
+            while True:
+                page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
+                for project in page["data"]:
+                    if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
+                            or not project["id"] or not isinstance(project.get("roots"), list)):
+                        continue
+                    for path in project["roots"]:
+                        path = path.get("path") if isinstance(path, dict) else path
+                        if isinstance(path, str) and path and Path(path).resolve() == root:
+                            matches.add(project["id"])
+                            break
+                cursor = page.get("nextCursor")
+                if not cursor:
+                    break
+            if len(matches) == 1:
+                project_id = next(iter(matches))
+                client._request_raw("thread/metadata/update", {
+                    "threadId": thread.id, "projectId": project_id})
+                emit(project=project_id)
+            else:
+                emit(project_skipped="no matching project" if not matches else
+                     "several matching projects")
+        except Exception as error:
+            emit(project_skipped=f"Codex could not update the chat project: {error}. "
+                 "Check Codex and try again")
+        if resumed is None:
             thread.set_name(request["name"])
         prompt = (request["prompt"] if resumed is not None else
                   request.get("fresh_prompt", request["prompt"]))
