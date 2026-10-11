@@ -19,24 +19,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ca27b7588187f8697933f4c33b75c86831a8a4a501e3332ff7cf68f748f8e666",
-    "changed": "901391c37a613ad6e5609cd5acae0b5097ddcd70a7b7464c0bb3b58b565a8b67",
-    "commit": "3950aac3ee74847832fc11969cdccda944cc9a7e",
+    "branch_diff": "7d75170815bd9c57af38be0d50c0e3031f666117187c06d8d21fe178c82ab492",
+    "changed": "8c9d7f1d07955846e3360b3dc5804bd174828a2b73e4e45efc9a9e8b0f43100f",
+    "commit": "0607c5fe2f70fe45914a5217337bfc15145935e5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The board still renders the old card page and returns the old count fields; it has no pinned folding sections, story keys, or cold-read history. Approved but unstarted stories and merged fixes still use the old counts, blocking plan problems do not appear in Needs you, and pane times are not rounded. The Tasks table assigns these parts of item 12 to COUNTS, WAITS, NAV and PANE, so they remain work for those tasks.",
+        "body": "Item 12 remains incomplete: approved but unstarted stories and GitHub-merged fixes still need the corrected counts, blocking plan problems are absent from Needs you, the page lacks the pinned folding sections, story keys and cold-read history, and pane times are not rounded. The story\u2019s Tasks table assigns these to COUNTS, WAITS, NAV and PANE, so they are follow-on work for those tasks.",
         "file": "src/forge/board.py",
-        "line": 63,
+        "line": 606,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "50e35f7e-1cef-4568-992a-0b1b7c704681",
+    "id": "2dc125c5-2183-4734-9b72-d03151956394",
     "status": "clean"
   },
   "round": 15,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -80,6 +80,10 @@
     },
     {
       "at": "2026-10-11T12:10:23.990017+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:22:52.813348+00:00",
       "step": "review"
     }
   ],
