@@ -106,7 +106,9 @@ def close(args: argparse.Namespace) -> int:
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
-            defaulted = state["stop"].pop("by", None)  # the owner reverses the repo's default
+            defaulted = state["stop"].get("by") == "default"
+            if defaulted:  # the owner reverses the repo's default; the next worker round hears it
+                state["stop"].update(by="owner", worker_round=state.get("round"))
             state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")

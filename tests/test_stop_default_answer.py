@@ -149,3 +149,16 @@ def test_4_new_and_existing_clients_get_the_default(repo, gh, tmp_path):
         for host in (".codex", ".claude"):
             text = " ".join((client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8").split())
             assert GUIDANCE in text
+
+
+def test_5_owner_choice_after_the_default_reaches_the_worker(land, monkeypatch):
+    item, _ = stopped(land)
+    later(monkeypatch, 31)
+    assert "repo's default" in land.close(item).stdout
+    reason = "The owner splits the greeting into its own fix"
+    assert land.close(item, "--resolve", "split", "--reason", reason).returncode == 0
+    worked = land.repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    brief = _workers(land)[-1]["brief"]
+    assert f"The owner replaced the repo's default choice with split: {reason}." in brief
+    assert "Nobody answered the review loop stop" not in brief

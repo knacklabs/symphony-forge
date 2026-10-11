@@ -153,6 +153,9 @@ def work(args: argparse.Namespace) -> None:
                     "choice: narrow this part to its Done-when lines. Follow-up fixes own the open findings ("
                     + (", ".join(stop.get("fixes") or []) or "none") + "); remove what goes beyond the "
                     "Done-when lines instead of fixing those findings here.")
+        elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
+            note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
+                    "Follow the owner's choice, not the earlier default narrowing.")
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
