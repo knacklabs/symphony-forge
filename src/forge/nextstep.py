@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
+from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, time_records, upgrade
 from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
@@ -606,6 +606,17 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     return status, receipt
 
 
+def default_due(top: Path, state: dict[str, Any]) -> bool:
+    """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
+    stop = state.get("stop") or {}
+    if not stop or stop.get("choice") or repo.config(top)["stop_default"] == "off":
+        return False
+    # Stops from earlier releases have no time of their own; their owner wait event has one.
+    since = time_records.when(stop.get("at") or next(
+        (e.get("at") for e in time_records.read(top, "events") if e.get("id") == stop.get("wait_id")), None))
+    return bool(since) and time_records.when(repo.now()) - since >= timedelta(minutes=30)
+
+
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
@@ -617,7 +628,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
-        if close.default_due(path or top, state):
+        if default_due(path or top, state):
             return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
                     "records the repo's default choice: narrow.", f"Next: forge close {item}"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "

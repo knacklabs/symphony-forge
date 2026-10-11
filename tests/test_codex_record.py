@@ -72,7 +72,7 @@ BARE_SERVER = """#!{python}
 import subprocess, sys
 done = subprocess.run([{ps!r}, *sys.argv[1:]], capture_output=True, text=True)
 if "app-server" in done.stdout:
-    done.stdout = " ".join(done.stdout.split()[:5]) + " python\\n"
+    done.stdout = " ".join(done.stdout.split()[:6]) + " python\\n"
 sys.stdout.write(done.stdout)
 sys.exit(done.returncode)
 """
@@ -296,6 +296,29 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data, claude_session):
                                 f", so it can't tell who holds {lock}; it counts it as held.\n"
                                 f"Next: delete {lock} once no forge work runs on BOARD/PAGE\n")
         (repo.bin / "ps").unlink()
+
+    if os.name != "nt":
+        # An exited owner still has a PID until its parent collects it. Use a real
+        # zombie, not a ps stand-in, and keep it unreaped throughout the retry.
+        owner = subprocess.Popen([sys.executable, "-c", "import sys; sys.stdin.read()"],
+                                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+        try:
+            snapshot = subprocess.run(["ps", "-ww", "-o", "lstart=,command=", "-p", str(owner.pid)],
+                                      capture_output=True, text=True, check=True,
+                                      env={**os.environ, "TZ": "UTC", "LC_ALL": "C", "LANG": "C"})
+            *started, command = snapshot.stdout.split(None, 5)
+            ended = {"pid": owner.pid, "started": "UTC " + " ".join(started),
+                     "command": command.strip()}
+            saved = _saved(record)
+            record.write_text(json.dumps({**saved, "driver": ended}), encoding="utf-8")
+            owner.stdin.close()
+            assert _down(owner.pid)
+            recovered = repo.forge("work", "BOARD/PAGE")
+            assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+        finally:
+            owner.stdin.close()
+            owner.wait(timeout=30)
 
     # A lock whose process id now belongs to another process is stale and cleared.
     lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",

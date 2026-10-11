@@ -605,6 +605,7 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
                  ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
+                 ("handback", "tidy-the-readme", "--subagent", "reader", "--text", "No findings."),
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),

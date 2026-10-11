@@ -109,7 +109,7 @@ def _wait_for_choice(top: Path, item: str) -> dict:
     while True:
         state = repo.read_state(item, top) or {}
         try:
-            close.check_stop(item, state, top)
+            close.check_stop(item, state)
             return state
         except repo.Refused as error:
             if error.entry is not close.REFUSALS["hotspot"] or repo.config(top)["stop_default"] == "off":

@@ -17,7 +17,6 @@ import sys
 import tempfile
 import time
 import tomllib
-from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -198,7 +197,15 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if (not switch and not fresh and round_number >= 3 and not state.get("stop") and
+    choice_round = 0
+    if (state.get("stop") or {}).get("choice"):
+        # Earlier stops omitted the round or stored the attempted next review.
+        path = repo.state_path(item)
+        chosen = repo.git("log", "-1", "--first-parent", "--format=%H",
+                          "-G", '"choice":', "--", path, cwd=top)
+        at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
+        choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
+    if (not switch and not fresh and round_number - choice_round >= 3 and
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
@@ -274,7 +281,7 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
-        if serious and round_number >= 3 and not state.get("stop"):
+        if serious and round_number - choice_round >= 3:
             default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
                                          f"origin/{default}", cwd=top).split("\0"))
             candidates = sorted(file for file in files & flagged & default_files
@@ -362,17 +369,6 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
     return False
 
 
-def default_due(top: Path, state: dict[str, Any]) -> bool:
-    """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
-    stop = state.get("stop") or {}
-    if not stop or stop.get("choice") or repo.config(top)["stop_default"] == "off":
-        return False
-    # Stops from earlier releases have no time of their own; their owner wait event has one.
-    since = time_records.when(stop.get("at") or next(
-        (e.get("at") for e in time_records.read(top, "events") if e.get("id") == stop.get("wait_id")), None))
-    return bool(since) and time_records.when(repo.now()) - since >= timedelta(minutes=30)
-
-
 def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
     """Record the repo's default choice, narrow, and start a follow-up fix for each open finding."""
     from forge import task  # close imports story, which imports task
@@ -415,6 +411,7 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
         state.pop("stop", None)
     if state.get("stop") and not state["stop"].get("choice"):
         top = top or _worktree(item)  # land passes no checkout
+        from forge.nextstep import default_due  # nextstep imports close
         if default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
