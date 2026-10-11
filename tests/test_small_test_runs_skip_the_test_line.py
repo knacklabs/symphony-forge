@@ -16,11 +16,13 @@ STORY = "reviews-skip-agent-line"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-@pytest.mark.parametrize("file_count, compound, other_suite",
-                         [(5, False, False), (6, False, False), (5, True, False), (5, False, True)],
-                         ids=["five-files", "six-files", "compound-command", "underlying_full_suite"])
+@pytest.mark.parametrize("file_count, compound, other_suite, doctest",
+                         [(5, False, False, False), (6, False, False, False), (5, True, False, False),
+                          (5, False, True, False), (5, False, False, True)],
+                         ids=["five-files", "six-files", "compound-command", "underlying_full_suite",
+                              "doctest-option"])
 def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
-                                                                 adopted, file_count, compound, other_suite):
+                                                                 adopted, file_count, compound, other_suite, doctest):
     server, connections = release_server
     repo = env.repo
     if adopted:
@@ -44,7 +46,8 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         repo.write(f"tests/test_app_{index}.py", "from app import VALUE\n"
                    "def test_current_app():\n    assert VALUE == 2\n")
     picker = "forge test --pytest {base}"
-    test_command = shell([sys.executable, "-m", "pytest", "tests", "-q"])
+    test_command = shell([sys.executable, "-m", "pytest", "tests", "-q",
+                          *(["--doctest-modules"] if doctest else [])])
     if compound:
         picker += " && " + test_command
     if other_suite:
@@ -70,7 +73,7 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         accepted(server, connections, held, holding, output)
         small, small_output = start(folder, tmp_path / "small", repo, "test")
         processes.append(small)
-        if file_count > 5 or compound or other_suite:
+        if file_count > 5 or compound or other_suite or doctest:
             _until(lambda: "in line" in small_output.read_text("utf-8") or small.poll() is not None,
                    "the larger test command to wait for the test place")
             assert small.poll() is None, small_output.read_text("utf-8")
@@ -86,7 +89,7 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         assert f"{file_count} passed" in said
         if other_suite:
             assert "full Node suite" in said
-        if file_count <= 5 and not compound and not other_suite:
+        if file_count <= 5 and not compound and not other_suite and not doctest:
             assert "in line" not in said
             assert holding.poll() is None
     finally:
