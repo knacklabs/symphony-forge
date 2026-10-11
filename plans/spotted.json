@@ -2582,8 +2582,8 @@
       "text": "Not done: the bundled license and notice describe a word list that is absent",
       "from": "blocking",
       "item": "plain-english-skill",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
@@ -2593,8 +2593,8 @@
       "text": "The installed skill's check command fails from the client repository root",
       "from": "blocking",
       "item": "plain-english-skill",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tNot done: keep gaps in legacy timing history unknown\twhere-time-went",
@@ -3341,8 +3341,8 @@
       "text": "Not done: the checker test cannot detect a lost semicolon rule",
       "from": "blocking",
       "item": "plain-english-skill",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
