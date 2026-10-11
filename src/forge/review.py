@@ -264,6 +264,35 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
+def few_tests(top: Path, command: str, base: str) -> bool:
+    """Forge's pytest picker narrowed to a few related test files ends in moments."""
+    if not re.fullmatch(r"(?:uv run(?: --frozen| --python [\w.-]+)* )?"
+                        r"forge test --pytest [0-9a-f]+", command.strip()):
+        return False
+    from forge import fasttest  # fasttest imports review in forge test
+
+    test = repo.config(top)["test"]
+    # Only Python tests are bounded by the picker's file count.
+    if re.search(r"[;&|<>\r\n`$]", test):
+        return False
+    test = re.sub(r"^uv run(?: --frozen| --python [\w.-]+)* ", "", test.strip())
+    try:
+        words = shlex.split(test, posix=os.name != "nt")
+    except ValueError:
+        return False
+    runner = Path(words[0].strip('"').replace("\\", "/")).name if words else ""
+    if runner not in {"pytest", "pytest.exe"} and not (
+            re.fullmatch(r"python[\d.]*(?:\.exe)?", runner) and words[1:3] == ["-m", "pytest"]):
+        return False
+    with contextlib.chdir(top):
+        # Doctests collect from every module, not only the picked test files.
+        if "doctest" in test or "doctest" in fasttest.pytest_options(words):
+            return False
+        picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
+    # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.
+    return not picked[2] and len(picked[0]) <= 5
+
+
 # Close shows these fasttest lines, which a later runner's output can push out of the tail.
 GAP = "No local test names "
 
@@ -293,7 +322,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if passed and passed.exists():
             print(skipped, flush=True)
             return 0, skipped
-        entry = machine.join("test", top, item, None, None)
+        entry = machine.join("test", top, item, None, None, small=few_tests(top, command, base))
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
                 print(skipped, flush=True)
