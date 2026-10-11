@@ -20,7 +20,18 @@
     "branch_diff": "4a958e984d4b3d0b1d6647218c194605560804e1b10467f07c3b69ad9a097dc4",
     "changed": "dbb80fda55e74532dae9cf63006742d1ba6905af4b05feac2444a43eae48d94c",
     "commit": "c86e1dfb36ea710fbb9012ef267e619ffe21c467",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. `setting_sources` attributes `models.build` to a file whenever that file has a build table, without checking whether it has an entry for the selected worker. In an upgraded repo with only `[models.build.codex]`, setting local `tools = \"claude\"` makes `forge work` use Claude's built-in default (repo.py:513\u2013530), while `forge next` claims the model came from `forge.toml`. The same check can claim a local model when the local table contains only the other worker's entry. The required per-setting source display is therefore incorrect in a normal worker-switching case.",
@@ -38,10 +49,10 @@
       }
     ],
     "id": "53efaa96-d182-49e9-abbe-0fc16e1fd295",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
@@ -65,7 +76,9 @@
     }
   ],
   "stop": {
+    "choice": "accept",
     "file": "src/forge/nextstep.py",
+    "reason": "Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
     "wait_id": "e17ff264-3398-4001-bf65-922c465b2cd2"
   },
   "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings",
