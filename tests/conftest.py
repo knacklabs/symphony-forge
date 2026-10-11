@@ -28,7 +28,10 @@ REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
-import signal, sys
+import os, signal, sys
+# Work rounds wait while the machine is busy; tests that need a load set their own.
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
@@ -275,6 +278,7 @@ def isolated_git_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
     monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
+    monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)  # a worker's test budget, likewise
     gitconfig = tmp_path / "gitconfig"
     # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
     # a helper removes a temporary clone; detached maintenance can still write its objects.
