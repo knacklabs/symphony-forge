@@ -988,7 +988,8 @@ def plain(title: str, body: str = "") -> str:
     markdown, labels, file paths or hashes."""
     def sentence(text: str) -> str:
         text = " ".join(text.replace("**", "").replace("`", "").split())
-        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate)\.\s*)+", "", text, flags=re.I)
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Later|Follow-up)[.:]\s*)+",
+                      "", text, flags=re.I)
         text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
         first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
         # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
