@@ -804,6 +804,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1152,8 +1163,8 @@
       "text": "Not done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,",
       "from": "blocking",
       "item": "sync-not-blocked",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
@@ -5233,17 +5244,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 194,
-      "text": "Earlier-release choices can trigger another stop before three new rounds",
-      "from": "blocking",
-      "item": "second-stop-choice",
       "status": "open",
       "closed_by": null
     }
