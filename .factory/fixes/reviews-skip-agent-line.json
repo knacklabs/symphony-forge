@@ -33,7 +33,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:11:41.406821+00:00",
@@ -53,7 +53,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/review.py",
+    "reason": "Owner chose narrow: small test runs skip the test queue only when the test command has no doctest option; reviews and plan reads still skip the agent queue",
     "wait_id": "87103d21-332b-425f-87dc-1103623a0466"
   },
   "why": "A 2-minute review waits about 10 minutes for an agent place and a worker's small test run queues for the single test place",
