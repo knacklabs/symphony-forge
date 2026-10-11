@@ -1,0 +1,14 @@
+{
+  "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
+  "branch": "fix/record-review-usage",
+  "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T09:13:38.849775+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviews and plan reads record no model, effort, chat or token use, so nobody can tell what they cost or whether a lighter setting would do"
+}
