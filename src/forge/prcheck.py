@@ -176,6 +176,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                            [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
     test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
                           "least_duration" if groups > 1 else "")
+    if groups > 1:
+        # Empty groups pass only if the unsplit suite still collects tests successfully.
+        test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if source
