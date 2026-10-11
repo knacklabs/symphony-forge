@@ -16,7 +16,18 @@
     "branch_diff": "d4bcd06ae1edc634a1ae5566d1030094aca83353f3118ad72875c853f0270b77",
     "changed": "e74f570676c980f3bd095275eaa76d25e66f76c6a2c7b42b8b306633e2d279d0",
     "commit": "f984c5fb0c2d50b735e92d135b3e6e540bfc9500",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 1, Harm 1): the proofs exist in earlier commits and the tests pass; only the latest commit's proof-list text is partial; the no-session routing stays with the WORK part. Recorded as lived-with.",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 1, Harm 1): the proofs exist in earlier commits and the tests pass; only the latest commit's proof-list text is partial; the no-session routing stays with the WORK part. Recorded as lived-with.",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Gate. The latest worker commit's Proof list covers the corrected stop guidance and matching skill copies, but omits Done-when item 4 and its command test. It provides no proof entry for the session hold, stale-round refusal, no-session refusal, or Node launch behavior.",
@@ -34,10 +45,10 @@
       }
     ],
     "id": "42630bd1-e1cd-4c42-b5b8-8586ca12ec28",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T16:51:56+00:00",
@@ -61,7 +72,9 @@
     }
   ],
   "stop": {
+    "choice": "accept",
     "file": "tests/test_tools_session_hold.py",
+    "reason": "Coordinator decision under the owner's bar (Gain 2, Work 1, Harm 1): the proofs exist in earlier commits and the tests pass; only the latest commit's proof-list text is partial; the no-session routing stays with the WORK part. Recorded as lived-with.",
     "round": 5,
     "wait_id": "9ebc7cc0-b2a0-4246-bdc2-4cbfffb0d568"
   },
