@@ -52,10 +52,12 @@ permissions:
 
 jobs:
   tests:
-    # Each event runs one of the two jobs. The skipped one takes another name, because a
-    # skipped job would otherwise pass a required check of the same name.
     if: github.event_name == 'pull_request'
-    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
+    name: test group ${{ matrix.group }} of <groups>
+    strategy:
+      fail-fast: false
+      matrix:
+        group: <group-list>
     runs-on: <runner>
     env:
       UV_FROZEN: '1'
@@ -75,6 +77,20 @@ jobs:
         run: python .forge/review-tests.py
 <node>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
+
+  tests-passed:
+    # The one required tests check: green only when every group passed. Each event runs one of
+    # tests-passed and forge-pr-check. The skipped one takes another name, because a skipped
+    # job would otherwise pass a required check of the same name; always() keeps a failed
+    # group from skipping this one.
+    needs: tests
+    if: always() && github.event_name == 'pull_request'
+    name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
+    runs-on: <runner>
+    steps:
+      - env:
+          GROUPS: ${{ needs.tests.result }}
+        run: test "$GROUPS" = success
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
@@ -154,6 +170,17 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = version if isinstance(version, str) and version.strip() else "22"
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
     source = cfg.get("repo") == "forge-source"
+    # ponytail: only a direct pytest call (bare, `python -m` or `uv run` with options) in a repo
+    # listing pytest-split splits; any other command, such as `make pytest`, runs one group.
+    direct = r"(?:(?:uv|poetry|pipenv) run(?: -\S+| [\d.]+)* |python3? -m )?pytest\b"
+    groups = 6 if (re.match(direct, cfg["test"]) and not re.search(r"[;&|]", cfg["test"])
+                   and any("pytest-split" in sync.read(path) for path in
+                           [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
+    test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
+                          "least_duration" if groups > 1 else "")
+    if groups > 1:
+        # Empty groups pass only if the unsplit suite still collects tests successfully.
+        test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if source
@@ -162,7 +189,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<node>", node)
-                .replace("<test>", json.dumps(cfg["test"]))
+                .replace("<test>", json.dumps(test))
+                .replace("<groups>", str(groups))
+                .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if "tests" not in cfg.get("checks", []):
         start = workflow.index("  tests:\n")
