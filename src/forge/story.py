@@ -271,9 +271,9 @@ def read(args: Any) -> int:
         fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
                     touched="(not available)" if diff == "(not available)" else
                     ", ".join(touched) or "the title")
-        # Unchanged text gets two rounds of notes; from round 3 only the diff can block.
+        # Only story plans cap notes on unchanged text; specs still get a full read.
         again = edit if passed(record, findings) else again.replace(
-            "${look}", look if round_number < 3 else cap)
+            "${look}", cap if is_story and round_number >= 3 else look)
         blocking = {n: block for n, block in blocks.items()
                     if not ADVISORY.match(block.split(". ", 1)[1])}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))

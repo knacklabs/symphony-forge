@@ -185,6 +185,10 @@ this repository's own known traps:
 
 $traps
 
+For a story from round 3 on, block only on changed text in the diff or an earlier blocking
+finding that remains open. Other gaps in unchanged text are `Advisory:`, even inside a touched
+section.
+
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
 Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
 Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
@@ -201,8 +205,8 @@ $traps
 
 <!-- forge:cap -->
 2. This is round $round: the text the diff does not touch has had its two rounds of notes.
-   Block only on a gap in the diff and the sections it touches, or on one of those findings
-   that is not closed. Any other note on unchanged text is `Advisory:`. Apply your first
+   Block only on changed text in the diff, or on one of those findings that is not closed.
+   Any other note on unchanged text is `Advisory:`, even inside a touched section. Apply your first
    round's checks and What counts to the diff, including Forge's general traps and this
    repository's own known traps:
 

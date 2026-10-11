@@ -752,6 +752,7 @@ below `## For the builders` needs no new round either, and `forge read` refuses 
 edit above it does, and that round checks only the edit and the sections it touches. Unchanged
 text gets two rounds of notes: from round 3 on, a reader blocks only on what changed since its
 last round or on an earlier blocking finding that is not closed.
+This two-round limit applies only to story plans.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
