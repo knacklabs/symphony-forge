@@ -296,9 +296,11 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 return 0, skipped
             workers = str(machine.half_cores())
             env = {**os.environ, "FORGE_WORKER": "1",
-                   "FORGE_CLOSE_TESTS": "1" if closing and "tests" in repo.config(top)["checks"] else "0",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+            env.pop("FORGE_CLOSE_TESTS", None)
+            if closing and "tests" in repo.config(top)["checks"]:
+                env["FORGE_CLOSE_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix())

@@ -278,6 +278,7 @@ def pytest_tests(base: str, command: str) -> int:
         command = " && ".join(part for kind, part, _ in parts
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
+    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
     workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
@@ -319,7 +320,7 @@ def pytest_tests(base: str, command: str) -> int:
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
-    if os.environ.get("FORGE_CLOSE_TESTS") == "1" and len(selected) * 3 > len(tests):
+    if closing and len(selected) * 3 > len(tests):
         print(LARGE, flush=True)
         return 0
     if shared_changed:
