@@ -2,12 +2,52 @@
   "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
   "branch": "fix/stop-default-answer",
   "done_when": "When a three-rounds stop gets no answer in 30 minutes, Forge records the repo's default choice (narrow to the Done-when lines and file each open finding as a follow-up fix, set once in forge.toml and on by default for new and upgraded repos), carries on, and the owner can reverse it later",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/templates/skill.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "38ce1337fa5da309501b72c89d889754f6df2bbd2bcffa3e8235fe1427e41e99",
+    "changed": "aabe96b14aa3bac1cd299f37d473efcb8fab0c16044e3c1c7ef7420a51aee494",
+    "commit": "377365bee57eec2d69da9130b74259c06fdd825a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. The default is recorded only when a later command calls `check_stop`. The existing `src/forge/land.py:34` checks the stop once, and lines 65\u201366 propagate the stop refusal and end the run. If the owner stays silent and nobody reruns a command, nothing records the default or carries on at 30 minutes. `test_3` manually reruns `land` after advancing the clock, so it does not cover the unattended case.",
+        "file": "src/forge/close.py",
+        "line": 412,
+        "priority": "P1",
+        "title": "Not done: The stop does not resume unattended after 30 minutes"
+      },
+      {
+        "body": "Raise: Not done. This loop uses `review.blocking`, which excludes P2 and P3 findings (`src/forge/review.py:196`). At a stop with a blocking finding and an open `Follow-up:` finding, Forge starts a fix only for the blocking finding, despite the promise to file each open finding. `test_1` supplies only one P1 finding and cannot detect this gap.",
+        "file": "src/forge/close.py",
+        "line": 379,
+        "priority": "P1",
+        "title": "Not done: Open advice findings do not get follow-up fixes"
+      },
+      {
+        "body": "Raise: Not done. The new guidance tells the agent to run `forge close <item>` after 30 minutes, but lines 1215\u20131219 of the same skill say never to rerun close or land until the human's choice is recorded. The contradiction is also copied into both host skill files. An agent following the earlier instruction will keep waiting instead of triggering the default.",
+        "file": "src/forge/templates/skill.md",
+        "line": 1228,
+        "priority": "P1",
+        "title": "Not done: Shipped stop guidance forbids the required retry"
+      }
+    ],
+    "id": "1e4a54d7-7100-4f98-9307-016c02b68962",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:30:55.492924+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T10:52:52.020882+00:00",
+      "step": "review"
     }
   ],
   "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves"
