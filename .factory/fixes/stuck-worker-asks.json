@@ -9,53 +9,30 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5bea455c1d3b018e9e4614d0ff58a7523a2e77aeb75dca0c700623b08249c888",
-    "changed": "4c9e2184e86493b061469961c008694f3ad6a4f0fa3642f153defb5b97327263",
-    "commit": "adf758b0eb8d87399e4bdb4ee39f5f9bc7ab11ec",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
-        "finding": 3
-      }
-    ],
+    "branch_diff": "003d82eac897017e198eadeb51e50c63d5212c7b26448a2ffff584a807700a3a",
+    "changed": "efbd1269c0c99d7812c533c495cd44122d18443621c1326dbd0aee61495ce529",
+    "commit": "22799e1a63762447f6b8826e593df28c082186ec",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. When a worker fixes a review finding but introduces a failing test, close.py:233-237 stops before another review and keeps the old finding in state. This line counts that unverified finding again on the next `forge work`, so Forge asks the owner even though the second round left a different failure. The A-then-B proof covers two test failures, but not a finding followed by a test failure.",
+        "body": "Raise: Not done. `stuck_round` increments the failure count on every `forge work` call, using the failing test output retained by the last `forge close`. If an agent runs `forge work` twice before closing again, the second call stops the item using the same test result even though the intervening worker round has not been tested. The command-level tests always run close between work calls, so they miss this normal rerun path.",
         "file": "src/forge/close.py",
-        "line": 405,
+        "line": 424,
         "priority": "P1",
-        "title": "Not done: a stale review finding can stop an item after a different failure"
+        "title": "Not done: one failed close can be counted as two stuck rounds"
       },
       {
-        "body": "Raise: Functional. worker.py:391 retains only the last 30 lines of a failed pull-request check. In a normal Jest run with a long stack trace, the test name can fall outside that tail while the generic `Tests: 1 failed` summary remains. This line then gives different failing tests in the same check the same key and stops the item prematurely. The named Jest proof uses one-line output, so it does not exercise the truncated CI log.",
+        "body": "Raise: Not done. The question derives \u201cThe worker tried\u201d solely from commit subjects and falls back to \u201cno new commits.\u201d A worker can attempt to fix a failing test, finish without a commit, and leave the test failing on the next close. Forge then asks the owner without saying what that worker tried, despite that being a required part of the question. The named proof uses a worker that commits \u201cWorker round,\u201d so it does not cover this stuck case.",
         "file": "src/forge/close.py",
-        "line": 411,
+        "line": 445,
         "priority": "P1",
-        "title": "Different tests can share the same truncated CI failure excerpt"
-      },
-      {
-        "body": "Raise: Gate. A normal `--resolve switch` call without `--reason` reaches this refusal, but `bad_choice` at close.py:57-59 tells the owner to retry with `<narrow|split|accept>`. That omits the chosen `switch` option and offers `accept`, which this new branch rejects for a stuck stop. The refusal therefore fails Forge's rule that every refusal name the real problem and the next action.",
-        "file": "src/forge/close.py",
-        "line": 100,
-        "priority": "P1",
-        "title": "A rejected stuck choice gives an invalid recovery command"
+        "title": "Not done: a worker with no commit leaves no account of what it tried"
       }
     ],
-    "id": "0d8eb434-2414-480c-9911-a8fa5d89786e",
-    "status": "clean"
+    "id": "fddd5fe6-910d-40e3-afd4-7a724f4ff5db",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -71,6 +48,10 @@
     },
     {
       "at": "2026-10-11T19:56:59.259363+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T21:42:28.218666+00:00",
       "step": "review"
     }
   ],
