@@ -187,6 +187,8 @@ Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that
 both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
+This applies to runs Forge launched. A handed-out native run has no process tree, so
+`forge stop` frees its hold and the coordinator stops the subagent in its session.
 
 In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
 repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
