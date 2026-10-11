@@ -67,7 +67,7 @@ REFUSALS = {
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
     "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. "
-                  "Ask the human to accept, narrow or split before reading again.",
+                  "Ask the human to accept, narrow or split before reading again, in these words:\n{question}",
                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
                    'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
@@ -88,6 +88,9 @@ FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
+# A file path with an optional line (with the "at" or "in" before it) or a commit hash, for plain().
+PATHLIKE = re.compile(r"(?:\s(?:at|in|on|from|see))?\s*\(?(?:(?:[\w.-]+/)+[\w.-]*\.\w+|\b[\w-]+\.[A-Za-z]{1,5}"
+                      r"(?=:\d))(?::[\d,-]+)?\)?|\s*\(?\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b\)?")
 BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
@@ -193,7 +196,7 @@ def read(args: Any) -> int:
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
         return 0
     if blocked_rounds >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target)
+        repo.refuse(REFUSALS["read_loop"], target=target, question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
     if is_story:
         text = _text(doc)
@@ -371,7 +374,8 @@ def read(args: Any) -> int:
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
     if not clean and blocked_rounds + 1 >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target)
+        repo.refuse(REFUSALS["read_loop"], target=target,
+                    question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every blocking finding a disposition, amend the doc, then forge read {target}")
@@ -943,6 +947,48 @@ def _diff(old: str, new: str, path: str) -> str:
     """A unified diff, line endings aside, so a Windows checkout's CRLF isn't a change."""
     return "\n".join(difflib.unified_diff(old.splitlines(), new.splitlines(), f"a/{path}", f"b/{path}",
                                           lineterm=""))
+
+
+def plain(title: str, body: str = "") -> str:
+    """A note or finding as one plain sentence: its title and its body's first sentence, without
+    markdown, labels, file paths or hashes."""
+    def sentence(text: str) -> str:
+        text = " ".join(text.replace("**", "").replace("`", "").split())
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*)+", "", text, flags=re.I)
+        text = PATHLIKE.sub("", text)
+        text = re.sub(r"\(\s*\)", "", text)
+        return re.sub(r"\s+([,.;:!?])", r"\1", re.split(r"(?<=[.!?])\s", text.strip(), maxsplit=1)[0])
+    title, body = sentence(title), sentence(body)
+    if not body:
+        return title
+    return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
+
+
+def stop_question(name: str, delivers: str, flagged: list[str], accept: str) -> str:
+    """The question a stopped read or review loop asks the human, ready to ask as written."""
+    return "\n".join([f"{name}: {delivers}" if delivers else name,
+                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
+                      "Accept, narrow or split?",
+                      f"- Accept: {accept} as it stands, with these problems known.",
+                      "- Narrow: drop these cases from its Done when; they become follow-ups.",
+                      "- Split: move these cases into a new story or fix of their own; this one goes on "
+                      "without them."])
+
+
+def read_question(doc: str, notes: str) -> str:
+    """A stopped cold-read loop's question: the doc's title and promise, and the latest round's
+    blocking notes."""
+    record, findings = _record(notes)
+    heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
+    flagged = []
+    for block in _findings(findings[heading.end():] if heading else "").values():
+        title, _, body = block.split(". ", 1)[1].partition("\n")
+        if not ADVISORY.match(title):
+            flagged.append(plain(title, "\n".join(line for line in body.splitlines()
+                                                  if not DISPOSITION.match(line))))
+    title = re.search(r"^# (.+)$", doc, re.M)
+    gives = plain(sections(doc).get("What changes for you", ""))
+    return stop_question(title[1].strip() if title else "", gives, flagged, "approve it")
 
 
 def _findings(text: str) -> dict[int, str]:

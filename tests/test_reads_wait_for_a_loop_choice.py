@@ -8,7 +8,7 @@ import pytest
 
 from conftest import _install
 from test_close import env  # noqa: F401
-from test_close_holds_after_three_blocked_reviews import client_item
+from test_close_holds_after_three_blocked_reviews import QUESTION_RULE, client_item
 from test_readloop_gates import dispose_all, say
 from test_records import SPEC
 from test_story import DOC, READER, claude_plan, hook, new_story, setup, worktree
@@ -47,16 +47,28 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     notes = doc.with_name(doc.stem + ".read.md")
     for number in range(1, 4):
         # Settled repeats are clean; each round must still find a distinct blocking gap.
-        say(repo, f"1. Basket recovery is missing for case {number}.\n")
+        say(repo, f"1. Blocking: Basket recovery is missing for case {number}.\n"
+                  "   Raise: a shopper who signs out at `src/basket.py:12` loses the saved basket. "
+                  "The doc never says when it comes back.\n")
         result = repo.forge("read", target, cwd=where)
         assert result.returncode == (1 if number == 3 else 0), result.stdout + result.stderr
         if number < 3:
             dispose_all(notes)
     resolution = f'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'
+    # The stop is a ready-to-ask question: the item, each open note in plain words, each choice.
+    question = (("Shoppers can save a basket: Shoppers can save a basket and come back to it later."
+                 if target == "SHOP" else "Invoices by email") + "\n"
+                "It still has these problems:\n"
+                "- Basket recovery is missing for case 3: a shopper who signs out loses the saved basket.\n"
+                "Accept, narrow or split?\n"
+                "- Accept: approve it as it stands, with these problems known.\n"
+                "- Narrow: drop these cases from its Done when; they become follow-ups.\n"
+                "- Split: move these cases into a new story or fix of their own; this one goes on "
+                "without them.")
     assert result.stderr == (
         f"Three consecutive cold-read rounds of {target} still have blocking notes. "
-        "Ask the human to accept, narrow or split before reading again.\n"
-        f"Next: {resolution}\n")
+        "Ask the human to accept, narrow or split before reading again, in these words:\n"
+        f"{question}\nNext: {resolution}\n")
     calls = repo.bin / "claude-calls.jsonl"
     assert len(calls.read_text("utf-8").splitlines()) == 3
     # Even edited documents and missing dispositions cannot spend a fourth reader.
@@ -64,7 +76,8 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     held = repo.forge("read", target, cwd=where)
     assert held.returncode == 1 and resolution in held.stderr
     if target == "SHOP":
-        assert resolution in repo.forge("next", cwd=where).stdout
+        said = repo.forge("next", cwd=where).stdout
+        assert resolution in said and question in said
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
     assert invalid.returncode == 1
@@ -102,6 +115,7 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         guide = (where / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert "three consecutive cold-read rounds" in " ".join(guide.split())
         assert '--resolve <accept|narrow|split> --reason "<human\'s choice>"' in guide
+        assert QUESTION_RULE in " ".join(guide.split())
 
 
 def test_2_a_clean_read_restarts_the_three_blocked_round_count(repo):

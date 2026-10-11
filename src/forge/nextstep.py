@@ -547,7 +547,7 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
     if record.get("blocked_rounds") == "3" and not record.get("loop_choice"):
-        return [line.format(target=key) for line in
+        return [line.format(target=key, question=story.read_question(doc, text)) for line in
                 (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
@@ -619,6 +619,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         stop = state["stop"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
                 "narrow the part, split it, or accept the remaining findings.",
+                close.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:
         return []

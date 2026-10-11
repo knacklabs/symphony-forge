@@ -22,10 +22,11 @@ def stopped(env, kind="fix"):
     seed(env, "src/a.py")
     item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
     result = rounds(env, item, where, ["src/a.py"] * 3)
-    assert result.stderr.splitlines()[-2:] == [
+    lines = result.stderr.splitlines()
+    assert [lines[-9], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
-        "to narrow the part, split it, or accept the remaining findings.",
+        "to narrow the part, split it, or accept the remaining findings, in these words:",
         f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
     ]
     return item, where

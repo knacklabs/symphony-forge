@@ -331,10 +331,11 @@ def _three_blocked_reviews_hold_the_fourth(env):
     rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
     assert _steps(done) == [step for n in rounds for step in (f"Closing {ITEM}.", n)] + [
         f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
-    assert _refusal(done) == [
+    lines = done.stderr.splitlines()
+    assert [lines[-9], lines[-1]] == [
         f"Review round 4 of {ITEM} still finds serious problems in app.py, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
-        "to narrow the part, split it, or accept the remaining findings.",
+        "to narrow the part, split it, or accept the remaining findings, in these words:",
         f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"']
     assert len(_workers(env)) == 3
     assert len(env.review_calls()) == 3
@@ -383,6 +384,24 @@ def _blocked_red_blocked_red(env):
     assert _refusal(done) == ["Checks failed on the pull request: tests.", f"Next: forge work {ITEM}"]
 
 
+def _findings_after_three_rounds_ask_a_question(env):
+    _fix(env, "working", worked=True)
+    # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
+    env.reviews(blocked(BLOCKER), CLEAN, blocked(BLOCKER),
+                blocked({**finding("P1", "Saving loses the reader name"),
+                         "body": "A returning reader at `src/save.py:9` sees no name. More."}))
+    env.checks([run("tests", "failure"), run("forge-pr-check")])
+    _red_checks(env)
+    done = _land(env)
+    assert done.returncode == 1
+    stop = done.stdout.splitlines().index(
+        f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}.")
+    assert done.stdout.splitlines()[stop + 1:stop + 4] == [
+        "Readme greets new readers: The readme opens with a greeting",
+        "It still has these problems:",
+        "- Saving loses the reader name: a returning reader sees no name."]
+
+
 def _dismissed_before_land(env):
     _agent(env)
     where = _fix(env, "working", worked=True)
@@ -415,6 +434,7 @@ def _codex_question_stops(repo, monkeypatch, sdk_data, gh):
 
 TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_check_gives_a_fix_round,
        ("cancelled", "cancel"), ("skipped", "skipping"), _blocked_red_blocked_red,
+       _findings_after_three_rounds_ask_a_question,
        _dismissed_before_land, _codex_question_stops]
 
 

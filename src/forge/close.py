@@ -52,7 +52,7 @@ REFUSALS = {
                 '"<file:line> <reason>"'),
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
                 "earlier round flagged too, so Forge stops sending the worker back. Ask the human "
-                "to narrow the part, split it, or accept the remaining findings.",
+                "to narrow the part, split it, or accept the remaining findings, in these words:\n{question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
@@ -114,7 +114,7 @@ def close(args: argparse.Namespace) -> int:
             print("Recorded the human's choice.")
     had_stop = bool(state.get("stop"))
     if not switch:
-        check_stop(item, state)
+        check_stop(item, state, top)
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
@@ -196,7 +196,7 @@ def close(args: argparse.Namespace) -> int:
         state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
-        check_stop(item, state)
+        check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
     if not fresh:
@@ -306,7 +306,8 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     if serious:
         if stopped:
-            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
+                        question=stop_question(top, item, state), **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -354,16 +355,35 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
     return False
 
 
-def check_stop(item: str, state: dict[str, Any]) -> None:
+def check_stop(item: str, state: dict[str, Any], top: Path) -> None:
     """A human choice or a later clean review releases a review loop stop."""
     result = state.get("review") or {}
     if (result.get("status") == "clean" and not review.blocking(result) and
             not (state.get("stop") or {}).get("choice")):
         state.pop("stop", None)
     if state.get("stop") and not state["stop"].get("choice"):
-        repo.refuse(REFUSALS["hotspot"], item=item,
+        repo.refuse(REFUSALS["hotspot"], item=item, question=stop_question(top, item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
+
+
+def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
+    """A stopped item's question for the human: what it is, its open serious findings, the choices."""
+    name, delivers = state.get("why") or item, state.get("done_when", "")
+    if "/" in item:  # a task: its row in the story's plan, which its worktree holds
+        key, task = item.split("/")
+        doc = top / "plans" / f"{key}.md"
+        text = doc.read_text(encoding="utf-8") if doc.is_file() else ""
+        try:
+            row = next((row for row in story.parse(text)["tasks"] if row["id"] == task), {})
+        except ValueError:
+            row = {}
+        title = re.search(r"^# (.+)$", text, re.M)
+        name = (row.get("Name") or item) + (f" (part of {title[1].strip()})" if title else "")
+        delivers = row.get("What it delivers", "")
+    flagged = [story.plain(finding["title"], finding.get("body", ""))
+               for _, finding in review.blocking(state.get("review") or {}) if isinstance(finding, dict)]
+    return story.stop_question(name, delivers, flagged, "merge it")
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:

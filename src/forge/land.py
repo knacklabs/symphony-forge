@@ -31,7 +31,7 @@ def land(args: argparse.Namespace) -> int:
     top = close._worktree(item)
     pin = repo.config(top)["version"]
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
-    close.check_stop(item, state)
+    close.check_stop(item, state, top)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
     rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0"))
     conflict_retry = False
@@ -67,6 +67,8 @@ def land(args: argparse.Namespace) -> int:
                 if rounds == ROUNDS:
                     rounds += 1  # this stop says why itself, so no stop line
                     say(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
+                    if error.entry is close.REFUSALS["blocked"]:
+                        say(close.stop_question(top, item, repo.read_state(item, top) or {}))
                     raise
                 rounds += 1
                 say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")

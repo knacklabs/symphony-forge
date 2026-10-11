@@ -1223,6 +1223,10 @@ the default branch changed since that review. Close still requires green checks;
 needs another review.
 A clean review clears an unanswered review-loop stop.
 
+When a cold read or review loop stops, ask the human the question it printed, in its words, one
+item per question. It names the item and what it delivers, says each open note or finding in plain
+words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
+
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
 recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
