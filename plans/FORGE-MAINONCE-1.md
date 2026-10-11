@@ -34,7 +34,7 @@ run the same close and pay the same price.
 ## Done when
 
 1. **When a pull request has no clash with main, closing it round after round never brings main into it.**
-2. **When a pull request clashes with main, or GitHub requires it to be up to date and it is behind, close and merge bring main in once at that point, and a round that only brought main in keeps the earlier review.**
+2. **When a pull request clashes with main, or GitHub requires it to be up to date and it is behind, close and merge bring main in once at that point.**
 3. **A pull request that GitHub reports as clashing is caught at Forge's next look at GitHub, without waiting for checks, and land and merge then bring main in and carry on by themselves.**
 4. **Two changes never clash over the spotted problems they record, and the default branch still shows every spotted problem, old and new, and the files that keep breaking.**
 
@@ -53,8 +53,9 @@ run the same close and pay the same price.
 
 ## Risks
 
-Risks: none one-way. Every change here reverts with its pull request, and per-change spotted
-records written meanwhile stay readable.
+Risks: none one-way. Every change here reverts with its pull request. After a revert, spotted
+problems recorded per change in the meantime stay in the repo but drop out of `forge next`'s
+list until the change is applied again.
 
 Trade-off, accepted by the owner on 2026-10-11: a pull request is no longer retested each time
 main moves. CI still tests each push merged with main as it was at that push (GitHub's pull
@@ -69,15 +70,18 @@ tightening it needs no new approval. -->
 Every new test file starts with `STORY = "FORGE-MAINONCE-1"`; each Done-when item has exactly one
 test function, `test_<n>_...`, that runs the forge command (never imports forge), on a repo made by
 `forge init` and on `tests/fixtures/adopted-v1.2.2` moved to this release (the `client` fixture in
-`tests/test_conflicting_pull_requests_stop_check_waits.py` shows the pattern). Only GitHub (the `gh`
-stub) and elapsed time are faked; git merges are real.
+`tests/test_conflicting_pull_requests_stop_check_waits.py` shows the pattern). Only the existing
+`env` stubs (GitHub's `gh`, Autoreview and Codex, as in `tests/test_close.py`) and elapsed time
+are faked, so review outcomes are set by the test; git merges are real.
 
 ### Done-when details
 
 1. Today `close.close` calls `_merge_default(top, item, branch, default)` unconditionally
    (`src/forge/close.py` line 139), which runs `git merge origin/<default>` every round. Keep the
    fetch and the stacked follow-up replay branch exactly as they are (their own condition, run
-   first). Then merge only when there is a clash, else return:
+   first). The owner's merge-setting fix (`switch` in `close.close`) keeps today's merge every
+   round, because its mechanical check compares HEAD directly with `origin/<default>` (close.py
+   lines 154-163). For every other item, merge only when there is a clash, else return:
    - HEAD already contains `origin/<default>`: no merge (as today, git would no-op).
    - a trial merge conflicts: `git merge-tree --write-tree --no-messages HEAD origin/<default>`
      exits 1 (writes nothing; Git 2.38+, already relied on in `githooks.fix_base` and the replay
@@ -98,8 +102,9 @@ stub) and elapsed time are faked; git merges are real.
    (b) the `gh` stub reports the pull request `CONFLICTING` while the trial merge is clean (a
    roadmap clash the local merge rule resolves but GitHub can't): close merges, and a second close
    with the stub now `MERGEABLE` adds no further merge, so land never loops; (c) the stub reports
-   `BEHIND` (a repo with the up-to-date rule): close merges. In (b) and (c) only main's changes came
-   in, so the earlier review is kept and no new review runs (today's branch-diff reuse).
+   `BEHIND` (a repo with the up-to-date rule): close merges. What close does after bringing main in
+   (tests, a new review or a reused one) stays as today's rules decide; this story promises no
+   review reuse.
    `forge merge`'s existing path on a `BEHIND`/`DIRTY` refusal (close, then merge again) now relies
    on rule (b)/(c) to bring main in; `tests/test_merge_refreshes_behind_base.py` must keep passing
    unchanged. Existing tests that expected a merge commit from a non-clashing main move change their
@@ -116,27 +121,34 @@ stub) and elapsed time are faked; git merges are real.
    message (no `FORGE_CHECKS_WAIT` timeout), and `forge merge` on a Ready item whose pull request
    turns `CONFLICTING` brings main in through close and merges. The 11-minute median wait in the
    evidence was not traced to one cause; the every-look read is the guarantee this item makes.
-4. Spotted records move from the one shared `plans/spotted.json` to one file per item,
-   `plans/spotted/<item>.json` (a task `KEY/TASK` is `plans/spotted/KEY/TASK.json`, as in
-   `.factory/`), same entry format and checks (`spotted._parse`).
-   - `spotted.record` adds new entries only to the item's own file. A status change (done,
-     `closed_by`) is written in whichever file holds that entry: the old `plans/spotted.json`,
-     another item's file, or its own. It returns the paths it wrote; close commits them
-     (`close.py` lines 280-291 pass them to `_save` in place of `spotted.PATH`).
-   - `spotted.read(top, ref)` returns the old file's entries plus every per-item file's, on a
-     checkout or a ref (`git ls-tree` under `plans/spotted/` for a ref). `nextstep` and the
-     hotspot count need no change beyond that.
-   - `spotted.check` also refuses a linked `plans/spotted` folder, and an unreadable per-item file
-     by its own path. `review.fingerprint` drops the folder as it drops the old file (line 144).
-   - The `.gitattributes` merge rule for `plans/spotted.json` stays for existing repos; new files
-     need none. Nothing writes the old file except a status change to an entry in it.
+4. Spotted records move from the one shared `plans/spotted.json` to one flat file per item,
+   `plans/spotted/<item>.json`, with a task's `/` written as `.` (`plans/spotted/KEY.TASK.json`;
+   fix names never hold a dot), so there are no subfolders. Same entry format and checks
+   (`spotted._parse`).
+   - `spotted.record` writes only the item's own file, never another file. New entries go there.
+     A closure (a fix whose Done-when names an open entry's path, or a dismissal) goes there too,
+     as a copy of that entry with `status: done` and `closed_by` set, under the same key. Two
+     changes closing the same entry each write their own file, so they never clash. `record`
+     returns whether the own file changed; close commits that path (`close.py` lines 280-291 pass
+     it to `_save` in place of `spotted.PATH`).
+   - `spotted.read(top, ref)` reads the old file and every per-item file, on a checkout or a ref
+     (`git ls-tree` of `plans/spotted/` for a ref), and returns one entry per key: a done copy wins
+     over an open one, and among done copies the first by file path. `nextstep` and the hotspot
+     count need no change beyond that.
+   - `spotted.check` refuses when `plans/`, `plans/spotted` or the item's own file is a link, as it
+     does for the old file today, and refuses an unreadable per-item file by its own path.
+     `review.fingerprint` drops the folder as it drops the old file (line 144).
+   - Nothing writes the old `plans/spotted.json` any more. Its `.gitattributes` merge rule stays
+     for existing repos; new files need none.
    - Wording: `src/forge/templates/brief.md` (never edit the spotted records) and the guide's two
      mentions (Learn the traps, Hotspots) name the spotted records, not the one file.
    Test (one): two fixes started from the same main each record spotted lines on neighbouring keys;
    each pull request changes only its own spotted file, and merging both into main in a fresh clone
    without Forge's merge rule (as GitHub merges) has no conflict; `forge next` on that main counts
-   entries from both and from an existing old list toward a hotspot; on the adopted fixture with an
-   old list, a fix whose Done-when names a listed path marks that old entry done.
+   entries from both and from an existing old list toward a hotspot. Then two more fixes whose
+   Done-when both name the path of one open entry in the old list each close it; both pull
+   requests leave the old list untouched, merge in the fresh clone with no conflict, and
+   `forge next` shows that entry done. A linked `plans/spotted` refuses.
 
 ## Tasks
 
@@ -148,7 +160,7 @@ brings main in, keeps both paragraphs and regenerates the copies.
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | ONCLASH | Main only on a clash | Close brings main in only on a trial-merge conflict or when GitHub reports the pull request conflicting or behind; the check wait reads GitHub's clash state on every look; merge brings main in through close when the wait finds a clash; the guide's close and merge paragraphs say so | 1, 2, 3 | `src/forge/close.py` (`_pull_request`, the call at line 139, `_merge_default`), `src/forge/checks.py`, `src/forge/merge.py`, `docs/guide.md`, the existing tests that expect a merge from a non-clashing main | `tests/test_mainonce_clash.py`, `tests/test_conflicting_pull_requests_stop_check_waits.py` | | no | |
-| SPOTTED | Spotted per change | Spotted records kept one file per item, read together with the old list, status changes written where the entry lives, close committing the files it wrote, the brief's and guide's wording | 4 | `src/forge/spotted.py`, `src/forge/close.py` (the spotted lines 280-291 only), `src/forge/review.py` (the fingerprint's spotted line), `src/forge/nextstep.py` (only if `spotted.read` cannot keep its signature), `src/forge/templates/brief.md` | `tests/test_mainonce_spotted.py`, `tests/test_spotted.py`, `tests/test_hotspots.py` | | no | |
+| SPOTTED | Spotted per change | Spotted records kept in one flat file per item, closures recorded in the closing item's own file, read together with the old list, close committing the item's file, the brief's and guide's wording | 4 | `src/forge/spotted.py`, `src/forge/close.py` (the spotted lines 280-291 only), `src/forge/review.py` (the fingerprint's spotted line), `src/forge/nextstep.py` (only if `spotted.read` cannot keep its signature), `src/forge/templates/brief.md` | `tests/test_mainonce_spotted.py`, `tests/test_spotted.py`, `tests/test_hotspots.py` | | no | |
 
 New moving parts: none
 
