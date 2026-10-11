@@ -33,7 +33,9 @@ def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
 def test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow(repo):
     top = Path(__file__).resolve().parents[1]
     repo.write("forge.toml", (top / "forge.toml").read_text(encoding="utf-8"))
-    repo.git("add", "forge.toml")
+    # Forge's pyproject lists pytest-split, so its suite runs in groups.
+    repo.write("pyproject.toml", (top / "pyproject.toml").read_text(encoding="utf-8"))
+    repo.git("add", "forge.toml", "pyproject.toml")
     repo.git("commit", "-q", "-m", "Set Forge's test command")
     repo.git("checkout", "-q", "-b", "fix/test-timeout")
     result = repo.forge("sync")
