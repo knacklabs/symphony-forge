@@ -37,6 +37,7 @@ def delay_tool(path: Path, report: str = "") -> None:
 def test_1_work_and_close_append_step_timings(env, request, monkeypatch, scenario, review_model):
     repo = env.repo
     if scenario == "codex":
+        request.getfixturevalue("claude_session")
         _codex_rounds(repo, monkeypatch, request.getfixturevalue("sdk_data"))
         return
     if scenario in ("blocked", "review_failed", "ci_failed"):

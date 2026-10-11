@@ -138,6 +138,17 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
+    if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
+        excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
+        excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
+        stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"origin/{default}...HEAD",
+                         "--", ".", *excluded, cwd=top)
+        lines = sum(int(number) for record in stats.split("\0")
+                    for number in record.split("\t", 2)[:2] if number.isdigit())
+        if lines > limit:
+            raise repo.Refused(
+                f"This story part changes {lines} lines outside tests, over the limit of {limit}; "
+                'split it or record a reason with forge fix allow-large "<reason>".', "")
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:
@@ -224,10 +235,11 @@ def close(args: argparse.Namespace) -> int:
                         continue
                     finding = previous["findings"][number - 1]
                     dismissed[(finding["file"], finding["title"])] = dismissal
-                result["dismissals"] = [dict(dismissed[(finding["file"], finding["title"])],
+                carried = {d["finding"] for d in result.get("dismissals", [])}
+                result["dismissals"] = result.get("dismissals", []) + [dict(dismissed[(finding["file"], finding["title"])],
                                              finding=number)
                                         for number, finding in enumerate(result["findings"], 1)
-                                        if (finding["file"], finding["title"]) in dismissed]
+                                        if number not in carried and (finding["file"], finding["title"]) in dismissed]
                 outcome = "blocked" if review.blocking(result) else "clean"
             finally:
                 if outcome == "failed":

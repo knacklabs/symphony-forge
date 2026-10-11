@@ -2,10 +2,18 @@ $summary
 
 # Worker brief
 
+Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
+including findings already fixed or dismissed. Do not reopen them with the same finding text
+(cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
+Forge ignores settled repeats, so they cannot block or start another round.
+
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
 $review_loop
+
+Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
+review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
@@ -61,6 +69,9 @@ $what
 ### Why
 
 $why
+
+The plan's Why carries the problem. A linked spec is optional; build the approved story without
+adding a separate spec, spec read, confirmation or roadmap fix.
 
 ### Done when
 
