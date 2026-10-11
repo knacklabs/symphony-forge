@@ -38,6 +38,9 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
+              "everything a worker needs. Start from the files and tests this brief names, and "
+              "search the rest of the repo only for what they call or what calls them.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
@@ -395,6 +398,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on: set[str] = set()
     values: dict[str, str] = {
         "settings": SETTINGS,
+        "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
@@ -443,6 +447,10 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        brief += "\n" + START_HERE + "\n"
+        if match["task"]:
+            brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
+                      f"Existing related tests: {values['existing_tests']}.\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"

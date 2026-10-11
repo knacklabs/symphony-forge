@@ -10,9 +10,7 @@ Forge ignores settled repeats, so they cannot block or start another round.
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
-Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has everything a
-worker needs. Start from the files and tests this brief names, and search the rest of the repo
-only for what they call or what calls them.
+$start_here
 
 $review_loop
 
