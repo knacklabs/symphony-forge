@@ -33,7 +33,7 @@
     "id": "d5888ffa-0eec-4b2e-81aa-982410f89bcf",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T13:08:04.276798+00:00",
@@ -52,5 +52,10 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/review.py",
+    "round": 4,
+    "wait_id": "f078c28e-f4a7-468e-a6e2-ee44aa695b4a"
+  },
   "why": "Close picks local tests only when they name or import a changed file, so tests that check a program's output from outside are missed and fail only on GitHub"
 }
