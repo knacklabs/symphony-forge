@@ -33,7 +33,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:25:21+00:00",
@@ -53,7 +53,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/machine.py",
+    "reason": "Owner chose narrow: check only stories still in progress so admission stays fast; the pane's why line is left for later, the forge command still shows why",
     "wait_id": "2b74a4ca-8e84-4a50-82d6-94661deb41a2"
   },
   "why": "The machine's agent line is first-come, so a part other work waits on queues behind new fixes",
