@@ -1,0 +1,60 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/story-from-goal",
+  "done_when": "forge story new <KEY> \"<title>\" works for a story that has no spec: the story's own branch adds it to the roadmap, the plan's Why carries the problem, and the story gets one read loop and one approval; stories made from a spec work as today and specs stay optional. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/nextstep.py",
+    "src/forge/story.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b38811c75cdf4681c71b7eb44fefad7f3de04a4eecff44f56686a36a3fe2045a",
+    "changed": "745be264676e25196dc9e57adabfee1b073edaa89c333efc15e39bce641236f5",
+    "commit": "35bd9a3fccd50f19d533054f5e9e6d26d5bd5ace",
+    "dismissals": [],
+    "findings": [],
+    "id": "649589ca-9ac3-4723-8c0b-71edfcf97230",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T15:18:21+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T16:19:34.187735+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:51:53.924012+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:45:09.656380+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:40:14.784771+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:23:03.659425+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:51:50.642551+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/story.py",
+    "reason": "Owner chose narrow: a fix promoted to a story keeps today's roadmap route; only brand-new stories start from a one-line goal",
+    "wait_id": "2631ba4f-09c4-419a-a219-e31ab01f848f"
+  },
+  "why": "A new story needs a spec, its own read loop, a confirmation and a roadmap fix before its plan can even start",
+  "worker": "codex"
+}
