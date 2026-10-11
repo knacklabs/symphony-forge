@@ -2,12 +2,45 @@
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/plain-english-skill",
   "done_when": "forge init and forge sync install a bundled Simplified Technical English skill for Claude and Codex (its MIT instructions, writing rules, substitutions and check tool, with its license and notice, and without the standard's word list), and the guide and worker brief tell agents to write plans' top sections, pull request summaries, questions and board or next lines with it, for new and upgraded repos",
+  "flagged": [
+    "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+    "tests/test_fix_plain_english_skill.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "735926f9fb61a21567e3f5609db35eb46071b149cdfbd79e90054bd9a2efe644",
+    "changed": "df098fe451673e56fbc62756a6e6fed5a8b4c630cd7a058c533a163650e05101",
+    "commit": "3be336c1ac7eeda819b6a7505311bad70d2e26e2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done \u2014 the shipped NOTICE.md says that `references/word-list.md` contains the ASD-STE100 words, and LICENSE makes the same claim. The shipping list in src/forge/plain_english.py omits that file, as the Done-when requires. Readers of the installed skill therefore get a false description of its contents and a reference to a file they cannot open.",
+        "file": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+        "line": 9,
+        "priority": "P1",
+        "title": "Not done: the bundled license and notice describe a word list that is absent"
+      },
+      {
+        "body": "Raise: Test \u2014 the test overwrites `guide` for each host, then checks only the Codex guide. Its phrase assertions omit Why, a fix's why, and `forge next`; removing those directions from both templates would still pass. It also runs the check tool only on valid text, so a tool that always exits successfully would pass. The named proof therefore does not fail when these Done-when behaviors break; the file-list tests check copies and inventories, not these behaviors.",
+        "file": "tests/test_fix_plain_english_skill.py",
+        "line": 53,
+        "priority": "P1",
+        "title": "Not done: the proof test misses required guidance and checker behavior"
+      }
+    ],
+    "id": "c3955cfb-a4d0-4e42-968b-9cedc4304da5",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T12:28:11.381196+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T15:03:06.018178+00:00",
+      "step": "review"
     }
   ],
   "why": "People reading Forge's plans, pull request summaries, questions and board get long, uneven English; a controlled-language skill (Simplified Technical English) makes that text short and clear"
