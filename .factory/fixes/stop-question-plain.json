@@ -18,45 +18,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9d63b28ade6e16fe38246b61782f4b077dc33821987d33fd411ebd802a8d4828",
-    "changed": "600355341d275656d05189976bb026ee5bb880150e8e34d2c468167a8680d155",
-    "commit": "aea9d74584a371a51ae1f82c1c0210e069ea3353",
+    "branch_diff": "59b20f0070add32cab269a4913b77f171b5d56309f7b0df3e99c3786cd97b2c5",
+    "changed": "093cf3a8d3bf9297ad3059d6864eed922e61396cf7002e743078f6ebd635753d",
+    "commit": "e506d9924e30890b80d50ed751c85014ae8fe9c2",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. `forge spec save` accepts story branches (`src/forge/records.py:364-375`), but this new `forge next` scan runs only for fix and forge worktrees. A spec stopped while being planned on a story branch has no question in `forge next`, so the owner cannot retrieve the question that `forge read` printed.",
+        "body": "Raise: Not done. If a story draft is edited after its third blocked cold read and the edit makes it temporarily malformed, `forge next` reports only the document error. The existing parse check at `src/forge/nextstep.py:421-425` returns before the new stopped-read question path runs, even though `forge read` still requires the owner\u2019s accept, narrow or split choice. The named test edits the stopped draft but keeps it valid, so it does not catch this gap.",
         "file": "src/forge/nextstep.py",
-        "line": 214,
+        "line": 556,
         "priority": "P1",
-        "title": "Not done: stopped specs on story branches disappear from forge next"
-      },
-      {
-        "body": "Raise: Not done. The first-sentence cut discards the useful text after a short lead-in. For example, the existing spec at `docs/specs/agent-merge.md:22` starts its Behaviour with `**The owner's setting.**`; its question says only \u201cThe owner's setting\u201d for what it delivers. A review body in the required form `Raise: Not done. <impact>` becomes only \u201cnot done\u201d after this function strips `Raise:`. Both leave out context the owner needs to choose.",
-        "file": "src/forge/story.py",
-        "line": 960,
-        "priority": "P1",
-        "title": "Not done: stopped questions can omit the delivery or who is affected"
-      },
-      {
-        "body": "Raise: Not done. The shared question tells the owner that Narrow drops cases from the item's \u201cDone when.\u201d Specs instead have Behaviour and Acceptance criteria (`src/forge/records.py:86`). When a spec read stops, this is not a concrete description of what narrowing that spec would do.",
-        "file": "src/forge/story.py",
-        "line": 973,
-        "priority": "P1",
-        "title": "Not done: the narrow choice names a section specs do not have"
-      },
-      {
-        "body": "Raise: Gate. The named proofs do not cover these Done-when details. The close test supplies a body that already starts with an impact sentence, so it passes while a required-form `Raise: Not done. <impact>` body loses that impact. The read test uses a spec with a full-sentence Behaviour and creates specs only in fix worktrees; its `forge next` assertion never exercises a spec stopped on a supported story branch. It also asserts the invalid \u201cDone when\u201d wording for specs. The listed tests can pass with the question defects above.",
-        "file": "tests/test_close_holds_after_three_blocked_reviews.py",
-        "line": 64,
-        "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: forge next loses a stopped story\u2019s question when its draft is malformed"
       }
     ],
-    "id": "658dfb16-001c-4af0-b70c-099090188814",
+    "id": "40708fff-58c1-4c2c-a608-4c67ff8cc8c6",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -69,8 +48,16 @@
     {
       "at": "2026-10-11T15:35:25.513987+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:32:45.020859+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/nextstep.py",
+    "wait_id": "36a8917a-cc37-4099-8b1d-6710c8d6221b"
+  },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
   "worker": "codex"
 }
