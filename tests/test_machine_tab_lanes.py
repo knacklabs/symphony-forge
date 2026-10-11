@@ -154,10 +154,11 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
             assert [row["item"] for row in rows] == [items[0][0], items[2][0]]
             assert [row["place"] for row in rows] == [0, 2]
         else:
-            assert [row["item"] for row in rows] == [items[0][0], "SHOP", "BASKET/SAVE"]
+            # A planned prerequisite now precedes the earlier story read in the waiting line.
+            assert [row["item"] for row in rows] == [items[0][0], "BASKET/SAVE", "SHOP"]
             assert [row["place"] for row in rows] == [0, 1, 2]
             assert [(row["item"], row["title"]) for row in rows[1:]] == [
-                ("SHOP", "Shoppers can save a basket"), ("BASKET/SAVE", "Save baskets")]
+                ("BASKET/SAVE", "Save baskets"), ("SHOP", "Shoppers can save a basket")]
             for row in rows[1:]:
                 assert row["repo_root"] == foreign.path.resolve().as_posix()
                 # Admission records carry the known worker round; the unread story's
