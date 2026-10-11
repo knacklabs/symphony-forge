@@ -1103,7 +1103,8 @@ test lane as close. It prints the report close keeps and always runs, including 
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
-a worker's session, so a worker's own `pytest -n auto` also stays at two. `pytest -n auto` honours
+a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
+its test command is capped with `--maxprocesses`. `pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,

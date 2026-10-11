@@ -52,9 +52,9 @@ LOAD_LIMIT = 1.5
 
 
 def _load_per_core() -> float | None:
-    """The one-minute load per core; None where the OS has none (Windows keeps the half-cores rule)."""
+    """The one-minute load per core Forge may use; None where the OS has none (Windows keeps the half-cores rule)."""
     with contextlib.suppress(OSError, AttributeError):
-        return os.getloadavg()[0] / (os.cpu_count() or 2)
+        return os.getloadavg()[0] / (getattr(os, "process_cpu_count", os.cpu_count)() or 2)
     return None
 
 
