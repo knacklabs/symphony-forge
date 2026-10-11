@@ -15,24 +15,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6613649ec8ffde01d749c18e9ace7902136b87d70023b59a22362d3b74f1eb7f",
-    "changed": "e996dea6c2250f080f4b3ddd38697ac0043ef635d1cdaabac0f70cea89a001ed",
-    "commit": "d196b02f3fe2203b50eb26890774f29d452ee0ec",
+    "branch_diff": "d9e6ba92192ec2258c33fd325861d0c6796fad59dbf08e02f0bad7eead71132e",
+    "changed": "9f1f7ebfa861392c68832d847247c205c220c8e3167f177326032c4ff5cb4669",
+    "commit": "6d50c4d2741ae6bd24f38bc3915e89744b790264",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Test. The large-selection cases always make the required `tests` check fail, so they prove only that a red check stops close. No case shows that a skipped local run reaches Ready when required checks pass. No case configures checks without `tests` and verifies that close runs pytest locally instead of skipping it. Regressions in either outcome would pass these tests, leaving the required-check reliance unproven.",
-        "file": "tests/test_close_skips_large_test_selections.py",
-        "line": 68,
-        "priority": "P1",
-        "title": "Not done: test green-check completion and the missing-tests-check safeguard"
+        "body": "The new threshold applies only to pytest. In a Node client where a shared module change makes Vitest or Jest select most test files, `close_tests` still runs the local selection through `--changed` or `--changedSince` (src/forge/fasttest.py:231-244). That leaves the same long local run for those clients. The Done-when line does not name another language, so this is a non-blocking follow-up.",
+        "file": "src/forge/fasttest.py",
+        "line": 323,
+        "priority": "P2",
+        "title": "Follow-up: large Vitest and Jest selections"
       }
     ],
-    "id": "d4e012a2-3de7-4a23-a632-cce1886bf73c",
-    "status": "blocked"
+    "id": "fc9fdf07-734d-4150-b3f2-8c827e9b4480",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T07:11:51.424133+00:00",
@@ -40,6 +40,10 @@
     },
     {
       "at": "2026-10-11T10:55:24.741854+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:10:23.360249+00:00",
       "step": "review"
     }
   ],
