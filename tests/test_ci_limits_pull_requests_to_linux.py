@@ -1,4 +1,4 @@
-"""Forge's own workflow saves shared runners; clients keep their workflow contract."""
+"""Forge's own extra workflow runs the platform groups on pushes; pull requests run them once, in the gating workflow."""
 import json
 import re
 import tomllib
@@ -13,16 +13,18 @@ WORKFLOW = ROOT / ".github/workflows/forge-next.yml"
 
 def matrix_rows(event):
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    # Evaluate GitHub's literal event-selected matrices at the config boundary.
-    selection = re.search(
-        r"include: >-\s*\$\{\{ github.event_name == 'pull_request' &&\s*"
-        r"fromJSON\('([^']+)'\)\s*\|\|\s*fromJSON\('([^']+)'\)\s*\}\}", workflow)
-    assert selection, "Select Linux groups for pull requests and every platform for pushes"
-    return json.loads(selection[1 if event == "pull_request" else 2])
+    tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
+    # The gating workflow runs the pull request's groups; this one runs only on pushes.
+    if re.search(r"^    if: github.event_name != 'pull_request'$", tests_job, re.M) and (
+            event == "pull_request"):
+        return []
+    selection = re.search(r"include: >-\s*\$\{\{ fromJSON\('([^']+)'\) \}\}", tests_job)
+    assert selection, "List every platform group for pushes"
+    return json.loads(selection[1])
 
 
 @pytest.mark.parametrize("event,counts", [
-    ("pull_request", {"ubuntu-latest": 6}),
+    ("pull_request", {}),
     ("push", {"ubuntu-latest": 3, "macos-latest": 6, "windows-latest": 8}),
 ])
 def test_1_event_runs_every_required_platform_group_once(event, counts):
@@ -33,6 +35,10 @@ def test_1_event_runs_every_required_platform_group_once(event, counts):
     triggers = workflow.split("\non:\n", 1)[1].split("\nconcurrency:", 1)[0]
     assert re.search(r"^  pull_request:$", triggers, re.M)
     assert re.search(r"^  push:\n    branches: \[main\]\n    tags: \['v\*'\]$", triggers, re.M)
+    # A job skipped on pull requests must not answer to the required tests check's name.
+    tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
+    name = re.search(r"^    name: (.+)$", tests_job, re.M)
+    assert name and name[1].strip() != "tests", "Name the push-only suite apart from the tests check"
 
 
 def test_2_pull_requests_keep_closes_named_checks():

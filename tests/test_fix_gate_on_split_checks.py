@@ -79,6 +79,8 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
     assert "group: [1, 2, 3, 4, 5, 6]" in groups and "fail-fast: false" in groups
     assert "name: test group ${{ matrix.group }} of 6" in groups
     assert SPLIT in groups
+    # Only Forge's own repo runs its container tests in the gating groups.
+    assert ("FORGE_CONTAINERS: '1'" in groups) == (kind == "source")
     # Branch protection keeps waiting on the one check named tests.
     check_gate(workflow)
     if kind == "source":

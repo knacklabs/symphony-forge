@@ -13,7 +13,7 @@ from typing import Any
 
 from forge import __version__, repo
 
-# The Forge agent runs (work rounds, plan reads, close reviews) one machine runs at once, whatever
+# The Forge work rounds one machine runs at once, whatever
 # the repo, so several repos' agents can't run it out of memory.
 _agent_entry: dict[str, Any] | None = None
 _WAIT_REASONS = {
@@ -125,8 +125,12 @@ def _unblocks(top: Path, item: str) -> bool:
     return False
 
 
-def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
-    """Join a lane; prerequisite agents go first, with arrival order within each group."""
+def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None,
+         small: bool = False) -> dict[str, Any]:
+    """Join a lane; prerequisite agents go first, with arrival order within each group.
+
+    Reviews and plan reads wait on a model's API rather than this machine's cores, and a small
+    test run ends in moments, so they start at once and take no place from anyone else."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
@@ -155,7 +159,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None, "round": round_number, "unblocks": unblocks,
-             "output_path": None, "progress": None}
+             "output_path": None, "progress": None, "free": small or kind in ("read", "review")}
     size = test_slots() if kind == "test" else half_cores()
     with _queue() as runs:
         runs.append(entry)
@@ -164,11 +168,12 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
         said: int | str = 0
         while True:
             with _queue() as runs:
-                lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")]
-                position = next((n for n, run in enumerate(lane) if run["id"] == entry["id"]), None)
-                if position is None:
+                mine = next((run for run in runs if run["id"] == entry["id"]), None)
+                if mine is None:
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
-                place = position - size + 1
+                lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
+                        and not run.get("free")]
+                place = 0 if entry["free"] else lane.index(mine) - size + 1
                 busy = None
                 # A work round waits while the machine is busy, unless no other agent runs, since
                 # waiting then never lowers the load.
@@ -181,8 +186,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                     busy = busy if busy is not None and busy >= LOAD_LIMIT else None
                 if place <= 0 and busy is None:
                     # Admission holds the place before the model process is launched.
-                    lane[position]["admitted"] = True
-                    entry["admitted"] = True
+                    mine["admitted"] = entry["admitted"] = True
             if place <= 0 and busy is None:
                 _lane_event(entry, "lane admitted")
                 return entry
@@ -304,10 +308,12 @@ def lanes(args: Any) -> int:
     now = datetime.fromisoformat(repo.now())
     for lane in result.values():
         rows = []
-        for index, run in enumerate(lane["entries"]):
+        counted = [run for run in lane["entries"] if not run.get("free")]
+        for run in lane["entries"]:
             if run.get("version") != __version__:
                 continue
-            run["place"] = 0 if run["started_at"] else max(0, index - lane["size"] + 1)
+            run["place"] = (0 if run["started_at"] or run.get("free")
+                            else max(0, counted.index(run) - lane["size"] + 1))
             at = run["started_at"] or run["joined_at"]
             run["elapsed"] = max(0, (now - datetime.fromisoformat(at)).total_seconds())
             rows.append(run)

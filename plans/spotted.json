@@ -5664,6 +5664,94 @@
       "item": "FORGE-TOOLS-1/HOLD",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tCompound test commands can bypass the test place\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 269,
+      "text": "Compound test commands can bypass the test place",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tConfigured pytest collection can bypass the test place\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 288,
+      "text": "Configured pytest collection can bypass the test place",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tExplicit nonstandard pytest files bypass the test place\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 293,
+      "text": "Explicit nonstandard pytest files bypass the test place",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNested pytest config lets doctests bypass the test place\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 289,
+      "text": "Nested pytest config lets doctests bypass the test place",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPytest doctests can bypass the test place despite an unrestricted run\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 291,
+      "text": "Pytest doctests can bypass the test place despite an unrestricted run",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tStandalone picker runs a full second suite without a test place\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 277,
+      "text": "Standalone picker runs a full second suite without a test place",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_agent_runs_wait_in_line.py\tNot done: proof list\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "tests/test_fix_agent_runs_wait_in_line.py",
+      "line": 65,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_small_test_runs_skip_the_test_line.py\tNot done: the five-file picker boundary has an end-to-end lane test\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "tests/test_small_test_runs_skip_the_test_line.py",
+      "line": 37,
+      "text": "Not done: the five-file picker boundary has an end-to-end lane test",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
