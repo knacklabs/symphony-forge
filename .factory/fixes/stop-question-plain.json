@@ -21,7 +21,13 @@
     "branch_diff": "59b20f0070add32cab269a4913b77f171b5d56309f7b0df3e99c3786cd97b2c5",
     "changed": "093cf3a8d3bf9297ad3059d6864eed922e61396cf7002e743078f6ebd635753d",
     "commit": "e506d9924e30890b80d50ed751c85014ae8fe9c2",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): forge next shows only the document error while a stopped story's draft is malformed; fixing the draft brings the question back. Recorded as lived-with.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. If a story draft is edited after its third blocked cold read and the edit makes it temporarily malformed, `forge next` reports only the document error. The existing parse check at `src/forge/nextstep.py:421-425` returns before the new stopped-read question path runs, even though `forge read` still requires the owner\u2019s accept, narrow or split choice. The named test edits the stopped draft but keeps it valid, so it does not catch this gap.",
@@ -32,10 +38,10 @@
       }
     ],
     "id": "40708fff-58c1-4c2c-a608-4c67ff8cc8c6",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -55,7 +61,9 @@
     }
   ],
   "stop": {
+    "choice": "accept",
     "file": "src/forge/nextstep.py",
+    "reason": "Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): forge next shows only the document error while a stopped story's draft is malformed; fixing the draft brings the question back. Recorded as lived-with.",
     "wait_id": "36a8917a-cc37-4099-8b1d-6710c8d6221b"
   },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
