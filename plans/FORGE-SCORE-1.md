@@ -100,8 +100,21 @@ integer 1 to 5. A cold-read note carries it as the note's last line. A review fi
 as the first line of the finding's `body`. Autoreview's finding schema sets
 `additionalProperties: false` (allowed: title, body, priority, confidence, category,
 code_location), so the scores can't be separate JSON fields; the body line is the place Autoreview
-passes through (principle 7: adapt, never mirror). `priority` stays, for Autoreview's own
-filtering, and the bar ignores it except for unscored saved results.
+passes through (principle 7: adapt, never mirror). `priority` stays as Autoreview's field, and the
+bar ignores it except for unscored saved results.
+
+**The rubric** (in both templates, marked "judgement, not measurement"):
+
+| Score | Gain (how much fixing helps) | Work (effort to fix) | Harm (what breaks if it goes wrong) |
+|---|---|---|---|
+| 1 | wording, a rare edge nobody named | a line, no new test | nothing; a revert undoes it |
+| 3 | a Done-when item partly unmet for a named case; a test that passes with the code broken | one file and one command-level test, under an hour | client-visible behaviour change, reversible by a revert |
+| 5 | security, data loss, the main case of a Done-when item not done | a new module, a second platform or language, a migration | one-way: data, a migration, a release clients upgrade to |
+
+Anchors: "Close's default test selection breaks Go repos" Gain 3, Work 4, Harm 2; "Close skips
+Jest `__tests__` folders" Gain 2, Work 2, Harm 1; "A blocked review is shown as waiting for checks
+when tests pass on retry" Gain 3, Work 2, Harm 1; "Promotion accepts an uncommitted roadmap entry"
+Gain 4, Work 2, Harm 2.
 
 **The bar, as code** (`score.bar`, checked top-down):
 1. Harm ≥ 4, or Gain 5 → `block`.
@@ -109,53 +122,69 @@ filtering, and the bar ignores it except for unscored saved results.
 3. Gain 3–4 and Work ≥ 3 → `follow-up` (below the bar).
 4. Gain ≤ 2 → `live with` (below the bar).
 
-"At the bar" means `block` or `fix now`. The bar's "ask the owner" row (Harm 3 with new scope, or
-undoing an owner decision) is the coordinator's judgement, not code: Forge can't tell new scope
-from text. It lives in the guide (part GUIDE). The row order joins the owner's two rules: "Gain
-1–2 never blocks" means the serious label never overrides the bar; the Harm floor exists so that
-security, data loss and migration notes do block.
+"At the bar" means `block` or `fix now`, at any priority. The bar's "ask the owner" row (Harm 3
+with new scope, or undoing an owner decision) is the coordinator's judgement, not code: Forge can't
+tell new scope from text. It lives in the guide (part GUIDE). The row order joins the owner's two
+rules: "Gain 1–2 never blocks" means the serious label never overrides the bar; the Harm floor
+exists so that security, data loss and migration notes do block.
 
-**The Harm floor.** A note or finding whose `Raise:` line is Security or Data loss, or whose title
-or `Raise:` line names a migration, gets Harm raised to 4 when scored lower. The rewritten score
-line ends `(floor: security)`, `(floor: data loss)` or `(floor: migration)`, so whoever reads the
-notes sees why.
+**The Harm floor.** `score.normalise(title, body)` raises Harm to 4 when it was scored lower and
+the `Raise:` line is Security or Data loss, or the title or the body names a migration. The
+rewritten score line ends `(floor: security)`, `(floor: data loss)` or `(floor: migration)`, so
+whoever reads the notes sees why. A cold-read note passes its first line as the title and the rest
+as the body.
 
 **Unscored notes** (saved before the upgrade, or a reader that forgot the line): a cold-read note
 with no score line is judged by its `Blocking:`/`Advisory:` label as today (unmarked = blocking).
 A saved review result whose findings have no scores is judged by priority, as `review.blocking`
 does today. A new review finding with no score line, or one out of range, makes `_finding` return
 None, so the run fails with today's "it wrote findings Forge cannot read" and close's existing
-second attempt runs.
+second attempt runs. SCORES therefore updates, in the same change, every existing test that builds
+review findings without a score line, so main stays green: the `finding` helper in
+`tests/test_close.py` (lines 60–64) writes a default score line (`Gain 3, Work 2, Harm 1` for
+P0/P1, `Gain 2, Work 1, Harm 1` for P2/P3), which keeps each test's outcome, the P0 refusal case
+near line 268 included; other tests with their own unscored findings get the same line.
+
+**Light reviews.** The prototype's light review passes `--max-priority P3` like every other review
+(`review.py` near line 583, and the fingerprint's level stays as today), and Forge applies the
+P0-only level after scoring: under it only `block` counts. A P1 scored Gain 5 or Harm 4 is never
+filtered out before the bar sees it.
 
 ### Done-when details
 
 1. New module `src/forge/score.py` (pinned by SCORES, used by the other parts): `parse(text)`
-   returns `(gain, work, harm)` or None from the score line; `normalise(text)` applies the Harm
-   floor and returns the scores and the text with the score line rewritten; `bar(scores)` returns
-   `block`, `fix now`, `follow-up`, `live with`, or None for no scores. `review._finding` calls
-   `normalise` on the body and adds `gain`, `work`, `harm` to the finding dict; the module
-   docstring's list of fields Forge reads stays true (body). `forge read` runs each new note of
-   the reader's output through `normalise` where it numbers them (`story.read`, near line 340).
-   Templates: `cold-read.md` (first round and both later-round blocks) and `review.md` (How to
-   report) gain the rubric table, the four anchors from the design, the score line format, the
-   Harm floor rule and "judgement, not measurement". In this part they keep today's
-   `Blocking:`/`Advisory:` labels and P0–P3 wording, so main stays consistent until BAR merges.
-   Test (one): a review stub writes, on its first attempt, one finding with no score line; on the
-   second, one finding scored `Gain 3, Work 2, Harm 1` and one Security finding scored `Harm 2`.
-   Close prints both, the second as `Harm 4 (floor: security)`. A read stub's note scored `Harm 1`
-   that names a migration is saved in the read notes as Harm 4 with `(floor: migration)`.
-2. `review.blocking` uses `score.bar` when a finding has scores, else today's priority rule. The
-   prototype sign-off's P0-only level keeps working: under `blocking_level == "P0"` only `block`
-   counts. `story.passed` and `story.undisposed`: a scored note at the bar blocks; a scored note
-   below it passes, and `forge read` writes `Disposition: keep - below the bar (follow-up)` or
-   `(live with)` under it, so it needs no disposition by hand. `close._block` lists the review's
-   below-bar findings under "Follow-ups" and "Lived with", each with its score line, inside the
-   folded section. The templates' "What blocks the merge" section and the read's Blocking/Advisory
-   rule say the bar decides; labels and priority stay only as Autoreview's field and for old
-   notes. Test (one): a fix whose review has a P1 scored Gain 2, Work 1, Harm 1 and a P2 scored
-   Gain 4, Work 4, Harm 2 reaches Ready, and its pull request lists both with scores; a P2 scored
-   Gain 3, Work 1, Harm 1 blocks. A story read whose only note scores Gain 2 passes, and its notes
-   show the automatic disposition.
+   returns `(gain, work, harm)` or None from the score line; `normalise(title, body)` applies the
+   Harm floor and returns the scores and the body with the score line rewritten; `bar(scores)`
+   returns `block`, `fix now`, `follow-up`, `live with`, or None for no scores. `review._finding`
+   calls `normalise` on the finding's title and body and adds `gain`, `work`, `harm` to the finding
+   dict; the module docstring's list of fields Forge reads stays true (title, body). `forge read`
+   runs each new note of the reader's output through `normalise` where it numbers them
+   (`story.read`, near line 340). Templates: `cold-read.md` (first round and both later-round
+   blocks) and `review.md` (How to report, and the sign-off block below `<!-- signoff -->`, which
+   `review.signoff` sends alone and which gets one attempt) gain the rubric table, the anchors, the
+   score line format, the Harm floor rule and "judgement, not measurement". In this part they keep
+   today's `Blocking:`/`Advisory:` labels and P0–P3 wording, so main stays consistent until BAR
+   merges. Test (one): a review stub writes, on its first attempt, one finding with no score line;
+   on the second, one finding scored `Gain 3, Work 2, Harm 1`, one Security finding scored
+   `Harm 2`, and one titled with a migration under `Raise: Functional` scored `Harm 1`. Close
+   prints all three, the second as `Harm 4 (floor: security)` and the third as
+   `Harm 4 (floor: migration)`. A sign-off review stub's one scored finding is read and refused as
+   a blocking sign-off issue. A read stub's note scored `Harm 1` that names a migration is saved in
+   the read notes as Harm 4 with `(floor: migration)`.
+2. `review.blocking` uses `score.bar` when a finding has scores, else today's priority rule; under
+   `blocking_level == "P0"` only `block` counts. `worker._fix_round` takes the same list: the
+   repair brief names every undismissed finding at the bar, at any priority, and drops the ones
+   below it (unscored saved findings: P0/P1 as today). `story.passed` and `story.undisposed`: a
+   scored note at the bar blocks; a scored note below it passes, and `forge read` writes
+   `Disposition: keep - below the bar (follow-up)` or `(live with)` under it, so it needs no
+   disposition by hand. `close._block` lists the review's below-bar findings under "Follow-ups" and
+   "Lived with", each with its score line, inside the folded section. The templates' "What blocks
+   the merge" section and the read's Blocking/Advisory rule say the bar decides; labels and
+   priority stay only as Autoreview's field and for old notes. Test (one): a fix whose review has a
+   P1 scored Gain 2, Work 1, Harm 1 and a P2 scored Gain 4, Work 4, Harm 2 reaches Ready, and its
+   pull request lists both with scores. A P2 scored Gain 3, Work 1, Harm 1 blocks close, and the
+   next `forge work` brief names it and not a below-bar P1 of the same review. A story read whose
+   only note scores Gain 2 passes, and its notes show the automatic disposition.
 3. Carry-forward reads only what is already stored: the read notes file (every note, its score
    line and its disposition) and the saved review results in the item's state. Nothing new is
    written. Read rounds: `$dispositions` lists every disposed note, below-bar ones included, each
@@ -164,34 +193,46 @@ second attempt runs.
    evidence>`. Reviews: a new `$accepted` block in `review.md` under How to report lists, as known
    and accepted, (a) for a task, the story's read notes with a `keep` or `defer` disposition, the
    automatic below-bar ones and an owner's accept; (b) this item's earlier below-bar findings with
-   scores. `review.instructions` fills it. A repeat with the same file and title is already ignored
-   (`review._settled`); extend that to below-bar findings of earlier rounds. Test (one): a story
-   with a kept read note and a below-bar note: the task's review prompt (the Autoreview stub saves
-   its argv) lists both as known and accepted; a second review round's prompt lists the first
-   round's below-bar finding; a later read round's prompt lists the earlier below-bar note.
+   scores; (c) this item's owner-accepted findings (the `accepted` dismissals that `_rulings` skips
+   today). `review.instructions` fills it. A repeat with the same file and title is already ignored
+   (`review._settled`); extend that to below-bar findings of earlier rounds and to owner-accepted
+   findings, which stay settled until a finding titled `Disputed keep <n>` names new harm evidence.
+   Test (one): a story with a kept read note and a below-bar note: the task's review prompt (the
+   Autoreview stub saves its argv) lists both as known and accepted; after the owner accepts a
+   blocking finding, the next review's prompt lists it and a repeat of it is ignored; a second
+   review round's prompt lists the first round's below-bar finding; a later read round's prompt
+   lists the earlier below-bar note.
 4. Close's three-round stop (`close.py` near lines 192 and 269, and `_three_blocked_reviews`) fires
    only when a finding at the bar repeats an earlier round's (same file and title) or an open
    finding at the bar has Harm ≥ 3; otherwise the worker goes on as in rounds 1 and 2. The read
    loop stop (`story._blocked_reads`, `read_loop`) fires on the third blocked round only when a
    note at the bar has Harm ≥ 3 or is a `Disputed keep`. The 30-minute default answer (from the
-   stop-default-answer fix) records narrow only when every open finding at the bar has Harm 1 or 2;
-   with Harm ≥ 3 open it keeps waiting. Unscored saved results stop as today. Test (one): three
-   blocked rounds with new Harm 1 findings each time go on to a fourth round; a third round with an
-   open Harm 3 finding stops; with elapsed time past 30 minutes, a stop with only Harm 2 findings
-   records narrow and one with a Harm 3 finding stays stopped.
+   stop-default-answer fix, review stops only) records narrow only when every open finding, at the
+   bar or below it, has Harm 1 or 2; with any Harm ≥ 3 open it keeps waiting. Unscored saved
+   results stop as today. Test (one): three blocked rounds with new Harm 1 findings each time go on
+   to a fourth round; a third round with an open Harm 3 finding at the bar stops; with elapsed time
+   past 30 minutes, a stop with only Harm 2 findings records narrow, and a stop with a Harm 2
+   finding at the bar plus a Harm 3 follow-up stays stopped.
 5. `score.table(rows)` renders the ranked table `# | Problem, for whom | Gain | Work | Harm |
    Proposed`, ranked by bar (block, fix now, follow-up, live with), then Harm and Gain descending,
    then Work ascending. "Problem, for whom" is `story.plain` of the note (from stop-question-plain);
    "Proposed" is the bar's outcome in words ("fix now", "fix this round", "follow-up fix", "live
    with"). `story.stop_question` shows the table in place of its bullet list when every row has
    scores, else today's bullets; `close.stop_question` and `story.read_question` pass the scores.
-   Guide paragraph (`src/forge/templates/skill.md`, left out of Scope; see Tasks): the coordinator
-   shows the same table in every update that lists notes or findings; it settles reversible Harm 1
-   and 2 notes itself (a disposition or a dismissal, with the scores in its reason) and tells the
-   owner after, in a line; it asks the owner only for Harm ≥ 3, new scope beyond the approved Done
-   when, owner gates (approve, merge), or undoing an owner decision. Test (one): a stopped review
-   and a stopped read each print the table ranked as above, through `forge close`, `forge read` and
-   `forge next`; the guide synced into a new and an upgraded repo has the coordinator rule.
+   Guide (`src/forge/templates/skill.md`, in GUIDE's Scope): rewrite the close-stop paragraph near
+   lines 1109–1114 (every in-boundary P0/P1 gets a fix round, "never a dismissal for being
+   unnecessary, rare or low value") so the bar decides which findings get a fix round, and the
+   review-loop and read-loop paragraphs near lines 1217–1235 ("Close holds the fourth review after
+   three consecutive rounds blocked by serious findings, whatever files they were in") so they
+   state item 4's stop rule. Add: the coordinator shows the same table in every update that lists
+   notes or findings; it settles reversible Harm 1 and 2 notes itself (a disposition or a
+   dismissal, with the scores in its reason) and tells the owner after, in a line; it asks the
+   owner only for Harm ≥ 3, new scope beyond the approved Done when, owner gates (approve, merge),
+   or undoing an owner decision. Test (one): a stopped review and a stopped read each print the
+   table ranked as above, through `forge close`, `forge read` and `forge next`; the guide synced
+   into a new and an upgraded repo has the coordinator rule, and neither the "never a dismissal for
+   being ... low value" sentence nor the "three consecutive rounds ... whatever files they were in"
+   sentence.
 6. README: a new section after "How it works", "How Forge weighs a note": the three scores, the
    bar table, and three worked examples: "close's default test selection breaks Go repos" (Gain 3,
    Work 4, Harm 2 → a follow-up fix, the merge goes on); a finding that a migration drops a column
@@ -206,16 +247,17 @@ second attempt runs.
 
 ## Tasks
 
-Every part may add its paragraph to `src/forge/templates/skill.md` and regenerate
-`.claude/skills/forge/` and `.codex/skills/forge/` with `forge sync`; those are left out of the
-Scope column so the parts run in parallel. If they clash on the guide, the part closed second
-brings main in, keeps both paragraphs and regenerates the copies.
+SCORES, BAR and README may add a paragraph to `src/forge/templates/skill.md` and regenerate
+`.claude/skills/forge/` and `.codex/skills/forge/` with `forge sync`; GUIDE owns the guide's
+rewrites and lists it in Scope. The host copies are left out of every Scope column so the parts run
+in parallel. If they clash on the guide, the part closed second brings main in, keeps both changes
+and regenerates the copies.
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| SCORES | Scores on every note | The score line, the rubric and the Harm floor in both templates; the scores module with parse, normalise, bar and the unscored rule; review findings and read notes scored and floored | 1 | `src/forge/score.py` (new), `src/forge/review.py` (`_finding`, the docstring), `src/forge/story.py` (the reader-output numbering in `read` only), `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` (rubric and score line only) | `tests/test_score_notes.py` | | no | |
-| BAR | The bar decides | The bar in close and read; below-bar notes disposed automatically and listed in the pull request; settled notes carried into every later read and review; the three-round stop and the 30-minute default judged by the bar | 2, 3, 4 | `src/forge/review.py` (`blocking`, `instructions`, `_settled`), `src/forge/story.py` (`passed`, `undisposed`, `_blocked_reads`, the round prompt), `src/forge/close.py` (the stops near lines 192 and 269, `_three_blocked_reviews`, `_block`, the default answer), `src/forge/templates/cold-read.md` and `src/forge/templates/review.md` (what blocks, the later-round blocks, `$accepted`), the existing tests that expect an unscored P1 to block | `tests/test_score_bar.py`, `tests/test_close_holds_after_three_blocked_reviews.py`, `tests/test_cold_read_blocking_notes.py` | SCORES | no | |
-| GUIDE | Ranked table and coordinator rule | The ranked table in every stop question; the guide's table rule and coordinator autonomy rule | 5 | `src/forge/score.py` (`table` only), `src/forge/story.py` (`stop_question`, `read_question`), `src/forge/close.py` (`stop_question` only) | `tests/test_score_table.py` | SCORES | yes | |
+| SCORES | Scores on every note | New `score.py` with `parse`, `normalise` (Harm floor on title and body), `bar` and the unscored rule; `review._finding` and the reader-output step of `story.read` score and floor every finding and note; the rubric and score line in the cold-read, review and sign-off templates; existing tests' findings given a default score line | 1 | `src/forge/score.py`, `src/forge/review.py`, `src/forge/story.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_notes.py`, `tests/test_close.py` | | no | |
+| BAR | The bar decides | `review.blocking` and `worker._fix_round` follow the bar; light reviews ask for every priority and apply P0-only after scoring; `story.passed` and `undisposed` pass below-bar notes with an automatic disposition; `close._block` lists follow-ups and lived-with findings; the `$accepted` block and `_settled` carry settled and owner-accepted notes forward; the three-round stops and the 30-minute default judged by the bar | 2, 3, 4 | `src/forge/review.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_bar.py`, `tests/test_close_holds_after_three_blocked_reviews.py`, `tests/test_cold_read_blocking_notes.py` | SCORES | no | |
+| GUIDE | Ranked table and coordinator rule | `score.table`; the ranked table in `story.stop_question`, `story.read_question` and `close.stop_question`; the guide's close-stop and loop paragraphs rewritten to the bar, plus the table rule and the coordinator autonomy rule | 5 | `src/forge/score.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/skill.md` | `tests/test_score_table.py` | SCORES | yes | |
 | README | README and upgrade | The README section with the three examples; the proof that saved unscored reads and reviews keep holding work back after an upgrade | 6 | `README.md` | `tests/test_score_upgrade.py` | BAR | no | |
 
 New moving parts: none
@@ -230,9 +272,10 @@ New moving parts: none
   and 6 here.
 - BAR and GUIDE both change `story.py` and `close.py`, in hunks far apart (gates and stops for
   BAR; the stop-question builders for GUIDE), so they build in parallel after SCORES.
-- SCORES and BAR both edit the two templates: SCORES adds the rubric and score line and keeps
-  today's labels; BAR changes what blocks and the later-round text. Each merge leaves main
-  consistent.
+- SCORES and BAR both edit the two templates and `review.py`: SCORES adds the rubric and score
+  line and keeps today's labels, and touches only `_finding` and the docstring; BAR changes what
+  blocks, the later-round text, `blocking`, `instructions`, `_settled` and the light review's
+  priority. Each merge leaves main consistent.
 - Size: `story.py` is about 1,150 lines with stop-question-plain. The bar, floor and table live in
   the new `score.py` so `story.py` stays under 1,200; if it would cross, the part moves more note
   handling into `score.py`, never past the ceiling.
