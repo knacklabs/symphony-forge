@@ -1,0 +1,14 @@
+{
+  "base": "9f73aca70d925fe5e107cb9ed920ff51016e409a",
+  "branch": "fix/accepted-notes-to-review",
+  "done_when": "The review of a story part is given the story's cold-read notes the owner accepted, narrowed away or left advisory, as known and accepted, and does not raise them again as blocking findings; new and upgraded repos get it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T15:24:06.219895+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Code reviews raise again problems that the owner already chose to live with during the plan's cold read, which adds rounds"
+}
