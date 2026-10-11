@@ -2,12 +2,44 @@
   "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
   "branch": "fix/worker-brief-faster",
   "done_when": "The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate fix?' and 'record a narrow choice' in advance (out-of-scope problems become Spotted lines; fix only findings inside the Done-when and list the rest in the proof), and ends with the reviewer's checklist the worker checks before handing over",
+  "flagged": [
+    "src/forge/templates/brief.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98e1c4f5c54f7068c8aee1360ea6f98325bd7fde298994238646073150382762",
+    "changed": "a57d7c54cdd30c13e02b86f24c4d88c689a1e7b79340be843b1ca5db57e80336",
+    "commit": "e584fef80739782a8f491d0b86a3a0a2883ee2e3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Resumed workers receive a brief that ends with round updates instead of the checklist, so they lack the requested final handoff check on a normal work path. Raise: Not done. `src/forge/worker.py:442-461` builds a shortened continued brief and appends changes or findings; the new checklist at this line appears only in the full template. The named test checks only an initial `forge work` call.",
+        "file": "src/forge/templates/brief.md",
+        "line": 264,
+        "priority": "P1",
+        "title": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds"
+      },
+      {
+        "body": "The new narrow-choice answer conflicts with the instruction workers receive earlier in the same brief, leaving them with incompatible directions when a review finding falls outside Done-when. Raise: Not done. This line says to fix only findings inside Done-when, while `REVIEW_LOOP` in `src/forge/worker.py:25-30`, inserted at `brief.md:17`, says to fix the findings in the round, including findings after a recorded narrow or split.",
+        "file": "src/forge/templates/brief.md",
+        "line": 254,
+        "priority": "P1",
+        "title": "Not done: Resolve conflicting fix-round directions"
+      }
+    ],
+    "id": "bb7dd59a-7bbc-4baf-aca4-a529bf6a202e",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:31:22.979706+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T08:32:43.084863+00:00",
+      "step": "review"
     }
   ],
   "why": "Worker turns take about 22 minutes: workers re-read the 15,000-word guide and search the whole repo, ask the same two questions, and fail 45% of first reviews"
