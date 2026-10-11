@@ -1,6 +1,13 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/skip-large-local-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a129e4-3188-7350-a586-487921098e9a",
+    "head": null,
+    "start": "60cfd9f937a59b25604b56418da38e98422ed247"
+  },
   "done_when": "When the tests close would pick cover more than a third of the suite, close skips the local run, says so in one line, and relies on the pull request's required checks",
   "kind": "fix",
   "round": 1,
