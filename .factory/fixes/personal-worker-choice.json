@@ -17,16 +17,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3f8e2160fd688fa094649be91cf0538272c201dc348ad83fbddf2c5ee61f1f9f",
-    "changed": "231a080033868fa6121e80cd647177a0162d1fda82325a128a583c53679a06d6",
-    "commit": "9deff982370510d3cfaeda544da12735dfefc7ee",
+    "branch_diff": "4a958e984d4b3d0b1d6647218c194605560804e1b10467f07c3b69ad9a097dc4",
+    "changed": "dbb80fda55e74532dae9cf63006742d1ba6905af4b05feac2444a43eae48d94c",
+    "commit": "c86e1dfb36ea710fbb9012ef267e619ffe21c467",
     "dismissals": [],
-    "findings": [],
-    "id": "0b5db8ca-f1b7-4d34-b93a-c4462ee69728",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done. `setting_sources` attributes `models.build` to a file whenever that file has a build table, without checking whether it has an entry for the selected worker. In an upgraded repo with only `[models.build.codex]`, setting local `tools = \"claude\"` makes `forge work` use Claude's built-in default (repo.py:513\u2013530), while `forge next` claims the model came from `forge.toml`. The same check can claim a local model when the local table contains only the other worker's entry. The required per-setting source display is therefore incorrect in a normal worker-switching case.",
+        "file": "src/forge/repo.py",
+        "line": 557,
+        "priority": "P1",
+        "title": "Not done: model sources are misidentified after a local tool switch"
+      },
+      {
+        "body": "Raise: Not done. The new source display is added only to ready-task lines. After `forge task start` or `forge fix start`, `forge next` reports the active item through `_item` (nextstep.py:614 onward), which prints the next `forge work` command without any setting sources. A developer checking which local choices will run that work sees no file attribution, although the Done-when requires `forge next` to show it.",
+        "file": "src/forge/nextstep.py",
+        "line": 499,
+        "priority": "P1",
+        "title": "Not done: forge next omits setting sources for active tasks and fixes"
+      }
+    ],
+    "id": "53efaa96-d182-49e9-abbe-0fc16e1fd295",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
@@ -43,9 +58,16 @@
     {
       "at": "2026-10-11T16:11:31.543348+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:34:05.564465+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest e0a4a9aa0abb497f7c13dd469c79c4c0ebbfd9d7` exited with status 1 on this machine.\n    @pytest.mark.parametrize(\"case\", [\n        pytest.param(name, marks=pytest.mark.skipif(\ntests/conftest.py:174: in forge\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 2980552.283901166, orig_timeout = 60, stdout_seq = [], stderr_seq = []\nskip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-personal-worker-choice/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2582/popen-gw3/test_30_migrate_moves_in_one_b0/bin/forge', 'close', 'migrate-v1']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n1 failed, 97 passed in 255.16s (0:04:15)",
+  "stop": {
+    "file": "src/forge/nextstep.py",
+    "wait_id": "e17ff264-3398-4001-bf65-922c465b2cd2"
+  },
   "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings",
   "worker": "codex"
 }
