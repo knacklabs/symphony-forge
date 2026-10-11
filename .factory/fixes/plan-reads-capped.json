@@ -32,6 +32,7 @@
     "id": "811cbc6a-69e1-4a2b-81b5-f98ce98aef2f",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -43,5 +44,6 @@
       "step": "review"
     }
   ],
-  "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner"
+  "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner",
+  "worker": "codex"
 }
