@@ -400,6 +400,12 @@ def _findings_after_three_rounds_ask_a_question(env):
         "Readme greets new readers: The readme opens with a greeting",
         "It still has these problems:",
         "- Saving loses the reader name: a returning reader sees no name."]
+    # The stop is recorded, so forge next repeats the question and close records the choice.
+    said = env.repo.forge("next").stdout
+    assert "\n".join(done.stdout.splitlines()[stop + 1:stop + 8]) in said
+    assert f"forge close {ITEM} --resolve <narrow|split|accept>" in said
+    chosen = env.close(ITEM, "--resolve", "narrow", "--reason", "Drop the reader name for now")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
 
 
 def _dismissed_before_land(env):

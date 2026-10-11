@@ -68,7 +68,16 @@ def land(args: argparse.Namespace) -> int:
                     rounds += 1  # this stop says why itself, so no stop line
                     say(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
                     if error.entry is close.REFUSALS["blocked"]:
-                        say(close.stop_question(top, item, repo.read_state(item, top) or {}))
+                        # Recorded as a review-loop stop, so forge next repeats the question and
+                        # forge close --resolve records the human's choice.
+                        state = repo.read_state(item, top) or {}
+                        serious = review.blocking(state.get("review") or {})
+                        state.update(stop={"file": serious[0][1]["file"], "round": rounds},
+                                     status="hotspot")
+                        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start",
+                                                                     reason="review loop")
+                        close._save(top, item, state, f"{item} stopped after {ROUNDS} fix rounds")
+                        say(close.stop_question(top, item, state))
                     raise
                 rounds += 1
                 say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")

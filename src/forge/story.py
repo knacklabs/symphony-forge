@@ -969,7 +969,7 @@ def stop_question(name: str, delivers: str, flagged: list[str], accept: str) -> 
     return "\n".join([f"{name}: {delivers}" if delivers else name,
                       *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
                       "Accept, narrow or split?",
-                      f"- Accept: {accept} as it stands, with these problems known.",
+                      f"- Accept: {accept}",
                       "- Narrow: drop these cases from its Done when; they become follow-ups.",
                       "- Split: move these cases into a new story or fix of their own; this one goes on "
                       "without them."])
@@ -987,8 +987,11 @@ def read_question(doc: str, notes: str) -> str:
             flagged.append(plain(title, "\n".join(line for line in body.splitlines()
                                                   if not DISPOSITION.match(line))))
     title = re.search(r"^# (.+)$", doc, re.M)
-    gives = plain(sections(doc).get("What changes for you", ""))
-    return stop_question(title[1].strip() if title else "", gives, flagged, "approve it")
+    found = sections(doc)
+    gives = plain(found.get("What changes for you") or found.get("Behaviour", ""))
+    return stop_question(title[1].strip() if title else "", gives, flagged,
+                         "keep these problems as known and mark the read accepted; approving or "
+                         "confirming the doc is still a separate step.")
 
 
 def _findings(text: str) -> dict[int, str]:

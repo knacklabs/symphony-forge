@@ -383,7 +383,9 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         delivers = row.get("What it delivers", "")
     flagged = [story.plain(finding["title"], finding.get("body", ""))
                for _, finding in review.blocking(state.get("review") or {}) if isinstance(finding, dict)]
-    return story.stop_question(name, delivers, flagged, "merge it")
+    return story.stop_question(name, delivers, flagged,
+                               "dismiss these findings with your reason and go on to the checks; "
+                               "merging is still a separate step.")
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:

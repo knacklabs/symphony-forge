@@ -57,11 +57,12 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     resolution = f'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'
     # The stop is a ready-to-ask question: the item, each open note in plain words, each choice.
     question = (("Shoppers can save a basket: Shoppers can save a basket and come back to it later."
-                 if target == "SHOP" else "Invoices by email") + "\n"
+                 if target == "SHOP" else "Invoices by email: Each invoice is emailed as a PDF.") + "\n"
                 "It still has these problems:\n"
                 "- Basket recovery is missing for case 3: a shopper who signs out loses the saved basket.\n"
                 "Accept, narrow or split?\n"
-                "- Accept: approve it as it stands, with these problems known.\n"
+                "- Accept: keep these problems as known and mark the read accepted; approving or "
+                "confirming the doc is still a separate step.\n"
                 "- Narrow: drop these cases from its Done when; they become follow-ups.\n"
                 "- Split: move these cases into a new story or fix of their own; this one goes on "
                 "without them.")
@@ -75,9 +76,8 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     doc.write_text(doc.read_text("utf-8") + "\nRecovery is now described.\n", "utf-8")
     held = repo.forge("read", target, cwd=where)
     assert held.returncode == 1 and resolution in held.stderr
-    if target == "SHOP":
-        said = repo.forge("next", cwd=where).stdout
-        assert resolution in said and question in said
+    said = repo.forge("next", cwd=where).stdout
+    assert resolution in said and question in said
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
     assert invalid.returncode == 1

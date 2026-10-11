@@ -80,7 +80,8 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         "It still has these problems:",
         "- Round 3 defect: saving drops the basket for returning shoppers.",
         "Accept, narrow or split?",
-        "- Accept: merge it as it stands, with these problems known.",
+        "- Accept: dismiss these findings with your reason and go on to the checks; merging is "
+        "still a separate step.",
         "- Narrow: drop these cases from its Done when; they become follow-ups.",
         "- Split: move these cases into a new story or fix of their own; this one goes on without them.",
     ]

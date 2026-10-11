@@ -211,6 +211,12 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
+            for notes in sorted((path / "docs" / "specs").glob("*.read.md")):  # a stopped spec read
+                text = notes.read_text(encoding="utf-8")
+                record = story._record(text)[0]  # pyright: ignore[reportPrivateUsage]
+                spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
+                if record.get("blocked_rounds") == "3" and not record.get("loop_choice") and spec.is_file():
+                    lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _refresh(top, trees) + (lines or _idle(top))
@@ -547,8 +553,7 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
     if record.get("blocked_rounds") == "3" and not record.get("loop_choice"):
-        return [line.format(target=key, question=story.read_question(doc, text)) for line in
-                (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
+        return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
@@ -559,6 +564,12 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
     return [f"Planning {title}: {why}, so round {done + 1} is next.{nudge if done + 1 >= 4 else ''}",
             f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
             f"forge read {key}"]
+
+
+def _read_loop(target: str, doc: str, notes: str) -> list[str]:
+    """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step."""
+    return [line.format(target=target, question=story.read_question(doc, notes)) for line in
+            (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],
