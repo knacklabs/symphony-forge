@@ -102,8 +102,7 @@ def close(args: argparse.Namespace) -> int:
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
-            state["stop"].update(choice=choice, reason=reason.strip(),
-                                 round=sum(step["step"] == "review" for step in state.get("steps", [])))
+            state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
@@ -191,7 +190,15 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if (not switch and not fresh and round_number - (state.get("stop") or {}).get("round", 0) >= 3 and
+    choice_round = 0
+    if (state.get("stop") or {}).get("choice"):
+        # Earlier stops omitted the round or stored the attempted next review.
+        path = repo.state_path(item)
+        chosen = repo.git("log", "-1", "--first-parent", "--format=%H",
+                          "-G", '"choice":', "--", path, cwd=top)
+        at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
+        choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
+    if (not switch and not fresh and round_number - choice_round >= 3 and
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
@@ -267,7 +274,7 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
-        if serious and round_number - (state.get("stop") or {}).get("round", 0) >= 3:
+        if serious and round_number - choice_round >= 3:
             default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
                                          f"origin/{default}", cwd=top).split("\0"))
             candidates = sorted(file for file in files & flagged & default_files
