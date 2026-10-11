@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 221,
+      "text": "Not done: synced skill copies match the template",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.claude/skills/forge/SKILL.md\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
       "kind": "bug",
       "path": ".claude/skills/forge/SKILL.md",
@@ -327,6 +338,17 @@
       "text": "Not done: Guide promises Codex fallback for Claude-only workers",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 180,
+      "text": "Not done: the guide describes the split design fallback correctly",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
       "status": "open",
       "closed_by": null
     },
@@ -1266,6 +1288,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 91,
+      "text": "Full board and GitHub reads delay task admission",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -1275,6 +1308,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 286,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends a named running or waiting run in either lane and frees its place\tFORGE-LANES-1/AGENTS",
@@ -1328,6 +1372,17 @@
       "text": "Repeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
       "from": "worker",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 93,
+      "text": "Scanning every historical story delays each agent admission",
+      "from": "blocking",
+      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     },
@@ -1805,6 +1860,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 503,
+      "text": "Not done: doctor ignores workers under a one-tool setting",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/repo.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "src/forge/repo.py",
@@ -2256,6 +2322,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: story rows expose the required time totals\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 491,
+      "text": "Not done: story rows expose the required time totals",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: story runway omits unknown time after the last recorded span\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -2417,6 +2494,28 @@
       "text": "Not done: Hook-trust command tests model Codex's worktree hook source",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 33,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 58,
+      "text": "Not done: scope-only blocker admission test",
+      "from": "blocking",
+      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     },
@@ -4793,94 +4892,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": ".claude/skills/forge/SKILL.md",
-      "line": 221,
-      "text": "Not done: synced skill copies match the template",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": "docs/guide.md",
-      "line": 180,
-      "text": "Not done: the guide describes the split design fallback correctly",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 91,
-      "text": "Full board and GitHub reads delay task admission",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 286,
-      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 93,
-      "text": "Scanning every historical story delays each agent admission",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 503,
-      "text": "Not done: doctor ignores workers under a one-tool setting",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
-      "kind": "bug",
-      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
-      "line": 33,
-      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
-      "kind": "bug",
-      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
-      "line": 58,
-      "text": "Not done: scope-only blocker admission test",
-      "from": "blocking",
-      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     }

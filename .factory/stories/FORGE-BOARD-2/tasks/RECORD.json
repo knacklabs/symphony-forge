@@ -10,20 +10,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c10955eb25dab42fa8ae0bb47b21e3f9b4860d7e85cde7726d795d049d12e428",
-    "changed": "e8721027c833dcc4e87681fc2fb4efe132c03e0ff30651c38f66eaf6bd6a9f3f",
-    "commit": "a9474586665426cc8afed793e0422805ac6f17f8",
+    "branch_diff": "c4708da75f281224c6c5af3767acdbab4eb25e4694ad71a378ce10de00ad171b",
+    "changed": "a7e03fa6f12e8befad1477d904e0f7e70fc255158e8f579b448e25b168792b53",
+    "commit": "14883b64930072c7c78f28445c076669e5aa3e93",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. A board or `forge next` read can show an obsolete review round or clean readiness for up to 60 seconds after another teammate updates the PR. The new `body` field is stored in `_machine_prs`'s 60-second cache (lines 94\u2013102). In `machine_board`, that cached PR takes precedence over the fresh open-PR list because `setdefault` does not replace it (lines 240\u2013248); `nextstep._report` likewise overwrites fresh PR data with the cached result (lines 191\u2013195). A normal close or push during that minute therefore leaves another machine reading the old shared record or head despite its fetch.",
-        "file": "src/forge/board.py",
-        "line": 80,
+        "body": "Raise: Not done. `time_records.story` returns intervals, a grouped `time_breakdown` and `total_seconds`, but omits `working_seconds`, `waiting_seconds` and `unknown_seconds`. The board copies this result into story rows, so an approved story with a recorded read and an unknown tail lacks the per-item totals that part and fix rows expose. The named story tests check only `time_breakdown` and miss this gap.",
+        "file": "src/forge/time_records.py",
+        "line": 491,
         "priority": "P1",
-        "title": "Not done: teammates see the current PR time record"
+        "title": "Not done: story rows expose the required time totals"
       }
     ],
-    "id": "b171ea78-bfb1-4366-b41a-40b03cd8d50c",
+    "id": "c65f0c2a-4304-4e4e-b08f-e2ccb52001c2",
     "status": "blocked"
   },
   "round": 10,
@@ -51,6 +51,10 @@
     },
     {
       "at": "2026-10-11T05:08:52.651405+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T06:02:38.744254+00:00",
       "step": "review"
     }
   ],
