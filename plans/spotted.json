@@ -2901,8 +2901,8 @@
       "text": "Owner reversal during an active worker round is ignored",
       "from": "blocking",
       "item": "stop-default-answer",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/worker.py\tPreserve clean-failure fallback when remembering Claude chats\treuse-worker-chats",
