@@ -140,6 +140,8 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
         return "unknown", [], []
     try:
         commit = pr["commits"]["nodes"][-1]["commit"]
+        if not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]:
+            return "unknown", [], []
         contexts = commit["statusCheckRollup"]["contexts"]
         nodes = contexts["nodes"]
         if not isinstance(nodes, list):
@@ -171,14 +173,15 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
               "unknown" if not statuses or "unknown" in statuses or missing or
               contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
-    if status == "fail" and (not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]):
-        return "unknown", [], []
     return status, events, failures
 
 
 def _rollup(pr: Item) -> list[Item]:
     try:
-        nodes = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+        commit = pr["commits"]["nodes"][-1]["commit"]
+        if not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]:
+            return []
+        nodes = commit["statusCheckRollup"]["contexts"]["nodes"]
         return [{**n, "startedAt": n.get("createdAt")} if n.get("__typename") == "StatusContext" else n
                 for n in nodes if isinstance(n, dict)] if isinstance(nodes, list) else []
     except (KeyError, TypeError, IndexError):
@@ -245,7 +248,7 @@ def machine_board(top: Path, history: Item | None = None,
     older = ([p for p in prs_snapshot if p.get("state") == "OPEN"] if complete else
              nextstep._prs(top, "open", "number,headRefName,headRefOid,url,isDraft,body"))
     for pr in older:
-        by_branch.setdefault(pr["headRefName"], pr)
+        by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
     finished_prs = [p for p in (prs_snapshot if complete else
                     nextstep._prs(top, "merged", "headRefName,headRefOid,state,mergedAt,mergedBy,body"))
                     if p.get("state", "MERGED") == "MERGED"
@@ -891,7 +894,7 @@ def _prs(top: Path) -> list[Item] | None:
                  and isinstance(pr.get("headRefName"), str)}
     opened = {p["headRefName"]: p for p in _machine_prs(top)}
     return [{**pr, **by_branch.get(pr.get("headRefName"), {}),
-             **({"statusCheckRollup": _rollup(opened.get(pr.get("headRefName")) or {})}
+             **({"statusCheckRollup": _rollup({**opened.get(pr.get("headRefName"), {}), **pr})}
                 if pr.get("state") == "OPEN" else {})} for pr in prs]
 
 

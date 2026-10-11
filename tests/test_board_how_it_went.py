@@ -15,6 +15,7 @@ import pytest
 from test_close import CLEAN, GREEN, STORY_DOC, approve_story, body, blocked, env, finding, run  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
+from test_board import seen
 from test_last_task_records_story_outcome import github_merge
 from test_worker import install_claude
 
@@ -34,18 +35,35 @@ def published(env, item, *, merged_at=None):
     return text
 
 
+def github_list_fields(env):
+    # GitHub only returns requested fields and rows matching the requested state.
+    gh = env.repo.bin / "gh"
+    gh.write_text(gh.read_text("utf-8").replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]
+        if args[:2] == ["pr", "list"] and "--json" in args:
+            fields = args[args.index("--json") + 1].split(",")
+            state = args[args.index("--state") + 1].upper() if "--state" in args else "ALL"
+            output = json.dumps([{k: v for k, v in pr.items() if k in fields}
+                                 for pr in json.loads(output) if state == "ALL" or pr["state"] == state])
+        sys.stdout.write(output)'''), "utf-8")
+
+
 @pytest.mark.parametrize("case,previous", [("shared-fix", False), ("shared-fix", True),
                                           ("story-runway", False), ("rebuilt-history", False),
                                           ("question-wait", False), ("conflict-wait", False),
                                           ("item-totals", False), ("approved-runway-known", False),
                                           ("approved-runway-unknown", False), ("real-read-runway", False),
                                           ("read-history-batching", False), ("refresh-stale-receipt", False),
-                                          ("refresh-missing-receipt", False), ("resume-published-wait", False)],
+                                          ("refresh-missing-receipt", False), ("resume-published-wait", False),
+                                          ("warm-checks-cache", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
-                              "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait"])
+                              "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
+                              "warm-checks-cache"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
+    if case == "warm-checks-cache":
+        warm_checks_cache(env, monkeypatch)
+        return
     if case == "story-runway":
         story_runway(env, monkeypatch)
         return
@@ -75,15 +93,7 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
                              case == "resume-published-wait")
         return
     client(env, previous)
-    # GitHub only returns requested fields, including for older PRs outside GraphQL's window.
-    gh = env.repo.bin / "gh"
-    gh.write_text(gh.read_text("utf-8").replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]
-        if args[:2] == ["pr", "list"] and "--json" in args:
-            fields = args[args.index("--json") + 1].split(",")
-            state = args[args.index("--state") + 1].upper() if "--state" in args else "ALL"
-            output = json.dumps([{k: v for k, v in pr.items() if k in fields}
-                                 for pr in json.loads(output) if state == "ALL" or pr["state"] == state])
-        sys.stdout.write(output)'''), "utf-8")
+    github_list_fields(env)
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
                'workers = "claude"\ntest = "echo passed"\nchecks = ["tests", "forge-pr-check"]\n'
@@ -309,6 +319,58 @@ def read_history_batching(env, monkeypatch):
             counts[mode].append(len(calls))
     assert 0 < counts["json"][0] == counts["json"][1] <= 2, counts
     assert 0 < counts["html"][0] == counts["html"][1] <= 3, counts
+
+
+def warm_checks_cache(env, monkeypatch):
+    github_list_fields(env)
+    item, where = env.start_fix(round=1)
+    env.reviews(blocked(finding("P1", "Basket disappears")))
+    first = env.close(item)
+    assert first.returncode == 1, first.stdout + first.stderr
+    old_body = published(env, item)
+    old_head = env.repo.git("ls-remote", "origin", f"refs/heads/fix/{item}").split()[0]
+    old_pr = {"number": 7, "headRefName": f"fix/{item}", "headRefOid": old_head,
+              "title": "Keep the basket", "body": old_body, "isDraft": False,
+              "url": "https://github.com/acme/shop/pull/7",
+              "commits": {"nodes": [{"commit": {"oid": old_head, "statusCheckRollup": {
+                  "contexts": {"pageInfo": {"hasNextPage": False}, "nodes": [
+                      {"__typename": "CheckRun", "name": name, "status": "COMPLETED",
+                       "conclusion": "SUCCESS"} for name in ("tests", "forge-pr-check")]}}}}]}}
+    env.gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
+        "pullRequests": {"nodes": [old_pr]}}}}))
+    machine = env.repo.path
+    observer = env.tmp / "cached-checks-observer"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(observer))
+    at = datetime.now(timezone.utc) + timedelta(seconds=60)
+    monkeypatch.setenv("FORGE_NOW", at.isoformat())
+    env.repo.path = observer
+    env.repo.git("worktree", "add", "-q", "-b", f"fix/{item}",
+                 str(env.tmp / "cached-checks-worktree"), f"origin/fix/{item}")
+    assert row(env.repo, item)["gates"]["review"]["status"] == "blocked"
+    calls = len(env.gh_calls("api", "graphql"))
+    env.repo.path = machine
+    env.commit(where, "app.py", "print('basket retained')\n")
+    env.reviews(CLEAN)
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    published(env, item)
+    assert env.repo.git("ls-remote", "origin", f"refs/heads/fix/{item}").split()[0] != old_head
+    env.repo.path = observer
+    monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=30)).isoformat())
+    current = row(env.repo, item)
+    page = env.tmp / "cached-checks-board.html"
+    rendered = env.repo.forge("board", "--out", str(page))
+    next_step = env.repo.forge("next")
+    assert rendered.returncode == 0, rendered.stdout + rendered.stderr
+    assert next_step.returncode == 0, next_step.stdout + next_step.stderr
+    assert len(env.gh_calls("api", "graphql")) == calls, "Checks remain cached inside the same minute"
+    visible = seen(page)
+    observations = {"json": current["stage"] == "ready" and
+                    current["gates"]["review"]["status"] == "clean" and len(current["rounds"]) == 2,
+                    "checks": current["pr"]["checks"] == "unknown",
+                    "html": "Readme greets new readers : Ready to merge." in visible,
+                    "next": any(item in line and "is ready" in line for line in next_step.stdout.splitlines())}
+    assert all(observations.values()), (observations, current["stage"], next_step.stdout, visible)
 
 
 def shared_ready_refresh(env, monkeypatch, missing, wait_first):

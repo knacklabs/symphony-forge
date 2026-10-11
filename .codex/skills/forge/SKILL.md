@@ -256,6 +256,8 @@ its first pull request stays local. A first-close merge conflict opens the pull 
 owner wait travels too, and resolving it records the wait's end.
 Resuming work ends a published merge wait even when another checkout started it. History
 refreshes retain the pull request's readiness; close publishes readiness for a newly checked head.
+Board and next reads use the current pull request history and head; cached checks apply only
+to the head they describe.
 Questions on older pull requests without local publication evidence stay local.
 Every pull request body stays within GitHub's size limit. Forge leaves tool-command prose out
 of the shared time record, shortens duplicated and advisory detail before the contract, and

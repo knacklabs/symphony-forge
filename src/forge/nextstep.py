@@ -191,7 +191,8 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
            if isinstance(pr.get("url"), str)} if trees else {}
     if trees:
-        prs.update({pr["headRefName"]: pr for pr in board._machine_prs(top)
+        prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
+                    for pr in board._machine_prs(top)
                     if isinstance(pr.get("headRefName"), str)})
     for key, (path, state, text) in sorted(_stories(top, history).items()):
         if state.get("status") == "done":
