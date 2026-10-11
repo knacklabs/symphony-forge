@@ -19,34 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a3a6fa91e1a4d7d65e1b97dacf0bdaa33860450728a48cd937f69d13a1748f0f",
-    "changed": "2d5706c99a55d5a7fb43dc07d9ddd152122fd6b4324e6d4b10ef94230a3ffb94",
-    "commit": "0b8aaaf7c9ff0bc22d8e0c77104a671b8ba2230e",
+    "branch_diff": "fe7f6e1cc931addf80668d9854556e854cce36a10ce862141db06a5eafaf4355",
+    "changed": "9152bf8f11d76ebc97bce7944522e4149a0866f0c00cfc8f9af957856bfdbaa5",
+    "commit": "4ac5a315aff852dd1d4ba1cd98747d6b0c991f12",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. The default-choice note reaches the worker only while `worker_round` equals the current round. After that worker runs, the round increments. If the next review is still blocked, a subsequent worker receives the open findings without the narrowing instruction and can resume fixing work that was assigned to follow-up fixes. The land proof uses a clean review immediately after the first worker round, so it does not cover this normal continuation.",
-        "file": "src/forge/worker.py",
-        "line": 154,
+        "body": "Raise: Functional. If the owner merges `stop_default = \"off\"` into the repo's `forge.toml` while another item is stopped, `default_due` reads that item's older checkout, where the setting is still `narrow`. The waiting `forge land` process therefore records the default and starts follow-up fixes after 30 minutes despite the repo's new choice. `forge close` checks the stop before merging the default branch (`close.py:123-146`), so it cannot pick up the setting first. The tests set `off` before creating the stopped item and miss this normal setting-change path.",
+        "file": "src/forge/nextstep.py",
+        "line": 612,
         "priority": "P1",
-        "title": "Narrowing instruction expires after one worker round"
-      },
-      {
-        "body": "Raise: Not done. The default creates a fix branch for each open finding at close.py:393, but an owner's later `--resolve accept` changes only the stop and review records here. Those fix branches remain open even though the owner has accepted the findings. The reversal test reaches ready without checking the follow-up fixes, so it misses this lasting effect of the default choice.",
-        "file": "src/forge/close.py",
-        "line": 109,
-        "priority": "P1",
-        "title": "Reversing the default leaves its follow-up fixes active"
-      },
-      {
-        "body": "Raise: Gate. The supplied proof list names only `test_5_owner_choice_after_the_default_reaches_the_worker`. It omits the named proofs for the 30-minute default and filing every open finding (`test_1`), unattended land continuation (`test_3`), and new and previously adopted client repos (`test_4`). Those tests exist, but the latest commit's proof list does not cover these Done-when details.",
-        "file": "tests/test_stop_default_answer.py",
-        "line": 154,
-        "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "A repo setting change does not reach an already stopped item"
       }
     ],
-    "id": "cdce8891-fa01-47bb-bc86-bdc0ef18c987",
+    "id": "0b16aeb5-66c1-4001-99dc-e1fb53cdc873",
     "status": "blocked"
   },
   "round": 1,
@@ -70,6 +56,10 @@
     },
     {
       "at": "2026-10-11T16:22:38.950401+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:54:08.931913+00:00",
       "step": "review"
     }
   ],
