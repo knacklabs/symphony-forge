@@ -37,7 +37,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T16:51:56+00:00",
@@ -60,5 +60,10 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "file": "tests/test_tools_session_hold.py",
+    "round": 5,
+    "wait_id": "9ebc7cc0-b2a0-4246-bdc2-4cbfffb0d568"
+  },
   "worker": "codex"
 }
