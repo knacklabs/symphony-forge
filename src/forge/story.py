@@ -264,7 +264,8 @@ def read(args: Any) -> int:
         spec_diff = _diff(seen["spec_seen"].stdout, spec_text, spec[0] if spec else "spec")
         # Answers changed since the last round count as changed text; older notes never saved them.
         saw_answers = repo.run("git", "cat-file", "blob", record.get("answers_seen") or "-", cwd=top)
-        fill["answers_diff"] = ("(not available)" if saw_answers.returncode else
+        fill["answers_diff"] = ("(not available: treat the whole `## Answers` section as changed)"
+                                if saw_answers.returncode else
                                 _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
@@ -298,6 +299,7 @@ def read(args: Any) -> int:
     result = {"before": before, "read_hash": read_hash, "round": round_number,
               "doc": rel, "notes": _rel(top, notes), "is_story": is_story,
               "spec_seen": _store(top, spec_text.encode("utf-8")),
+              "answers_seen": _store(top, answers.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8")), "head": head,
               "reader": reader, "left": left,
               "blocked_rounds": blocked_rounds, "native": is_native,
@@ -397,7 +399,7 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
               "round": str(round_number), "passed": "yes" if clean else "no",
               "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
-              "answers_seen": _store(top, answers.encode("utf-8")),
+              "answers_seen": result.get("answers_seen", ""),
               "notes_seen": _store(top, old.encode("utf-8")),
               "conversation": ran["conversation"] if reader == "codex" and not result["native"] else "",
               "session": codex.record(top, target, "Grill")["claude"]["id"]
