@@ -10,14 +10,19 @@ from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 STORY = "worker-brief-faster"
 
 
-@pytest.fixture
-def brief(client):
+@pytest.fixture(params=[False, True], ids=["fresh", "resumed"])
+def brief(client, request):
     log = install_claude(client)
     story(client)
     assert client.forge("task", "start", "BOARD/API").returncode == 0
     worked = client.forge("work", "BOARD/API")
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    return calls(log)[-1]["brief"]
+    first = calls(log)[-1]["brief"]
+    if request.param:
+        worked = client.forge("work", "BOARD/API", "--note", "Fix findings inside Done-when")
+        assert worked.returncode == 0, worked.stdout + worked.stderr
+        assert "--resume" in calls(log)[-1]["args"]
+    return first, calls(log)[-1]["brief"]
 
 
 def flat(text):
@@ -25,7 +30,7 @@ def flat(text):
 
 
 def test_1_brief_names_the_plan_files_and_skips_the_coordinator_guide(brief):
-    text = flat(brief)
+    text = flat(brief[0])
     assert "`src/api/**`" in text and "`tests/test_api.py`" in text
     assert ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
             "everything a worker needs. Start from the files and tests this brief names, and "
@@ -33,7 +38,10 @@ def test_1_brief_names_the_plan_files_and_skips_the_coordinator_guide(brief):
 
 
 def test_2_brief_answers_separate_fix_and_narrow_choice_in_advance(brief):
-    text = flat(brief)
+    text = flat(brief[1])
+    assert ("Otherwise, fix the findings inside your Done-when in this round, including new "
+            "findings after a recorded narrow or split;") in text
+    assert "Otherwise, fix the findings in this round" not in text
     assert ("Never ask whether a problem needs a separate fix: a problem outside your Done-when "
             "is a `Spotted:` line.") in text
     assert ("Never ask to record a narrow choice: fix only the review findings inside your "
@@ -42,7 +50,7 @@ def test_2_brief_answers_separate_fix_and_narrow_choice_in_advance(brief):
 
 
 def test_3_brief_ends_with_the_reviewers_checklist(brief):
-    last = brief.rsplit("\n## ", 1)[1]
+    last = brief[1].rsplit("\n## ", 1)[1]
     assert last.startswith("Before you hand over\n")
     for check in ("Every Done-when item you cover", "fails without your change",
                   "`Proof list:`", "No new dependency", "`## Review rules`", "committed"):
