@@ -570,6 +570,19 @@ def machine_board(top: Path, history: Item | None = None,
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
                 item["children"].append(child)
+    older_parts: dict[str, list[Item]] = {}
+    for rel, (state, _) in best.items():
+        match = STATE.fullmatch(rel)
+        if rel not in history["expired"] or not match["task"] or match["key"] not in items:
+            continue
+        key, tid = match["key"], match["task"]
+        branch = state.get("branch") or f"task/{key}-{tid}"
+        if rel in merged or branch in merged_prs or key in completed:
+            state = {**state, "status": "merged"}
+        older_parts.setdefault(key, []).append(time_records.merged(
+            time_records.item(top, f"{key}/{tid}", state, events=recorded, timings=timings,
+                              ended_at=merged_dates.get(branch)),
+            time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
     notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
                       for key, current in items.items() if current["kind"] == "story"}
     past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
@@ -589,8 +602,10 @@ def machine_board(top: Path, history: Item | None = None,
                 break
             seen.add(previous)
             notes = past_notes.get(previous, "")
-        current.update(time_records.story(current["children"], read_rounds,
-                                          unfinished=current["stage"] != "done"))
+        started = _step(best.get(repo.state_path(key), ({}, landed))[0], "start")
+        current.update(time_records.story([*current["children"], *older_parts.get(key, [])], read_rounds,
+                                          unfinished=current["stage"] != "done",
+                                          started_at=started.isoformat() if started else None))
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
     active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}

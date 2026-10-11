@@ -55,7 +55,7 @@ def publish_snapshot(env, item, text):
 
 
 @pytest.mark.parametrize("oversized", ["contract-and-proof", "diagnostics-and-history", "unicode-owner-text",
-                                       "last-part-outcome"])
+                                       "last-part-outcome", "legacy-unicode-history"])
 def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(env, oversized):
     config = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
@@ -95,11 +95,16 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
     text = latest_body(env)
     assert "Basket quantities disappear" in text
     assert "Done when:" in text
-    if oversized != "last-part-outcome":
+    if oversized not in ("last-part-outcome", "legacy-unicode-history"):
         assert re.search(r"shorten|omit|trim", re.sub(r"<!--.*?-->", "", text, flags=re.S), re.I)
     if oversized == "contract-and-proof":
         assert "Basket quantities survive" in text
     owner_note = "\n\n## Owner notes\n\nAna will check the basket on Tuesday.\n"
+    if oversized == "legacy-unicode-history":
+        # An earlier release's visible history fit GitHub before shared JSON escaped its CJK text.
+        text = re.sub(r"## How it went\n.*?(?=\n<!-- forge:end -->)",
+                      lambda _: "## How it went\n\n" + "篮" * 12_000, text, flags=re.S)
+        assert len((text + owner_note).encode("utf-8")) < LIMIT
     publish_snapshot(env, item, text + owner_note)
     env.commit(where, "app.py", "print('basket quantities survive')\n")
     env.reviews(CLEAN)
@@ -107,6 +112,8 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
     assert second.returncode == 0, second.stdout + second.stderr
     text = latest_body(env)
     assert "Ana will check the basket on Tuesday." in text
+    if oversized == "legacy-unicode-history":
+        assert re.search(r"shorten|omit|trim", re.sub(r"<!--.*?-->", "", text, flags=re.S), re.I)
     publish_snapshot(env, item, text)
     # The retained shared record must remain useful on a machine with no original logs.
     first_machine = env.repo.path

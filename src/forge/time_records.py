@@ -470,7 +470,8 @@ def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str
     return re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", replace, body, count=1, flags=re.S)
 
 
-def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unfinished: bool = True) -> dict[str, Any]:
+def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unfinished: bool = True,
+          started_at: str | None = None) -> dict[str, Any]:
     spans = [span for part in parts for span in part.get("intervals", [])]
     for read in read_rounds:
         end, seconds = when(read.get("read_at")), read.get("seconds")
@@ -479,6 +480,8 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
             spans.append({"start": (end - timedelta(seconds=seconds if known else 0)).isoformat(),
                           "end": end.isoformat(), "kind": "working" if known else "unknown"})
     points = sorted({at for span in spans for name in ("start", "end") if (at := when(span.get(name)))})
+    if start := when(started_at):
+        points = sorted({start, *points})
     if points and unfinished and (now := when(repo.now())) and now > points[-1]:
         points.append(now)
     intervals, totals = [], dict.fromkeys(("working", "waiting", "unknown"), 0.0)

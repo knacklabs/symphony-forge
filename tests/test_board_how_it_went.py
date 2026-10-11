@@ -54,13 +54,18 @@ def github_list_fields(env):
                                           ("approved-runway-unknown", False), ("real-read-runway", False),
                                           ("read-history-batching", False), ("refresh-stale-receipt", False),
                                           ("refresh-missing-receipt", False), ("resume-published-wait", False),
-                                          ("warm-checks-cache", False)],
+                                          ("warm-checks-cache", False), ("story-full-runway", False),
+                                          ("story-full-runway", True)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
-                              "warm-checks-cache"])
+                              "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
+    if case == "story-full-runway":
+        client(env, previous)
+        story_full_runway(env, monkeypatch)
+        return
     if case == "warm-checks-cache":
         warm_checks_cache(env, monkeypatch)
         return
@@ -563,6 +568,63 @@ def rebuilt_history(env):
     assert merged.returncode == 0, merged.stdout + merged.stderr
     assert "Rebuilt from history." in env.repo.git("log", "-1", "--format=%B", "origin/main")
     assert row(env.repo, item)["rebuilt"] is True
+
+
+def story_full_runway(env, monkeypatch):
+    began = datetime(2026, 9, 20, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+
+    def clock(seconds):
+        for name in ("FORGE_NOW", "GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
+            monkeypatch.setenv(name, at(seconds))
+
+    clock(0)
+    approve_story(env.repo, STORY_DOC)
+    listing = env.repo.git("worktree", "list", "--porcelain")
+    story_tree = next(Path(block.splitlines()[0].removeprefix("worktree "))
+                      for block in listing.split("\n\n") if "branch refs/heads/story/SHOP" in block)
+    notes = (story_tree / "plans/SHOP.read.md").read_text("utf-8")
+    notes = re.sub(r"^read_at:.*$", "read_at: " + at(20), notes, flags=re.M)
+    notes = re.sub(r"^seconds:.*$", "seconds: 10", notes, flags=re.M)
+    clock(20)
+    env.commit(story_tree, "plans/SHOP.read.md", notes)
+    env.repo.git("merge", "-q", "--ff-only", "story/SHOP")
+    env.repo.git("push", "-q", "origin", "main")
+    clock(30)
+    first = env.repo.forge("task", "start", "SHOP/T1")
+    assert first.returncode == 0, first.stdout + first.stderr
+    tree = Path(first.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+    env.commit(tree, "app.py", "print('saved basket')\n")
+    clock(60)
+    env.repo.git("merge", "-q", "--ff-only", "task/SHOP-T1")
+    env.repo.git("push", "-q", "origin", "main", "task/SHOP-T1")
+    github_list_fields(env)
+    env.gh.respond("pr", "list", stdout=json.dumps([{
+        "number": 7, "headRefName": "task/SHOP-T1", "state": "MERGED", "mergedAt": at(60),
+        "body": "Saved baskets remain available", "title": "Save a basket", "isDraft": False,
+        "headRefOid": env.repo.git("rev-parse", "task/SHOP-T1"),
+        "url": "https://github.com/acme/shop/pull/7"}]))
+    clock(864000)
+    second = env.repo.forge("task", "start", "SHOP/T2")
+    assert second.returncode == 0, second.stdout + second.stderr
+    events = []
+    for item, start, end in (("SHOP/T1", 30, 50), ("SHOP/T2", 864010, 864030)):
+        events.extend([
+            {"id": item + "-phase", "item": item, "event": "work phase", "phase": "building", "at": at(start)},
+            {"id": item + "-start", "item": item, "event": "run start", "kind": "worker", "at": at(start)},
+            {"id": item + "-end", "item": item, "event": "run end", "kind": "worker", "run_id": item + "-start", "at": at(end)},
+        ])
+    events.append({"id": "first-merge-wait", "item": "SHOP/T1", "event": "owner wait start",
+                   "reason": "merge", "at": at(50)})
+    top = env.repo.path / ".git/forge"
+    (top / "events.jsonl").write_text("".join(json.dumps(event) + "\n" for event in events), "utf-8")
+    (top / "timings.jsonl").write_text("", "utf-8")
+    clock(864040)
+    current = row(env.repo, "SHOP")
+    assert [child["id"] for child in current["children"]] == ["SHOP/T2"]
+    assert current["intervals"][0] == {"start": at(0), "end": at(10), "kind": "unknown"}
+    assert current["total_seconds"] == 864040
+    assert current["time_breakdown"] == {"working": 50, "waiting": 10, "unknown": 863980}
 
 
 def story_runway(env, monkeypatch):
