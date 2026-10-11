@@ -235,7 +235,7 @@ def close(args: argparse.Namespace) -> int:
         print("".join(line + "\n" for line in tested.splitlines()
                       if line.startswith(review.GAP)), end="", flush=True)
         if failed:  # a review would only report the same failure
-            state.update(tests=tested, status="fixing")
+            state.update(tests=tested, status="fixing", tested_head=repo.git("rev-parse", "HEAD", cwd=top))
             _save(top, item, state, f"Tests of {item} failed")
             repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
         state.pop("tests", None)
@@ -419,15 +419,23 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
             line for line in text.splitlines() if re.search(r"fail|error|✕|×", line, re.I))).split())[:200]
         keys += ([f"the failing test {name}" for name in names] or
                  [f'the failing check {label} ("{excerpt}")'] if excerpt else [])
-    # Each failure counts the rounds in a row that left it; a cleared one drops out.
-    before = (state.get("stuck") or {}).get("keys") or {}
+    # Each failure counts the rounds in a row that left it; a cleared one drops out. A round with
+    # no close since the last one has no new test or review result, so it counts nothing.
+    stuck = state.get("stuck") or {}
+    result = [state.get("tested_head"), reviewed]
+    if stuck and stuck.get("result") == result:
+        if "question" in stop:
+            state.pop("stop")
+        return
+    before = stuck.get("keys") or {}
     counts = {key: before.get(key, 0) + 1 for key in keys}
     same = [key for key, count in counts.items() if count >= 2]
     if "question" in stop:
         state.pop("stop")
     elif same:
         stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
-    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "review": reviewed}
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "review": reviewed,
+                      "result": result}
 
 
 def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,

@@ -27,6 +27,7 @@ SUITES = {
                  'print("FAILED test_readme.py::test_" + ("a" if first else "b"))\nraise SystemExit(1)\n'),
     "finding then test": ('import pathlib, sys\nif pathlib.Path("work-1.txt").exists():\n'
                           '    print("FAILED test_readme.py::test_greeting")\n    sys.exit(1)\n'),
+    "work twice": 'print("FAILED test_readme.py::test_greeting")\nraise SystemExit(1)\n',
     "jest same": ('import random\nprint(f"  ✕ greets the reader ({{random.randint(2, 99)}} ms)")\n'
                   'raise SystemExit(1)\n'),
     "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
@@ -34,6 +35,7 @@ SUITES = {
                        'print(f"  ✕ greeting case {{len(run.read_text())}} (3 ms)")\nraise SystemExit(1)\n'),
 }
 STUCK = {"pytest same": "the failing test test_readme.py::test_greeting",
+         "work twice": "the failing test test_readme.py::test_greeting",
          "a then b": "the failing test test_readme.py::test_b",
          "jest same": 'the failing check Tests on the close run ("✕ greets the reader")',
          "finding": 'the review finding "Saving drops the greeting" in app.py'}
@@ -61,13 +63,15 @@ def _rounds(env, case):
     item, _ = env.start_fix()
     for _ in range(2 if case == "a then b" else 1):
         assert env.close(item).returncode == 1
-        worked = env.repo.forge("work", item)
-        assert worked.returncode == 0, worked.stdout + worked.stderr
+        # A second round with no close between has no new result, so it counts nothing.
+        for _ in range(2 if case == "work twice" else 1):
+            worked = env.repo.forge("work", item)
+            assert worked.returncode == 0, worked.stdout + worked.stderr
     assert env.close(item).returncode == 1
     return item
 
 
-@pytest.mark.parametrize("case", ["pytest same", "a then b", "jest same", "jest different", "finding",
+@pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest different", "finding",
                                   "finding then test"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
