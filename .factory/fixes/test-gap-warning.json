@@ -1,0 +1,14 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/test-gap-warning",
+  "done_when": "Close names each changed source file that no test mentions, saying GitHub's checks will cover it, and the worker brief tells workers that when they change text the program prints they search the tests for that text and run those tests",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T13:08:04.276798+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close picks local tests only when they name or import a changed file, so tests that check a program's output from outside are missed and fail only on GitHub"
+}
