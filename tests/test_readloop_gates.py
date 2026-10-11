@@ -19,6 +19,7 @@ from conftest import _install, patient
 from test_codex_worker import _sent
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_readloop_rounds import CODEX, FIRST, _no_codex, _setup
+from test_readloop_rounds import reader_sessions  # noqa: F401 (shared host cleanup fixture)
 from test_story import DOC, claude_plan, hook, new_story, setup, worktree
 
 TASKS = DOC.replace("| SHOW | Show the saved time |", "| SHOW | Show the time saved |")
@@ -441,12 +442,13 @@ def _passing_reader_keeps_its_chat(repo, claude_payload, monkeypatch, tmp_path,
 
     # Codex is uninstalled: this Claude session hands out the replacement, then records its pass.
     _no_codex(monkeypatch, tmp_path)
-    out = repo.forge("read", "SHOP")
+    out = reader.native("read", "SHOP")
     assert out.returncode == 0, out.stderr
     offered = json.loads(out.stdout)
     assert (offered["role"], offered["tool"]) == ("reader", "claude")
     assert offered["reason"] == "its reader, Codex, is no longer installed"
-    out = repo.forge("handback", "SHOP", "--subagent", "replacement-reader",
+    out = reader.native("handback", "SHOP", "--round", str(offered["round"]),
+                     "--subagent", "replacement-reader",
                      "--text", "No findings.")
     assert out.returncode == 0, out.stderr
     assert (f"The cold read's earlier Codex conversation for SHOP, {conversation}, is left as it "

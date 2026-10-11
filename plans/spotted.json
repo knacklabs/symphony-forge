@@ -1376,28 +1376,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close loses source-file warnings after another test runner\ttest-gap-warning",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 333,
-      "text": "Not done: Close loses source-file warnings after another test runner",
-      "from": "blocking",
-      "item": "test-gap-warning",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 320,
-      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
-      "from": "blocking",
-      "item": "test-gap-warning",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -1561,17 +1539,6 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tLoad per core is understated when Forge has fewer available CPUs than the host\tadmit-by-load",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 57,
-      "text": "Load per core is understated when Forge has fewer available CPUs than the host",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "open",
-      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
@@ -2190,28 +2157,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 371,
-      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
-      "from": "blocking",
-      "item": "test-gap-warning",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 296,
-      "text": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2274,6 +2219,17 @@
       "text": "A dependent story's roadmap entry never reaches the default branch",
       "from": "blocking",
       "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tLegacy read notes leave changed Answers text outside the round-three check\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 268,
+      "text": "Legacy read notes leave changed Answers text outside the round-three check",
+      "from": "blocking",
+      "item": "plan-reads-capped",
       "status": "open",
       "closed_by": null
     },
@@ -2454,6 +2410,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tStandard: Touch only what the task needs\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 275,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "src/forge/sync.py",
@@ -2575,6 +2542,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 204,
+      "text": "Not done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
       "kind": "bug",
       "path": "src/forge/templates/cold-read.md",
@@ -2582,6 +2560,17 @@
       "text": "Not done: Follow-up reader brief contradicts the advisory rule",
       "from": "blocking",
       "item": "read-blocking-only",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tRound-three cap downgrades conflicts from changed spec and Answers text\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 208,
+      "text": "Round-three cap downgrades conflicts from changed spec and Answers text",
+      "from": "blocking",
+      "item": "plan-reads-capped",
       "status": "open",
       "closed_by": null
     },
@@ -2619,6 +2608,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 138,
+      "text": "Not done: stop guidance for native reads",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tStandard: Delete before adding\tqueued-not-stop",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -2628,28 +2628,6 @@
       "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
-      "kind": "bug",
-      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
-      "line": 9,
-      "text": "Not done: the bundled license and notice describe a word list that is absent",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
-      "kind": "bug",
-      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
-      "line": 94,
-      "text": "The installed skill's check command fails from the client repository root",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tNot done: keep gaps in legacy timing history unknown\twhere-time-went",
@@ -2989,39 +2967,6 @@
       "text": "Not done: init and upgrade plus sync local-selection test",
       "from": "blocking",
       "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test that Close preserves every warning past the report cap\ttest-gap-warning",
-      "kind": "bug",
-      "path": "tests/test_close_names_untested_source_files.py",
-      "line": 50,
-      "text": "Not done: test that Close preserves every warning past the report cap",
-      "from": "blocking",
-      "item": "test-gap-warning",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the printed-text brief after upgrade\ttest-gap-warning",
-      "kind": "bug",
-      "path": "tests/test_close_names_untested_source_files.py",
-      "line": 39,
-      "text": "Not done: test the printed-text brief after upgrade",
-      "from": "blocking",
-      "item": "test-gap-warning",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the source-file warning through forge close\ttest-gap-warning",
-      "kind": "bug",
-      "path": "tests/test_close_names_untested_source_files.py",
-      "line": 30,
-      "text": "Not done: test the source-file warning through forge close",
-      "from": "blocking",
-      "item": "test-gap-warning",
       "status": "open",
       "closed_by": null
     },
@@ -3422,24 +3367,13 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
+      "key": "bug\ttests/test_fix_plan_reads_capped.py\tNot done: test the changed Answers rule with pre-upgrade read notes\tplan-reads-capped",
       "kind": "bug",
-      "path": "tests/test_fix_plain_english_skill.py",
-      "line": 67,
-      "text": "Not done: the checker test cannot detect a lost semicolon rule",
+      "path": "tests/test_fix_plan_reads_capped.py",
+      "line": 58,
+      "text": "Not done: test the changed Answers rule with pre-upgrade read notes",
       "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
-      "kind": "bug",
-      "path": "tests/test_fix_plain_english_skill.py",
-      "line": 53,
-      "text": "Not done: the proof test misses required guidance and checker behavior",
-      "from": "blocking",
-      "item": "plain-english-skill",
+      "item": "plan-reads-capped",
       "status": "open",
       "closed_by": null
     },
@@ -4027,6 +3961,17 @@
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
+      "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "tests/test_tools_session_hold.py",
+      "line": 149,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
       "kind": "bug",
       "path": "tests/test_trim_skills.py",
@@ -4067,39 +4012,6 @@
       "text": "Not done: Test related-test instructions in new and previously adopted client repos",
       "from": "blocking",
       "item": "worker-fast-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: proof list\tadmit-by-load",
-      "kind": "bug",
-      "path": "tests/test_worker_runs_wait_for_machine_load.py",
-      "line": 60,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: the 1.5 load-per-core boundary test\tadmit-by-load",
-      "kind": "bug",
-      "path": "tests/test_worker_runs_wait_for_machine_load.py",
-      "line": 56,
-      "text": "Not done: the 1.5 load-per-core boundary test",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: two-process proof for previously adopted repos\tadmit-by-load",
-      "kind": "bug",
-      "path": "tests/test_worker_runs_wait_for_machine_load.py",
-      "line": 66,
-      "text": "Not done: two-process proof for previously adopted repos",
-      "from": "blocking",
-      "item": "admit-by-load",
       "status": "open",
       "closed_by": null
     },
@@ -5442,6 +5354,171 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tLoad per core is understated when Forge has fewer available CPUs than the host\tadmit-by-load",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 57,
+      "text": "Load per core is understated when Forge has fewer available CPUs than the host",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 296,
+      "text": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+      "line": 9,
+      "text": "Not done: the bundled license and notice describe a word list that is absent",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+      "line": 94,
+      "text": "The installed skill's check command fails from the client repository root",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 67,
+      "text": "Not done: the checker test cannot detect a lost semicolon rule",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 53,
+      "text": "Not done: the proof test misses required guidance and checker behavior",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: proof list\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 60,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: the 1.5 load-per-core boundary test\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 56,
+      "text": "Not done: the 1.5 load-per-core boundary test",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: two-process proof for previously adopted repos\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 66,
+      "text": "Not done: two-process proof for previously adopted repos",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close loses source-file warnings after another test runner\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 333,
+      "text": "Not done: Close loses source-file warnings after another test runner",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 320,
+      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 371,
+      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test that Close preserves every warning past the report cap\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 50,
+      "text": "Not done: test that Close preserves every warning past the report cap",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the printed-text brief after upgrade\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 39,
+      "text": "Not done: test the printed-text brief after upgrade",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the source-file warning through forge close\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 30,
+      "text": "Not done: test the source-file warning through forge close",
+      "from": "blocking",
+      "item": "test-gap-warning",
       "status": "open",
       "closed_by": null
     }
