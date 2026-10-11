@@ -3906,6 +3906,17 @@
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
+      "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "tests/test_tools_session_hold.py",
+      "line": 149,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
       "kind": "bug",
       "path": "tests/test_trim_skills.py",
