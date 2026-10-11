@@ -1,0 +1,14 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/hook-n-flag",
+  "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T10:29:43.068718+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit"
+}
