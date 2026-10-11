@@ -1,0 +1,14 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/reviews-skip-agent-line",
+  "done_when": "Close's review and plan reads do not wait for an agent place, and a test run limited to a few named test files does not wait for the test place",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:41.406821+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A 2-minute review waits about 10 minutes for an agent place and a worker's small test run queues for the single test place"
+}
