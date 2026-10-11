@@ -273,7 +273,7 @@ def pytest_tests(base: str, command: str) -> int:
         command = " && ".join(part for kind, part, _ in parts
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
-    workers = str(machine.half_cores())
+    workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []

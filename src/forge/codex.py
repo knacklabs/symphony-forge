@@ -548,7 +548,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             log.open("a", encoding="utf-8", buffering=1) as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
+            errors="replace", env=(machine.worker_env() if command == "work" else
+                                   {**os.environ, "FORGE_WORKER": "1"}), **GROUP) as driver:
         machine.agent_started(driver.pid, log)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None

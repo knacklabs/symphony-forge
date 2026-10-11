@@ -293,7 +293,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             if passed and passed.exists():  # the close this one waited for passed the same files
                 print(skipped, flush=True)
                 return 0, skipped
-            workers = str(machine.half_cores())
+            workers = machine.test_cpus()
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
