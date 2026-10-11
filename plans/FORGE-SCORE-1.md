@@ -281,7 +281,7 @@ New moving parts: none
 
 - Builds on two fixes in flight: stop-question-plain (GUIDE's table replaces its bullet list in
   `story.stop_question`) and stop-default-answer (BAR changes its 30-minute rule). Both merge
-  before BAR and GUIDE start; if one hasn't, the part waits and says so.
+  before any part starts (SCORES pins the stop-question call sites, so it needs stop-question-plain too); if one hasn't, the part waits and says so.
 - Replaces two fixes started but not built: value-effort-risk and accepted-notes-to-review. Close
   both branches without merging once this story is approved; their Done-when lines are items 3, 5
   and 6 here.
