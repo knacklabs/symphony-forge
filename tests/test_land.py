@@ -382,7 +382,8 @@ def _blocked_red_blocked_red(env):
     assert _steps(done) == [step for n, what in enumerate(whats, 1) for step in (
         f"Closing {ITEM}.", f"Fix round {n} of 3: the worker fixes {what}.")] + [
         f"Stopped: {ITEM} needs you."]
-    assert "Two rounds in a row left the failing check tests." in done.stderr
+    assert ('Two rounds in a row left the failing check tests ("AssertionError: no greeting in README").'
+            in done.stderr)
     assert _refusal(done)[-1] == (
         f'Next: forge close {ITEM} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
 

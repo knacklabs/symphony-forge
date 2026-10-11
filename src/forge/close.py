@@ -96,8 +96,7 @@ def close(args: argparse.Namespace) -> int:
         if (not choice or not reason or not reason.strip() or
                 not state.get("stop") or (state["stop"].get("choice") and not continued) or
                 args.dismiss or args.because or
-                (choice == "accept" or choice == "switch" and cfg["tools"] != "both" if stuck
-                 else choice in ("switch", "same"))):
+                (choice == "accept" if stuck else choice in ("switch", "same"))):
             repo.refuse(REFUSALS["bad_choice"], item=item)
         if not continued:
             if choice == "switch":  # the next forge work runs this item on the other tool
@@ -399,7 +398,12 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
     for label, text in failing:
         names = [name for line in text.splitlines() if "FAILED" in line
                  for name in re.findall(r"\S+::\S+", line)]
-        keys += [f"the failing test {name}" for name in names] or [f"the failing check {label}"]
+        # Without test names (Jest, Vitest), the failure lines stand in, durations removed;
+        # a failure with no such lines is never counted as the same one.
+        excerpt = " ".join(re.sub(r"\(?\d[\d.]*\s*m?s\b\)?", "", " / ".join(
+            line for line in text.splitlines() if re.search(r"fail|error|✕|×", line, re.I))).split())[:200]
+        keys += ([f"the failing test {name}" for name in names] or
+                 [f'the failing check {label} ("{excerpt}")'] if excerpt else [])
     stuck = state.get("stuck") or {}
     same = [key for key in dict.fromkeys(keys) if key in stuck.get("keys", [])]
     if "question" in stop:
@@ -419,8 +423,8 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     tried = repo.git("log", "--first-parent", "--no-merges", "--format=%s", f"{since}..HEAD",
                      "--", ".", ":(exclude).factory", cwd=top).splitlines()
     other = "claude" if tool == "codex" else "codex"
-    choices = ([f"switch this item to {other.title()}"] if cfg["tools"] == "both" else []) + [
-        f"keep {tool.title()} for one more round", "or narrow or split it"]
+    choices = [f"switch this item to {other.title()}", f"keep {tool.title()} for one more round",
+               "or narrow or split it"]
     question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
                 f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
                 f"Choose one: {'; '.join(choices)}.")
