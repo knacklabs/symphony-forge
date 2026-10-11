@@ -30,11 +30,18 @@ def test_1_full_access_turn_accepts_and_read_only_turn_declines(repo, monkeypatc
         assert f"Accepted Codex's request {method}" in log
     assert "Declined" not in built.stdout
 
-    # forge ask, a read-only turn: the same requests are declined and nothing runs.
+    # Cold reads retain the read-only approval boundary after the question command's removal.
     for name in ("ran-stub-ask-1", "ran-stub-ask-2"):
         (folder / name).unlink()
     before = len(_stub(calls))
-    asked = repo.forge("ask", "Where is the parser?", cwd=folder)
+    config = folder / "forge.toml"
+    config.write_text(config.read_text("utf-8") +
+                      '\n[models.grill.codex]\nmodel = "gpt-6-sol"\neffort = "high"\n', "utf-8")
+    doc = folder / "docs/specs/approval.md"
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    doc.write_text("# Read-only approval boundary\n", "utf-8")
+    monkeypatch.setenv("STUB_CODEX_TEXT", "No findings.")
+    asked = repo.forge("read", "approval", cwd=folder)
     assert asked.returncode == 0, asked.stdout + asked.stderr
     assert _sent(calls, "thread/start")[-1]["approvalPolicy"] == "never"
     assert _answers(calls, before) == [(KNOWN, DECLINE, False), (UNKNOWN, DECLINE, False)]
