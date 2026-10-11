@@ -54,6 +54,9 @@ def pytest_options(arguments: list[str]) -> str:
     return options
 
 
+XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
+
+
 def narrow_command(command: str, excluded: list[str], workers: str) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
@@ -65,7 +68,7 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
             replacements.append((token.start(), token.end(), ""))
     options = ["-p", "_forge_pytest_selection"] if excluded else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
-    if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
+    if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
@@ -279,7 +282,7 @@ def pytest_tests(base: str, command: str) -> int:
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
     closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
-    workers = str(machine.half_cores())
+    workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
