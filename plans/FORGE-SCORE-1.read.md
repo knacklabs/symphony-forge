@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-11T16:52:45.898249+00:00
-read_hash: 6b79cc08eff7486ea08886d1eab138aa8ae04765
-round: 2
+read_at: 2026-10-11T16:59:48.791717+00:00
+read_hash: 2081bfb254ca8fa9dfdb54dba60b22612d4c0f9a
+round: 3
 passed: no
-doc_seen: 6b79cc08eff7486ea08886d1eab138aa8ae04765
+doc_seen: 2081bfb254ca8fa9dfdb54dba60b22612d4c0f9a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 41772197fb8a9c3d8ecf2abf4e5613245247094e
+notes_seen: ea8ad88c18f7a2121c39bdc976faf136836db5df
 conversation: 01a12bc8-a7cd-7b21-a693-963671ac740e
 session:
-blocked_rounds: 2
-loop_choice:
-loop_reason:
+blocked_rounds: 3
+loop_choice: accept
+loop_reason: Coordinator decision under the owner's bar (Gain 2, Work 1, Harm 1): a sequencing note; the builders' notes now say SCORES also starts after the stop-question fix merges
 ---
 # Cold read notes
 
@@ -121,3 +121,12 @@ Read-only inspection; runtime tests were not run. These findings identify plan g
     Disposition: keep - below the bar (Gain 2, Work 1, Harm 1): the read stop shares the review rule that item 4's test covers; add a read case if BAR has room.
 
 Read-only inspection; runtime tests were not run. These findings concern the plan and its promised proof.
+
+## Round 3
+
+18. Blocking: SCORES now needs the stop-question fix before it starts, but that prerequisite still applies only to BAR and GUIDE.
+    Raise: Plan gap
+    The new wiring rule assigns SCORES edits to `story.stop_question`, `story.read_question` and `close.stop_question` (plan lines 156–159). Those functions exist on `fix/stop-question-plain`, but are absent from this checkout’s source. Notes still requires that fix to merge only before BAR and GUIDE start (lines 282–284), so SCORES can start without the functions its wiring requires.
+
+Read-only inspection; runtime tests were not run. The task order can stall SCORES.
+   Disposition: keep - Coordinator decision under the owner's bar (Gain 2, Work 1, Harm 1): a sequencing note; the builders' notes now say SCORES also starts after the stop-question fix merges
