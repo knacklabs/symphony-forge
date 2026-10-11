@@ -5,6 +5,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,8 @@ from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
 
 STORY = "FIX-REVIEW-ALONGSIDE-TESTS"
+CLOSE_TIMEOUT = 90
+CLEANUP_TIMEOUT = 15
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
@@ -48,11 +51,10 @@ def test_1_close_starts_tests_and_review_together_and_reports_both(env, adopted,
     with socket.socket() as server:
         server.bind(("127.0.0.1", 0))
         server.listen(2)
-        server.settimeout(15)
         address = server.getsockname()
         wait = '''
 import socket
-with socket.create_connection({address!r}, timeout=45) as connection:
+with socket.create_connection({address!r}) as connection:
     connection.sendall({role!r})
     assert connection.recv(1) == b"x"
 '''
@@ -71,6 +73,8 @@ with socket.create_connection({address!r}, timeout=45) as connection:
             "args = sys.argv[1:]", wait.format(address=address, role=b"review")
             + "\nargs = sys.argv[1:]"), encoding="utf-8")
         item, where = env.start_fix()
+        # Bound the whole command, including preparation and lane admission, not either start.
+        deadline = time.monotonic() + CLOSE_TIMEOUT
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "close", item],
                                    cwd=repo.path, stdin=subprocess.DEVNULL,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
@@ -79,11 +83,12 @@ with socket.create_connection({address!r}, timeout=45) as connection:
         try:
             roles = set()
             for _ in range(2):
+                server.settimeout(max(0.001, deadline - time.monotonic()))
                 connection, _ = server.accept()
                 connections.append(connection)
-                connection.settimeout(15)
+                connection.settimeout(max(0.001, deadline - time.monotonic()))
                 roles.add(connection.recv(32))
-            # Neither edge can finish until both have started: sequential close times out here.
+            # Ordering proves overlap: neither edge can finish until both have started.
             assert roles == {b"tests", b"review"}
             assert process.poll() is None
         except TimeoutError:
@@ -95,6 +100,7 @@ with socket.create_connection({address!r}, timeout=45) as connection:
             if roles == {b"tests"}:
                 # Release a late sequential review too, so the red regression owns its cleanup.
                 try:
+                    server.settimeout(CLEANUP_TIMEOUT)
                     connection, _ = server.accept()
                     connection.recv(32)
                     connection.sendall(b"x")
@@ -102,12 +108,14 @@ with socket.create_connection({address!r}, timeout=45) as connection:
                 except TimeoutError:
                     pass
             try:
-                output, errors = process.communicate(timeout=60)
+                remaining = (max(1, deadline - time.monotonic())
+                             if roles == {b"tests", b"review"} else CLEANUP_TIMEOUT)
+                output, errors = process.communicate(timeout=remaining)
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.communicate(timeout=60)
                 raise
-        assert roles == {b"tests", b"review"}, output + errors
+        assert roles == {b"tests", b"review"}, f"Started: {roles!r}\n" + output + errors
     assert process.returncode == (1 if red or priority else 0), output + errors
     assert ("Ready:" in output) == (not red and not priority)
     assert ("client test failed" if red else "client tests passed") in output + errors
