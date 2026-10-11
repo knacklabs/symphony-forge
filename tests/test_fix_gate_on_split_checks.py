@@ -130,3 +130,24 @@ def test_2_a_command_that_wraps_pytest_runs_one_group(repo, command):
     assert synced.returncode == 0, synced.stderr
     groups = jobs((repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
     assert "group: [1]" in groups and f'- run: "{command}"\n' in groups
+
+
+def test_3_init_splits_a_repo_that_already_lists_pytest_split_and_doctor_accepts_it(repo, gh, tmp_path):
+    client, remote = tmp_path / "client", tmp_path / "client.git"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
+    repo.git("remote", "add", "origin", str(remote), cwd=client)
+    (client / "pyproject.toml").write_text(
+        '[project]\nname = "shop"\nversion = "0.1.0"\n\n'
+        '[dependency-groups]\ndev = ["pytest", "pytest-split"]\n', encoding="utf-8")
+    gh.respond("api", stdout="{}")
+    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+               stdout='{"message":"Branch not protected","status":"404"}')
+
+    initialized = repo.forge("init", cwd=client)
+
+    assert initialized.returncode == 0, initialized.stderr
+    groups = jobs((client / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
+    assert "group: [1, 2, 3, 4, 5, 6]" in groups and SPLIT in groups
+    doctor = repo.forge("doctor", cwd=client)
+    assert "doesn't run forge.toml's test" not in doctor.stdout, doctor.stdout
