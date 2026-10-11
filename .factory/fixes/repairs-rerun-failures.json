@@ -19,25 +19,40 @@
   "flagged": [
     "src/forge/_pytest_repair.py",
     "src/forge/fasttest.py",
+    "src/forge/review.py",
     "tests/test_close_reruns_failed_tests_first.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "82a53d3ee6e2ab1f18c90d6d3f7d38d11a74817d3944d49e26806a8ce26ea83a",
-    "changed": "33d4d15f85feb3acdc312c3e2c6e15d94a4d4b680535b6916601b22261b4e940",
-    "commit": "1b69f32225c156f4280b9b5858062c728daad300",
+    "branch_diff": "032af97f865b9bba7a2c2f8303efd04c9cae928860aa552c1ddc59925b67ffd1",
+    "changed": "4920e95afdad53667d44115393421c0836d55ef8df7167a3d640e76e69f2eb01",
+    "commit": "aaf3c8e744818c58fd1c9fef274586ea9122e17a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. With `test = \"cd backend && pytest\"` and `fast_test = \"forge test --pytest {base}\"`, pytest records a failed node as `test_z.py::test_failed` (as the new subdirectory test confirms), but this code compares `test_z.py` with Git paths such as `backend/test_z.py`. If a repair restores that test file to its base version and leaves an unrelated code edit, `forge test --pytest` can select no tests and return success without retrying the failure. The tests cover the picker at the repository root and subdirectory pytest without the picker, so they miss this combination. A second normal repair path also misses the retry: if reverting a failed code edit leaves only documentation changes, `review.py:272-276` returns before the new repair hook at `review.py:295` runs.",
-        "file": "src/forge/fasttest.py",
-        "line": 244,
+        "body": "Raise: Not done. A failed pytest case can disappear from the next close when the default branch advances. `close.py:403-405` fetches the latest default branch, and `close_test` at `review.py:252-258` embeds the new merge base in the fast-test command. This line keys failure receipts by that command, so the next close cannot see the earlier failure. If the repair restores the failed test file to base and leaves only a documentation change, the docs-only return at lines 277-283 reports success without retrying it; the picker can likewise select no test. The new evidence is a changed merge base between closes, which the restored-file test does not cover.",
+        "file": "src/forge/review.py",
+        "line": 271,
         "priority": "P1",
-        "title": "Not done: some repair closes skip previously failed pytest tests"
+        "title": "Not done: advancing the merge base hides failed pytest cases"
+      },
+      {
+        "body": "Raise: Functional. In a pytest repo using `--cov=src --cov-fail-under=90`, a repair that changes a test or fixture can reuse most passing tests here. pytest-cov then measures only the tests actually run, so the repaired tests may pass while the configured coverage gate fails. [pytest-cov documents](https://pytest-cov.readthedocs.io/en/stable/config.html) that `--cov-fail-under` fails below the threshold and that prior coverage is discarded unless `--cov-append` is set. The end-to-end tests do not exercise a coverage-gated command.",
+        "file": "src/forge/_pytest_repair.py",
+        "line": 99,
+        "priority": "P1",
+        "title": "Coverage-gated pytest repairs stay red after their tests pass"
+      },
+      {
+        "body": "Raise: Scale. Every distinct expanded fast-test command gets a cache directory at `review.py:271-273`, and this code writes a full per-test JSON snapshot without removing old directories. The recommended `{base}` command changes as the default branch advances, leaving prior snapshots unused. A client with 10,000 tests and hundreds of pull requests accumulates hundreds of such snapshots in Forge's machine-wide config directory; the change has no cleanup path.",
+        "file": "src/forge/_pytest_repair.py",
+        "line": 149,
+        "priority": "P1",
+        "title": "Pytest receipt files grow without bound across pull requests"
       }
     ],
-    "id": "e050748b-191d-4419-9730-7a33a625bb26",
+    "id": "ad009b0c-e015-4bcc-84d6-737ed875d0fb",
     "status": "blocked"
   },
   "round": 5,
@@ -53,6 +68,10 @@
     },
     {
       "at": "2026-10-11T05:01:26.485189+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T05:46:45.571275+00:00",
       "step": "review"
     }
   ],

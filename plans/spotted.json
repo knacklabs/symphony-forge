@@ -386,11 +386,33 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/_pytest_repair.py\tCoverage-gated pytest repairs stay red after their tests pass\trepairs-rerun-failures",
+      "kind": "bug",
+      "path": "src/forge/_pytest_repair.py",
+      "line": 99,
+      "text": "Coverage-gated pytest repairs stay red after their tests pass",
+      "from": "blocking",
+      "item": "repairs-rerun-failures",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/_pytest_repair.py\tNot done: subdirectory pytest commands rerun the full suite\trepairs-rerun-failures",
       "kind": "bug",
       "path": "src/forge/_pytest_repair.py",
       "line": 18,
       "text": "Not done: subdirectory pytest commands rerun the full suite",
+      "from": "blocking",
+      "item": "repairs-rerun-failures",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/_pytest_repair.py\tPytest receipt files grow without bound across pull requests\trepairs-rerun-failures",
+      "kind": "bug",
+      "path": "src/forge/_pytest_repair.py",
+      "line": 149,
+      "text": "Pytest receipt files grow without bound across pull requests",
       "from": "blocking",
       "item": "repairs-rerun-failures",
       "status": "open",
@@ -1255,6 +1277,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 91,
+      "text": "Full board and GitHub reads delay task admission",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -1264,6 +1297,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 286,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends a named running or waiting run in either lane and frees its place\tFORGE-LANES-1/AGENTS",
@@ -1317,6 +1361,17 @@
       "text": "Repeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
       "from": "worker",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 93,
+      "text": "Scanning every historical story delays each agent admission",
+      "from": "blocking",
+      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     },
@@ -1790,6 +1845,17 @@
       "text": "Concurrent closes can lose a temporary Git object while a local review clone copies it; the CI suite failed and the focused local command cases pass.",
       "from": "worker",
       "item": "stacked-fix-count",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: advancing the merge base hides failed pytest cases\trepairs-rerun-failures",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 271,
+      "text": "Not done: advancing the merge base hides failed pytest cases",
+      "from": "blocking",
+      "item": "repairs-rerun-failures",
       "status": "open",
       "closed_by": null
     },
@@ -2296,6 +2362,28 @@
       "text": "Not done: Hook-trust command tests model Codex's worktree hook source",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 33,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 58,
+      "text": "Not done: scope-only blocker admission test",
+      "from": "blocking",
+      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     },
@@ -4683,61 +4771,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 91,
-      "text": "Full board and GitHub reads delay task admission",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 286,
-      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 93,
-      "text": "Scanning every historical story delays each agent admission",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
-      "kind": "bug",
-      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
-      "line": 33,
-      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
-      "kind": "bug",
-      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
-      "line": 58,
-      "text": "Not done: scope-only blocker admission test",
-      "from": "blocking",
-      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     }
