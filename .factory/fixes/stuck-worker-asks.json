@@ -9,23 +9,37 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "646c866becd7154b0501f9199a53134d5efb504f12a26b18dd2a6eb36bf26ecc",
-    "changed": "dfc03babcb41f583672e4de515adaeef7536fcce084df00181b75121b9bc626f",
-    "commit": "04cadfcbf06cc6a767f82ef030129f327f861b2e",
+    "branch_diff": "39dcb9a61b9a07140b33b3ff07d0d28bc1491077348f0a5f65939e98b5a7ac96",
+    "changed": "2cf48397c4a1ebd740b1b5f370a078fbe628c4ab7c18c7fde92cd9064f725a9d",
+    "commit": "adf758b0eb8d87399e4bdb4ee39f5f9bc7ab11ec",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. If the first fix round clears failure A but leaves failure B, and the second fix round still leaves B, Forge should stop before a third fix round. At the A-to-B transition, `rounds` resets to 1. When B appears again, this condition is false, so `forge work` runs another round without asking the owner. The named tests begin with the failure that repeats and do not cover this progression.",
+        "body": "Raise: Not done. When a worker fixes a review finding but introduces a failing test, close.py:233-237 stops before another review and keeps the old finding in state. This line counts that unverified finding again on the next `forge work`, so Forge asks the owner even though the second round left a different failure. The A-then-B proof covers two test failures, but not a finding followed by a test failure.",
         "file": "src/forge/close.py",
-        "line": 419,
+        "line": 405,
         "priority": "P1",
-        "title": "Not done: two rounds leaving the same new failure do not stop the item"
+        "title": "Not done: a stale review finding can stop an item after a different failure"
+      },
+      {
+        "body": "Raise: Functional. worker.py:391 retains only the last 30 lines of a failed pull-request check. In a normal Jest run with a long stack trace, the test name can fall outside that tail while the generic `Tests: 1 failed` summary remains. This line then gives different failing tests in the same check the same key and stops the item prematurely. The named Jest proof uses one-line output, so it does not exercise the truncated CI log.",
+        "file": "src/forge/close.py",
+        "line": 411,
+        "priority": "P1",
+        "title": "Different tests can share the same truncated CI failure excerpt"
+      },
+      {
+        "body": "Raise: Gate. A normal `--resolve switch` call without `--reason` reaches this refusal, but `bad_choice` at close.py:57-59 tells the owner to retry with `<narrow|split|accept>`. That omits the chosen `switch` option and offers `accept`, which this new branch rejects for a stuck stop. The refusal therefore fails Forge's rule that every refusal name the real problem and the next action.",
+        "file": "src/forge/close.py",
+        "line": 100,
+        "priority": "P1",
+        "title": "A rejected stuck choice gives an invalid recovery command"
       }
     ],
-    "id": "2296e30e-020c-4033-b8bf-10e228af2bab",
+    "id": "0d8eb434-2414-480c-9911-a8fa5d89786e",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -38,7 +52,15 @@
     {
       "at": "2026-10-11T19:01:46.601662+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:56:59.259363+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/close.py",
+    "wait_id": "df761558-9013-4705-b459-eb1ccac87b15"
+  },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }

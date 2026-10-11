@@ -793,6 +793,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA rejected stuck choice gives an invalid recovery command\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 100,
+      "text": "A rejected stuck choice gives an invalid recovery command",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -809,6 +820,17 @@
       "path": "src/forge/close.py",
       "line": 402,
       "text": "Different failing tests in one check can falsely stop an item",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tDifferent tests can share the same truncated CI failure excerpt\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 411,
+      "text": "Different tests can share the same truncated CI failure excerpt",
       "from": "blocking",
       "item": "stuck-worker-asks",
       "status": "open",
@@ -866,6 +888,17 @@
       "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line",
       "from": "blocking",
       "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: a stale review finding can stop an item after a different failure\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 405,
+      "text": "Not done: a stale review finding can stop an item after a different failure",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
       "status": "open",
       "closed_by": null
     },
@@ -2630,6 +2663,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+      "line": 9,
+      "text": "Not done: the bundled license and notice describe a word list that is absent",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+      "line": 94,
+      "text": "The installed skill's check command fails from the client repository root",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: keep gaps in legacy timing history unknown\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -3363,6 +3418,28 @@
       "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
       "from": "worker",
       "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 67,
+      "text": "Not done: the checker test cannot detect a lost semicolon rule",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 53,
+      "text": "Not done: the proof test misses required guidance and checker behavior",
+      "from": "blocking",
+      "item": "plain-english-skill",
       "status": "open",
       "closed_by": null
     },
@@ -5376,50 +5453,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
-      "kind": "bug",
-      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
-      "line": 9,
-      "text": "Not done: the bundled license and notice describe a word list that is absent",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
-      "kind": "bug",
-      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
-      "line": 94,
-      "text": "The installed skill's check command fails from the client repository root",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
-      "kind": "bug",
-      "path": "tests/test_fix_plain_english_skill.py",
-      "line": 67,
-      "text": "Not done: the checker test cannot detect a lost semicolon rule",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
-      "kind": "bug",
-      "path": "tests/test_fix_plain_english_skill.py",
-      "line": 53,
-      "text": "Not done: the proof test misses required guidance and checker behavior",
-      "from": "blocking",
-      "item": "plain-english-skill",
       "status": "open",
       "closed_by": null
     }
