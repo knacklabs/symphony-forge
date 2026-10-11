@@ -145,7 +145,29 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     repo.git("add", "docs/product/BRIEF.md", cwd=fix)
     page = _decision(fix, answers)
 
-    # Model selection belongs to Autoreview; completion, findings and product integrity remain gates.
+    queue.write_text(json.dumps([{"report": {"review_status": "scoped-clean", "findings": []}}]))
+    missing_selection = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert missing_selection.returncode == 0, missing_selection.stderr
+    assert "status: accepted" in page.read_text()
+    page = _decision(fix, answers)
+
+    queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
+                                   "codex model gpt-6.1-sol is unavailable for this account; "
+                                   "retrying with gpt-6-astra",
+                                  "report": {"review_status": "scoped-clean", "findings": []}}]))
+    fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert fallback.returncode == 0, fallback.stderr
+    assert "status: accepted" in page.read_text()
+    page = _decision(fix, answers)
+
+    queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: xhigh",
+                                  "report": {"review_status": "scoped-clean", "findings": []}}]))
+    other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert other_effort.returncode == 0, other_effort.stderr
+    assert "status: accepted" in page.read_text()
+    page = _decision(fix, answers)
+    reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
+
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {
         "review_status": "incomplete", "findings": [], "scope_rejected_findings": [{
             "priority": "P2", "title": "Outside scope", "body": "Review did not finish",
@@ -192,7 +214,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert accepted.returncode == 0, accepted.stderr
     assert f"reviewed_commit: {reviewed}" in page.read_text()
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
-    assert len(calls) == 9
+    assert len(calls) == 12
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options

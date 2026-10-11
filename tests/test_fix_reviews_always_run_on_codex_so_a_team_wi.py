@@ -33,7 +33,7 @@ def _claude_only(tmp_path: Path, monkeypatch, bin_dir: Path, helper: str = "") -
     monkeypatch.setenv("USERPROFILE", str(home))
 
 
-def test_1_close_without_codex_reviews_with_claude_and_autoreview_defaults(
+def test_1_close_without_codex_reviews_with_claude_on_autoreviews_defaults(
         env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")

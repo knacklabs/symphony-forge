@@ -196,7 +196,7 @@ def merge(args: argparse.Namespace) -> int:
 def _enable(top: Path) -> int:
     """Open, or continue after an interruption, the fix that sets merge = "agent", and close it."""
     default = repo.default_branch(top)
-    if any(os.environ.get(name) for name in story.COORDINATORS) or repo.current_branch(top) != default:
+    if any(os.environ.get(name) for name in ("CLAUDECODE", "CODEX_THREAD_ID")) or repo.current_branch(top) != default:
         repo.refuse(REFUSALS["owner_only"], default=default)
     if repo.default_config(top)["merge"] == "agent":
         repo.refuse(REFUSALS["enabled"])
