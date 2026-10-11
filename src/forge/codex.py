@@ -804,9 +804,12 @@ def identity(pid: int) -> dict[str, Any] | None:
         finally:
             kernel32.CloseHandle(handle)
     done = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-ww", "-o",
-                    "lstart=,command=", "-p", str(pid))  # -ww: whole command
+                    "stat=,lstart=,command=", "-p", str(pid))  # -ww: whole command
     gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
-    *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
+    fields = done.stdout.split(None, 1)
+    if not done.returncode and fields and fields[0].startswith("Z"):
+        return None
+    *start, command = (fields[1] if len(fields) > 1 else "").split(None, 5) or [""]
     started = " ".join(start)
     if gone:
         return None
