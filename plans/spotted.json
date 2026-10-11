@@ -5543,6 +5543,83 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tLegacy read notes leave changed Answers text outside the round-three check\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 268,
+      "text": "Legacy read notes leave changed Answers text outside the round-three check",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tStandard: Touch only what the task needs\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 275,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 204,
+      "text": "Not done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tRound-three cap downgrades conflicts from changed spec and Answers text\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 208,
+      "text": "Round-three cap downgrades conflicts from changed spec and Answers text",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 138,
+      "text": "Not done: stop guidance for native reads",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_plan_reads_capped.py\tNot done: test the changed Answers rule with pre-upgrade read notes\tplan-reads-capped",
+      "kind": "bug",
+      "path": "tests/test_fix_plan_reads_capped.py",
+      "line": 58,
+      "text": "Not done: test the changed Answers rule with pre-upgrade read notes",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "tests/test_tools_session_hold.py",
+      "line": 149,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
