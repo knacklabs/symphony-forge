@@ -1,6 +1,13 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/worker-tests-once",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a129d5-71be-79a1-8daa-4b030d3f7bae",
+    "head": null,
+    "start": "b3e442929e0afd5077eb9d779185ac10d29e7864"
+  },
   "done_when": "The worker brief tells workers to run the related tests once at the end of their turn, rerunning only what failed, and never to poll the machine lines",
   "kind": "fix",
   "round": 1,
