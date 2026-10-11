@@ -2,6 +2,8 @@
 from test_worker import calls, install_claude
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
+STORY = "FIX-PROOF-LIST-CARRIES-FORWARD"
+
 
 def test_1_brief_says_each_proof_list_carries_the_previous_one_forward(client):  # noqa: F811
     # The review reads only the latest commit's list; a repair round must not drop earlier proofs.
