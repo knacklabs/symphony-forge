@@ -20,6 +20,7 @@ from test_codex_resume import RESUMING, _resuming
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_fix_claude_workers_start_a_fresh_session_eve import _session
 from test_readloop_rounds import CODEX, FIRST, _native_round, _no_claude, _no_codex, _setup
+from test_readloop_rounds import reader_sessions  # noqa: F401 (shared host cleanup fixture)
 from test_records import SPEC
 from test_setup import _fresh_client
 from test_story import worktree

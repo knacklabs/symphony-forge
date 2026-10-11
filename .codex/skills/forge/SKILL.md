@@ -128,18 +128,19 @@ sign-off reviews. Existing review model entries are ignored; doctor explains thi
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
 continue the named subagent when told to, or start fresh with the whole brief in a new session.
-Run `forge handback` with its last message and id when it finishes. Send the nudge when asked;
-never edit the brief. Only the coordinator hands back or starts another round.
+If that chat is unreachable in the same session, start fresh with the whole brief too.
+Run `forge handback` with its last message and id and the printed `--round` when it finishes.
+Send the nudge when asked; never edit the brief. Only the coordinator hands back or starts a round.
 
 **Native plan reads.** With one tool, that tool reads every plan. With both, the first read
 chooses the other installed tool, and later rounds keep their reader while it is available.
 When that reader is your session's tool, `forge read <target>` prints a JSON instruction for
 the `reader` role in the plan's checkout. Continue its named subagent with `prompt`, or start
 one with `fresh_prompt` when no subagent is named. Run it in the background, read only, then
-give its final message and id to `forge handback <target> --subagent <id> --text "<message>"`.
-Forge holds the item's lock and machine place until handback, checks for changed files,
-numbers the findings and records the read. A new session starts fresh with the whole prompt.
-New repos get the reader role at init; earlier adopted repos get it on upgrade and sync.
+give its message and id to `forge handback <target> --round <round> --subagent <id> --text "<message>"`.
+The session holds the item's lock and machine place until handback or the session ends.
+`forge stop` frees Forge's hold; stop the subagent in your session too. Stale rounds record nothing.
+Forge checks for changed files, numbers and records findings. Init and upgrade deliver the reader role.
 
 **Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
 New repos get the setting's default at init; existing repos get this guide when the upgraded
@@ -192,6 +193,8 @@ Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that
 both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
+This applies to runs Forge launched. A handed-out native run has no process tree, so
+`forge stop` frees its hold and the coordinator stops the subagent in its session.
 
 In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
 repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
@@ -764,8 +767,11 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 `## For the builders` heading is shown whole. The approval binds "What changes for you" and
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
-below `## For the builders` needs no new round either; an edit above it does, and that round
-checks only the edit and the sections it touches.
+below `## For the builders` needs no new round either, and `forge read` refuses to run one; an
+edit above it does, and that round checks only the edit and the sections it touches. Unchanged
+text gets two rounds of notes: from round 3 on, a reader blocks only on what changed since its
+last round or on an earlier blocking finding that is not closed.
+This two-round limit applies only to story plans.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 

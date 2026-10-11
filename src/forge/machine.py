@@ -212,7 +212,7 @@ def started(entry: dict[str, Any] | int, pid: int | None = None) -> None:
         agent_started(entry)
         return
     assert isinstance(entry, dict)
-    process = codex.identity(pid) or {"pid": pid}
+    process = entry["process"] if entry.get("native") else codex.identity(pid) or {"pid": pid}
     with _queue() as runs:
         for run in runs:
             if run["id"] == entry["id"]:
@@ -220,7 +220,7 @@ def started(entry: dict[str, Any] | int, pid: int | None = None) -> None:
                 entry.update(run)
                 return
     # Stop may win between admission and spawning. Do not leave a cancelled child running.
-    if codex._alive(process) is True:
+    if not entry.get("native") and codex._alive(process) is True:
         codex._stop(process, True)
     raise repo.Refused("This run was stopped; it will not start another agent.", "")
 
@@ -231,18 +231,6 @@ def leave(entry: dict[str, Any]) -> None:
         runs[:] = [run for run in runs if run["id"] != entry["id"] or
                    (not run.get("native") and run["process"]["pid"] != os.getpid()
                     and _running(run["process"]))]
-
-
-def hold_session(entry: dict[str, Any], session: dict[str, Any]) -> None:
-    """The coordinating host holds a native place until handback, including between commands."""
-    with _queue() as runs:
-        for run in runs:
-            if run["id"] == entry["id"]:
-                run.update(native=True, session=session["id"], process=session["process"],
-                           forge=session["process"], started_at=repo.now())
-                entry.update(run)
-                return
-    raise repo.Refused("This read was stopped while waiting; it will not start.", "")
 
 
 def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
@@ -375,7 +363,7 @@ def load() -> dict[str, Any]:
 
 def stop(args: Any) -> int:
     """A person cancels waiting entries or ends verified process trees before freeing places."""
-    from forge import codex
+    from forge import codex, native
     if os.environ.get("FORGE_WORKER"):
         raise repo.Refused("Only a person can run forge stop; ask the person to stop the run.", "")
     if bool(args.entry_id) == bool(args.item) or (args.entry_id and args.repo):
@@ -387,18 +375,24 @@ def stop(args: Any) -> int:
         # Validate every target before signalling any. Unknown identity never grants permission.
         for run in selected:
             if run.get("native"):
-                raise repo.Refused("Stop this subagent in the coordinating session, then hand its result back.", "")
+                continue
             process = run["process"]
             if (run.get("agent") or run["started_at"]) and ("started" not in process or codex._alive(process) is None):
                 raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")
         for run in selected:
+            if run.get("native"):
+                continue
             if (run.get("agent") or run["started_at"]) and codex._alive(run["process"]) is True:
                 ended = codex._stop(run["process"], run["process"] != run.get("forge"))
                 # The tree is confirmed ended even if its leader still awaits reaping.
                 if not ended:
                     raise repo.Refused("Forge could not confirm the run stopped; its place is still held.", "")
             runs.remove(run)
-    print("Stopped the run." if selected else "There is nothing to stop.")
+    held = [run for run in selected if run.get("native")]
+    for run in held:
+        native.cancel(run)
+    print("Stopped Forge's hold; stop the subagent in your session too." if held else
+          "Stopped the run." if selected else "There is nothing to stop.")
     return 0
 
 
