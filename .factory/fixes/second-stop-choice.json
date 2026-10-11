@@ -1,0 +1,14 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/second-stop-choice",
+  "done_when": "When a review loop stops again after an earlier recorded choice, forge close --resolve narrow, split or accept records the new choice and the board and forge next show the item waiting on that choice until it is made",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T06:38:17.441218+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the owner records a choice on a stopped review loop, the next stop three rounds later refuses a new choice, so the owner's decision can't be recorded"
+}
