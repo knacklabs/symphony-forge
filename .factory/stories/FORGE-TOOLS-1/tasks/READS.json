@@ -12,24 +12,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7835734a3a8e62a8a3cdfa2d3a2c2e934259a7e4d0d86a315a634b0e1904ed87",
-    "changed": "02a56cf2c0843c42c289c1975de0609a9b6c4973ac6997035fdc68f2c4120123",
-    "commit": "8c2d4fd2608c423359e71257ce3c11b033e8f7c0",
+    "branch_diff": "760ba6cd8a6cd6b2b090024dd9c9c4e6589ef7290d878c4a5ae09cb54e153581",
+    "changed": "e82f9471c2b45a6784a5d676cff8978f495b96410206b3e68ec59eb0e4c49223",
+    "commit": "b320e958b6f2f09d727de8466095549f308d1060",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Functional. `native.offer` calls `machine.join` before printing its JSON handout. When all agent places are occupied, `machine.join` prints a waiting message to stdout, so the command eventually returns that message followed by JSON. A coordinator expecting the documented JSON instruction cannot parse it. The native read test parses the entire stdout but never fills the agent line.",
-        "file": "src/forge/native.py",
-        "line": 68,
-        "priority": "P1",
-        "title": "Native read handout stops being valid JSON when the agent line is full"
-      }
-    ],
-    "id": "0f39ed71-48a4-417b-803b-15c4872d7cd7",
-    "status": "blocked"
+    "findings": [],
+    "id": "89a5a368-808b-40c6-a3b6-88bee187537c",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T05:28:32+00:00",
@@ -37,6 +29,10 @@
     },
     {
       "at": "2026-10-11T12:13:03.017940+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:27:33.428871+00:00",
       "step": "review"
     }
   ],
