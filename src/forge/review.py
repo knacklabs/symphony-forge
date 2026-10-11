@@ -264,7 +264,8 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
-def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tuple[int, str]:
+def test_run(top: Path, command: str, base: str, *, always: bool = False,
+             closing: bool = True) -> tuple[int, str]:
     """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
     branch = repo.current_branch(top)
     item = (branch_item(branch, top) or (branch, {}))[0]
@@ -281,7 +282,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
                 said = DOCS_ONLY.format(command=command)
                 print(said, flush=True)
                 return 0, said
-        from forge import codex  # codex imports review indirectly
+        from forge import codex, fasttest  # both import review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
@@ -297,6 +298,9 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+            env.pop("FORGE_CLOSE_TESTS", None)
+            if closing and "tests" in repo.config(top)["checks"]:
+                env["FORGE_CLOSE_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix())
@@ -355,6 +359,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
                 passed.touch()
         finally:
             machine.leave(entry)
+        if fasttest.LARGE in done.stdout:
+            print(fasttest.LARGE, flush=True)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
