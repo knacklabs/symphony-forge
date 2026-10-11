@@ -2,13 +2,46 @@
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/gate-on-split-checks",
   "done_when": "The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when every group passes, for this repo and for client repos on init and after upgrade and sync",
+  "flagged": [
+    "src/forge/prcheck.py",
+    "tests/test_fix_gate_on_split_checks.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "06112bde211b972e5594fbae7595fc01a75ac4c073ee684b6bee7f77f76e111e",
+    "changed": "7052aa725b5c47a5eb15a66a9f23b2cd46be1bedc48991ce817ccd035ea30834",
+    "commit": "9e854441d0e6e72a37df60f98a6a1207878f427f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Functional. `ships()` selects six groups whenever pytest-split is listed, regardless of suite size. A newly initialized or upgraded client repo with fewer than six collected tests gets empty groups; pytest exits with code 5 for those groups, so the required `tests` check fails even when every test passes. The changed six-group selection is at `src/forge/prcheck.py:174-178`. [pytest-split's grouping code](https://raw.githubusercontent.com/jerry-git/pytest-split/0.11.0/src/pytest_split/algorithms.py) leaves groups empty when there are fewer items than splits, and [pytest documents exit code 5](https://www.pytest.org/en/latest/reference/exit-codes.html) for no collected tests.",
+        "file": "src/forge/prcheck.py",
+        "line": 174,
+        "priority": "P1",
+        "title": "Not done: The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when it"
+      },
+      {
+        "body": "Raise: Test. The proof list names `test_1[new]` for init, but that case initializes a client with the default command, checks only that its workflow has `group: [1]`, then changes `forge.toml` and verifies the six-group gate only after `forge sync`. It never checks that init itself writes a required `tests` gate that reflects its groups. An init regression that omits or miswires `tests-passed` would leave this named proof green. The default command is chosen during init at `src/forge/init.py:138-144`, and `_fresh_client` calls init before returning at `tests/test_setup.py:181-195`.",
+        "file": "tests/test_fix_gate_on_split_checks.py",
+        "line": 32,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "1be9d582-f16a-4a5f-9d5d-c96d9790476d",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:11:31.476676+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T09:29:11.277934+00:00",
+      "step": "review"
     }
   ],
   "why": "The check that gates merging runs the whole suite as one 35-minute job; the six faster test groups run only in a workflow nothing waits on",
