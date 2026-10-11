@@ -12,7 +12,23 @@
     "branch_diff": "39dcb9a61b9a07140b33b3ff07d0d28bc1491077348f0a5f65939e98b5a7ac96",
     "changed": "2cf48397c4a1ebd740b1b5f370a078fbe628c4ab7c18c7fde92cd9064f725a9d",
     "commit": "adf758b0eb8d87399e4bdb4ee39f5f9bc7ab11ec",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. When a worker fixes a review finding but introduces a failing test, close.py:233-237 stops before another review and keeps the old finding in state. This line counts that unverified finding again on the next `forge work`, so Forge asks the owner even though the second round left a different failure. The A-then-B proof covers two test failures, but not a finding followed by a test failure.",
@@ -37,9 +53,9 @@
       }
     ],
     "id": "0d8eb434-2414-480c-9911-a8fa5d89786e",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -59,7 +75,9 @@
     }
   ],
   "stop": {
+    "choice": "accept",
     "file": "src/forge/close.py",
+    "reason": "Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
     "wait_id": "df761558-9013-4705-b459-eb1ccac87b15"
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
