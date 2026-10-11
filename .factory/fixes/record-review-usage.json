@@ -1,6 +1,13 @@
 {
   "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
   "branch": "fix/record-review-usage",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12aed-08f3-74e0-a55d-1349141a7037",
+    "head": null,
+    "start": "93e3211e03539c404ef810f605fd57973b697c84"
+  },
   "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
   "flagged": [
     "tests/test_fix_reviews_and_reads_record_their_cost.py"
