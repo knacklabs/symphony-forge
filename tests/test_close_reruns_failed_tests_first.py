@@ -75,6 +75,7 @@ def record_run(request):
     guide = " ".join((repo.path / ".codex/skills/forge/SKILL.md").read_text("utf-8").split())
     assert "the next close runs failed tests first" in guide
     assert "reuses passing tests whose" in guide
+    assert "Other test tools rerun their full configured command unchanged after a failure;" in guide
     repo.git("add", "-A")
     repo.git("-c", no_hooks, "commit", "-q", "--allow-empty", "-m", "Sync the client test command")
     setup = repo.git("branch", "--show-current")
@@ -178,3 +179,44 @@ def test_configured_mode(request):
 
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [True, False]
+
+
+def test_3_other_test_runners_repeat_the_full_configured_command_after_a_failure(env):
+    log, prerequisite = env.tmp / "checked-stages.jsonl", env.tmp / "service-ready"
+    script = env.tmp / "check-client.py"
+    script.write_text(f'''import ast, json, pathlib, subprocess, sys
+stage, arguments = sys.argv[1], sys.argv[2:]
+with pathlib.Path({json.dumps(log.as_posix())}).open("a", encoding="utf-8") as log:
+    log.write(json.dumps(sys.argv[1:]) + "\\n")
+if stage == "syntax":
+    assert arguments == ["--strict"]
+    assert len(ast.parse(pathlib.Path("app.py").read_text("utf-8")).body) == 1
+elif stage == "service":
+    assert arguments == ["--service", "local"]
+    assert pathlib.Path({json.dumps(prerequisite.as_posix())}).exists()
+elif stage == "smoke":
+    assert arguments == ["--output", "hello"]
+    checked = subprocess.run([sys.executable, "app.py"], capture_output=True, text=True)
+    assert checked.returncode == 0 and checked.stdout.strip() == "hello"
+else:
+    raise AssertionError(stage)
+''', "utf-8")
+    runner = f'"{sys.executable}" "{script}"'
+    command = (f"{runner} syntax --strict && {runner} service --service local "
+               f"&& {runner} smoke --output hello")
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", config + f"test = {json.dumps(command)}\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix()
+
+    failed = env.close(item)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    initial = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
+    assert initial == [["syntax", "--strict"], ["service", "--service", "local"]]
+
+    prerequisite.write_text("ready\n", "utf-8")
+    repaired = env.close(item)
+    assert repaired.returncode == 0, repaired.stdout + repaired.stderr
+    stages = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
+    assert stages[len(initial):] == [
+        ["syntax", "--strict"], ["service", "--service", "local"], ["smoke", "--output", "hello"]]
