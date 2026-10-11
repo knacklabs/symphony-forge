@@ -474,12 +474,12 @@ def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
 
 
 def fast_said(selection: dict[str, Any]) -> str:
-    """What a turn's recorded speed says about Fast, or "" when the turn didn't want it."""
+    """Say which speed Forge requested, without claiming Codex confirmed it."""
     if not selection.get("fast_wanted"):
-        return ""
+        return "Codex speed: normal requested for this turn."
     if selection.get("tier", "default") != "default":
-        return "Codex Fast: on for this turn."
-    return (f"Codex Fast: wanted, but {selection['model']} doesn't offer it, so this turn runs at "
+        return "Codex Fast: requested for this turn."
+    return (f"Codex Fast: wanted, but {selection['model']} doesn't offer it, so this turn requests "
             "normal speed.")
 
 
@@ -546,6 +546,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
     refused, server, untrusted = "", None, {}
+    before_selection = []
+    selected = read or archive_thread or attach_request is not None
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
@@ -615,9 +617,22 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
                 elif "selection" in said:
+                    if (not echo and said["selection"]["fast_wanted"]
+                            and said["selection"]["tier"] == "default"):
+                        print(fast_said(said["selection"]), flush=True)
                     if ran.get("run_id"):
-                        repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
-                    text = fast_said(said["selection"])
+                        repo.record_progress(checkout, item, ran["run_id"],
+                                             model=said["selection"]["model"],
+                                             effort=said["selection"]["effort"])
+                    text = "\n".join(filter(None, [fast_said(said["selection"]),
+                                                  *before_selection]))
+                    before_selection.clear()
+                    selected = True
+                elif "speed" in said:
+                    started.update(said["speed"])
+                    repo.record_event(checkout, item, "codex speed", run_id=ran.get("run_id"),
+                                      **said["speed"])
+                    text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     continued = {"continued": said["continued"],
@@ -645,6 +660,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     result["turn"] = said["turn"]
                     started = {"conversation": result["conversation"], "turn": said["turn"],
                                "kind": kind, "started": repo.now(),
+                               **{key: said[key] for key in ("model", "fast_wanted", "requested_tier", "tier")},
                                **({"note": note} if note is not None else {})}
                     _append(turns, started)
                     _record(record, start=begun, pending=None, **continued)
@@ -683,10 +699,17 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                                                  step=repo.worker_step(tool_name or tool["type"], inputs))
                     text = _event(said)
                 if text:
+                    if not selected:
+                        before_selection.append(text)
+                        continue
                     if echo:
                         print(text, flush=True)
                     out.write(text + "\n")
         finally:  # on an error or Ctrl-C too: the driver ends its group once stdin closes
+            for text in before_selection:
+                if echo:
+                    print(text, flush=True)
+                out.write(text + "\n")
             with contextlib.suppress(OSError):  # a driver that has gone already can't be told
                 driver.stdin.close()
             driver.stdout.close()

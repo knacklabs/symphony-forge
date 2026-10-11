@@ -105,8 +105,10 @@ def work(args: argparse.Namespace) -> None:
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design)
     _, chosen, why = repo.worker(config, kind.lower(), design)
-    print(f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
-          f"because {why}", flush=True)
+    building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
+                f"because {why}")
+    if not on_codex:
+        print(building, flush=True)
     if note is not None and (pending := codex.record(top, item).get("question_id")):
         repo.record_event(top, item, "owner wait end", wait_id=pending)
     from forge import time_records
@@ -245,7 +247,8 @@ def work(args: argparse.Namespace) -> None:
                         prefix.rsplit(" ", 1)[0] or prefix) + "…"
             result = codex.run(top, item, kind, name, brief, "full-access",
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
-                               design=design)
+                               design=design,
+                               on_thread=(lambda _: print(building, flush=True)) if on_codex else None)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
             _restore_settings(item, top, state)

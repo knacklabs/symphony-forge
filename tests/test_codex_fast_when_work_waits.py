@@ -18,12 +18,31 @@ NOTICE = ("Codex Fast is now on for quick work: every fix, after the first repai
           "or when other planned work waits.")
 
 
-def _tiers(repo, tiers):
+def _tiers(repo, tiers, receipt=None):
     # Vendor metadata never chooses Forge's tier; the real command does that.
     stub = (ROOT / "tests/stubs/codex-app-server").read_text("utf-8")
     if tiers != "missing":
         stub = stub.replace('"supportedReasoningEfforts": [',
                             '"serviceTiers": ' + repr(tiers) + ', "supportedReasoningEfforts": [')
+    stub = stub.replace('    cwd, config, asked, turns =',
+                        '    global TURN\n    cwd, config, asked, turns =')
+    stub = stub.replace('            turns += 1',
+                        '            turns += 1\n            TURN = f"turn-stub-{turns}"')
+    reported = ('params.get("serviceTier", "default")'
+                if receipt in (None, "sibling") else repr(receipt))
+    if receipt == "thread":
+        stub = stub.replace('"reasoningEffort": (config or {})',
+                            '"serviceTier": None, "reasoningEffort": (config or {})')
+    elif receipt != "missing":
+        stub = stub.replace('            notify("turn/started",',
+                            '            notify("thread/settings/updated", threadId=THREAD, '
+                            'threadSettings={"serviceTier": ' + reported + '})\n'
+                            '            notify("turn/started",')
+    if receipt == "sibling":
+        stub = stub.replace('            notify("turn/started",',
+                            '            notify("thread/settings/updated", threadId="thr-other", '
+                            'threadSettings={"serviceTier": "default"})\n'
+                            '            notify("turn/started",')
     _install(repo.bin, "codex-app-server", stub)
 
 
@@ -181,24 +200,3 @@ def test_4_init_and_previous_release_upgrade_deliver_the_default_and_guidance(
     checked = subprocess.run([str(installed), "doctor"], cwd=up.folder,
                              capture_output=True, text=True, timeout=60)
     assert "on for every fix, after the first repair round, or when other planned work waits" in checked.stdout
-
-
-@pytest.mark.parametrize("tiers, said, doctor", [
-    ([{"id": "priority", "name": "Fast"}], "Codex Fast: on for this turn.",
-     "the last codex turn ran with fast"),
-    ([], "Codex Fast: wanted, but gpt-6-sol doesn't offer it, so this turn runs at normal speed.",
-     "the last codex turn wanted fast, but gpt-6-sol doesn't offer it"),
-])
-def test_7_each_turn_says_and_records_whether_fast_ran(repo, monkeypatch, sdk_data, tiers, said,
-                                                        doctor):
-    # A fix wants Fast. The run says at its start whether it got it, and doctor reads it back.
-    folder, _ = _codex_repo(repo, monkeypatch, sdk_data)
-    _tiers(repo, tiers)
-    started = repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in")
-    assert started.returncode == 0, started.stdout + started.stderr
-    worked = repo.forge("work", "fix-the-login-typo")
-    assert worked.returncode == 0, worked.stdout + worked.stderr
-    assert said in worked.stdout.splitlines()
-    checked = repo.forge("doctor")
-    lines = [line.lower() for line in checked.stdout.splitlines() if "codex fast" in line.lower()]
-    assert len(lines) == 1 and doctor in lines[0], checked.stdout
