@@ -220,3 +220,34 @@ else:
     stages = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     assert stages[len(initial):] == [
         ["syntax", "--strict"], ["service", "--service", "local"], ["smoke", "--output", "hello"]]
+
+
+@pytest.mark.parametrize("xdist", [False, True], ids=["serial", "xdist"])
+def test_4_close_tests_can_launch_pytest_with_their_own_environment(env, monkeypatch, xdist):
+    # Child commands replace PYTHONPATH; only the client's own plugins may be inherited.
+    monkeypatch.setenv("PYTEST_PLUGINS", "client_plugin")
+    command = f'"{sys.executable}" -m pytest tests/test_parent.py -q' + (" -n 2" if xdist else "")
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", config + f"test = {json.dumps(command)}\n")
+    env.commit(env.repo.path, ".gitignore", "__pycache__/\n.pytest_cache/\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix({
+        "client_plugin.py": '''def pytest_addoption(parser):
+    parser.addoption("--client-mode", default="ready")
+''',
+        "tests/child_check.py": '''def test_client_plugin(request):
+    assert request.config.getoption("--client-mode") == "ready"
+''',
+        "tests/test_parent.py": '''import os, subprocess, sys
+def test_child_pytest():
+    child = subprocess.run([sys.executable, "-m", "pytest", "tests/child_check.py", "-q"],
+                           env={**os.environ, "PYTHONPATH": os.getcwd()},
+                           capture_output=True, text=True)
+    assert child.returncode == 0, child.stdout + child.stderr
+    assert "1 passed" in child.stdout
+''',
+    })
+
+    closed = env.close(item)
+
+    assert closed.returncode == 0, closed.stdout + closed.stderr

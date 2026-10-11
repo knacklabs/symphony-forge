@@ -104,6 +104,12 @@ class Repair:
         # A test's child commands must run normally, without this close's receipts.
         os.environ.pop("FORGE_REPAIR_ROOT", None)
         os.environ.pop("FORGE_REPAIR_CACHE", None)
+        plugins = [name for name in os.environ.get("PYTEST_PLUGINS", "").split(",")
+                   if name.strip() and name.strip() != "_forge_pytest_repair"]
+        if plugins:
+            os.environ["PYTEST_PLUGINS"] = ",".join(plugins)
+        else:
+            os.environ.pop("PYTEST_PLUGINS", None)
 
     @pytest.hookimpl(optionalhook=True)
     def pytest_configure_node(self, node):
