@@ -10,7 +10,7 @@
   },
   "done_when": "When the tests close would pick cover more than a third of the suite, close skips the local run, says so in one line, and relies on the pull request's required checks",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
