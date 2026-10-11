@@ -40,6 +40,8 @@ jobs:
 
   tests:
     if: github.event_name != 'pull_request'
+    # Not "tests": this job skips on pull requests, and a skipped job would fail the required check.
+    name: full suite on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
       FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
     strategy:

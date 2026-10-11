@@ -35,6 +35,10 @@ def test_1_event_runs_every_required_platform_group_once(event, counts):
     triggers = workflow.split("\non:\n", 1)[1].split("\nconcurrency:", 1)[0]
     assert re.search(r"^  pull_request:$", triggers, re.M)
     assert re.search(r"^  push:\n    branches: \[main\]\n    tags: \['v\*'\]$", triggers, re.M)
+    # A job skipped on pull requests must not answer to the required tests check's name.
+    tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
+    name = re.search(r"^    name: (.+)$", tests_job, re.M)
+    assert name and name[1].strip() != "tests", "Name the push-only suite apart from the tests check"
 
 
 def test_2_pull_requests_keep_closes_named_checks():
