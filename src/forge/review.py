@@ -272,19 +272,16 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
                    for path in changed if path):
                 said = DOCS_ONLY.format(command=command)
-                print(said, flush=True)
                 return 0, said
         from forge import codex  # codex imports review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
         if passed and passed.exists():
-            print(skipped, flush=True)
             return 0, skipped
         entry = machine.join("test", top, item, None, None)
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
-                print(skipped, flush=True)
                 return 0, skipped
             workers = str(machine.half_cores())
             env = {**os.environ, "FORGE_WORKER": "1",

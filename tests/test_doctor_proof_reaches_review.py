@@ -64,6 +64,11 @@ def test_1_doctor_fix_commit_proof_reaches_first_close_review(env, monkeypatch, 
     for rel in written:
         assert rel in proof
     assert f"forge close {name}" in proof and "test run" in proof
+    # Review starts with a pending notice; completed results belong to close's report.
+    assert "reports its test run result alongside the review result" in proof
+    for host in (".codex", ".claude"):
+        guide = (folder / host / "skills/forge/SKILL.md").read_text("utf-8")
+        assert "close supplies its test run result" not in guide
     checked = repo.forge("doctor", cwd=folder)
     assert "differs from what forge sync writes" not in checked.stdout
 
@@ -71,6 +76,8 @@ def test_1_doctor_fix_commit_proof_reaches_first_close_review(env, monkeypatch, 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 1
     assert proof in env.prompt()
-    assert "client checks passed" in env.prompt()
-    assert "exited with status 0" in env.prompt()
+    # Proof is available at launch; completed test output is reported when close joins tests.
+    assert "Tests are running alongside this review" in env.prompt()
+    assert "client checks passed" in closed.stdout
+    assert "exited with status 0" in closed.stdout
     assert proof in body(env.gh_calls("pr", "create")[-1])

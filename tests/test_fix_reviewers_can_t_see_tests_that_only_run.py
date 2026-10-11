@@ -1,4 +1,4 @@
-"""forge close runs the repo's test command and hands its result to the reviewer."""
+"""Close reports completed tests while its reviewer receives concurrent-run guidance."""
 from __future__ import annotations
 
 import subprocess
@@ -30,22 +30,24 @@ def _with_test_command(env, suite: str) -> None:
     env.repo.git("push", "-q", "origin", "main")
 
 
-def test_1_close_runs_a_passing_test_command_and_shows_the_reviewer(env):
+def test_1_close_runs_a_passing_test_command_and_reports_its_result(env):
     _with_test_command(env, SUITE.split("\n\n@pytest")[0] + "\n")
     item, _ = env.start_fix()
-    assert env.close(item).returncode == 0
+    done = env.close(item)
+    assert done.returncode == 0, done.stdout + done.stderr
     result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
-    assert "passed" in result
-    assert "1 passed" in result
+    # Review starts before tests finish; the completed report belongs to close's output.
+    assert "Tests are running alongside this review" in result
+    assert "1 passed" in done.stdout
 
 
 def test_2_close_lists_skipped_tests_with_their_reason(env):
     _with_test_command(env, SUITE)
     item, _ = env.start_fix()
-    assert env.close(item).returncode == 0
-    result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
-    assert "1 passed, 1 skipped" in result
-    assert "needs a service outside the sandbox" in result
+    done = env.close(item)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 passed, 1 skipped" in done.stdout
+    assert "needs a service outside the sandbox" in done.stdout
 
 
 def test_3_brief_says_close_run_skips_and_deletion_tests_count(env):
@@ -78,12 +80,12 @@ def test_4_close_shows_a_go_style_skip_and_its_reason(env):
                + f"test = {f'{sys.executable} gotest.py'!r}\n".replace("'", '"'))
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
-    assert env.close(item).returncode == 0
-    result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
-    assert "exited with status 0" in result
-    assert "--- SKIP: TestOutside (0.00s)" in result
-    assert "needs a service outside the sandbox" in result
-    assert "ok  \texample.com/app\t0.01s" in result
+    done = env.close(item)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "exited with status 0" in done.stdout
+    assert "--- SKIP: TestOutside (0.00s)" in done.stdout
+    assert "needs a service outside the sandbox" in done.stdout
+    assert "ok  \texample.com/app\t0.01s" in done.stdout
 
 
 def test_5_close_runs_the_test_command_merged_from_the_default_branch(env):
@@ -93,9 +95,9 @@ def test_5_close_runs_the_test_command_merged_from_the_default_branch(env):
     env.commit(env.repo.path, "forge.toml",
                toml.read_text("utf-8").replace("-p no:cacheprovider", "-p no:cacheprovider -v"))
     env.repo.git("push", "-q", "origin", "main")
-    assert env.close(item).returncode == 0
-    result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
-    assert "-p no:cacheprovider -v checks` exited" in result
+    done = env.close(item)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "-p no:cacheprovider -v checks` exited" in done.stdout
 
 
 def test_6_forge_init_in_a_go_repo_writes_a_test_command_that_prints_skips(repo, gh, tmp_path):

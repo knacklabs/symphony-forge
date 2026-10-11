@@ -1,0 +1,65 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/review-alongside-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12665-4f06-7fc2-8d43-9a622fea4921",
+    "head": "f1fc53fb70515ef7f1f4e22520da197cdabef95c",
+    "start": "71fe349a28f880d2d3e6af321966f922306de2de"
+  },
+  "done_when": "Close starts the review at the same time as its tests, so a round takes about as long as the slower of the two; a red test or a P0/P1 finding still stops the round, and both results are reported together. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/close.py",
+    "tests/test_close_runs_tests_and_review_together.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7a9a10b97b722847dfaa94b034c10f69e85fae50c7af53164acc33e6c6b00f37",
+    "changed": "d8ae95825021d3ee4fac9fc2f290a4dd24398b96e1d356c9e51b3dedbf12d013",
+    "commit": "ce7c00e5310d82a7214b47de99b774b9fd899803",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Gate. The standard requires: \u201cTests own and clean up every process they start, even after a crash; detect and fail on leftover processes when a test worker crashes.\u201d On a 90-second timeout, this test kills only the `forge close` parent. The test command and Autoreview are launched in separate process groups (`review.test_run` and `review._attempt`), so a hung child can remain running after the test fails. The test neither stops those children nor checks for leftovers.",
+        "file": "tests/test_close_runs_tests_and_review_together.py",
+        "line": 115,
+        "priority": "P1",
+        "title": "Standard: Tests own and clean up every process they start"
+      }
+    ],
+    "id": "6b4e742a-7ef3-4b0b-a8c3-d80c2176068c",
+    "status": "blocked"
+  },
+  "round": 5,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-10-10T15:16:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T16:58:19.428559+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:55:15.151775+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T03:59:35.108704+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:26:34.096266+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:42:16.502548+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Close waits for tests to finish before it starts the review",
+  "worker": "codex"
+}

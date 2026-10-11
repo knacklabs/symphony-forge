@@ -35,7 +35,7 @@ def test_1_close_skips_the_test_command_for_a_docs_and_plans_only_fix(env):
     said = [line for line in closed.stdout.splitlines() if SKIPPED in line]
     assert len(said) == 1, closed.stdout
     assert len(env.review_calls()) == 1
-    assert SKIPPED in env.prompt()
+    assert "Tests are running alongside this review" in env.prompt()
     # The named checks still gate it: the red tests check stops close.
     assert closed.returncode != 0
     assert "Checks failed on the pull request: tests." in closed.stderr
@@ -52,4 +52,4 @@ def test_2_close_runs_the_test_command_when_a_docs_fix_also_changes_code(env):
     assert closed.returncode == 0, closed.stderr
     assert log.read_text("utf-8") == "ran\n"
     assert SKIPPED not in closed.stdout
-    assert "exited with status 0" in env.prompt()
+    assert "exited with status 0" in closed.stdout

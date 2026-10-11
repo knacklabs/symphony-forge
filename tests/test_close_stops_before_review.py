@@ -1,5 +1,4 @@
-"""forge close merges the default branch before it runs the tests or reviews, and stops before
-the review when the test command fails, keeping the failing output for the next worker round."""
+"""Close merges before either check and keeps failing output for the next worker round."""
 from __future__ import annotations
 
 import json
@@ -74,7 +73,7 @@ def test_1_a_conflicting_merge_stops_before_the_test_lock_any_test_run_or_review
     assert "waits its turn" not in done.stdout
 
 
-def test_2_a_failing_test_command_stops_before_the_review_and_the_worker_gets_its_output(land):
+def test_2_a_failing_test_command_blocks_the_round_and_the_worker_gets_its_output(land):
     env = land
     log = _with_test_command(env)
     item, where = env.start_fix()
@@ -82,9 +81,10 @@ def test_2_a_failing_test_command_stops_before_the_review_and_the_worker_gets_it
     assert done.returncode == 1, done.stdout + done.stderr
     command = f"{sys.executable} {env.tmp / 'suite.py'}"
     assert done.stderr.splitlines()[-2:] == [
-        f"`{command}` failed on this machine, so close stopped before the review; the next worker "
-        "round gets its output.", f"Next: forge work {item}"]
-    assert env.review_calls() == []
+        f"`{command}` failed on this machine; the next worker round gets its output.",
+        f"Next: forge work {item}"]
+    # Review now overlaps tests, even when they fail; the failed output still reaches work.
+    assert len(env.review_calls()) == 1
     assert log.read_text("utf-8").splitlines() == ["run"]
     record = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
     assert record["status"] == "fixing"
@@ -98,7 +98,7 @@ def test_2_a_failing_test_command_stops_before_the_review_and_the_worker_gets_it
     assert "AssertionError: the readme has no greeting" in worker["brief"]
 
 
-def test_3_land_gives_a_failing_test_run_a_fix_round_then_reviews_once(land):
+def test_3_land_reviews_each_changed_round_and_fixes_failing_tests(land):
     env = land
     log = _with_test_command(env)
     _agent(env)
@@ -110,5 +110,6 @@ def test_3_land_gives_a_failing_test_run_a_fix_round_then_reviews_once(land):
     assert _steps(done) == [f"Closing {ITEM}.", "Fix round 1 of 3: the worker fixes the failing tests.",
                             f"Closing {ITEM}.", f"Merging {ITEM}."]
     assert log.read_text("utf-8").splitlines() == ["run", "run"]
-    assert len(env.review_calls()) == 1
-    assert "1 passed" in env.prompt()
+    # Both rounds review their own changed head, rather than waiting for passing tests.
+    assert len(env.review_calls()) == 2
+    assert "1 passed" in done.stdout
