@@ -2,12 +2,45 @@
   "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
   "branch": "fix/plan-reads-capped",
   "done_when": "A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never asks for another read",
+  "flagged": [
+    "src/forge/story.py",
+    "src/forge/templates/cold-read.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ee42f91ffc7513806b8c14440de84f47689b4decd2acc4261cf32c25f3f7399c",
+    "changed": "a029c0b7044d5b65554910ea199b3e16eb467e6e4d1694388ca7a4792454c7ee",
+    "commit": "9288bc8511b28f6201c5af82e58596a6c1ed5266",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. The round-three prompt still permits a blocking finding anywhere in a section touched by the diff. If an agent changes one sentence in `## Done when`, the reader can block on a different, unchanged sentence in that section and require another read. The delivered guide says blocking is limited to changed text or an earlier finding that remains open. The named test checks the prompt text but supplies `No findings.` in round three, so it does not catch this case.",
+        "file": "src/forge/templates/cold-read.md",
+        "line": 204,
+        "priority": "P1",
+        "title": "Not done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never"
+      },
+      {
+        "body": "Raise: Functional. The standard says, \u201cTouch only what the task needs.\u201d This cap is applied to every later `forge read`, including spec reads, because the branch at this line does not check `is_story`. The Done-when item concerns story plans. On a spec's third round, a new gap in unchanged spec text is now directed to be advisory, allowing a spec with a blocking gap to pass. The previous three-blocked-round safeguard would instead have held it for the owner's choice.",
+        "file": "src/forge/story.py",
+        "line": 275,
+        "priority": "P1",
+        "title": "Standard: Touch only what the task needs"
+      }
+    ],
+    "id": "811cbc6a-69e1-4a2b-81b5-f98ce98aef2f",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:32:02.888915+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T09:30:30.643611+00:00",
+      "step": "review"
     }
   ],
   "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner"
