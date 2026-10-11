@@ -11,25 +11,33 @@
   "done_when": "Close's review and plan reads do not wait for an agent place, and a test run limited to a few named test files does not wait for the test place",
   "flagged": [
     "src/forge/review.py",
+    "tests/test_fix_agent_runs_wait_in_line.py",
     "tests/test_small_test_runs_skip_the_test_line.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6b4b644f3caad3275718e3432a48dba4d9756ed1f798ae366d1aa9e40fea78ce",
-    "changed": "d3cf9542aec842bb6290678a6bd46e7c643a487451f6082c9596227b773a4dae",
-    "commit": "5846f33d0d984570cbf8ca8a7c8fdb7457e1dec0",
+    "branch_diff": "b69cde1c9b88b30f4173bbef1aa7eaf9899e7654ccb883d0b34e1e681e6ddd1d",
+    "changed": "dd1f95651e9380ea895326556a8fd1d87d1e7154f906273a890d0e14484a34cd",
+    "commit": "6edbe21bafc01a3512d650b359dd8255ee14037e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional \u2014 A single pytest command can collect more than the five files counted for admission. In a repo whose `test` command is `pytest tests src --doctest-modules`, changing five `test_*.py` files makes `few_tests` grant a free place at line 291. `fasttest.related` counts only `test_*.py` and `*_test.py` files (lines 280\u2013283), while `narrow_command` preserves `--doctest-modules` and the `src` target (lines 57\u201386). The run can therefore execute the repo's source doctests while another test run holds the only place. Explicitly named test files outside those filename patterns have the same gap.",
+        "body": "Raise: Functional \u2014 `few_tests` checks only the command tokens for a doctest option, then grants a free run when at most five conventionally named test files are selected. In a client with `test = \"pytest tests src\"` and an unchanged `pyproject.toml` containing `addopts = \"--doctest-modules\"`, five changed test files qualify even though pytest also runs source doctests. `fasttest.py:31\u201354` shows that pytest options can come from configuration or `PYTEST_ADDOPTS`; `fasttest.py:276\u2013279` counts only `test_*.py` and `*_test.py`. An explicitly named file outside those patterns, such as `tests/acceptance.py`, likewise remains in the command without being counted. These runs can exceed the five-file limit while another run holds the only test place. This is new evidence beyond the previously reported command-line doctest case.",
         "file": "src/forge/review.py",
-        "line": 291,
+        "line": 288,
         "priority": "P1",
-        "title": "Pytest doctests can bypass the test place despite an unrestricted run"
+        "title": "Configured pytest collection can bypass the test place"
+      },
+      {
+        "body": "Raise: Gate \u2014 The supplied proof list names only the doctest-option and five-file test-lane cases. It omits both remaining Done-when details: a close review and a plan read starting without an agent place. The changed command-level test at this line exercises those behaviours, but neither has an entry in the required whole-change proof list.",
+        "file": "tests/test_fix_agent_runs_wait_in_line.py",
+        "line": 65,
+        "priority": "P1",
+        "title": "Not done: proof list"
       }
     ],
-    "id": "f0a049af-6eac-4051-95ce-04aaa44a2e9e",
+    "id": "26554a1e-26c1-4676-90e1-7953c5bb49fd",
     "status": "blocked"
   },
   "round": 2,
@@ -49,6 +57,10 @@
     },
     {
       "at": "2026-10-11T13:30:29.940385+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:13:37.306733+00:00",
       "step": "review"
     }
   ],

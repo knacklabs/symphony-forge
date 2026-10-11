@@ -2102,6 +2102,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tConfigured pytest collection can bypass the test place\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 288,
+      "text": "Configured pytest collection can bypass the test place",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2432,6 +2443,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 254,
+      "text": "Not done: Resolve conflicting fix-round directions",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 264,
+      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting\tbrief-close-pushes",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -2626,6 +2659,17 @@
       "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
       "from": "blocking",
       "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 464,
+      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
+      "from": "blocking",
+      "item": "worker-brief-faster",
       "status": "open",
       "closed_by": null
     },
@@ -2883,6 +2927,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_sync_conflicts.py\tThe new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
       "kind": "bug",
       "path": "tests/test_close_sync_conflicts.py",
@@ -3090,6 +3145,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_agent_runs_wait_in_line.py\tNot done: proof list\treviews-skip-agent-line",
+      "kind": "bug",
+      "path": "tests/test_fix_agent_runs_wait_in_line.py",
+      "line": 65,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py\tNot done: Upgrade a client adopted on v1.2.3 to v1.2.4\trelease-124",
@@ -4225,6 +4291,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5156,61 +5233,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 254,
-      "text": "Not done: Resolve conflicting fix-round directions",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 264,
-      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 464,
-      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     }
