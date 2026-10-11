@@ -16,24 +16,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f8d2630dd0076dd04216e0451ab7320813b1ec53d697c878357a272852032007",
-    "changed": "75360c6c25f5b598e1be1d2c602382f024545ccacf75566edf04b3db16eae040",
-    "commit": "91c1b7be4903e0f5ef6acb19ddbaaa2391224743",
+    "branch_diff": "da600a529e056ff065c780591634420b2e079d8bc2e5090c798dd1f8c5c45c29",
+    "changed": "939662410c70a49819ed71be770f9f1bb0d29fa27dab401309230c4a811a8642",
+    "commit": "ce887a7a3302688ee376e095c512fbf9e1cf99cc",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Data loss. During an upgrade, an earlier-release `forge work` run can hold this lock, causing sync to skip its chat and say the run will keep it. The v1.2.2 worker takes the same lock (`tests/fixtures/forge-v1.2.2/src/forge/worker.py:80`) but commits only status (`:116`); it never commits the chat binding. Upgrade invokes sync once (`src/forge/upgrade.py:163-165`), so when that worker finishes, the chat remains only in `.git/forge` and is lost if the local record disappears or work moves to another machine. The named proof holds a current-release worker after running the old release sequentially, so it does not catch this case.",
+        "body": "Raise: Not done. During an upgrade, another item's earlier-release `forge work` run can hold a chat lock. This branch refuses `forge sync` at this line before `sync.write` refreshes any generated files (`src/forge/sync.py:509-510`); it neither waits for that run nor refreshes the files while leaving its chat alone. The named old-release test asserts that refusal, so it does not prove the Done-when behavior for this case. The refusal also prints a problem and a `Next:` line rather than saying what it is waiting for in one line.",
         "file": "src/forge/codex.py",
-        "line": 329,
+        "line": 336,
         "priority": "P1",
-        "title": "Old-release runs leave skipped chats only in local records"
+        "title": "Not done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,"
       }
     ],
-    "id": "147cc6a5-e96d-4f97-83da-53b36f29cf7f",
+    "id": "3d0f7d17-fa18-4931-8063-869200231007",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:29:38.316552+00:00",
@@ -50,8 +50,16 @@
     {
       "at": "2026-10-11T16:15:44.399651+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:38:05.756886+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/codex.py",
+    "wait_id": "31200b99-6ad3-4335-810d-9ccf59db7d65"
+  },
   "why": "forge sync refuses whenever any other item's forge work or land is running on the machine, so workers copy the guide by hand",
   "worker": "codex"
 }
