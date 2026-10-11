@@ -19,31 +19,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f60c3160b89b92686e1dd5e44e4deabd65531bcacd5cedd9f5a9df2979c289d8",
-    "changed": "932fdaf452aef8ac0893d7c9cc4592b1ccec1d8819ebacb8f97d28bdfa4d60e2",
-    "commit": "e091bdc708208cb7bc18ae3d0e6e6c21b87e1f35",
+    "branch_diff": "ca27b7588187f8697933f4c33b75c86831a8a4a501e3332ff7cf68f748f8e666",
+    "changed": "901391c37a613ad6e5609cd5acae0b5097ddcd70a7b7464c0bb3b58b565a8b67",
+    "commit": "3950aac3ee74847832fc11969cdccda944cc9a7e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The change to `codex.preserve_chats` resolves a temporary worktree path, and the new `machine-restart` test exercises chat recovery through a symlinked temporary directory. Neither supports the shared time record, publication, story runways, or plain times owned by RECORD. Both `src/forge/codex.py` and the unrelated test additions in `tests/test_worker_and_reader_chats_survive_rounds.py` are outside Scope.",
-        "file": "src/forge/codex.py",
-        "line": 306,
-        "priority": "P1",
-        "title": "Unrelated chat recovery changes exceed this part's scope"
-      },
-      {
-        "body": "Item 12 still lacks the approved-but-unstarted count, blocking problems in Needs you, pinned folding sections with story keys and cold-read history, and pane rounding. The Tasks table assigns these to COUNTS, WAITS, NAV and PANE, whose changes are not in this branch; the current board still renders the old page.",
+        "body": "The board still renders the old card page and returns the old count fields; it has no pinned folding sections, story keys, or cold-read history. Approved but unstarted stories and merged fixes still use the old counts, blocking plan problems do not appear in Needs you, and pane times are not rounded. The Tasks table assigns these parts of item 12 to COUNTS, WAITS, NAV and PANE, so they remain work for those tasks.",
         "file": "src/forge/board.py",
         "line": 63,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "3f097bbd-25f1-467e-befa-27bc18b45ea2",
-    "status": "blocked"
+    "id": "50e35f7e-1cef-4568-992a-0b1b7c704681",
+    "status": "clean"
   },
   "round": 14,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -83,6 +76,10 @@
     },
     {
       "at": "2026-10-11T09:19:01.545161+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T12:10:23.990017+00:00",
       "step": "review"
     }
   ],
