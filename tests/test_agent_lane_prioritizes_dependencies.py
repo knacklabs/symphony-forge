@@ -111,3 +111,58 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
             assert processes[item].wait(timeout=30) == 0, outputs[item].read_text("utf-8")
     finally:
         finish(repo, list(processes.values()))
+
+
+def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
+        env, tmp_path, monkeypatch, claude_payload):
+    repo = env.repo
+    config = (repo.path / "forge.toml").read_text("utf-8")
+    repo.write("forge.toml", config + GRILL +
+               'models.fix = { model = "opus", effort = "high" }\n')
+    repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Plan the unfinished story")
+    _land_fixture(repo)
+    _install(repo.bin, "claude", READER.format(python=sys.executable))
+    # Neither of these runs unblocks a part, so admission must finish inspecting the plans.
+    doc = DOC.replace("| SAVE | yes |", "| none | yes |")
+    tree = ready(repo, "SHOP", doc)
+    approved = hook(repo, claude_plan(claude_payload, doc, cwd=tree))
+    assert approved.returncode == 0, approved.stderr
+    for part in ("SHOW", "SHARE"):
+        made = repo.forge("task", "start", f"SHOP/{part}")
+        assert made.returncode == 0, made.stderr
+    machine_cores(repo, 2)
+    occupied = make_work(repo, "Already running")
+    hold_agents(env)
+    processes = []
+    try:
+        process, _ = start(repo.path, tmp_path / "occupied-history", repo, "work", occupied[0])
+        processes.append(process)
+        _until(lambda: (repo.bin / f"started-{occupied[1]}").exists(), "occupied agent place")
+        counts = []
+        for index, part in enumerate(("SHOW", "SHARE")):
+            if index:
+                # Text fixtures represent landed history; stale story refs must not reopen it.
+                for number in range(40):
+                    key = f"FINISHED-{number}"
+                    repo.write(f".factory/stories/{key}/story.json",
+                               json.dumps({"status": "done", "branch": f"story/{key}"}))
+                    repo.write(f"plans/{key}.md", doc)
+                repo.git("add", "-A")
+                repo.git("commit", "-qm", "Earlier stories are finished")
+                _land_fixture(repo)
+                for number in range(40):
+                    repo.git("branch", f"story/FINISHED-{number}")
+            trace = tmp_path / f"admission-{index}.jsonl"
+            with monkeypatch.context() as tracing:
+                tracing.setenv("GIT_TRACE2_EVENT", trace.as_posix())
+                process, output = start(repo.path, tmp_path / f"history-{index}",
+                                        repo, "work", f"SHOP/{part}")
+            processes.append(process)
+            _until(lambda: "in line." in output.read_text("utf-8"), "waiting agent admission")
+            events = [json.loads(line) for line in trace.read_text("utf-8").splitlines()]
+            counts.append(sum(event.get("event") == "start" for event in events))
+        assert counts[1] <= counts[0] + 2, counts
+    finally:
+        finish(repo, processes)

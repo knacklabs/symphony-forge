@@ -79,7 +79,7 @@ def remember(top: Path) -> None:
 
 def _unblocks(top: Path, item: str) -> bool:
     """Read current plans and merge state locally; admission needs no board or GitHub history."""
-    from forge import story, task
+    from forge import board, story, task
 
     landed = story.landed_ref(top)
     paths = set(repo.git("ls-tree", "-r", "--name-only", landed, "--", ".factory/stories", cwd=top).splitlines())
@@ -88,10 +88,11 @@ def _unblocks(top: Path, item: str) -> bool:
     keys.update(ref.split("/story/", 1)[1] for ref in repo.git(
         "for-each-ref", "--format=%(refname)", "refs/heads/story/",
         "refs/remotes/origin/story/", cwd=top).splitlines())
+    states = board._blob_texts(top, [f"{landed}:{path}" for path in paths if path.endswith("/story.json")])
+    finished = {spec.split(":", 1)[1].split("/")[2] for spec, text in states.items()
+                if story.json_of(text).get("status") == "done"}
     busy = task._started(landed, top)
-    for key in keys:
-        if story.json_of(story.show(top, landed, repo.state_path(key))).get("status") == "done":
-            continue
+    for key in keys - finished:
         for tid, part in task.rows(task.sections(story._plan(top, key))).items():
             dependent = f"{key}/{tid.strip('` ')}"
             if repo.state_path(dependent) in paths:
