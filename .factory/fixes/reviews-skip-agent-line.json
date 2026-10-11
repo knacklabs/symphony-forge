@@ -16,27 +16,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f2651bf2637cbbbb08081c5fd1a9b5af89dbffa13cfa2465f26fbb87ed491add",
-    "changed": "02e573572a3d7024c30a06c5645f4615d510d17126c35234071cc44d3a17bee0",
-    "commit": "3c50fb61493fc1ddf0a4e4b7b32aebc560ee01ea",
+    "branch_diff": "18cd410455b3d5b131617ae3df8480ecb7f8236ba1f90cea66bef7105d029499",
+    "changed": "42cbf77ea1dc34731d9198294ff5872244e5deec157868c533d699fa29c65c64",
+    "commit": "78c9c88d2de1e898f0d50853d70fdeac266749eb",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional \u2014 A test command that includes the picker and a full test run takes no test place when the picker selects at most five files. `few_tests` recognizes the picker by substring, so a supported `fast_test` such as `forge test --pytest {base} && pytest tests` is admitted as small even though its second command runs the full suite. Concurrent runs can then exceed the machine's test limit; the ruling says other test commands must still wait.",
+        "body": "Raise: Functional \u2014 A standalone `fast_test = \"forge test --pytest {base}\"` can bypass the test place even when the run includes a full second suite. New evidence beyond the earlier compound-command finding is the picker\u2019s underlying `test` command: with `test = \"pytest tests && npm test\"` and an npm `node --test` script, `few_tests` counts only the selected Python files here. `fasttest.py:300-305,332` keeps the Node command, while `fasttest.py:57-86` narrows only pytest. Five selected Python files therefore admit an unrestricted full Node run outside the machine\u2019s test limit. The named lane proof covers a compound `fast_test`, but not this standalone-picker case.",
         "file": "src/forge/review.py",
-        "line": 269,
+        "line": 277,
         "priority": "P1",
-        "title": "Compound test commands can bypass the test place"
-      },
-      {
-        "body": "Raise: Test \u2014 The named proof creates only `tests/test_app.py` and checks a one-file run. The ruling defines \u201ca few\u201d as five or fewer picker-selected files. This test would still pass if admission incorrectly stopped at one file or extended beyond five, so it does not prove the stated boundary through `forge test`.",
-        "file": "tests/test_small_test_runs_skip_the_test_line.py",
-        "line": 37,
-        "priority": "P1",
-        "title": "Not done: the five-file picker boundary has an end-to-end lane test"
+        "title": "Standalone picker runs a full second suite without a test place"
       }
     ],
-    "id": "4294e5f3-509b-4443-87ea-aa7b0eadcdaa",
+    "id": "3d159ded-306e-4fc5-8349-027c9d071ab4",
     "status": "blocked"
   },
   "round": 1,
@@ -48,6 +41,10 @@
     },
     {
       "at": "2026-10-11T10:07:54.624462+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T11:50:16.269683+00:00",
       "step": "review"
     }
   ],
