@@ -272,8 +272,9 @@ LARGE = ("More than a third of the test files selected; skipping local tests and
          "pull request's required checks.")
 
 
-def related(base: str) -> tuple[list[str], list[str], bool]:
-    """The selected test files, all test files, and whether shared inputs changed (all selected)."""
+def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
+    """The selected test files, all test files, whether shared inputs changed (all selected), and
+    the changed sources no test file names."""
     changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
     tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
@@ -284,11 +285,10 @@ def related(base: str) -> tuple[list[str], list[str], bool]:
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(not manifest_test_inputs_unchanged(Path(name), base)
+    shared_changed = any(not manifest_test_inputs_unchanged(Path(name), base)
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), base) for name in shared):
-        return [path.as_posix() for path in tests], [path.as_posix() for path in tests], True
+           or not own_version_only(Path(name), base) for name in shared)
     modules = []
     for name in changed:
         path = Path(name)
@@ -299,10 +299,15 @@ def related(base: str) -> tuple[list[str], list[str], bool]:
             parts.pop()
         if parts:
             modules.append((".".join(parts), path))
+    missed = [source.as_posix() for module, source in modules
+              if not any(mentions(path, module, source) for path in tests)]
+    everything = [path.as_posix() for path in tests]
+    if shared_changed:
+        return everything, everything, True, missed
     selected = sorted(path.as_posix() for path in tests
                       if path.as_posix() in changed
                       or any(mentions(path, module, source) for module, source in modules))
-    return selected, [path.as_posix() for path in tests], False
+    return selected, everything, False, missed
 
 
 def pytest_tests(base: str, command: str) -> int:
@@ -317,7 +322,11 @@ def pytest_tests(base: str, command: str) -> int:
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
-    selected, tests, shared_changed = related(base)
+    selected, tests, shared_changed, missed = related(base)
+    # Tests that run the program from outside never name its files, so say what local runs miss.
+    from forge.review import GAP  # imported late: review's imports lead back here
+    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+          end="", flush=True)
     if not shared_changed:
         if not selected:
             print("No changed or module-related test files to run.")

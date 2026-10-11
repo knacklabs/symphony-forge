@@ -38,6 +38,8 @@ $delegation
   only what is committed.
 - Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
   `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- When you change text the program prints (messages, pull request text, board lines), search the
+  tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
