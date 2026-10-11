@@ -1,0 +1,14 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/worker-tests-once",
+  "done_when": "The worker brief tells workers to run the related tests once at the end of their turn, rerunning only what failed, and never to poll the machine lines",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:46.584899+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Workers run their tests about three times per turn and watch the test line while waiting"
+}
