@@ -2,12 +2,67 @@
   "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
   "branch": "fix/admit-by-load",
   "done_when": "Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes, so queue waits stay under five minutes per round",
+  "flagged": [
+    "src/forge/machine.py",
+    "src/forge/review.py",
+    "tests/test_worker_runs_wait_for_machine_load.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "106203b60b77e3f6c1bd69d1cd8503d40aba1467154afbc1069e13f2912b628b",
+    "changed": "4fe8d1b37de49f7dd3d23c3338405392cfdcb750bac32414aa6282e1f858c323",
+    "commit": "c27ca757cc83397ea04d49029b2c3aff9401efa9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. A worker test command with an explicit process count, such as `pytest -n 4`, still starts four test workers. `test_cpus()` only sets environment variables, while `review.test_run` and `fasttest.py` run the configured command without limiting its process count. The named proof runs a Python command that prints the environment value; it never counts test processes.",
+        "file": "src/forge/review.py",
+        "line": 296,
+        "priority": "P1",
+        "title": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,"
+      },
+      {
+        "body": "Raise: Functional. Admission divides load by `os.cpu_count()`, but Forge sizes its agent lane with `os.process_cpu_count()` when available (`machine.py:37`). On a host with 64 CPUs where Forge can use eight, load 17 is treated as 0.27 per core instead of 2.13 per available core. Additional work rounds are admitted into the eight CPUs that the fix is meant to protect. The new test sets both CPU counts to the same value, so it misses this case.",
+        "file": "src/forge/machine.py",
+        "line": 57,
+        "priority": "P1",
+        "title": "Load per core is understated when Forge has fewer available CPUs than the host"
+      },
+      {
+        "body": "Raise: Gate. The supplied proof list covers load admission and the test-process budget but has no entry for the Done-when detail that queue waits stay under five minutes per round. The admission test waits for the second round to start eventually; it neither records nor bounds the queue wait.",
+        "file": "tests/test_worker_runs_wait_for_machine_load.py",
+        "line": 60,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      },
+      {
+        "body": "Raise: Test. The named admission proof checks load per core at 2.0 and 1.0, but never at 1.5. Changing the admission comparison from `>= 1.5` to `> 1.5` would leave this test green while starting a work round at a load the Done-when explicitly excludes.",
+        "file": "tests/test_worker_runs_wait_for_machine_load.py",
+        "line": 56,
+        "priority": "P1",
+        "title": "Not done: the 1.5 load-per-core boundary test"
+      },
+      {
+        "body": "Raise: Test. The two-process test runs only in the new repo fixture. The earlier-release adoption fixture is used only by the load test; the existing upgrade test checks a separately launched test run's four-core budget, not a worker's two-process budget. This leaves the required existing-repo upgrade case unproved for the second Done-when item.",
+        "file": "tests/test_worker_runs_wait_for_machine_load.py",
+        "line": 66,
+        "priority": "P1",
+        "title": "Not done: two-process proof for previously adopted repos"
+      }
+    ],
+    "id": "d13316b1-6e1a-4390-b11b-935463f6e859",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:31:53.460889+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T12:29:28.923454+00:00",
+      "step": "review"
     }
   ],
   "why": "Up to nine worker runs share eight cores at load 17, so every step queues and the local suite runs twice as slow as CI"
