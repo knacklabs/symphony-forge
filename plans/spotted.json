@@ -2883,6 +2883,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_sync_conflicts.py\tThe new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
       "kind": "bug",
       "path": "tests/test_close_sync_conflicts.py",
@@ -2989,6 +3000,17 @@
       "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
       "from": "worker",
       "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_turn_speed_receipts.py\tNot done: proof list\tfast-mode-visible",
+      "kind": "bug",
+      "path": "tests/test_codex_turn_speed_receipts.py",
+      "line": 83,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "fast-mode-visible",
       "status": "open",
       "closed_by": null
     },
@@ -4214,6 +4236,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5145,28 +5178,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     }

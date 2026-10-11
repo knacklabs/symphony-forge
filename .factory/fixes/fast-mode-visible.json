@@ -12,25 +12,26 @@
   "flagged": [
     "src/forge/codex.py",
     "src/forge/codex_turn.py",
-    "src/forge/doctor.py"
+    "src/forge/doctor.py",
+    "tests/test_codex_turn_speed_receipts.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "54f18c6ff27a6298661b79eba8830ee07c4df671c7fcaad82246c3223849a5b0",
-    "changed": "91dead5aedc98cb73c70994ede1f7a2bfb29e5989002a8d6da9b7ff219dcecc6",
-    "commit": "6b51a3046c9bc7d616fc154e7fbcd5b11330a185",
+    "branch_diff": "cf77e9c68d25d8639a77c9ed7d317b1b325bc0bcee727b018a8ac8b7d98be7c8",
+    "changed": "110be2c2f726a0e59ff30c67f1dbbf2a470b1e8aae1850c0a3806202a65f8ef7",
+    "commit": "98be4135fd38c71d3109781da8f39beed1ee3abf",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A normal queued `forge work` run can print the machine-lane wait message before this Fast-unavailable notice. The notice is emitted only after Codex selects a model here, while `machine.join` prints its wait message earlier (`src/forge/machine.py:159`). A split-worker run that falls back from Claude also prints the Claude building and fallback messages first (`src/forge/worker.py:111,209`). In both cases, the run's first stdout line does not explain that Fast was wanted but unavailable. The first-line test covers neither queue contention nor fallback.",
-        "file": "src/forge/codex.py",
-        "line": 627,
+        "body": "Raise: Gate. The two proof-list entries cover the first-line notice, per-turn records, and doctor, but omit the Done-when requirement that Fast is used whenever the model offers it. The named receipt test checks expected recorded tiers at line 83; the request assertion in `tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting` is not named in the proof list. Add that proof so the Fast-use requirement is accounted for.",
+        "file": "tests/test_codex_turn_speed_receipts.py",
+        "line": 83,
         "priority": "P1",
-        "title": "Not done: Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast waswanted"
+        "title": "Not done: proof list"
       }
     ],
-    "id": "6a907a6d-ce9c-48a3-b588-71e563007b5f",
+    "id": "e26e9201-8e4e-4629-aa65-5baf3ade1702",
     "status": "blocked"
   },
   "round": 1,
@@ -46,6 +47,10 @@
     },
     {
       "at": "2026-10-11T13:05:10.073585+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:17:39.995486+00:00",
       "step": "review"
     }
   ],
