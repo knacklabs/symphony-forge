@@ -2025,6 +2025,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/prcheck.py\tforge doctor rejects healthy split workflows\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 179,
+      "text": "forge doctor rejects healthy split workflows",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/quicktest.py\tNot done: forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {\trepos-without-a-quick-test-setting-don-t",
       "kind": "bug",
       "path": "src/forge/quicktest.py",
@@ -2883,6 +2894,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_sync_conflicts.py\tThe new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
       "kind": "bug",
       "path": "tests/test_close_sync_conflicts.py",
@@ -3174,6 +3196,17 @@
       "path": "tests/test_fix_gate_on_split_checks.py",
       "line": 32,
       "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: test six split groups at new-client init\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 45,
+      "text": "Not done: test six split groups at new-client init",
       "from": "blocking",
       "item": "gate-on-split-checks",
       "status": "open",
@@ -4225,6 +4258,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5156,28 +5200,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     }

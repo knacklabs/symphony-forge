@@ -16,24 +16,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "25fe6438f53444bc63d3153c8810628bd8d9226eeba5971eed5b1d5c45cd75b7",
-    "changed": "ba7b8bc72e94ad5cb06894f6050810c2fb7f2caa139ef49101ba42cba0b004a3",
-    "commit": "80867f6c7e1958b3a55c642f300684f7680fe859",
+    "branch_diff": "414a6ae28d299b50f172b0098ba8e9f1f3a545b53cb3b243ce6a251eb9d17b14",
+    "changed": "8bfc797bb6b41004485e081b9aba1efc2bff13a45f10ab38e5dc195d69c95876",
+    "commit": "c967e8ea5a2c841359d8e4e83bf7c274193f265e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. The split check treats any command containing the word `pytest` as a direct pytest invocation. In a Python client with pytest-split listed in `pyproject.toml` and `test = \"make pytest\"`, init or sync generates `make pytest --splits 6 --group ...`. Make rejects `--splits`, so the required `tests` check fails even when the suite passes. The documented one-group fallback for commands that are not direct pytest invocations does not apply.",
+        "body": "Raise: Functional. For any repo whose generated workflow has six groups, `ships()` appends split flags to `cfg[\"test\"]` before writing the `run:` line. The unchanged `forge doctor` check at `src/forge/doctor.py:409-410` looks for the original command as an exact `run:` line, so it reports that the tests check does not run the configured command and exits with an error even immediately after a successful sync. This affects Forge's own repo and split-enabled clients.",
         "file": "src/forge/prcheck.py",
-        "line": 174,
+        "line": 179,
         "priority": "P1",
-        "title": "Not done: Generated gate fails for Makefile pytest commands"
+        "title": "forge doctor rejects healthy split workflows"
+      },
+      {
+        "body": "Raise: Test. The proof list names `test_1` for new clients, but its init assertion checks only a one-group workflow. It adds a pytest-split pyproject and checks six groups only after `forge sync` (lines 43-46 and 70-81). A regression where `forge init` fails to generate six groups for a new client that already lists pytest-split would leave this proof green, so the Done-when init behavior lacks its command-level test.",
+        "file": "tests/test_fix_gate_on_split_checks.py",
+        "line": 45,
+        "priority": "P1",
+        "title": "Not done: test six split groups at new-client init"
       }
     ],
-    "id": "badfe2d9-601f-4e3f-93a4-0a700efc5186",
+    "id": "d9a111f7-59d5-4532-ab92-e67fc166a974",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:11:31.476676+00:00",
@@ -46,8 +53,16 @@
     {
       "at": "2026-10-11T13:08:38.906309+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:28:26.522930+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/prcheck.py",
+    "wait_id": "9a72f9af-0940-4002-88ae-ac38eb06bde0"
+  },
   "why": "The check that gates merging runs the whole suite as one 35-minute job; the six faster test groups run only in a workflow nothing waits on",
   "worker": "codex"
 }
