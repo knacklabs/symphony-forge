@@ -10,18 +10,27 @@
   },
   "done_when": "Close starts the review at the same time as its tests, so a round takes about as long as the slower of the two; a red test or a P0/P1 finding still stops the round, and both results are reported together. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
-    "src/forge/close.py"
+    "src/forge/close.py",
+    "tests/test_close_runs_tests_and_review_together.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f0d643e2d474bcfb709e25967b5f95d4ed4732029017064fab230597ff1a29e8",
-    "changed": "bfa7927fb3a053436ea96390e13f2a12c68ab6584d1d0c7f887649a038ee7af5",
-    "commit": "10da90113655b22f1c2068a0385c0d612efc214d",
+    "branch_diff": "173199f70a4c7e9a7c115bfd59a7b5a1ec43815483737d58c07c62cd7c4d0925",
+    "changed": "d325913df09cdd4dce581f81ee5ef2fde6c86abe7729a301ec345a7a1006299c",
+    "commit": "726f037c61665a940a8385fb958c9aefa7d99801",
     "dismissals": [],
-    "findings": [],
-    "id": "41009692-5bba-477e-bab2-f75bc44f72b9",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Test. The required end-to-end test fails intermittently in the repository suite. Its 15-second socket timeout also covers preparation and review-lane admission; the proof list records three post-commit timeout failures and about 33 seconds before review-lane admission. Those failures do not show that close ran tests and review sequentially, but they leave the new-client and earlier-adoption cases without reliable suite proof. The direct diagnostic passes do not resolve the full-suite failure.",
+        "file": "tests/test_close_runs_tests_and_review_together.py",
+        "line": 51,
+        "priority": "P1",
+        "title": "Not done: tests/test_close_runs_tests_and_review_together.py::test_1_close_starts_tests_and_review_together_and_reports_both"
+      }
+    ],
+    "id": "84719ec5-4341-40e8-9dee-57c24efd0607",
+    "status": "blocked"
   },
   "round": 4,
   "status": "fixing",
@@ -36,6 +45,10 @@
     },
     {
       "at": "2026-10-10T17:55:15.151775+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T03:59:35.108704+00:00",
       "step": "review"
     }
   ],
