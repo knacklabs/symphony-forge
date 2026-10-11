@@ -63,6 +63,8 @@ REFUSALS = {
     "wrong_app": ("{reader} is the cold reader of {doc}, so its next round can't start from {reader}.",
                   "run forge read {target} from {app}"),
     "no_read": ("{doc} has no cold read.", "forge read {target}"),
+    "builders_only": ("{doc} passed its cold read and changed since only below `## For the builders`, "
+                      "so it needs no new round.", "forge next"),
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
@@ -195,6 +197,10 @@ def read(args: Any) -> int:
     if blocked_rounds >= 3:
         repo.refuse(REFUSALS["read_loop"], target=target)
     later = bool(record.get("read_hash"))
+    doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
+    if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
+            and not changed_since_read(record["read_hash"], doc_hash, _text(doc), top)):
+        repo.refuse(REFUSALS["builders_only"], doc=rel)  # an edit that needs no new approval
     if is_story:
         text = _text(doc)
         parsed = _parsed(text, rel)
@@ -229,8 +235,8 @@ def read(args: Any) -> int:
     if gone:
         codex._record(codex._item_file(top, target, ".json", "Grill"),
                       **{"conversation" if recorded == "codex" else "claude": None})
-    first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
-                                        (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
+    first, again, edit, look, cap, head = re.split(r"<!-- forge:(?:round|edit|look|cap|notes) -->\n",
+                                                   (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
 
     def remember_reader(chat: str) -> None:
@@ -265,8 +271,9 @@ def read(args: Any) -> int:
         fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
                     touched="(not available)" if diff == "(not available)" else
                     ", ".join(touched) or "the title")
-        if passed(record, findings):  # only an edit since a passing round: read just that edit
-            again = edit
+        # Unchanged text gets two rounds of notes; from round 3 only the diff can block.
+        again = edit if passed(record, findings) else again.replace(
+            "${look}", look if round_number < 3 else cap)
         blocking = {n: block for n, block in blocks.items()
                     if not ADVISORY.match(block.split(". ", 1)[1])}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))

@@ -159,14 +159,7 @@ Check:
    - Raise a kept finding again only with new evidence of a distinct defect, as
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
-2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
-   and What counts: each "Done when" item's rules and the test that proves each, shared
-   names no earlier task pins, task size, and Forge's general traps and this repository's own
-   known traps:
-
-$traps
-
-Write only your new findings, as a numbered list starting at $next, in your first round's format.
+${look}Write only your new findings, as a numbered list starting at $next, in your first round's format.
 Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
 Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
 advisory notes need no disposition or another round.
@@ -197,6 +190,23 @@ Block only when the plan is wrong, contradicts itself, or a builder could not ac
 Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
 advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
+
+<!-- forge:look -->
+2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
+   and What counts: each "Done when" item's rules and the test that proves each, shared
+   names no earlier task pins, task size, and Forge's general traps and this repository's own
+   known traps:
+
+$traps
+
+<!-- forge:cap -->
+2. This is round $round: the text the diff does not touch has had its two rounds of notes.
+   Block only on a gap in the diff and the sections it touches, or on one of those findings
+   that is not closed. Any other note on unchanged text is `Advisory:`. Apply your first
+   round's checks and What counts to the diff, including Forge's general traps and this
+   repository's own known traps:
+
+$traps
 
 <!-- forge:notes -->
 # Cold read notes

@@ -748,8 +748,10 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 `## For the builders` heading is shown whole. The approval binds "What changes for you" and
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
-below `## For the builders` needs no new round either; an edit above it does, and that round
-checks only the edit and the sections it touches.
+below `## For the builders` needs no new round either, and `forge read` refuses to run one; an
+edit above it does, and that round checks only the edit and the sections it touches. Unchanged
+text gets two rounds of notes: from round 3 on, a reader blocks only on what changed since its
+last round or on an earlier blocking finding that is not closed.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
