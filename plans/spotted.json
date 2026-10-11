@@ -1200,11 +1200,33 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/deny.py\tA heredoc written to a script hides a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 219,
+      "text": "A heredoc written to a script hides a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/deny.py\tArithmetic left shift or a partly quoted delimiter can hide a prohibited commit\thook-n-flag",
       "kind": "bug",
       "path": "src/forge/deny.py",
       "line": 208,
       "text": "Arithmetic left shift or a partly quoted delimiter can hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tEscaped space lets a comment hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 209,
+      "text": "Escaped space lets a comment hide a prohibited commit",
       "from": "blocking",
       "item": "hook-n-flag",
       "status": "open",

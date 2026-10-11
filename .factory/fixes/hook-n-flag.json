@@ -16,27 +16,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "39bdd698d4e0253eb8dbf90de5bd021541da93869faa430d4bdbf3e7c47747d4",
-    "changed": "869377c07b12cd2c7897fd6123dfa9615b8afd3fb4d6b9fd17edeb6b4aaadcd6",
-    "commit": "ce012e053aba9fee6398dfd4ab98757c5a3d2df3",
+    "branch_diff": "44a0b95b4b70dbc33e9ee7794a0816aabf7f5474800fa380b962472e9da7d4b7",
+    "changed": "5d8a3a574f0aeb16f0e883075cfc2868a0e1d723bb6fe69fa59c8f29e6e3da64",
+    "commit": "b5a6920828e1d01a147525aaf1f15b1e15a1e2bf",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Security. The heredoc matcher at line 208 treats `<< 2` in `echo $((1 << 2))` as a heredoc opener. It then discards a following `git commit -n` line while searching for a line containing only `2`, so the hook permits a command that skips Git hooks. It also reads `<<E\"OF\"` as a heredoc ending at `E` rather than `EOF`, which can discard a prohibited commit after the real heredoc ends.",
+        "body": "Raise: Security. At line 209, the scanner treats `#` after an escaped space as a comment. In `echo x\\ #note; git commit -n`, the shell treats `#note` as part of the argument and executes the commit, but the scanner discards everything from `#` onward. The hook therefore allows a commit that skips hooks.",
         "file": "src/forge/deny.py",
-        "line": 208,
+        "line": 209,
         "priority": "P1",
-        "title": "Arithmetic left shift or a partly quoted delimiter can hide a prohibited commit"
+        "title": "Escaped space lets a comment hide a prohibited commit"
       },
       {
-        "body": "Raise: Not done. The shell check at lines 219\u2013221 restores every heredoc body if an earlier command invokes `bash`. For `bash -c true && git commit -F - <<'EOF'` followed by a message line mentioning `git commit -n`, the hook inspects that message as a command and refuses the commit, although the commit has neither prohibited option. The named allowed tests do not put a shell command before a commit whose message mentions `-n`.",
+        "body": "Raise: Security. Line 219 treats a `cat` heredoc as inert whenever there is no pipe on its opener line. For `cat > script.sh <<'EOF'` with `git commit -n` in the body, followed by `bash script.sh` in the same command, the hook removes the commit from inspection even though the shell executes it.",
         "file": "src/forge/deny.py",
-        "line": 221,
+        "line": 219,
+        "priority": "P1",
+        "title": "A heredoc written to a script hides a prohibited commit"
+      },
+      {
+        "body": "Raise: Not done. Line 216 recognizes a stdin commit message only for literal `git commit -F -`. A valid `git -C web commit -F - <<'EOF'` message containing `git commit -n` is retained and parsed as a command, so the hook refuses a commit that has neither prohibited option. The same gap affects `git commit --file=-`. The named allowed proof covers only literal `git commit -F -`.",
+        "file": "src/forge/deny.py",
+        "line": 216,
         "priority": "P1",
         "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on"
       }
     ],
-    "id": "a5b27ff5-b0c0-4177-9347-7adeb35535fa",
+    "id": "901ab06e-67d4-4728-9d89-5dc89df73673",
     "status": "blocked"
   },
   "round": 1,
@@ -56,6 +63,10 @@
     },
     {
       "at": "2026-10-11T15:40:59.630113+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:36:01.870476+00:00",
       "step": "review"
     }
   ],
