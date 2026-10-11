@@ -39,6 +39,7 @@
     "id": "1e4a54d7-7100-4f98-9307-016c02b68962",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -50,5 +51,6 @@
       "step": "review"
     }
   ],
-  "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves"
+  "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves",
+  "worker": "codex"
 }
