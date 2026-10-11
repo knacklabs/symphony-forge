@@ -479,8 +479,6 @@ def machine_board(top: Path, history: Item | None = None,
                        or (history["dates"].get(repo.state_path(item)) if finished and kind != "story" else None))
         if finished and _when(finished_at):
             status += " on " + _day(_when(finished_at))
-        elif (state.get("stop") or {}).get("by") == "default":
-            status += " (its review loop stop was answered by the repo's default)"
         if worker:
             status = {"build": "Worker", "read": "Plan read", "review": "Review"}.get(worker["kind"], "Worker") + " running"
             if worker.get("elapsed") is not None:

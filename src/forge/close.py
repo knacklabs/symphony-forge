@@ -376,7 +376,11 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
     from forge import task  # close imports story, which imports task
 
     fixes = []
-    for _, finding in review.blocking(state.get("review") or {}):
+    result = state.get("review") or {}
+    dismissed = {d["finding"] for d in result.get("dismissals", [])}
+    for number, finding in enumerate(result.get("findings", []), 1):
+        if number in dismissed:
+            continue
         why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
                        f"({finding['file']}:{finding['line']})".split())
         done = " ".join(f"A review no longer finds: {finding['title']}".split())

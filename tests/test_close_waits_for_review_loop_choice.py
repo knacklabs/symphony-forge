@@ -14,7 +14,7 @@ from test_setup import _fresh_client
 
 GUIDANCE = (
     "Ask the human to narrow the part, split it, or accept the remaining findings. "
-    "Never re-run close or land past this stop until their choice is recorded."
+    "Run `forge land <item>` in the background after a close stop, or keep the current land running."
 )
 
 
@@ -33,6 +33,10 @@ def stopped(env, kind="fix"):
 
 @pytest.mark.parametrize("kind", ["fix", "task", "fix-claude"])
 def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, kind):
+    # Human-only waiting is now opt-in; the default keeps land alive for a timed answer.
+    toml = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
+    env.repo.git("push", "-q", "origin", "main")
     if kind == "fix-claude":
         _claude_only(tmp_path, monkeypatch, env.repo.bin,
                      (ROOT / "tests/stubs/autoreview").read_text())

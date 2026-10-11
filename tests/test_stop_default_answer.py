@@ -7,8 +7,11 @@ import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
+from test_hotspot_stop import seed, rounds
 from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
 from test_setup import _fresh_client
 
@@ -26,7 +29,14 @@ def follow_ups(env):
 
 
 def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
-    item, where = stopped(env)
+    seed(env, "src/a.py")
+    item, where = env.start_fix()
+    rounds(env, item, where, ["src/a.py"] * 2)
+    env.commit(where, "app.py", "print(3)\n")
+    env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py"),
+                        finding("P2", "Follow-up: advice", "src/a.py"),
+                        finding("P3", "Polish advice", "src/a.py")))
+    assert "Ask the human" in env.close(item).stderr
     before = len(env.review_calls())
     later(monkeypatch, 20)
     waiting = env.close(item)
@@ -44,18 +54,24 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
             "default choice: narrow the part to its Done-when lines.") in answered.stdout
     assert "The review left serious findings open" in answered.stderr
     assert len(env.review_calls()) == before
-    [branch] = follow_ups(env)
+    branches = follow_ups(env)
+    assert len(branches) == 3
+    messages = [env.repo.git("log", "-1", "--format=%s", b) for b in branches]
+    assert any("Follow-up: advice (src/a.py:1)" in message for message in messages)
+    assert any("Polish advice (src/a.py:1)" in message for message in messages)
+    branch = next(b for b in branches if "Round 3 defect" in
+                  env.repo.git("log", "-1", "--format=%s", b))
     assert (env.repo.git("log", "-1", "--format=%s", branch)
             == "Start the fix: Review finding left open by tidy-readme: Round 3 defect (src/a.py:1)")
     shown = env.repo.forge("next").stdout
     assert (f"The repo's default answered the review loop stop on The fix {item}: narrow it to its "
-            f"Done-when lines; follow-up fixes own the open findings: {branch.removeprefix('fix/')}.") in shown
+            "Done-when lines; follow-up fixes own the open findings:") in shown
     board = env.repo.forge("board", "--json")
-    assert "answered by the repo's default" in board.stdout
+    assert board.returncode == 0 and "fixing" in board.stdout
 
     # Closing again records nothing new; the owner can still reverse the default.
     assert env.close(item).returncode == 1
-    assert len(follow_ups(env)) == 1
+    assert len(follow_ups(env)) == 3
     reversed_ = env.close(item, "--resolve", "accept", "--reason", "The owner accepts these findings")
     assert reversed_.returncode == 0, reversed_.stdout + reversed_.stderr
     assert "Ready:" in reversed_.stdout
@@ -70,23 +86,41 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
     later(monkeypatch, 600)
     waiting = env.close(item)
     assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    waiting = env.repo.forge("land", item)
+    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
     assert "Ask the human" in env.repo.forge("next").stdout
     assert follow_ups(env) == []
 
 
-def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch):
-    where = _fix(land, "working", worked=True, changes={
-        "app.py": "print('hello')\n", "other.py": "print('hello')\n", "show.py": "print('hello')\n"})
-    land.reviews(*(blocked(finding("P1", "Greeting is missing", file=file))
-                   for file in ("app.py", "other.py", "show.py")))
-    assert "Ask the human" in _land(land).stderr
-    workers = len(_workers(land))
-    later(monkeypatch, 31)
-    land.reviews(blocked(finding("P1", "Greeting is missing", file="show.py")), CLEAN)
-    landed = _land(land)
+@pytest.mark.parametrize("entry", ["running", "same-file", "stopped"])
+def test_3_land_carries_on_and_the_worker_narrows(land, entry):
+    if entry == "stopped":
+        item, where = stopped(land)
+        land.reviews(CLEAN)
+    else:
+        if entry == "same-file":
+            seed(land, "app.py")
+        item = ITEM
+        where = _fix(land, "working", worked=True, changes={
+            "app.py": "print('hello')\n", "other.py": "print('hello')\n", "show.py": "print('hello')\n"})
+        paths = ["app.py"] * 3 if entry == "same-file" else ["app.py", "other.py", "show.py"]
+        land.reviews(*(blocked(finding("P1", "Greeting is missing", file=file))
+                       for file in paths), CLEAN)
+    # Advance only the clock; one real land invocation must wait and resume itself.
+    # Rerunning land after moving the clock missed the unattended failure.
+    shim = land.repo.bin / "forge"
+    clock = """import os, time
+from datetime import datetime, timedelta, timezone
+def advance(seconds):
+    current = datetime.fromisoformat(os.environ.get('FORGE_NOW') or datetime.now(timezone.utc).isoformat())
+    os.environ['FORGE_NOW'] = (current + timedelta(seconds=seconds)).isoformat()
+time.sleep = advance
+"""
+    shim.write_text(shim.read_text().replace("from forge.cli import main", clock + "from forge.cli import main"))
+    landed = _land(land, item)
     assert landed.returncode == 0, landed.stdout + landed.stderr
-    assert f"{ITEM} is ready; a human merges" in landed.stdout
-    assert len(_workers(land)) == workers + 1
+    assert f"{item} is ready; a human merges" in landed.stdout
+    assert "Nobody answered the review loop stop in 30 minutes" in landed.stdout
     brief = _workers(land)[-1]["brief"]
     assert "the repo's default choice: narrow this part to its Done-when lines" in brief
     assert where.exists()
