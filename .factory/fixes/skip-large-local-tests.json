@@ -3,12 +3,14 @@
   "branch": "fix/skip-large-local-tests",
   "done_when": "When the tests close would pick cover more than a third of the suite, close skips the local run, says so in one line, and relies on the pull request's required checks",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-11T07:11:51.424133+00:00",
       "step": "start"
     }
   ],
-  "why": "When a change touches many files, close's local tests turn into the full suite, which takes about an hour on a laptop while GitHub runs it anyway"
+  "why": "When a change touches many files, close's local tests turn into the full suite, which takes about an hour on a laptop while GitHub runs it anyway",
+  "worker": "codex"
 }
