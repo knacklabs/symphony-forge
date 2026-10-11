@@ -1,6 +1,13 @@
 {
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/sync-not-blocked",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12b1e-cef1-77f2-b73c-1c8e71c31b87",
+    "head": null,
+    "start": "6f2f1d5dc35a09b7a5cebab14634c0b71837ddfa"
+  },
   "done_when": "forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually holds, saying so in one line",
   "flagged": [
     "tests/test_sync_not_blocked_by_other_runs.py"
