@@ -1,0 +1,14 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/gate-on-split-checks",
+  "done_when": "The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when every group passes, for this repo and for client repos on init and after upgrade and sync",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:31.476676+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The check that gates merging runs the whole suite as one 35-minute job; the six faster test groups run only in a workflow nothing waits on"
+}
