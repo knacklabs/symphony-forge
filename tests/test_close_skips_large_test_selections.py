@@ -14,9 +14,10 @@ STORY = "FIX-SKIP-LARGE-LOCAL-TESTS"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
+@pytest.mark.parametrize("fast", [False, True], ids=["default-picker", "fast-test-picker"])
 @pytest.mark.parametrize("selection", [2, 3, "shared"])
 def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
-        env, monkeypatch, adopted, selection):
+        env, monkeypatch, adopted, fast, selection):
     # Real pytest writes the receipt; only review and GitHub are faked.
     if adopted:
         version = env.repo.forge("--version").stdout.split()[-1]
@@ -41,9 +42,12 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
     settings = (env.repo.path / "forge.toml").read_text("utf-8")
     settings = re.sub(r"^test = .*\n", "", settings, flags=re.M)
     settings = "test = " + json.dumps(command) + "\n" + settings
+    if fast:
+        settings = 'fast_test = "forge test --pytest {base}"\n' + settings
     env.repo.write("forge.toml", settings)
-    env.repo.write("conftest.py", "import pathlib, pytest\n"
+    env.repo.write("conftest.py", "import os, pathlib, pytest\n"
                    "@pytest.fixture(autouse=True)\ndef receipt(request):\n"
+                   "    assert 'FORGE_CLOSE_TESTS' not in os.environ\n"
                    f"    (pathlib.Path({json.dumps(log.as_posix())}) / request.node.name).touch()\n")
     for number in range(6):
         env.repo.write(f"tests/test_case_{number}.py",
@@ -73,5 +77,6 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
     # Explicit worker runs keep the old contract, even for shared inputs or large selections.
     tested = env.repo.forge("test", cwd=where)
     assert tested.returncode == 0, tested.stdout + tested.stderr
-    expected = {f"test_case_{number}" for number in range(6)}
+    expected = {f"test_case_{number}" for number in
+                range(6 if not fast or selection == "shared" else selection)}
     assert {path.name for path in log.iterdir()} == expected
