@@ -210,6 +210,12 @@
       "spec": "docs/specs/board-for-the-team.md",
       "status": "pending",
       "order": 75
+    },
+    {
+      "key": "FORGE-MAINONCE-1",
+      "title": "Pull requests take in main only on a real clash",
+      "status": "pending",
+      "order": 76
     }
   ],
   "epics": [

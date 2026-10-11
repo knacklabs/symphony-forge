@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MAINONCE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-11T07:35:34.985293+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Pull requests take in main only on a real clash",
+  "touches": 0
+}
