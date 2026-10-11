@@ -117,13 +117,18 @@ def work(args: argparse.Namespace) -> None:
     _, chosen, why = repo.worker(config, kind.lower(), design)
     print(f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
           f"because {why}", flush=True)
-    if note is not None and (pending := codex.record(top, item).get("question_id")):
-        repo.record_event(top, item, "owner wait end", wait_id=pending)
-        if published:
-            from forge import close
-            close._refresh_record(top, item, state)
-    if pending_merge := time_records.pending_merge_wait(top, item):
+    pr = None
+    if published:
+        from forge import close
+        pr = close._pull_request(top, state.get("branch") or repo.current_branch(top))
+    answered = note is not None and codex.record(top, item).get("question_id")
+    if answered:
+        repo.record_event(top, item, "owner wait end", wait_id=answered)
+    pending_merge = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
+    if pending_merge:
         repo.record_event(top, item, "owner wait end", wait_id=pending_merge["id"])
+    if pr and (answered or pending_merge):
+        close._refresh_record(top, item, state, pr)
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
@@ -269,7 +274,7 @@ def work(args: argparse.Namespace) -> None:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
-            if published and (asked or note is not None):
+            if published and (asked or note is not None or pending_merge):
                 from forge import close
                 close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():

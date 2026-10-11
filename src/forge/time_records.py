@@ -320,7 +320,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
             "total_seconds": round((end - start).total_seconds(), 3) if start and end and end >= start else None}
 
 
-def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "") -> str:
+def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "", *,
+               preserve_ready: bool = False) -> str:
     records = {name: [row for row in read(top, name) if row.get("item") == key]
                for name in ("events", "timings")}
     data = merged(item(top, key, state, **records), from_body(published))
@@ -328,17 +329,19 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "")
                                   for r in [*data.get("clean_reviews", []),
                                             *[e for e in data["events"] if e.get("event") == "review result"
                                               and e.get("outcome") == "clean"]]}.values())
-    try:
-        ready = json.loads(repo.ready_path(key, top).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        ready = {}
-    head = repo.git("rev-parse", "HEAD", cwd=top)
-    data["ready"] = None
-    if ready.get("commit") == head and ready.get("review") == "clean":
-        data["ready"] = {"commit": head, "review": "clean"}
-        if review := state.get("review"):
-            data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
-                                          for r in [*data["clean_reviews"], review]}.values())
+    # Only close publishes readiness; a history refresh may come from an older checkout.
+    if not preserve_ready:
+        try:
+            ready = json.loads(repo.ready_path(key, top).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            ready = {}
+        head = repo.git("rev-parse", "HEAD", cwd=top)
+        data["ready"] = None
+        if ready.get("commit") == head and ready.get("review") == "clean":
+            data["ready"] = {"commit": head, "review": "clean"}
+            if review := state.get("review"):
+                data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
+                                              for r in [*data["clean_reviews"], review]}.values())
     times = "; ".join(f"{label}: {duration(data['time_breakdown'][category])}"
                       for category, label in zip(CATEGORIES, LABELS))
     times = "; ".join(f"{kind}: {duration(data[f'{kind}_seconds'])}"
@@ -460,7 +463,7 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
 
 
 def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str:
-    history = how_it_went(top, key, state, body)
+    history = how_it_went(top, key, state, body, preserve_ready=True)
     def replace(block: re.Match[str]) -> str:
         text, count = HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
         return text if count else text.replace("<!-- forge:end -->", history + "\n<!-- forge:end -->", 1)

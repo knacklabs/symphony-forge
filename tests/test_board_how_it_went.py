@@ -39,10 +39,12 @@ def published(env, item, *, merged_at=None):
                                           ("question-wait", False), ("conflict-wait", False),
                                           ("item-totals", False), ("approved-runway-known", False),
                                           ("approved-runway-unknown", False), ("real-read-runway", False),
-                                          ("read-history-batching", False)],
+                                          ("read-history-batching", False), ("refresh-stale-receipt", False),
+                                          ("refresh-missing-receipt", False), ("resume-published-wait", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
-                              "approved-runway-unknown", "real-read-runway", "read-history-batching"])
+                              "approved-runway-unknown", "real-read-runway", "read-history-batching",
+                              "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-runway":
         story_runway(env, monkeypatch)
@@ -67,6 +69,10 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
         return
     if case == "read-history-batching":
         read_history_batching(env, monkeypatch)
+        return
+    if case.startswith("refresh-") or case == "resume-published-wait":
+        shared_ready_refresh(env, monkeypatch, case == "refresh-missing-receipt",
+                             case == "resume-published-wait")
         return
     client(env, previous)
     # GitHub only returns requested fields, including for older PRs outside GraphQL's window.
@@ -303,6 +309,72 @@ def read_history_batching(env, monkeypatch):
             counts[mode].append(len(calls))
     assert 0 < counts["json"][0] == counts["json"][1] <= 2, counts
     assert 0 < counts["html"][0] == counts["html"][1] <= 3, counts
+
+
+def shared_ready_refresh(env, monkeypatch, missing, wait_first):
+    install_claude(env.repo)
+    config = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", config.read_text("utf-8")
+               + 'models.lite = { model = "sonnet", effort = "medium" }\n')
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix(round=1)
+    first = env.close(item)
+    assert first.returncode == 0, first.stderr
+    published(env, item)
+    machine_a = env.repo.path
+    remote = env.repo.git("remote", "get-url", "origin")
+    machine_b = env.tmp / "new-ready-machine"
+    env.repo.git("clone", "-q", remote, str(machine_b))
+    env.repo.path = machine_b
+    resumed = env.tmp / "new-ready-worktree"
+    env.repo.git("worktree", "add", "-q", "-b", f"fix/{item}", str(resumed), f"origin/fix/{item}")
+    env.commit(resumed, "app.py", "print('newer ready basket')\n")
+    at = datetime.now(timezone.utc) + timedelta(seconds=60)
+    monkeypatch.setenv("FORGE_NOW", at.isoformat())
+    ready = env.close(item)
+    assert ready.returncode == 0, ready.stdout + ready.stderr
+    published(env, item)
+    peer = env.tmp / "ready-observer"
+    env.repo.git("clone", "-q", remote, str(peer))
+    env.repo.path = peer
+    assert row(env.repo, item)["stage"] == "ready"
+    env.repo.path = machine_a
+    if missing:
+        # A's successful publication event remains; only its obsolete local receipt is absent.
+        (machine_a / ".git/forge/ready" / f"{item}.json").unlink()
+    stub = env.repo.bin / "claude"
+    source = stub.read_text("utf-8")
+    if not wait_first:
+        stub.write_text(source.replace('print("stub claude: built it")',
+                                       'print("\\n\\nQuestion: May I reuse the existing basket parser?")'), "utf-8")
+    monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=30)).isoformat())
+    worked = env.repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    if not wait_first:
+        assert "Question: May I reuse the existing basket parser?" in worked.stdout
+    published(env, item)
+    env.repo.path = peer
+    monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=60)).isoformat())
+    refreshed = row(env.repo, item)
+    if not wait_first:
+        assert refreshed["stage"] == "ready", "Refreshing older local history cannot revoke the published PR head's readiness"
+    waits = [interval for interval in refreshed["intervals"]
+             if interval["category"] == "waiting_for_owner"
+             and at <= datetime.fromisoformat(interval["start"])
+             and (wait_first or datetime.fromisoformat(interval["start"]) < at + timedelta(seconds=30))]
+    wait = max(waits, key=lambda interval: interval["end"])
+    assert datetime.fromisoformat(wait["end"]) == at + timedelta(seconds=30)
+    if wait_first:
+        monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=90)).isoformat())
+        assert row(env.repo, item)["waiting_seconds"] == refreshed["waiting_seconds"]
+        return
+    env.repo.path = machine_a
+    stub.write_text(source, "utf-8")
+    answered = env.repo.forge("work", item, "--note", "Yes, reuse the existing parser")
+    assert answered.returncode == 0, answered.stdout + answered.stderr
+    published(env, item)
+    env.repo.path = peer
+    assert row(env.repo, item)["stage"] == "ready"
 
 
 def question_wait(env, monkeypatch):
