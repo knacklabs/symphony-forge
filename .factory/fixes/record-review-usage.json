@@ -24,6 +24,7 @@
     "id": "b18dbeaf-998f-4a81-8c35-c4cb7824333e",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -35,5 +36,6 @@
       "step": "review"
     }
   ],
-  "why": "Reviews and plan reads record no model, effort, chat or token use, so nobody can tell what they cost or whether a lighter setting would do"
+  "why": "Reviews and plan reads record no model, effort, chat or token use, so nobody can tell what they cost or whether a lighter setting would do",
+  "worker": "codex"
 }
