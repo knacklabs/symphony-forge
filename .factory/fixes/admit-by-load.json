@@ -13,7 +13,13 @@
     "branch_diff": "6fb374a3a012ddf32359e018bfa4081397596e77f5957d59afb3959459287745",
     "changed": "11d0f31de7e1c045e57b3d371e731ba118e20f8b5fa5595a11b4d15e33b50e5a",
     "commit": "0d3f87b9e96dee817f474ab43f9f466f599d5435",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): the cap covers test runs Forge starts; a pytest.ini addopts -n setting is left as a follow-up fix. Recorded as lived-with.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. A worker in a repo whose `forge.toml` runs plain pytest and whose `pytest.ini` sets `addopts = -n 4` still starts four test processes through `forge test`. The new cap is added only when the command text contains an xdist option; pytest's configured options are absent from that text. `src/forge/fasttest.py:31-54` already reads these options for the separate `--pytest` path, but `forge test` can run the configured command directly (`src/forge/fasttest.py:253-265`). The named proof puts `-n 4` in the command itself, so it passes while this supported configuration exceeds the two-process limit.",
@@ -24,9 +30,9 @@
       }
     ],
     "id": "d2770c23-d122-43d3-813e-648b855b54a9",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T07:31:53.460889+00:00",
@@ -46,7 +52,9 @@
     }
   ],
   "stop": {
+    "choice": "accept",
     "file": "src/forge/review.py",
+    "reason": "Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): the cap covers test runs Forge starts; a pytest.ini addopts -n setting is left as a follow-up fix. Recorded as lived-with.",
     "wait_id": "9aeb736c-c183-4cd2-ae28-ab91ce4f7705"
   },
   "why": "Up to nine worker runs share eight cores at load 17, so every step queues and the local suite runs twice as slow as CI"
