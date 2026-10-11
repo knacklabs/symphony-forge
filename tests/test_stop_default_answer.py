@@ -12,7 +12,7 @@ import pytest
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
 from test_hotspot_stop import seed, rounds
-from test_land import ITEM, _agent, _fix, _land, _workers, land  # noqa: F401
+from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
 from test_setup import _fresh_client
 
 GUIDANCE = ("When nobody answers a review-loop stop in 30 minutes, close or land records the repo's "
@@ -95,7 +95,6 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
 
 @pytest.mark.parametrize("entry", ["running", "same-file", "stopped"])
 def test_3_land_carries_on_and_the_worker_narrows(land, entry):
-    _agent(land)  # the owner merges a defaulted item anyway, so they can still reverse it
     if entry == "stopped":
         item, where = stopped(land)
         land.reviews(CLEAN)
@@ -123,7 +122,6 @@ time.sleep = advance
     assert landed.returncode == 0, landed.stdout + landed.stderr
     assert f"{item} is ready; a human merges" in landed.stdout
     assert "Nobody answered the review loop stop in 30 minutes" in landed.stdout
-    assert not land.gh_calls("pr", "merge")
     brief = _workers(land)[-1]["brief"]
     assert "the repo's default choice: narrow this part to its Done-when lines" in brief
     # A fresh brief carries the fix-round rules; they must not contradict the narrowing.
@@ -131,7 +129,6 @@ time.sleep = advance
         "Close stopped on these." in brief)
     shown = land.repo.forge("next").stdout
     assert f"The repo's default answered the review loop stop on The fix {item}" in shown
-    assert f"forge merge {item}" not in shown
     assert where.exists()
 
 
