@@ -3,12 +3,14 @@
   "branch": "fix/review-blocks-on-done-when",
   "done_when": "A 'Not done' finding blocks only when it names a Done-when line the change misses as written; cases the Done-when does not name are recorded as non-blocking follow-ups, while functional, security and data-loss findings on the changed code still block",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-11T07:11:36.440769+00:00",
       "step": "start"
     }
   ],
-  "why": "Reviews keep blocking on new 'not done' angles the Done-when never named (other languages, platforms, tools), so every round finds something new"
+  "why": "Reviews keep blocking on new 'not done' angles the Done-when never named (other languages, platforms, tools), so every round finds something new",
+  "worker": "codex"
 }
