@@ -3,39 +3,33 @@
   "branch": "fix/tests-once-per-round",
   "done_when": "Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise only the test files the change touched and the tests named after its changed source files; CI still runs the full suite and a red CI sends the item back. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
-    "src/forge/fasttest.py"
+    "src/forge/fasttest.py",
+    "tests/test_close_keeps_full_tests_in_ci.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "69d27a78037f68f3315671c69067e5fc7306bd964d4841dabe53245aab60607b",
-    "changed": "ae6ea4790d48d663c632d4e0f1be65e67ba66e92d10b4e213a7c8657a70a3b3d",
-    "commit": "3d569df60d6770923329b82a12f53549fa5ea708",
+    "branch_diff": "879348d96951a32c89f90431b603e5c60f4c57ebc8cef6064db61be7dd80c3a4",
+    "changed": "e68d50729c0661152c7a8bace4249cdcd106e2feaa5fa274c3341294fa466200",
+    "commit": "3c744eb2893763ad54971869ee79e2d5e6b4bb9f",
     "dismissals": [],
     "findings": [
       {
-        "body": "Close reports no matching tests when a change touches `__tests__/cart.js`, and it misses that file when `cart.js` changes.\nRaise: Not done \u2014 The filename filter checks only the basename for `.test`, `.spec`, and similar patterns. [Jest's default test discovery](https://jestjs.io/docs/30.0/configuration) also includes ordinary JavaScript and TypeScript files under `__tests__`. The named Jest proofs use only `.test` and `.spec` files, so they do not cover this normal layout.",
+        "body": "A newly initialized Node client still runs its full test command locally after it adds an app. Raise: Not done \u2014 `src/forge/init.py:61,141` gives new Node repos `[ ! -f package.json ] || (npm ci && npm test)` with no `fast_test`. The `||` matches this fallback guard, so Close runs the entire command instead of selecting related Vitest or Jest tests. This shipped init command is new evidence beyond the earlier ruling about compound npm scripts.",
         "file": "src/forge/fasttest.py",
-        "line": 217,
+        "line": 219,
         "priority": "P1",
-        "title": "Not done: Close skips Jest's default __tests__ files"
+        "title": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise"
       },
       {
-        "body": "Changing a helper-only `helpers_test.go` file produces no Go command, so Close succeeds without even compiling the changed test package.\nRaise: Functional \u2014 The file is selected, but `names` is empty and the `if names` guard drops the package. [Go compiles every active `_test.go` file](https://pkg.go.dev/cmd/go#hdr-Test_packages), including helper files without test functions. The Go proof changes files containing test functions; its shared helper file stays unchanged.",
-        "file": "src/forge/fasttest.py",
-        "line": 325,
+        "body": "The test named for new and previously adopted clients does not test local selection in either client. Raise: Test \u2014 `test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_ci` checks delivered guides and the workflow, but never changes a test or source file and runs `forge close` in those clients. It passes while the shipped Node init command still runs the full suite locally, so it does not prove the Done-when behavior for init or upgrade plus sync.",
+        "file": "tests/test_close_keeps_full_tests_in_ci.py",
+        "line": 80,
         "priority": "P1",
-        "title": "Not done: Go test helper edits run no local package check"
-      },
-      {
-        "body": "A valid command such as `uv sync && uv run pytest tests` fails in setup during Close because selected test filenames are appended to `uv sync`.\nRaise: Functional \u2014 `src/forge/quicktest.py:51\u201357` classifies `uv sync` as an unrecognized part, and this fallback appends the selected filenames to it. The shipped guide at `src/forge/templates/skill.md:986` promises to keep setup arguments. The command proofs cover direct pytest and npm setup, but not a Python setup step.",
-        "file": "src/forge/fasttest.py",
-        "line": 391,
-        "priority": "P1",
-        "title": "Close passes test filenames to Python setup commands"
+        "title": "Not done: init and upgrade plus sync local-selection test"
       }
     ],
-    "id": "da87b550-47ce-4fd5-aed8-88b04a28d5c4",
+    "id": "9ff62084-98eb-436c-a52e-19d23dac1c1a",
     "status": "blocked"
   },
   "round": 5,
@@ -55,6 +49,10 @@
     },
     {
       "at": "2026-10-10T20:40:01.437255+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:20:27.325790+00:00",
       "step": "review"
     }
   ],
