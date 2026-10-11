@@ -252,7 +252,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
 
 def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
-    else filename-related tests when CI runs test. Workers still run test."""
+    else supported runner selection when CI runs test. Workers still run test."""
     cfg = repo.config(top)
     command = cfg["fast_test"] or cfg["test"]
     if closing and command and not cfg["fast_test"] and "tests" in cfg["checks"]:

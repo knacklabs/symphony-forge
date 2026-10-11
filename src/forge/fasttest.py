@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import init, machine, quicktest, repo
+from forge import machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -210,196 +210,33 @@ def own_version_only(path: Path, base: str) -> bool:
 
 
 def close_tests(base: str) -> int:
-    """CI owns the full suite; close's default selects tests by their filenames."""
-    changed = git_files("diff", "--no-renames", "--name-only", f"{base}...HEAD")
-    changed += git_files("ls-files", "--others", "--exclude-standard")
-    tests = [name for name in git_files("ls-files", "--cached", "--others", "--exclude-standard")
-             if Path(name).is_file() and re.search(r"^test_|_test\.|[.]test[.]|[.]spec[.]|_spec[.]|[.]e2e-spec[.]",
-                                                  Path(name).name)]
-    stems = {Path(name).stem for name in changed if name not in tests}
-    selected = [name for name in tests if name in changed or any(
-        re.match(r"^(?:test_" + re.escape(stem) + r"(?:_|\.)|" + re.escape(stem)
-                 + r"(?:_test\.|_spec\.|\.test\.|\.spec\.|\.e2e-spec\.))", Path(name).name)
-        for stem in stems)]
-    if not selected:
-        print("No changed or source-named test files to run.", flush=True)
-        return 0
-    print("Related tests: " + ", ".join(sorted(selected)), flush=True)
+    """Use supported runners' selection; leave other commands unchanged."""
     command = repo.config(Path.cwd())["test"]
-    root = Path.cwd().resolve()
-
-    def expand(directory, command):
-        package = directory / "package.json"
-        config = json.loads(package.read_text("utf-8")) if package.is_file() else {}
-        scripts = config.get("scripts", {})
-        for kind, part, passthrough in quicktest.test_parts(directory, command):
-            words = shlex.split(part)
-            script = words[2] if words[:2] in (["npm", "run"], ["npm", "run-script"]) else (
-                words[1] if words[:1] == ["npm"] and len(words) > 1 else "")
-            if script == "test" and "--workspaces" in words:
-                workspaces = config.get("workspaces", [])
-                if isinstance(workspaces, dict):
-                    workspaces = workspaces.get("packages", [])
-                for workspace in sorted({path for pattern in workspaces for path in directory.glob(pattern)
-                                         if (path / "package.json").is_file()}):
-                    if "test" in json.loads((workspace / "package.json").read_text("utf-8")).get("scripts", {}):
-                        yield from expand(workspace, "npm test")
-            elif script == "test" and "&&" in scripts.get(script, ""):
-                if "pretest" in scripts:
-                    yield directory, "setup", "npm run pretest", ""
-                yield from expand(directory, scripts[script])
-                if "posttest" in scripts:
-                    yield directory, "setup", "npm run posttest", ""
-            else:
-                runner = shlex.split(scripts.get(script, part))
-                if "playwright" in runner:
-                    index = runner.index("playwright")
-                    if runner[index + 1:index + 2] == ["test"]:
-                        kind = "playwright"
-                        if words[:1] == ["playwright"]:
-                            part = "npm exec -- " + part
-                    else:
-                        kind = "setup"
-                if words[:2] == ["docker", "compose"]:
-                    kind = "setup"
-                yield directory, kind, part, passthrough
-
-    parts = list(expand(root, command))
-    all_selected = selected
-    commands = []
-    environment = dict(os.environ)
-    with tempfile.TemporaryDirectory(prefix="forge-close-tests-") as folder:
-        excluded = [(root / name).as_posix() for name in tests if name not in selected]
-        selection = Path(folder) / "_forge_pytest_selection.py"
-        selection.write_text("from pathlib import Path\n"
-                             "def pytest_configure(config):\n"
-                             "    excluded = {Path(p).resolve() for p in " + json.dumps(excluded) + "}\n"
-                             "    config.args = [p for p in config.args if Path(p.split('::', 1)[0]).resolve() not in excluded]\n"
-                             "    config.option.ignore = (config.option.ignore or []) + " + json.dumps(excluded) + "\n",
-                             "utf-8")
-        environment["PYTHONPATH"] = os.pathsep.join([folder, environment.get("PYTHONPATH", "")])
-        if any(kind == "vitest" for _, kind, _, _ in parts):
-            preload = Path(folder) / "vitest-config.cjs"
-            preload.write_text("const prefix = " + json.dumps(Path(folder).as_posix() + "/selection-") + ";\n" + r"""
-if (/(?:^|[\\/])(?:vitest(?:\.m?js)?|cli\.js)$/.test(process.argv[1] || '') &&
-    process.argv.some(arg => arg.startsWith(prefix))) {
-  const kept = process.argv.slice(0, 2);
-  process.env.FORGE_CLOSE_VITEST_CONFIG = '';
-  for (let i = 2; i < process.argv.length; i++) {
-    const arg = process.argv[i];
-    const config = arg === '--config' || arg === '-c' ? process.argv[++i] :
-      arg.startsWith('--config=') || arg.startsWith('-c=') ? arg.slice(arg.indexOf('=') + 1) : undefined;
-    if (config === undefined) kept.push(arg);
-    else if (config.startsWith(prefix)) kept.push('--config', config);
-    else process.env.FORGE_CLOSE_VITEST_CONFIG = config;
-  }
-  process.argv = kept;
-}
-""", "utf-8")
-            environment["NODE_OPTIONS"] = (environment.get("NODE_OPTIONS", "") + " --require "
-                                           + json.dumps(preload.as_posix(), ensure_ascii=False)).strip()
-        for directory, kind, part, passthrough in parts:
-            selected = [(root / name).relative_to(directory).as_posix() for name in all_selected
-                        if (root / name).is_relative_to(directory)]
-            if kind == "python":
-                if any(name.endswith(".py") for name in selected):
-                    commands.append((narrow_command(part, excluded, str(machine.half_cores())), directory))
-            elif kind in ("node-install", "setup") or (kind == "node-check" and re.search(r"\b(?:lint|typecheck)\b", part)):
-                commands.append((part, directory))
-            elif part == dict(init.STACKS).get("go.mod"):
-                for package_dir in sorted({Path(name).parent for name in selected if name.endswith("_test.go")}):
-                    package = "./" + package_dir.as_posix()
-                    listed = repo.run("go", "list", "-json", package, cwd=directory)
-                    if listed.returncode:
-                        print(listed.stdout + listed.stderr, flush=True)
-                        return listed.returncode
-                    info = json.loads(listed.stdout)
-                    active = info.get("TestGoFiles", []) + info.get("XTestGoFiles", [])
-                    names = []
-                    for name in selected:
-                        if Path(name).parent == package_dir and Path(name).name in active:
-                            source = (directory / name).read_text("utf-8")
-                            source = re.sub(r'//[^\n]*|/\*.*?\*/|`[^`]*`|"(?:\\.|[^"\\])*"'
-                                            r"|'(?:\\.|[^'\\])*'", "", source, flags=re.S)
-                            names += re.findall(r"^\s*func\s+((?:Test|Example|Fuzz)\w*)\s*\(", source, re.M)
-                    if names:
-                        words = ["go", "test", "-v", "-run", "^(?:" + "|".join(names) + ")$", package]
-                        commands.append((subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words), directory))
-            else:
-                files = [name for name in selected if not name.endswith(".py")] if kind in ("vitest", "jest", "playwright") else selected
-                if files:
-                    if kind == "node-check" and shlex.split(part)[0] == "npm" and "--" not in shlex.split(part):
-                        passthrough = " --"
-                    if kind == "jest":
-                        passthrough += " --runTestsByPath"
-                    if kind == "playwright":
-                        passthrough += " --pass-with-no-tests"
-                    words = shlex.split(part)
-                    if words[:2] == ["npm", "exec"] and "--" not in words:
-                        tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
-                        start = tokens[quicktest._npm_runner_index(words)].start()
-                        part = part[:start] + "-- " + part[start:]
-                    # shortcut: custom launchers must forward file arguments; use fast_test otherwise.
-                    batches = [files]
-                    while batches:
-                        batch = batches.pop(0)
-                        arguments = ([re.escape((directory / name).resolve().as_posix()).replace("/", r"[/\\]") + "$"
-                                      for name in batch] if kind == "playwright" else batch)
-                        if kind in ("vitest", "jest"):
-                            selection = Path(folder) / (f"selection-{len(commands)}" + (
-                                ".mjs" if kind == "vitest" else ".cjs"))
-                            paths = json.dumps([(directory / name).resolve().as_posix() for name in batch])
-                            if kind == "jest":
-                                selection.write_text("const {resolve} = require('node:path');\n"
-                                    "const selected = new Set(" + paths + ".map(p => resolve(p)));\n"
-                                    "module.exports = paths => ({filtered: paths.filter(p => selected.has(resolve(p)))});\n",
-                                    "utf-8")
-                                arguments = ["--filter", selection.as_posix()] + batch
-                            else:
-                                selection.write_text("""import {resolve, dirname} from 'node:path';
-import {existsSync} from 'node:fs';
-import {createRequire} from 'node:module';
-const require = createRequire(process.argv[1]);
-const {BaseSequencer} = await import(require.resolve('vitest/node'));
-const {loadConfigFromFile} = await import(require.resolve('vite'));
-const selected = new Set(SELECTED.map(p => resolve(p)));
-export default async env => {
-  const args = process.argv.slice(2);
-  const values = flags => args.flatMap((arg, i) => flags.includes(arg) ? [args[i + 1]] :
-    flags.some(flag => arg.startsWith(flag + '=')) ? [arg.slice(arg.indexOf('=') + 1)] : []);
-  const root = resolve(values(['--root', '-r']).at(-1) || process.cwd());
-  let original = process.env.FORGE_CLOSE_VITEST_CONFIG;
-  if (original) original = resolve(root, original);
-  const names = ['vitest.config', 'vite.config'].flatMap(name =>
-    ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs'].map(ext => name + '.' + ext));
-  for (let dir = root; !original; dir = dirname(dir)) {
-    original = names.map(name => resolve(dir, name)).find(existsSync);
-    if (dir === dirname(dir)) break;
-  }
-  const config = original ? (await loadConfigFromFile(env, original, root)).config : {};
-  config.test ||= {};
-  config.test.sequence ||= {};
-  const Sequencer = config.test.sequence.sequencer || BaseSequencer;
-  config.test.sequence.sequencer = class extends Sequencer {
-    async sort(specs) { return super.sort(specs.filter(s => selected.has(resolve(s.moduleId || s[1])))); }
-  };
-  return config;
-};
-""".replace("SELECTED", paths, 1), "utf-8")
-                                arguments = ["--config", selection.as_posix()] + batch
-                        arguments = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
-                        narrowed = part + passthrough + " " + arguments
-                        # Leave room for npm's wrapper within Windows' shell limit.
-                        if kind in ("vitest", "jest", "playwright") and len(narrowed) > 6000 and len(batch) > 1:
-                            middle = len(batch) // 2
-                            batches[:0] = [batch[:middle], batch[middle:]]
-                        else:
-                            commands.append((narrowed, directory))
-        for command, directory in commands:
-            status = subprocess.run(command, shell=True, env=environment, cwd=directory).returncode
-            if status:
-                return status
-        return 0
+    parts = quicktest.test_parts(Path.cwd(), command)
+    package = Path("package.json")
+    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+    # Compound scripts forward npm arguments to the last command, not every runner.
+    if not parts or "||" in command or any(re.search(r"&&|[;|]", scripts[script])
+            for kind, part, _ in parts if kind in ("vitest", "jest")
+            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+        return subprocess.run(command, shell=True).returncode
+    for kind, part, passthrough in parts:
+        if kind == "python":
+            status = pytest_tests(base, part)
+        else:
+            if kind in ("vitest", "jest"):
+                words = shlex.split(part)
+                if words[:2] == ["npm", "exec"] and "--" not in words:
+                    tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
+                    start = tokens[quicktest._npm_runner_index(words)].start()
+                    part = part[:start] + "-- " + part[start:]
+                changed = "--changed" if kind == "vitest" else "--changedSince"
+                argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
+                part += f"{passthrough} {changed} {argument} --passWithNoTests"
+            status = subprocess.run(part, shell=True).returncode
+        if status:
+            return status
+    return 0
 
 
 def test(args) -> int:
@@ -416,9 +253,12 @@ def test(args) -> int:
         status, report = review.test_run(top, review.close_test(top, base, closing=False), base, always=True)
         print(report)
         return status
-    changed = git_files("diff", "--no-renames", "--name-only", args.base)
+    return pytest_tests(args.base, repo.config(Path.cwd())["test"])
+
+
+def pytest_tests(base: str, command: str) -> int:
+    changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
@@ -433,10 +273,10 @@ def test(args) -> int:
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(not manifest_test_inputs_unchanged(Path(name), args.base)
+    if any(not manifest_test_inputs_unchanged(Path(name), base)
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), args.base) for name in shared):
+           or not own_version_only(Path(name), base) for name in shared):
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:

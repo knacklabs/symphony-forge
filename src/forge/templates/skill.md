@@ -981,18 +981,14 @@ When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
-Close runs `fast_test` when set; otherwise it runs only changed test files and tests named
-after changed source files. CI runs the full suite.
-The fallback keeps the test command's setup and options and excludes unrelated pytest files.
-It expands compound npm test scripts to select files in each workspace and in Playwright.
-Browser installation and Compose setup keep their arguments. NestJS `.e2e-spec` files count
-as tests for both touched-file and source-name selection.
-It passes selected filenames to other runners. Node selection uses compact filters and splits
-large selections into short commands. Forge's default Go command runs the selected test functions
-in their packages, keeping Go's build constraints and shared test helpers.
-Custom launchers must forward file arguments;
-set `fast_test` for runners that need another selection method. If no matching tests exist,
-close runs none locally. A red CI still sends the item back to the worker.
+Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
+and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
+`--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
+Go and other runners run the full test command. Compound npm scripts also keep their full
+command because arguments cannot select each runner inside them. Set `fast_test` for a different
+selection. Supported runners with no related tests run none locally. A red CI still sends
+the item back to the worker.
 To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
 `{base}` standing for the merge base with the default branch.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
