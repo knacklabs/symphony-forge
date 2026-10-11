@@ -11,6 +11,7 @@
   "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding as one plain sentence saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
   "flagged": [
     "src/forge/nextstep.py",
+    "src/forge/review.py",
     "src/forge/story.py",
     "tests/test_close_holds_after_three_blocked_reviews.py",
     "tests/test_reads_wait_for_a_loop_choice.py"
@@ -18,27 +19,35 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d3535f505de3af1d9c56e2614e2b7a9da78c4dd42859edf6046969301df8e6ac",
-    "changed": "4c8f73443a547613157d5f64dcf24d5d703102457d35a1c83bd2b9f6b31c757e",
-    "commit": "e506d9924e30890b80d50ed751c85014ae8fe9c2",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): forge next shows only the document error while a stopped story's draft is malformed; fixing the draft brings the question back. Recorded as lived-with.",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "b7d2fc3fef0aba0022805f6f36a20152c4cbf48bc65a826b0be7f847377dde44",
+    "changed": "817388b333726a74013ba59176f55b272cbe47f5ee61b58b8b71a14b90b3e564",
+    "commit": "772ebc929c4769965f4d75d7e21b2b76351328c0",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. If a story draft is edited after its third blocked cold read and the edit makes it temporarily malformed, `forge next` reports only the document error. The existing parse check at `src/forge/nextstep.py:421-425` returns before the new stopped-read question path runs, even though `forge read` still requires the owner\u2019s accept, narrow or split choice. The named test edits the stopped draft but keeps it valid, so it does not catch this gap.",
-        "file": "src/forge/nextstep.py",
-        "line": 556,
+        "body": "Raise: Not done. On a stopped review with both blocking findings and advice, the question lists only blocking findings and says Accept will \u201cdismiss these findings\u201d (`src/forge/review.py:218-222`). But `forge close --resolve accept` dismisses every finding in the review, including the advice (`src/forge/close.py:93-99`). The owner is therefore given an inaccurate account of what Accept does for that item.",
+        "file": "src/forge/review.py",
+        "line": 219,
         "priority": "P1",
-        "title": "Not done: forge next loses a stopped story\u2019s question when its draft is malformed"
+        "title": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names"
+      },
+      {
+        "body": "Raise: Test. The named close and read proofs each create only one blocking finding in the stopped round (`tests/test_close_holds_after_three_blocked_reviews.py:80-81`; `tests/test_reads_wait_for_a_loop_choice.py:63-64`). Both would pass if a question printed only the first blocker. A normal stop with two open blockers would then omit one problem the owner needs to decide about, so the explicit \u201ceach open\u201d behavior has no effective command-level test.",
+        "file": "tests/test_close_holds_after_three_blocked_reviews.py",
+        "line": 80,
+        "priority": "P1",
+        "title": "Not done: test every open blocker in a stopped question"
+      },
+      {
+        "body": "Raise: Gate. The standard says, \u201cWhen you present options, lead with the one you recommend, its reason and how sure you are.\u201d The new ready-to-ask question always presents Accept first, then Narrow and Split, with no recommendation or reason (`src/forge/story.py:1010-1014`). The shipped guide also requires the coordinator to ask that text exactly (`src/forge/templates/skill.md:1240-1242`), conflicting with its existing instruction to put the recommended option first (`src/forge/templates/skill.md:56-57,73-74`).",
+        "file": "src/forge/story.py",
+        "line": 1010,
+        "priority": "P1",
+        "title": "Standard: Give one recommendation"
       }
     ],
-    "id": "40708fff-58c1-4c2c-a608-4c67ff8cc8c6",
-    "status": "clean"
+    "id": "6d339101-93d7-4a16-8391-5480efc2a784",
+    "status": "blocked"
   },
   "round": 1,
   "status": "fixing",
@@ -58,6 +67,10 @@
     {
       "at": "2026-10-11T16:32:45.020859+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:37:04.967061+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -66,7 +79,6 @@
     "reason": "Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): forge next shows only the document error while a stopped story's draft is malformed; fixing the draft brings the question back. Recorded as lived-with.",
     "wait_id": "36a8917a-cc37-4099-8b1d-6710c8d6221b"
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest edb6251b29cdd25904c47f8e8f28c3c3b3c61019` exited with status 1 on this machine.\n>       assert result.returncode == 0, result.stderr\nE       AssertionError: Traceback (most recent call last):\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/bin/forge\", line 6, in <module>\nE             sys.exit(main())\nE                      ^^^^^^\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/earlier-close/src/forge/cli.py\", line 166, in main\nE             return _run(argv)\nE                    ^^^^^^^^^^\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/earlier-close/src/forge/cli.py\", line 149, in _run\nE             result = function(args) or 0\nE                      ^^^^^^^^^^^^^^\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/earlier-close/src/forge/board.py\", line 59, in board\nE             print(json.dumps(machine_board(top)))\nE                              ^^^^^^^^^^^^^^^^^^\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/earlier-close/src/forge/board.py\", line 527, in machine_board\nE             items[name] = row(name, \"fix\", state.get(\"why\") or \"A small fix\", state, where)\nE                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/earlier-close/src/forge/board.py\", line 301, in row\nE             lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != \"story\"\nE                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2521/popen-gw0/test_1_each_new_stop_waits_for3/earlier-close/src/forge/nextstep.py\", line 634, in _item\nE             close.stop_question(path or top, item, state),\nE             ^^^^^^^^^^^^^^^^^^^\nE         AttributeError: module 'forge.close' has no attribute 'stop_question'\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-stop-question-plain/.venv/bin/python', '/pri..., item, state),\\n    ^^^^^^^^^^^^^^^^^^^\\nAttributeError: module \\'forge.close\\' has no attribute \\'stop_question\\'\\n').returncode\n\ntests/test_item_time_history.py:23: AssertionError\n6 failed, 127 passed in 516.33s (0:08:36)",
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
   "worker": "codex"
 }
