@@ -23,7 +23,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
-| "Ask Codex about this code" | `forge ask "<question>"` |
+| "Ask about this code" | Hand the question to the session's `explorer` subagent role |
 | "Close it" or "Is it ready?" | `forge close <item>` |
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
@@ -76,7 +76,7 @@ questions; write for the human's choice.
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
-`runner` selects the GitHub Actions runner label for both jobs in the generated `forge.yml`;
+`runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
 it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
@@ -126,6 +126,16 @@ as a background subagent of the named role. Keep the item's chat while the sessi
 continue the named subagent when told to, or start fresh with the whole brief in a new session.
 Run `forge handback` with its last message and id when it finishes. Send the nudge when asked;
 never edit the brief. Only the coordinator hands back or starts another round.
+
+**Native plan reads.** With one tool, that tool reads every plan. With both, the first read
+chooses the other installed tool, and later rounds keep their reader while it is available.
+When that reader is your session's tool, `forge read <target>` prints a JSON instruction for
+the `reader` role in the plan's checkout. Continue its named subagent with `prompt`, or start
+one with `fresh_prompt` when no subagent is named. Run it in the background, read only, then
+give its final message and id to `forge handback <target> --subagent <id> --text "<message>"`.
+Forge holds the item's lock and machine place until handback, checks for changed files,
+numbers the findings and records the read. A new session starts fresh with the whole prompt.
+New repos get the reader role at init; earlier adopted repos get it on upgrade and sync.
 
 **Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
 New repos get the setting's default at init; existing repos get this guide when the upgraded
@@ -852,7 +862,7 @@ and commit the merge, then rerun `forge work <item>`. Work refuses before changi
 record or the index, so both conflicted and resolved but uncommitted merges stay intact.
 New repos get this guidance at init; existing repos get it after upgrading and running sync.
 
-Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
+Every Codex worker, plan reader and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff
 and any question. Forge sets these for each thread, including resumed threads; neither
 `forge.toml` nor user or project Codex settings can turn them up. New and upgraded repos get
@@ -883,22 +893,17 @@ replacing any earlier full-suite instruction. The synced test-audit skill follow
 CI runs the full suite.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
-changes. Codex runs no project hook in a project it doesn't trust, so Codex workers, readers and
-`forge ask` all refuse there until the human trusts it; `forge doctor` says how. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
+changes. Codex runs no project hook in a project it doesn't trust, so Codex workers and readers
+all refuse there until the human trusts it; `forge doctor` says how. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
 ask the human to review it in Codex's /hooks, then run the command again.
 
-For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
-Codex read-only in this checkout and prints the answer. Use `--model <model>` and
-`--effort <effort>` to choose for this question; without them it uses the Codex entry of
-`[models.explore]` in `forge.toml`, falling back to `[models.lite]` when explore is absent.
-Its records stay under `.git/forge/`; the conversation is temporary and does not
-appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
-discards the answer.
+For a quick read-only question about this checkout, hand it to the session's `explorer`
+subagent role. It uses the explore entry in `forge.toml`; no separate Forge command is needed.
 
 Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
-and `forge ask` Codex's. Workers and Claude plan readers with no entry use Forge's defaults.
+and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
 Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses its design default.
 Claude workers use model and effort
 and ignore the Codex-only subagents and subagent_effort keys.
@@ -972,7 +977,7 @@ from the other tool is omitted so the Codex role uses the session's model. Claud
 roles use their implementation entry or Sonnet xhigh; Claude planning uses grill or Opus high,
 and Claude diagnosing always uses Opus high.
 
-The explorer role and `forge ask` use the read-only `explore` kind; `lite` keeps a fix's first
+The explorer role uses the read-only `explore` kind; `lite` keeps a fix's first
 build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
 `[models.explore.codex]` with the same settings as the initial lite Codex entry. Existing repos
 without explore keep using lite for read-only work after upgrading and syncing. To choose
@@ -1059,6 +1064,10 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+The generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
+which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
+the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
+and syncing; branch protection keeps the same `tests` check.
 When the pytest selection would cover more than a third of the Python test files (shared
 test inputs select them all), close skips the local run, says so in one line, and relies on
 the pull request's required checks. `forge test` still runs its tests.
@@ -1231,6 +1240,7 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is

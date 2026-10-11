@@ -439,9 +439,15 @@ def _passing_reader_keeps_its_chat(repo, claude_payload, monkeypatch, tmp_path,
     assert _sent(reader.log, "thread/resume")[-1]["threadId"] == conversation
     reader.dispose(FIRST, "cut")
 
-    # Codex is uninstalled: a Claude conversation passes, and Codex's is left as it is, named.
+    # Codex is uninstalled: this Claude session hands out the replacement, then records its pass.
     _no_codex(monkeypatch, tmp_path)
     out = repo.forge("read", "SHOP")
+    assert out.returncode == 0, out.stderr
+    offered = json.loads(out.stdout)
+    assert (offered["role"], offered["tool"]) == ("reader", "claude")
+    assert offered["reason"] == "its reader, Codex, is no longer installed"
+    out = repo.forge("handback", "SHOP", "--subagent", "replacement-reader",
+                     "--text", "No findings.")
     assert out.returncode == 0, out.stderr
     assert (f"The cold read's earlier Codex conversation for SHOP, {conversation}, is left as it "
             "is, because Codex is no longer installed.") in out.stdout

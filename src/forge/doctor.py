@@ -406,7 +406,9 @@ def doctor(args: argparse.Namespace) -> int:
         add("fast_test still runs python -m forge.fasttest in the client's environment.",
             'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
-    elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read( top / sync.WORKFLOW_PATH):
+    # Test groups append their split options to the command.
+    elif "tests" in cfg["checks"] and not any(f"run: {json.dumps(cfg['test'])[:-1]}{end}" in sync.read(top / sync.WORKFLOW_PATH)
+                                              for end in ('"', " --splits ")):
         add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted = _codex_trusts(top, codex_config)
