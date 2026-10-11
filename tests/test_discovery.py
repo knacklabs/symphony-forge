@@ -17,11 +17,9 @@ DISCOVER = ["No story or fix is in progress and the roadmap is empty, so start w
             "the Forge skill's Discovery section says.",
             'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
             'filled problem card and the brief names it"']
-WRITE_SPEC = ["No story or fix is in progress and the roadmap is empty; the discovery notes hold a "
-              "problem card, so write its spec.",
-              'Next: forge fix start "Write the spec for the chosen problem" --done "A confirmed '
-              'spec whose Why names the problem card"',
-              "Next: forge spec save <slug>"]
+PLAN_STORY = ["No story or fix is in progress and the roadmap is empty; the discovery notes hold a "
+              "problem card, so plan its story with the problem in Why.",
+              'Next: forge story new <KEY> "<title>"']
 
 
 def _ok(done) -> str:
@@ -75,14 +73,14 @@ def test_2_a_new_project_starts_with_an_empty_card_and_discovery_first(repo, gh,
                  "the brief's Summary", "the spec's Why"):
         assert rule in section, rule
 
-    # Once a card is filled, the next planning step is its spec.
+    # Specs used to be required here. Once a card is filled, plan its story directly.
     repo.write("docs/product/DISCOVERY.md", notes.replace(
         "### <short problem title>\n- Job: unknown",
         "### Invoices get lost\n- Job: Send each invoice to the client"))
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Discover the problem")
     repo.git("push", "-q", "origin", "main")
-    assert _ok(repo.forge("next")).splitlines()[:3] == WRITE_SPEC
+    assert _ok(repo.forge("next")).splitlines()[:2] == PLAN_STORY
 
     # Anything on the roadmap means planning is under way: the usual idle lines.
     repo.write("plans/roadmap.json", '{"items": [{"key": "INV-1", "spec": "docs/specs/inv.md"}]}\n')

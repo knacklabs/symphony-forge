@@ -71,6 +71,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         require_worker_environment(repo.bin / 'claude')
         item, where = env.start_fix()
     else:
+        request.getfixturevalue("claude_session")
         where, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))
         require_worker_environment(repo.bin / 'codex-app-server')
         stub = repo.bin / 'codex-app-server'
@@ -155,6 +156,7 @@ def _repeated_worker_questions(env, monkeypatch, request, family):
     repo = env.repo
     question = 'Question: May I use the existing parser?'
     if family == 'codex':
+        request.getfixturevalue("claude_session")
         _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))
         require_worker_environment(repo.bin / 'codex-app-server')
         item = 'BOARD/PAGE'
@@ -302,6 +304,7 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
     initial = question if question_turn != 'nudge' else ''
     nudged = second if question_turn == 'both' else question if question_turn == 'nudge' else ''
     if family == 'codex':
+        request.getfixturevalue("claude_session")
         where, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))
         item = 'BOARD/PAGE'
         stub = repo.bin / 'codex-app-server'

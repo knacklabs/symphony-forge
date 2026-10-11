@@ -205,7 +205,7 @@ def _crash(work: subprocess.Popen, saved: dict) -> None:
     work.communicate()
 
 
-def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
+def test_5_one_worker_per_item(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
@@ -356,7 +356,7 @@ def _exec_driver_is_stopped(repo) -> None:
 
 # ponytail: four kill-and-wait scenarios; under a full parallel run they need more than the 150 s default.
 @pytest.mark.timeout(600)
-def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
+def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path, claude_session):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"

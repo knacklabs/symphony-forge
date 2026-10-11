@@ -20,7 +20,7 @@ QUIET = {
 }
 
 
-def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, sdk_data, tmp_path):
+def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, sdk_data, tmp_path, claude_session):
     # Contract owner: real Forge commands and pinned SDK, faking only Codex/Autoreview.
     # Previously only model/effort were sent, allowing noisy user or project settings to win.
     repo = env.repo

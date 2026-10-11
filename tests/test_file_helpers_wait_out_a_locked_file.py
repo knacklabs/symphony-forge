@@ -87,7 +87,7 @@ def test_2_a_file_that_stays_locked_fails_after_five_seconds(tmp_path, monkeypat
     assert time.monotonic() - began >= 5
 
 
-def test_3_forge_work_rounds_go_on_while_their_records_refuse_twice(repo, monkeypatch, sdk_data):
+def test_3_forge_work_rounds_go_on_while_their_records_refuse_twice(repo, monkeypatch, sdk_data, claude_session):
     _, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     record = turns.with_suffix(".json")
     first = repo.forge("work", "BOARD/PAGE")
