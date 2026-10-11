@@ -1,5 +1,5 @@
 """Every review and plan read records its model, effort, chat and token use when it ends."""
-import json
+import subprocess
 import sys
 
 import pytest
@@ -8,10 +8,10 @@ import conftest
 from test_close import report, env  # noqa: F401  (env is a fixture)
 from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
-from test_run_records import (_previously_adopted_client_records_runs_after_upgrade,
-                              _readers_inherit_worker_environment, records)
-from test_story import DOC, new_story, setup
-from test_upgrade_command import unsynced_up  # noqa: F401
+from test_run_records import _readers_inherit_worker_environment, records
+from test_story import DOC, new_story, setup, worktree
+from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
+                                  unsynced_up)  # noqa: F401
 
 # The pinned helper names its model and thinking, then runs the engine and keeps its output.
 HELPER = '''#!{python}
@@ -94,9 +94,32 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
         assert end | CLAUDE_SPENT == end
         assert (end['model'], end['effort']) == ('opus', 'high')
     else:
-        # A repo adopted on an earlier release gets it on upgrade, with no setting: its Codex
-        # rounds go through the same recording as a Codex read.
-        _previously_adopted_client_records_runs_after_upgrade(
-            request.getfixturevalue('unsynced_up'), monkeypatch, request.getfixturevalue('sdk_data'))
-        end = run_end(env.repo, 'work')
-        assert end | CODEX_SERVER_SPENT == end and end['chat'] and end['model']
+        # The old proof checked only a worker round. The upgraded release must record both
+        # its close review and an actual plan read, without changing the adopted settings.
+        up = request.getfixturevalue('unsynced_up')
+        (tmp_path / 'autoreview' / 'scripts' / 'autoreview').write_text(
+            HELPER.format(python=sys.executable, report=report()), 'utf-8')
+        conftest._install(repo.bin, 'codex', CODEX.format(python=sys.executable))
+        _repo_adopted_on_the_previous_release(up)
+        end = run_end(repo, 'review')
+        spent = {"chat": "thread-review", "input_tokens": 900, "cached_input_tokens": 600,
+                 "output_tokens": 120, "reasoning_output_tokens": 40}
+        assert end | spent == end
+        assert (end['model'], end['effort']) == ('review-model', 'high')
+
+        # Land the upgraded fixture so a new story starts with the upgraded release.
+        repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}',
+                 'merge', '-q', '--ff-only', f'fix/{NAME}')
+        repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}', 'push', '-q', 'origin', 'main')
+        conftest._install(repo.bin, 'claude', CLAUDE.format(python=sys.executable))
+        release = [sys.executable, str(up.tmp / 'releases' / RELEASE / 'forge')]
+        made = subprocess.run([*release, 'story', 'new', 'SHOP', 'Shoppers can save a basket'],
+                              cwd=up.folder, capture_output=True, text=True, timeout=60)
+        assert made.returncode == 0, made.stdout + made.stderr
+        (worktree(repo, 'story/SHOP') / 'plans' / 'SHOP.md').write_text(DOC, 'utf-8')
+        read = subprocess.run([*release, 'read', 'SHOP'], cwd=up.folder,
+                              capture_output=True, text=True, timeout=60)
+        assert read.returncode == 0, read.stdout + read.stderr
+        end = run_end(repo, 'read')
+        assert end | CLAUDE_SPENT == end
+        assert (end['model'], end['effort']) == ('opus', 'high')
