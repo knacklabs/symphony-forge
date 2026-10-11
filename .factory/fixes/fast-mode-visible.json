@@ -13,32 +13,27 @@
     "src/forge/codex.py",
     "src/forge/codex_turn.py",
     "src/forge/doctor.py",
+    "src/forge/worker.py",
     "tests/test_codex_turn_speed_receipts.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ce9786c8f2a45232e211b7db80e6ba9cd58c359eb0e65e1d57b44bbb99e58e9c",
-    "changed": "462927837fdc2de883b849dd2d93a18b3d591b87dbc6903a7026f2d14771dabd",
-    "commit": "98be4135fd38c71d3109781da8f39beed1ee3abf",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's low-risk rule (risk 1): the only open finding is a missing proof-list entry, now added in the last commit",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "9c441a85d29dac27ca54a7528a4d480d4a900a8eb963c90e809667cd11716946",
+    "changed": "a7efcdc5e6c27be13e2afd4a23b8715652f0afe774cc7c58b1f8cdf209d02776",
+    "commit": "838be6132423559c9a2a4eb4f0b1db3cbfbe14b4",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The two proof-list entries cover the first-line notice, per-turn records, and doctor, but omit the Done-when requirement that Fast is used whenever the model offers it. The named receipt test checks expected recorded tiers at line 83; the request assertion in `tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting` is not named in the proof list. Add that proof so the Fast-use requirement is accounted for.",
-        "file": "tests/test_codex_turn_speed_receipts.py",
-        "line": 83,
+        "body": "Raise: Functional. In a supported split-worker fallback, `building` is formatted for Claude at line 111. If Claude fails, the fallback selects Codex at line 211 and sets `on_codex = True` at line 235. This new callback then prints the stale Claude worker and model line when the Codex conversation starts, immediately after telling the user it fell back to Codex. The run gives contradictory status for the worker doing the work.",
+        "file": "src/forge/worker.py",
+        "line": 256,
         "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Fallback reports Claude as the active worker after switching to Codex"
       }
     ],
-    "id": "e26e9201-8e4e-4629-aa65-5baf3ade1702",
-    "status": "clean"
+    "id": "7d409517-4a5a-49df-b7c5-359dd3cc33ef",
+    "status": "blocked"
   },
   "round": 1,
   "status": "fixing",
@@ -58,6 +53,10 @@
     {
       "at": "2026-10-11T15:17:39.995486+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:28:49.741726+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -67,7 +66,6 @@
     "round": 4,
     "wait_id": "bfe603d6-fbbb-4344-ba55-e9b6f479845f"
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest edb6251b29cdd25904c47f8e8f28c3c3b3c61019` exited with status 1 on this machine.\n            repo.git(\"add\", \"-A\")\n            repo.git(\"commit\", \"-qm\", \"Adopt earlier Forge\")\n            config = repo.path / \"forge.toml\"\n            version = repo.forge(\"--version\").stdout.split()[-1]\n            config.write_text(re.sub(r'^version = .*$', f'version = \"{version}\"',\n                                     config.read_text(\"utf-8\"), flags=re.M), \"utf-8\")\n            repo.git(\"commit\", \"-qam\", \"Pin current Forge\")\n            repo.git(\"push\", \"-q\", \"origin\", \"main\")\n            said, doctor = (text.replace(\"gpt-6-sol\", \"gpt-6.1-sol\") for text in (said, doctor))\n        _tiers(repo, tiers, receipt)\n        if mode == \"always-ask\":\n            _policy(repo, repo.path, \"always\")\n        monkeypatch.setenv(\"STUB_CODEX_OVERLOADED\", \"1\")\n        monkeypatch.setenv(\"FORGE_CODEX_RETRY_WAIT\", \"0\")\n        started = repo.forge(\"fix\", \"start\", \"Fix the login typo\", \"--done\", \"It says Log in\")\n        assert started.returncode == 0, started.stdout + started.stderr\n        if mode == \"off\":\n            folder = repo.path.parent / f\"{repo.path.name}-fix-fix-the-login-typo\"\n            _policy(repo, folder, mode)\n        worked = (repo.forge(\"ask\", \"Which speed does this model support?\") if mode == \"always-ask\"\n                  else repo.forge(\"work\", \"fix-the-login-typo\"))\n>       assert worked.returncode == 0, worked.stdout + worked.stderr\nE       AssertionError: forge: argument {init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}: invalid choice: 'ask' (choose from 'init', 'sync', 'doctor', 'test', 'migrate', 'upgrade', 'next', 'board', 'lanes', 'stop', 'story', 'read', 'task', 'fix', 'work', 'handback', 'close', 'merge', 'land', 'spec', 'decision', 'roadmap', 'hook').\nE         Next: forge --help\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-fast-mode-visible/.venv/bin/python', '/priva...', 'fix', 'work', 'handback', 'close', 'merge', 'land', 'spec', 'decision', 'roadmap', 'hook').\\nNext: forge --help\\n\").returncode\n\ntests/test_codex_turn_speed_receipts.py:77: AssertionError\n2 failed, 53 passed in 103.43s (0:01:43)",
   "why": "Codex Fast was added but every Codex turn still runs at normal speed and nothing shows which speed a turn used",
   "worker": "codex"
 }
