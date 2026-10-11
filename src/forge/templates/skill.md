@@ -1000,6 +1000,8 @@ Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
+Forge's initial optional-package Node command uses the same selection once an app adds
+`package.json`; with no package it still runs nothing.
 Go and other runners run the full test command. Compound npm scripts also keep their full
 command because arguments cannot select each runner inside them. Set `fast_test` for a different
 selection. Supported runners with no related tests run none locally. A red CI still sends

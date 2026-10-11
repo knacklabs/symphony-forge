@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import machine, quicktest, repo
+from forge import init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -214,6 +214,10 @@ def close_tests(base: str) -> int:
     command = repo.config(Path.cwd())["test"]
     parts = quicktest.test_parts(Path.cwd(), command)
     package = Path("package.json")
+    if command == init.NODE_TEST:
+        if not package.is_file():
+            return 0
+        command = " && ".join(part for _, part, _ in parts)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
     if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])

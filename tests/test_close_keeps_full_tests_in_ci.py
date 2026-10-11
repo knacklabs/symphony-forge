@@ -60,18 +60,27 @@ def test_1_close_selects_pytest_tests_and_red_ci_returns_the_item(env, tmp_path)
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-and-sync"])
+@pytest.mark.parametrize("runner", ["jest", "vitest"])
 def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_ci(
-        unsynced_up, tmp_path, previous):
+        unsynced_up, tmp_path, monkeypatch, previous, runner):
     up, repo = unsynced_up, unsynced_up.repo
+    command = "[ ! -f package.json ] || (npm ci && npm test)"
     if previous:
         patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client",
                                        repo.path, dirs_exist_ok=True))
+        # The previous release shipped this same optional-package command to Node clients.
+        config = (repo.path / "forge.toml").read_text("utf-8")
+        old_command = tomllib.loads(config)["test"]
+        repo.write("forge.toml", config.replace("test = " + json.dumps(old_command),
+                                               "test = " + json.dumps(command)))
         repo.git("add", "-A")
         repo.git("commit", "-q", "-m", "Client adopted on an earlier release")
         repo.git("push", "-q", "origin", "main")
         upgraded = up.run(RELEASE)
         assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
         client = up.folder
+        synced = repo.forge("sync", cwd=client)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
     else:
         client, initialized = _fresh_client(repo, up.env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -80,10 +89,48 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
         for rule in ("pytest", "Vitest", "Jest", "--changed", "--changedSince", "full test command"):
             assert rule in guide, rule
         assert "Go and other runners run the full test command" in guide
+        assert "optional-package Node command" in guide
     workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")
     full_command = tomllib.loads((client / "forge.toml").read_text("utf-8"))["test"]
+    assert full_command == command
+    assert not tomllib.loads((client / "forge.toml").read_text("utf-8")).get("fast_test")
     assert "run: " + json.dumps(full_command) in workflow
     assert "fast_test" not in workflow
+
+    # App adoption must keep init's command and select real runner tests at close.
+    # The unrelated throwing test makes a full-suite fallback observable.
+    assert shutil.which("npm"), "The initialized Node client regression requires npm."
+    repo.path = client
+    for name in list(os.environ):
+        if name.lower().startswith("npm_config_"):
+            monkeypatch.delenv(name)
+    for kind in ("user", "global"):
+        config = repo.write(f"npm-{kind}.rc", "")
+        monkeypatch.setenv(f"NPM_CONFIG_{kind.upper()}CONFIG", config.as_posix())
+    receipt = tmp_path / "initialized-node-receipt"
+    script = ("npm exec --yes --package=jest@30.2.0 -- jest --runInBand" if runner == "jest" else
+              "npm exec --yes --package=vitest@3.2.4 -- vitest run --globals --maxWorkers=1 --pool=threads --no-isolate")
+    repo.write("package.json", json.dumps({"name": "client", "version": "1.0.0", "scripts": {"test": script}}))
+    repo.write("package-lock.json", json.dumps({"name": "client", "version": "1.0.0", "lockfileVersion": 3,
+                                              "packages": {"": {"name": "client", "version": "1.0.0"}}}))
+    repo.write(".gitignore", "node_modules/\n")
+    selected = "__tests__/cart.js" if runner == "jest" else "checks/cart.test.js"
+    unrelated = "__tests__/unrelated.js" if runner == "jest" else "checks/unrelated.test.js"
+    imports = "const fs = require('node:fs');\n" if runner == "jest" else "import fs from 'node:fs';\n"
+    repo.write(selected, imports + f"test('client', () => fs.writeFileSync({json.dumps(str(receipt))}, 'ran'));\n")
+    repo.write(unrelated, "test('unrelated', () => { throw new Error('unrelated test ran'); });\n")
+    repo.git("add", "-A")
+    # Fixture setup represents the application already landed on the client's main.
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m", "Add the client application")
+    repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "HEAD:main")
+    item, where = up.env.start_fix({selected: (client / selected).read_text("utf-8") + "// Changed\n"})
+
+    closed = up.env.close(item)
+
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert receipt.read_text("utf-8") == "ran", closed.stdout + closed.stderr
+    settings = tomllib.loads((where / "forge.toml").read_text("utf-8"))
+    assert settings["test"] == command and not settings.get("fast_test")
 
 
 @pytest.mark.parametrize("runner", ["go", "custom", "compound-npm", "pipe-npm"])
