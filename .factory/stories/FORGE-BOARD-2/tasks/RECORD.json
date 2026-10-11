@@ -19,20 +19,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cec43b37679c70b1a1c56e8475d5192e07da101c976c9729a4f52410abb24039",
-    "changed": "360067afe627e9eee82340d09f0a4f24c0903ee5b7c0669eecc852f2bfeda577",
-    "commit": "4850a02c0d98046eadc22b7d9fdfdde3027cf750",
+    "branch_diff": "6a482337c6724a5f3fd9aebab22e9096b1627ec10718fa9b7e1a4b6fb80746b8",
+    "changed": "aede329e146eb0c3dc9174929106d244e869cf7919293e7f93ad11ea5197dbfa",
+    "commit": "d8e1684f47bec0f9da64449c043895ce17f21178",
     "dismissals": [],
     "findings": [
       {
-        "body": "Item 12 remains incomplete in this branch: approved but unstarted stories and GitHub-merged fixes need corrected counts; blocking plan problems are absent from Needs you; the page lacks the pinned folding sections, story keys and cold-read history; and pane times remain unrounded. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE, so they are follow-on work for those tasks.",
+        "body": "Item 12 remains incomplete in this branch: approved but unstarted stories and GitHub-merged fixes still need corrected counts; blocking plan problems are absent from Needs you; the page lacks the pinned folding sections, story keys and cold-read history; and pane times remain unrounded. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE, so they are follow-on work for those tasks.",
         "file": "src/forge/board.py",
         "line": 606,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "e554a0fe-b8a4-4bd8-84cf-c96c90637edd",
+    "id": "d06c4f12-b120-4122-a826-14f79b8fddb1",
     "status": "clean"
   },
   "round": 15,
@@ -88,6 +88,10 @@
     },
     {
       "at": "2026-10-11T16:06:38.063547+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:11:13.204759+00:00",
       "step": "review"
     }
   ],
