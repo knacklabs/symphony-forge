@@ -17,24 +17,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9b107e8bea9491851ca279045a09cf7bbf18b2c231fe888c3ab30e4e5c166fdd",
-    "changed": "e4b74910d1fe12a91daefe30bfc2c52814cc1c834c05a260bfe798265d5bf3ed",
-    "commit": "baca9d05d95840652245b54445170dcd0d15a4a0",
+    "branch_diff": "e82b2149579414122651660d6efce91c76df108d40e27fa61abdcdd82a44d0c0",
+    "changed": "7029c557e8142d61587a7332d0622d6e8c469887de1cabedd83621787acf52c4",
+    "commit": "281113eed8896722cb170b70bd25602685f9d87b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Functional \u2014 The new admission check grants a free run based on the count from `fasttest.related`, but that function counts only files named `test_*.py` or `*_test.py` (`fasttest.py:276\u2013279`). For an existing client with `test = \"pytest tests/acceptance.py tests\"`, changing five conventional test files admits the picker without a test place, while its underlying command also runs the explicitly named `acceptance.py`. `fasttest.py:57\u201386` leaves that operand in the command. The added doctest check does not cover this case, so the run can exceed the five-file limit while the test place is occupied.",
-        "file": "src/forge/review.py",
-        "line": 293,
-        "priority": "P1",
-        "title": "Explicit nonstandard pytest files bypass the test place"
-      }
-    ],
-    "id": "0149ea06-95b6-4766-90d7-db4635b80edd",
-    "status": "blocked"
+    "findings": [],
+    "id": "44f37b5d-98ad-4fd1-a9a4-b69aa02b3dda",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T07:11:41.406821+00:00",
@@ -58,6 +50,10 @@
     },
     {
       "at": "2026-10-11T16:37:31.813492+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:37:13.438694+00:00",
       "step": "review"
     }
   ],
