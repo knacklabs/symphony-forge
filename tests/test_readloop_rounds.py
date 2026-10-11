@@ -25,6 +25,17 @@ from test_codex_worker import _lines, _sent, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_phases import _flat
 from test_story import DOC, new_story, setup, worktree
+from test_tools_session_hold import Session
+
+
+@pytest.fixture(autouse=True)
+def reader_sessions(repo):
+    repo.reader_sessions = {}
+    try:
+        yield
+    finally:
+        for session in repo.reader_sessions.values():
+            session.close()
 
 CODEX = r'''
 import json, os, pathlib, subprocess, sys
@@ -170,12 +181,21 @@ class Reader:
             self.monkeypatch.delenv(variable, raising=False)
         self.monkeypatch.setenv(*(("CLAUDECODE", "1") if app == "claude" else
                                   ("CODEX_THREAD_ID", "thr-coordinator")))
+        self.coordinator = app
+
+    def native(self, *args):
+        # Native rounds require an actual surviving host, not just its environment marker.
+        sessions = self.repo.reader_sessions
+        if self.coordinator not in sessions:
+            sessions[self.coordinator] = Session(
+                self.repo, self.repo.bin / f"{self.coordinator}-host", self.coordinator + "-session")
+        return sessions[self.coordinator].forge(*args)
 
     def say(self, text: str) -> None:
         (self.repo.bin / f"{self.app}-says.md").write_text(text, encoding="utf-8")
 
     def read(self):
-        return self.repo.forge("read", "SHOP")
+        return (self.native if self.coordinator == self.app else self.repo.forge)("read", "SHOP")
 
     def ok(self, text: str = "No findings.\n") -> str:
         self.say(text)
@@ -457,7 +477,8 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     native = json.loads(offered.stdout)
     assert (native["role"], native["tool"], native["model"]) == ("reader", "claude", "opus")
     assert reader.text() == notes and not (repo.bin / "codex-app-server.jsonl").exists()
-    finished = repo.forge("handback", "SHOP", "--subagent", "pinned-reader", "--text", "No findings.")
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "pinned-reader", "--text", "No findings.")
     assert finished.returncode == 0, finished.stdout + finished.stderr
 
     # From the other coordinator, a missing recorded app starts a fresh native reader.
@@ -465,14 +486,15 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     _no_claude(repo, monkeypatch, tmp_path)
     reader.doc.write_text(reader.doc.read_text("utf-8") + "\nSaved baskets expire after thirty days.\n",
                           encoding="utf-8")
-    moved = repo.forge("read", "SHOP")
+    moved = reader.native("read", "SHOP")
     assert moved.returncode == 0, moved.stdout + moved.stderr
     native = json.loads(moved.stdout)
     assert native["reason"] == "its reader, Claude Code, is no longer installed"
     assert native["tool"] == "codex" and native["model"] == "gpt-6-sol"
     assert "Round 3 of your cold read" in native["fresh_prompt"]
     assert "You are doing the one cold read" in native["fresh_prompt"]
-    finished = repo.forge("handback", "SHOP", "--subagent", "replacement-reader", "--text", "No findings.")
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "replacement-reader", "--text", "No findings.")
     assert finished.returncode == 0, finished.stdout + finished.stderr
     assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
 
@@ -488,17 +510,19 @@ def _same_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     native = json.loads(offered.stdout)
     assert native["role"] == "reader" and native["tool"] == "codex"
     assert "Round 2 of your cold read" in native["fresh_prompt"]
-    finished = repo.forge("handback", "SHOP", "--subagent", "codex-reader", "--text", "No findings.")
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "codex-reader", "--text", "No findings.")
     assert finished.returncode == 0, finished.stdout + finished.stderr
     assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
 
 
 def _native_round(reader, text="No findings."):
-    offered = reader.read()
+    offered = reader.native("read", "SHOP")
     assert offered.returncode == 0, offered.stdout + offered.stderr
     native = json.loads(offered.stdout)
     assert native["role"] == "reader" and native["tool"] == reader.app
-    finished = reader.repo.forge("handback", "SHOP", "--subagent", "readloop-reader", "--text", text)
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "readloop-reader", "--text", text)
     assert finished.returncode == 0, finished.stdout + finished.stderr
     return native
 
