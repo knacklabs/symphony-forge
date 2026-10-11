@@ -17,7 +17,7 @@
   },
   "done_when": "After a failed test run, close's next round in a pytest repo runs the tests that failed first and skips tests whose files are unchanged since their last pass; other test tools rerun their full command as today; CI on the pull request still runs the full suite. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
