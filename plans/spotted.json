@@ -5147,6 +5147,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
