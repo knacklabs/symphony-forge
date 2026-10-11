@@ -10,8 +10,8 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
 repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
-the first cold read uses the other agent when installed, otherwise a separate conversation
-of the coordinating agent.
+with one tool, that tool reads plans; with both, the first cold read uses the other installed tool,
+or the coordinating session's `reader` subagent when the other tool is unavailable.
 `forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
@@ -29,7 +29,7 @@ the install line to fix it.
 - **CI runners:** `runner = "ubuntu-latest"` is the default in `forge.toml`. For an organisation
   using self-hosted Linux runners, use `forge init --runner self-hosted`, or set
   `runner = "self-hosted"` in an existing repo's settings in a fix and run `forge sync`.
-  A custom runner label works too. Sync writes that label into both generated jobs in
+  A custom runner label works too. Sync writes that label into every generated job in
   `.github/workflows/forge.yml`; new repos get it at init and earlier adopted repos get it after
   upgrading Forge and syncing. The jobs install uv and select Python themselves; Node tests
   install Node from the repo's version file or engines, defaulting to the client stack's Node 22.
@@ -146,6 +146,11 @@ the other tool uses its kit. Reviews use the repo's tool through Autoreview's ow
 and effort; with both they use Codex when installed, otherwise Claude. Existing review model
 entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
 
+For a native plan read, `forge read <target>` hands out the `reader` role, the plan's checkout
+and its prompt. Run that background subagent in your session, then record its final message
+with `forge handback <target> --subagent <id> --text "<message>"`. Its lock and machine place
+stay held until handback. Forge checks for changed files and records the usual cold-read notes.
+
 The same file holds a `[models]` table: `[models.build]` for the first task build,
 `[models.fix]` for later fix rounds, `[models.lite]` for a fix's first build round,
 `[models.explore]` for the explorer role on both hosts and quick read-only questions,
@@ -212,13 +217,8 @@ Without an answer, another `forge work <item>` and `forge close <item>` refuse. 
 question and answer in the answering brief and resumes the worker's conversation when possible.
 If that round fails or is interrupted, answer again with `--note`; the question remains open.
 
-Use `forge ask "<question>"` for a quick read-only look at this checkout without starting a
-fix. It uses the Codex entry of `[models.explore]` in `forge.toml` by default, falling back to
-`[models.lite]` when explore is absent; pass `--model <model>` or
-`--effort <effort>` to override either setting for the question. Forge prints the answer and
-keeps its records under `.git/forge/`. The Codex conversation is temporary and does not appear
-in the chat list. If a tracked or untracked file changes during the turn, Forge discards the
-answer and tells you to check `git status` before asking again.
+For a quick read-only question about this checkout, hand it to the session's `explorer`
+subagent role. It uses the explore entry in `forge.toml`; no separate Forge command is needed.
 
 New repos get explore on Claude with `claude-haiku-5-5` at high effort and on Codex with the
 initial lite settings. Upgrading and syncing an existing repo preserves its settings: without
@@ -260,6 +260,11 @@ command close runs instead of `test`, with `{base}` replaced by the merge base w
 branch, so it runs only the tests related to the changed files plus fast checks (for example
 `npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
 `test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
+The `tests` check runs the suite as parallel groups and passes only when every group passes:
+six groups when `test` calls pytest directly (not through make or tox) and the repo lists
+pytest-split, otherwise one.
+New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
+required check keeps its `tests` name, so branch protection doesn't change.
 When the pytest selection would cover more than a third of the repo's Python test files
 (shared test inputs select them all), close skips the local run, says so in one line, and
 relies on the pull request's required checks. `forge test` still runs its tests. New repos

@@ -17,10 +17,10 @@ import pytest
 from conftest import patient
 from test_close import PIN
 
-# Forge's subagent roles, which sync writes for both hosts.
+# Forge's subagent roles, including the native cold reader, which sync writes for both hosts.
 ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
     "worker", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
-    "debugger", "security", "performance")
+    "debugger", "security", "performance", "reader")
     for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
@@ -158,7 +158,8 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
     assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
-                      "features": {"web_search": True, "hooks": True}}
+                      "features": {"web_search": True, "hooks": True},
+                      "agents": {"reader": {"config_file": "agents/reader.toml"}}}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
