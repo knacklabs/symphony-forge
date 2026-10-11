@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import machine, quicktest, repo
+from forge import init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -209,6 +209,44 @@ def own_version_only(path: Path, base: str) -> bool:
     return snapshots[0] == snapshots[1]
 
 
+def close_tests(base: str) -> int:
+    """Use supported runners' selection; leave other commands unchanged."""
+    command = repo.config(Path.cwd())["test"]
+    parts = quicktest.test_parts(Path.cwd(), command)
+    package = Path("package.json")
+    if command == init.NODE_TEST:
+        if not package.is_file():
+            return 0
+        command = " && ".join(part for _, part, _ in parts)
+    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+    # Compound scripts forward npm arguments to the last command, not every runner.
+    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
+            for kind, part, _ in parts if kind in ("vitest", "jest")
+            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+        return subprocess.run(command, shell=True).returncode
+    if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
+        if any(kind == "python" for kind, _, _ in parts):
+            return pytest_tests(base, command)
+        return subprocess.run(command, shell=True).returncode
+    for kind, part, passthrough in parts:
+        if kind == "python":
+            status = pytest_tests(base, part)
+        else:
+            if kind in ("vitest", "jest"):
+                words = shlex.split(part)
+                if words[:2] == ["npm", "exec"] and "--" not in words:
+                    tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
+                    start = tokens[quicktest._npm_runner_index(words)].start()
+                    part = part[:start] + "-- " + part[start:]
+                changed = "--changed" if kind == "vitest" else "--changedSince"
+                argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
+                part += f"{passthrough} {changed} {argument} --passWithNoTests"
+            status = subprocess.run(part, shell=True).returncode
+        if status:
+            return status
+    return 0
+
+
 def test(args) -> int:
     if args.base is None:
         from forge import review
@@ -220,12 +258,15 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        status, report = review.test_run(top, review.close_test(top, base), base, always=True)
+        status, report = review.test_run(top, review.close_test(top, base, closing=False), base, always=True)
         print(report)
         return status
-    changed = git_files("diff", "--no-renames", "--name-only", args.base)
+    return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
+
+
+def pytest_tests(base: str, command: str) -> int:
+    changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
@@ -240,10 +281,10 @@ def test(args) -> int:
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(not manifest_test_inputs_unchanged(Path(name), args.base)
+    if any(not manifest_test_inputs_unchanged(Path(name), base)
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), args.base) for name in shared):
+           or not own_version_only(Path(name), base) for name in shared):
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:

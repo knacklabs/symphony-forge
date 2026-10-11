@@ -1,0 +1,56 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/tests-once-per-round",
+  "done_when": "Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise only the test files the change touched and the tests named after its changed source files; CI still runs the full suite and a red CI sends the item back. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/fasttest.py",
+    "tests/test_close_keeps_full_tests_in_ci.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cdf0c4c39d128b335875b9af206a9bedcc19adb90eafa114d6ed74b125d6bc89",
+    "changed": "2843acc4b2c87870c527a491aab2eece748b714794c02e19f66fd6af2e582b5a",
+    "commit": "8a63eabca229f8fa0c97e901598ef89b7d7dda48",
+    "dismissals": [],
+    "findings": [],
+    "id": "66937ea4-ab7a-4ff3-97d8-cdb618f8a0e3",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T15:16:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T16:50:48.905493+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:47:25.500862+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:40:01.437255+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:20:27.325790+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:58:11.349426+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/fasttest.py",
+    "reason": "Owner chose narrow: pick tests only for Python, Vitest and Jest with each tool's own changed-files option; every other repo runs its full test command as today",
+    "wait_id": "f44c26da-5432-45e5-8390-ea7180a7d0e4"
+  },
+  "why": "Each round runs the same tests twice, on the laptop and in CI, which is most of a round's time",
+  "worker": "codex"
+}

@@ -1,5 +1,5 @@
 """forge.toml's fast_test: close runs it instead of test, with {base} filled in as the merge base
-with the default branch; without it close runs test. The pull request's CI keeps the full test."""
+with the default branch; unsupported runners keep their full command. CI keeps the full test."""
 from __future__ import annotations
 
 import sys
@@ -42,12 +42,14 @@ def test_1_close_runs_fast_test_with_the_merge_base_in_place_of_base(env):
     assert f"fast {base}" in env.prompt()  # the review sees the command close ran
 
 
-def test_2_close_runs_test_when_fast_test_is_unset(env):
+def test_2_close_runs_the_full_custom_command_when_fast_test_is_unset(env):
     log = _settings(env, fast=False)
     item, _ = env.start_fix()
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
+    # The recorded narrow restores full local execution for unsupported launchers.
     assert log.read_text("utf-8").splitlines() == ["full"]
+    assert "1 passed" in env.prompt()
 
 
 def test_3_the_generated_workflow_s_tests_job_still_runs_test(env):
