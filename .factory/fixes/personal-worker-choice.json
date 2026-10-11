@@ -17,24 +17,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3b9993bd153ed810ca7f78764bf8a8216244a1f93cc59c625cce24c8190ec4ad",
-    "changed": "51e82b6b199019fcbaf3487463e37a6b2796f15e9944af3eceb29ed21d261131",
-    "commit": "d3ddaa8c0d58888698d3d85ff61bca4485076c26",
+    "branch_diff": "3f8e2160fd688fa094649be91cf0538272c201dc348ad83fbddf2c5ee61f1f9f",
+    "changed": "231a080033868fa6121e80cd647177a0162d1fda82325a128a583c53679a06d6",
+    "commit": "9deff982370510d3cfaeda544da12735dfefc7ee",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. A local `tools = \"both\"` can change which worker builds, but `local_choices` reports only `workers` when the effective tools value is `both`. If `workers` is shared, `forge next` shows no local source at all. It also omits the `forge.toml` source of shared model and effort settings. The named test checks local labels but does not catch these missing sources, so the required per-setting display remains incomplete.",
-        "file": "src/forge/repo.py",
-        "line": 552,
-        "priority": "P1",
-        "title": "Not done: forge next does not show which file each work setting came from"
-      }
-    ],
-    "id": "6e5ed658-c188-480f-88d7-895082875411",
-    "status": "blocked"
+    "findings": [],
+    "id": "0b5db8ca-f1b7-4d34-b93a-c4462ee69728",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
@@ -46,6 +38,10 @@
     },
     {
       "at": "2026-10-11T15:26:54.710571+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:11:31.543348+00:00",
       "step": "review"
     }
   ],
