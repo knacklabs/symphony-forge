@@ -489,4 +489,5 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
         totals[kind] += (b - a).total_seconds()
         intervals.append({"start": a.isoformat(), "end": b.isoformat(), "kind": kind})
     return {"intervals": intervals, "time_breakdown": totals,
+            **{f"{kind}_seconds": seconds if points else None for kind, seconds in totals.items()},
             "total_seconds": sum(totals.values()) if points else None}

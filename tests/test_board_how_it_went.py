@@ -251,6 +251,9 @@ def approved_runway(env, monkeypatch, known):
     assert current["gates"]["plan_read"]["status"] == "passed"
     assert current["children"] == []
     assert current["total_seconds"] == (70 if known else 60)
+    assert current["working_seconds"] == (10 if known else 0)
+    assert current["waiting_seconds"] == 0
+    assert current["unknown_seconds"] == 60
     assert current["time_breakdown"] == {"working": 10 if known else 0, "waiting": 0, "unknown": 60}
     assert current["intervals"][-1] == {"start": at(0), "end": at(60), "kind": "unknown"}
 
@@ -589,6 +592,9 @@ def story_runway(env, monkeypatch):
     assert current["approved_by"] == "Forge Test"
     assert row(env.repo, first)["approved_by"] == "Forge Test"
     assert current["total_seconds"] == 70
+    assert current["working_seconds"] == 60
+    assert current["waiting_seconds"] == 0
+    assert current["unknown_seconds"] == 10
     assert current["time_breakdown"] == {"working": 60, "waiting": 0, "unknown": 10}
     assert current["intervals"]
 
