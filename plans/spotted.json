@@ -5367,6 +5367,17 @@
       "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
