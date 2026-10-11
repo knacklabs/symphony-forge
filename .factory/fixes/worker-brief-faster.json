@@ -10,32 +10,26 @@
   },
   "done_when": "The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate fix?' and 'record a narrow choice' in advance (out-of-scope problems become Spotted lines; fix only findings inside the Done-when and list the rest in the proof), and ends with the reviewer's checklist the worker checks before handing over",
   "flagged": [
-    "src/forge/templates/brief.md"
+    "src/forge/templates/brief.md",
+    "src/forge/worker.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98e1c4f5c54f7068c8aee1360ea6f98325bd7fde298994238646073150382762",
-    "changed": "a57d7c54cdd30c13e02b86f24c4d88c689a1e7b79340be843b1ca5db57e80336",
-    "commit": "e584fef80739782a8f491d0b86a3a0a2883ee2e3",
+    "branch_diff": "258d63c4f1c5c729cbaf5729ec618dc63be7eb3abf7affcf9119bacbc1f71219",
+    "changed": "cf43fef6696a702559ae58f3851ca4c4ccd2345f56d86efb31314dff672c2386",
+    "commit": "d3bb15300233a37f5124e9caf3a0cec4817cbdbd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Resumed workers receive a brief that ends with round updates instead of the checklist, so they lack the requested final handoff check on a normal work path. Raise: Not done. `src/forge/worker.py:442-461` builds a shortened continued brief and appends changes or findings; the new checklist at this line appears only in the full template. The named test checks only an initial `forge work` call.",
-        "file": "src/forge/templates/brief.md",
-        "line": 264,
+        "body": "Raise: Not done. A worker whose session began before a Forge upgrade can resume without receiving the new instruction to skip the coordinator guide, leaving the reported reread problem on a normal upgrade path. The instruction is in the full template at `src/forge/templates/brief.md:13`, but the continued path at `src/forge/worker.py:444-464` builds a shorter brief that omits it. The added test checks this instruction only in the first brief, even for its earlier-adopted client fixture; it does not start a session before upgrading.",
+        "file": "src/forge/worker.py",
+        "line": 464,
         "priority": "P1",
-        "title": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds"
-      },
-      {
-        "body": "The new narrow-choice answer conflicts with the instruction workers receive earlier in the same brief, leaving them with incompatible directions when a review finding falls outside Done-when. Raise: Not done. This line says to fix only findings inside Done-when, while `REVIEW_LOOP` in `src/forge/worker.py:25-30`, inserted at `brief.md:17`, says to fix the findings in the round, including findings after a recorded narrow or split.",
-        "file": "src/forge/templates/brief.md",
-        "line": 254,
-        "priority": "P1",
-        "title": "Not done: Resolve conflicting fix-round directions"
+        "title": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'"
       }
     ],
-    "id": "bb7dd59a-7bbc-4baf-aca4-a529bf6a202e",
+    "id": "71494af2-5cb3-4a7c-9886-e019a6481815",
     "status": "blocked"
   },
   "round": 1,
@@ -47,6 +41,10 @@
     },
     {
       "at": "2026-10-11T08:32:43.084863+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T10:34:23.163504+00:00",
       "step": "review"
     }
   ],
