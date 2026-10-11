@@ -2080,6 +2080,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 169,
+      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
+      "from": "blocking",
+      "item": "read-blocking-only",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/templates/review-tests.py",
@@ -2437,6 +2448,17 @@
       "path": "tests/test_close_runs_tests_and_review_together.py",
       "line": 51,
       "text": "Not done: tests/test_close_runs_tests_and_review_together.py::test_1_close_starts_tests_and_review_together_and_reports_both",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_tests_and_review_together.py\tStandard: Tests own and clean up every process they start\treview-alongside-tests",
+      "kind": "bug",
+      "path": "tests/test_close_runs_tests_and_review_together.py",
+      "line": 115,
+      "text": "Standard: Tests own and clean up every process they start",
       "from": "blocking",
       "item": "review-alongside-tests",
       "status": "open",
@@ -4683,17 +4705,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
-      "kind": "bug",
-      "path": "src/forge/templates/cold-read.md",
-      "line": 169,
-      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
-      "from": "blocking",
-      "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
     }

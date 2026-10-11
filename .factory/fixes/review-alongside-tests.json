@@ -16,16 +16,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b8242e72f3cec34ab36c3339a4caeb11c60de7a9640818d7412cab5bd0149738",
-    "changed": "625c79ddfb6164363f2b3d7f1de3388a7e83dde35c25786c6329db75b8ab45da",
-    "commit": "2be8f8d1c197e6666c2b59293976e7d0aedd8ecc",
+    "branch_diff": "7a9a10b97b722847dfaa94b034c10f69e85fae50c7af53164acc33e6c6b00f37",
+    "changed": "d8ae95825021d3ee4fac9fc2f290a4dd24398b96e1d356c9e51b3dedbf12d013",
+    "commit": "ce7c00e5310d82a7214b47de99b774b9fd899803",
     "dismissals": [],
-    "findings": [],
-    "id": "eb1e8feb-4604-4346-8b1a-1b8eb6aa75f2",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Gate. The standard requires: \u201cTests own and clean up every process they start, even after a crash; detect and fail on leftover processes when a test worker crashes.\u201d On a 90-second timeout, this test kills only the `forge close` parent. The test command and Autoreview are launched in separate process groups (`review.test_run` and `review._attempt`), so a hung child can remain running after the test fails. The test neither stops those children nor checks for leftovers.",
+        "file": "tests/test_close_runs_tests_and_review_together.py",
+        "line": 115,
+        "priority": "P1",
+        "title": "Standard: Tests own and clean up every process they start"
+      }
+    ],
+    "id": "6b4e742a-7ef3-4b0b-a8c3-d80c2176068c",
+    "status": "blocked"
   },
   "round": 5,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:16:47+00:00",
@@ -45,6 +53,10 @@
     },
     {
       "at": "2026-10-11T04:26:34.096266+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:42:16.502548+00:00",
       "step": "review"
     }
   ],
