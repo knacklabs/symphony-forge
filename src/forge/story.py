@@ -954,23 +954,28 @@ def plain(title: str, body: str = "") -> str:
     markdown, labels, file paths or hashes."""
     def sentence(text: str) -> str:
         text = " ".join(text.replace("**", "").replace("`", "").split())
-        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*)+", "", text, flags=re.I)
-        text = PATHLIKE.sub("", text)
-        text = re.sub(r"\(\s*\)", "", text)
-        return re.sub(r"\s+([,.;:!?])", r"\1", re.split(r"(?<=[.!?])\s", text.strip(), maxsplit=1)[0])
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate)\.\s*)+", "", text, flags=re.I)
+        text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
+        first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
+        # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
+        if rest and len(first.split()) < 5:
+            first = f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
+                                                  rest[0][:1].lower() + rest[0][1:])
+        return first
     title, body = sentence(title), sentence(body)
     if not body:
         return title
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
 
 
-def stop_question(name: str, delivers: str, flagged: list[str], accept: str) -> str:
+def stop_question(name: str, delivers: str, flagged: list[str], accept: str,
+                  parts: str = "Done when") -> str:
     """The question a stopped read or review loop asks the human, ready to ask as written."""
     return "\n".join([f"{name}: {delivers}" if delivers else name,
                       *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
                       "Accept, narrow or split?",
                       f"- Accept: {accept}",
-                      "- Narrow: drop these cases from its Done when; they become follow-ups.",
+                      f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
                       "- Split: move these cases into a new story or fix of their own; this one goes on "
                       "without them."])
 
@@ -991,7 +996,9 @@ def read_question(doc: str, notes: str) -> str:
     gives = plain(found.get("What changes for you") or found.get("Behaviour", ""))
     return stop_question(title[1].strip() if title else "", gives, flagged,
                          "keep these problems as known and mark the read accepted; approving or "
-                         "confirming the doc is still a separate step.")
+                         "confirming the doc is still a separate step.",
+                         "Done when" if "What changes for you" in found else
+                         "Behaviour and Acceptance criteria")
 
 
 def _findings(text: str) -> dict[int, str]:

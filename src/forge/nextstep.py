@@ -211,14 +211,15 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
-            for notes in sorted((path / "docs" / "specs").glob("*.read.md")):  # a stopped spec read
-                text = notes.read_text(encoding="utf-8")
-                record = story._record(text)[0]  # pyright: ignore[reportPrivateUsage]
-                spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
-                if record.get("blocked_rounds") == "3" and not record.get("loop_choice") and spec.is_file():
-                    lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
+    for path in sorted(trees.values()):  # a spec read stopped on any work branch
+        for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
+            text = notes.read_text(encoding="utf-8")
+            record = story._record(text)[0]  # pyright: ignore[reportPrivateUsage]
+            spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
+            if record.get("blocked_rounds") == "3" and not record.get("loop_choice") and spec.is_file():
+                lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text)
     lines = _refresh(top, trees) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)

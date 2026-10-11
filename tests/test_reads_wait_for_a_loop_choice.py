@@ -26,20 +26,20 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     if "models.grill.claude" not in config:
         env.commit(where, "forge.toml", config + 'models.grill.claude = { model = "opus", effort = "high" }\n')
     _install(repo.bin, "claude", READER.format(python=sys.executable))
-    if target == "SHOP":
-        env.commit(where, "docs/decisions/0001-client-signoff.md",
-                   '---\nstatus: accepted\nconfirmed_by: A Client\n---\n# Signed off\n')
-        env.commit(where, "plans/roadmap.json", json.dumps({"items": [{"key": target}]}))
-        # Stories start on the default branch: land the fixture's upgrade and sign-off first.
-        repo.git("merge", "--ff-only", repo.git("rev-parse", "HEAD", cwd=where))
-        made = repo.forge("story", "new", target, "Shoppers can save a basket", cwd=where)
-        assert made.returncode == 0, made.stderr
-        where = worktree(repo, "story/SHOP")
-        doc = where / "plans/SHOP.md"
-    else:
-        doc = where / "docs/specs/basket.md"
-        doc.parent.mkdir(parents=True, exist_ok=True)
-    original = DOC if target == "SHOP" else SPEC
+    env.commit(where, "docs/decisions/0001-client-signoff.md",
+               '---\nstatus: accepted\nconfirmed_by: A Client\n---\n# Signed off\n')
+    env.commit(where, "plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}]}))
+    # Stories start on the default branch: land the fixture's upgrade and sign-off first.
+    repo.git("merge", "--ff-only", repo.git("rev-parse", "HEAD", cwd=where))
+    made = repo.forge("story", "new", "SHOP", "Shoppers can save a basket", cwd=where)
+    assert made.returncode == 0, made.stderr
+    # The spec is planned on the story's branch, where forge spec save accepts it.
+    where = worktree(repo, "story/SHOP")
+    doc = where / ("plans/SHOP.md" if target == "SHOP" else "docs/specs/basket.md")
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    # A short bold lead-in keeps the sentence after it.
+    original = DOC if target == "SHOP" else SPEC.replace(
+        "Each invoice is emailed as a PDF.", "**Emailed invoices.** Each invoice is emailed as a PDF.")
     doc.write_text(original, "utf-8")
     if target != "SHOP":
         saved = repo.forge("spec", "save", target, cwd=where)
@@ -48,7 +48,7 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     for number in range(1, 4):
         # Settled repeats are clean; each round must still find a distinct blocking gap.
         say(repo, f"1. Blocking: Basket recovery is missing for case {number}.\n"
-                  "   Raise: a shopper who signs out at `src/basket.py:12` loses the saved basket. "
+                  "   Raise: Not done. A shopper who signs out at `src/basket.py:12` loses the saved basket. "
                   "The doc never says when it comes back.\n")
         result = repo.forge("read", target, cwd=where)
         assert result.returncode == (1 if number == 3 else 0), result.stdout + result.stderr
@@ -56,14 +56,16 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
             dispose_all(notes)
     resolution = f'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'
     # The stop is a ready-to-ask question: the item, each open note in plain words, each choice.
+    parts = "Done when" if target == "SHOP" else "Behaviour and Acceptance criteria"
     question = (("Shoppers can save a basket: Shoppers can save a basket and come back to it later."
-                 if target == "SHOP" else "Invoices by email: Each invoice is emailed as a PDF.") + "\n"
+                 if target == "SHOP" else
+                 "Invoices by email: Emailed invoices: each invoice is emailed as a PDF.") + "\n"
                 "It still has these problems:\n"
                 "- Basket recovery is missing for case 3: a shopper who signs out loses the saved basket.\n"
                 "Accept, narrow or split?\n"
                 "- Accept: keep these problems as known and mark the read accepted; approving or "
                 "confirming the doc is still a separate step.\n"
-                "- Narrow: drop these cases from its Done when; they become follow-ups.\n"
+                f"- Narrow: drop these cases from its {parts}; they become follow-ups.\n"
                 "- Split: move these cases into a new story or fix of their own; this one goes on "
                 "without them.")
     assert result.stderr == (

@@ -61,7 +61,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
         env.reviews(blocked({**finding("P1", f"Raise: Round {number} defect", path),
-                             "body": "Saving at `app.py:3` drops the basket for returning "
+                             "body": "Raise: Not done. Saving at `app.py:3` drops the basket for returning "
                                      "shoppers (a3f9c2e1b). More detail."}))
         result = env.close(item)
         assert result.returncode == 1, result.stdout + result.stderr
