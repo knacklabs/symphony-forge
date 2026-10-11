@@ -17,16 +17,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e82b2149579414122651660d6efce91c76df108d40e27fa61abdcdd82a44d0c0",
-    "changed": "7029c557e8142d61587a7332d0622d6e8c469887de1cabedd83621787acf52c4",
-    "commit": "281113eed8896722cb170b70bd25602685f9d87b",
+    "branch_diff": "56971047c7541f0ac295b70a7da3ef312ae5a9e8965fd8770fb66093cbc4b176",
+    "changed": "c66b9cccf13972586f6cfe0a866ad549cf1696274e6b394ac2cbc24bb49cf3f0",
+    "commit": "a72b67dd38e2b1ab36991ef597650eabb9269650",
     "dismissals": [],
-    "findings": [],
-    "id": "44f37b5d-98ad-4fd1-a9a4-b69aa02b3dda",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Functional \u2014 A client with `test = \"pytest tests\"` and `tests/pytest.ini` containing `addopts = --doctest-modules` can run doctests from many Python helper files while taking no test place. The guard here calls `pytest_options`, but `fasttest.py:31\u201354` checks only repository-root config files and explicit `-c` files. [Pytest searches for configuration from the `tests` path upward](https://docs.pytest.org/en/stable/reference/customize.html), so it uses the nested file that Forge misses. Five selected test files therefore qualify for free admission despite the broader collection. This is distinct from the earlier root `pyproject.toml` case; the named config proof uses only a root `pytest.ini`.",
+        "file": "src/forge/review.py",
+        "line": 289,
+        "priority": "P1",
+        "title": "Nested pytest config lets doctests bypass the test place"
+      }
+    ],
+    "id": "59b89955-7e6e-4bad-a6be-9b43d9703c37",
+    "status": "blocked"
   },
   "round": 2,
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:11:41.406821+00:00",
@@ -55,13 +63,15 @@
     {
       "at": "2026-10-11T17:37:13.438694+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:37:16.036731+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "narrow",
     "file": "src/forge/review.py",
-    "reason": "Owner chose narrow: small test runs skip the test queue only when the test command has no doctest option; reviews and plan reads still skip the agent queue",
-    "wait_id": "87103d21-332b-425f-87dc-1103623a0466"
+    "wait_id": "3470fdd3-55d0-4b19-8e71-2fff205fb778"
   },
   "why": "A 2-minute review waits about 10 minutes for an agent place and a worker's small test run queues for the single test place",
   "worker": "codex"
