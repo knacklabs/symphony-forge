@@ -10,7 +10,7 @@ same format RECORDS reads for `spec confirm`. The frontmatter is the latest roun
     read_at: <when>
     read_hash: <git hash-object of the doc as read>
     round, passed: <n>, and yes when that round has no blocking notes
-    doc_seen, spec_seen, notes_seen: <what its reader saw, kept by git hash-object -w>
+    doc_seen, spec_seen, notes_seen, answers_seen: <what its reader saw, kept by git hash-object -w>
     ---
     ## Round <n>
 
@@ -85,7 +85,7 @@ KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
 RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
-          "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
+          "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
@@ -250,6 +250,7 @@ def read(args: Any) -> int:
     read_hash = _store(top, text, rel)
     spec = _find_spec(top, target) if is_story else None
     spec_text, blocks = spec[2] if spec else "", _findings(findings)
+    answers = sections(_text(top / "docs/product/BRIEF.md")).get("Answers", "") if is_story else ""
     fill: dict[str, Any] = {
         "path": rel, "doc": text.decode("utf-8"), "target": target, "traps": agents_section(top, "Known traps"),
         "spec": (f"\nConfirmed spec at `{spec[0]}` on `{spec[1]}`:\n\n{spec[2]}\n" if spec else
@@ -262,6 +263,10 @@ def read(args: Any) -> int:
                 for name in ("doc_seen", "spec_seen", "notes_seen")}
         diff = _diff(seen["doc_seen"].stdout, text.decode("utf-8"), rel)
         spec_diff = _diff(seen["spec_seen"].stdout, spec_text, spec[0] if spec else "spec")
+        # Answers changed since the last round count as changed text; older notes never saved them.
+        saw_answers = repo.run("git", "cat-file", "blob", record.get("answers_seen") or "-", cwd=top)
+        fill["answers_diff"] = ("(not available)" if saw_answers.returncode else
+                                _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
         saw = _findings(_record(seen["notes_seen"].stdout)[1])
@@ -359,6 +364,7 @@ def read(args: Any) -> int:
               "round": str(round_number), "passed": "yes" if clean else "no",
               "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
+              "answers_seen": _store(top, answers.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8")),
               "conversation": ran["conversation"] if reader == "codex" else "",
               "session": codex.record(top, target, "Grill")["claude"]["id"] if reader == "claude" else ""}
@@ -995,7 +1001,9 @@ def keep_reader_chat(top: Path, target: str, reader: str, chat: str) -> bool:
 
 
 def _notes(record: dict[str, str], findings: str) -> str:
-    head = "".join(f"{key}: {record.get(key) or ''}".rstrip() + "\n" for key in RECORD)
+    # ponytail: answers_seen came later; leave it out until a read saves it, so older notes keep their record.
+    head = "".join(f"{key}: {record.get(key) or ''}".rstrip() + "\n" for key in RECORD
+                   if key != "answers_seen" or record.get(key))
     return f"---\n{head}---\n{findings}"
 
 

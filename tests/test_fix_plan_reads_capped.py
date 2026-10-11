@@ -58,6 +58,9 @@ def test_1_unchanged_text_gets_two_rounds_and_builders_edits_no_read(repo, gh, t
     shop = new_story(repo, "SHOP")
     doc, notes = shop / "plans/SHOP.md", shop / "plans/SHOP.read.md"
     doc.write_text(BUILT, encoding="utf-8")
+    brief = shop / "docs/product/BRIEF.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text("# Brief\n\n## Answers\n\n- Baskets last a week.\n", encoding="utf-8")
     prompts = []
     for reply, edit in [("1. Blocking: Sign-in is out of scope.\n", "shows when it was saved."),
                        ("2. Blocking: The basket has no size limit.\n", "displays when it was saved."),
@@ -69,10 +72,16 @@ def test_1_unchanged_text_gets_two_rounds_and_builders_edits_no_read(repo, gh, t
                              encoding="utf-8")
             doc.write_text(BUILT.replace("says when it was saved.", edit),
                            encoding="utf-8")
+            if len(prompts) == 2:
+                brief.write_text(brief.read_text("utf-8").replace("week", "month"), encoding="utf-8")
     # Rounds 1 and 2 may note anything; round 3 blocks only on the diff or an unclosed finding.
     assert CAP not in prompts[0] and CAP not in prompts[1]
     assert "Look for new gaps anywhere in the doc" in prompts[1]
     assert CAP in prompts[2] and "Look for new gaps anywhere in the doc" not in prompts[2]
+    # A changed Answers section is changed text in round 3, so it can still block.
+    assert "+- Baskets last a month." in prompts[2]
+    assert "Block only on changed text in the diff, the spec's diff or the Answers diff" in " ".join(
+        prompts[2].split())
     # Editing one sentence never opens the unchanged sentences in that section to blockers.
     assert "Block only on changed text in the diff" in prompts[2]
     assert "Block only on a gap in the diff and the sections it touches" not in prompts[2]

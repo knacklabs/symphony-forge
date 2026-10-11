@@ -148,6 +148,9 @@ $spec_diff
 
 When that diff is not empty, check the plan still matches the changed spec. Re-read the
 `## Answers` section of `docs/product/BRIEF.md` from the checkout: it can change between rounds.
+Its diff since your last round, empty when it is unchanged:
+
+$answers_diff
 
 Check:
 
@@ -179,14 +182,19 @@ For a story, the confirmed spec's diff since your last round, empty when it is u
 
 $spec_diff
 
-Check only this diff and the sections it touches, not the rest of the doc, which passed: apply
-your first round's checks and What counts to them, including Forge's general traps and
-this repository's own known traps:
+For a story, the diff of the `## Answers` section of `docs/product/BRIEF.md` since your last
+round, empty when it is unchanged:
+
+$answers_diff
+
+Check only this diff and the sections it touches, not the rest of the doc, which passed, plus
+any spec or Answers diff above: apply your first round's checks and What counts to them,
+including Forge's general traps and this repository's own known traps:
 
 $traps
 
-For a story from round 3 on, block only on changed text in the diff or an earlier blocking
-finding that remains open. Other gaps in unchanged text are `Advisory:`, even inside a touched
+For a story from round 3 on, block only on changed text in the diff, the spec's diff or the
+Answers diff, or on an earlier blocking finding that remains open. Other gaps in unchanged text are `Advisory:`, even inside a touched
 section.
 
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
@@ -205,7 +213,8 @@ $traps
 
 <!-- forge:cap -->
 2. This is round $round: the text the diff does not touch has had its two rounds of notes.
-   Block only on changed text in the diff, or on one of those findings that is not closed.
+   Block only on changed text in the diff, the spec's diff or the Answers diff, or on one of
+   those findings that is not closed.
    Any other note on unchanged text is `Advisory:`, even inside a touched section. Apply your first
    round's checks and What counts to the diff, including Forge's general traps and this
    repository's own known traps:
