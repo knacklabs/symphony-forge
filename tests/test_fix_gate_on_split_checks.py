@@ -114,7 +114,7 @@ def test_2_small_split_suite_passes_without_hiding_errors(repo):
 
 
 @pytest.mark.parametrize("command", ["make pytest", "uv run make pytest", "tox -e pytest"])
-def test_2_a_command_that_wraps_pytest_runs_one_group(repo, command):
+def test_4_a_command_that_wraps_pytest_runs_one_group(repo, command):
     # Only pytest itself takes the split options; make and tox would reject them.
     repo.write("forge.toml", (ROOT / "forge.toml").read_text(encoding="utf-8").replace(
         'repo = "forge-source"\n', "").replace(
