@@ -217,7 +217,16 @@ def main() -> int:
                     except JsonRpcError as retry_error:
                         reason = retry_error.message
                 if resumed is None:
-                    emit(fresh=f"Codex couldn't resume its conversation: {reason}")
+                    if reason == (f"session {request['thread']} is archived. Run "
+                                  f"`codex unarchive {request['thread']}` to unarchive it first."):
+                        emit(fresh="the earlier Codex conversation was archived")
+                    else:
+                        if reason not in (f"no rollout found for {request['thread']}",
+                                          f"no rollout found for thread id {request['thread']}",
+                                          f"thread not found: {request['thread']}",
+                                          f"thread not loaded: {request['thread']}"):
+                            raise
+                        emit(fresh=f"Codex couldn't resume its conversation: {reason}")
         if request.get("ephemeral"):
             settings["ephemeral"] = True
         thread = resumed or codex.thread_start(**settings)

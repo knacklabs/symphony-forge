@@ -503,8 +503,10 @@ def install_merge_rules(top: Path) -> bool:
 
 
 def sync(args: argparse.Namespace) -> None:
+    from forge import codex
     top = repo.root()
     cfg = repo.config(top)
+    codex.preserve_chats(top)
     changed = write(top, cfg)
     if cfg.get("repo") == "forge-source":
         page = command_page()

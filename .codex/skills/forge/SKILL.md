@@ -897,6 +897,19 @@ Claude and its design entry. New repos get this at init; existing repos get it o
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.
 
+Each task and fix keeps the same worker chat for each tool until merge. Later rounds resume it
+after model or effort changes, restarts, missing local records or a fresh worktree. Plan reads
+keep their reader chat across rounds too. Forge starts a new chat only when the tool reports
+the old chat gone or archived or the item changes tools, and says why in one line. Other resume
+errors stop the round and keep its chat.
+Upgrade's sync commits earlier-release chat bindings in their owning work branches, without
+accepting reader findings. It also recovers turn logs when local JSON is missing, moved spec
+worktrees and workers on `forge/` branches. A landed spec's binding travels in the upgrade fix's existing notes.
+If several worktrees contain a moved spec and its reader notes, run `forge read <slug>` in its
+owning checkout, then sync again so Forge can preserve that binding without guessing the owner.
+Keep `.git/forge` until the upgrade finishes. If those chat records have
+uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying.
+
 Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
 Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.

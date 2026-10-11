@@ -105,7 +105,7 @@ def main():
         if saved is None:  # as Codex says it: a read and a resume word it differently
             send(id=message["id"], error={"code": -32600, "message": "thread not loaded: " + id
                                           if method == "thread/read" else
-                                          "no rollout found for " + id})
+                                          "no rollout found for thread id " + id})
             continue
         result = {}
         if method in ("thread/start", "thread/resume"):
@@ -160,17 +160,18 @@ main()
 '''
 
 
-def _resuming(repo, monkeypatch, sdk_data: Path, client=False) -> tuple[Path, Path, Path]:
+def _resuming(repo, monkeypatch, sdk_data: Path, client=False, start_task=True) -> tuple[Path, Path, Path]:
     """Codex workers with the story approved, BOARD/PAGE started, a fix kind of its own, and the
     stand-in app-server whose conversations outlive it (run by this Python, so the command Forge
     records at its start stays its command). Returns the task's folder, the app-server's log and
     the item's turn log."""
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data, client=client)
+    folder, calls = _codex_repo(repo, monkeypatch, sdk_data, client=client, start_task=start_task)
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{RESUMING}")
-    version = repo.forge("--version").stdout.split()[-1]
-    (folder / "forge.toml").write_text(_toml(version, "codex", MODELS,
-                                           "client" if client else "forge-source"), encoding="utf-8")
-    repo.git("commit", "-q", "-am", "Think harder in fix rounds", cwd=folder)
+    if start_task:
+        version = repo.forge("--version").stdout.split()[-1]
+        (folder / "forge.toml").write_text(_toml(version, "codex", MODELS,
+                                               "client" if client else "forge-source"), encoding="utf-8")
+        repo.git("commit", "-q", "-am", "Think harder in fix rounds", cwd=folder)
     return folder, calls, repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
 
 
@@ -293,6 +294,15 @@ def _fresh_conversation(repo, monkeypatch, sdk_data, reason):
     # Forge starts fresh, and says why, when it can't continue the conversation.
     record = turns.with_suffix(".json")
     store = repo.bin / "threads.json"
+    first = _saved(record)["conversation"]
+
+    def continued():
+        again = repo.forge("work", "BOARD/PAGE")
+        assert again.returncode == 0, again.stdout + again.stderr
+        assert "Starting a new Codex conversation" not in again.stdout
+        assert len(_sent(calls, "thread/start")) == 1
+        assert _sent(calls, "thread/resume")[-1]["threadId"] == first
+        assert _lines(turns)[-1]["continued"] is True
 
     def fresh(why: str) -> None:
         resumed = len(_sent(calls, "thread/resume"))
@@ -311,20 +321,23 @@ def _fresh_conversation(repo, monkeypatch, sdk_data, reason):
 
     if reason == "no-record":
         record.unlink()
-        fresh("Forge has no record of its conversation on this machine")
+        continued()
     elif reason == "missing-rollout":
         conversation = _saved(record)["conversation"]
         threads = json.loads(store.read_text(encoding="utf-8"))
         del threads[conversation]
         store.write_text(json.dumps(threads), encoding="utf-8")
-        fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
+        fresh(f"Codex couldn't resume its conversation: no rollout found for thread id {conversation}")
     elif reason == "moved":
         moved = folder.with_name("moved-BOARD-PAGE")
         repo.git("worktree", "move", str(folder), str(moved))
-        fresh(f"its conversation was started in another checkout, {folder}")
+        continued()
     else:
+        (folder / "built.py").write_text("BUILT = 2\n", encoding="utf-8")
+        repo.git("add", "built.py", cwd=folder)
         repo.git("commit", "-q", "--amend", "-m", "Reworded", cwd=folder)
-        fresh("the branch's history was rewritten under its conversation")
+        continued()
+        assert "BUILT = 2" in _text(calls)
     # With none of those, the next call continues the conversation again.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns)[-1]["continued"] is True
@@ -429,14 +442,15 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data, cla
     repo.git("commit", "-q", "-m", "Take the approved story doc", cwd=folder)
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
-    why = "the story's approval changed after its conversation started"
-    assert f"Starting a new Codex conversation, because {why}." in again.stdout
-    assert _sent(calls, "thread/resume") == [] and len(_sent(calls, "thread/start")) == 2
-    assert (_lines(turns)[-1]["continued"], _lines(turns)[-1]["fresh_start"]) == (False, why)
+    # Approval still gates the brief; a newly approved brief stays in the same chat.
+    assert "Starting a new Codex conversation" not in again.stdout
+    assert len(_sent(calls, "thread/start")) == 1
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == "thr-stub-1"
+    assert (_lines(turns)[-1]["continued"], _lines(turns)[-1]["fresh_start"]) == (True, None)
 
     # Under the new approval, the next call continues the new conversation.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-2"]
+    assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-1", "thr-stub-1"]
 
     # The approved part changes in the story's own worktree, not yet committed: that is the doc the
     # next approval reads, so forge work refuses before it records any status or starts Codex.

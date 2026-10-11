@@ -55,7 +55,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     asked = repo.forge("work", "BOARD/PAGE")
     assert asked.returncode == 0, asked.stderr
     assert question in asked.stdout and 'forge work BOARD/PAGE --note "<answer>"' in asked.stdout
-    assert int(repo.git("rev-list", "--count", "HEAD", cwd=folder)) == int(before) + 1
+    # The status and durable chat binding are Forge commits; the worker commits no answer.
+    assert int(repo.git("rev-list", "--count", "HEAD", cwd=folder)) == int(before) + 2
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     assert json.loads(record.read_text("utf-8"))["question"] == question
 

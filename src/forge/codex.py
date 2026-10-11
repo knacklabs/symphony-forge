@@ -15,6 +15,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -69,6 +70,10 @@ FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
                for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
 
 REFUSALS = {
+    "chat_dirty": ("The chat record at {path} has uncommitted changes, so sync left it alone.",
+                   "commit or undo those changes, then forge sync"),
+    "chat_owner": ("More than one worktree contains docs/specs/{item}.md, so sync cannot locate its earlier reader chat.",
+                   "run forge read {item} in its owning checkout, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
                   "no Codex turn here.", "forge doctor"),
@@ -164,7 +169,175 @@ def installed() -> bool:
 def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
     """The item's record: its Codex processes, conversation, checkout, approval, the commit its
     last turn started from, and HEAD when a turn last ended. A cold read's (Grill) is its own."""
-    return _json(_item_file(checkout, item, ".json", kind))
+    saved = _json(_item_file(checkout, item, ".json", kind))
+    if kind == "Grill":
+        from forge import story
+        _, _, notes, _ = story._paths(item, checkout)
+        fields, _ = story._record(sync.read(notes))
+        if not story.KEY.fullmatch(item) and not (fields.get("conversation") or fields.get("session")):
+            fields, _ = story._record(story.show(checkout, repo.default_branch(checkout),
+                                                notes.relative_to(checkout).as_posix()) or "")
+        chat = {"conversation": fields.get("conversation") or None,
+                "claude": {"id": fields["session"], "checkout": str(checkout)}
+                if fields.get("session") else None}
+    else:
+        chat = (repo.read_state(item, checkout) or {}).get("chat", {})
+        if not chat and saved.get("conversation") and saved.get("claude"):
+            # Earlier releases kept both fallback IDs; the work log records which tool ran last.
+            launches = re.findall(rf"^--- forge work {re.escape(item)} at .*$|"
+                                  r"^Codex app-server: process \d+$",
+                                  sync.read(repo.work_log(checkout, item)), re.M)
+            if launches:
+                saved["claude" if launches[-1].startswith("Codex ") else "conversation"] = None
+    if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")) and not (
+            chat.get("conversation") or (chat.get("claude") or {}).get("id")):
+        lines = sync.read(_item_file(checkout, item, ".log", kind)).splitlines()
+        if lines:
+            logged = json.loads(lines[-1])
+            saved.update({key: logged[key] for key in ("conversation", "claude", "head")
+                         if logged.get(key)})
+            saved["start"] = logged.get("start") or repo.git("rev-parse", "HEAD", cwd=checkout)
+    if (chat.get("conversation") or (chat.get("claude") or {}).get("id")) and (
+            chat.get("conversation"), (chat.get("claude") or {}).get("id")) != (
+            saved.get("conversation"), (saved.get("claude") or {}).get("id")):
+        # Another machine may have committed a replacement since this local record was written.
+        saved.update(chat)
+    return {**chat, **saved}
+
+
+def remember(checkout: Path, item: str, saved: dict[str, Any] | None = None) -> None:
+    """Keep the worker's identity in its existing committed state, before it can start work."""
+    saved = record(checkout, item) if saved is None else saved
+    state = repo.read_state(item, checkout) or {}
+    chat = state.get("chat", {})
+    if (chat.get("conversation"), (chat.get("claude") or {}).get("id")) == (
+            saved.get("conversation"), (saved.get("claude") or {}).get("id")):
+        return
+    state["chat"] = {key: saved.get(key) for key in
+                     ("conversation", "claude", "start", "head", "approval")}
+    if state["chat"]["claude"]:
+        state["chat"]["claude"] = {key: value for key, value in state["chat"]["claude"].items()
+                                  if key != "checkout"}
+    repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, checkout),
+                      top=checkout)
+
+
+def preserve_chats(top: Path) -> None:
+    """Move earlier-release local bindings into their owning branches during upgrade's sync."""
+    from forge import story
+    threads = repo.forge_dir(top) / "threads"
+    paths = sorted({path.with_suffix(".json") for path in threads.rglob("*")
+                    if path.suffix in (".json", ".log")})
+    if not paths:
+        return
+    trees = {branch: tree for branch, tree in story.worktrees(top).items()
+             if branch != repo.default_branch(top)}
+    refs = set(repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
+    with tempfile.TemporaryDirectory(prefix="forge-chats-") as temporary:
+        for path in paths:
+            folder, item = path.relative_to(threads).as_posix().removesuffix(".json").split("/", 1)
+            if folder not in ("fix", "task", "read"):
+                continue
+            saved = _json(path)
+            branch = (f"story/{item}" if folder == "read" and story.KEY.fullmatch(item) else
+                      f"{folder}/{item.replace('/', '-')}" if folder != "read" else "")
+            if folder == "fix":
+                choices = [branch, f"forge/{item}"]
+                branch = next((name for name in choices if name in trees),
+                              next((name for name in choices if name in refs), branch))
+            recorded = saved.get("checkout") or (saved.get("claude") or {}).get("checkout")
+            owner = trees.get(branch) if branch else next((tree for tree in trees.values()
+                                                           if str(tree) == recorded), None)
+            added = False
+            recovered = None
+            if owner is None and folder == "read" and not branch:
+                rel = f"docs/specs/{item}.md"
+                notes = f"docs/specs/{item}.read.md"
+                landed_notes = story.show(top, repo.default_branch(top), notes) or ""
+                binding = saved
+                if not (binding.get("conversation") or (binding.get("claude") or {}).get("id")):
+                    lines = sync.read(path.with_suffix(".log")).splitlines()
+                    binding = json.loads(lines[-1]) if lines else saved
+                fields, _ = story._record(landed_notes)
+                if (fields.get("conversation") or fields.get("session")) and (
+                        fields.get("conversation") or None, fields.get("session") or None) == (
+                        binding.get("conversation"), (binding.get("claude") or {}).get("id")):
+                    continue  # The landed binding already recovers this chat without an owner search.
+                landed = story.show(top, repo.default_branch(top), rel)
+                begun = saved.get("head") or saved.get("start")
+                if not begun:
+                    lines = sync.read(path.with_suffix(".log")).splitlines()
+                    begun = json.loads(lines[-1]).get("start") if lines else None
+                ancestry = repo.run("git", "merge-base", "--is-ancestor", begun,
+                                    repo.default_branch(top), cwd=top).returncode if begun else None
+                if (fields.get("conversation") or fields.get("session")) and ancestry == 0:
+                    continue  # A newer landed binding supersedes this machine's old record.
+                owning = set()
+                if ancestry == 1:
+                    owning = set(repo.git("for-each-ref", f"--contains={begun}",
+                                          "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
+                matches = [name for name, tree in trees.items()
+                           if (tree / rel).is_file() and (name in owning or sync.read(tree / rel) != landed
+                               or sync.read(tree / notes) != landed_notes)]
+                matches += [name for name in sorted(refs - trees.keys())
+                            if name.startswith(("fix/", "forge/", "story/", "task/"))
+                            and (text := story.show(top, name, rel)) is not None and (name in owning or text != landed
+                                or (story.show(top, name, notes) or "") != landed_notes)]
+                if len(matches) > 1:
+                    repo.refuse(REFUSALS["chat_owner"], item=item)
+                branch = matches[0] if matches else ""
+                owner = trees.get(branch)
+                if branch in owning and not (
+                        saved.get("conversation") or (saved.get("claude") or {}).get("id")):
+                    branch_notes = (sync.read(owner / notes) if owner else
+                                    story.show(top, branch, notes) or "")
+                    if branch_notes == landed_notes and (
+                            story.show(top, begun, notes) or "") == landed_notes:
+                        recovered = binding
+            if owner is None and branch in refs:
+                owner = Path(temporary) / "item"
+                repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
+                added = True
+            if owner is None and folder == "read" and not branch and (
+                    top / "docs/specs" / f"{item}.md").is_file():
+                owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
+            if owner is None:
+                continue
+            try:
+                kind = "Grill" if folder == "read" else "Fix"
+                if folder == "read":
+                    if not branch and not (owner / "docs/specs" / f"{item}.md").is_file():
+                        continue  # A renamed or deleted spec no longer owns this reader record.
+                    _, _, notes, _ = story._paths(item, owner)
+                    fields, _ = story._record(sync.read(notes))
+                    if not recovered and (fields.get("conversation") or fields.get("session")):
+                        continue
+                    rel = notes.relative_to(owner).as_posix()
+                else:
+                    state = repo.read_state(item, owner)
+                    if not state or state.get("chat"):
+                        continue
+                    rel = repo.state_path(item)
+                with hold(owner, item, kind):
+                    saved = recovered or record(owner, item, kind)
+                    if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
+                        continue
+                    if repo.git("status", "--porcelain", "--", rel, cwd=owner):
+                        repo.refuse(REFUSALS["chat_dirty"], path=owner / rel)
+                    if folder == "read":
+                        reader = fields.get("reader", "").split(" ")[0]
+                        if recovered or reader not in story.NAMES:
+                            reader = "codex" if saved.get("conversation") else "claude"
+                        chat = (saved.get("conversation") if reader == "codex" else
+                                (saved.get("claude") or {}).get("id"))
+                        if chat:
+                            repo._work_branch(owner)
+                            story.keep_reader_chat(owner, item, reader, chat)
+                    else:
+                        remember(owner, item)
+            finally:
+                if added:
+                    repo.git("worktree", "remove", str(owner), cwd=top)
 
 
 def archive(checkout: Path, item: str, kind: str, thread: str) -> bool:
@@ -191,15 +364,8 @@ def conversation(checkout: Path, item: str, approval: str | None,
                  kind: str = "Fix") -> tuple[str | None, str]:
     """The item's conversation to continue and "", or None and why Forge starts a new one."""
     saved = record(checkout, item, kind)
-    if not saved.get("start"):
+    if not saved.get("conversation"):
         return None, "Forge has no record of its conversation on this machine"
-    if saved.get("checkout") != str(checkout):
-        return None, f"its conversation was started in another checkout, {saved.get('checkout')}"
-    if saved.get("approval") != approval:
-        return None, "the story's approval changed after its conversation started"
-    for commit in {saved["start"], saved.get("head") or saved["start"]}:
-        if repo.run("git", "merge-base", "--is-ancestor", commit, "HEAD", cwd=checkout).returncode:
-            return None, "the branch's history was rewritten under its conversation"
     return saved["conversation"], ""
 
 
@@ -213,7 +379,7 @@ def recover(checkout: Path, item: str) -> None:
     lines = sync.read(turns).splitlines()
     last = json.loads(lines[-1]) if lines else {"status": None}
     path = _item_file(checkout, item, ".json", "Fix")
-    saved = _json(path)
+    saved = record(checkout, item)
     pending = saved.get("pending")  # a turn about to start, until its "started" line is logged
     if "status" in last and not pending:
         return
@@ -305,7 +471,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         archive_thread: bool = False, model: str | None = None,
         effort: str | None = None, fresh_prompt: str | None = None,
         design: bool = False, attach_request: dict[str, Any] | None = None,
-        round_number: int | None = None) -> dict[str, Any]:
+        round_number: int | None = None,
+        on_thread: Callable[[str], None] | None = None) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. A new one gets `fresh_prompt`
     when supplied. `fresh` says why it starts, and the conversation is recorded with the story's
@@ -444,7 +611,12 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     pending = {"kind": kind, "start": begun, **continued,
                                **({"note": note} if note is not None else {})}
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending=pending, **ended)
+                            approval=approval, pending=pending, **ended,
+                            **({"start": begun} if not said["continued"] else {}))
+                    if kind in ("Build", "Fix", "Lite"):
+                        remember(checkout, item, _json(record))
+                    if on_thread is not None:
+                        on_thread(said["thread"])
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":

@@ -76,7 +76,7 @@ def main():
         saved = threads.setdefault(id, {"cwd": params.get("cwd")}) \
             if method == "thread/start" else threads.get(id)
         if saved is None:
-            send(id=message["id"], error={"code": -32600, "message": "no rollout found for " + id})
+            send(id=message["id"], error={"code": -32600, "message": "no rollout found for thread id " + id})
             continue
         save(threads)
         if method != "turn/start":
@@ -125,8 +125,9 @@ with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
 store = here / "claude-sessions.json"
 sessions = json.loads(store.read_text(encoding="utf-8")) if store.exists() else {}
 if "--resume" in args and args[args.index("--resume") + 1] not in sessions:
-    print(f"No conversation found with session ID: {args[args.index('--resume') + 1]}",
-          file=sys.stderr)
+    print(json.dumps({"type": "result", "subtype": "error_during_execution",
+                      "is_error": True, "result": "Resume failed", "errors": ["Could not load the requested session.",
+                          f"No conversation found with session ID: {args[args.index('--resume') + 1]}"]}))
     sys.exit(1)
 if "--session-id" in args:
     sessions[args[args.index("--session-id") + 1]] = os.getcwd()
@@ -338,11 +339,11 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert SECOND in prompt
     assert "a numbered list starting at 4" in _flat(prompt)
 
-    # Only exactly "No findings." passes; the conversation is archived once it does.
+    # Only exactly "No findings." passes; the chat stays available for amendments.
     notes = reader.text()
     assert "round: 3\n" in notes and "passed: yes\n" in notes and "## Round 3\n\nNo findings.\n" in notes
     if app == "codex":
-        assert [call["threadId"] for call in _sent(reader.log, "thread/archive")] == ["thr-stub-1"]
+        assert not _sent(reader.log, "thread/archive")
     assert "Next: in Claude Code, show plans/SHOP.md in Plan Mode" in repo.forge("next").stdout
 
 
@@ -370,7 +371,19 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
             assert sent in prompt, sent
         return prompt
 
-    # A failed round records nothing and drops its conversation, so the retry starts fresh.
+    def continued(says="No findings.\n", held=False):
+        if held:
+            reader.say(says)
+            result = reader.read()
+            assert result.returncode == 1 and "Ask the human to accept, narrow or split" in result.stderr
+            out = result.stdout
+        else:
+            out = reader.ok(says)
+        assert "Starting a new" not in out
+        assert reader.continued()
+        return reader.prompt()
+
+    # A failed round keeps both the accepted notes and its conversation.
     reader.fail(True)
     calls = reader.calls()
     failed = reader.read()
@@ -381,10 +394,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
                                                      "Next: forge read SHOP\n")
     assert reader.text() == notes
     reader.fail(False)
-    no_record = ("Forge has no record of its conversation on this machine" if app == "codex" else
-                 "Forge has no record of its Claude session on this machine")
     # A reply with no numbered finding becomes one, numbered after the earlier rounds'.
-    prompt = fresh(no_record, "The totals are unclear.\n")
+    prompt = continued("The totals are unclear.\n")
     assert "Round 2 of your cold read" in prompt and "a numbered list starting at 2" in _flat(prompt)
     assert "## Round 2\n\n2. The totals are unclear.\n" in reader.text()
     assert "passed: no" in reader.text()
@@ -401,7 +412,7 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.text() == notes
     reader.touch(None)
     (reader.shop / "scratch.txt").unlink()
-    fresh(no_record, "1. Nothing saves offline.\n", held=True)
+    continued("1. Nothing saves offline.\n", held=True)
     assert "## Round 3\n\n3. Nothing saves offline.\n" in reader.text()
     reader.dispose("Nothing saves offline.", "cut")
     chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing session recovery")
@@ -411,7 +422,7 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     session = (json.loads((repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.json")
                          .read_text("utf-8")).get("claude") or {}).get("id")
     reader.lose()
-    fresh("Codex couldn't resume its conversation: no rollout found for thr-stub-3" if app == "codex"
+    fresh("Codex couldn't resume its conversation: no rollout found for thread id thr-stub-1" if app == "codex"
           else f"Claude couldn't continue session {session}", "4. Totals need tax.\n")
     reader.dispose("Totals need tax.", "cut")
 
@@ -420,7 +431,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     old = re.sub(r"^(round|passed|doc_seen|spec_seen|notes_seen|blocked_rounds|loop_choice|loop_reason):.*\n",
                  "", reader.text(), flags=re.M)
     reader.notes.write_text(re.sub(r"^## Round \d+\n\n", "", old, flags=re.M), encoding="utf-8")
-    prompt = fresh("Forge has no copy of what its last round read")
+    prompt = continued()
+    assert "Shoppers can save a basket and come back" in prompt
     assert "Round 2 of your cold read" in prompt and "(not available)" in prompt
     assert "a numbered list starting at 5" in _flat(prompt)
     assert "round: 2\n" in reader.text() and "## Round 2\n\nNo findings.\n" in reader.text()

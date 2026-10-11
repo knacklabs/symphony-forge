@@ -418,16 +418,16 @@ NO_ARCHIVE = CODEX.replace('        if method != "turn/start":', '''\
         if method != "turn/start":''')
 
 
-def _archive_only_own_on_pass(repo, claude_payload, monkeypatch, tmp_path,
+def _passing_reader_keeps_its_chat(repo, claude_payload, monkeypatch, tmp_path,
         sdk_data):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "codex")
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{NO_ARCHIVE}")
-    # A failed archive only prints a note; the round still passes.
+    # Passing used to archive the chat; it now keeps it for any later read round.
     monkeypatch.setenv("STUB_CODEX_NO_ARCHIVE", "1")
     out = reader.ok()
-    assert ("Forge could not archive the cold read's Codex conversation for SHOP; archive it in "
-            "Codex when it is available.") in out
-    assert "passed: yes\n" in reader.text() and _sent(reader.log, "thread/archive")
+    assert "could not archive" not in out
+    assert "passed: yes\n" in reader.text() and _sent(reader.log, "thread/archive") == []
+    conversation = _sent(reader.log, "turn/start")[-1]["threadId"]
     monkeypatch.delenv("STUB_CODEX_NO_ARCHIVE")
 
     # A round with findings keeps its conversation for the next round.
@@ -435,8 +435,8 @@ def _archive_only_own_on_pass(repo, claude_payload, monkeypatch, tmp_path,
     archived = len(_sent(reader.log, "thread/archive"))
     reader.ok(f"1. {FIRST}\n")
     assert len(_sent(reader.log, "thread/archive")) == archived
-    conversation = json.loads((repo.path / ".git/forge/threads/read/SHOP.json").read_text("utf-8"))[
-        "conversation"]
+    assert reader.continued()
+    assert _sent(reader.log, "thread/resume")[-1]["threadId"] == conversation
     reader.dispose(FIRST, "cut")
 
     # Codex is uninstalled: a Claude conversation passes, and Codex's is left as it is, named.
@@ -454,7 +454,7 @@ WALKS = [_exact_pass_is_committed,
          _old_story_keeps_todays_rules,
          _approval_reaches_promoted_task,
          _failed_merge_leaves_task,
-         _archive_only_own_on_pass]
+         _passing_reader_keeps_its_chat]
 
 
 @pytest.mark.parametrize("walk", WALKS, ids=lambda walk: walk.__name__.strip("_"))

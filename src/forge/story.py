@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import tempfile
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from string import Template
@@ -82,7 +83,7 @@ KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
 RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
-          "blocked_rounds", "loop_choice", "loop_reason")
+          "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
@@ -211,7 +212,11 @@ def read(args: Any) -> int:
     other = "claude" if here == "codex" else "codex"
     # The other app reads when it is installed, else a separate conversation of this one. A later
     # round stays with the recorded reader while its app is installed.
-    recorded = record.get("reader", "").split(" ")[0]
+    saved = codex.record(top, target, "Grill")
+    recorded = ("codex" if record.get("conversation") else "claude" if record.get("session") else
+                record.get("reader", "").split(" ")[0])
+    if not recorded:
+        recorded = "codex" if saved.get("conversation") else "claude" if saved.get("claude") else ""
     gone = recorded in NAMES and not installed[recorded]
     if recorded == here and installed[other] and not gone:
         repo.refuse(REFUSALS["wrong_app"], doc=rel, reader=NAMES[here], app=NAMES[other],
@@ -222,9 +227,20 @@ def read(args: Any) -> int:
     left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
     config = repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
+    if gone:
+        codex._record(codex._item_file(top, target, ".json", "Grill"),
+                      **{"conversation" if recorded == "codex" else "claude": None})
     first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
                                         (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
+
+    def remember_reader(chat: str) -> None:
+        nonlocal before
+        if _snapshot(top) != before:
+            repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
+        if keep_reader_chat(top, target, reader, chat):
+            before = _snapshot(top)
+
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = _store(top, text, rel)
     spec = _find_spec(top, target) if is_story else None
@@ -242,8 +258,8 @@ def read(args: Any) -> int:
         diff = _diff(seen["doc_seen"].stdout, text.decode("utf-8"), rel)
         spec_diff = _diff(seen["spec_seen"].stdout, spec_text, spec[0] if spec else "spec")
         if any(done.returncode for done in seen.values()):
-            why = why or "Forge has no copy of what its last round read"
             diff = spec_diff = "(not available)"
+        saw = _findings(_record(seen["notes_seen"].stdout)[1])
         old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
         touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
                    if old_sections.get(name) != new_sections.get(name)]
@@ -253,24 +269,32 @@ def read(args: Any) -> int:
         if passed(record, findings):  # only an edit since a passing round: read just that edit
             again = edit
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()))
-        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()) or "None.")
+        # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
+        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
+            block for n, block in blocks.items() if saw.get(n, "").split() != block.split()) or "None.")
+        if any(done.returncode for done in seen.values()):
+            prompt = fresh_prompt
+    session = saved.get("claude")
+    if record.get("reader") and record["reader"].split(" ")[0] != reader:
+        prompt = fresh_prompt
+    if gone and (session if reader == "claude" else saved.get("conversation")):
+        prompt, why = fresh_prompt, ""
     context = "\n\nEarlier rounds' notes and answers:\n" + (findings or "None.")
     context += "\n\nThe doc's Notes and decisions:\n" + sections(text.decode("utf-8")).get("Notes", "None.")
     prompt += context
     fresh_prompt += context
-    session = codex.record(top, target, "Grill").get("claude") if later and not why else None
     if reader == "claude":
         if later and not why and not session:
             why = "Forge has no record of its Claude session on this machine"
-        elif session and session.get("checkout") != str(top):
-            why, session = f"its session was started in another checkout, {session['checkout']}", None
         with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
-                                why, round_number)
+                                why, round_number, remember_reader)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
-        thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
+        thread, why = codex.conversation(top, target, None, "Grill") if not why else (None, why)
+        if not thread and not later and not gone:
+            why = ""
         # One read per item, nothing left running, and one of the machine's agent slots.
         with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read", target,
                 **repo.models(config, "grill", reader)):
@@ -281,15 +305,14 @@ def read(args: Any) -> int:
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
-                            fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number)
+                            fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number,
+                            on_thread=remember_reader)
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
     said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before or failed or not said:
-        # Nothing is recorded, and the retry starts a fresh conversation.
-        codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
-                      conversation=None, start=None, claude=None)
+        # Chat bindings survive failed reads; accepted findings stay unchanged.
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
@@ -327,17 +350,11 @@ def read(args: Any) -> int:
               "round": str(round_number), "passed": "yes" if clean else "no",
               "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
-              "notes_seen": _store(top, old.encode("utf-8"))}
+              "notes_seen": _store(top, old.encode("utf-8")),
+              "conversation": ran["conversation"] if reader == "codex" else "",
+              "session": codex.record(top, target, "Grill")["claude"]["id"] if reader == "claude" else ""}
     kept = findings.rstrip("\n") if later else head.strip()
     _write(notes, _notes(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"))
-    if reader == "codex" and clean and ran.get("conversation"):
-        try:
-            archived = codex.archive(top, target, "Grill", ran["conversation"])
-        except Exception:
-            archived = False
-        if not archived:
-            print(f"Forge could not archive the cold read's Codex conversation for {target}; "
-                  "archive it in Codex when it is available.")
     if clean and left:
         print(f"The cold read's earlier {NAMES[recorded]} conversation for {target}, {left}, is left "
               f"as it is, because {NAMES[recorded]} is no longer installed.")
@@ -848,7 +865,8 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 
 
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
-                 resume: str | None, why: str, round_number: int) -> subprocess.CompletedProcess[str]:
+                 resume: str | None, why: str, round_number: int,
+                 on_thread: Callable[[str], None]) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
     exe = shutil.which("claude")
     if exe is None:
@@ -880,7 +898,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                     if isinstance(event, dict):
                         line = repo.claude_output(top, target, ran["run_id"], event)
                         if event.get("type") == "result":
-                            final = line
+                            final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)
                 reader.wait()
                 errors.seek(0)
@@ -889,8 +907,9 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
         return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
 
     if resume:
+        on_thread(resume)
         done = run("--resume", resume, text=prompt)
-        if not done.returncode or not done.stderr.startswith("No conversation found"):
+        if not done.returncode or "No conversation found" not in done.stdout + done.stderr:
             return done
         why = f"Claude couldn't continue session {resume}"
     if why:
@@ -898,6 +917,9 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
+    codex._append(codex._item_file(top, target, ".log", "Grill"),
+                  {"claude": {"id": session}, "status": None})
+    on_thread(session)
     return run("--session-id", session, text=fresh_prompt)
 
 
@@ -940,6 +962,18 @@ def _record(notes: str) -> tuple[dict[str, str], str]:
     fields = {key.strip(): value.strip().strip("\"'")
               for key, colon, value in (line.partition(":") for line in match[1].splitlines()) if colon}
     return fields, notes[match.end():]
+
+
+def keep_reader_chat(top: Path, target: str, reader: str, chat: str) -> bool:
+    """Commit a reader identity without accepting its read or changing its findings."""
+    top, _, notes, _ = _paths(target, top)
+    fields, body = _record(_text(notes))
+    identity = {"conversation": chat if reader == "codex" else "",
+                "session": chat if reader == "claude" else ""}
+    if all(fields.get(key, "") == value for key, value in identity.items()):
+        return False
+    _write(notes, _notes({**fields, **identity}, body))
+    return repo.commit_state("Keep the reader conversation", _rel(top, notes), top=top)
 
 
 def _notes(record: dict[str, str], findings: str) -> str:

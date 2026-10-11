@@ -1,0 +1,157 @@
+{
+  "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
+  "branch": "fix/reuse-worker-chats",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a121a9-01ea-7493-bf3d-49046de562d8",
+    "head": "16286d99fee3ca94facb0be45bc5b311094e1d20",
+    "start": "456f6c1ad34b60fea1386a4b4f46ef4588d798f1"
+  },
+  "done_when": "Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or effort change, a Forge or machine restart, or a fresh worktree of the same item; a fresh chat starts only when the recorded chat truly can't be resumed (the tool reports it gone, or the item moved to the other tool), and then the round says why in one line; plan reads keep their reader chat across rounds the same way; the coordinator guide says so; command tests with stubbed Codex and Claude cover each resume case and each fresh-chat reason, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/codex.py",
+    "src/forge/codex_turn.py",
+    "src/forge/story.py",
+    "src/forge/worker.py",
+    "tests/test_worker_and_reader_chats_survive_rounds.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8bf5d4e4e142171247177401a38e998bc79ab1c200ae4e69efc8fc3e36428a42",
+    "changed": "f14732488520f75f4773065f36b4d2423ab10fedc4facf2c93d928f09c350699",
+    "commit": "1a26eb87445230c6a2050242b1de9b7ca7b14b00",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done \u2014 an earlier-release Codex reader can lose a resumable chat during upgrade. If its first read of a spec unchanged from the default branch fails, its local JSON is removed, and sync runs from another worktree, this owner search has no commit to locate the spec branch: the v1.2.2 turn log\u2019s final entry has no `start` field. The spec and reader notes also match the default branch, so sync does not preserve the binding on the owning branch. After metadata loss, a later read starts a fresh chat. Test 18\u2019s log-only case uses a spec absent from default; test 22\u2019s failed unchanged-spec case retains the JSON. This is distinct evidence from the settled unchanged-spec finding.",
+        "file": "src/forge/codex.py",
+        "line": 269,
+        "priority": "P1",
+        "title": "Not done: Recover log-only failed spec-reader chats when the spec is unchanged"
+      }
+    ],
+    "id": "378a4b0f-0f0c-4c7f-8b31-0e31f2cb67a4",
+    "status": "blocked"
+  },
+  "round": 21,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-10-09T16:42:38+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:25:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:54:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:51:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:20:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:24:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:31:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:06:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:18:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:43:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:14:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:51:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:42:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:23:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:15:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T11:10:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T12:52:08.862907+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T14:41:14.349899+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T15:52:52.567414+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:49:19.292618+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:38:39.028937+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:47:58.778050+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:19:40.377523+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:37:20.171430+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:15:02.054902+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/story.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the two remaining findings: Codex's real missing-rollout wording, and reader chats archived by an earlier release"
+  },
+  "why": "Worker chats should be reused: each task or fix should keep the same worker conversation from its first round until it merges, but today some rounds start a fresh chat (for example when the model or effort changes, after Forge restarts, or when a record is missing), losing context and costing tokens (owner, 2026-10-09)",
+  "worker": "codex"
+}
