@@ -261,7 +261,8 @@ branch, so it runs only the tests related to the changed files plus fast checks 
 `npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
 `test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
 The `tests` check runs the suite as parallel groups and passes only when every group passes:
-six groups when `test` is a single pytest command and the repo lists pytest-split, otherwise one.
+six groups when `test` calls pytest directly (not through make or tox) and the repo lists
+pytest-split, otherwise one.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
 

@@ -1057,7 +1057,7 @@ Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
 The generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
-which passes only when every group passes: six groups when `test` is a lone pytest command and
+which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.

@@ -170,8 +170,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = version if isinstance(version, str) and version.strip() else "22"
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
     source = cfg.get("repo") == "forge-source"
-    # ponytail: only a lone pytest command with pytest-split listed splits; others run one group.
-    groups = 6 if (re.search(r"\bpytest\b", cfg["test"]) and not re.search(r"[;&|]", cfg["test"])
+    # ponytail: only a direct pytest call (bare, `python -m` or `uv run` with options) in a repo
+    # listing pytest-split splits; any other command, such as `make pytest`, runs one group.
+    direct = r"(?:(?:uv|poetry|pipenv) run(?: -\S+| [\d.]+)* |python3? -m )?pytest\b"
+    groups = 6 if (re.match(direct, cfg["test"]) and not re.search(r"[;&|]", cfg["test"])
                    and any("pytest-split" in sync.read(path) for path in
                            [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
     test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
