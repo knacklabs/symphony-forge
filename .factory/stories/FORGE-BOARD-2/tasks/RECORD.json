@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-BOARD-2-RECORD",
+  "chat": {
+    "approval": "afe350ad99410ee306565a2d2d6e32293a40f2bfe29ab313810ddb6d7e9d246e",
+    "claude": null,
+    "conversation": "01a1269c-d934-7d01-971a-34231b2676c1",
+    "head": "e091bdc708208cb7bc18ae3d0e6e6c21b87e1f35",
+    "start": "db13e4d6f1166bf0c77bc40c0126b82d28cb1dc3"
+  },
   "flagged": [
     ".claude/skills/forge/SKILL.md",
     "src/forge/board.py",
