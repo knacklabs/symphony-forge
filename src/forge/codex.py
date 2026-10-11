@@ -326,6 +326,12 @@ def preserve_chats(top: Path) -> None:
                     if not state or state.get("chat"):
                         continue
                     rel = repo.state_path(item)
+                lock = _item_file(owner, item, ".lock", kind)
+                if lock.exists() and _alive(_json(lock)) is not False:
+                    # The running call records its own chat when its round ends.
+                    command = "read" if kind == "Grill" else "work"
+                    print(f"Left {item}'s chat alone: forge {command} {item} is running and keeps it.")
+                    continue
                 with hold(owner, item, kind):
                     saved = recovered or record(owner, item, kind)
                     if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
