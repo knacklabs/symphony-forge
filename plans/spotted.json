@@ -4762,6 +4762,61 @@
       "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 91,
+      "text": "Full board and GitHub reads delay task admission",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 286,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 93,
+      "text": "Scanning every historical story delays each agent admission",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 33,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 58,
+      "text": "Not done: scope-only blocker admission test",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
