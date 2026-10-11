@@ -17,10 +17,14 @@ from test_upgrade_command import _repo_adopted_on_the_previous_release, unsynced
 
 STORY = "stuck-worker-asks"
 
-# The repo's test commands: pytest naming the same test every run, Jest with the same failure
-# but a different duration, and Jest failing a different test on each run.
+# The repo's test commands: pytest naming the same test every run, pytest failing test_a once
+# then test_b, Jest with the same failure but a different duration, and Jest failing a different
+# test on each run.
 SUITES = {
     "pytest same": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
+    "a then b": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
+                 'run.write_text("x")\n'
+                 'print("FAILED test_readme.py::test_" + ("a" if first else "b"))\nraise SystemExit(1)\n'),
     "jest same": ('import random\nprint(f"  ✕ greets the reader ({{random.randint(2, 99)}} ms)")\n'
                   'raise SystemExit(1)\n'),
     "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
@@ -28,6 +32,7 @@ SUITES = {
                        'print(f"  ✕ greeting case {{len(run.read_text())}} (3 ms)")\nraise SystemExit(1)\n'),
 }
 STUCK = {"pytest same": "the failing test test_readme.py::test_greeting",
+         "a then b": "the failing test test_readme.py::test_b",
          "jest same": 'the failing check Tests on the close run ("✕ greets the reader")',
          "finding": 'the review finding "Saving drops the greeting" in app.py'}
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
@@ -41,7 +46,7 @@ def question(stuck):
 
 
 def _rounds(env, case):
-    """Start the fix whose every close fails the same way, then run work and close twice."""
+    """Start the fix whose every close fails, then run work and close once (twice for a then b)."""
     if case == "finding":
         env.reviews(blocked(finding("P1", "Saving drops the greeting")))
     else:
@@ -52,7 +57,7 @@ def _rounds(env, case):
                    + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
         env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
-    for _ in range(2):
+    for _ in range(2 if case == "a then b" else 1):
         assert env.close(item).returncode == 1
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
@@ -60,7 +65,7 @@ def _rounds(env, case):
     return item
 
 
-@pytest.mark.parametrize("case", ["pytest same", "jest same", "jest different", "finding"])
+@pytest.mark.parametrize("case", ["pytest same", "a then b", "jest same", "jest different", "finding"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
@@ -127,6 +132,6 @@ def test_4_clients_receive_the_stuck_worker_guidance(unsynced_up, adoption):
         client = up.folder
     for host in (".codex", ".claude"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        assert "When two fix rounds in a row leave the same failing test or finding" in guide
+        assert "When two rounds in a row leave the same failing test or finding" in guide
         assert ('`forge close <item> --resolve <switch|same|narrow|split> --reason '
                 '"<human\'s choice>"`') in guide

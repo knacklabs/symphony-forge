@@ -1242,7 +1242,7 @@ needs another review.
 A clean review clears an unanswered review-loop stop.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
-When two fix rounds in a row leave the same failing test or finding, `forge work` stops the item;
+When two rounds in a row leave the same failing test or finding, `forge work` stops the item;
 close also stops a story part that grows past its line limit. Either prints a ready-to-ask
 question: what the item delivers, what is stuck, what the worker tried, and the choices. Ask the
 owner exactly that question; never switch tools yourself. Record the answer with

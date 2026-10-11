@@ -377,8 +377,8 @@ def _blocked_red_blocked_red(env):
     _red_checks(env)
     done = _land(env)
     assert done.returncode == 1
-    whats = [FINDINGS_ROUND, "the failing checks", FINDINGS_ROUND]
-    # Two rounds left the same failing check, so the third stops and asks the owner.
+    whats = [FINDINGS_ROUND, "the failing checks"]
+    # Two rounds left the same failing check, so the second fix round stops and asks the owner.
     assert _steps(done) == [step for n, what in enumerate(whats, 1) for step in (
         f"Closing {ITEM}.", f"Fix round {n} of 3: the worker fixes {what}.")] + [
         f"Stopped: {ITEM} needs you."]

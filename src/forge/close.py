@@ -398,7 +398,7 @@ def check_stop(item: str, state: dict[str, Any]) -> None:
 def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 findings: list[dict[str, Any]], failing: list[tuple[str, str]]) -> None:
     """At a round's start: stop when the last two rounds both left one same failing test or
-    finding, else count this round. A recorded choice buys exactly one more round."""
+    finding. A recorded choice buys exactly one more round."""
     stop = state.get("stop") or {}
     if "question" in stop and not stop.get("choice"):
         repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
@@ -412,14 +412,15 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
             line for line in text.splitlines() if re.search(r"fail|error|✕|×", line, re.I))).split())[:200]
         keys += ([f"the failing test {name}" for name in names] or
                  [f'the failing check {label} ("{excerpt}")'] if excerpt else [])
-    stuck = state.get("stuck") or {}
-    same = [key for key in dict.fromkeys(keys) if key in stuck.get("keys", [])]
+    # Each failure counts the rounds in a row that left it; a cleared one drops out.
+    before = (state.get("stuck") or {}).get("keys") or {}
+    counts = {key: before.get(key, 0) + 1 for key in keys}
+    same = [key for key, count in counts.items() if count >= 2]
     if "question" in stop:
         state.pop("stop")
-    elif same and stuck.get("rounds", 0) >= 2:
+    elif same:
         stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
-    state["stuck"] = {"keys": keys, "head": repo.git("rev-parse", "HEAD", cwd=top),
-                      "rounds": stuck.get("rounds", 0) + 1 if same else 1}
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top)}
 
 
 def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
