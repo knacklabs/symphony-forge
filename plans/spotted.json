@@ -2157,6 +2157,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/prcheck.py\tUpgrade PRs with red local tests can pass the previous release's check\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 248,
+      "text": "Upgrade PRs with red local tests can pass the previous release's check",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tforge doctor rejects healthy split workflows\tgate-on-split-checks",
       "kind": "bug",
       "path": "src/forge/prcheck.py",

@@ -11,47 +11,30 @@
   "done_when": "Close starts the review at the same time as its tests, so a round takes about as long as the slower of the two; a red test or a P0/P1 finding still stops the round, and both results are reported together. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
   "flagged": [
     "src/forge/close.py",
+    "src/forge/prcheck.py",
     "tests/test_close_runs_tests_and_review_together.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b1f994f5bc4fbc85e5e1c7139c336abb43d5213fd18d03366e5017d92637bd52",
-    "changed": "d341750f433944f2e6133f1197d15cf5fdcc37b17a76f79bffbb5cb087bd3659",
-    "commit": "d7d6455a9a70eebb23a2cf1c0ed968b6da8b8d74",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is fixed in commit 4529d6f; finding 2 (80-line cap in a 100-file change) is Gain 2, lived with as on test-gap-warning",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is fixed in commit 4529d6f; finding 2 (80-line cap in a 100-file change) is Gain 2, lived with as on test-gap-warning",
-        "finding": 2
-      }
-    ],
+    "branch_diff": "4cf4d9cf4f09bf2f0a57942785f5d8740959013f51b22a3df80cd5af084b3902",
+    "changed": "bc4b2dae64f888cdb6374aa8f207d579a0f015b734c15b199e7343f7cc8b0826",
+    "commit": "3bc60da944fab8dc0ae97a54ac0864e609439041",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. When a previously ready, non-draft pull request gets a new commit whose local tests fail, close pushes that commit and publishes a clean review before refusing at this line. `_publish` only makes an existing pull request draft for a blocked review (`src/forge/close.py:650\u2013667`), and `forge-pr-check` checks the review but not the saved test failure (`src/forge/prcheck.py:237\u2013249`). In a supported repo whose required checks omit `tests`, the pull request can therefore be merged despite the red test. The same exposure occurs where draft pull requests are unsupported.",
-        "file": "src/forge/close.py",
-        "line": 335,
+        "body": "Raise: Functional. The new local-test guard at this line runs only after the new release is on the default branch. During `forge upgrade`, the new release runs `close` on an upgrade pull request, but the pull request workflow checks out the base branch and installs its older Forge version (`src/forge/prcheck.py:100\u2013121`). The v1.2.2 checker (`tests/fixtures/forge-v1.2.2/src/forge/prcheck.py:169\u2013180`) ignores saved test failures. In a supported repo without a required `tests` check where draft pull requests are unavailable, a clean review and red local test therefore leave the upgrade PR mergeable. The new earlier-adoption test merges the synced release into `main` before invoking this check, so it does not cover the upgrade PR.",
+        "file": "src/forge/prcheck.py",
+        "line": 248,
         "priority": "P1",
-        "title": "A red local test can leave an existing pull request mergeable"
-      },
-      {
-        "body": "Raise: Functional. Close now prints only `tested` here, removing its separate print of every `No local test names` warning. The pytest picker emits one warning per uncovered changed source file (`src/forge/fasttest.py:313\u2013315`), but `review.test_run` caps its returned report at the first 50 and last 30 selected lines (`src/forge/review.py:368\u2013375`). In a realistic bulk change of 100 source modules without named tests, warnings in the middle disappear from close's output, so workers cannot see every file whose local test coverage was missed.",
-        "file": "src/forge/close.py",
-        "line": 258,
-        "priority": "P1",
-        "title": "Close drops source-file test warnings from large changes"
+        "title": "Upgrade PRs with red local tests can pass the previous release's check"
       }
     ],
-    "id": "14d04355-ca96-4837-ad4b-bf966d854220",
-    "status": "clean"
+    "id": "e5569e9b-f7a0-47ec-a011-e549f706b976",
+    "status": "blocked"
   },
   "round": 6,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:16:47+00:00",
@@ -103,6 +86,10 @@
     },
     {
       "at": "2026-10-11T20:39:58.752013+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T23:39:14.015781+00:00",
       "step": "review"
     }
   ],
