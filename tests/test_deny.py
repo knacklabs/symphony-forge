@@ -35,6 +35,11 @@ BLOCKED = {
     "git add -A && git commit -nm 'Fix it'": HOOKS,
     "uv run pytest -n 2 && git commit -m 'Fix it' -n": HOOKS,
     "bash <<'EOF'\ngit commit -n -m 'Fix it'\nEOF": HOOKS,
+    "cat <<'EOF' | bash\ngit commit -n\nEOF": HOOKS,
+    "cat <<EOF | bash\ngit commit --no-verify\nEOF": HOOKS,
+    "git commit -F - <<EOF\n$(git commit -n)\nEOF": HOOKS,
+    "git commit -m --no-verify -n": HOOKS,
+    "git commit -m x --no-verify": HOOKS,
     "git -c core.hooksPath=/dev/null push origin HEAD:main": HOOKS,
     "git -c core.hooksPath=/tmp commit -m 'Fix it'": HOOKS,
     "gh pr merge 12 --squash": MERGE,
@@ -47,7 +52,9 @@ ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
            "uv run pytest -n 2 tests/x.py && git commit -m 'Fix it'",
            'uv run pytest -n 2 && git commit -m "-n 2 runs two workers"', "git commit -uno -m x",
            "pytest -n 2 && git commit -F - <<'EOF'\nTests don't need git commit -n\nEOF",
-           "git commit -m \"$(cat <<'EOF'\nProof list: git commit -n isn't run\nEOF\n)\""]
+           "git commit -m \"$(cat <<'EOF'\nProof list: git commit -n isn't run\nEOF\n)\"",
+           "git commit -m --no-verify", "git commit --message --no-verify",
+           "git commit -F - <<EOF\nProof list: git commit -n --no-verify\nEOF"]
 
 
 def test_23_deny_hook(repo, claude_payload, codex_payload):

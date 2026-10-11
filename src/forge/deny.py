@@ -30,6 +30,9 @@ REFUSALS = {
 OPERATORS = set(";&|()<>")
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "eval"}
 ALONE_BREAKERS = OPERATORS | set("`'\\\n{}=")
+COMMIT_VALUES = {"--message", "--file", "--author", "--date", "--template", "--reuse-message",
+                 "--reedit-message", "--fixup", "--squash", "--trailer", "--cleanup",
+                 "--pathspec-from-file"}
 CONFIG_GETS ={"--get", "--get-all", "--get-regexp"}
 CONFIG_SCOPES = {"--global", "--local", "--system", "--worktree"}
 
@@ -86,8 +89,6 @@ def _run_by(command: list[str], depth: int) -> Iterator[list[str]]:
 
 def _rule(program: str, args: list[str], alone: bool = False) -> str | None:
     """The rule a program and its arguments break, if any. `alone`: this is the whole command."""
-    if "--no-verify" in args:
-        return "no_verify"
     short = _short(args)
     if program == "rm" and ({"r", "R"} & short or "--recursive" in args) and (
             "f" in short or "--force" in args) and not (alone and _in_temp(args)):
@@ -99,7 +100,7 @@ def _rule(program: str, args: list[str], alone: bool = False) -> str | None:
         checked = args[:len(args) - len(rest)] if sub == "config" and _config_read(rest) else args
         if any("hookspath" in a.lower() for a in checked):
             return "no_verify"
-        if sub == "commit" and _commit_skips_hooks(rest):
+        if _commit_skips_hooks(rest) if sub == "commit" else "--no-verify" in args:
             return "no_verify"
         short = _short(rest)
         if sub == "reset" and "--hard" in rest:
@@ -148,16 +149,20 @@ def _config_read(args: list[str]) -> bool:
 
 
 def _commit_skips_hooks(args: list[str]) -> bool:
-    """Whether git commit's own short options include -n (its short --no-verify), reading them
-    as git does: -m, -F, -C, -c and -t take a value, as the rest of the word or the next word, and
-    -S and -u take the rest of the word, so a message such as -m "-n 2 ..." or -uno doesn't count.
-    ponytail: a long option's separate value (--author "-n x") still counts, which only refuses."""
+    """Whether git commit's own options include --no-verify or -n, read as git reads them: -m, -F,
+    -C, -c, -t and the long options in COMMIT_VALUES take the next word as their value (the short
+    ones the rest of the word, if any), and -S and -u take the rest of the word. So a message such
+    as -m --no-verify or -m "-n 2 ..." doesn't count, and neither does -uno."""
     value = False
     for arg in args:
         if value:
             value = False
         elif arg == "--":
             return False
+        elif arg == "--no-verify":
+            return True
+        elif arg in COMMIT_VALUES:
+            value = True
         elif arg[:1] == "-" and arg[:2] != "--":
             for i, letter in enumerate(arg[1:], 2):
                 if letter == "n":
@@ -169,18 +174,24 @@ def _commit_skips_hooks(args: list[str]) -> bool:
 
 
 def _without_heredocs(text: str) -> str:
-    """The text without the bodies of quoted heredocs (<<'EOF'), which are data such as a commit
-    message, unless a shell on that line runs them."""
-    lines, end = [], None
+    """The text without heredoc bodies, which are data such as a commit message. An unquoted body
+    keeps its lines with $(...) or backticks, which run. Nothing is dropped when a shell or eval
+    appears outside the bodies, since it may run them: refusing too much beats missing a command."""
+    lines, end, quoted = [], None, False
     for line in text.split("\n"):
         if end is not None:
-            end = None if line.strip() == end else end
+            if line.strip() == end:
+                end = None
+            elif not quoted and ("$(" in line or "`" in line):
+                lines.append(line)
             continue
         lines.append(line)
-        found = re.search(r"<<-?\s*(['\"])(\w+)\1", line)
-        if found and not SHELLS & {w.rsplit("/", 1)[-1] for w in line[:found.start()].split()}:
-            end = found[2]
-    return "\n".join(lines)
+        found = re.search(r"<<-?\s*(['\"]?)(\w+)\1", line)
+        if found:
+            end, quoted = found[2], bool(found[1])
+    kept = "\n".join(lines)
+    words = {word.rsplit("/", 1)[-1] for word in re.findall(r"[\w./-]+", kept)}
+    return text if SHELLS & words else kept
 
 
 def _short(args: list[str]) -> set[str]:
