@@ -151,8 +151,9 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests through `forge test` in the
 foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
 `fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
-base with `origin/<default branch>`; a picker run of five or fewer related test files skips the
-lane's wait unless the test command or pytest config has a doctest option. It always runs, including uncommitted changes. Then commit
+base with `origin/<default branch>`, on at most two test processes; a picker run of five or fewer
+related test files skips the lane's wait unless the test command or pytest config has a doctest
+option. It always runs, including uncommitted changes. Then commit
 any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
@@ -245,6 +246,10 @@ that one round.
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
