@@ -28,9 +28,6 @@ STORY = "fast-mode-visible"
     ([], "needed", "missing", None,
      "Codex Fast: wanted, but gpt-6-sol doesn't offer it, so this turn requests normal speed.",
      "the last codex turn wanted fast, but gpt-6-sol doesn't offer it"),
-    ([], "always-ask", None, "default",
-     "Codex Fast: wanted, but gpt-6-sol doesn't offer it, so this turn requests normal speed.",
-     "the last codex turn wanted fast, but gpt-6-sol doesn't offer it"),
     ([{"id": "priority", "name": "Fast"}], "needed", "default", "default",
      "Codex Fast: requested for this turn.", "codex reported normal speed"),
     ([{"id": "priority", "name": "Fast"}], "needed", "other", "other",
@@ -63,8 +60,6 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
         repo.git("push", "-q", "origin", "main")
         said, doctor = (text.replace("gpt-6-sol", "gpt-6.1-sol") for text in (said, doctor))
     _tiers(repo, tiers, receipt)
-    if mode == "always-ask":
-        _policy(repo, repo.path, "always")
     monkeypatch.setenv("STUB_CODEX_OVERLOADED", "1")
     monkeypatch.setenv("FORGE_CODEX_RETRY_WAIT", "0")
     started = repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in")
@@ -72,8 +67,7 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
     if mode == "off":
         folder = repo.path.parent / f"{repo.path.name}-fix-fix-the-login-typo"
         _policy(repo, folder, mode)
-    worked = (repo.forge("ask", "Which speed does this model support?") if mode == "always-ask"
-              else repo.forge("work", "fix-the-login-typo"))
+    worked = repo.forge("work", "fix-the-login-typo")
     assert worked.returncode == 0, worked.stdout + worked.stderr
     events = [json.loads(line) for line in
               (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]

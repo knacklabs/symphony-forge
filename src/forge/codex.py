@@ -617,9 +617,6 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
                 elif "selection" in said:
-                    if (not echo and said["selection"]["fast_wanted"]
-                            and said["selection"]["tier"] == "default"):
-                        print(fast_said(said["selection"]), flush=True)
                     if ran.get("run_id"):
                         repo.record_progress(checkout, item, ran["run_id"],
                                              model=said["selection"]["model"],
