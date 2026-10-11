@@ -10,6 +10,8 @@ Forge ignores settled repeats, so they cannot block or start another round.
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
+$start_here
+
 $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
@@ -254,3 +256,5 @@ exception is a bug that stops your item from working: fix it and name it in your
 $standards
 
 <!-- end -->
+
+$handover
