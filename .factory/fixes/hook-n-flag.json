@@ -40,7 +40,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T10:29:43.068718+00:00",
@@ -60,7 +60,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/deny.py",
+    "reason": "Coordinator decision (nothing dropped or accepted): one more round; the latest commit fixes both open findings, including the security one, so the review checks it",
     "wait_id": "8a530c86-6421-4a29-a9c2-52177b98fae4"
   },
   "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit",
