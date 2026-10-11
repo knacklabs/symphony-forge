@@ -1,15 +1,15 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-11T16:33:33.355639+00:00
-read_hash: 7ad9c46bda4b09d978e4850e33cc1ccb75a0a6c2
-round: 1
+read_at: 2026-10-11T16:52:45.898249+00:00
+read_hash: 6b79cc08eff7486ea08886d1eab138aa8ae04765
+round: 2
 passed: no
-doc_seen: 7ad9c46bda4b09d978e4850e33cc1ccb75a0a6c2
+doc_seen: 6b79cc08eff7486ea08886d1eab138aa8ae04765
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 41772197fb8a9c3d8ecf2abf4e5613245247094e
 conversation: 01a12bc8-a7cd-7b21-a693-963671ac740e
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -92,3 +92,32 @@ Only a genuine trade-off goes to the human, as a question with options.
     Disposition: cut
 
 Read-only inspection; runtime tests were not run. These findings identify plan gaps, not verified runtime failures.
+
+## Round 2
+
+13. Blocking: The corrected Scope paths make the promised BAR/GUIDE parallel build impossible.
+    Raise: Plan gap
+    Both tasks now list `src/forge/story.py` and `src/forge/close.py`, while Notes still says they build in parallel after SCORES. `task.start` refuses overlapping file paths regardless of separate hunks (`src/forge/task.py:278–282`). Once either task starts, the other cannot start as planned.
+    Disposition: cut
+
+14. Blocking: BAR’s new light-review behavior requires test changes outside its Tests column.
+    Raise: Plan gap
+    The amended plan requires `--max-priority P3`, but `tests/test_aha_review.py:49–50` and `tests/test_reviews_use_repository_tool.py:31` require P0 for light reviews. Neither file has an owner in the Tasks table. The new default P0 score also produces `fix now`, which the light gate ignores, contradicting the existing prototype test’s expected refusal.
+    Disposition: cut
+
+15. Blocking: Scored sign-off findings still bypass the bar.
+    Raise: Functional
+    The amendment gives sign-off reviewers score instructions, but their gate separately selects P0/P1 findings in `review.run` (`src/forge/review.py:599–611`). Changing `review.blocking` does not reach it. A below-bar P1 still prevents sign-off, while an at-bar P2 passes. The new sign-off test checks only a blocking finding and would miss both errors.
+    Disposition: cut
+
+16. Blocking: The third-round stop still excludes open Harm 3 follow-ups.
+    Raise: Not done
+    Item 4 promises a stop when any Harm 3-or-more note is open. Its implementation requires that finding to be **at the bar** (plan lines 205–209). A third review containing a new Harm 1 blocker and a Harm 3 follow-up therefore continues. The amended timeout rule explicitly counts below-bar findings as open, so these two rules disagree about the same state.
+    Disposition: cut
+
+17. Blocking: Unproven: item 4’s permission to continue low-Harm cold reads after three rounds.
+    Raise: Test
+    The read stop has its own implementation in `story.read` and `_blocked_reads`. Item 4’s named scenario exercises review rounds; GUIDE exercises an already stopped read. Both tests could pass while three reads containing new Gain 3, Work 1, Harm 1 notes still trigger the old unconditional stop.
+    Disposition: keep - below the bar (Gain 2, Work 1, Harm 1): the read stop shares the review rule that item 4's test covers; add a read case if BAR has room.
+
+Read-only inspection; runtime tests were not run. These findings concern the plan and its promised proof.

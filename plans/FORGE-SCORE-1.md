@@ -141,14 +141,22 @@ does today. A new review finding with no score line, or one out of range, makes 
 None, so the run fails with today's "it wrote findings Forge cannot read" and close's existing
 second attempt runs. SCORES therefore updates, in the same change, every existing test that builds
 review findings without a score line, so main stays green: the `finding` helper in
-`tests/test_close.py` (lines 60–64) writes a default score line (`Gain 3, Work 2, Harm 1` for
-P0/P1, `Gain 2, Work 1, Harm 1` for P2/P3), which keeps each test's outcome, the P0 refusal case
+`tests/test_close.py` (lines 60–64) writes a default score line (`Gain 5, Work 2, Harm 4` for
+P0, which is `block`; `Gain 3, Work 2, Harm 1` for P1; `Gain 2, Work 1, Harm 1` for P2/P3), which
+keeps each test's outcome under today's and the light gate, the P0 refusal case
 near line 268 included; other tests with their own unscored findings get the same line.
 
 **Light reviews.** The prototype's light review passes `--max-priority P3` like every other review
 (`review.py` near line 583, and the fingerprint's level stays as today), and Forge applies the
 P0-only level after scoring: under it only `block` counts. A P1 scored Gain 5 or Harm 4 is never
-filtered out before the bar sees it.
+filtered out before the bar sees it. BAR updates `tests/test_aha_review.py` (lines 49–50) and
+`tests/test_reviews_use_repository_tool.py` (line 31), which today expect `--max-priority P0`, to
+expect P3 and to show the P0-only level applied after scoring.
+
+**Stop-question call sites.** SCORES pins `score.table(rows)` as a stub that returns today's
+bullet lines, and makes `story.stop_question`, `story.read_question` and `close.stop_question`
+pass each row's scores and call it (a one-line call site each). GUIDE then fills `score.table`
+alone, so BAR and GUIDE share no path and build in parallel after SCORES.
 
 ### Done-when details
 
@@ -172,7 +180,9 @@ filtered out before the bar sees it.
    a blocking sign-off issue. A read stub's note scored `Harm 1` that names a migration is saved in
    the read notes as Harm 4 with `(floor: migration)`.
 2. `review.blocking` uses `score.bar` when a finding has scores, else today's priority rule; under
-   `blocking_level == "P0"` only `block` counts. `worker._fix_round` takes the same list: the
+   `blocking_level == "P0"` only `block` counts. The sign-off gate in `review.run` (`review.py`
+   near lines 599–611) selects findings with `score.bar` (`block` or `fix now`) in place of
+   `SERIOUS`, unscored ones by priority as today. `worker._fix_round` takes the same list: the
    repair brief names every undismissed finding at the bar, at any priority, and drops the ones
    below it (unscored saved findings: P0/P1 as today). `story.passed` and `story.undisposed`: a
    scored note at the bar blocks; a scored note below it passes, and `forge read` writes
@@ -184,7 +194,9 @@ filtered out before the bar sees it.
    P1 scored Gain 2, Work 1, Harm 1 and a P2 scored Gain 4, Work 4, Harm 2 reaches Ready, and its
    pull request lists both with scores. A P2 scored Gain 3, Work 1, Harm 1 blocks close, and the
    next `forge work` brief names it and not a below-bar P1 of the same review. A story read whose
-   only note scores Gain 2 passes, and its notes show the automatic disposition.
+   only note scores Gain 2 passes, and its notes show the automatic disposition. A sign-off review
+   with a P1 scored Gain 2, Work 1, Harm 1 passes sign-off; one with a P2 scored Gain 3, Work 1,
+   Harm 1 is refused as a blocking sign-off issue.
 3. Carry-forward reads only what is already stored: the read notes file (every note, its score
    line and its disposition) and the saved review results in the item's state. Nothing new is
    written. Read rounds: `$dispositions` lists every disposed note, below-bar ones included, each
@@ -203,22 +215,25 @@ filtered out before the bar sees it.
    review round's prompt lists the first round's below-bar finding; a later read round's prompt
    lists the earlier below-bar note.
 4. Close's three-round stop (`close.py` near lines 192 and 269, and `_three_blocked_reviews`) fires
-   only when a finding at the bar repeats an earlier round's (same file and title) or an open
-   finding at the bar has Harm ≥ 3; otherwise the worker goes on as in rounds 1 and 2. The read
-   loop stop (`story._blocked_reads`, `read_loop`) fires on the third blocked round only when a
-   note at the bar has Harm ≥ 3 or is a `Disputed keep`. The 30-minute default answer (from the
+   only when a finding at the bar repeats an earlier round's (same file and title), or when any
+   open finding, at or below the bar, has Harm ≥ 3; otherwise the worker goes on as in rounds 1 and
+   2. The read loop stop (`story._blocked_reads`, `read_loop`) fires on the third blocked round
+   only when a note at the bar is a `Disputed keep`, or when any open note, at or below the bar,
+   has Harm ≥ 3. The 30-minute default answer (from the
    stop-default-answer fix, review stops only) records narrow only when every open finding, at the
    bar or below it, has Harm 1 or 2; with any Harm ≥ 3 open it keeps waiting. Unscored saved
    results stop as today. Test (one): three blocked rounds with new Harm 1 findings each time go on
-   to a fourth round; a third round with an open Harm 3 finding at the bar stops; with elapsed time
+   to a fourth round; a third round with a new Harm 1 finding at the bar and an open Harm 3
+   follow-up stops; with elapsed time
    past 30 minutes, a stop with only Harm 2 findings records narrow, and a stop with a Harm 2
    finding at the bar plus a Harm 3 follow-up stays stopped.
 5. `score.table(rows)` renders the ranked table `# | Problem, for whom | Gain | Work | Harm |
    Proposed`, ranked by bar (block, fix now, follow-up, live with), then Harm and Gain descending,
    then Work ascending. "Problem, for whom" is `story.plain` of the note (from stop-question-plain);
    "Proposed" is the bar's outcome in words ("fix now", "fix this round", "follow-up fix", "live
-   with"). `story.stop_question` shows the table in place of its bullet list when every row has
-   scores, else today's bullets; `close.stop_question` and `story.read_question` pass the scores.
+   with"). It returns the table when every row has scores, else today's bullets; the call sites in
+   `story.stop_question`, `story.read_question` and `close.stop_question` are SCORES' (see
+   Stop-question call sites), so GUIDE changes only `score.table` and the guide.
    Guide (`src/forge/templates/skill.md`, in GUIDE's Scope): rewrite the close-stop paragraph near
    lines 1109–1114 (every in-boundary P0/P1 gets a fix round, "never a dismissal for being
    unnecessary, rare or low value") so the bar decides which findings get a fix round, and the
@@ -255,9 +270,9 @@ and regenerates the copies.
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| SCORES | Scores on every note | New `score.py` with `parse`, `normalise` (Harm floor on title and body), `bar` and the unscored rule; `review._finding` and the reader-output step of `story.read` score and floor every finding and note; the rubric and score line in the cold-read, review and sign-off templates; existing tests' findings given a default score line | 1 | `src/forge/score.py`, `src/forge/review.py`, `src/forge/story.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_notes.py`, `tests/test_close.py` | | no | |
-| BAR | The bar decides | `review.blocking` and `worker._fix_round` follow the bar; light reviews ask for every priority and apply P0-only after scoring; `story.passed` and `undisposed` pass below-bar notes with an automatic disposition; `close._block` lists follow-ups and lived-with findings; the `$accepted` block and `_settled` carry settled and owner-accepted notes forward; the three-round stops and the 30-minute default judged by the bar | 2, 3, 4 | `src/forge/review.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_bar.py`, `tests/test_close_holds_after_three_blocked_reviews.py`, `tests/test_cold_read_blocking_notes.py` | SCORES | no | |
-| GUIDE | Ranked table and coordinator rule | `score.table`; the ranked table in `story.stop_question`, `story.read_question` and `close.stop_question`; the guide's close-stop and loop paragraphs rewritten to the bar, plus the table rule and the coordinator autonomy rule | 5 | `src/forge/score.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/skill.md` | `tests/test_score_table.py` | SCORES | yes | |
+| SCORES | Scores on every note | New `score.py` with `parse`, `normalise` (Harm floor on title and body), `bar`, the unscored rule and a `table` stub; `review._finding` and the reader-output step of `story.read` score and floor every finding and note; `story.stop_question`, `story.read_question` and `close.stop_question` pass scores to `score.table`; the rubric and score line in the cold-read, review and sign-off templates; existing tests' findings given a default score line | 1 | `src/forge/score.py`, `src/forge/review.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_notes.py`, `tests/test_close.py` | | no | |
+| BAR | The bar decides | `review.blocking`, the sign-off gate in `review.run` and `worker._fix_round` follow the bar; light reviews ask for every priority and apply P0-only after scoring; `story.passed` and `undisposed` pass below-bar notes with an automatic disposition; `close._block` lists follow-ups and lived-with findings; the `$accepted` block and `_settled` carry settled and owner-accepted notes forward; the three-round stops and the 30-minute default judged by the bar | 2, 3, 4 | `src/forge/review.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_bar.py`, `tests/test_close_holds_after_three_blocked_reviews.py`, `tests/test_cold_read_blocking_notes.py`, `tests/test_aha_review.py`, `tests/test_reviews_use_repository_tool.py` | SCORES | no | |
+| GUIDE | Ranked table and coordinator rule | `score.table` filled in, so every stop question shows the ranked table; the guide's close-stop and loop paragraphs rewritten to the bar, plus the table rule and the coordinator autonomy rule | 5 | `src/forge/score.py`, `src/forge/templates/skill.md` | `tests/test_score_table.py` | SCORES | yes | |
 | README | README and upgrade | The README section with the three examples; the proof that saved unscored reads and reviews keep holding work back after an upgrade | 6 | `README.md` | `tests/test_score_upgrade.py` | BAR | no | |
 
 New moving parts: none
@@ -270,8 +285,8 @@ New moving parts: none
 - Replaces two fixes started but not built: value-effort-risk and accepted-notes-to-review. Close
   both branches without merging once this story is approved; their Done-when lines are items 3, 5
   and 6 here.
-- BAR and GUIDE both change `story.py` and `close.py`, in hunks far apart (gates and stops for
-  BAR; the stop-question builders for GUIDE), so they build in parallel after SCORES.
+- BAR and GUIDE share no path: SCORES pins the `score.table` stub and its call sites, GUIDE
+  changes only `score.py` and the guide, so they build in parallel after SCORES.
 - SCORES and BAR both edit the two templates and `review.py`: SCORES adds the rubric and score
   line and keeps today's labels, and touches only `_finding` and the docstring; BAR changes what
   blocks, the later-round text, `blocking`, `instructions`, `_settled` and the light review's
