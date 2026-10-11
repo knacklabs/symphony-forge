@@ -40,7 +40,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:11:31.476676+00:00",
@@ -60,7 +60,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/prcheck.py",
+    "reason": "Coordinator decision (Harm 2, nothing dropped): one more round; the latest commit fixes both open findings, so the review checks it",
     "wait_id": "9a72f9af-0940-4002-88ae-ac38eb06bde0"
   },
   "why": "The check that gates merging runs the whole suite as one 35-minute job; the six faster test groups run only in a workflow nothing waits on",
