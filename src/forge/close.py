@@ -643,11 +643,12 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
              pr: dict[str, Any] | None, result: dict[str, Any],
              evidence: tuple[str, str]) -> dict[str, Any]:
     """Open the pull request, or refresh its contract and Forge's block. While the review is
-    blocked, the pull request is a draft."""
+    blocked or the local tests failed, the pull request is a draft."""
     check, proof = evidence
     history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
-    draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
+    draft = (result["status"] == "blocked" or bool(state.get("tests")) or
+             (pr is None and result["status"] == "reviewing"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"

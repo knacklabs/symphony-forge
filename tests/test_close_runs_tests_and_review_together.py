@@ -119,6 +119,7 @@ with socket.create_connection({address!r}) as connection:
             + wait.format(address=address, role=b"review")
             + "\nargs = sys.argv[1:]"), encoding="utf-8")
         item, where = env.start_fix()
+        env.open_pr("")  # an earlier round left the pull request ready for review
         launcher = repo.bin / "forge"
         launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
             _record_process(env.tmp / "close.owned-process.json") + "from forge.cli import main"),
@@ -185,6 +186,14 @@ with socket.create_connection({address!r}) as connection:
     if red:
         # Failed output is durable for the next worker even when review also blocked.
         assert "client test failed" in (where / f".factory/fixes/{item}.json").read_text("utf-8")
+    # Red tests or a serious finding turn the pull request back to a draft, and forge-pr-check refuses it.
+    assert any("--undo" in call for call in env.gh_calls("pr", "ready")) == bool(red or priority)
+    checked = repo.forge("hook", "pr-check", "--base", repo.git("rev-parse", "HEAD"), "--head",
+                         repo.git("rev-parse", "HEAD", cwd=where), "--branch",
+                         repo.git("branch", "--show-current", cwd=where))
+    assert (checked.returncode == 0) == (not red and not priority), checked.stdout + checked.stderr
+    if red and not priority:
+        assert "local tests that failed" in checked.stderr
     for host in (".claude", ".codex"):
         guide = (repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert "tests and review run at the same time" in guide
