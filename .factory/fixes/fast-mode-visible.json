@@ -32,6 +32,7 @@
     "id": "f79b2efb-4fb5-41df-bf06-2625f97dcfa8",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -43,5 +44,6 @@
       "step": "review"
     }
   ],
-  "why": "Codex Fast was added but every Codex turn still runs at normal speed and nothing shows which speed a turn used"
+  "why": "Codex Fast was added but every Codex turn still runs at normal speed and nothing shows which speed a turn used",
+  "worker": "codex"
 }
