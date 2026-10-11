@@ -33,9 +33,15 @@ def test_5_guide_explains_design_models_and_fallback():
     # The guide names the current default; decision 0097 keeps the model it was decided with.
     assert "gpt-6.1-sol` at high effort" in models
     assert "User-facing" in models and "Prototype before sign-off" in models
-    assert ('`[models.design.codex]` with `workers = "codex"`, and '
-            '`[models.design.claude]` with `workers = "claude"` or `"split"`') in models
+    # Tools now selects the design family; workers controls routing only with both tools.
+    assert ("uses its selected tool's design entry: `[models.design.codex]` on Codex and "
+            "`[models.design.claude]` on Claude") in models
+    assert ('With `tools = "both"` and `workers = "split"`, the fallback applies only to '
+            'Claude design rounds run through its kit') in models
     assert "`claude` command is missing" in models
     assert "Claude fails before changing the checkout" in models
     assert "prints and logs the fallback reason" in models
     assert "without a Codex retry" in models
+    assert ("When Claude Code coordinates the round, design work runs as its native "
+            "`frontend` subagent; a failed native round gets no automatic Codex retry") in models
+    assert "With one tool selected, Forge reports the failure without a Codex retry" in models

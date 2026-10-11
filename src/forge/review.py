@@ -560,8 +560,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
             page.write(string.Template(rules).substitute(standards=(
                 Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
-        engine = cfg["workers"]
-        if engine == "split":
+        engine = cfg["tools"]
+        if engine == "both":
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
@@ -579,6 +579,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
                                                 strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
+                    ran.update(selected)
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)

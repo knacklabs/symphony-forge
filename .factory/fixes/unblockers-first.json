@@ -1,0 +1,56 @@
+{
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/unblockers-first",
+  "done_when": "In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first-come within each group, and its place in line says why. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/machine.py",
+    "tests/test_agent_lane_prioritizes_dependencies.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "31425a971092b199f80c06bd6cabcec550b67e25f552a4c7cc5bea3e045c8e30",
+    "changed": "86fa60ef213b979f108f7412107766524ddd57f101e86ef4811dab8790f06c88",
+    "commit": "83ff1253a6a4fecd66b32a97f89a4614f4b39ca6",
+    "dismissals": [],
+    "findings": [],
+    "id": "92b62dc9-1f68-42fe-a1cc-28f7bb5c0389",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T15:25:21+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T17:03:30.931222+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:54:13.852400+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:16:42.204279+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:01:18.581318+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:38:48.401748+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/machine.py",
+    "reason": "Owner chose narrow: check only stories still in progress so admission stays fast; the pane's why line is left for later, the forge command still shows why",
+    "wait_id": "2b74a4ca-8e84-4a50-82d6-94661deb41a2"
+  },
+  "why": "The machine's agent line is first-come, so a part other work waits on queues behind new fixes",
+  "worker": "codex"
+}
