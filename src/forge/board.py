@@ -580,8 +580,7 @@ def machine_board(top: Path, history: Item | None = None,
         for tid, spec in specs.items():
             tid = tid.strip("` ")
             item = f"{key}/{tid}"
-            waits = [dep if "/" in dep else f"{key}/{dep}"
-                     for dep in task.cell_list(spec.get("After", ""))]
+            waits = task.waits_for(key, task.cell_list(spec.get("After", "")))
             current = active_parts.get(item, {})
             task_state = nextstep._task(top, key, tid, trees, merged_prs, history)
             waits = list(dict.fromkeys(waits + readiness.get(key, {}).get("waits", {}).get(tid, [])))
