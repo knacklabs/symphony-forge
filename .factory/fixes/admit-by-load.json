@@ -10,51 +10,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0cca5c07ccd62b9635b7d5070a98a9e2bc48403a90772bc940aef01ff32efba2",
-    "changed": "e0896c0db18e8903aabb1b6c0ee0893b9483759d261f7fb7d3b51e01d6a60770",
-    "commit": "891805d2b1cacbf9b3e1f7b2c55eb58b932e2247",
+    "branch_diff": "6fb374a3a012ddf32359e018bfa4081397596e77f5957d59afb3959459287745",
+    "changed": "11d0f31de7e1c045e57b3d371e731ba118e20f8b5fa5595a11b4d15e33b50e5a",
+    "commit": "0d3f87b9e96dee817f474ab43f9f466f599d5435",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A worker running `forge test` with a configured command such as `pytest -n 4` still starts four test processes. This line sets an environment budget, but `review.test_run` passes the configured command to the shell unchanged at line 304; an explicit process count overrides the auto-worker setting. The named proof at tests/test_worker_runs_wait_for_machine_load.py:69 prints that setting instead of counting processes.",
+        "body": "Raise: Not done. A worker in a repo whose `forge.toml` runs plain pytest and whose `pytest.ini` sets `addopts = -n 4` still starts four test processes through `forge test`. The new cap is added only when the command text contains an xdist option; pytest's configured options are absent from that text. `src/forge/fasttest.py:31-54` already reads these options for the separate `--pytest` path, but `forge test` can run the configured command directly (`src/forge/fasttest.py:253-265`). The named proof puts `-n 4` in the command itself, so it passes while this supported configuration exceeds the two-process limit.",
         "file": "src/forge/review.py",
-        "line": 296,
+        "line": 301,
         "priority": "P1",
         "title": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,"
-      },
-      {
-        "body": "Raise: Functional. Admission divides load by the host count from `os.cpu_count()`, while the agent lane uses `os.process_cpu_count()` when available at line 37. On a 64-CPU host where Forge can use eight CPUs, load 17 is read as 0.27 rather than 2.13 per available core, so further work rounds are admitted. The new test gives both counts the same value.",
-        "file": "src/forge/machine.py",
-        "line": 57,
-        "priority": "P1",
-        "title": "Load per core is understated when Forge has fewer available CPUs than the host"
-      },
-      {
-        "body": "Raise: Gate. The supplied proof list covers load admission and the test-process budget but omits the Done-when detail that queue waits stay under five minutes per round. This test waits for admission eventually; it does not measure or bound the wait.",
-        "file": "tests/test_worker_runs_wait_for_machine_load.py",
-        "line": 60,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      },
-      {
-        "body": "Raise: Test. The admission proof checks loads of 2.0 and 1.0 per core, but not exactly 1.5. Changing the admission comparison from `>= 1.5` to `> 1.5` would leave this test green while admitting a round at the threshold the Done-when excludes.",
-        "file": "tests/test_worker_runs_wait_for_machine_load.py",
-        "line": 59,
-        "priority": "P1",
-        "title": "Not done: the 1.5 load-per-core boundary test"
-      },
-      {
-        "body": "Raise: Test. The two-process proof runs only with the new-repo fixture; unlike test_1, it never calls `_release` for a repo adopted on an earlier release. The unchanged upgrade test at tests/test_lanes_upgrade.py:33 checks a separately launched test run's four-core budget, not a worker's two-process budget. The required existing-repo case remains unproved.",
-        "file": "tests/test_worker_runs_wait_for_machine_load.py",
-        "line": 66,
-        "priority": "P1",
-        "title": "Not done: two-process proof for previously adopted repos"
       }
     ],
-    "id": "7849f335-6efe-4c31-95f4-caea6a00ee1e",
+    "id": "d2770c23-d122-43d3-813e-648b855b54a9",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:31:53.460889+00:00",
@@ -67,7 +39,15 @@
     {
       "at": "2026-10-11T15:02:23.143809+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:34:47.774450+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/review.py",
+    "wait_id": "9aeb736c-c183-4cd2-ae28-ab91ce4f7705"
+  },
   "why": "Up to nine worker runs share eight cores at load 17, so every step queues and the local suite runs twice as slow as CI"
 }
