@@ -16,24 +16,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "18cd410455b3d5b131617ae3df8480ecb7f8236ba1f90cea66bef7105d029499",
-    "changed": "42cbf77ea1dc34731d9198294ff5872244e5deec157868c533d699fa29c65c64",
-    "commit": "78c9c88d2de1e898f0d50853d70fdeac266749eb",
+    "branch_diff": "6b4b644f3caad3275718e3432a48dba4d9756ed1f798ae366d1aa9e40fea78ce",
+    "changed": "d3cf9542aec842bb6290678a6bd46e7c643a487451f6082c9596227b773a4dae",
+    "commit": "5846f33d0d984570cbf8ca8a7c8fdb7457e1dec0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional \u2014 A standalone `fast_test = \"forge test --pytest {base}\"` can bypass the test place even when the run includes a full second suite. New evidence beyond the earlier compound-command finding is the picker\u2019s underlying `test` command: with `test = \"pytest tests && npm test\"` and an npm `node --test` script, `few_tests` counts only the selected Python files here. `fasttest.py:300-305,332` keeps the Node command, while `fasttest.py:57-86` narrows only pytest. Five selected Python files therefore admit an unrestricted full Node run outside the machine\u2019s test limit. The named lane proof covers a compound `fast_test`, but not this standalone-picker case.",
+        "body": "Raise: Functional \u2014 A single pytest command can collect more than the five files counted for admission. In a repo whose `test` command is `pytest tests src --doctest-modules`, changing five `test_*.py` files makes `few_tests` grant a free place at line 291. `fasttest.related` counts only `test_*.py` and `*_test.py` files (lines 280\u2013283), while `narrow_command` preserves `--doctest-modules` and the `src` target (lines 57\u201386). The run can therefore execute the repo's source doctests while another test run holds the only place. Explicitly named test files outside those filename patterns have the same gap.",
         "file": "src/forge/review.py",
-        "line": 277,
+        "line": 291,
         "priority": "P1",
-        "title": "Standalone picker runs a full second suite without a test place"
+        "title": "Pytest doctests can bypass the test place despite an unrestricted run"
       }
     ],
-    "id": "3d159ded-306e-4fc5-8349-027c9d071ab4",
+    "id": "f0a049af-6eac-4051-95ce-04aaa44a2e9e",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:11:41.406821+00:00",
@@ -46,8 +46,16 @@
     {
       "at": "2026-10-11T11:50:16.269683+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:30:29.940385+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/review.py",
+    "wait_id": "87103d21-332b-425f-87dc-1103623a0466"
+  },
   "why": "A 2-minute review waits about 10 minutes for an agent place and a worker's small test run queues for the single test place",
   "worker": "codex"
 }
