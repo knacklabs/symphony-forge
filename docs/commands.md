@@ -6,6 +6,7 @@
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
 | `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
 | `forge test` | Run fast_test (else test) in the machine test lane; `--pytest <base>` picks related pytest tests. |
+| `forge handback <target>` | Records a session subagent result and frees its held place |
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
 | `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |
 | `forge next` | Says where things stand and gives the exact next command |
@@ -20,7 +21,6 @@
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
 | `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix's done-when; the old text and the reason stay in its record, and the next review judges the new text |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
-| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.explore]`, or lite when absent) |
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |
 | `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
