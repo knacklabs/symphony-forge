@@ -83,6 +83,11 @@ def work(args: argparse.Namespace) -> None:
     match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
+    from forge import time_records
+    # Review and body files can survive a failed first publication; only success needs a refresh.
+    published = (repo.ready_path(item, top).exists() or any(
+        event.get("item") == item and event.get("event") == "pull request published"
+        for event in time_records.read(top, "events")))
     if match["task"]:
         doc = f"plans/{match['key']}.md"
         story._parsed(story._text(top / doc), doc)  # pyright: ignore[reportPrivateUsage]
@@ -114,7 +119,9 @@ def work(args: argparse.Namespace) -> None:
           f"because {why}", flush=True)
     if note is not None and (pending := codex.record(top, item).get("question_id")):
         repo.record_event(top, item, "owner wait end", wait_id=pending)
-    from forge import time_records
+        if published:
+            from forge import close
+            close._refresh_record(top, item, state)
     if pending_merge := time_records.pending_merge_wait(top, item):
         repo.record_event(top, item, "owner wait end", wait_id=pending_merge["id"])
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
@@ -178,6 +185,7 @@ def work(args: argparse.Namespace) -> None:
         nudge = COMMIT_NUDGE
         outcome = "failed"
         final = None
+        asked = ""
         nudged = ""
         try:
             if not on_codex:
@@ -261,6 +269,9 @@ def work(args: argparse.Namespace) -> None:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
+            if published and (asked or note is not None):
+                from forge import close
+                close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
                       f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")

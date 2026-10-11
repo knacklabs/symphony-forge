@@ -264,7 +264,8 @@ def test_4_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fix
         assert current["total_seconds"] == pytest.approx(sum(
             value for value in current["time_breakdown"].values() if value is not None), abs=1)
     parent = row(env.repo, "SHOP")
-    assert "time_breakdown" not in parent
+    # RECORD now gives stories a runway derived from their parts without counting overlaps twice.
+    assert parent["time_breakdown"]["working"] == 25
     assert "rounds" not in parent
 
 
@@ -413,7 +414,8 @@ def test_11_merged_item_with_unknown_end_keeps_observed_step_time(env, step, out
     current = row(env.repo, item)
     assert current["total_seconds"] is None
     assert current["time_breakdown"][category] == 5
-    assert "5s" in current["rounds"][0]["line"]
+    # Human durations now use plain rounded units; raw JSON category seconds stay unchanged.
+    assert "5 seconds" in current["rounds"][0]["line"]
     if step == "CI wait":
         # Earlier releases recorded both red tests and wait exhaustion as failed.
         assert "CI unknown" in current["rounds"][0]["line"]
