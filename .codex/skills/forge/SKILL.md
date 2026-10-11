@@ -1056,6 +1056,9 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+When the pytest selection would cover more than a third of the Python test files (shared
+test inputs select them all), close skips the local run, says so in one line, and relies on
+the pull request's required checks. `forge test` still runs its tests.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
@@ -1074,7 +1077,8 @@ that run the program from outside miss it locally and GitHub's checks cover it. 
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
-full command when `conftest.py`, requirements or lock files change.
+full command when `conftest.py`, requirements or lock files change, except for close's
+large-selection skip above.
 For `pyproject.toml`, every change triggers the full command unless all changed lines are
 known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
 `include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
@@ -1223,6 +1227,7 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is

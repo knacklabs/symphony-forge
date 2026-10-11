@@ -32,6 +32,8 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
     for name in ("named", "first", "second"):
         env.repo.write(f"src/app/{name}.py", "VALUE = 1\n")
     env.repo.write("tests/test_named.py", "# app/named.py\ndef test_named():\n    assert True\n")
+    for number in range(3):  # Close skips local tests when over a third would run.
+        env.repo.write(f"tests/test_other_{number}.py", "def test_other():\n    assert True\n")
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Use Forge's own test settings")
     env.repo.git("push", "-q", "origin", "main")
