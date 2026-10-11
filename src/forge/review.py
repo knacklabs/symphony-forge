@@ -202,6 +202,29 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
              and n not in dismissed)]
 
 
+def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
+    """A stopped item's question for the human: what it is, its open serious findings, the choices."""
+    from forge import story as story_  # story imports review through worker and doctor
+
+    name, delivers = state.get("why") or item, state.get("done_when", "")
+    if "/" in item:  # a task: its row in the story's plan, which its worktree holds
+        key, task = item.split("/")
+        doc = top / "plans" / f"{key}.md"
+        text = doc.read_text(encoding="utf-8") if doc.is_file() else ""
+        try:
+            row = next((row for row in story_.parse(text)["tasks"] if row["id"] == task), {})
+        except ValueError:
+            row = {}
+        title = re.search(r"^# (.+)$", text, re.M)
+        name = (row.get("Name") or item) + (f" (part of {title[1].strip()})" if title else "")
+        delivers = row.get("What it delivers", "")
+    flagged = [story_.plain(finding["title"], finding.get("body", ""))
+               for _, finding in blocking(state.get("review") or {}) if isinstance(finding, dict)]
+    return story_.stop_question(name, delivers, flagged,
+                               "dismiss these findings with your reason and go on to the checks; "
+                               "merging is still a separate step.")
+
+
 # --- the instructions ------------------------------------------------------------------
 
 

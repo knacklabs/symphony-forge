@@ -631,7 +631,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         stop = state["stop"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
                 "narrow the part, split it, or accept the remaining findings.",
-                close.stop_question(path or top, item, state),
+                review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:
         return []

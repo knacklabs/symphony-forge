@@ -31,7 +31,7 @@ def land(args: argparse.Namespace) -> int:
     top = close._worktree(item)
     pin = repo.config(top)["version"]
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
-    close.check_stop(item, state, top)
+    close.check_stop(item, state)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
     rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0"))
     conflict_retry = False
@@ -77,7 +77,7 @@ def land(args: argparse.Namespace) -> int:
                         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start",
                                                                      reason="review loop")
                         close._save(top, item, state, f"{item} stopped after {ROUNDS} fix rounds")
-                        say(close.stop_question(top, item, state))
+                        say(review.stop_question(top, item, state))
                     raise
                 rounds += 1
                 say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
