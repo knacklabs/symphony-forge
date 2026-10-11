@@ -73,8 +73,10 @@ status lines.
 next` so they never disagree). Blockers are today's: the part's unmerged After parts plus started,
 unmerged parts whose Scope overlaps (`waits_for` with `_started`). With `stack = "off"` or no
 blockers, today's behaviour. The part stacks only when there is exactly one blocker and, read from
-that blocker's pushed branch head: it is started; it has no unmerged `stacked_on` (it starts from
-main, so stacks are two deep at most and a stacked part's base is never rewritten under it); its
+that blocker's pushed branch head: it is started; it is on main, meaning it has no `stacked_on`,
+or the part in its `stacked_on` is merged within the blocker's own history (`task._merged` on the
+merge base of its head and the default branch), so it has already replayed onto main. Stacks are
+two deep at most and a stacked part's base is never rewritten under it; its
 `forge.toml` pin equals the default branch's; and its recorded review is `clean` and still covers
 that head, by the same check `forge hook pr-check` makes (`review.fingerprint(head, ...) ==
 review.changed`, review commit on the branch), so changes pushed after the review don't count as
@@ -101,7 +103,8 @@ use).
    `"two_bases": ("{item} waits for {deps}, so it starts once all but one of them merge.", "forge next")`.
    Test: each case refuses with its line, and no branch, worktree or remote branch is created:
    A not started; A reviewed, then a new commit pushed on A without a new review; B stacked on A
-   and reviewed, and D After B; A started before the upgrade on the older pin; D After two
+   and reviewed, and D After B, both while A is unmerged and after A merged but before B's close
+   replays it (D starts on B once that close has run); A started before the upgrade on the older pin; D After two
    unmerged parts.
 3. `close` uses the part's own changes while `stacked_on` is unmerged: the size limit and the review
    base from the recorded `base` (as `fix_base`; `review.run` fetches a ref under `refs/remotes/`,

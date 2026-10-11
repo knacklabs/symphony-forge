@@ -1,15 +1,15 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-11T08:27:35.287546+00:00
-read_hash: ad6303a81c178e70d7ec32218a5fe66459239380
-round: 1
+read_at: 2026-10-11T09:26:58.182344+00:00
+read_hash: adb38ab59435bcf98c85e73ea24b5f50078d4ffb
+round: 2
 passed: no
-doc_seen: ad6303a81c178e70d7ec32218a5fe66459239380
+doc_seen: adb38ab59435bcf98c85e73ea24b5f50078d4ffb
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 7e09660d978a17e2ddbba26a7157292f4ccb47d1
 conversation: 01a12a0d-b795-74e2-83ae-0c4b25007a01
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -62,3 +62,14 @@ Disposition: cut
 Disposition: cut
 
 No files changed; runtime tests were not run. These are plan findings, not runtime verification.
+
+## Round 2
+
+6. Blocking: The new start rule can admit another part before its blocker has replayed onto main.
+   Raise: Plan gap.
+   `plans/FORGE-STACK-1.md:76–80` allows B once its parent A has merged, without checking that B has replayed. When A and B change the same code and test files, B's old review fingerprint can still match: `src/forge/review.py:134–160` hashes changed filenames and head blobs, not the baseline or ancestry.
+   Thus, after A merges but before `forge close B`, C can start on B's old head. B's subsequent replay rewrites C's base, contradicting the two-deep guarantee at lines 171–174. The planned refusal test covers only A still unmerged.
+
+Disposition: cut
+
+No files changed; runtime tests were not run. The replay-before-start guarantee remains unproven.
