@@ -14,29 +14,37 @@
     "src/forge/review.py",
     "src/forge/story.py",
     "tests/test_close_holds_after_three_blocked_reviews.py",
+    "tests/test_land.py",
     "tests/test_reads_wait_for_a_loop_choice.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "201ddf2df328d37f1d06fc93015de31ddb35e9a250bcb2b12303666cdacbb66c",
-    "changed": "1db94fbf02ef04a719b75bacb4f48230545f8d995700835b69da9cc27e2985d5",
-    "commit": "2b36df5ad3e080f04e04b7ef62de5e6772b6b766",
+    "branch_diff": "4e0b49698decbc7d0be866156b4a145a76dc722339f204a5108d630d2192f6e7",
+    "changed": "6f41f4ddec64575ec395dfc0b43bd3b70b2ffaf3780a3061862f49b304930669",
+    "commit": "e3bb342f4ced98abb6c57e61505279af06de1ae8",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A stopped review can still give the owner a gate label and an incomplete account of a blocker instead of one plain sentence saying what goes wrong for whom. At line 991, `plain()` removes `Not done.` but leaves the common `Not done:` finding title intact, then keeps only the body's first sentence. The branch's recorded review in `.factory/fixes/stop-question-plain.json:28-32` is a concrete example: its title begins `Not done:`, and the sentence explaining the effect on the owner comes after the first sentence. The named close proof uses a `Raise:` title, so it passes without exercising this input.",
+        "body": "Raise: Not done. The owner can receive a review label and a blocker summary that never says who is harmed. A real finding in `.factory/fixes/plain-english-skill.json:42-46` begins `Raise: Not done \u2014` and explains the effect on readers in a later sentence. This regex leaves the em-dash label intact, while the first-sentence cut at line 994 drops that effect. The named close proof uses a dotted label with the impact in its first sentence, so it passes for this input.",
         "file": "src/forge/story.py",
         "line": 991,
         "priority": "P1",
-        "title": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names"
+        "title": "Not done: stopped questions can retain review labels and omit who is affected"
+      },
+      {
+        "body": "Raise: Gate. The latest commit's proof list names only the close and read tests. It omits the separate `forge land` three-fix-round stop, which records and prints a question through the changed path at `src/forge/land.py:67-80`. This test exercises that path, but it is absent from the proof list copied into the pull request, leaving a Done-when case without a listed proof.",
+        "file": "tests/test_land.py",
+        "line": 387,
+        "priority": "P1",
+        "title": "Not done: proof list"
       }
     ],
-    "id": "8de452ea-2a22-4ef8-bd96-4d22ac63aebb",
+    "id": "be46bbae-05c2-4e46-995e-d7eb910e9aad",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -61,13 +69,15 @@
     {
       "at": "2026-10-11T19:30:00.154580+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:29:18.017242+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "accept",
-    "file": "src/forge/nextstep.py",
-    "reason": "Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): forge next shows only the document error while a stopped story's draft is malformed; fixing the draft brings the question back. Recorded as lived-with.",
-    "wait_id": "36a8917a-cc37-4099-8b1d-6710c8d6221b"
+    "file": "src/forge/story.py",
+    "wait_id": "999ac8fa-abba-44aa-a3a9-dc359283b2e9"
   },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
   "worker": "codex"
