@@ -176,29 +176,29 @@ def _commit_skips_hooks(args: list[str]) -> bool:
 
 
 def _without_data(text: str) -> str:
-    """The text without comments, and without the heredoc bodies that are only data: those read by
-    `git commit -F -` and by a cat whose output nothing runs (not piped, at most inside a git
-    commit's $(...)). Every other body is checked as commands, so when unsure Forge refuses. Only
-    a # outside quotes starts a comment, and only a << redirection (outside quotes and $((...)),
-    to a plain or wholly quoted word) opens a heredoc; an unquoted body keeps its $(...) lines."""
+    """The text without comments, and without the heredoc bodies that git commit -F - (or
+    --file=-) reads as its message. Every other body, even cat's, is checked as commands, so when
+    unsure Forge refuses. Only an unescaped # outside quotes starts a comment, and only a <<
+    redirection (outside quotes and $((...)), to a plain or wholly quoted word) opens a heredoc;
+    an unquoted message keeps its $(...) lines, which run."""
     kept: list[str] = []
     quote, start, outer = "", 0, []  # open quote, where this command starts, each open $( or $((
     lines = iter(text.split("\n"))
     for line in lines:
         kept.append(line)
-        bodies, i, start = [], 0, 0
+        bodies, i, start, escaped = [], 0, 0, -1
         while i < len(line):
             c = line[i]
-            arith = bool(outer) and outer[-1][2]
+            arith = bool(outer) and outer[-1][1]
             if quote == "'":
                 quote = "" if c == "'" else quote
             elif c == "\\":
-                i += 1
+                i = escaped = i + 1
             elif quote == '"' and c == '"':
                 quote = ""
             elif line.startswith("$(", i):
-                outer.append((quote, line[start:i], line.startswith("$((", i)))
-                quote, i = "", i + (2 if outer[-1][2] else 1)
+                outer.append((quote, line.startswith("$((", i)))
+                quote, i = "", i + (2 if outer[-1][1] else 1)
                 start = i + 1
             elif c == ")" and not quote and outer and (not arith or line.startswith("))", i)):
                 quote, i, start = outer.pop()[0], i + arith, i + 1 + arith
@@ -206,19 +206,17 @@ def _without_data(text: str) -> str:
                 pass
             elif c in "'\"":
                 quote = c
-            elif c == "#" and (i == 0 or line[i - 1] in " \t;&|()"):
+            elif c == "#" and (i == 0 or line[i - 1] in " \t;&|()" and escaped != i - 1):
                 kept[-1] = line[:i]
                 break
             elif c in ";&|()":
                 start = i + 1
             elif line[i - 1:i] != "<" and (found := HEREDOC.match(line, i)):
                 owner = line[start:i].split()
-                stdin_message = owner[:2] == ["git", "commit"] and "-F -" in " ".join(owner)
-                shown = owner[:1] == ["cat"] and (
-                    outer[-1][1].split()[:2] == ["git", "commit"] if outer
-                    else "|" not in line[found.end():])
-                bodies.append((found[1] or found[2] or found[3], found[3] is not None,
-                               stdin_message or shown))
+                sub, rest = _subcommand(owner[1:]) if owner[:1] == ["git"] else ("", [])
+                message = sub == "commit" and ("--file=-" in rest or any(
+                    rest[k:k + 2] in (["-F", "-"], ["--file", "-"]) for k in range(len(rest))))
+                bodies.append((found[1] or found[2] or found[3], found[3] is not None, message))
                 i = found.end() - 1
             i += 1
         for end, unquoted, data in bodies:
