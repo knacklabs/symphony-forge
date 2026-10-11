@@ -86,7 +86,7 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     assert "fast_test" not in workflow
 
 
-@pytest.mark.parametrize("runner", ["go", "custom"])
+@pytest.mark.parametrize("runner", ["go", "custom", "compound-npm", "pipe-npm"])
 def test_3_close_keeps_the_full_command_for_other_runners(env, tmp_path, monkeypatch, runner):
     # The recorded narrow replaces selective Go and generic filename forwarding with
     # unchanged full commands, including helper-only test edits and custom launchers.
@@ -103,20 +103,41 @@ def test_3_close_keeps_the_full_command_for_other_runners(env, tmp_path, monkeyp
                            f"func TestClient(t *testing.T) {{\n"
                            f"if err := os.WriteFile({json.dumps(str(receipts / name))}, "
                            '[]byte("ran"), 0600); err != nil { t.Fatal(err) }\n}\n')
-        command, changed = "go test -v ./...", "helpers_test.go"
+        command, changed, expected = "go test -v ./...", "helpers_test.go", ["cart", "other"]
+    elif runner in {"compound-npm", "pipe-npm"}:
+        assert shutil.which("npm"), "The npm shell command regression requires npm."
+        for name in list(os.environ):
+            if name.lower().startswith("npm_config_"):
+                monkeypatch.delenv(name)
+        for kind in ("user", "global"):
+            config = env.repo.write(f"npm-{kind}.rc", "")
+            monkeypatch.setenv(f"NPM_CONFIG_{kind.upper()}CONFIG", config.as_posix())
+        env.repo.write("__tests__/cart.js", "const fs = require('node:fs');\n"
+                       f"test('client', () => fs.writeFileSync({json.dumps(str(receipts / 'jest'))}, 'ran'));\n")
+        env.repo.write("client-check.py", "from pathlib import Path\nimport sys\n"
+                       "assert len(sys.argv) == 1, sys.argv\n"
+                       + ("sys.stdin.read()\n" if runner == "pipe-npm" else "")
+                       + f"Path({json.dumps(str(receipts / 'custom'))}).write_text('ran', encoding='utf-8')\n")
+        client = f'"{Path(sys.executable).as_posix()}" client-check.py'
+        script = "npm exec --yes --package=jest@30.2.0 -- jest --runInBand"
+        if runner == "compound-npm":
+            script += " && " + client
+        env.repo.write("package.json", json.dumps({"name": "client", "scripts": {"test": script}}))
+        command = "npm test" + (" | " + client if runner == "pipe-npm" else "")
+        changed, expected = "__tests__/cart.js", ["custom", "jest"]
     else:
         env.repo.write("client-check.py", "from pathlib import Path\nimport sys\n"
                        "assert len(sys.argv) == 1, sys.argv\n"
                        f"Path({json.dumps(str(receipts / 'all'))}).write_text('ran', encoding='utf-8')\n")
         command = f'"{Path(sys.executable).as_posix()}" client-check.py'
-        changed = "client-check.py"
+        changed, expected = "client-check.py", ["all"]
     _command(env, command)
     item, _ = env.start_fix({changed: (env.repo.path / changed).read_text("utf-8") + "\n"})
 
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert sorted(path.name for path in receipts.iterdir()) == (["cart", "other"] if runner == "go" else ["all"])
+    assert sorted(path.name for path in receipts.iterdir()) == expected
 
 
 @pytest.mark.parametrize("runner", ["vitest", "jest"])

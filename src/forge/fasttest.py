@@ -216,9 +216,13 @@ def close_tests(base: str) -> int:
     package = Path("package.json")
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
-    if not parts or "||" in command or any(re.search(r"&&|[;|]", scripts[script])
+    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
             for kind, part, _ in parts if kind in ("vitest", "jest")
             for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+        return subprocess.run(command, shell=True).returncode
+    if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
+        if any(kind == "python" for kind, _, _ in parts):
+            return pytest_tests(base, command)
         return subprocess.run(command, shell=True).returncode
     for kind, part, passthrough in parts:
         if kind == "python":
@@ -253,7 +257,7 @@ def test(args) -> int:
         status, report = review.test_run(top, review.close_test(top, base, closing=False), base, always=True)
         print(report)
         return status
-    return pytest_tests(args.base, repo.config(Path.cwd())["test"])
+    return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
 
 
 def pytest_tests(base: str, command: str) -> int:
