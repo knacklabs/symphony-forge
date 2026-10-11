@@ -2,12 +2,37 @@
   "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
   "branch": "fix/record-review-usage",
   "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+  "flagged": [
+    "tests/test_fix_reviews_and_reads_record_their_cost.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e9fd15910e1d44afac3291648f639475abf9a86288dbd7051c94eb88610d95ef",
+    "changed": "b7da1bb1b77d53dffa7c11ba3342e01c7f2ab32c33b252cb7415d3bb048b2150",
+    "commit": "eb695c60cb807cdde450ae5b77f514f0bd768593",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Test. The `existing_repo` proof upgrades a repo adopted on an earlier release, but then checks only a `work` run end. It never runs a plan read or asserts the review run's model, effort, chat id, and token use. This test would pass if either new cost-recording path failed after upgrade, so the proof list's upgrade claim remains untested.",
+        "file": "tests/test_fix_reviews_and_reads_record_their_cost.py",
+        "line": 101,
+        "priority": "P1",
+        "title": "Not done: earlier-adopted repo review and plan-read cost test"
+      }
+    ],
+    "id": "b18dbeaf-998f-4a81-8c35-c4cb7824333e",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T09:13:38.849775+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T10:57:01.280193+00:00",
+      "step": "review"
     }
   ],
   "why": "Reviews and plan reads record no model, effort, chat or token use, so nobody can tell what they cost or whether a lighter setting would do"
