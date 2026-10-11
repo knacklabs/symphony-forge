@@ -1,0 +1,14 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/fast-mode-visible",
+  "done_when": "Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast was wanted but the model does not offer it, and Fast is used whenever the model offers it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:55.850092+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Codex Fast was added but every Codex turn still runs at normal speed and nothing shows which speed a turn used"
+}
