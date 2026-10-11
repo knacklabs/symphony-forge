@@ -19,24 +19,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8bf5d4e4e142171247177401a38e998bc79ab1c200ae4e69efc8fc3e36428a42",
-    "changed": "f14732488520f75f4773065f36b4d2423ab10fedc4facf2c93d928f09c350699",
-    "commit": "1a26eb87445230c6a2050242b1de9b7ca7b14b00",
+    "branch_diff": "3cd6d6407deb66fd8bd498525d771902aa46e4e7f59f87b594c593ac156f65f8",
+    "changed": "96154790391e87b5f1d34743548266b769fdafd133a098050ee25a48ba0d3579",
+    "commit": "8caa7c12db90d2b64c38bd4be5ed78c3e0f4386d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done \u2014 an earlier-release Codex reader can lose a resumable chat during upgrade. If its first read of a spec unchanged from the default branch fails, its local JSON is removed, and sync runs from another worktree, this owner search has no commit to locate the spec branch: the v1.2.2 turn log\u2019s final entry has no `start` field. The spec and reader notes also match the default branch, so sync does not preserve the binding on the owning branch. After metadata loss, a later read starts a fresh chat. Test 18\u2019s log-only case uses a spec absent from default; test 22\u2019s failed unchanged-spec case retains the JSON. This is distinct evidence from the settled unchanged-spec finding.",
-        "file": "src/forge/codex.py",
-        "line": 269,
-        "priority": "P1",
-        "title": "Not done: Recover log-only failed spec-reader chats when the spec is unchanged"
-      }
-    ],
-    "id": "378a4b0f-0f0c-4c7f-8b31-0e31f2cb67a4",
-    "status": "blocked"
+    "findings": [],
+    "id": "365d1ea8-02ba-49d9-886b-052b7e93ed74",
+    "status": "clean"
   },
   "round": 23,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:38+00:00",
@@ -144,6 +136,10 @@
     },
     {
       "at": "2026-10-11T04:15:02.054902+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T05:17:14.817109+00:00",
       "step": "review"
     }
   ],
