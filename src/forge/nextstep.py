@@ -547,6 +547,9 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
+    if record.get("blocked_rounds") == "3" and not record.get("loop_choice"):
+        return [line.format(target=key) for line in
+                (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
