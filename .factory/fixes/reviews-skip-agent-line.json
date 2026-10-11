@@ -32,6 +32,7 @@
     "id": "4294e5f3-509b-4443-87ea-aa7b0eadcdaa",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -43,5 +44,6 @@
       "step": "review"
     }
   ],
-  "why": "A 2-minute review waits about 10 minutes for an agent place and a worker's small test run queues for the single test place"
+  "why": "A 2-minute review waits about 10 minutes for an agent place and a worker's small test run queues for the single test place",
+  "worker": "codex"
 }
