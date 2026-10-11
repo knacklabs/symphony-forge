@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from contextlib import redirect_stdout
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +66,8 @@ def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_pro
             repo.refuse(codex.REFUSALS["leftover"], pid=unknown, item=target, command="read")
         previous = codex.record(top, target, "Grill").get("native") or {}
         resume = previous.get("subagent") if not why and previous.get("session") == owner["id"] else None
-        entry = machine.join("read", top, target, models.get("model"), models.get("effort"))
+        with redirect_stdout(sys.stderr):
+            entry = machine.join("read", top, target, models.get("model"), models.get("effort"))
         machine.hold_session(entry, owner)
         codex._record(path, **({"claude": None} if result["reader"] == "codex" else
                               {"conversation": None, "start": None}),

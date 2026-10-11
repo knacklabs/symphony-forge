@@ -5,15 +5,18 @@ now owns that read; only a cross-tool read calls the external kit.
 """
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install
+from conftest import ROOT, _install, machine_cores
 from test_codex_reader import GRILL
 from test_codex_worker import _toml
 from test_story import DOC, new_story, setup
 from test_worker import calls
+from test_fix_agent_runs_wait_in_line import _until
 
 STORY = "FORGE-TOOLS-1"
 
@@ -52,8 +55,9 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         return [entry for entry in json.loads(shown.stdout)["agents"]["entries"]
                 if entry["item"] == "SHOP"]
 
-    def handout():
-        result = repo.forge("read", "SHOP")
+    def handout(result=None):
+        if result is None:
+            result = repo.forge("read", "SHOP")
         assert result.returncode == 0, result.stdout + result.stderr
         handed = json.loads(result.stdout)
         assert handed["role"] == "reader"
@@ -70,7 +74,35 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert lane() == []
         return result
 
-    initial = handout()
+    # A native read waits behind another session-owned read but still emits one JSON document.
+    machine_cores(repo, 2)
+    wish = new_story(repo, "WISH")
+    (wish / "plans/WISH.md").write_text(DOC, "utf-8")
+    (wish / "forge.toml").write_text(config.read_text("utf-8"), "utf-8")
+    trusted = home / "config.toml"
+    trusted.write_text(trusted.read_text("utf-8") +
+                       f'\n[projects.{json.dumps(str(wish))}]\ntrust_level = "trusted"\n', "utf-8")
+    occupied = repo.forge("read", "WISH")
+    assert occupied.returncode == 0, occupied.stdout + occupied.stderr
+    assert json.loads(occupied.stdout)["role"] == "reader"
+    stdout, stderr = tmp_path / "queued-read.out", tmp_path / "queued-read.err"
+    with stdout.open("w", encoding="utf-8") as out, stderr.open("w", encoding="utf-8") as err:
+        queued = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "read", "SHOP"],
+                                  cwd=repo.path, stdin=subprocess.DEVNULL, stdout=out, stderr=err)
+    try:
+        _until(lambda: "in line." in stdout.read_text("utf-8") + stderr.read_text("utf-8"),
+               "native read waiting for an agent place")
+        released = repo.forge("handback", "WISH", "--text", "No findings.",
+                              "--subagent", "wish-reader")
+        assert released.returncode == 0, released.stdout + released.stderr
+        assert queued.wait(timeout=60) == 0
+        initial = handout(subprocess.CompletedProcess(queued.args, queued.returncode,
+                          stdout.read_text("utf-8"), stderr.read_text("utf-8")))
+        assert "in line." in stderr.read_text("utf-8")
+    finally:
+        if queued.poll() is None:
+            queued.kill()
+            queued.wait(timeout=10)
     assert DOC in initial["prompt"]
     held_id = lane()[0]["id"]
     duplicate = repo.forge("read", "SHOP")
@@ -193,8 +225,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         # Claude-only settings under Codex still use the external Claude kit.
         monkeypatch.delenv("CLAUDECODE")
         monkeypatch.setenv("CODEX_THREAD_ID", "different-tool-session")
-        wish = new_story(repo, "WISH")
-        (wish / "plans/WISH.md").write_text(DOC, "utf-8")
+        (wish / "plans/WISH.md").write_text(DOC + "\nSaved baskets expire after thirty days.\n", "utf-8")
         (wish / "forge.toml").write_text(config.read_text("utf-8"), "utf-8")
         external = repo.forge("read", "WISH")
         assert external.returncode == 0, external.stdout + external.stderr
