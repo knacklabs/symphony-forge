@@ -1563,6 +1563,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tLoad per core is understated when Forge has fewer available CPUs than the host\tadmit-by-load",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 57,
+      "text": "Load per core is understated when Forge has fewer available CPUs than the host",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -2186,8 +2197,19 @@
       "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
       "from": "blocking",
       "item": "test-gap-warning",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 296,
+      "text": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
@@ -2608,6 +2630,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+      "line": 9,
+      "text": "Not done: the bundled license and notice describe a word list that is absent",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+      "line": 94,
+      "text": "The installed skill's check command fails from the client repository root",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: keep gaps in legacy timing history unknown\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -2956,8 +3000,8 @@
       "text": "Not done: test that Close preserves every warning past the report cap",
       "from": "blocking",
       "item": "test-gap-warning",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the printed-text brief after upgrade\ttest-gap-warning",
@@ -3374,6 +3418,28 @@
       "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
       "from": "worker",
       "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 67,
+      "text": "Not done: the checker test cannot detect a lost semicolon rule",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 53,
+      "text": "Not done: the proof test misses required guidance and checker behavior",
+      "from": "blocking",
+      "item": "plain-english-skill",
       "status": "open",
       "closed_by": null
     },
@@ -4001,6 +4067,39 @@
       "text": "Not done: Test related-test instructions in new and previously adopted client repos",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: proof list\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 60,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: the 1.5 load-per-core boundary test\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 56,
+      "text": "Not done: the 1.5 load-per-core boundary test",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: two-process proof for previously adopted repos\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 66,
+      "text": "Not done: two-process proof for previously adopted repos",
+      "from": "blocking",
+      "item": "admit-by-load",
       "status": "open",
       "closed_by": null
     },
@@ -5343,105 +5442,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tLoad per core is understated when Forge has fewer available CPUs than the host\tadmit-by-load",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 57,
-      "text": "Load per core is understated when Forge has fewer available CPUs than the host",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 296,
-      "text": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
-      "kind": "bug",
-      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
-      "line": 9,
-      "text": "Not done: the bundled license and notice describe a word list that is absent",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
-      "kind": "bug",
-      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
-      "line": 94,
-      "text": "The installed skill's check command fails from the client repository root",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
-      "kind": "bug",
-      "path": "tests/test_fix_plain_english_skill.py",
-      "line": 67,
-      "text": "Not done: the checker test cannot detect a lost semicolon rule",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
-      "kind": "bug",
-      "path": "tests/test_fix_plain_english_skill.py",
-      "line": 53,
-      "text": "Not done: the proof test misses required guidance and checker behavior",
-      "from": "blocking",
-      "item": "plain-english-skill",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: proof list\tadmit-by-load",
-      "kind": "bug",
-      "path": "tests/test_worker_runs_wait_for_machine_load.py",
-      "line": 60,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: the 1.5 load-per-core boundary test\tadmit-by-load",
-      "kind": "bug",
-      "path": "tests/test_worker_runs_wait_for_machine_load.py",
-      "line": 56,
-      "text": "Not done: the 1.5 load-per-core boundary test",
-      "from": "blocking",
-      "item": "admit-by-load",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: two-process proof for previously adopted repos\tadmit-by-load",
-      "kind": "bug",
-      "path": "tests/test_worker_runs_wait_for_machine_load.py",
-      "line": 66,
-      "text": "Not done: two-process proof for previously adopted repos",
-      "from": "blocking",
-      "item": "admit-by-load",
       "status": "open",
       "closed_by": null
     }
