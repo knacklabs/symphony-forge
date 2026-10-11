@@ -193,7 +193,20 @@ def leave(entry: dict[str, Any]) -> None:
     """Release an entry once its command has ended."""
     with _queue() as runs:
         runs[:] = [run for run in runs if run["id"] != entry["id"] or
-                   (run["process"]["pid"] != os.getpid() and _running(run["process"]))]
+                   (not run.get("native") and run["process"]["pid"] != os.getpid()
+                    and _running(run["process"]))]
+
+
+def hold_session(entry: dict[str, Any], session: dict[str, Any]) -> None:
+    """The coordinating host holds a native place until handback, including between commands."""
+    with _queue() as runs:
+        for run in runs:
+            if run["id"] == entry["id"]:
+                run.update(native=True, session=session["id"], process=session["process"],
+                           forge=session["process"], started_at=repo.now())
+                entry.update(run)
+                return
+    raise repo.Refused("This read was stopped while waiting; it will not start.", "")
 
 
 def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
@@ -337,6 +350,8 @@ def stop(args: Any) -> int:
                     (root and run["repo_root"] == root.as_posix() and run["item"] == args.item)]
         # Validate every target before signalling any. Unknown identity never grants permission.
         for run in selected:
+            if run.get("native"):
+                raise repo.Refused("Stop this subagent in the coordinating session, then hand its result back.", "")
             process = run["process"]
             if (run.get("agent") or run["started_at"]) and ("started" not in process or codex._alive(process) is None):
                 raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")

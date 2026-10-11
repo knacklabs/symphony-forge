@@ -1,0 +1,63 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/gate-on-split-checks",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12a4c-c99a-75a3-b2ce-b711372f171f",
+    "head": "16996195de05346b1a2ea5a3e8bb9148e75d710e",
+    "start": "dd24e1ca220d6e52cdc1a235f167d09360a4c845"
+  },
+  "done_when": "The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when every group passes, for this repo and for client repos on init and after upgrade and sync",
+  "flagged": [
+    "src/forge/prcheck.py",
+    "tests/test_fix_gate_on_split_checks.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f44434f21dd637160213811c68e611605d5be0b7d43af407a11e1223e42b00f",
+    "changed": "3837eaf743c384b781f15379debd81c959daec183a5706943678b1a9ac5cc4f9",
+    "commit": "49a8282910427a52c1c669fb010b834647bfc1d3",
+    "dismissals": [],
+    "findings": [],
+    "id": "333e80bc-192a-4c5a-8405-0090698d8f1a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:31.476676+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T09:29:11.277934+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:08:38.906309+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:28:26.522930+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:35:04.663917+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:16:27.227744+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/prcheck.py",
+    "reason": "Coordinator decision (Harm 2, nothing dropped): one more round; the latest commit fixes both open findings, so the review checks it",
+    "wait_id": "9a72f9af-0940-4002-88ae-ac38eb06bde0"
+  },
+  "why": "The check that gates merging runs the whole suite as one 35-minute job; the six faster test groups run only in a workflow nothing waits on",
+  "worker": "codex"
+}
