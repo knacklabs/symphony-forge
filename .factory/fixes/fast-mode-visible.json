@@ -21,7 +21,13 @@
     "branch_diff": "cf77e9c68d25d8639a77c9ed7d317b1b325bc0bcee727b018a8ac8b7d98be7c8",
     "changed": "110be2c2f726a0e59ff30c67f1dbbf2a470b1e8aae1850c0a3806202a65f8ef7",
     "commit": "98be4135fd38c71d3109781da8f39beed1ee3abf",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's low-risk rule (risk 1): the only open finding is a missing proof-list entry, now added in the last commit",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Gate. The two proof-list entries cover the first-line notice, per-turn records, and doctor, but omit the Done-when requirement that Fast is used whenever the model offers it. The named receipt test checks expected recorded tiers at line 83; the request assertion in `tests/test_codex_fast_when_work_waits.py::test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting` is not named in the proof list. Add that proof so the Fast-use requirement is accounted for.",
@@ -32,10 +38,10 @@
       }
     ],
     "id": "e26e9201-8e4e-4629-aa65-5baf3ade1702",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T07:11:55.850092+00:00",
@@ -55,7 +61,9 @@
     }
   ],
   "stop": {
+    "choice": "accept",
     "file": "tests/test_codex_turn_speed_receipts.py",
+    "reason": "Coordinator decision under the owner's low-risk rule (risk 1): the only open finding is a missing proof-list entry, now added in the last commit",
     "round": 4,
     "wait_id": "bfe603d6-fbbb-4344-ba55-e9b6f479845f"
   },
