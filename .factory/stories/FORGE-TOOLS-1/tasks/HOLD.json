@@ -13,27 +13,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "28e0c97ce8881000b1cec9d2c6b4fdd7e0a293cd87c3dc85772f06b474055868",
-    "changed": "be77a29e915c1c0dbdecec46a8d229c8ed55e87ab66af816f9e646c1e7d7677e",
-    "commit": "a7082b0e88339bfb244c2f6be200e186c156bf3d",
+    "branch_diff": "d4bcd06ae1edc634a1ae5566d1030094aca83353f3118ad72875c853f0270b77",
+    "changed": "e74f570676c980f3bd095275eaa76d25e66f76c6a2c7b42b8b306633e2d279d0",
+    "commit": "f984c5fb0c2d50b735e92d135b3e6e540bfc9500",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Gate. The supplied latest-commit Proof list covers guide wording and skill-copy equality, but has no entry for Done-when item 4 or its command test. It omits proof of the session hold, stop, stale-round refusal, no-session refusal, and Node launch behavior exercised here.",
+        "body": "Raise: Gate. The latest worker commit's Proof list covers the corrected stop guidance and matching skill copies, but omits Done-when item 4 and its command test. It provides no proof entry for the session hold, stale-round refusal, no-session refusal, or Node launch behavior.",
         "file": "tests/test_tools_session_hold.py",
         "line": 149,
         "priority": "P1",
         "title": "Not done: proof list"
       },
       {
-        "body": "The no-session refusal at this line runs only for callers of `repo.route`. The unchanged `worker.work` path in `src/forge/worker.py:82-122` does not call it, so `forge work` can still start in a one-tool repo without a coordinating session. The separate WORK task owns that routing change.",
+        "body": "The no-session refusal here applies only to callers of `repo.route`. The unchanged `worker.work` path in `src/forge/worker.py:82-122` does not call it, so `forge work` can still start in a one-tool repo without a coordinating session. The separate WORK task owns that routing change.",
         "file": "src/forge/repo.py",
         "line": 531,
         "priority": "P2",
         "title": "Later: route forge work through repo.route in WORK"
       }
     ],
-    "id": "40b05d12-9a7a-4ea2-b051-8ca6e215d754",
+    "id": "42630bd1-e1cd-4c42-b5b8-8586ca12ec28",
     "status": "blocked"
   },
   "round": 3,
@@ -53,6 +53,10 @@
     },
     {
       "at": "2026-10-11T18:36:31.609704+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:07:39.601535+00:00",
       "step": "review"
     }
   ],
