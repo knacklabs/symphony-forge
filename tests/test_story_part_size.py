@@ -67,9 +67,11 @@ def test_1_close_stops_large_parts_unless_allowed_or_already_in_flight(env, case
 
     if case in {"401 lines", "deleted lines", "added plus removed"}:
         assert done.returncode == 1, done.stdout + done.stderr
-        assert done.stderr == (
-            'This story part changes 401 lines outside tests, over the limit of 400; '
-            'split it or record a reason with forge fix allow-large "<reason>".\n')
+        # Growing past the limit stops the part and asks the owner, like a stuck worker.
+        assert done.stderr.splitlines()[-4:-2] == [
+            "It changes 401 lines outside tests, over its limit of 400.", "The worker tried: Work."]
+        assert done.stderr.splitlines()[-1] == (
+            f'Next: forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
         assert env.review_calls() == []
         assert env.gh_calls("pr", "create") == []
         assert env.repo.git("rev-parse", "origin/task/SHOP-T1") == published

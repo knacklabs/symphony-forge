@@ -92,7 +92,7 @@ def work(args: argparse.Namespace) -> None:
         design = repo.user_facing(config, row)
     else:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
-    family = repo.worker(config, "build", design)[0]
+    family = repo.worker(config, "build", design, state.get("tool"))[0]
     on_codex = family == "codex"
     if note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
@@ -104,7 +104,7 @@ def work(args: argparse.Namespace) -> None:
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design)
-    _, chosen, why = repo.worker(config, kind.lower(), design)
+    _, chosen, why = repo.worker(config, kind.lower(), design, state.get("tool"))
     print(f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
           f"because {why}", flush=True)
     if note is not None and (pending := codex.record(top, item).get("question_id")):
@@ -147,6 +147,9 @@ def work(args: argparse.Namespace) -> None:
             fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
+        from forge import close  # close imports story, which imports this module
+
+        close.stuck_round(top, item, state, config, findings, failing)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:

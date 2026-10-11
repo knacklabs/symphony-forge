@@ -61,6 +61,13 @@ def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
     assert "earlier brief" in _text(calls)
     assert "## The fix" not in _text(calls) and "## Tests first" not in _text(calls)
 
+    # The checks pass and the finding changes, so this third round on them isn't stuck.
+    gh.respond("pr", "checks", state["branch"], stdout="[]")
+    state = json.loads(state_file.read_text(encoding="utf-8"))
+    state["review"]["findings"][0]["title"] = "Greeting too long"
+    state_file.write_text(json.dumps(state), encoding="utf-8")
+    repo.git("commit", "-qam", "New finding", cwd=fix)
+
     # Only the provider losing the conversation now requires the whole brief in a fresh chat.
     store = repo.bin / "threads.json"
     threads = json.loads(store.read_text("utf-8"))

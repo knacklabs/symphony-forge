@@ -325,7 +325,8 @@ def _three_blocked_reviews_hold_the_fourth(env):
     # Previously land exhausted its fix budget after a fourth blocked review;
     # now close's any-file hold stops that review before Autoreview runs.
     where = _fix(env, "working", worked=True)
-    env.reviews(blocked(BLOCKER))
+    # A new finding each round: the same one twice would stop the worker sooner.
+    env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2, 3)))
     done = _land(env)
     assert done.returncode == 1
     rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
@@ -377,10 +378,13 @@ def _blocked_red_blocked_red(env):
     done = _land(env)
     assert done.returncode == 1
     whats = [FINDINGS_ROUND, "the failing checks", FINDINGS_ROUND]
+    # Two rounds left the same failing check, so the third stops and asks the owner.
     assert _steps(done) == [step for n, what in enumerate(whats, 1) for step in (
         f"Closing {ITEM}.", f"Fix round {n} of 3: the worker fixes {what}.")] + [
-        f"Closing {ITEM}.", f"Stopped after 3 fix rounds: {ITEM} still has the failing checks."]
-    assert _refusal(done) == ["Checks failed on the pull request: tests.", f"Next: forge work {ITEM}"]
+        f"Stopped: {ITEM} needs you."]
+    assert "Two rounds in a row left the failing check tests." in done.stderr
+    assert _refusal(done)[-1] == (
+        f'Next: forge close {ITEM} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
 
 
 def _dismissed_before_land(env):
