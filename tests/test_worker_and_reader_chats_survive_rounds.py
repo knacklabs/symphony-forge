@@ -355,6 +355,8 @@ def _accepted_read(text):
     fields = {}
     for line in header.splitlines():
         name, _, value = line.partition(":")
+        if name in ("blocked_rounds", "loop_choice", "loop_reason") and not value.strip():
+            continue  # Older notes omit unset loop fields; sync can write their empty defaults.
         if name not in ("conversation", "session"):
             fields[name] = value
     return fields, findings
