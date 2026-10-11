@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import string
 import subprocess
@@ -249,11 +250,17 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
 
-def close_test(top: Path, base: str) -> str:
+def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
-    else its test. The pull request's tests check always runs test."""
+    else supported runner selection when CI runs test. Workers still run test."""
     cfg = repo.config(top)
     command = cfg["fast_test"] or cfg["test"]
+    if closing and command and not cfg["fast_test"] and "tests" in cfg["checks"]:
+        merge_base = repo.git("merge-base", base, "HEAD", cwd=top)
+        code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
+                f"from forge.fasttest import close_tests; sys.exit(close_tests({merge_base!r}))")
+        words = [sys.executable, "-c", code]
+        return subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 

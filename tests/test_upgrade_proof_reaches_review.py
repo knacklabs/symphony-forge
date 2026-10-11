@@ -42,6 +42,8 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
         if key in config:
             settings = settings.replace(f'{key} = {json.dumps(config[key])}',
                                         f'{key} = {json.dumps(command)}')
+    if "fast_test" not in config:
+        settings = f'fast_test = {json.dumps(command)}\n' + settings
     if "test" not in config:
         settings = f'test = {json.dumps(command)}\n' + settings
     up.on_main("forge.toml", settings, "Set the client check")
