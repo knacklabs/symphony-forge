@@ -264,6 +264,10 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
+# Close shows these fasttest lines, which a later runner's output can push out of the tail.
+GAP = "No local test names "
+
+
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
              closing: bool = True) -> tuple[int, str]:
     """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
@@ -368,7 +372,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             print(fasttest.LARGE, flush=True)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
-                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
+                        | {n for n, line in enumerate(out) if line.startswith(GAP)})
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
