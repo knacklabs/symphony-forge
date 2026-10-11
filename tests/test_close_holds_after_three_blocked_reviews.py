@@ -60,9 +60,11 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
-        env.reviews(blocked({**finding("P1", f"Raise: Round {number} defect", path),
-                             "body": "Raise: Not done. Saving at `app.py:3` drops the basket for returning "
-                                     "shoppers (a3f9c2e1b). More detail."}))
+        # The advice note counts toward what Accept dismisses.
+        env.reviews(blocked(finding("P3", "Advice only"),
+                            {**finding("P1", f"Raise: Round {number} defect", path),
+                             "body": "Raise: Not done. Saving at `app.py:3` drops the basket for "
+                                     "returning shoppers (a3f9c2e1b). More detail."}))
         result = env.close(item)
         assert result.returncode == 1, result.stdout + result.stderr
         if number < 3 or not same_file:
@@ -80,8 +82,9 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         "It still has these problems:",
         "- Round 3 defect: saving drops the basket for returning shoppers.",
         "Accept, narrow or split?",
-        "- Accept: dismiss these findings with your reason and go on to the checks; merging is "
-        "still a separate step.",
+        "- Accept: every finding in this review, the 1 listed and 1 advice notes, is dismissed "
+        "with your reason and recorded; close then goes on to the checks, and merging is still a "
+        "separate step.",
         "- Narrow: drop these cases from its Done when; they become follow-ups.",
         "- Split: move these cases into a new story or fix of their own; this one goes on without them.",
     ]

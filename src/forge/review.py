@@ -218,11 +218,16 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         title = re.search(r"^# (.+)$", text, re.M)
         name = (row.get("Name") or item) + (f" (part of {title[1].strip()})" if title else "")
         delivers = row.get("What it delivers", "")
+    result = state.get("review") or {}
     flagged = [story_.plain(finding["title"], finding.get("body", ""))
-               for _, finding in blocking(state.get("review") or {}) if isinstance(finding, dict)]
+               for _, finding in blocking(result) if isinstance(finding, dict)]
+    # Accept dismisses every finding not yet dismissed, advice included.
+    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(flagged)
     return story_.stop_question(name, delivers, flagged,
-                               "dismiss these findings with your reason and go on to the checks; "
-                               "merging is still a separate step.")
+                               f"every finding in this review, the {len(flagged)} listed and {advice} "
+                               "advice notes, is dismissed with your reason and recorded; close then "
+                               "goes on to the checks, and merging is still a separate step.")
 
 
 # --- the instructions ------------------------------------------------------------------
