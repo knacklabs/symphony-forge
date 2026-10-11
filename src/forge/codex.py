@@ -299,6 +299,16 @@ def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
     return False
 
 
+def fast_said(selection: dict[str, Any]) -> str:
+    """What a turn's recorded speed says about Fast, or "" when the turn didn't want it."""
+    if not selection.get("fast_wanted"):
+        return ""
+    if selection.get("tier", "default") != "default":
+        return "Codex Fast: on for this turn."
+    return (f"Codex Fast: wanted, but {selection['model']} doesn't offer it, so this turn runs at "
+            "normal speed.")
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
@@ -430,7 +440,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "selection" in said:
                     if ran.get("run_id"):
                         repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
-                    text = ""
+                    text = fast_said(said["selection"])
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     continued = {"continued": said["continued"],

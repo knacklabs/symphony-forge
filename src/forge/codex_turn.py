@@ -201,7 +201,8 @@ def main() -> int:
                     cursor = page.get("nextCursor")
                     if not cursor:
                         break
-                emit(selection={"model": response["model"], "effort": effort})
+                emit(selection={"model": response["model"], "effort": effort, "tier": tier,
+                                "fast_wanted": bool(request.get("fast"))})
             return response
         client._request_raw = selected_request
         resumed = None

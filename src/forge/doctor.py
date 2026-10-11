@@ -448,7 +448,14 @@ def doctor(args: argparse.Namespace) -> int:
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    print(f"- Codex Fast: {fast}; models without Fast run normally.")
+    events = repo.forge_dir(top) / "events.jsonl"
+    rows = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    last = next((row for row in reversed(rows) if "tier" in row), None)
+    said = ("" if last is None else " The last Codex turn ran with Fast."
+            if last["tier"] != "default" else
+            f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it, so it ran at "
+            "normal speed." if last.get("fast_wanted") else " The last Codex turn ran at normal speed.")
+    print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
     claude = shutil.which("claude")
     version = None
     if claude:
