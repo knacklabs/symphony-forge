@@ -11,39 +11,48 @@
   "done_when": "When a three-rounds stop gets no answer in 30 minutes, Forge records the repo's default choice (narrow to the Done-when lines and file each open finding as a follow-up fix, set once in forge.toml and on by default for new and upgraded repos), carries on, and the owner can reverse it later",
   "flagged": [
     "src/forge/close.py",
-    "src/forge/templates/skill.md"
+    "src/forge/nextstep.py",
+    "src/forge/templates/skill.md",
+    "src/forge/worker.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "38ce1337fa5da309501b72c89d889754f6df2bbd2bcffa3e8235fe1427e41e99",
-    "changed": "aabe96b14aa3bac1cd299f37d473efcb8fab0c16044e3c1c7ef7420a51aee494",
-    "commit": "377365bee57eec2d69da9130b74259c06fdd825a",
+    "branch_diff": "a90ddcecd61056aa46209dcae125a6ac17e0397bbdc240474aff1c01722a3abb",
+    "changed": "c7f5fad58ad28e6b0c19269a7f5e5ac0250f854facb5f9548cc4a3175ad0fe82",
+    "commit": "c9dd36536f52851a7392d15e6356f4fadc79a9ce",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The default is recorded only when a later command calls `check_stop`. The existing `src/forge/land.py:34` checks the stop once, and lines 65\u201366 propagate the stop refusal and end the run. If the owner stays silent and nobody reruns a command, nothing records the default or carries on at 30 minutes. `test_3` manually reruns `land` after advancing the clock, so it does not cover the unattended case.",
+        "body": "Raise: Not done. In a repo where Forge merges ready pull requests, the waiting land process can apply the default, finish the worker round, and merge before the owner returns. Merge then removes the item's worktree and branch (`src/forge/merge.py:174-184`), while `forge close --resolve` first requires that worktree (`src/forge/close.py:85-86,429-436`). The promised later reversal is therefore unavailable on this normal path. The reversal test runs only before merge.",
         "file": "src/forge/close.py",
-        "line": 412,
+        "line": 109,
         "priority": "P1",
-        "title": "Not done: The stop does not resume unattended after 30 minutes"
+        "title": "Not done: The owner cannot reverse the default after automatic merge"
       },
       {
-        "body": "Raise: Not done. This loop uses `review.blocking`, which excludes P2 and P3 findings (`src/forge/review.py:196`). At a stop with a blocking finding and an open `Follow-up:` finding, Forge starts a fix only for the blocking finding, despite the promise to file each open finding. `test_1` supplies only one P1 finding and cannot detect this gap.",
+        "body": "Raise: Not done. The new fix's `why` contains only the finding title and location; it drops the finding body, which holds the defect's evidence and impact. A finding whose title is brief and whose body contains the reproduction steps becomes a follow-up fix without those steps in its worker brief. `test_1` checks only the generated commit subject, so it cannot detect this loss.",
         "file": "src/forge/close.py",
-        "line": 379,
+        "line": 384,
         "priority": "P1",
-        "title": "Not done: Open advice findings do not get follow-up fixes"
+        "title": "Not done: Follow-up fixes omit the finding's explanation"
       },
       {
-        "body": "Raise: Not done. The new guidance tells the agent to run `forge close <item>` after 30 minutes, but lines 1215\u20131219 of the same skill say never to rerun close or land until the human's choice is recorded. The contradiction is also copied into both host skill files. An agent following the earlier instruction will keep waiting instead of triggering the default.",
-        "file": "src/forge/templates/skill.md",
-        "line": 1228,
+        "body": "Raise: Not done. The new coordinator note tells the worker to leave open findings to follow-up fixes and remove work beyond Done-when. The same generated fix-round brief still says, at `src/forge/templates/brief.md:201-205`, that a valid finding must be fixed everywhere. After a timed stop, both instructions reach the worker together, leaving the required narrowing behavior contradictory. `test_3` checks that the new note is present but does not check the complete brief.",
+        "file": "src/forge/worker.py",
+        "line": 152,
         "priority": "P1",
-        "title": "Not done: Shipped stop guidance forbids the required retry"
+        "title": "Not done: The worker receives conflicting instructions about deferred findings"
+      },
+      {
+        "body": "Raise: Functional. Once the resumed land run reaches ready with a pull request URL, `src/forge/nextstep.py:666-669` returns before this new default-choice message is built. `forge next` then shows only the merge instruction, hiding the recorded choice and its follow-up fixes on the successful path. `test_1` checks next while the item is fixing; `test_3` reaches ready but does not check next.",
+        "file": "src/forge/nextstep.py",
+        "line": 671,
+        "priority": "P1",
+        "title": "The recorded default disappears from next when the item is ready"
       }
     ],
-    "id": "1e4a54d7-7100-4f98-9307-016c02b68962",
+    "id": "66887fc0-eeff-4810-894e-8c8ba2a3082a",
     "status": "blocked"
   },
   "round": 1,
@@ -55,6 +64,10 @@
     },
     {
       "at": "2026-10-11T10:52:52.020882+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:13:54.386843+00:00",
       "step": "review"
     }
   ],
