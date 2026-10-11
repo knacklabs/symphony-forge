@@ -38,6 +38,8 @@ $delegation
   only what is committed.
 - Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
   `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- When you change text the program prints (messages, pull request text, board lines), search the
+  tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
@@ -245,6 +247,10 @@ that one round.
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never

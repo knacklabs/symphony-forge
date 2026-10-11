@@ -74,6 +74,10 @@ Give each question one line of context and a header of 12 characters or less. Us
 that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
 questions; write for the human's choice.
 
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
+
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
 `runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
@@ -1087,7 +1091,8 @@ For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own r
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
 including package-relative imports. Filenames and references to changed non-Python inputs
-do not select tests. It supports root packages and the `src/` layout, and pytest's
+do not select tests. After the run it names each changed Python file that no test names; tests
+that run the program from outside miss it locally and GitHub's checks cover it. It supports root packages and the `src/` layout, and pytest's
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
