@@ -2179,6 +2179,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 371,
+      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2934,6 +2945,17 @@
       "text": "Not done: init and upgrade plus sync local-selection test",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test that Close preserves every warning past the report cap\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 50,
+      "text": "Not done: test that Close preserves every warning past the report cap",
+      "from": "blocking",
+      "item": "test-gap-warning",
       "status": "open",
       "closed_by": null
     },
