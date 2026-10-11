@@ -76,7 +76,7 @@ questions; write for the human's choice.
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
-`runner` selects the GitHub Actions runner label for both jobs in the generated `forge.yml`;
+`runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
 it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
@@ -1061,6 +1061,10 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+The generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
+which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
+the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
+and syncing; branch protection keeps the same `tests` check.
 When the pytest selection would cover more than a third of the Python test files (shared
 test inputs select them all), close skips the local run, says so in one line, and relies on
 the pull request's required checks. `forge test` still runs its tests.
