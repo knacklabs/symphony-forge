@@ -80,8 +80,6 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
     stub = (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8")
     stub = stub.replace('THREAD, TURN = "thr-stub-1", "turn-stub-1"',
                         'THREAD, TURN = os.environ.get("STUB_THREAD", "thr-stub-1"), "turn-stub-1"')
-    stub = stub.replace('"text": "stub codex: built it with "',
-                        '"text": os.environ.get("STUB_TEXT") or "stub codex: built it with "')
     stub = stub.replace('        elif method == "turn/start":',
                         '        elif method == "turn/start":\n'
                         '            if os.environ.get("STUB_NO_TURN"):\n'
@@ -344,7 +342,7 @@ def test_7_cold_read_keeps_chats_after_writing_notes_even_when_archive_would_fai
     assert notes.is_file() and not [call for call in calls if call.get("method") == "thread/archive"]
     shop_calls = len(calls)
 
-    monkeypatch.setenv("STUB_TEXT", "No findings.")
+    monkeypatch.setenv("STUB_CODEX_TEXT", "No findings.")
     monkeypatch.setenv("STUB_THREAD", "thr-pass-read")
     passing = new_story(repo, "PASS")
     (passing / "plans" / "PASS.md").write_text(DOC, encoding="utf-8")
