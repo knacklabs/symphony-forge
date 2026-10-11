@@ -16,16 +16,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fa8840b1ea671ad13c07b9c2ece381be1cd95beb868f3c0ac5c365cfe3aa65bb",
-    "changed": "63b8437c62519a77111a877e213113f53802dfa5e97031f30b7ec9dd8c2d9117",
-    "commit": "e0f738ec48adbd7a57aeffd06aa56ea934187305",
+    "branch_diff": "db7b95fcf996c639d15260fe6029c2c14773fe1e541082da4af6990e751bbb4e",
+    "changed": "fe5865b104f6e4681be73d6b1af081b4c35099a9ecdd9f28f13b20ffc3a16dc7",
+    "commit": "d7d6455a9a70eebb23a2cf1c0ed968b6da8b8d74",
     "dismissals": [],
-    "findings": [],
-    "id": "635a83d9-e6f7-4455-b36f-5ac21b46a465",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Functional. When a previously ready, non-draft pull request gets a new commit whose local tests fail, close pushes that commit and publishes a clean review before refusing at this line. `_publish` only makes an existing pull request draft for a blocked review (`src/forge/close.py:650\u2013667`), and `forge-pr-check` checks the review but not the saved test failure (`src/forge/prcheck.py:237\u2013249`). In a supported repo whose required checks omit `tests`, the pull request can therefore be merged despite the red test. The same exposure occurs where draft pull requests are unsupported.",
+        "file": "src/forge/close.py",
+        "line": 335,
+        "priority": "P1",
+        "title": "A red local test can leave an existing pull request mergeable"
+      },
+      {
+        "body": "Raise: Functional. Close now prints only `tested` here, removing its separate print of every `No local test names` warning. The pytest picker emits one warning per uncovered changed source file (`src/forge/fasttest.py:313\u2013315`), but `review.test_run` caps its returned report at the first 50 and last 30 selected lines (`src/forge/review.py:368\u2013375`). In a realistic bulk change of 100 source modules without named tests, warnings in the middle disappear from close's output, so workers cannot see every file whose local test coverage was missed.",
+        "file": "src/forge/close.py",
+        "line": 258,
+        "priority": "P1",
+        "title": "Close drops source-file test warnings from large changes"
+      }
+    ],
+    "id": "14d04355-ca96-4837-ad4b-bf966d854220",
+    "status": "blocked"
   },
   "round": 6,
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-10T15:16:47+00:00",
@@ -74,13 +89,15 @@
     {
       "at": "2026-10-11T19:36:34.086613+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:39:58.752013+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "narrow",
     "file": "src/forge/close.py",
-    "reason": "Owner chose one more round: update the older test that expects the test result inside the review prompt to the new behaviour; no other change",
-    "wait_id": "ce713daa-cd45-4901-ba01-18ba24989529"
+    "wait_id": "174889e5-e6b5-4942-80b5-7dc4e8ceeb90"
   },
   "why": "Close waits for tests to finish before it starts the review",
   "worker": "codex"
