@@ -27,7 +27,7 @@ from test_phases import _flat
 from test_story import DOC, new_story, setup, worktree
 
 CODEX = r'''
-import json, os, pathlib, sys
+import json, os, pathlib, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 STORE, LOG = HERE / "threads.json", HERE / "codex-app-server.jsonl"
@@ -51,7 +51,8 @@ def send(**message):
 def thread(id, saved):
     return {"id": id, "cliVersion": "0.159.2", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
             "ephemeral": False, "modelProvider": "openai", "preview": "", "sessionId": "stub",
-            "source": "appServer", "status": {"type": "idle"}, "turns": []}
+            "source": "appServer", "status": {"type": "idle"}, "turns": [],
+            "gitInfo": saved.get("gitInfo")}
 
 
 def main():
@@ -75,6 +76,9 @@ def main():
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"
         saved = threads.setdefault(id, {"cwd": params.get("cwd")}) \
             if method == "thread/start" else threads.get(id)
+        if method == "thread/start":
+            saved["gitInfo"] = {"sha": subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=saved["cwd"], text=True).strip()}
         if saved is None:
             send(id=message["id"], error={"code": -32600, "message": "no rollout found for thread id " + id})
             continue
@@ -84,7 +88,8 @@ def main():
                 "approvalPolicy": "never", "approvalsReviewer": "user", "cwd": saved["cwd"],
                 "model": "stub-model", "modelProvider": "openai",
                 "sandbox": {"type": "readOnly"}, "thread": thread(id, saved)}
-                if method in ("thread/start", "thread/resume") else {})
+                if method in ("thread/start", "thread/resume") else
+                {"thread": thread(id, saved)} if method == "thread/read" else {})
             continue
         turn = f"turn-{id}-{len(_turns(threads)) + 1}"
         send(id=message["id"], result={"turn": {"id": turn, "items": [], "status": "inProgress"}})

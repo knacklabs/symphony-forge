@@ -74,6 +74,8 @@ REFUSALS = {
                    "commit or undo those changes, then forge sync"),
     "chat_owner": ("More than one worktree contains docs/specs/{item}.md, so sync cannot locate its earlier reader chat.",
                    "run forge read {item} in its owning checkout, then forge sync"),
+    "chat_origin": ("Codex has no starting commit for the earlier reader chat of docs/specs/{item}.md, so sync cannot locate its owner.",
+                    "run forge read {item} in its owning checkout, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
                   "no Codex turn here.", "forge doctor"),
@@ -268,6 +270,12 @@ def preserve_chats(top: Path) -> None:
                 if not begun:
                     lines = sync.read(path.with_suffix(".log")).splitlines()
                     begun = json.loads(lines[-1]).get("start") if lines else None
+                if not begun and binding.get("conversation"):
+                    # Earlier-release logs omit the commit; Codex captured it when the chat began.
+                    begun = run(top, item, "Grill", "", "", "read-only",
+                                binding["conversation"], read=True, echo=False).get("start")
+                    if not begun:
+                        repo.refuse(REFUSALS["chat_origin"], item=item)
                 ancestry = repo.run("git", "merge-base", "--is-ancestor", begun,
                                     repo.default_branch(top), cwd=top).returncode if begun else None
                 if (fields.get("conversation") or fields.get("session")) and ancestry == 0:
@@ -586,6 +594,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     refused, text, untrusted = said["refused"], "", said
                 elif control := next((key for key in ("read", "archived", "attached") if key in said), None):
                     result[control], text = said[control], ""
+                    if control == "read":
+                        result["start"] = said.get("start")
                 elif "attachment_failed" in said:
                     text = f"Could not attach the pull request to the Codex chat: {said['attachment_failed']}"
                 elif "project" in said:

@@ -20,14 +20,21 @@ STORY = "reuse-worker-chats"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("family,amended,failed", [
-    (family, amended, False) for family in ("codex", "claude") for amended in (True, False)
-] + [("codex", False, True)], ids=[
+@pytest.mark.parametrize("family,amended,failed,log_only,prior_read,missing_origin", [
+    (family, amended, False, False, False, False)
+    for family in ("codex", "claude") for amended in (True, False)
+] + [("codex", False, True, log_only, True, False) for log_only in (False, True)]
+  + [("codex", False, True, True, False, missing_origin)
+     for missing_origin in (False, True)], ids=[
     "codex-changed-spec", "codex-unchanged-spec", "claude-changed-spec",
     "claude-unchanged-spec", "codex-failed-unchanged-spec",
+    "codex-failed-unchanged-spec-log-only",
+    "codex-failed-first-unchanged-spec-log-only",
+    "codex-failed-first-unchanged-spec-log-only-no-origin",
 ])
 def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
-        repo, monkeypatch, tmp_path, sdk_data, adopted, family, amended, failed):
+        repo, monkeypatch, tmp_path, sdk_data, adopted, family, amended, failed, log_only,
+        prior_read, missing_origin):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted)
     started = repo.forge("fix", "start", "Publish invoice plan", "--done", "The plan is saved")
     assert started.returncode == 0, started.stdout + started.stderr
@@ -38,7 +45,7 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
     saved = repo.forge("spec", "save", "invoices", cwd=published)
     assert saved.returncode == 0, saved.stdout + saved.stderr
     reader.say("No findings.\n")
-    if failed:
+    if prior_read:
         read = repo.forge("read", "invoices", cwd=published)
         assert read.returncode == 0, read.stdout + read.stderr
         landed_chat = _reader_chat(reader)
@@ -59,23 +66,43 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
         assert saved.returncode == 0, saved.stdout + saved.stderr
     reader.say("No findings.\n")
     if failed:
-        accepted = (owner / "docs/specs/invoices.read.md").read_bytes()
-        reader.lose()
-        (repo.bin / "threads.json").write_text(
-            json.dumps({"unrelated": {"cwd": str(owner)}}), encoding="utf-8")
+        if prior_read:
+            accepted = (owner / "docs/specs/invoices.read.md").read_bytes()
+            reader.lose()
+            (repo.bin / "threads.json").write_text(
+                json.dumps({"unrelated": {"cwd": str(owner)}}), encoding="utf-8")
         reader.fail(True)
     read = _old_round(repo, tmp_path, owner, "read", "invoices", expect_success=not failed)
     first = _reader_chat(reader)
     if failed:
         assert "Codex reported the turn failed" in read.stderr
-        assert first != landed_chat
-        assert (owner / "docs/specs/invoices.read.md").read_bytes() == accepted
+        if prior_read:
+            assert first != landed_chat
+            assert (owner / "docs/specs/invoices.read.md").read_bytes() == accepted
+        else:
+            assert not (owner / "docs/specs/invoices.read.md").exists()
         reader.fail(False)
     if repo.git("diff", "--name-only", "--", "forge.toml", cwd=owner):
         repo.git("commit", "-qam", "Keep the current Forge pin", "--", "forge.toml", cwd=owner)
     repo.git("worktree", "remove", str(owner))
+    if log_only:
+        (repo.path / ".git/forge/threads/read/invoices.json").unlink()
+    if missing_origin:
+        store = repo.bin / "threads.json"
+        threads = json.loads(store.read_text("utf-8"))
+        threads[first].pop("gitInfo")
+        store.write_text(json.dumps(threads), encoding="utf-8")
 
-    upgrade, _ = _sync_elsewhere(repo, tmp_path)
+    upgrade, synced = _sync_elsewhere(repo, tmp_path, expect_success=not missing_origin)
+    if missing_origin:
+        assert synced.returncode == 1, synced.stdout + synced.stderr
+        assert synced.stderr.endswith(
+            "Codex has no starting commit for the earlier reader chat of docs/specs/invoices.md, "
+            "so sync cannot locate its owner.\n"
+            "Next: run forge read invoices in its owning checkout, then forge sync\n")
+        for ref in (branch, "fix/chat-upgrade"):
+            assert repo.git("ls-tree", "--name-only", ref, "--", "docs/specs/invoices.read.md") == ""
+        return
     assert "Invoices also show their payment date." not in (
         upgrade / "docs/specs/invoices.md").read_text("utf-8")
     shutil.rmtree(repo.path / ".git/forge")
