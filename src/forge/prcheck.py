@@ -61,7 +61,7 @@ jobs:
     runs-on: <runner>
     env:
       UV_FROZEN: '1'
-<tests-timeout>    steps:
+<containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -188,6 +188,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<tests-timeout>", "    timeout-minutes: 10\n"
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
+                .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(test))
                 .replace("<groups>", str(groups))
