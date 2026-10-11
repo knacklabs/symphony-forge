@@ -8,7 +8,7 @@ from pathlib import Path
 
 import conftest
 import pytest
-from test_setup import ROLE_FILES
+from test_setup import PLAIN_ENGLISH, ROLE_FILES
 
 STORY = "FORGE-SPLIT-1"
 
@@ -25,6 +25,8 @@ SOURCES = {
         "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
         "skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
         "skills/test-audit/SKILL.md": ".codex/skills/test-audit/SKILL.md",
+        **{f"skills/simplified-technical-english/{name}":
+           f"src/forge/templates/skills/simplified-technical-english/{name}" for name in PLAIN_ENGLISH},
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
     ".forge/review-tests.py": "src/forge/templates/review-tests.py",
