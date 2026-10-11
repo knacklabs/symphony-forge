@@ -1,5 +1,6 @@
 """Owner-facing output from Forge's pull requests, board, and next command."""
 import json
+import re
 import pytest
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401 - command-level fixture
 from test_story import setup
@@ -40,6 +41,7 @@ def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review
     env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
     assert env.close(item).returncode == (1 if blocked_review else 0)
     review = body(env.gh_calls("pr", "create")[-1]).split("<!-- forge:begin -->\n", 1)[1]
+    review = re.sub(r"<!--.*?-->", "", review, flags=re.S)
     # A clean review now opens with one count line instead of "The review found no serious problems."
     verdict = ("The review found serious problems." if blocked_review
                else "Review: clean, 0 dismissed, 0 advice.")
@@ -76,20 +78,23 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     state.parent.mkdir(parents=True)
     state.write_text(json.dumps({"branch": "fix/tidy-up", "why": "Tidy up",
                                  "status": "waiting for checks"}))
+    head = repo.git("rev-parse", "HEAD", cwd=fix)
     gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
-               "headRefName,state,title,body,mergedAt,url", stdout=json.dumps([{
+               "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url", stdout=json.dumps([{
                    "headRefName": "fix/tidy-up", "state": "OPEN", "title": "Tidy up",
+                   "headRefOid": head,
                    "url": "https://github.com/acme/shop/pull/7"}]))
     # Open checks now come from the cached GraphQL query (FORGE-MOD-1), rather than
     # the old latest-25-of-all-states request. Links and ready-to-merge remain required.
     gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
-        "pullRequests": {"nodes": [{"headRefName": "fix/tidy-up", "commits": {
-            "nodes": [{"commit": {"statusCheckRollup": {"contexts": {"nodes": [
+        "pullRequests": {"nodes": [{"headRefName": "fix/tidy-up", "headRefOid": head,
+            "title": "Tidy up", "url": "https://github.com/acme/shop/pull/7", "commits": {
+            "nodes": [{"commit": {"oid": head, "statusCheckRollup": {"contexts": {"nodes": [
                 {"__typename": "CheckRun", "databaseId": 7, "name": "tests",
                  "status": "COMPLETED", "conclusion": "SUCCESS",
                  "completedAt": "2026-09-27T10:00:00Z"}]}}}}]}}]}}}}))
-    gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
-               "headRefName,state,title,body,mergedAt,files,statusCheckRollup", exit=1,
+    gh.respond("pr", "list", "--state", "merged", "--limit", "25", "--json",
+               "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", exit=1,
                stderr="GitHub timed out on the detailed bulk request")
     out = tmp_path / "board.html"
     result = repo.forge("board", "--out", str(out))

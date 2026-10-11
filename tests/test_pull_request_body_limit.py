@@ -39,6 +39,12 @@ if args[:1] == ["pr"] and len(args) > 1 and args[1] in ("create", "edit", "merge
             sys.exit(1)
 '''
     gh.write_text(header + "\n" + boundary + source, "utf-8")
+    helper = env.queue.parent / "autoreview/scripts/autoreview"
+    header, source = helper.read_text("utf-8").split("\n", 1)
+    helper.write_text(header + '\nimport sys\n'
+                     'if len(" ".join(sys.argv).encode("utf-16-le")) // 2 >= 32767:\n'
+                     '    sys.exit("Review command exceeds the Windows command-line limit.")\n'
+                     + source, "utf-8")
 
 
 def latest_body(env):

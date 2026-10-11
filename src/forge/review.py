@@ -565,16 +565,14 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # then create the file afresh ("x" refuses anything still there).
         repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
-            page.write(string.Template(rules).substitute(standards=(
+            page.write(prompt + "\n\n" + string.Template(rules).substitute(standards=(
                 Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
         engine = cfg["tools"]
         if engine == "both":
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
-        # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
-        # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
-                "--max-priority", "P0" if light else "P3", "--prompt", prompt,
+                "--max-priority", "P0" if light else "P3",
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
         launcher = _launcher(tmp / "bin", tree, engine)
