@@ -173,6 +173,7 @@ def _made_by_forge_closes_without_a_worker(env, kind):
 
 
 def _failed_worker_stops_then_builds_again(env, monkeypatch):
+    # A failed attempt's durable chat commit must not make land skip the worker retry.
     _fix(env)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     failed = _land(env)
