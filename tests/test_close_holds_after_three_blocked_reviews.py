@@ -96,6 +96,9 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         "in these words:", *question,
         f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
     ]
+    assert (", which an earlier round flagged too, so Forge stops sending the worker back. Ask the "
+            "human to narrow the part, split it, or accept the remaining findings, in these words:\n"
+            + "\n".join(question)) in result.stderr
     assert len(env.review_calls()) == 3
     next_step = env.repo.forge("next")
     assert next_step.returncode == 0, next_step.stderr

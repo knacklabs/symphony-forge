@@ -38,7 +38,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, native, repo, task, worker
+from forge import codex, machine, native, repo, review, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -88,9 +88,6 @@ FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
-# A file path with an optional line (with the "at" or "in" before it) or a commit hash, for plain().
-PATHLIKE = re.compile(r"(?:\s(?:at|in|on|from|see))?\s*\(?(?:(?:[\w.-]+/)+[\w.-]*\.\w+|\b[\w-]+\.[A-Za-z]{1,5}"
-                      r"(?=:\d))(?::[\d,-]+)?\)?|\s*\(?\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b\)?")
 BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
@@ -1001,38 +998,6 @@ def _diff(old: str, new: str, path: str) -> str:
                                           lineterm=""))
 
 
-def plain(title: str, body: str = "") -> str:
-    """A note or finding in plain words: its title and up to two sentences of its body, without
-    markdown, labels, file paths or hashes."""
-    def sentences(text: str, keep: int) -> str:
-        text = " ".join(text.replace("**", "").replace("`", "").split())
-        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Functional|Test|"
-                      r"Security|Scale|Data loss|Later|Follow-up)\s*[.:\u2014\u2013-]+\s*)+", "", text, flags=re.I)
-        text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
-        first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
-        # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
-        if keep == 1 and rest and len(first.split()) < 5:
-            return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
-                                                 rest[0][:1].lower() + rest[0][1:])
-        return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
-    title, body = sentences(title, 1), sentences(body, 2)
-    if not body:
-        return title
-    return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
-
-
-def stop_question(name: str, delivers: str, flagged: list[str], accept: str,
-                  parts: str = "Done when") -> str:
-    """The question a stopped read or review loop asks the human, ready to ask as written."""
-    return "\n".join([f"{name}: {delivers}" if delivers else name,
-                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
-                      "Accept, narrow or split?",
-                      f"- Accept: {accept}",
-                      f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
-                      "- Split: move these cases into a new story or fix of their own; this one goes on "
-                      "without them."])
-
-
 def read_question(doc: str, notes: str) -> str:
     """A stopped cold-read loop's question: the doc's title and promise, and the latest round's
     blocking notes."""
@@ -1042,12 +1007,12 @@ def read_question(doc: str, notes: str) -> str:
     for block in _findings(findings[heading.end():] if heading else "").values():
         title, _, body = block.split(". ", 1)[1].partition("\n")
         if not ADVISORY.match(title):
-            flagged.append(plain(title, "\n".join(line for line in body.splitlines()
+            flagged.append(review.plain(title, "\n".join(line for line in body.splitlines()
                                                   if not DISPOSITION.match(line))))
     title = re.search(r"^# (.+)$", doc, re.M)
     found = sections(doc)
-    gives = plain(found.get("What changes for you") or found.get("Behaviour", ""))
-    return stop_question(title[1].strip() if title else "", gives, flagged,
+    gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
+    return review.question(title[1].strip() if title else "", gives, flagged,
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else
