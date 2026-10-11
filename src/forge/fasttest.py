@@ -264,9 +264,40 @@ def test(args) -> int:
     return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
 
 
-def pytest_tests(base: str, command: str) -> int:
+def related(base: str) -> tuple[list[str], list[str]] | None:
+    """The changed and module-related test files, and all test files; None when shared inputs changed."""
     changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
+    shared = [name for name in changed
+              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
+              or Path(name).name.endswith(".lock")
+              or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
+    if any(not manifest_test_inputs_unchanged(Path(name), base)
+           if Path(name).name == "pyproject.toml" else
+           Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
+           or not own_version_only(Path(name), base) for name in shared):
+        return None
+    tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
+                                            "--exclude-standard")
+             if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
+             and name.endswith(".py") and Path(name).is_file()]
+    modules = []
+    for name in changed:
+        path = Path(name)
+        if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
+            continue
+        parts = module_parts(path)
+        if parts[-1] == "__init__":
+            parts.pop()
+        if parts:
+            modules.append((".".join(parts), path))
+    selected = sorted(path.as_posix() for path in tests
+                      if path.as_posix() in changed
+                      or any(mentions(path, module, source) for module, source in modules))
+    return selected, [path.as_posix() for path in tests]
+
+
+def pytest_tests(base: str, command: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
@@ -277,43 +308,17 @@ def pytest_tests(base: str, command: str) -> int:
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
-    shared = [name for name in changed
-              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
-              or Path(name).name.endswith(".lock")
-              or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(not manifest_test_inputs_unchanged(Path(name), base)
-           if Path(name).name == "pyproject.toml" else
-           Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), base) for name in shared):
+    picked = related(base)
+    if picked is None:
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
-        tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
-                                                "--exclude-standard")
-                 if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
-                 and name.endswith(".py") and Path(name).is_file()]
-        modules = []
-        for name in changed:
-            path = Path(name)
-            if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
-                continue
-            parts = module_parts(path)
-            if parts[-1] == "__init__":
-                parts.pop()
-            if parts:
-                modules.append((".".join(parts), path))
-        selected = []
-        for path in tests:
-            if (path.as_posix() in changed
-                    or any(mentions(path, module, source)
-                           for module, source in modules)):
-                selected.append(path.as_posix())
-        selected.sort()
+        selected, tests = picked
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
+        excluded = [path for path in tests if path not in selected]
         print("Related tests: " + ", ".join(selected), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:

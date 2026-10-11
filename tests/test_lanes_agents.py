@@ -104,9 +104,11 @@ def finish(repo, processes):
 
 
 @pytest.mark.parametrize("cancel_between", [False, True], ids=["nudge", "stop-between"])
-def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path, person, lane_adapter, cancel_between):
+def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_line(env, tmp_path, person, lane_adapter, cancel_between):
+    # Reads and reviews wait on the model's API, not this machine's cores. They used to take
+    # agent places; now they start while one work round holds the only place.
     repo = env.repo
-    machine_cores(repo, 6)
+    machine_cores(repo, 2)
     first, first_name = make_work(repo, "First typo")
     # Windows's venv redirector can have a different pid from the Forge interpreter.
     parent_pid = tmp_path / "forge-parent-pid"
@@ -257,8 +259,8 @@ else:
         stopped = repo.forge("stop", queued[1][0])
         assert stopped.returncode == 0, stopped.stderr
         _until(lambda: "number 1 in line." in (tmp_path / "waiting-3/work.out").read_text("utf-8"), "updated position")
-        (repo.bin / f"go-{read_name}").touch()
-        assert processes[1].wait(timeout=30) == 0
+        (repo.bin / f"go-{queued[0][1]}").touch()
+        assert processes[3].wait(timeout=30) == 0
         _until(lambda: started(queued[2][1]), "the last waiting agent")
         assert not started(queued[1][1])
         assert processes[4].wait(timeout=30) != 0

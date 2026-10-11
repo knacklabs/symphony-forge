@@ -159,11 +159,13 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 ## Machine views
 
-Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
-plan reads and close reviews share a line. Waiting items that other planned work waits on go
+Forge gives agents half the available cores (at least one place), across all repos. Work rounds
+share a line. Plan reads and close reviews wait on the model's service, not this machine, so they
+start at once and take no place. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
+one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
+and takes no place. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
 and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
@@ -1132,8 +1134,9 @@ still stops for a pending question and gives open findings or failing tests a wo
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work`, `forge read` and close reviews already queue agent runs across the machine;
-close and worker tests share the separate test lane, with one place per four available cores
+`forge work` already queues work rounds across the machine, while reads and close reviews start
+at once; close and worker tests share the separate test lane, except picker runs of five or fewer
+test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 
 If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:

@@ -264,6 +264,18 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
+def few_tests(top: Path, command: str, base: str) -> bool:
+    """Forge's pytest picker narrowed to a few related test files ends in moments."""
+    if "forge test --pytest" not in command:
+        return False
+    from forge import fasttest  # fasttest imports review in forge test
+
+    with contextlib.chdir(top):
+        picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
+    # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.
+    return picked is not None and len(picked[0]) <= 5
+
+
 def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tuple[int, str]:
     """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
     branch = repo.current_branch(top)
@@ -288,7 +300,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
         if passed and passed.exists():
             print(skipped, flush=True)
             return 0, skipped
-        entry = machine.join("test", top, item, None, None)
+        entry = machine.join("test", top, item, None, None, small=few_tests(top, command, base))
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
                 print(skipped, flush=True)

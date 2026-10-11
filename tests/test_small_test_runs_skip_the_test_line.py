@@ -1,0 +1,63 @@
+"""A worker's run of a few related test files starts while another repo holds the test place."""
+import json
+import shutil
+import subprocess
+import sys
+
+import pytest
+
+from conftest import ROOT, machine_cores
+from test_close import Forge, env  # noqa: F401
+from test_fix_agent_runs_wait_in_line import _other_repo
+from test_lanes_agents import start
+from test_lanes_tests import accepted, configure, reap, release_server, shell  # noqa: F401
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
+def test_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
+                                                                 adopted):
+    server, connections = release_server
+    repo = env.repo
+    if adopted:
+        # A client adopted on an earlier release gets this on upgrade, with no setting to change.
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
+        version = repo.forge("--version").stdout.split()[-1]
+        config = (repo.path / "forge.toml").read_text("utf-8").replace('version = "v1.2.2"', f'version = "{version}"')
+        repo.write("forge.toml", "\n".join(line for line in config.splitlines() if not line.startswith("test =")) + "\n")
+    machine_cores(repo, 4)  # one test place
+    other = _other_repo(tmp_path, repo.bin)
+    holder_home = tmp_path / "holder"
+    holder_home.mkdir()
+    holder = Forge(other, env.gh, holder_home)
+    configure(holder, server)
+    _, held = holder.start_fix()
+    monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
+    repo.write("app.py", "VALUE = 1\n")
+    repo.write("pyproject.toml", '[project]\nname = "lane-client"\nversion = "0.0.0"\n')
+    repo.write("tests/test_app.py", "from app import VALUE\n"
+               "def test_current_app():\n    assert VALUE == 2\n")
+    repo.write("forge.toml", "test = " + json.dumps(shell([sys.executable, "-m", "pytest", "tests", "-q"]))
+               + '\nfast_test = "forge test --pytest {base}"\n' + (repo.path / "forge.toml").read_text("utf-8"))
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Configure a pytest client")
+    repo.git("push", "-q", "origin", "main")
+    _, folder = env.start_fix()
+    monkeypatch.setenv("PYTHONPATH", str(folder))
+    (folder / "app.py").write_text("VALUE = 2\n", "utf-8")
+    processes = []
+    try:
+        holding, output = start(held, tmp_path / "holding", repo, "test")
+        processes.append(holding)
+        accepted(server, connections, held, holding, output)
+        small, small_output = start(folder, tmp_path / "small", repo, "test")
+        processes.append(small)
+        try:
+            status = small.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            status = None
+        said = small_output.read_text("utf-8")
+        assert status == 0, said
+        assert "in line" not in said and "1 passed" in said
+        assert holding.poll() is None
+    finally:
+        reap(processes, server, connections)
