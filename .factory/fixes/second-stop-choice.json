@@ -1,0 +1,48 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/second-stop-choice",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a129af-3a90-7bf0-9274-85204e12f329",
+    "head": "c7f07f250fa76748a80070eb9a30bd5579035b4e",
+    "start": "bf12657d9992e4f9163b206aadeddfaac0886ca2"
+  },
+  "done_when": "When a review loop stops again after an earlier recorded choice, forge close --resolve narrow, split or accept records the new choice and the board and forge next show the item waiting on that choice until it is made",
+  "flagged": [
+    "src/forge/close.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "34c44e29e385f9f7675e72410f40ebea5efa6517e6c6102fe82fb2aea7b4677c",
+    "changed": "6625ac01509c583a7c6540eca7492d1b22d431f4fef410d395e3d9ea9d3c85bc",
+    "commit": "846ce23f4c366294f1c7d0dc312452c3253ac355",
+    "dismissals": [],
+    "findings": [],
+    "id": "d8556a73-cbf7-4038-bcca-6e633aedf938",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T06:38:17.441218+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T07:46:03.249073+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T12:55:49.057941+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:21:49.625518+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "After the owner records a choice on a stopped review loop, the next stop three rounds later refuses a new choice, so the owner's decision can't be recorded",
+  "worker": "codex"
+}
