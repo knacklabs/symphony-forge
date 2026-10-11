@@ -386,6 +386,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/_pytest_repair.py\tNot done: subdirectory pytest commands rerun the full suite\trepairs-rerun-failures",
+      "kind": "bug",
+      "path": "src/forge/_pytest_repair.py",
+      "line": 18,
+      "text": "Not done: subdirectory pytest commands rerun the full suite",
+      "from": "blocking",
+      "item": "repairs-rerun-failures",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -936,6 +947,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tFull board scan delays every ordinary first Codex work turn\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 270,
+      "text": "Full board scan delays every ordinary first Codex work turn",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -945,6 +967,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 264,
+      "text": "Not done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
@@ -2300,6 +2333,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_chatview_start.py",
+      "line": 57,
+      "text": "Not done: move the remaining Codex-worker tests to claude_session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "tests/test_ci_job_budgets.py",
@@ -2340,6 +2384,17 @@
       "text": "Not done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale",
       "from": "blocking",
       "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_reruns_failed_tests_first.py\tNot done: test independent pytest invocations across repair rounds\trepairs-rerun-failures",
+      "kind": "bug",
+      "path": "tests/test_close_reruns_failed_tests_first.py",
+      "line": 178,
+      "text": "Not done: test independent pytest invocations across repair rounds",
+      "from": "blocking",
+      "item": "repairs-rerun-failures",
       "status": "open",
       "closed_by": null
     },
@@ -2406,6 +2461,17 @@
       "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "from": "worker",
       "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_fast_when_work_waits.py\tNot done: first-round fix Fast coverage\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "tests/test_codex_fast_when_work_waits.py",
+      "line": 43,
+      "text": "Not done: first-round fix Fast coverage",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
       "status": "open",
       "closed_by": null
     },
@@ -2608,6 +2674,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tStandard: Tests own and clean up every process they start\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 23,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tThe full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "The full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tWindows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
       "kind": "bug",
       "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
@@ -2615,6 +2703,17 @@
       "text": "Windows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
       "from": "worker",
       "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tNot done: keep mixed worker tests on their intended routes\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+      "line": 37,
+      "text": "Not done: keep mixed worker tests on their intended routes",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
       "status": "open",
       "closed_by": null
     },
@@ -4511,6 +4610,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 79,
+      "text": "The checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
+      "from": "worker",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -4551,94 +4661,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tFull board scan delays every ordinary first Codex work turn\tcodex-fast-when-needed",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 270,
-      "text": "Full board scan delays every ordinary first Codex work turn",
-      "from": "blocking",
-      "item": "codex-fast-when-needed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for\tcodex-fast-when-needed",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 264,
-      "text": "Not done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for",
-      "from": "blocking",
-      "item": "codex-fast-when-needed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_fast_when_work_waits.py\tNot done: first-round fix Fast coverage\tcodex-fast-when-needed",
-      "kind": "bug",
-      "path": "tests/test_codex_fast_when_work_waits.py",
-      "line": 43,
-      "text": "Not done: first-round fix Fast coverage",
-      "from": "blocking",
-      "item": "codex-fast-when-needed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.codex/skills/forge/SKILL.md\tThe checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
-      "kind": "improve",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 79,
-      "text": "The checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
-      "from": "worker",
-      "item": "codex-fast-when-needed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
-      "kind": "bug",
-      "path": "tests/test_chatview_start.py",
-      "line": 57,
-      "text": "Not done: move the remaining Codex-worker tests to claude_session",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SWITCH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tStandard: Tests own and clean up every process they start\tFORGE-TOOLS-1/SWITCH",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 23,
-      "text": "Standard: Tests own and clean up every process they start",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SWITCH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tThe full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 101,
-      "text": "The full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
-      "from": "worker",
-      "item": "FORGE-TOOLS-1/SWITCH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tNot done: keep mixed worker tests on their intended routes\tFORGE-TOOLS-1/SWITCH",
-      "kind": "bug",
-      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
-      "line": 37,
-      "text": "Not done: keep mixed worker tests on their intended routes",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SWITCH",
       "status": "open",
       "closed_by": null
     }
