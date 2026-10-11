@@ -1,59 +1,169 @@
 # A story's parts build on each other instead of clashing through main
 
-<n> parts · Risks: ... · New moving parts: ...
+3 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
+- A part that waits on another unmerged part, because the plan puts it after that part or because
+  both change the same files, no longer waits for that part to merge. As soon as that part's review
+  passes, the next part starts on top of it, with its code already in place.
+- Its pull request shows only its own changes, and its review and size limit cover only those.
+  It is never merged before the part beneath it.
+- When the part beneath merges, whether Forge merges it or a person does on GitHub, Forge points
+  the next pull request at the main branch, moves its own changes on top of the merged code, tests
+  it and merges it as usual. You resolve a conflict only when its own changes clash with what
+  merged.
+- The board and `forge next` show a stacked part as building on the part beneath it, and once it is
+  built, as waiting for that part to merge.
+- When a part can't start yet, Forge says which part it waits for and what to run next.
+- One line in `forge.toml` turns this off, and parts then wait for merges as they do today.
 
 ## Why
 
-A story's parts build on each other instead of clashing through main
+A part that comes after another part starts from the main branch only once the earlier part has
+merged, so a chain of parts runs strictly one after another: a recent board story's longest chain
+was seven parts at two to three hours each. Parts that don't wait on each other but change the same
+code each start from main and then clash with each other through main as they merge: one part of
+the recent tools story went through four conflict re-closes and took 17.9 hours from start to merge
+for about three hours of work. Over the last few days a finish with a conflict took a median of 92
+minutes against 35 without. Today's workaround is waiting, or resolving the same clash again after
+every merge.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
+1. **A part that waits on unmerged work, because it comes after another part or changes the same files, starts on top of that work as soon as that work's review passes, instead of waiting for it to merge.**
+2. **When a part can't start yet, Forge says which part it waits for and what to run next, also when the parts it waits on don't build on each other or one of them hasn't passed review.**
+3. **While the part beneath is unmerged, a stacked part's pull request, review and size limit cover only its own changes, and it is never merged before the part beneath it.**
+4. **When the part beneath merges, by Forge or by a person on GitHub, the stacked part's pull request moves to the main branch, its own changes move on top of the merged code, and it is tested and merged as usual.**
+5. **The board and Forge's next-step summary show a stacked part as building on the part beneath it, and once built, as waiting for that part to merge.**
+6. **One setting turns stacking off, and parts then wait for merges as they do today.**
 
-1. **Something anyone can observe once this is done.**
+## New and existing repos
+
+- **New repos** (init or adoption): stacking is on; `forge init` writes no line for it. The guide's
+  paragraphs arrive with `forge sync` as usual.
+- **Existing repos**: after moving to this release, stacking is on without any change to
+  `forge.toml`. Parts started before the upgrade keep their base and finish as today. Turning it
+  off needs the new release first, because an older Forge refuses the new setting. Tested on a
+  repo adopted on an earlier release and upgraded: a part after a reviewed part starts on top of
+  it, and with the setting off it waits as before.
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
-
-Risks: none
+Risks: none one-way. Turning the setting off brings back today's waiting for new starts; parts
+already started on top of another part finish that way. A stacked part's tests run on the main
+branch only after the part beneath merges, so a clash with code that merged meanwhile shows up
+then, as it does today for a follow-up fix.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Stacked parts reuse what stacked follow-up fixes already do: `task.fix_start` records `stacked_on`
+(the item beneath) and `base` (the start commit); `githooks.fix_base` counts only the item's own
+changes while `stacked_on` is unmerged; `close._merge_default` replays only the item's own commits
+onto the default branch once `stacked_on` merges, with a lease. This story drops the `kind ==
+"fix"` gate there and gives parts the same two fields, so fixes and parts share one path. What
+parts add: the start rule, a pull request that targets the base's branch, the retarget, and the
+status lines.
+
+**The start rule** (`task.stack_base`, pinned by START, called by `forge task start` and `forge
+next` so they never disagree). Blockers are today's: the part's unmerged After parts plus started,
+unmerged parts whose Scope overlaps (`waits_for` with `_started`). With `stack = "off"` or no
+blockers, today's behaviour. Otherwise the part stacks on the blocker whose `stacked_on` chain
+(read from each branch's pushed state) holds every other blocker, when that top blocker is started
+and its pushed state's `review.status` is `clean`. Its base is `origin/task/<KEY>-<TASK>` of that
+blocker; the overlap check skips the blocker and its chain. Any other case refuses (item 2). One
+rule for same-story and other-story blockers.
+
+Every new test file starts with `STORY = "FORGE-STACK-1"`, has one `test_<n>_...` per Done-when
+item it covers, runs the forge command (never imports forge), and runs on a new repo and on the
+previously adopted release fixture upgraded (the `previous` parametrisation the stacked-fix tests
+use).
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
-
-1. <Evidence, edge cases and the tests that prove item 1.>
+1. `forge task start` on a stackable part branches from the top blocker's remote branch, carries
+   the story doc as today when it differs, writes `stacked_on` and `base` into the part's state,
+   and prints `Started <item> on top of <base item> on <branch> in <path>`. Test: A's close
+   records a clean review (stub review); B After A starts and A's head is an ancestor of B; C with
+   no After whose Scope overlaps A starts on A too; D After B and A, with B stacked on A and
+   reviewed, starts on B.
+2. Refusals in `task.REFUSALS`, each before any branch or commit:
+   `"base_not_started": ("{item} builds on {base}, which hasn't started yet.", "forge task start {base}")`,
+   `"base_not_built": ("{item} builds on {base}, whose review hasn't passed yet.", "forge close {base}")`,
+   `"two_bases": ("{item} waits for {deps}, which don't build on each other, so it starts once all but one of them merge.", "forge next")`.
+   Test: each case refuses with its line, and no branch, worktree or remote branch is created.
+3. `close` uses the part's own changes while `stacked_on` is unmerged: the size limit and the review
+   base from the recorded `base` (as `fix_base`; `review.run` fetches a ref under `refs/remotes/`,
+   so point a local one at it), the pull request opened with `--base` the base part's branch, no
+   default-branch merge, no CI wait and no ready receipt; it ends with `Reviewed <item>; it is
+   tested and merges after <base item> merges.` and `Next: forge next`. `forge merge` refuses with
+   `"stacked": ("{item} builds on {base}, which hasn't merged yet.", "forge merge {base}")`.
+   `forge hook pr-check` fails a stacked part's pull request while its base is unmerged with
+   `<item> builds on <base item>; Forge checks its pull request once it targets <default>.` It
+   fails rather than passes so a pass can never carry over to the default branch; the replay's
+   push reruns it. `forge land` stops at the close line. Test: parent with 300 changed lines and
+   child with 200 under a 400 limit closes; the stub `gh` sees the base part's branch as `--base`;
+   the review stub's base excludes the parent's files; no checks are awaited; `forge merge` and
+   pr-check refuse with their lines; in a chain of three, after the first merges and the second
+   replays, the third still counts only its own lines.
+4. `forge merge` of a part, after GitHub reports it merged and before deleting its remote branch,
+   points every open pull request based on that branch at the default branch (`gh pr list --base
+   <branch> --state open`, then `gh pr edit <n> --base <default>`) and prints `Next: forge close
+   <item>` for each. A failed retarget refuses before deleting:
+   `"retarget": ("Forge could not point {other}'s pull request at {default}, so it kept {item}'s branch.", "check that pull request, then forge merge {item}")`.
+   `close` of a stacked part whose base has merged retargets its own pull request when it still
+   targets the base's branch (a person merged on GitHub and kept the branch), replays as follow-up
+   fixes do, reuses a clean review whose own diff is unchanged, then waits for checks and records
+   ready as usual. Test: after `forge merge` of A (stub `gh`), the retarget call comes before the
+   branch delete; `forge close B` then replays B onto the squashed default branch, B's head no
+   longer holds A's original commits, and `forge merge B` merges; with A merged on GitHub and its
+   branch kept, `forge close B` retargets itself; a clash in B's own changes stops with the
+   existing replay refusal.
+5. `forge next` lists a stackable part with `Next: forge task start <item>  # <worker> builds it on
+   top of <base item>`; a started stacked part's line says `<item> is building on <base item>.`,
+   and once its review is clean and the base is unmerged, `<item> is built and waits for <base
+   item> to merge.` with the base's next step; after the base merges, `Next: forge close <item>`.
+   The board's part status for the last two cases reads `Building on <base name>` and `Waiting for
+   <base name> to merge`, by part name, in whichever module derives part status when SHOW starts
+   (board.py today). Test: these lines in order across one A-then-B run, and `forge board --json`
+   shows both statuses.
+6. `repo.KEYS["stack"] = str`, `DEFAULTS["stack"] = "on"`, `CHOICES["stack"] = ("on", "off")`. With
+   `off`, start and `forge next` behave as today. Test: `stack = "off"` refuses B with today's
+   waiting line; `stack = "maybe"` refuses as `stack must be one of on, off`; the upgraded
+   fixture has no line and stacks.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
+Each part adds its own paragraph to `src/forge/templates/skill.md` (the story-planning section
+next to the After rules) and regenerates `.claude/skills/forge/` and `.codex/skills/forge/` with
+`forge sync`; those are left out of Scope. The worker brief doesn't change: workers build in their
+checkout as before.
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| START | Parts start on top of reviewed work | The `stack` setting, `task.stack_base` with the start rule, stacked starts with `stacked_on` and `base`, the three refusals, `forge next` listing stackable parts as able to start, the settings paragraph in docs/guide.md | 1, 2, 6 | src/forge/repo.py, src/forge/task.py, src/forge/nextstep.py, docs/guide.md | tests/test_stack_start.py | | no | |
+| CLOSE | Stacked parts close, move to main and merge | Own-change size, review and pull request while the base is unmerged, the merge and pr-check refusals, land stopping, the retarget in merge and close, the replay gate opened to parts | 3, 4 | src/forge/close.py, src/forge/merge.py, src/forge/githooks.py, src/forge/prcheck.py, src/forge/land.py | tests/test_stack_close.py | START | no | |
+| SHOW | Next and the board show stacked parts | The building-on and waiting-for-base lines in `forge next`, the close step after the base merges, the board's two statuses | 5 | src/forge/nextstep.py, src/forge/board.py, src/forge/board_facts.py | tests/test_stack_status.py | START | no | |
 
 New moving parts: none
 
 ## Notes
+
+- Owner direction (2026-10-11): cut time-to-merge for this repo and client repos by letting a
+  story's parts build on each other instead of clashing through main; stacking can be turned off.
+- Runs after FORGE-MAINONCE-1 ("Pull requests take in main only on a real clash"), which changes
+  how close takes in main in the same function CLOSE changes. Its plan doesn't name its parts yet;
+  once it does, add its part that changes close's main merge to CLOSE's After as
+  `FORGE-MAINONCE-1/<TASK>`. START and SHOW don't touch close and need no such wait.
+- CLOSE and SHOW run side by side after START (no shared file). SHOW overlaps the board story's
+  board work; the overlap guard holds it until those parts merge, and its status line goes in
+  whichever module then derives part status.
+- In a chain of three or more, after the bottom part merges and the middle part is replayed, the
+  top part's pull request on GitHub shows the older history in its diff until the middle part
+  merges; its review, size limit and checks still count only its own changes.
+- Forge shrinks: no new command or module; stacked fixes and stacked parts share one replay path
+  (the fix-only gate goes), and conflict re-closes through main drop for parts that stack.
+- No client repo is named anywhere in this story's code, tests, texts or commits.
