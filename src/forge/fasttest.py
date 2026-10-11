@@ -276,7 +276,7 @@ def pytest_tests(base: str, command: str) -> int:
     workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
-    excluded = []
+    excluded, gaps = [], ""
     shared = [name for name in changed
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
@@ -309,8 +309,12 @@ def pytest_tests(base: str, command: str) -> int:
                            for module, source in modules)):
                 selected.append(path.as_posix())
         selected.sort()
+        # Tests that run the program from outside never name its files, so say what local runs miss.
+        gaps = "".join(f"No local test names {source.as_posix()}; GitHub's checks will cover it.\n"
+                       for module, source in modules
+                       if not any(mentions(path, module, source) for path in tests))
         if not selected:
-            print("No changed or module-related test files to run.")
+            print("No changed or module-related test files to run.\n" + gaps, end="")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
@@ -324,5 +328,7 @@ def pytest_tests(base: str, command: str) -> int:
                                  + json.dumps(excluded) + "\n", "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        return subprocess.run(narrow_command(command, excluded, workers), shell=True,
-                              env=environment).returncode
+        status = subprocess.run(narrow_command(command, excluded, workers), shell=True,
+                                env=environment).returncode
+    print(gaps, end="", flush=True)
+    return status
