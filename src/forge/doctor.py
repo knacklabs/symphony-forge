@@ -428,6 +428,10 @@ def doctor(args: argparse.Namespace) -> int:
                     add(f"{skill} is required for UI work but isn't installed where the " f"{host} worker reads skills.", INSTALL[skill])
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
+    if local := cfg.get("local"):
+        print(f"- Note: from {repo.LOCAL}: " + ", ".join(
+            [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
+            + [f"models.{kind}" for kind in local.get("models", {})]) + "; the rest from forge.toml.")
     if "review" in cfg.get("models", {}):
         print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")

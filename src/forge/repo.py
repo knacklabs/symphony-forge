@@ -37,6 +37,10 @@ REFUSALS = {
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
+    "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
+    "local_key": ("forge.local.toml can't set {key}: it holds only tools, workers and [models] tables, "
+                  "so settings the team shares stay in forge.toml.",
+                  "move {key} to forge.toml in a fix, or take it out of forge.local.toml"),
     "pin": (
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
@@ -409,9 +413,33 @@ def config(top: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
         refuse(REFUSALS["no_config"])
     try:
-        return _config_text(path.read_text(encoding="utf-8"))
+        return _config_text(path.read_text(encoding="utf-8"), path.parent)
     except UnicodeDecodeError as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+
+
+LOCAL = "forge.local.toml"
+
+
+def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
+    """forge.toml's settings with this clone's forge.local.toml laid over them. The file sits in the
+    main checkout, so every worktree of the clone shares it, and sets only tools, workers and
+    [models] kinds. "local" holds what it set; "shared" is forge.toml alone, for committed files."""
+    path = _common_path(top).parent / LOCAL
+    if not path.is_file():
+        return cfg
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
+        refuse(REFUSALS["bad_local"], problem=exc)
+    for key in data:
+        if key not in ("tools", "workers", "models"):
+            refuse(REFUSALS["local_key"], key=key)
+    problem = (_config_problem({"version": cfg["version"], **{k: v for k, v in data.items() if k != "models"}})
+               or _models_problem(data.get("models", {})))
+    if problem:
+        refuse(REFUSALS["bad_local"], problem=problem)
+    return {**cfg, **data, "models": {**cfg["models"], **data.get("models", {})}, "local": data, "shared": cfg}
 
 
 def default_config(top: Path) -> dict[str, Any]:
@@ -455,7 +483,8 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
                    for text in texts if text.startswith("---"))
 
 
-def _config_text(text: str) -> dict[str, Any]:
+def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
+    """forge.toml's text, checked; given its checkout, with that clone's forge.local.toml over it."""
     try:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
@@ -466,7 +495,7 @@ def _config_text(text: str) -> dict[str, Any]:
     problem = _models_problem(data.get("models", {}))
     if problem:
         refuse(REFUSALS["models"], problem=problem)
-    return {**DEFAULTS, **data}
+    return _with_local({**DEFAULTS, **data}, top) if top else {**DEFAULTS, **data}
 
 
 def ready_path(item: str, top: Path) -> Path:
@@ -507,10 +536,11 @@ def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str,
     family = (cfg["tools"] if cfg["tools"] != "both" else
               cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
-    why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
+    local = {key: f" in {LOCAL}" if key in cfg.get("local", {}) else "" for key in ("tools", "workers")}
+    why = (f"tools = {family}{local['tools']}" + (", with the design model as it is user-facing" if design else "")
            if cfg["tools"] != "both" else
-           ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
-           if cfg["workers"] == "split" else f"workers = {family}"
+           ("it is user-facing" if design else "it isn't user-facing") + f" (workers = split{local['workers']})"
+           if cfg["workers"] == "split" else f"workers = {family}{local['workers']}"
            + (", with the design model as it is user-facing" if design else ""))
     return family, chosen, why
 
