@@ -12,46 +12,47 @@
   "flagged": [
     "src/forge/nextstep.py",
     "src/forge/story.py",
+    "tests/test_close_holds_after_three_blocked_reviews.py",
     "tests/test_reads_wait_for_a_loop_choice.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98243f5b476294028c7d75caa361ac7a7cf1ffd85e0492bded6910351b6d9b90",
-    "changed": "83ca8782a9784f50eb1db2510b02096f0562f4216251a73432701b47c4afeb99",
-    "commit": "ad91f526ae0fa0358de2221ee02cdb047adf86f0",
+    "branch_diff": "9d63b28ade6e16fe38246b61782f4b077dc33821987d33fd411ebd802a8d4828",
+    "changed": "600355341d275656d05189976bb026ee5bb880150e8e34d2c468167a8680d155",
+    "commit": "aea9d74584a371a51ae1f82c1c0210e069ea3353",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. `read_question` takes the delivery summary only from `What changes for you`, but specs use sections such as `Behaviour`. The named spec test accepts a question containing only \u201cInvoices by email,\u201d even though the spec says each invoice is emailed as a PDF. A stopped spec therefore does not tell the owner what it delivers.",
-        "file": "src/forge/story.py",
-        "line": 990,
-        "priority": "P1",
-        "title": "Not done: stopped specs omit what they deliver"
-      },
-      {
-        "body": "Raise: Not done. The new `forge next` question path is inside `_next_round`, which handles story plans; `forge next` has no corresponding path for a stopped spec. Land's own three-fix-round stop also prints a question without recording `state.stop` (`src/forge/land.py:67-72`), while `forge next` repeats review questions only when that field exists (`src/forge/nextstep.py:618`). After either stop, the owner cannot retrieve the promised question with `forge next`.",
+        "body": "Raise: Not done. `forge spec save` accepts story branches (`src/forge/records.py:364-375`), but this new `forge next` scan runs only for fix and forge worktrees. A spec stopped while being planned on a story branch has no question in `forge next`, so the owner cannot retrieve the question that `forge read` printed.",
         "file": "src/forge/nextstep.py",
-        "line": 549,
+        "line": 214,
         "priority": "P1",
-        "title": "Not done: forge next does not repeat every stopped question"
+        "title": "Not done: stopped specs on story branches disappear from forge next"
       },
       {
-        "body": "Raise: Not done. The shared question says Accept will \u201capprove it\u201d for a cold read or \u201cmerge it\u201d for a review. `forge read --resolve accept` records the choice and marks the read accepted; story approval or spec confirmation is separate. `forge close --resolve accept` accepts the findings and continues through checks; it does not merge the pull request. These ready-to-ask words give the owner an incorrect account of what accepting does.",
+        "body": "Raise: Not done. The first-sentence cut discards the useful text after a short lead-in. For example, the existing spec at `docs/specs/agent-merge.md:22` starts its Behaviour with `**The owner's setting.**`; its question says only \u201cThe owner's setting\u201d for what it delivers. A review body in the required form `Raise: Not done. <impact>` becomes only \u201cnot done\u201d after this function strips `Raise:`. Both leave out context the owner needs to choose.",
         "file": "src/forge/story.py",
-        "line": 972,
+        "line": 960,
         "priority": "P1",
-        "title": "Not done: the accept choice describes an action it does not perform"
+        "title": "Not done: stopped questions can omit the delivery or who is affected"
       },
       {
-        "body": "Raise: Gate. The proof list claims `forge next` coverage for stopped reads including specs, but this test calls `forge next` only when `target == \"SHOP\"`; the spec case never checks it. The land three-round proof checks only the question printed by `forge land`, with no `forge next` assertion. The listed proof therefore does not cover those Done-when cases.",
-        "file": "tests/test_reads_wait_for_a_loop_choice.py",
-        "line": 77,
+        "body": "Raise: Not done. The shared question tells the owner that Narrow drops cases from the item's \u201cDone when.\u201d Specs instead have Behaviour and Acceptance criteria (`src/forge/records.py:86`). When a spec read stops, this is not a concrete description of what narrowing that spec would do.",
+        "file": "src/forge/story.py",
+        "line": 973,
+        "priority": "P1",
+        "title": "Not done: the narrow choice names a section specs do not have"
+      },
+      {
+        "body": "Raise: Gate. The named proofs do not cover these Done-when details. The close test supplies a body that already starts with an impact sentence, so it passes while a required-form `Raise: Not done. <impact>` body loses that impact. The read test uses a spec with a full-sentence Behaviour and creates specs only in fix worktrees; its `forge next` assertion never exercises a spec stopped on a supported story branch. It also asserts the invalid \u201cDone when\u201d wording for specs. The listed tests can pass with the question defects above.",
+        "file": "tests/test_close_holds_after_three_blocked_reviews.py",
+        "line": 64,
         "priority": "P1",
         "title": "Not done: proof list"
       }
     ],
-    "id": "c5acc3ba-6220-4b73-8c42-118257fb3cc3",
+    "id": "658dfb16-001c-4af0-b70c-099090188814",
     "status": "blocked"
   },
   "round": 1,
@@ -63,6 +64,10 @@
     },
     {
       "at": "2026-10-11T13:03:06.972700+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:35:25.513987+00:00",
       "step": "review"
     }
   ],

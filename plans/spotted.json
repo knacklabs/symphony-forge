@@ -1992,6 +1992,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: stopped specs on story branches disappear from forge next\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 214,
+      "text": "Not done: stopped specs on story branches disappear from forge next",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tPublished story state can hide locally recorded question touches in the context hook.",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2311,6 +2322,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can omit the delivery or who is affected\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 960,
+      "text": "Not done: stopped questions can omit the delivery or who is affected",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: stopped specs omit what they deliver\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2327,6 +2349,17 @@
       "path": "src/forge/story.py",
       "line": 972,
       "text": "Not done: the accept choice describes an action it does not perform",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: the narrow choice names a section specs do not have\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 973,
+      "text": "Not done: the narrow choice names a section specs do not have",
       "from": "blocking",
       "item": "stop-question-plain",
       "status": "open",
@@ -2828,6 +2861,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_holds_after_three_blocked_reviews.py\tNot done: proof list\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_close_holds_after_three_blocked_reviews.py",
+      "line": 64,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
       "kind": "bug",
       "path": "tests/test_close_keeps_full_tests_in_ci.py",
@@ -2879,6 +2923,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     },
@@ -4225,6 +4280,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5156,28 +5222,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     }
