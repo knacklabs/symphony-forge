@@ -9,34 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "26a98d911d8a081ebe8becbf8ec68c825094ce173c006a8b446aea4820034c92",
-    "changed": "4df9b2f8abd2eb8ca62b4c6f5ea1b2b4c4ad56888b1d9f2fa642a43739a6741e",
-    "commit": "9ba3988e299051853fe96517dcf6d42ceee08d85",
+    "branch_diff": "90bcc618afa5ef89cd4b3315a045785df4bacc0d76a686269f479bffeb6a005f",
+    "changed": "685d435afc3e27e530972a6678d1c9187eb9c81cd17d14541d536749a50ee285",
+    "commit": "2665bc04ee85f877763b37874743d7526a5d9bd3",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. In a repo whose test command runs pytest followed by Jest, this warning is printed after the Python portion, before Jest. Close's report retains only the last 30 output lines (`src/forge/review.py:358-364`), so ordinary Jest output can remove every warning. The report then fails to name Python files missed by local tests or say GitHub's checks will cover them.",
+        "body": "Raise: Not done. Close still omits the notice on normal paths. With six test files, changing three selected tests and an unmentioned source file makes `fasttest.py:328-330` return before printing the computed `gaps`. A changed shared test input takes `fasttest.py:298-300`, where `gaps` is never computed. The report can also lose notices: with 51 skip-related lines, two gap lines, and 40 lines from a later runner, `review.py:369-374` truncates both gap lines, leaving `close.py:216-217` nothing to print. The named close test covers only a small, non-skipped report and passes in these cases.",
         "file": "src/forge/fasttest.py",
-        "line": 333,
+        "line": 320,
         "priority": "P1",
-        "title": "Not done: Close loses source-file warnings after another test runner"
-      },
-      {
-        "body": "Raise: Test. The named proof calls `forge test --pytest` directly and checks only one unmentioned source file. It never exercises `forge close` or its bounded report, so it passes when Close loses the warnings. With only one unmentioned file, it also cannot catch an implementation that reports just one file instead of each file.",
-        "file": "tests/test_close_names_untested_source_files.py",
-        "line": 30,
-        "priority": "P1",
-        "title": "Not done: test the source-file warning through forge close"
-      },
-      {
-        "body": "Raise: Test. The prior-adoption case uses a fixture that runs the current `forge sync` (`tests/test_workers_leave_settings_to_coordinator.py:22-39`), then checks a `forge work` brief. It does not upgrade that earlier-adopted repo to the new release and check the new instruction afterward. The claimed proof therefore misses the required existing-client upgrade path.",
-        "file": "tests/test_close_names_untested_source_files.py",
-        "line": 39,
-        "priority": "P1",
-        "title": "Not done: test the printed-text brief after upgrade"
+        "title": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it"
       }
     ],
-    "id": "4b59429e-0206-4c02-80fd-9154af4e212f",
+    "id": "9a688e33-6b65-4478-b28c-295b9027f10a",
     "status": "blocked"
   },
   "status": "fixing",
@@ -47,6 +33,10 @@
     },
     {
       "at": "2026-10-11T15:04:38.865339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:54:08.600337+00:00",
       "step": "review"
     }
   ],
