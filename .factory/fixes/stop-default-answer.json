@@ -18,45 +18,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a90ddcecd61056aa46209dcae125a6ac17e0397bbdc240474aff1c01722a3abb",
-    "changed": "c7f5fad58ad28e6b0c19269a7f5e5ac0250f854facb5f9548cc4a3175ad0fe82",
-    "commit": "c9dd36536f52851a7392d15e6356f4fadc79a9ce",
+    "branch_diff": "8454a3f91d66d74a60dcffc4ce66ee7b2dbbd8a5e0e9c7fce598af976a68f7df",
+    "changed": "013f3cf6a329208b01149f45b091e032d7e9fd8607300d878320b21fc5e0961c",
+    "commit": "ca4854bfbec9cf32d9ddcf93c477e36b742d851e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. In a repo where Forge merges ready pull requests, the waiting land process can apply the default, finish the worker round, and merge before the owner returns. Merge then removes the item's worktree and branch (`src/forge/merge.py:174-184`), while `forge close --resolve` first requires that worktree (`src/forge/close.py:85-86,429-436`). The promised later reversal is therefore unavailable on this normal path. The reversal test runs only before merge.",
-        "file": "src/forge/close.py",
-        "line": 109,
-        "priority": "P1",
-        "title": "Not done: The owner cannot reverse the default after automatic merge"
-      },
-      {
-        "body": "Raise: Not done. The new fix's `why` contains only the finding title and location; it drops the finding body, which holds the defect's evidence and impact. A finding whose title is brief and whose body contains the reproduction steps becomes a follow-up fix without those steps in its worker brief. `test_1` checks only the generated commit subject, so it cannot detect this loss.",
-        "file": "src/forge/close.py",
-        "line": 384,
-        "priority": "P1",
-        "title": "Not done: Follow-up fixes omit the finding's explanation"
-      },
-      {
-        "body": "Raise: Not done. The new coordinator note tells the worker to leave open findings to follow-up fixes and remove work beyond Done-when. The same generated fix-round brief still says, at `src/forge/templates/brief.md:201-205`, that a valid finding must be fixed everywhere. After a timed stop, both instructions reach the worker together, leaving the required narrowing behavior contradictory. `test_3` checks that the new note is present but does not check the complete brief.",
+        "body": "Raise: Functional. If the default is recorded and the owner then uses `forge close --resolve split --reason ...`, close.py:109 removes `by=\"default\"`. A subsequent `forge land` sends the worker back to fix the original findings, but worker.py:151 supplies a coordinator note only when `by` is still `default`; the owner's split choice and reason are absent from the brief. The worker can continue the original fix instead of the agreed split. The reversal proof tests only `accept`, so it passes with this path broken.",
         "file": "src/forge/worker.py",
-        "line": 152,
+        "line": 151,
         "priority": "P1",
-        "title": "Not done: The worker receives conflicting instructions about deferred findings"
-      },
-      {
-        "body": "Raise: Functional. Once the resumed land run reaches ready with a pull request URL, `src/forge/nextstep.py:666-669` returns before this new default-choice message is built. `forge next` then shows only the merge instruction, hiding the recorded choice and its follow-up fixes on the successful path. `test_1` checks next while the item is fixing; `test_3` reaches ready but does not check next.",
-        "file": "src/forge/nextstep.py",
-        "line": 671,
-        "priority": "P1",
-        "title": "The recorded default disappears from next when the item is ready"
+        "title": "The owner's later split choice does not reach the worker"
       }
     ],
-    "id": "66887fc0-eeff-4810-894e-8c8ba2a3082a",
+    "id": "95deef80-826f-4b03-8a30-4b8b2b41787e",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:30:55.492924+00:00",
@@ -69,8 +48,17 @@
     {
       "at": "2026-10-11T13:13:54.386843+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:41:44.269070+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-11T15:41:44.294897+00:00",
+    "file": "src/forge/worker.py",
+    "wait_id": "56663803-ad7c-4b60-91ae-9b709b28f628"
+  },
   "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves",
   "worker": "codex"
 }

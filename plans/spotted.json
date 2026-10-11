@@ -2729,6 +2729,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tThe owner's later split choice does not reach the worker\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 151,
+      "text": "The owner's later split choice does not reach the worker",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -2923,6 +2934,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     },
@@ -4258,6 +4280,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5189,28 +5222,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     }
