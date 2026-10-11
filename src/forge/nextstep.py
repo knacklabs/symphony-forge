@@ -495,8 +495,10 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             except repo.Refused:  # unreadable there: what forge next reads here
                 cfg = _report_config(top, refusals)
             # The worker beside each task, as a shell comment so the line still pastes as a command.
-            builds[name] = repo.worker(cfg, "build", repo.user_facing(cfg, rows[name]))[0].title() + (
-                f" builds it ({repo.LOCAL})" if {"tools", "workers"} & set(cfg.get("local", {})) else " builds it")
+            design = repo.user_facing(cfg, rows[name])
+            local = repo.local_choices(cfg, "build", design)
+            builds[name] = repo.worker(cfg, "build", design)[0].title() + " builds it" + (
+                f" ({' and '.join(local)} from {repo.LOCAL})" if local else "")
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}  # {builds[task]}"

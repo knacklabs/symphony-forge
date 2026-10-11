@@ -536,13 +536,22 @@ def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str,
     family = (cfg["tools"] if cfg["tools"] != "both" else
               cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
-    local = {key: f" in {LOCAL}" if key in cfg.get("local", {}) else "" for key in ("tools", "workers")}
-    why = (f"tools = {family}{local['tools']}" + (", with the design model as it is user-facing" if design else "")
+    why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
            if cfg["tools"] != "both" else
-           ("it is user-facing" if design else "it isn't user-facing") + f" (workers = split{local['workers']})"
-           if cfg["workers"] == "split" else f"workers = {family}{local['workers']}"
+           ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
+           if cfg["workers"] == "split" else f"workers = {family}"
            + (", with the design model as it is user-facing" if design else ""))
-    return family, chosen, why
+    local = local_choices(cfg, kind, design)
+    return family, chosen, why + (f"; {' and '.join(local)} from {LOCAL}" if local else "")
+
+
+def local_choices(cfg: dict[str, Any], kind: str, design: bool) -> list[str]:
+    """The settings choosing this worker and its models that came from forge.local.toml."""
+    local = cfg.get("local", {})
+    kind = "design" if design else "lite" if kind == "explore" and "explore" not in cfg["models"] else kind
+    deciding = "tools" if cfg["tools"] != "both" else "workers"
+    return (([deciding] if deciding in local else [])
+            + ([f"models.{kind}"] if kind in local.get("models", {}) else []))
 
 
 def coordinator() -> str | None:
