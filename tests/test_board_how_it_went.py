@@ -6,6 +6,7 @@ Only GitHub and review reports are faked; no Forge helper is imported.
 """
 import json
 import re
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -37,10 +38,11 @@ def published(env, item, *, merged_at=None):
                                           ("story-runway", False), ("rebuilt-history", False),
                                           ("question-wait", False), ("conflict-wait", False),
                                           ("item-totals", False), ("approved-runway-known", False),
-                                          ("approved-runway-unknown", False), ("real-read-runway", False)],
+                                          ("approved-runway-unknown", False), ("real-read-runway", False),
+                                          ("read-history-batching", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
-                              "approved-runway-unknown", "real-read-runway"])
+                              "approved-runway-unknown", "real-read-runway", "read-history-batching"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-runway":
         story_runway(env, monkeypatch)
@@ -62,6 +64,9 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
         return
     if case == "real-read-runway":
         real_read_runway(env, monkeypatch)
+        return
+    if case == "read-history-batching":
+        read_history_batching(env, monkeypatch)
         return
     client(env, previous)
     # GitHub only returns requested fields, including for older PRs outside GraphQL's window.
@@ -249,6 +254,55 @@ def real_read_runway(env, monkeypatch):
     assert any(interval["kind"] == "working" and datetime.fromisoformat(interval["end"]) == read_at
                for interval in current["intervals"])
     assert current["total_seconds"] == pytest.approx(current["time_breakdown"]["working"] + 60)
+
+
+def read_history_batching(env, monkeypatch):
+    began = datetime(2026, 10, 10, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+    monkeypatch.setenv("FORGE_NOW", at(220))
+    for key in ("SHOP", "PACK"):
+        approve_story(env.repo, STORY_DOC, key)
+    listing = env.repo.git("worktree", "list", "--porcelain")
+    trees = {key: next(Path(block.splitlines()[0].removeprefix("worktree "))
+                       for block in listing.split("\n\n") if f"branch refs/heads/story/{key}" in block)
+             for key in ("SHOP", "PACK")}
+    original = (trees["SHOP"] / "plans/SHOP.read.md").read_text("utf-8")
+    counts = {"json": [], "html": []}
+    for rounds in (2, 10):
+        previous = ""
+        for number in range(1, rounds + 1):
+            notes = re.sub(r"^read_at:.*$", "read_at: " + at(number * 20), original, flags=re.M)
+            notes = re.sub(r"^round:.*$", "round: " + str(number), notes, flags=re.M)
+            notes = re.sub(r"^(?:seconds|notes_seen):.*\n", "", notes, flags=re.M)
+            fields = "\nseconds: 5" + ("\nnotes_seen: " + previous if previous else "")
+            notes = notes.replace("\n---", fields + "\n---", 1)
+            # Historical notes are actual Git objects, including objects unreachable from refs.
+            stored = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=env.repo.path,
+                                    input=notes, capture_output=True, text=True, encoding="utf-8", check=True)
+            previous = stored.stdout.strip()
+        for key, tree in trees.items():
+            env.commit(tree, f"plans/{key}.read.md", notes)
+            env.repo.git("push", "-q", "origin", f"story/{key}", cwd=tree)
+        for mode in ("json", "html"):
+            trace = env.tmp / f"git-{mode}-{rounds}.jsonl"
+            monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
+            page = env.tmp / "read-history-board.html"
+            result = env.repo.forge("board", *(('--json',) if mode == "json" else ('--out', str(page))))
+            monkeypatch.delenv("GIT_TRACE2_EVENT")
+            assert result.returncode == 0, result.stdout + result.stderr
+            if mode == "json":
+                items = {item["id"]: item for item in json.loads(result.stdout)["items"]}
+                for key in trees:
+                    assert items[key]["time_breakdown"] == {
+                        "working": rounds * 5, "waiting": 0, "unknown": 205 - rounds * 5}
+                    assert items[key]["total_seconds"] == 205
+            recorded = [json.loads(line) for line in trace.read_text("utf-8").splitlines()]
+            commands = [event["argv"] for event in recorded if event["event"] == "start"]
+            calls = [argv for argv in commands if "cat-file" in argv]
+            assert all("blob" not in argv for argv in calls), calls
+            counts[mode].append(len(calls))
+    assert 0 < counts["json"][0] == counts["json"][1] <= 2, counts
+    assert 0 < counts["html"][0] == counts["html"][1] <= 3, counts
 
 
 def question_wait(env, monkeypatch):

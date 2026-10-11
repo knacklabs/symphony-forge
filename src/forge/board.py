@@ -10,7 +10,6 @@ none of those. Without gh the page shows the state and its dates only.
 from __future__ import annotations
 
 import html
-import io
 import json
 import os
 import re
@@ -568,24 +567,27 @@ def machine_board(top: Path, history: Item | None = None,
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
                 item["children"].append(child)
-    for key, current in items.items():
-        if current["kind"] == "story":
-            notes = _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
-            read_rounds, seen = [], set()
-            while notes:
-                record, _ = story._record(notes)
-                try:
-                    seconds = float(record["seconds"])
-                except (KeyError, ValueError):
-                    seconds = None
-                read_rounds.append({"read_at": record.get("read_at"), "seconds": seconds})
-                previous = record.get("notes_seen")
-                if not previous or previous in seen:
-                    break
-                seen.add(previous)
-                notes = repo.run("git", "cat-file", "blob", previous, cwd=top).stdout
-            current.update(time_records.story(current["children"], read_rounds,
-                                              unfinished=current["stage"] != "done"))
+    notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
+                      for key, current in items.items() if current["kind"] == "story"}
+    past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
+                             if (previous := story._record(notes)[0].get("notes_seen")))), follow_notes=True)
+    for key, notes in notes_by_story.items():
+        current = items[key]
+        read_rounds, seen = [], set()
+        while notes:
+            record, _ = story._record(notes)
+            try:
+                seconds = float(record["seconds"])
+            except (KeyError, ValueError):
+                seconds = None
+            read_rounds.append({"read_at": record.get("read_at"), "seconds": seconds})
+            previous = record.get("notes_seen")
+            if not previous or previous in seen:
+                break
+            seen.add(previous)
+            notes = past_notes.get(previous, "")
+        current.update(time_records.story(current["children"], read_rounds,
+                                          unfinished=current["stage"] != "done"))
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
     active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}
@@ -750,20 +752,30 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     return stories, fixes, prs
 
 
-def _blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> dict[str, str]:
     """Read git objects in one process; sizes are bytes, including on Windows."""
     if not specs:
         return {}
-    done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
-                          input=("\n".join(specs) + "\n").encode("utf-8"), capture_output=True,
-                          check=True, env={**os.environ, "FORGE_WORKER": "1"})
-    contents, texts = io.BytesIO(done.stdout), {}
-    for spec in specs:
-        header = contents.readline()
-        if not header.endswith(b" missing\n"):
-            text = contents.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+    pending, seen, texts = list(dict.fromkeys(specs)), set(specs), {}
+    with subprocess.Popen([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          env={**os.environ, "FORGE_WORKER": "1"}) as process:
+        assert process.stdin is not None and process.stdout is not None
+        for spec in pending:
+            process.stdin.write((spec + "\n").encode("utf-8"))
+            process.stdin.flush()
+            header = process.stdout.readline()
+            if header.endswith(b" missing\n"):
+                continue
+            text = process.stdout.read(int(header.split()[-1])).decode("utf-8", errors="replace")
             texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
-            contents.read(1)
+            process.stdout.read(1)
+            if follow_notes and (previous := story._record(texts[spec])[0].get("notes_seen")) and previous not in seen:
+                seen.add(previous)
+                pending.append(previous)
+        output, errors = process.communicate()
+        if process.returncode:
+            raise subprocess.CalledProcessError(process.returncode, process.args, output, errors)
     return texts
 
 
