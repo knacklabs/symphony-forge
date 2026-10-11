@@ -31,6 +31,7 @@
     "id": "bb7dd59a-7bbc-4baf-aca4-a529bf6a202e",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -42,5 +43,6 @@
       "step": "review"
     }
   ],
-  "why": "Worker turns take about 22 minutes: workers re-read the 15,000-word guide and search the whole repo, ask the same two questions, and fail 45% of first reviews"
+  "why": "Worker turns take about 22 minutes: workers re-read the 15,000-word guide and search the whole repo, ask the same two questions, and fail 45% of first reviews",
+  "worker": "codex"
 }
