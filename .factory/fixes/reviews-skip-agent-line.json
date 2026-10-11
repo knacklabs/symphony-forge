@@ -17,27 +17,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b69cde1c9b88b30f4173bbef1aa7eaf9899e7654ccb883d0b34e1e681e6ddd1d",
-    "changed": "dd1f95651e9380ea895326556a8fd1d87d1e7154f906273a890d0e14484a34cd",
-    "commit": "6edbe21bafc01a3512d650b359dd8255ee14037e",
+    "branch_diff": "9b107e8bea9491851ca279045a09cf7bbf18b2c231fe888c3ab30e4e5c166fdd",
+    "changed": "e4b74910d1fe12a91daefe30bfc2c52814cc1c834c05a260bfe798265d5bf3ed",
+    "commit": "baca9d05d95840652245b54445170dcd0d15a4a0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional \u2014 `few_tests` checks only the command tokens for a doctest option, then grants a free run when at most five conventionally named test files are selected. In a client with `test = \"pytest tests src\"` and an unchanged `pyproject.toml` containing `addopts = \"--doctest-modules\"`, five changed test files qualify even though pytest also runs source doctests. `fasttest.py:31\u201354` shows that pytest options can come from configuration or `PYTEST_ADDOPTS`; `fasttest.py:276\u2013279` counts only `test_*.py` and `*_test.py`. An explicitly named file outside those patterns, such as `tests/acceptance.py`, likewise remains in the command without being counted. These runs can exceed the five-file limit while another run holds the only test place. This is new evidence beyond the previously reported command-line doctest case.",
+        "body": "Raise: Functional \u2014 The new admission check grants a free run based on the count from `fasttest.related`, but that function counts only files named `test_*.py` or `*_test.py` (`fasttest.py:276\u2013279`). For an existing client with `test = \"pytest tests/acceptance.py tests\"`, changing five conventional test files admits the picker without a test place, while its underlying command also runs the explicitly named `acceptance.py`. `fasttest.py:57\u201386` leaves that operand in the command. The added doctest check does not cover this case, so the run can exceed the five-file limit while the test place is occupied.",
         "file": "src/forge/review.py",
-        "line": 288,
+        "line": 293,
         "priority": "P1",
-        "title": "Configured pytest collection can bypass the test place"
-      },
-      {
-        "body": "Raise: Gate \u2014 The supplied proof list names only the doctest-option and five-file test-lane cases. It omits both remaining Done-when details: a close review and a plan read starting without an agent place. The changed command-level test at this line exercises those behaviours, but neither has an entry in the required whole-change proof list.",
-        "file": "tests/test_fix_agent_runs_wait_in_line.py",
-        "line": 65,
-        "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Explicit nonstandard pytest files bypass the test place"
       }
     ],
-    "id": "26554a1e-26c1-4676-90e1-7953c5bb49fd",
+    "id": "0149ea06-95b6-4766-90d7-db4635b80edd",
     "status": "blocked"
   },
   "round": 2,
@@ -61,6 +54,10 @@
     },
     {
       "at": "2026-10-11T16:13:37.306733+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:37:31.813492+00:00",
       "step": "review"
     }
   ],
