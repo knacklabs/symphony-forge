@@ -48,7 +48,8 @@ def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review
 
 
 def test_4_promoted_spec_task_is_named_spec(repo):
-    setup(repo)
+    # Promotion no longer adds an entry; it inherits the committed roadmap entry.
+    setup(repo, keys=("SHOP", "PRODUCT"))
     fix = repo.path.parent / "repo-fix-write-spec"
     repo.git("worktree", "add", "-q", "-b", "fix/write-spec", str(fix), "main")
     state = fix / ".factory/fixes/write-spec.json"

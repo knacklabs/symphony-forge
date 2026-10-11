@@ -85,7 +85,7 @@ def _writer(repo, mode, conversation="thr-stub-1"):
         release.unlink(missing_ok=True)
 
 
-def test_3_active_writer_retries_and_continues_the_conversation(repo, monkeypatch, sdk_data):
+def test_3_active_writer_retries_and_continues_the_conversation(repo, monkeypatch, sdk_data, claude_session):
     _, calls, turns = _ready(repo, monkeypatch, sdk_data)
     monkeypatch.setenv("STUB_RESUME_ERROR", "release")
     with _writer(repo, "release") as holder:

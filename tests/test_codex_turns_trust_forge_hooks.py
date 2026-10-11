@@ -81,7 +81,7 @@ def _stopped(calls, before):
 
 
 def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_turns(
-        repo, monkeypatch, sdk_data):
+        repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     _sync(repo, repo.path)
     monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")  # as after the hook launcher changed
@@ -111,7 +111,7 @@ def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_t
 
 
 def test_2_a_changed_or_foreign_untrusted_hook_stops_fresh_and_resumed_worker_turns(
-        repo, monkeypatch, sdk_data):
+        repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     _sync(repo, repo.path)
     hooks_file = repo.path / ".codex" / "hooks.json"

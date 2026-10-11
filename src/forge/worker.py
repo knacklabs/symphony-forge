@@ -27,7 +27,9 @@ REVIEW_LOOP = (
     "whatever files they were in. The existing same-file stop still applies from the third round. "
     "Wait for a recorded choice only after close has stopped the review loop. "
     "Otherwise, fix the findings in this round, including new findings after a recorded "
-    "narrow or split; do not ask for another choice unless close stops the loop again.")
+    "narrow or split; do not ask for another choice unless close stops the loop again. "
+    "Read also stops after three consecutive cold-read rounds with blocking notes; the coordinator "
+    "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
@@ -165,7 +167,10 @@ def work(args: argparse.Namespace) -> None:
         state["worker"] = family
         state["round"] = round_number
         admission["round"] = round_number
-        repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
+        message = f"{item} is {state['status']}"
+        if note is not None:
+            message += "\n\nCoordinator note:\n" + ((question + "\n") if question else "") + "Answer: " + note
+        repo.commit_state(message, repo.write_state(item, state, top),
                           top=top)
         repo.record_event(top, item, "work phase", lane_id=admission["id"],
                           phase="fixing_findings" if findings or failing else "building")
