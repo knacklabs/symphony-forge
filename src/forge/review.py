@@ -290,7 +290,18 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-            with repo.record_run(top, item, "test") as ran:
+            with repo.record_run(top, item, "test") as ran, tempfile.TemporaryDirectory(
+                    prefix="forge-repair-") as folder:
+                if passed:
+                    hook = Path(__file__).with_name("_pytest_repair.py")
+                    shutil.copyfile(hook, Path(folder) / "_forge_pytest_repair.py")
+                    key = hashlib.sha256((str(top.resolve()) + command + hook.read_text("utf-8")
+                                          + env["PYTEST_ADDOPTS"]).encode()).hexdigest()
+                    env.update(FORGE_REPAIR_ROOT=str(top.resolve()), FORGE_REPAIR_CACHE=str(
+                        machine._repos_file().parent / "pytest-passes" / key))
+                    env["PYTHONPATH"] = os.pathsep.join([folder, env.get("PYTHONPATH", "")])
+                    env["PYTEST_PLUGINS"] = ",".join(filter(None, [env.get("PYTEST_PLUGINS"),
+                                                                  "_forge_pytest_repair"]))
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix())
                 with log.open("w", encoding="utf-8") as sink, subprocess.Popen(
