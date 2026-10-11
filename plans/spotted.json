@@ -793,6 +793,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA blocked review is shown as waiting for checks when its tests pass on retry\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 267,
+      "text": "A blocked review is shown as waiting for checks when its tests pass on retry",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tA failed review loses the concurrent test failure from the next worker brief\treview-alongside-tests",
       "kind": "bug",
       "path": "src/forge/close.py",
