@@ -9,7 +9,7 @@ same format RECORDS reads for `spec confirm`. The frontmatter is the latest roun
     reader: <who read it>
     read_at: <when>
     read_hash: <git hash-object of the doc as read>
-    round, passed: <n>, and yes only when that round's whole text, trimmed, is "No findings."
+    round, passed: <n>, and yes when that round has no blocking notes
     doc_seen, spec_seen, notes_seen: <what its reader saw, kept by git hash-object -w>
     ---
     ## Round <n>
@@ -85,6 +85,7 @@ RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec
           "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
+ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
 BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
@@ -252,8 +253,10 @@ def read(args: Any) -> int:
                     ", ".join(touched) or "the title")
         if passed(record, findings):  # only an edit since a passing round: read just that edit
             again = edit
-        fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()))
-        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()) or "None.")
+        blocking = {n: block for n, block in blocks.items()
+                    if not ADVISORY.match(block.split(". ", 1)[1])}
+        fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
+        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()) or "None.")
     context = "\n\nEarlier rounds' notes and answers:\n" + (findings or "None.")
     context += "\n\nThe doc's Notes and decisions:\n" + sections(text.decode("utf-8")).get("Notes", "None.")
     prompt += context
@@ -319,6 +322,7 @@ def read(args: Any) -> int:
         numbers = itertools.count(max(blocks, default=0) + 1)
         said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
                            said if FINDING.search(said) else f"1. {said}")
+        clean = passed({"round": str(round_number)}, f"## Round {round_number}\n\n{said}")
     model = repo.models(config, "grill", reader).get("model", "its own default model")
     record = {"reader": f"{reader} ({model})" + (
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
@@ -348,13 +352,14 @@ def read(args: Any) -> int:
             state["status"] = "read"
         changed.append(repo.write_state(target, repo.add_step(state, "read"), top))
     if clean:  # a passing round is committed, so tasks and pull requests carry what passed
-        repo.commit_state(f"Round {round_number} of the cold read of {rel} found nothing", *changed,
+        outcome = "found nothing" if said == "No findings." else "had no blocking notes"
+        repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
     if not clean and blocked_rounds + 1 >= 3:
         repo.refuse(REFUSALS["read_loop"], target=target)
-    print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if clean else
+    print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
-          f"Next: give every finding a disposition, amend the doc, then forge read {target}")
+          f"Next: give every blocking finding a disposition, amend the doc, then forge read {target}")
     return 0
 
 
@@ -620,12 +625,18 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
-    """The latest round found nothing or the human accepted it; never trust the passed flag.
-    That text runs from the recorded round's heading to the end, so a heading in a reply is text."""
+    """The latest round has no blockers or the human accepted it; never trust the passed flag."""
     if record.get("loop_choice") == "accept" and record.get("loop_reason"):
         return True
     heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
-    return bool(record.get("round") and heading) and findings[heading.end():].strip() == "No findings."
+    if not record.get("round") or not heading:
+        return False
+    text = findings[heading.end():].strip()
+    if text == "No findings.":
+        return True
+    parts = FINDING.split(text)
+    return (len(parts) > 1 and parts[0].strip() in ("", "No findings.")
+            and all(ADVISORY.match(body) for body in parts[2::2]))
 
 
 def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
@@ -651,6 +662,8 @@ def undisposed(findings: str) -> str:
     """The number of the first finding without a disposition (keep needs a reason), or ""."""
     parts = FINDING.split(findings)
     for number, finding in zip(parts[1::2], parts[2::2]):
+        if ADVISORY.match(finding):
+            continue
         found = DISPOSITION.search(finding)
         if not found or (found[1].lower() == "keep" and not found[2]):
             return number

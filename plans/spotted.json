@@ -1607,17 +1607,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/nextstep.py\tForge next still directs clients with a populated roadmap to choose an existing item\tstory-from-goal",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 352,
-      "text": "Forge next still directs clients with a populated roadmap to choose an existing item",
-      "from": "blocking",
-      "item": "story-from-goal",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: Developer assignments must be discoverable and current in teammate checkouts\tstart-is-claim",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -1805,28 +1794,6 @@
       "closed_by": "dismissed"
     },
     {
-      "key": "bug\tsrc/forge/story.py\tA dependent story's roadmap entry never reaches the default branch\tstory-from-goal",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 139,
-      "text": "A dependent story's roadmap entry never reaches the default branch",
-      "from": "blocking",
-      "item": "story-from-goal",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 256,
-      "text": "New cold-read notes can be lost when a settled note repeats",
-      "from": "blocking",
-      "item": "settled-stays-settled",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -1926,28 +1893,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/story.py\tPromoted stories leave their roadmap entry off the task branch\tstory-from-goal",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 139,
-      "text": "Promoted stories leave their roadmap entry off the task branch",
-      "from": "blocking",
-      "item": "story-from-goal",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tPromotion accepts an uncommitted roadmap entry and leaves it off the task branch\tstory-from-goal",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 124,
-      "text": "Promotion accepts an uncommitted roadmap entry and leaves it off the task branch",
-      "from": "blocking",
-      "item": "story-from-goal",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "src/forge/sync.py",
@@ -2032,6 +1977,17 @@
       "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 169,
+      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
+      "from": "blocking",
+      "item": "read-blocking-only",
       "status": "open",
       "closed_by": null
     },
@@ -4551,6 +4507,61 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 256,
+      "text": "New cold-read notes can be lost when a settled note repeats",
+      "from": "blocking",
+      "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tForge next still directs clients with a populated roadmap to choose an existing item\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 352,
+      "text": "Forge next still directs clients with a populated roadmap to choose an existing item",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tA dependent story's roadmap entry never reaches the default branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 139,
+      "text": "A dependent story's roadmap entry never reaches the default branch",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tPromoted stories leave their roadmap entry off the task branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 139,
+      "text": "Promoted stories leave their roadmap entry off the task branch",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tPromotion accepts an uncommitted roadmap entry and leaves it off the task branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 124,
+      "text": "Promotion accepts an uncommitted roadmap entry and leaves it off the task branch",
+      "from": "blocking",
+      "item": "story-from-goal",
       "status": "open",
       "closed_by": null
     },
