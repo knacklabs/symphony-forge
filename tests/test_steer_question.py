@@ -10,7 +10,7 @@ import time
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_resume import _resuming
 from test_codex_worker import _codex_repo, _lines, _sent, sdk_data  # noqa: F401
 
@@ -41,7 +41,7 @@ def _resumable_question(repo, monkeypatch, sdk_data):
 
 @pytest.mark.parametrize("scenario", ("fresh", "resume", "interrupt"))
 def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_data, gh,
-                                                         scenario):
+                                                         scenario, claude_session):
     if scenario == "resume":
         _answer_continues_the_same_conversation(repo, monkeypatch, sdk_data)
         return
@@ -59,6 +59,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     assert json.loads(record.read_text("utf-8"))["question"] == question
 
+    # Initial work may consult GitHub to choose Fast; unanswered work and close must not.
+    patient(lambda: gh.log.write_text("", encoding="utf-8"))
     head = repo.git("rev-parse", "HEAD", cwd=folder)
     blocked = repo.forge("work", "BOARD/PAGE")
     closed = repo.forge("close", "BOARD/PAGE")

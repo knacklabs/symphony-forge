@@ -8,7 +8,7 @@ STORY = "FIX-EVERY-FIX-ROUND-RESENDS-THE-WHOLE-WORKER"
 
 
 def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
-        repo, monkeypatch, sdk_data, gh):
+        repo, monkeypatch, sdk_data, gh, claude_session):
     _, calls, _ = _resuming(repo, monkeypatch, sdk_data)
     started = repo.forge("fix", "start", "Show a greeting", "--done", "The page greets visitors")
     assert started.returncode == 0, started.stderr

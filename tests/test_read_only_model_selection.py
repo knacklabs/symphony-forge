@@ -112,7 +112,9 @@ def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
 
 @pytest.mark.parametrize("host", ["codex", "claude"])
 def test_5_a_fix_first_build_keeps_lite_with_explore_configured(
-        repo, monkeypatch, sdk_data, host):
+        repo, monkeypatch, sdk_data, host, request):
+    if host == "codex":
+        request.getfixturevalue("claude_session")
     log = _sdk(repo, monkeypatch, sdk_data, repo.path) if host == "codex" else install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'

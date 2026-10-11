@@ -4520,6 +4520,138 @@
       "item": "settled-stays-settled",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tForge next still directs clients with a populated roadmap to choose an existing item\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 352,
+      "text": "Forge next still directs clients with a populated roadmap to choose an existing item",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tA dependent story's roadmap entry never reaches the default branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 139,
+      "text": "A dependent story's roadmap entry never reaches the default branch",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tPromoted stories leave their roadmap entry off the task branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 139,
+      "text": "Promoted stories leave their roadmap entry off the task branch",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tPromotion accepts an uncommitted roadmap entry and leaves it off the task branch\tstory-from-goal",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 124,
+      "text": "Promotion accepts an uncommitted roadmap entry and leaves it off the task branch",
+      "from": "blocking",
+      "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tFull board scan delays every ordinary first Codex work turn\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 270,
+      "text": "Full board scan delays every ordinary first Codex work turn",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 264,
+      "text": "Not done: Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_fast_when_work_waits.py\tNot done: first-round fix Fast coverage\tcodex-fast-when-needed",
+      "kind": "bug",
+      "path": "tests/test_codex_fast_when_work_waits.py",
+      "line": 43,
+      "text": "Not done: first-round fix Fast coverage",
+      "from": "blocking",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 79,
+      "text": "The checked-in host guides already lag shipped runner and board guidance; refresh that drift separately.",
+      "from": "worker",
+      "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_chatview_start.py",
+      "line": 57,
+      "text": "Not done: move the remaining Codex-worker tests to claude_session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tStandard: Tests own and clean up every process they start\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 23,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tThe full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 101,
+      "text": "The full suite failed when the second close ended without saying it was waiting in line; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tNot done: keep mixed worker tests on their intended routes\tFORGE-TOOLS-1/SWITCH",
+      "kind": "bug",
+      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+      "line": 37,
+      "text": "Not done: keep mixed worker tests on their intended routes",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
