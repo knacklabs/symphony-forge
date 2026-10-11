@@ -1,0 +1,14 @@
+{
+  "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
+  "branch": "fix/plan-reads-capped",
+  "done_when": "A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never asks for another read",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:32:02.888915+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner"
+}
