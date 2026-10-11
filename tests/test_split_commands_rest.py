@@ -9,11 +9,11 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 
 OWNERS = {
     "approval": {"hook approval"},
-    "ask": {"ask"},
     "close": {"close"},
     "deny": {"hook deny"},
     "githooks": {"hook pre-commit", "hook pre-push"},
     "merge": {"merge"},
+    "native": {"handback"},
     "payback": {"spec payback"},
     "prcheck": {"hook pr-check"},
     "records": {"spec save", "spec confirm", "spec measure", "decision new",

@@ -2,7 +2,9 @@
 
 Real Forge commands own the assertions; Claude, uv and GitHub are faked at their edges.
 """
+import json
 import tomllib
+from pathlib import Path
 
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_setup import _fresh_client
@@ -66,8 +68,17 @@ def test_3_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path,
     monkeypatch.setenv("CLAUDECODE", "1")
     result = repo.forge("read", "SHOP")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "high"]
-    assert "reader: claude (claude-opus-5-5)" in (shop / "plans/SHOP.read.md").read_text("utf-8")
+    # The same-tool fallback now uses a session reader, with the same built-in defaults.
+    offered = json.loads(result.stdout)
+    assert (offered["role"], offered["tool"], offered["model"], offered["effort"]) == (
+        "reader", "claude", "claude-opus-5-5", "high")
+    assert Path(offered["checkout"]).resolve() == shop.resolve()
+    assert calls(log) == []
+    finished = repo.forge("handback", "SHOP", "--subagent", "default-reader",
+                          "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    assert "reader: claude (claude-opus-5-5), a subagent of this Claude Code session" in (
+        (shop / "plans/SHOP.read.md").read_text("utf-8"))
 
 
 def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
