@@ -213,6 +213,8 @@ def close(args: argparse.Namespace) -> int:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
+        print("".join(line + "\n" for line in tested.splitlines()
+                      if line.startswith(review.GAP)), end="", flush=True)
         if failed:  # a review would only report the same failure
             state.update(tests=tested, status="fixing")
             _save(top, item, state, f"Tests of {item} failed")

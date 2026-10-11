@@ -1376,6 +1376,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close loses source-file warnings after another test runner\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 333,
+      "text": "Not done: Close loses source-file warnings after another test runner",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 320,
+      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -2168,6 +2190,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 371,
+      "text": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2956,6 +2989,39 @@
       "text": "Not done: init and upgrade plus sync local-selection test",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test that Close preserves every warning past the report cap\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 50,
+      "text": "Not done: test that Close preserves every warning past the report cap",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the printed-text brief after upgrade\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 39,
+      "text": "Not done: test the printed-text brief after upgrade",
+      "from": "blocking",
+      "item": "test-gap-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_names_untested_source_files.py\tNot done: test the source-file warning through forge close\ttest-gap-warning",
+      "kind": "bug",
+      "path": "tests/test_close_names_untested_source_files.py",
+      "line": 30,
+      "text": "Not done: test the source-file warning through forge close",
+      "from": "blocking",
+      "item": "test-gap-warning",
       "status": "open",
       "closed_by": null
     },
