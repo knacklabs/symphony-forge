@@ -320,10 +320,13 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert "a numbered list starting at 3" in flat
     assert "- Fixture paths break on Windows." in prompt
     assert "Re-read the `## Answers` section of `docs/product/BRIEF.md` from the checkout" in flat
-    # Never the first round's instructions, the whole doc or what the reader re-reads itself.
+    # Never the first round's instructions, the whole doc or what the reader re-reads itself; a
+    # changed Answers section arrives only as its diff, so later rounds can block on it.
     for resent in ("You are doing the one cold read", "Shoppers can save a basket and come back",
-                   "the client's own servers"):
+                   "# Brief"):
         assert resent not in prompt, resent
+    assert prompt.count("the client's own servers") == 1
+    assert "+- Hosting: the client's own servers" in prompt
     notes = reader.text()
     assert "round: 2\n" in notes and "## Round 2\n\n3. Disputed keep 1:" in notes
     assert f"## Round 1\n\n1. {FIRST}\n   Disposition: keep because" in notes
