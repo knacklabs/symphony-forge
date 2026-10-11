@@ -266,7 +266,8 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
 
 def few_tests(top: Path, command: str, base: str) -> bool:
     """Forge's pytest picker narrowed to a few related test files ends in moments."""
-    if "forge test --pytest" not in command:
+    if not re.fullmatch(r"(?:uv run(?: --frozen| --python [\w.-]+)* )?"
+                        r"forge test --pytest [0-9a-f]+", command.strip()):
         return False
     from forge import fasttest  # fasttest imports review in forge test
 

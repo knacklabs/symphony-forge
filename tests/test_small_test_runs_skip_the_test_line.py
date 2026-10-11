@@ -8,14 +8,18 @@ import pytest
 
 from conftest import ROOT, machine_cores
 from test_close import Forge, env  # noqa: F401
-from test_fix_agent_runs_wait_in_line import _other_repo
+from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import start
 from test_lanes_tests import accepted, configure, reap, release_server, shell  # noqa: F401
 
+STORY = "reviews-skip-agent-line"
+
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-def test_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
-                                                                 adopted):
+@pytest.mark.parametrize("file_count, compound", [(5, False), (6, False), (5, True)],
+                         ids=["five-files", "six-files", "compound-command"])
+def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
+                                                                 adopted, file_count, compound):
     server, connections = release_server
     repo = env.repo
     if adopted:
@@ -34,10 +38,15 @@ def test_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, 
     monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
     repo.write("app.py", "VALUE = 1\n")
     repo.write("pyproject.toml", '[project]\nname = "lane-client"\nversion = "0.0.0"\n')
-    repo.write("tests/test_app.py", "from app import VALUE\n"
-               "def test_current_app():\n    assert VALUE == 2\n")
+    # Five selected files skip the lane; six files and compound commands still wait.
+    for index in range(file_count):
+        repo.write(f"tests/test_app_{index}.py", "from app import VALUE\n"
+                   "def test_current_app():\n    assert VALUE == 2\n")
+    picker = "forge test --pytest {base}"
+    if compound:
+        picker += " && " + shell([sys.executable, "-m", "pytest", "tests", "-q"])
     repo.write("forge.toml", "test = " + json.dumps(shell([sys.executable, "-m", "pytest", "tests", "-q"]))
-               + '\nfast_test = "forge test --pytest {base}"\n' + (repo.path / "forge.toml").read_text("utf-8"))
+               + "\nfast_test = " + json.dumps(picker) + "\n" + (repo.path / "forge.toml").read_text("utf-8"))
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure a pytest client")
     repo.git("push", "-q", "origin", "main")
@@ -51,13 +60,22 @@ def test_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, 
         accepted(server, connections, held, holding, output)
         small, small_output = start(folder, tmp_path / "small", repo, "test")
         processes.append(small)
+        if file_count > 5 or compound:
+            _until(lambda: "in line" in small_output.read_text("utf-8") or small.poll() is not None,
+                   "the larger test command to wait for the test place")
+            assert small.poll() is None, small_output.read_text("utf-8")
+            assert "in line" in small_output.read_text("utf-8")
+            connections[0].sendall(b"x")
+            assert holding.wait(timeout=60) == 0, output.read_text("utf-8")
         try:
             status = small.wait(timeout=60)
         except subprocess.TimeoutExpired:
             status = None
         said = small_output.read_text("utf-8")
         assert status == 0, said
-        assert "in line" not in said and "1 passed" in said
-        assert holding.poll() is None
+        assert f"{file_count} passed" in said
+        if file_count <= 5 and not compound:
+            assert "in line" not in said
+            assert holding.poll() is None
     finally:
         reap(processes, server, connections)

@@ -165,7 +165,8 @@ start at once and take no place. Waiting items that other planned work waits on 
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
 one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
-and takes no place. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
+and takes no place when the whole command is the picker, optionally run through `uv run`.
+Compound commands keep their place. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
 and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
