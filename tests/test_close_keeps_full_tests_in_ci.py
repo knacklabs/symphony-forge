@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install, patient
-from test_close import env, run  # noqa: F401
+from test_close import GREEN, env, run  # noqa: F401
 from test_machine_views import github, pull
 from test_setup import _fresh_client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
@@ -124,6 +124,7 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m", "Add the client application")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "HEAD:main")
     item, where = up.env.start_fix({selected: (client / selected).read_text("utf-8") + "// Changed\n"})
+    up.env.checks(GREEN)
 
     closed = up.env.close(item)
 
