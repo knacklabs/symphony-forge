@@ -10,27 +10,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5c710237ba1590d5863939fdfd8edc9ee4e5bd833d4dcb9ee51aba734d034f54",
-    "changed": "785ef53503b9114c3c2bbd0634d77ecb218abec78cca04010c14645d721593a3",
-    "commit": "df3506cf5659d070afe8705e02d9b02fa50cc0e8",
+    "branch_diff": "c10955eb25dab42fa8ae0bb47b21e3f9b4860d7e85cde7726d795d049d12e428",
+    "changed": "e8721027c833dcc4e87681fc2fb4efe132c03e0ff30651c38f66eaf6bd6a9f3f",
+    "commit": "a9474586665426cc8afed793e0422805ac6f17f8",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. After machine B publishes a clean review for a newer PR head, a record refresh from machine A replaces B's published `ready` commit with A's older receipt commit, or with null if A has no receipt. `nextstep._item_readiness` reads only `record.ready`, so teammates then see the unchanged, clean PR as not ready. Worker question and answer refreshes can reach this path without a new close.",
-        "file": "src/forge/time_records.py",
-        "line": 336,
+        "body": "Raise: Functional. A board or `forge next` read can show an obsolete review round or clean readiness for up to 60 seconds after another teammate updates the PR. The new `body` field is stored in `_machine_prs`'s 60-second cache (lines 94\u2013102). In `machine_board`, that cached PR takes precedence over the fresh open-PR list because `setdefault` does not replace it (lines 240\u2013248); `nextstep._report` likewise overwrites fresh PR data with the cached result (lines 191\u2013195). A normal close or push during that minute therefore leaves another machine reading the old shared record or head despite its fetch.",
+        "file": "src/forge/board.py",
+        "line": 80,
         "priority": "P1",
-        "title": "Refreshing a PR from an older checkout erases newer clean readiness"
-      },
-      {
-        "body": "Raise: Functional. A human-merge wait started on machine B exists in the PR record but not in machine A's local events. When A resumes `forge work`, this call searches only local events, so it records no wait end. The shared record continues to show an owner wait after work resumes, and the board can report the item as waiting for a merge that is no longer its next action.",
-        "file": "src/forge/worker.py",
-        "line": 125,
-        "priority": "P1",
-        "title": "Cross-machine rework leaves a published owner wait open"
+        "title": "Not done: teammates see the current PR time record"
       }
     ],
-    "id": "17fb3177-369e-4f03-8ba2-697c55599aca",
+    "id": "b171ea78-bfb1-4366-b41a-40b03cd8d50c",
     "status": "blocked"
   },
   "round": 9,
@@ -54,6 +47,10 @@
     },
     {
       "at": "2026-10-11T04:29:43.225286+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T05:08:52.651405+00:00",
       "step": "review"
     }
   ],
