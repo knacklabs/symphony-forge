@@ -27,8 +27,8 @@ REVIEW_LOOP = (
     "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
     "whatever files they were in. The existing same-file stop still applies from the third round. "
     "Wait for a recorded choice only after close has stopped the review loop. "
-    "Otherwise, fix the findings in this round, including new findings after a recorded "
-    "narrow or split; do not ask for another choice unless close stops the loop again. "
+    "Otherwise, fix the findings inside your Done-when in this round, including new findings "
+    "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
     "Read also stops after three consecutive cold-read rounds with blocking notes; the coordinator "
     "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
@@ -38,6 +38,9 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
+              "everything a worker needs. Start from the files and tests this brief names, and "
+              "search the rest of the repo only for what they call or what calls them.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
@@ -156,12 +159,14 @@ def work(args: argparse.Namespace) -> None:
             round_number = 1 + len({(entry["conversation"], entry["turn"])
                                     for line in turns.read_text(encoding="utf-8").splitlines()
                                     if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
-        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
-                                continued=bool(thread))
-        fresh_brief = None
+        changes = ""
         if thread:
             saved = session or codex.record(top, item)
-            brief += _changes(top, saved.get("head") or saved["start"])
+            changes = _changes(top, saved.get("head") or saved["start"])
+        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
+                                continued=bool(thread), changes=changes)
+        fresh_brief = None
+        if thread:
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
         state["status"] = "fixing" if findings or failing else "working"
@@ -223,8 +228,8 @@ def work(args: argparse.Namespace) -> None:
                         saved = codex.record(top, item)
                         fresh_brief = brief
                         brief, _ = _brief(match, top, state, findings, failing, note, question,
-                                          round_number, continued=True)
-                        brief += _changes(top, saved.get("head") or saved["start"])
+                                          round_number, continued=True,
+                                          changes=_changes(top, saved.get("head") or saved["start"]))
                     on_codex = True
                 else:
                     _restore_settings(item, top, state)
@@ -387,13 +392,15 @@ def _failing(branch: str) -> list[tuple[str, str]]:
 def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
            findings: list[dict[str, Any]], failing: list[tuple[str, str]],
            note: str | None = None, question: str | None = None,
-           round_number: int = 1, continued: bool = False) -> tuple[str, str]:
+           round_number: int = 1, continued: bool = False, changes: str = "") -> tuple[str, str]:
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {
         "settings": SETTINGS,
+        "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
+        "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
         on.add("coordinator")
@@ -440,6 +447,10 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        brief += "\n" + START_HERE + "\n"
+        if match["task"]:
+            brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
+                      f"Existing related tests: {values['existing_tests']}.\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
@@ -458,7 +469,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         if findings or failing:
             brief += (f"\n## Fix round\n\n### Open serious findings\n\n{values['findings']}\n"
                       f"\n### Failing checks\n\n{values['checks']}\n")
-        return brief, subject
+        return brief + changes + "\n" + values["handover"] + "\n", subject
     on.add("standards")
     values["standards"] = (HERE / "standards.md").read_text(encoding="utf-8").strip()
     values["conventions"] = str(CONVENTIONS)
