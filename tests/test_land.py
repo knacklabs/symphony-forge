@@ -399,7 +399,7 @@ def _findings_after_three_rounds_ask_a_question(env):
     assert done.stdout.splitlines()[stop + 1:stop + 4] == [
         "Readme greets new readers: The readme opens with a greeting",
         "It still has these problems:",
-        "- Saving loses the reader name: a returning reader sees no name."]
+        "- Saving loses the reader name: a returning reader sees no name. More."]
     # The stop is recorded, so forge next repeats the question and close records the choice.
     said = env.repo.forge("next").stdout
     assert "\n".join(done.stdout.splitlines()[stop + 1:stop + 8]) in said

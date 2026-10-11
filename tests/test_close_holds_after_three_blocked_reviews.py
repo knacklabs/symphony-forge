@@ -63,8 +63,9 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         # The advice note counts toward what Accept dismisses.
         env.reviews(blocked(finding("P3", "Advice only"),
                             {**finding("P1", f"Not done: Round {number} defect", path),
-                             "body": "Raise: Not done. Saving at `app.py:3` drops the basket for "
-                                     "returning shoppers (a3f9c2e1b). More detail."}))
+                             "body": "Raise: Not done \u2014 Saving at `app.py:3` drops the basket "
+                                     "(a3f9c2e1b). Returning shoppers lose their saved items. "
+                                     "More detail."}))
         result = env.close(item)
         assert result.returncode == 1, result.stdout + result.stderr
         if number < 3 or not same_file:
@@ -80,7 +81,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     question = [
         "Readme greets new readers: The readme opens with a greeting",
         "It still has these problems:",
-        "- Round 3 defect: saving drops the basket for returning shoppers.",
+        "- Round 3 defect: saving drops the basket. Returning shoppers lose their saved items.",
         "Accept, narrow or split?",
         "- Accept: every finding in this review, the 1 listed and 1 advice notes, is dismissed "
         "with your reason and recorded; close then goes on to the checks, and merging is still a "

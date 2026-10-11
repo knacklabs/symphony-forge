@@ -984,20 +984,20 @@ def _diff(old: str, new: str, path: str) -> str:
 
 
 def plain(title: str, body: str = "") -> str:
-    """A note or finding as one plain sentence: its title and its body's first sentence, without
+    """A note or finding in plain words: its title and up to two sentences of its body, without
     markdown, labels, file paths or hashes."""
-    def sentence(text: str) -> str:
+    def sentences(text: str, keep: int) -> str:
         text = " ".join(text.replace("**", "").replace("`", "").split())
-        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Later|Follow-up)[.:]\s*)+",
-                      "", text, flags=re.I)
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Functional|Test|"
+                      r"Security|Scale|Data loss|Later|Follow-up)\s*[.:\u2014\u2013-]+\s*)+", "", text, flags=re.I)
         text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
         first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
         # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
-        if rest and len(first.split()) < 5:
-            first = f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
-                                                  rest[0][:1].lower() + rest[0][1:])
-        return first
-    title, body = sentence(title), sentence(body)
+        if keep == 1 and rest and len(first.split()) < 5:
+            return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
+                                                 rest[0][:1].lower() + rest[0][1:])
+        return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
+    title, body = sentences(title, 1), sentences(body, 2)
     if not body:
         return title
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])

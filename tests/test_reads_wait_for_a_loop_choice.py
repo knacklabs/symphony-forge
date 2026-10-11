@@ -61,7 +61,8 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
                  if target == "SHOP" else
                  "Invoices by email: Emailed invoices: each invoice is emailed as a PDF.") + "\n"
                 "It still has these problems:\n"
-                "- Basket recovery is missing for case 3: a shopper who signs out loses the saved basket.\n"
+                "- Basket recovery is missing for case 3: a shopper who signs out loses the saved basket. "
+                "The doc never says when it comes back.\n"
                 "Accept, narrow or split?\n"
                 "- Accept: keep these problems as known and mark the read accepted; approving or "
                 "confirming the doc is still a separate step.\n"
