@@ -15,7 +15,7 @@ from test_running_commands_follow_changed_forge_pin import _earlier_release
 STORY = "merge-behind-base"
 
 
-def _client(env, tmp_path, previous):
+def _client(env, tmp_path, previous, *, fast_test=True):
     if previous:
         patient(lambda: shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
                                         env.repo.path, dirs_exist_ok=True))
@@ -36,6 +36,8 @@ def _client(env, tmp_path, previous):
     config = config.replace('merge = "human"', 'merge = "agent"')
     config = re.sub(r'^test = .*$', 'test = "python verify.py"', config, flags=re.M)
     config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
+    if fast_test:
+        config = 'fast_test = "python verify.py"\n' + config
     env.commit(prepared, "forge.toml", config)
     synced = env.repo.forge("sync", cwd=prepared)
     assert synced.returncode == 0, synced.stderr
@@ -182,7 +184,7 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
                          ids=["merge-green-close", "land-green-close", "merge-red-close"])
 def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying_merge(
         env, tmp_path, monkeypatch, previous, command, failing_test):
-    test_log = _client(env, tmp_path, previous)
+    test_log = _client(env, tmp_path, previous, fast_test=False)
     current = env.repo.forge("--version").stdout.split()[-1]
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
@@ -192,6 +194,7 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
                              "done_when": "The client uses its earlier Forge pin"}, {})
     config = (prepared / "forge.toml").read_text("utf-8")
     config = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', config)
+    config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
     env.commit(prepared, "forge.toml", config)
     env.repo.git("merge", "-q", "--ff-only", "fix/repin-client")
     remote = Path(env.repo.git("remote", "get-url", "origin"))
@@ -203,7 +206,8 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert closed.returncode == 0, closed.stdout + closed.stderr
     first_head = env.repo.git("rev-parse", "HEAD", cwd=where)
     before_reviews = len(env.review_calls())
-    upgraded = config.replace('version = "v1.2.2"', f'version = "{current}"\nfast_test = ""')
+    upgraded = config.replace('version = "v1.2.2"',
+                              f'version = "{current}"\nfast_test = "python verify.py"')
     _github_moves_default(env, False, "BEHIND", upgraded, failing_test)
 
     done = env.repo.forge(command, item, cwd=where)

@@ -102,25 +102,27 @@ def test_3_active_writer_retries_and_continues_the_conversation(repo, monkeypatc
 
     monkeypatch.setenv("STUB_RESUME_ERROR", "hold")
     with _writer(repo, "hold") as holder:
-        fresh = repo.forge("work", "BOARD/PAGE")
-        assert fresh.returncode == 0, fresh.stdout + fresh.stderr
+        refused = repo.forge("work", "BOARD/PAGE")
+        assert refused.returncode != 0, refused.stdout + refused.stderr
         assert holder.poll() is None
     assert len(_sent(calls, "thread/resume")) == 4
-    assert len(_sent(calls, "thread/start")) == 2
-    assert "already has an active writer" in fresh.stdout
-    assert "Starting a new Codex conversation" in fresh.stdout
-    assert _lines(turns)[-1]["continued"] is False
+    # A busy writer stops this round and preserves the original chat, rather than forking it.
+    assert len(_sent(calls, "thread/start")) == 1
+    assert "already has an active writer" in refused.stdout + refused.stderr
+    assert "Starting a new Codex conversation" not in refused.stdout
+    assert len(_sent(calls, "turn/start")) == 2
 
     monkeypatch.setenv("STUB_RESUME_ERROR", "other")
-    fresh = repo.forge("work", "BOARD/PAGE")
-    assert fresh.returncode == 0, fresh.stdout + fresh.stderr
+    refused = repo.forge("work", "BOARD/PAGE")
+    assert refused.returncode != 0, refused.stdout + refused.stderr
     assert len(_sent(calls, "thread/resume")) == 5
-    assert len(_sent(calls, "thread/start")) == 3
-    assert "Codex couldn't resume its conversation: stub: store is busy" in fresh.stdout
-    assert _lines(turns)[-1]["continued"] is False
+    assert len(_sent(calls, "thread/start")) == 1
+    assert "stub: store is busy" in refused.stdout + refused.stderr
+    assert "Starting a new Codex conversation" not in refused.stdout
+    assert len(_sent(calls, "turn/start")) == 2
 
-    monkeypatch.setenv("STUB_RESUME_ERROR", "hold")
-    with _writer(repo, "hold", "thr-stub-3") as holder:
+    monkeypatch.setenv("STUB_RESUME_ERROR", "release")
+    with _writer(repo, "release", "thr-stub-1") as holder:
         work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
                                 cwd=repo.path, env={**os.environ, "STUB_HOLD_TURN": "1"},
                                 stdout=subprocess.PIPE,
@@ -142,6 +144,8 @@ def test_3_active_writer_retries_and_continues_the_conversation(repo, monkeypatc
             assert work.returncode == 0, output + errors
             assert holder.poll() is None
             assert not turns.with_suffix(".lock").exists()
+            assert len(_sent(calls, "thread/start")) == 1
+            assert _sent(calls, "thread/resume")[-1]["threadId"] == "thr-stub-1"
         finally:
             release.touch()
             if work.poll() is None:

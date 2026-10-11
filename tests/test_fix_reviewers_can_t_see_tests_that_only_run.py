@@ -25,7 +25,8 @@ def _with_test_command(env, suite: str) -> None:
     toml = env.repo.path / "forge.toml"
     command = f"{sys.executable} -m pytest -q -p no:cacheprovider checks"
     env.commit(env.repo.path, "forge.toml",
-               toml.read_text("utf-8") + f"test = {command!r}\n".replace("'", '"'))
+               toml.read_text("utf-8") + f"test = {command!r}\n".replace("'", '"')
+               + f"fast_test = {command!r}\n".replace("'", '"'))
     env.commit(env.repo.path, "checks/test_suite.py", suite)
     env.repo.git("push", "-q", "origin", "main")
 
@@ -75,7 +76,8 @@ def test_4_close_shows_a_go_style_skip_and_its_reason(env):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "gotest.py", GO_STYLE)
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + f"test = {f'{sys.executable} gotest.py'!r}\n".replace("'", '"'))
+               + f"test = {f'{sys.executable} gotest.py'!r}\n".replace("'", '"')
+               + f"fast_test = {f'{sys.executable} gotest.py'!r}\n".replace("'", '"'))
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0

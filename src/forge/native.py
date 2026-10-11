@@ -67,7 +67,9 @@ def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_pro
         resume = previous.get("subagent") if not why and previous.get("session") == owner["id"] else None
         entry = machine.join("read", top, target, models.get("model"), models.get("effort"))
         machine.hold_session(entry, owner)
-        codex._record(path, pending={"checkout": top.resolve().as_posix(), "session": owner["id"],
+        codex._record(path, **({"claude": None} if result["reader"] == "codex" else
+                              {"conversation": None, "start": None}),
+                      pending={"checkout": top.resolve().as_posix(), "session": owner["id"],
                                     "entry": entry, "result": result})
         print(json.dumps({"target": target, "role": "reader", "tool": result["reader"],
                           "checkout": top.resolve().as_posix(), **models,
@@ -92,7 +94,7 @@ def handback(args: Any) -> int:
     path = codex._item_file(top, args.target, ".json", "Grill")
     lock = path.with_suffix(".lock")
     with codex._one_at_a_time(lock):
-        pending = codex.record(top, args.target, "Grill").get("pending")
+        pending = codex._json(path).get("pending")
         held = codex._json(lock)
         if not pending or pending["session"] != owner["id"] or any(
                 held.get(key) != owner["process"][key] for key in ("pid", "started")):

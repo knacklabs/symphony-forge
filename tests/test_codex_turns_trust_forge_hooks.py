@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -78,6 +79,15 @@ def _refusal(named, path, command, item):
 def _stopped(calls, before):
     sent = [call.get("method") for call in _stub(calls)[before:]]
     return "hooks/list" in sent and not {"thread/start", "thread/resume", "turn/start"} & set(sent)
+
+
+def _canonical_checkout(repo, client, branch):
+    # Keep Forge's real item state while the hook provider lists the canonical checkout's hooks.
+    trees = repo.git("worktree", "list", "--porcelain", cwd=client).split("\n\n")
+    owner = next(Path(tree.splitlines()[0].removeprefix("worktree ")) for tree in trees
+                 if f"branch refs/heads/{branch}" in tree.splitlines())
+    repo.git("worktree", "remove", str(owner), cwd=client)
+    repo.git("checkout", "-q", branch, cwd=client)
 
 
 def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_turns(
@@ -233,7 +243,9 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
     if lifecycle == "new":
         made = repo.forge("init", cwd=client)
         assert made.returncode == 0, made.stdout + made.stderr
-        repo.git("checkout", "-q", "-b", "fix/hook-trust", cwd=client)
+        started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted", cwd=client)
+        assert started.returncode == 0, started.stdout + started.stderr
+        _canonical_checkout(repo, client, "fix/hook-trust")
     else:
         # Run the released command, rather than labelling today's generated files as old.
         (client / "README.md").write_text("# An existing app\n", encoding="utf-8")
@@ -246,7 +258,7 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
             cwd=client, capture_output=True, text=True, encoding="utf-8", timeout=120)
         assert made.returncode == 0, made.stdout + made.stderr
         repo.git("merge", "-q", "--ff-only", "fix/adopt-forge", cwd=client)
-        repo.git("checkout", "-q", "-b", "fix/upgrade-forge", cwd=client)
+        _canonical_checkout(repo, client, "fix/adopt-forge")
         config = client / "forge.toml"
         old = config.read_text(encoding="utf-8")
         assert 'version = "v1.2.2"' in old

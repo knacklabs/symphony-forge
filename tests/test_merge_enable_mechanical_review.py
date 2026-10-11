@@ -41,6 +41,7 @@ def client(owner, request):
             f"from pathlib import Path; Path({json.dumps(str(owner.tmp / 'tested.txt'))}).write_text('passed')"]
     command = subprocess.list2cmdline(args) if os.name == "nt" else shlex.join(args)
     text = re.sub(r'^test = .*$', lambda _: "test = " + json.dumps(command), text, flags=re.M)
+    text = "fast_test = " + json.dumps(command) + "\n" + text
     version = repo.forge("--version").stdout.split()[-1]
     text = re.sub(r'^version = .*$', lambda _: "version = " + json.dumps(version), text, flags=re.M)
     repo.write("forge.toml", text)

@@ -3,6 +3,7 @@ a Markdown file, or under .factory/, and still runs the review and waits for eve
 any other changed file runs the test command as before."""
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -20,8 +21,9 @@ def _with_test_command(env) -> Path:
     script = env.tmp / "suite.py"
     script.write_text(f"open({str(log)!r}, 'a').write('ran\\n')\nprint('1 passed')\n", "utf-8")
     toml = env.repo.path / "forge.toml"
+    command = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}"'
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"'))
+               + "fast_test = " + json.dumps(command) + "\n")
     env.repo.git("push", "-q", "origin", "main")
     return log
 
