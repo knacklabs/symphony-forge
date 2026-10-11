@@ -49,14 +49,23 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5", "--effort", "medium"]
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5, medium) because workers = claude; "
             "forge.local.toml: workers = claude, models.build; forge.toml: tools = both") in built.stdout
-    # A local tools choice overrides forge.toml's Codex workers too.
+    # A local tools choice overrides forge.toml's Codex workers too. forge.toml has only Codex
+    # models, so Claude's come from Forge's built-in default.
     (repo.path / "forge.local.toml").write_text('tools = "claude"\n', "utf-8")
     started = repo.forge("task", "start", "BOARD/API")
     assert started.returncode == 0, started.stdout + started.stderr
     built = repo.forge("work", "BOARD/API")
     assert built.returncode == 0, built.stdout + built.stderr
     assert len(calls(claude_log)) == 2
-    assert "because tools = claude; forge.local.toml: tools = claude; forge.toml: workers = codex, models.build" in built.stdout, built.stdout
+    assert ("because tools = claude; forge.local.toml: tools = claude; forge.toml: workers = codex; "
+            "built-in default: models.build") in built.stdout, built.stdout
+    # A started fix's forge work line names its worker and sources too.
+    fixed = repo.forge("fix", "start", "Tidy the readme", "--done", "The readme is tidy")
+    assert fixed.returncode == 0, fixed.stdout + fixed.stderr
+    name = fixed.stdout.split()[2]
+    shown = repo.forge("next").stdout
+    assert (f"Next: forge work {name}  # Claude builds it (forge.local.toml: tools = claude; "
+            "forge.toml: workers = codex; built-in default: models.lite)") in shown, shown
     for folder in (repo.path, page, other):
         assert repo.git("status", "--porcelain", "--untracked-files=no", cwd=folder) == ""
 

@@ -533,8 +533,7 @@ def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]
 def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
     """One tool overrides workers; both keeps workers' tool or split's design routing.
     Design work uses the family's design model. forge work and forge next both ask this."""
-    family = (cfg["tools"] if cfg["tools"] != "both" else
-              cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
+    family = _family(cfg, design)
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
     why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
            if cfg["tools"] != "both" else
@@ -544,20 +543,25 @@ def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str,
     return family, chosen, why + (f"; {sources}" if (sources := setting_sources(cfg, kind, design)) else "")
 
 
+def _family(cfg: dict[str, Any], design: bool) -> str:
+    return (cfg["tools"] if cfg["tools"] != "both" else
+            cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
+
+
 def setting_sources(cfg: dict[str, Any], kind: str, design: bool) -> str:
-    """With a forge.local.toml, which file set tools, workers and this work's models table, such as
+    """With a forge.local.toml, which file set tools, workers and this work's models, such as
     "forge.local.toml: tools = both; forge.toml: workers = codex, models.build"; else ""."""
     local = cfg.get("local")
     if local is None:
         return ""  # ponytail: no local file means forge.toml set them all, so output stays as it was
     kind = "design" if design else "lite" if kind == "explore" and "explore" not in cfg["models"] else kind
-    files: dict[str, list[str]] = {LOCAL: [], "forge.toml": []}
+    files: dict[str, list[str]] = {LOCAL: [], "forge.toml": [], "built-in default": []}
     for key in ("tools", "workers"):
         files[LOCAL if key in local else "forge.toml"].append(f"{key} = {cfg[key]}")
-    if kind in local.get("models", {}):
-        files[LOCAL].append(f"models.{kind}")
-    elif kind in cfg["shared"]["models"]:
-        files["forge.toml"].append(f"models.{kind}")
+    # A file sets this work's models only with an entry for the worker that runs it.
+    family = _family(cfg, design)
+    files[next((name for name, table in ((LOCAL, local.get("models", {})), ("forge.toml", cfg["shared"]["models"]))
+                if models({"models": table}, kind, family)), "built-in default")].append(f"models.{kind}")
     return "; ".join(f"{name}: {', '.join(keys)}" for name, keys in files.items() if keys)
 
 

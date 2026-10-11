@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
+from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, task, upgrade
 from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
@@ -667,7 +667,22 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
-    return [sentence.format(**values), f"Next: {step.format(**values)}"]
+    return [sentence.format(**values), f"Next: {step.format(**values)}" + (
+        _builder(item, status, path or top, refusals) if step == "forge work {item}" else "")]
+
+
+def _builder(item: str, status: str, folder: Path, refusals: dict[Path, str]) -> str:
+    """The worker beside a forge work line, with where its settings came from, when a
+    forge.local.toml sets any; "" otherwise."""
+    cfg = _report_config(folder, refusals)
+    key, _, name = item.partition("/")
+    doc = folder / "plans" / f"{key}.md"
+    design = bool(name) and doc.is_file() and repo.user_facing(
+        cfg, task.rows(task.sections(doc.read_text(encoding="utf-8"))).get(name, {}))
+    # As forge work picks it: a first round builds a task or runs a fix as lite work.
+    kind = "fix" if status != "started" else "build" if name else "lite"
+    sources = repo.setting_sources(cfg, kind, design)
+    return f"  # {repo.worker(cfg, kind, design)[0].title()} builds it ({sources})" if sources else ""
 
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
