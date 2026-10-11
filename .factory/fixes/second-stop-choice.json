@@ -1,13 +1,6 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/second-stop-choice",
-  "chat": {
-    "approval": null,
-    "claude": null,
-    "conversation": "01a129af-3a90-7bf0-9274-85204e12f329",
-    "head": "c7f07f250fa76748a80070eb9a30bd5579035b4e",
-    "start": "bf12657d9992e4f9163b206aadeddfaac0886ca2"
-  },
   "done_when": "When a review loop stops again after an earlier recorded choice, forge close --resolve narrow, split or accept records the new choice and the board and forge next show the item waiting on that choice until it is made",
   "flagged": [
     "src/forge/close.py"
@@ -15,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b96e98ae92b4206bb55b53285d4314c84971838e9df3e69c9b3fb0a0d094f729",
-    "changed": "054076b5e4ac0e271f6f85e8dcc8ba21348f5af48cd9a9185b01b63fc074df7a",
-    "commit": "db81d1644e57c9e4b550ffefc5edff75a1a50f6a",
+    "branch_diff": "98b4b52e0b0dc3ea418a1aa5c0bf5d2f70438b8fd484a42518de7048387a0ac3",
+    "changed": "f339cdfcda147252aa61a231626eda15ad33571ffa7b0f69b8336c5c7ac8a50e",
+    "commit": "d7e1bdbea97aabc4827e07d56b2bbc048cf85707",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Functional. An existing client can upgrade after recording its first choice. Earlier same-file stops have no `round` field, so line 194 treats that choice as round zero. The prior three blocked reviews still satisfy `_three_blocked_reviews`, and the first `forge close` after the upgrade stops before reviewing the owner's new work. Earlier any-file stops instead store the attempted fourth round, delaying the next stop by a round. The new test upgrades clients before their first choice, so it misses both persisted-state cases.",
-        "file": "src/forge/close.py",
-        "line": 194,
-        "priority": "P1",
-        "title": "Earlier-release choices can trigger another stop before three new rounds"
-      }
-    ],
-    "id": "c154f695-07f4-4ed6-8255-a2c760a83fb8",
-    "status": "blocked"
+    "findings": [],
+    "id": "93e1a26a-12b5-4ac0-87ea-ec1b3cb70a2f",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T06:38:17.441218+00:00",
@@ -40,6 +25,10 @@
     },
     {
       "at": "2026-10-11T07:46:03.249073+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T12:55:49.057941+00:00",
       "step": "review"
     }
   ],
