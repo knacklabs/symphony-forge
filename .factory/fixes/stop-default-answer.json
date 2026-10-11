@@ -19,24 +19,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fe7f6e1cc931addf80668d9854556e854cce36a10ce862141db06a5eafaf4355",
-    "changed": "9152bf8f11d76ebc97bce7944522e4149a0866f0c00cfc8f9af957856bfdbaa5",
-    "commit": "4ac5a315aff852dd1d4ba1cd98747d6b0c991f12",
+    "branch_diff": "fa18218fd2cc468f0342d5251298636bbf34219462104a7e30b290911b1d9859",
+    "changed": "3a79f12c65035f1d7f7742ce7b5bdd70557b2d52285fc737cf548bdb87ab3db9",
+    "commit": "74cbf899210f51eb191ef7c425983c554991a30c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. If the owner merges `stop_default = \"off\"` into the repo's `forge.toml` while another item is stopped, `default_due` reads that item's older checkout, where the setting is still `narrow`. The waiting `forge land` process therefore records the default and starts follow-up fixes after 30 minutes despite the repo's new choice. `forge close` checks the stop before merging the default branch (`close.py:123-146`), so it cannot pick up the setting first. The tests set `off` before creating the stopped item and miss this normal setting-change path.",
-        "file": "src/forge/nextstep.py",
-        "line": 612,
+        "body": "Raise: Functional. `forge land` starts the worker after recording the timed default, and this choice is put into the worker brief only when that round starts. If the owner then records `--resolve split` while the worker is running, the current worker never receives the split instruction. Land can accept a clean review and merge without starting another worker round, despite reporting that the owner's choice was recorded. This is a normal minutes-long window; `test_5` covers only a reversal made before `forge work` starts.",
+        "file": "src/forge/worker.py",
+        "line": 159,
         "priority": "P1",
-        "title": "A repo setting change does not reach an already stopped item"
+        "title": "Owner reversal during an active worker round is ignored"
       }
     ],
-    "id": "0b16aeb5-66c1-4001-99dc-e1fb53cdc873",
+    "id": "b6b85959-8808-4201-91a3-b2b36fa178bc",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:30:55.492924+00:00",
@@ -61,14 +61,16 @@
     {
       "at": "2026-10-11T18:54:08.931913+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:49:32.085187+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-11T15:41:44.294897+00:00",
-    "choice": "narrow",
+    "at": "2026-10-11T19:49:32.094934+00:00",
     "file": "src/forge/worker.py",
-    "reason": "Coordinator decision under the owner's low-risk rule (Harm 2, reversible): one more round to make an owner's later choice after a recorded default reach the worker; no other change",
-    "wait_id": "56663803-ad7c-4b60-91ae-9b709b28f628"
+    "wait_id": "cb94eaca-7336-44f8-a384-c9e87d4243c5"
   },
   "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves",
   "worker": "codex"
