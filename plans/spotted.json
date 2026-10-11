@@ -804,6 +804,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1926,6 +1937,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 68,
+      "text": "Native read handout stops being valid JSON when the agent line is full",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/READS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2538,6 +2560,17 @@
       "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
       "from": "blocking",
       "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 138,
+      "text": "Not done: stop guidance for native reads",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
       "status": "open",
       "closed_by": null
     },
@@ -5255,28 +5288,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 194,
-      "text": "Earlier-release choices can trigger another stop before three new rounds",
-      "from": "blocking",
-      "item": "second-stop-choice",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
-      "kind": "bug",
-      "path": "src/forge/native.py",
-      "line": 68,
-      "text": "Native read handout stops being valid JSON when the agent line is full",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/READS",
       "status": "open",
       "closed_by": null
     }

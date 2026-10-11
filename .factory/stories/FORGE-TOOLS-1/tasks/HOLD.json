@@ -7,24 +7,33 @@
     "head": null,
     "start": "2a6ab333a4bffc32def95575c80c4d3708fd30ae"
   },
-  "flagged": [],
+  "flagged": [
+    "src/forge/templates/skill.md"
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "da2d87fc811c2aeee3d1838c1852c331107d787e13c263ca2b864b3dacbc0ae6",
-    "changed": "769ebd880356a0fafaff736d8d93f38879fdcac7670c50bf29eb5f876ea16f0a",
-    "commit": "b8572fa74109e3da3552b16135cef41fa62fc634",
+    "branch_diff": "a899f5ec4ff018b44a0d841741f631d33ac6ce2384a06a91b80b569307f69b0d",
+    "changed": "03ba498879a93c8ac1d8dd37fc933099dd5fbf89503fe6bd7c06e81994bde349",
+    "commit": "2183da2a1c2e54697000647da6e2a20283095d55",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new no-session refusal applies only when a caller uses `repo.route`. `worker.work` does not call it, so `forge work` can still commit item state and start a run in a one-tool repo without a coordinating session. The separate WORK task owns that routing change.",
+        "body": "Raise: Not done. The shipped guide says `forge stop` frees a native read's hold and that the coordinator must stop the subagent separately. Later, the same guide says a running run's verified process tree ends before its place is freed (line 188). Native stops deliberately leave the session and subagent running, so these instructions contradict each other on what `forge stop` does.",
+        "file": "src/forge/templates/skill.md",
+        "line": 138,
+        "priority": "P1",
+        "title": "Not done: stop guidance for native reads"
+      },
+      {
+        "body": "The new no-session refusal runs only through `repo.route`. The unchanged `worker.work` does not call it, so `forge work` can still start in a one-tool repo without a coordinating session. The separate WORK task owns that routing change.",
         "file": "src/forge/repo.py",
         "line": 531,
         "priority": "P2",
         "title": "Later: route forge work through repo.route in WORK"
       }
     ],
-    "id": "ebbacae6-351a-431b-a57b-914230ebed22",
-    "status": "clean"
+    "id": "6985fdfd-d8b2-4b21-82b3-b5288b494dbf",
+    "status": "blocked"
   },
   "round": 2,
   "status": "fixing",
@@ -35,6 +44,10 @@
     },
     {
       "at": "2026-10-11T17:28:21.358260+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:06:56.721540+00:00",
       "step": "review"
     }
   ],
