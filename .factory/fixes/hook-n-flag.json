@@ -1,6 +1,13 @@
 {
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/hook-n-flag",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12b19-4d17-7a90-bb2b-81b678b20f96",
+    "head": null,
+    "start": "60e93db45b593bb0de6dfebf2bc94b289a115b49"
+  },
   "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line",
   "flagged": [
     "src/forge/deny.py"
