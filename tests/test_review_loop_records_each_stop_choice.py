@@ -26,6 +26,9 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
     item, where = client_item(env, tmp_path, previous)
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for cycle, choice in enumerate((first, second)):
+        # Keep the any-file case from hitting the same-file rule across cycles.
+        if cycle and not same_file:
+            paths = ["README.md", ".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md"]
         for offset, path in enumerate(paths, 1):
             number = cycle * 3 + offset
             env.commit(where, "app.py", f"print('round {number}')\n")
