@@ -16,7 +16,7 @@ from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 STORY = "FORGE-CHATVIEW-1"
 
 
-def test_3_new_chats_get_short_names(repo, monkeypatch, sdk_data):
+def test_3_new_chats_get_short_names(repo, monkeypatch, sdk_data, claude_session):
     _, calls, _ = _resuming(repo, monkeypatch, sdk_data)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _sent(calls, "thread/name/set")[-1]["name"] == "BOARD · The page"
@@ -40,8 +40,6 @@ def test_3_new_chats_get_short_names(repo, monkeypatch, sdk_data):
         "grill.claude": {"model": "opus", "effort": "high"}}), encoding="utf-8")
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
-    monkeypatch.setenv("CLAUDECODE", "1")
-    monkeypatch.delenv("CODEX_THREAD_ID")
     read = repo.forge("read", "BOARD")
     assert read.returncode == 0, read.stdout + read.stderr
     assert _sent(calls, "thread/name/set")[-1]["name"] == "Read · BOARD"
@@ -59,7 +57,7 @@ def test_3_new_chats_get_short_names(repo, monkeypatch, sdk_data):
         "Read · customer-chat-preview-keeps-every-important-round…")
 
 
-def test_4_each_prompt_begins_with_its_round_summary(repo, monkeypatch, sdk_data):
+def test_4_each_prompt_begins_with_its_round_summary(repo, monkeypatch, sdk_data, claude_session):
     _, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     first = repo.forge("work", "BOARD/PAGE")
     assert first.returncode == 0, first.stdout + first.stderr
@@ -98,8 +96,6 @@ def test_4_each_prompt_begins_with_its_round_summary(repo, monkeypatch, sdk_data
         "grill.claude": {"model": "opus", "effort": "high"}}), encoding="utf-8")
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
-    monkeypatch.setenv("CLAUDECODE", "1")
-    monkeypatch.delenv("CODEX_THREAD_ID")
     read = repo.forge("read", "BOARD")
     assert read.returncode == 0, read.stdout + read.stderr
     assert _sent(calls, "turn/start")[-1]["input"][0]["text"].startswith(

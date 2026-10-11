@@ -55,7 +55,7 @@ def test_3_a_worker_that_commits_its_round_is_not_asked_again(repo, gh, monkeypa
 
 
 def test_4_a_codex_worker_that_left_changes_uncommitted_is_asked_once_and_commits(
-        repo, gh, monkeypatch, sdk_data):
+        repo, gh, monkeypatch, sdk_data, claude_session):
     folder, server = _codex_repo(repo, monkeypatch, sdk_data)
     monkeypatch.setenv("STUB_CODEX_TOUCH", "login.txt")
     monkeypatch.setenv("STUB_CODEX_COMMIT_FROM", "2")
@@ -72,7 +72,7 @@ def test_4_a_codex_worker_that_left_changes_uncommitted_is_asked_once_and_commit
 
 
 def test_5_a_codex_worker_that_never_commits_still_gets_the_warning(
-        repo, gh, monkeypatch, sdk_data):
+        repo, gh, monkeypatch, sdk_data, claude_session):
     folder, server = _codex_repo(repo, monkeypatch, sdk_data)
     monkeypatch.setenv("STUB_CODEX_TOUCH", "login.txt")
 

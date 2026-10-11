@@ -339,21 +339,19 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
 
 
 def _idle(top: Path) -> list[str]:
-    """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
+    """Nothing in progress: discover a problem, then plan its story; specs are optional."""
     ref = story.landed_ref(top)
     items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
     if isinstance(items, list) and any(
             not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
         return ["No story or fix is in progress.",
-                'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+                'Next: forge story new <KEY> "<title>"',
                 'Next: forge fix start "<why>" --done "<done when>"']
     fields = CARD_FIELD.findall(story.show(top, ref, DISCOVERY) or "")
     if any(value.strip().lower() not in ("", "unknown") for value in fields):
         return ["No story or fix is in progress and the roadmap is empty; the discovery notes hold "
-                "a problem card, so write its spec.",
-                'Next: forge fix start "Write the spec for the chosen problem" --done "A confirmed '
-                'spec whose Why names the problem card"',
-                "Next: forge spec save <slug>"]
+                "a problem card, so plan its story with the problem in Why.",
+                'Next: forge story new <KEY> "<title>"']
     return ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
             "the Forge skill's Discovery section says.",
             'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
@@ -548,6 +546,9 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
+    if record.get("blocked_rounds") == "3" and not record.get("loop_choice"):
+        return [line.format(target=key) for line in
+                (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):

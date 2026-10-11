@@ -455,7 +455,7 @@ your recommendation first. Add a one-line `Why I ask:` to each question until th
 they know why. Ask at most two questions for a fix and eight for a story, then write what is
 still unanswered as `unknown`.
 
-**A new project.** On a new project, or an ask no confirmed spec covers, run this discovery
+**A new project.** On a new project, run this discovery
 with the story limit. Before the first meeting, draft a one-page pre-meeting brief in
 `docs/context/` from the prospect's website: their likely jobs, two or three guessed problem cards
 each marked `(guess)`, their terms, and the first five questions to ask. During discovery, keep
@@ -472,7 +472,8 @@ source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off pers
 adding the section to an older file on first use: `### <short problem title>`, then Job,
 Workaround, Cost, Who feels it, How often and Evidence. Write customer notes in `docs/context/`
 into cards and leave the notes where they are. Name the chosen card's heading in the brief's
-Summary and the spec's Why. Costs use rounded rates, never real salaries.
+Summary and the story's Why (or the spec's Why when using a spec). Costs use rounded rates,
+never real salaries.
 
 **Options.** For the chosen problem, offer two to four options, always with `Don't build` and
 `Smallest slice`, plus `Use what they have` (a setting, report or process change in tools they
@@ -480,7 +481,7 @@ already run) whenever one could do the job. Give each option that builds somethi
 `forge spec payback` line, and recommend the one with the fewest months among those answering
 build or smallest slice first; a tie goes to the smaller build. If none does, recommend don't
 build, or find out first when an option's value can't be estimated. The human chooses; write the
-choice and one line of why into the spec's Behaviour.
+choice and one line of why into the story's Why, or the spec's Behaviour when using a spec.
 
 ## Prototype
 
@@ -688,6 +689,17 @@ fix's folder:
 
 ## Planning a story
 
+Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
+its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
+The entry travels with its tasks to the default branch, including tasks waiting on another story.
+Write the problem, today's workaround and its cost in the plan's Why; the title seeds that
+section. Run the story's one cold-read loop, then get its one approval. A story already linked
+to a confirmed spec keeps that link and follows the same story read and approval as before.
+Promotion keeps the fix's existing roadmap entry: before using `--from-fix`, put that entry
+on the fix's branch and commit it. Promotion adds no entry or separate roadmap copy.
+Forge refuses promotion while the fix's roadmap has uncommitted changes.
+New repos get this guide at init; existing repos get it after upgrading Forge and running sync.
+
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
 there are no findings, ignoring other note lines. A numbered or bulleted real finding still
@@ -707,9 +719,10 @@ checks only the edit and the sections it touches.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
-- Done when: a few results the client or their user can observe, each tracing to the spec's
-  behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
-  code names, file paths or test names. "Code exists" is not a result.
+- Done when: a few results the client or their user can observe, each answering the plan's Why
+  and, when linked to a spec, tracing to its behaviour or success measure.
+  Each item is one bold plain sentence and nothing more, with no code names, file paths or
+  test names. "Code exists" is not a result.
 - Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
   line asking you to split them into smaller stories; already approved larger stories stay as they are.
 - Each item's evidence, edge cases and the test or check that proves it go under the same number in
@@ -720,7 +733,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - Put Risks right after Done when, then the `## For the builders` heading, so the owner's
   sections come first and everything for the agents sits below.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
-  its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
+  its Tests. A task that covers nothing is cut; work wanted later goes to Notes, or the linked
+  spec's Out of scope.
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
@@ -743,7 +757,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 
 **The roadmap.** Order stories by value, not by layer. The first story is the smallest slice, end
 to end and usable by the client; it brings only the setup, sign-in and data it needs. No
-setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
+setup-only, platform or "foundation" stories. Cut a story that answers no problem in its Why;
+when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
@@ -883,6 +898,14 @@ Claude and its design entry. New repos get this at init; existing repos get it o
 
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.
+
+Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
+round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
+Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
+The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
+Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy. New repos
+get the default at init; existing repos get it on upgrade without adding a setting, and sync
+refreshes both host guides. The upgrade's sync announces the default in one line.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
@@ -1135,6 +1158,15 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+
+Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
+specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
+recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
+Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
+the current document; later changes need another read. Narrow or split the part as agreed before
+reading again. A clean round or a recorded choice restarts the three-round count.
+For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
+command as a close stop.
 
 When GitHub refuses because the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,

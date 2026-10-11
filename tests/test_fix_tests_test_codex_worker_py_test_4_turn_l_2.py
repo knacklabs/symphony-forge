@@ -20,8 +20,8 @@ STORY = "tests-test-codex-worker-py-test-4-turn-l-2"
 
 
 @pytest.mark.parametrize("round", range(20 if os.name == "nt" else 1))
-def test_1_test_4_turn_log_passes_20_times_in_a_row_on_windows(repo, monkeypatch, sdk_data, round):
-    test_4_turn_log(repo, monkeypatch, sdk_data)
+def test_1_test_4_turn_log_passes_20_times_in_a_row_on_windows(repo, monkeypatch, sdk_data, round, claude_session):
+    test_4_turn_log(repo, monkeypatch, sdk_data, claude_session)
 
 
 def test_2_a_codex_process_left_running_fails_test_4_turn_log(tmp_path):
