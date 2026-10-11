@@ -34,6 +34,8 @@ $delegation
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
   started still runs in the background. Commit your work before your turn ends: the review reads
   only what is committed.
+- Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
+  `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
