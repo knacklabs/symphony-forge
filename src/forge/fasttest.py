@@ -298,19 +298,24 @@ def pytest_tests(base: str, command: str) -> int:
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
            or not own_version_only(Path(name), base) for name in shared)
+    modules = []
+    for name in changed:
+        path = Path(name)
+        if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
+            continue
+        parts = module_parts(path)
+        if parts[-1] == "__init__":
+            parts.pop()
+        if parts:
+            modules.append((".".join(parts), path))
+    # Tests that run the program from outside never name its files, so say what local runs miss.
+    from forge.review import GAP  # imported late: review's imports lead back here
+    print("".join(f"{GAP}{source.as_posix()}; GitHub's checks will cover it.\n"
+                  for module, source in modules
+                  if not any(mentions(path, module, source) for path in tests)), end="", flush=True)
     if shared_changed:
         selected = [path.as_posix() for path in tests]
     else:
-        modules = []
-        for name in changed:
-            path = Path(name)
-            if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
-                continue
-            parts = module_parts(path)
-            if parts[-1] == "__init__":
-                parts.pop()
-            if parts:
-                modules.append((".".join(parts), path))
         selected = []
         for path in tests:
             if (path.as_posix() in changed
