@@ -39,7 +39,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:16:43+00:00",
@@ -59,7 +59,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/fasttest.py",
+    "reason": "Owner chose narrow: pick tests only for Python, Vitest and Jest with each tool's own changed-files option; every other repo runs its full test command as today",
     "wait_id": "f44c26da-5432-45e5-8390-ea7180a7d0e4"
   },
   "why": "Each round runs the same tests twice, on the laptop and in CI, which is most of a round's time",
