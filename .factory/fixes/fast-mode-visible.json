@@ -1,6 +1,13 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/fast-mode-visible",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12aa3-f1dd-7900-b8ba-3b4d91203966",
+    "head": "7257154286226c7a394e8a22253cc585a11cac50",
+    "start": "00ef47e605a0073f55f0afa35786aafe01081aa5"
+  },
   "done_when": "Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast was wanted but the model does not offer it, and Fast is used whenever the model offers it",
   "flagged": [
     "src/forge/codex.py",
