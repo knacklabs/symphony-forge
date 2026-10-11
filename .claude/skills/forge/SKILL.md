@@ -990,6 +990,11 @@ rules and the build-simple ladder. Apply its rules in every phase.
 **Finding forms.** `Simpler: <cut> → <replacement>` is P2, or P1 when a new moving part isn't
 named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when item:
 `Not done: <item>` (P1). A missing rule-11 basic is its own P1, never `Simpler:`.
+A `Not done` finding blocks only when it names a Done-when item the change misses as
+written. A case the Done-when does not name, such as another language, platform, shell,
+tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
+doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
+on the changed code still blocks under its own Raise line.
 
 ## Closing
 
