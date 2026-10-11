@@ -284,11 +284,10 @@ def few_tests(top: Path, command: str, base: str) -> bool:
     if runner not in {"pytest", "pytest.exe"} and not (
             re.fullmatch(r"python[\d.]*(?:\.exe)?", runner) and words[1:3] == ["-m", "pytest"]):
         return False
-    # Doctests collect from every module, not only the picked test files.
-    if any(word.startswith("--doctest") for word in words):
-        return False
-
     with contextlib.chdir(top):
+        # Doctests collect from every module, not only the picked test files.
+        if "doctest" in test or "doctest" in fasttest.pytest_options(words):
+            return False
         picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
     # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.
     return not picked[2] and len(picked[0]) <= 5

@@ -18,9 +18,10 @@ STORY = "reviews-skip-agent-line"
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
 @pytest.mark.parametrize("file_count, compound, other_suite, doctest",
                          [(5, False, False, False), (6, False, False, False), (5, True, False, False),
-                          (5, False, True, False), (5, False, False, True)],
+                          (5, False, True, False), (5, False, False, "command"),
+                          (5, False, False, "config")],
                          ids=["five-files", "six-files", "compound-command", "underlying_full_suite",
-                              "doctest-option"])
+                              "doctest-option", "doctest-config"])
 def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
                                                                  adopted, file_count, compound, other_suite, doctest):
     server, connections = release_server
@@ -47,7 +48,9 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
                    "def test_current_app():\n    assert VALUE == 2\n")
     picker = "forge test --pytest {base}"
     test_command = shell([sys.executable, "-m", "pytest", "tests", "-q",
-                          *(["--doctest-modules"] if doctest else [])])
+                          *(["--doctest-modules"] if doctest == "command" else [])])
+    if doctest == "config":
+        repo.write("pytest.ini", "[pytest]\naddopts = --doctest-modules\n")
     if compound:
         picker += " && " + test_command
     if other_suite:
