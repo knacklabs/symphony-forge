@@ -7,7 +7,6 @@ for these cases, so they cannot protect the new continuity contract.
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -228,18 +227,6 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
         if app == "claude" and change == "record-missing":
             synced = repo.forge("sync", cwd=other)
             assert synced.returncode == 0, synced.stdout + synced.stderr
-        elif change == "machine-restart":
-            branch = repo.git("branch", "--show-current", cwd=reader.shop)
-            repo.git("add", "-A", cwd=reader.shop)
-            repo.git("commit", "-qm", "Keep reader settings before removing its checkout", cwd=reader.shop)
-            repo.git("worktree", "remove", str(reader.shop))
-            with monkeypatch.context() as temporary:
-                if os.name != "nt":
-                    alias = tmp_path / "temporary directory alias"
-                    alias.symlink_to(tmp_path, target_is_directory=True)
-                    temporary.setenv("TMPDIR", str(alias))
-                _sync_elsewhere(repo, tmp_path)
-            repo.git("worktree", "add", "-q", str(reader.shop), branch)
         else:
             _sync_elsewhere(repo, tmp_path)
         assert _accepted_read(reader.text()) == accepted

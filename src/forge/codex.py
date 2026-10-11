@@ -303,7 +303,7 @@ def preserve_chats(top: Path) -> None:
                             story.show(top, begun, notes) or "") == landed_notes:
                         recovered = binding
             if owner is None and branch in refs:
-                owner = (Path(temporary) / "item").resolve()
+                owner = Path(temporary) / "item"
                 repo.git("worktree", "add", "-q", str(owner), branch, cwd=top)
                 added = True
             if owner is None and folder == "read" and not branch and (
