@@ -17,26 +17,12 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "56971047c7541f0ac295b70a7da3ef312ae5a9e8965fd8770fb66093cbc4b176",
-    "changed": "c66b9cccf13972586f6cfe0a866ad549cf1696274e6b394ac2cbc24bb49cf3f0",
-    "commit": "a72b67dd38e2b1ab36991ef597650eabb9269650",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): round 6 was clean; round 7 after a main merge found a nested pytest config case; recorded as lived-with with a follow-up to read config files between the repo root and the test path",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Raise: Functional \u2014 A client with `test = \"pytest tests\"` and `tests/pytest.ini` containing `addopts = --doctest-modules` can run doctests from many Python helper files while taking no test place. The guard here calls `pytest_options`, but `fasttest.py:31\u201354` checks only repository-root config files and explicit `-c` files. [Pytest searches for configuration from the `tests` path upward](https://docs.pytest.org/en/stable/reference/customize.html), so it uses the nested file that Forge misses. Five selected test files therefore qualify for free admission despite the broader collection. This is distinct from the earlier root `pyproject.toml` case; the named config proof uses only a root `pytest.ini`.",
-        "file": "src/forge/review.py",
-        "line": 289,
-        "priority": "P1",
-        "title": "Nested pytest config lets doctests bypass the test place"
-      }
-    ],
-    "id": "59b89955-7e6e-4bad-a6be-9b43d9703c37",
+    "branch_diff": "4ad8d14af84273967e71f042e657992b921a49201904f654746d64ea51b2c450",
+    "changed": "36f762f9ae41899ffff6a148e4f98cb081aa9f3188412a466c8f699b478774f7",
+    "commit": "c0e66a96204fb95c843245f09990601cef0fe386",
+    "dismissals": [],
+    "findings": [],
+    "id": "20624373-159c-404f-b05a-bf150ca6f491",
     "status": "clean"
   },
   "round": 2,
@@ -72,6 +58,10 @@
     },
     {
       "at": "2026-10-11T18:37:16.036731+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T21:32:52.227810+00:00",
       "step": "review"
     }
   ],
