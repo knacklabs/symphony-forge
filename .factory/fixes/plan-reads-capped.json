@@ -33,7 +33,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:32:02.888915+00:00",
@@ -53,7 +53,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/templates/cold-read.md",
+    "reason": "Coordinator decision under the owner's low-risk rule (risk 2): from round three, a change to the linked spec or the brief's Answers since the last round also counts as changed text that can block",
     "wait_id": "52ffb420-a392-4541-ad10-8ee600ede74b"
   },
   "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner",
