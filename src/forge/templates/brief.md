@@ -239,8 +239,9 @@ conventions apply only to a repo on the default stack.
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
 cover and every detail next to the test or check that proves it, or marked `missing`. Include the
-test's file and case name, or the named check and its result. Keep the whole list current in every
-round, not only the entries you changed. Forge copies it into the pull request and gives it to
+test's file and case name, or the named check and its result. Every commit's `Proof list:` carries
+the previous one forward and adds to it, even in a small repair commit; never list only the latest
+change. Forge copies it into the pull request and gives it to
 the reviewer. The first review checks every entry and reports every missing case it finds in
 that one round.
 
