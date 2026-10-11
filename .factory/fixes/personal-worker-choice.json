@@ -1,0 +1,14 @@
+{
+  "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
+  "branch": "fix/personal-worker-choice",
+  "done_when": "A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it, overrides only which tools run work, the worker split and the model and effort per kind of work; Forge refuses any other key in it; new and upgraded repos ignore the file in git; forge next and forge doctor show which file each of those settings came from",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T09:41:53.088023+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings"
+}
