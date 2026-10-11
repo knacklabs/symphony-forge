@@ -213,6 +213,11 @@ $checks
 <!-- end -->
 ## Build simple
 
+A plan's cold read passes with no blocking notes. A note blocks when the plan is wrong,
+contradicts itself, or a builder could not act on it. Notes marked `Advisory:` are recorded and
+need no disposition or another round; only blocking findings need the coordinator to amend
+the plan and read again.
+
 Take the first rung that holds: don't build it; reuse what the repo has; the standard library; the
 platform; an installed dependency; one line; then the least code that works. Never simplify away
 validation, security, data-loss protection or accessibility.

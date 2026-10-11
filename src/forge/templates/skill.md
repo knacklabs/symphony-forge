@@ -717,6 +717,11 @@ fix's folder:
 
 ## Planning a story
 
+A cold read passes when none of its notes is blocking: the plan is wrong, contradicts itself,
+or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
+`Advisory:`. Advisory notes are recorded and need no disposition or another round; unmarked
+findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
+
 Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
 The entry travels with its tasks to the default branch, including tasks waiting on another story.
@@ -730,7 +735,7 @@ New repos get this guide at init; existing repos get it after upgrading Forge an
 
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
-there are no findings, ignoring other note lines. A numbered or bulleted real finding still
+there are no findings, ignoring other note lines. A numbered or bulleted blocking finding still
 needs a disposition and another round.
 
 Use one framing line before showing a story in Plan Mode:
