@@ -16,31 +16,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "12fb9333d0db05ef49930ccdc58ec72eeef65567cecb4dfd039a9c24c692aa0b",
-    "changed": "544303ea620b8b2bae010e23b58ea056f908b6960be897357b2fd9a7f2115847",
-    "commit": "3b481495da076f748f7a3b8d7434478d6ab64445",
+    "branch_diff": "dc9c71b96fadceddd9efddd2ed712c1b5da95dee2ea7e6df73b5f7d8885808e4",
+    "changed": "e9a907d3ebdb011465a47bd447d4d3f5d5d0163e81bb3b751d218c341930136a",
+    "commit": "e66b808c1916b33dfe5d44c59abab58300bed687",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. Forge does not pass `--stream-engine-output` to Autoreview. [Autoreview's engine code](https://github.com/openclaw/agent-skills/raw/refs/heads/main/skills/autoreview/scripts/autoreview) adds `--json` to Codex only when that opt-in flag is set. On a normal Codex review, the launcher therefore receives no `thread.started` or `turn.completed` events for `_spent` to parse, and the run end lacks chat and token use. The `review_codex` proof misses this because its fake helper always invokes Codex with `--json`.",
-        "file": "src/forge/review.py",
-        "line": 598,
-        "priority": "P1",
-        "title": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do"
-      },
-      {
-        "body": "Raise: Scale. Autoreview can split a large review into multiple provider passes, but `_spent` replaces `found` at each new Codex thread and each Claude result. For a review split into two passes, the single Forge run end records only the final pass's chat and tokens, understating the review's cost. The named tests exercise only one pass.",
-        "file": "src/forge/review.py",
-        "line": 753,
-        "priority": "P1",
-        "title": "Chunked reviews record only the last pass's token use"
-      }
-    ],
-    "id": "9a9c8c2f-59f9-49ab-ad35-d0d72814ab7b",
-    "status": "blocked"
+    "findings": [],
+    "id": "b43785df-81cf-4ee3-8d3a-4aec0be52369",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T09:13:38.849775+00:00",
@@ -52,6 +37,10 @@
     },
     {
       "at": "2026-10-11T13:27:14.915466+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:09:44.607723+00:00",
       "step": "review"
     }
   ],
