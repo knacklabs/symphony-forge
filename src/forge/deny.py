@@ -33,6 +33,7 @@ ALONE_BREAKERS = OPERATORS | set("`'\\\n{}=")
 COMMIT_VALUES = {"--message", "--file", "--author", "--date", "--template", "--reuse-message",
                  "--reedit-message", "--fixup", "--squash", "--trailer", "--cleanup",
                  "--pathspec-from-file"}
+HEREDOC = re.compile(r"<<-?[ \t]*(?:'(\w+)'|\"(\w+)\"|(\w+))(?=[\s;&|<>)]|$)")
 CONFIG_GETS ={"--get", "--get-all", "--get-regexp"}
 CONFIG_SCOPES = {"--global", "--local", "--system", "--worktree"}
 
@@ -175,18 +176,20 @@ def _commit_skips_hooks(args: list[str]) -> bool:
 
 
 def _without_data(text: str) -> str:
-    """The text without comments and heredoc bodies, which are data such as a commit message. An
-    unquoted body keeps its lines with $(...) or backticks, which run. Nothing is dropped when a
-    shell or eval is a command word outside them, since it may run them: refusing too much beats
-    missing a command. Only a # or << outside quotes starts a comment or opens a heredoc."""
+    """The text without comments, and without the heredoc bodies that are only data: those read by
+    `git commit -F -` and by a cat whose output nothing runs (not piped, at most inside a git
+    commit's $(...)). Every other body is checked as commands, so when unsure Forge refuses. Only
+    a # outside quotes starts a comment, and only a << redirection (outside quotes and $((...)),
+    to a plain or wholly quoted word) opens a heredoc; an unquoted body keeps its $(...) lines."""
     kept: list[str] = []
-    quote, outer = "", []  # the open quote, and the quotes around each open $(
+    quote, start, outer = "", 0, []  # open quote, where this command starts, each open $( or $((
     lines = iter(text.split("\n"))
     for line in lines:
         kept.append(line)
-        bodies, i = [], 0
+        bodies, i, start = [], 0, 0
         while i < len(line):
             c = line[i]
+            arith = bool(outer) and outer[-1][2]
             if quote == "'":
                 quote = "" if c == "'" else quote
             elif c == "\\":
@@ -194,31 +197,37 @@ def _without_data(text: str) -> str:
             elif quote == '"' and c == '"':
                 quote = ""
             elif line.startswith("$(", i):
-                outer.append(quote)
-                quote, i = "", i + 1
-            elif c == ")" and not quote and outer:
-                quote = outer.pop()
-            elif quote:
+                outer.append((quote, line[start:i], line.startswith("$((", i)))
+                quote, i = "", i + (2 if outer[-1][2] else 1)
+                start = i + 1
+            elif c == ")" and not quote and outer and (not arith or line.startswith("))", i)):
+                quote, i, start = outer.pop()[0], i + arith, i + 1 + arith
+            elif quote or arith:
                 pass
             elif c in "'\"":
                 quote = c
             elif c == "#" and (i == 0 or line[i - 1] in " \t;&|()"):
                 kept[-1] = line[:i]
                 break
-            elif found := re.match(r"<<-?\s*(['\"]?)(\w+)\1", line[i:]):
-                bodies.append((found[2], bool(found[1])))
-                i += found.end() - 1
+            elif c in ";&|()":
+                start = i + 1
+            elif line[i - 1:i] != "<" and (found := HEREDOC.match(line, i)):
+                owner = line[start:i].split()
+                stdin_message = owner[:2] == ["git", "commit"] and "-F -" in " ".join(owner)
+                shown = owner[:1] == ["cat"] and (
+                    outer[-1][1].split()[:2] == ["git", "commit"] if outer
+                    else "|" not in line[found.end():])
+                bodies.append((found[1] or found[2] or found[3], found[3] is not None,
+                               stdin_message or shown))
+                i = found.end() - 1
             i += 1
-        for end, quoted in bodies:
+        for end, unquoted, data in bodies:
             for body in lines:
                 if body.strip() == end:
                     break
-                if not quoted and ("$(" in body or "`" in body):
+                if not data or unquoted and ("$(" in body or "`" in body):
                     kept.append(body)
-    without = "\n".join(kept)
-    runs_shell = any(SHELLS & {word.rsplit("/", 1)[-1] for word in words}
-                     for words in _commands(without))
-    return text if runs_shell else without
+    return "\n".join(kept)
 
 
 def _short(args: list[str]) -> set[str]:
