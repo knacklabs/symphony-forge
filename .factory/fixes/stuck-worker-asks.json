@@ -9,34 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "818ac9e29ff511ba5d786e84016b88855e7d19080c7a0802a122f6cf0faa65b2",
-    "changed": "4b3510f59c1b1e34f29a6a46b179cf827d5d6cc75cb348320d94080c699aa9b0",
-    "commit": "48ff6c79fe03218b9a118e64c88731d0bd9dbeba",
+    "branch_diff": "646c866becd7154b0501f9199a53134d5efb504f12a26b18dd2a6eb36bf26ecc",
+    "changed": "dfc03babcb41f583672e4de515adaeef7536fcce084df00181b75121b9bc626f",
+    "commit": "04cadfcbf06cc6a767f82ef030129f327f861b2e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. For a client configured with `tools = \"claude\"` or `tools = \"codex\"`, the question omits the required switch choice, and `forge close --resolve switch` rejects it at close.py:99. The owner therefore cannot choose the other tool for that item.",
+        "body": "Raise: Not done. If the first fix round clears failure A but leaves failure B, and the second fix round still leaves B, Forge should stop before a third fix round. At the A-to-B transition, `rounds` resets to 1. When B appears again, this condition is false, so `forge work` runs another round without asking the owner. The named tests begin with the failure that repeats and do not cover this progression.",
         "file": "src/forge/close.py",
-        "line": 422,
+        "line": 419,
         "priority": "P1",
-        "title": "Not done: single-tool clients cannot choose the other tool"
-      },
-      {
-        "body": "Raise: Functional. Test names are recognized only on lines containing `FAILED` and a `::` identifier. When a supported Jest or Vitest client reports failures without that format, every failure becomes the same check label. Two fix rounds that leave different failing tests under `tests` are then treated as the same stuck problem, so Forge stops the item before the stated condition is met.",
-        "file": "src/forge/close.py",
-        "line": 402,
-        "priority": "P1",
-        "title": "Different failing tests in one check can falsely stop an item"
-      },
-      {
-        "body": "Raise: Test. The named proof covers a repeated synthetic failing test, but no command-level test covers a repeated review finding or the `same`, `narrow`, and `split` choices. Its switch check reaches `forge work` only to assert Codex's setup refusal; `worker.ready` rejects that call before a Codex turn starts. The size-limit proof likewise stops at the question. The required next-round behavior therefore has no end-to-end proof.",
-        "file": "tests/test_stuck_worker_asks.py",
-        "line": 57,
-        "priority": "P1",
-        "title": "Not done: test repeated findings and the worker round after a choice"
+        "title": "Not done: two rounds leaving the same new failure do not stop the item"
       }
     ],
-    "id": "f174ac9f-e3bd-4c6c-8a0f-0352ceeb2ce8",
+    "id": "2296e30e-020c-4033-b8bf-10e228af2bab",
     "status": "blocked"
   },
   "status": "fixing",
@@ -47,6 +33,10 @@
     },
     {
       "at": "2026-10-11T15:14:35.829188+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:01:46.601662+00:00",
       "step": "review"
     }
   ],
