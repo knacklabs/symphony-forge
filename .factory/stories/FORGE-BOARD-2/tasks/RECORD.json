@@ -34,7 +34,7 @@
     "status": "blocked"
   },
   "round": 6,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -54,7 +54,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/worker.py",
+    "reason": "Owner chose narrow: fix the per-round git calls on board reads; questions on pull requests opened before this release stay local",
     "wait_id": "9b2780a7-3d24-4d7d-b106-712aada451c7"
   },
   "worker": "codex"
