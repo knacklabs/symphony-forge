@@ -1,0 +1,14 @@
+{
+  "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
+  "branch": "fix/stop-default-answer",
+  "done_when": "When a three-rounds stop gets no answer in 30 minutes, Forge records the repo's default choice (narrow to the Done-when lines and file each open finding as a follow-up fix, set once in forge.toml and on by default for new and upgraded repos), carries on, and the owner can reverse it later",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T07:30:55.492924+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves"
+}
