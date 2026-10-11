@@ -9,31 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "879348d96951a32c89f90431b603e5c60f4c57ebc8cef6064db61be7dd80c3a4",
-    "changed": "e68d50729c0661152c7a8bace4249cdcd106e2feaa5fa274c3341294fa466200",
-    "commit": "3c744eb2893763ad54971869ee79e2d5e6b4bb9f",
+    "branch_diff": "cdf0c4c39d128b335875b9af206a9bedcc19adb90eafa114d6ed74b125d6bc89",
+    "changed": "2843acc4b2c87870c527a491aab2eece748b714794c02e19f66fd6af2e582b5a",
+    "commit": "8a63eabca229f8fa0c97e901598ef89b7d7dda48",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "A newly initialized Node client still runs its full test command locally after it adds an app. Raise: Not done \u2014 `src/forge/init.py:61,141` gives new Node repos `[ ! -f package.json ] || (npm ci && npm test)` with no `fast_test`. The `||` matches this fallback guard, so Close runs the entire command instead of selecting related Vitest or Jest tests. This shipped init command is new evidence beyond the earlier ruling about compound npm scripts.",
-        "file": "src/forge/fasttest.py",
-        "line": 219,
-        "priority": "P1",
-        "title": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise"
-      },
-      {
-        "body": "The test named for new and previously adopted clients does not test local selection in either client. Raise: Test \u2014 `test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_ci` checks delivered guides and the workflow, but never changes a test or source file and runs `forge close` in those clients. It passes while the shipped Node init command still runs the full suite locally, so it does not prove the Done-when behavior for init or upgrade plus sync.",
-        "file": "tests/test_close_keeps_full_tests_in_ci.py",
-        "line": 80,
-        "priority": "P1",
-        "title": "Not done: init and upgrade plus sync local-selection test"
-      }
-    ],
-    "id": "9ff62084-98eb-436c-a52e-19d23dac1c1a",
-    "status": "blocked"
+    "findings": [],
+    "id": "66937ea4-ab7a-4ff3-97d8-cdb618f8a0e3",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:16:43+00:00",
@@ -53,6 +38,10 @@
     },
     {
       "at": "2026-10-11T04:20:27.325790+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:58:11.349426+00:00",
       "step": "review"
     }
   ],
