@@ -16,38 +16,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "04ee5d551cf1b190907e7f4fdc250f7f6f93f4cfdfe8c31a49484d0fbdb549f0",
-    "changed": "dfa5fa471aa592d285e8e54ed0c37412113d6424b5859687a5f92bbb2565d255",
-    "commit": "a21d0524043ae8ccecfa0e6ff5c7f12b8388dc27",
+    "branch_diff": "39bdd698d4e0253eb8dbf90de5bd021541da93869faa430d4bdbf3e7c47747d4",
+    "changed": "869377c07b12cd2c7897fd6123dfa9615b8afd3fb4d6b9fd17edeb6b4aaadcd6",
+    "commit": "ce012e053aba9fee6398dfd4ab98757c5a3d2df3",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Security. The heredoc search treats `<<EOF` inside a quoted argument as a real heredoc opener. For the valid shell input `echo '<<EOF'` followed on the next line by `git commit -n`, it discards the commit line before the guard inspects it. The hook therefore permits a commit that skips Git hooks.",
+        "body": "Raise: Security. The heredoc matcher at line 208 treats `<< 2` in `echo $((1 << 2))` as a heredoc opener. It then discards a following `git commit -n` line while searching for a line containing only `2`, so the hook permits a command that skips Git hooks. It also reads `<<E\"OF\"` as a heredoc ending at `E` rather than `EOF`, which can discard a prohibited commit after the real heredoc ends.",
         "file": "src/forge/deny.py",
-        "line": 189,
+        "line": 208,
         "priority": "P1",
-        "title": "Literal heredoc marker can hide a prohibited commit"
+        "title": "Arithmetic left shift or a partly quoted delimiter can hide a prohibited commit"
       },
       {
-        "body": "Raise: Not done. Lines 193\u2013194 restore every heredoc body whenever the retained text contains `bash`, even if that word is only in the commit message. A valid `git commit -F - <<'EOF'` message that says `Fix bash hook handling` and later mentions `git commit -n` is refused, although the invoked commit has no prohibited option. The allowed heredoc tests do not contain a shell name in their messages.",
+        "body": "Raise: Not done. The shell check at lines 219\u2013221 restores every heredoc body if an earlier command invokes `bash`. For `bash -c true && git commit -F - <<'EOF'` followed by a message line mentioning `git commit -n`, the hook inspects that message as a command and refuses the commit, although the commit has neither prohibited option. The named allowed tests do not put a shell command before a commit whose message mentions `-n`.",
         "file": "src/forge/deny.py",
-        "line": 194,
+        "line": 221,
         "priority": "P1",
         "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on"
-      },
-      {
-        "body": "Raise: Test. The changed test calls `forge hook deny` directly in the manually initialized `repo` fixture. It does not exercise the corrected decision through a newly initialized client or a client adopted on an earlier release and then upgraded. The existing upgrade test checks that host configuration contains `forge hook deny`, but does not check this flag behavior. The repository's review rule requires tests covering both client lifecycles.",
-        "file": "tests/test_deny.py",
-        "line": 60,
-        "priority": "P1",
-        "title": "Not done: init and earlier-adoption upgrade tests for the corrected hook"
       }
     ],
-    "id": "dd8884f5-aae4-4352-8696-68c724078bc2",
+    "id": "a5b27ff5-b0c0-4177-9347-7adeb35535fa",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:29:43.068718+00:00",
@@ -60,8 +53,16 @@
     {
       "at": "2026-10-11T15:08:58.544421+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:40:59.630113+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/deny.py",
+    "wait_id": "8a530c86-6421-4a29-a9c2-52177b98fae4"
+  },
   "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit",
   "worker": "codex"
 }
