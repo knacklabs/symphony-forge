@@ -10,25 +10,33 @@
   },
   "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
   "flagged": [
+    "src/forge/review.py",
     "tests/test_fix_reviews_and_reads_record_their_cost.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e9fd15910e1d44afac3291648f639475abf9a86288dbd7051c94eb88610d95ef",
-    "changed": "b7da1bb1b77d53dffa7c11ba3342e01c7f2ab32c33b252cb7415d3bb048b2150",
-    "commit": "eb695c60cb807cdde450ae5b77f514f0bd768593",
+    "branch_diff": "12fb9333d0db05ef49930ccdc58ec72eeef65567cecb4dfd039a9c24c692aa0b",
+    "changed": "544303ea620b8b2bae010e23b58ea056f908b6960be897357b2fd9a7f2115847",
+    "commit": "3b481495da076f748f7a3b8d7434478d6ab64445",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Test. The `existing_repo` proof upgrades a repo adopted on an earlier release, but then checks only a `work` run end. It never runs a plan read or asserts the review run's model, effort, chat id, and token use. This test would pass if either new cost-recording path failed after upgrade, so the proof list's upgrade claim remains untested.",
-        "file": "tests/test_fix_reviews_and_reads_record_their_cost.py",
-        "line": 101,
+        "body": "Raise: Not done. Forge does not pass `--stream-engine-output` to Autoreview. [Autoreview's engine code](https://github.com/openclaw/agent-skills/raw/refs/heads/main/skills/autoreview/scripts/autoreview) adds `--json` to Codex only when that opt-in flag is set. On a normal Codex review, the launcher therefore receives no `thread.started` or `turn.completed` events for `_spent` to parse, and the run end lacks chat and token use. The `review_codex` proof misses this because its fake helper always invokes Codex with `--json`.",
+        "file": "src/forge/review.py",
+        "line": 598,
         "priority": "P1",
-        "title": "Not done: earlier-adopted repo review and plan-read cost test"
+        "title": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do"
+      },
+      {
+        "body": "Raise: Scale. Autoreview can split a large review into multiple provider passes, but `_spent` replaces `found` at each new Codex thread and each Claude result. For a review split into two passes, the single Forge run end records only the final pass's chat and tokens, understating the review's cost. The named tests exercise only one pass.",
+        "file": "src/forge/review.py",
+        "line": 753,
+        "priority": "P1",
+        "title": "Chunked reviews record only the last pass's token use"
       }
     ],
-    "id": "b18dbeaf-998f-4a81-8c35-c4cb7824333e",
+    "id": "9a9c8c2f-59f9-49ab-ad35-d0d72814ab7b",
     "status": "blocked"
   },
   "round": 1,
@@ -40,6 +48,10 @@
     },
     {
       "at": "2026-10-11T10:57:01.280193+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:27:14.915466+00:00",
       "step": "review"
     }
   ],

@@ -2080,6 +2080,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tChunked reviews record only the last pass's token use\trecord-review-usage",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 753,
+      "text": "Chunked reviews record only the last pass's token use",
+      "from": "blocking",
+      "item": "record-review-usage",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tConcurrent closes can lose a temporary Git object while a local review clone copies it; the CI suite failed and the focused local command cases pass.",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2087,6 +2098,17 @@
       "text": "Concurrent closes can lose a temporary Git object while a local review clone copies it; the CI suite failed and the focused local command cases pass.",
       "from": "worker",
       "item": "stacked-fix-count",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 598,
+      "text": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+      "from": "blocking",
+      "item": "record-review-usage",
       "status": "open",
       "closed_by": null
     },
