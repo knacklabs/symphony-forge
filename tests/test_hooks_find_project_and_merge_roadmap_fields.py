@@ -38,7 +38,8 @@ def test_1_claude_hook_finds_project_before_current_folder(client, tmp_path):
     outside.mkdir()
     environment = {**os.environ, "CLAUDE_PROJECT_DIR": client.path.as_posix(),
                    "XDG_BIN_HOME": client.bin.as_posix()}
-    for bash, expected in [("pwd", 0), ("git commit --no-verify", 2)]:
+    for bash, expected in [("pwd", 0), ("git commit --no-verify", 2),
+                           ("pytest -n 2 && git commit -m 'Fix it'", 0), ("git commit -nm x", 2)]:
         done = subprocess.run(["sh", "-c", command], cwd=outside, env=environment,
                               input=json.dumps({"tool_name": "Bash", "cwd": outside.as_posix(),
                                                 "tool_input": {"command": bash}}),

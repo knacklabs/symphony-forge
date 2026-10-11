@@ -48,7 +48,7 @@ def hook(args: argparse.Namespace) -> None:
     command = tool_input.get("command") if isinstance(tool_input, dict) else None
     if isinstance(command, list):  # ponytail: an argv-shaped command, should a host send one
         command = shlex.join(map(str, command))
-    command = _without_heredocs(str(command or ""))
+    command = _without_data(str(command or ""))
     # A command that is only rm: nothing before it can change the folder or a variable it uses.
     alone = not set(command) & ALONE_BREAKERS
     for words in _commands(command):
@@ -64,6 +64,7 @@ def _commands(text: str, depth: int = 0) -> Iterator[list[str]]:
     try:
         lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
         lexer.whitespace_split = True
+        lexer.commenters = ""  # _without_data drops real comments; a # inside a word is text
         words = list(lexer)
     except ValueError:  # an unfinished quote, say in a heredoc: plain words still show programs
         words = [word.strip("'\"") for word in text.split()]
@@ -173,25 +174,51 @@ def _commit_skips_hooks(args: list[str]) -> bool:
     return False
 
 
-def _without_heredocs(text: str) -> str:
-    """The text without heredoc bodies, which are data such as a commit message. An unquoted body
-    keeps its lines with $(...) or backticks, which run. Nothing is dropped when a shell or eval
-    appears outside the bodies, since it may run them: refusing too much beats missing a command."""
-    lines, end, quoted = [], None, False
-    for line in text.split("\n"):
-        if end is not None:
-            if line.strip() == end:
-                end = None
-            elif not quoted and ("$(" in line or "`" in line):
-                lines.append(line)
-            continue
-        lines.append(line)
-        found = re.search(r"<<-?\s*(['\"]?)(\w+)\1", line)
-        if found:
-            end, quoted = found[2], bool(found[1])
-    kept = "\n".join(lines)
-    words = {word.rsplit("/", 1)[-1] for word in re.findall(r"[\w./-]+", kept)}
-    return text if SHELLS & words else kept
+def _without_data(text: str) -> str:
+    """The text without comments and heredoc bodies, which are data such as a commit message. An
+    unquoted body keeps its lines with $(...) or backticks, which run. Nothing is dropped when a
+    shell or eval is a command word outside them, since it may run them: refusing too much beats
+    missing a command. Only a # or << outside quotes starts a comment or opens a heredoc."""
+    kept: list[str] = []
+    quote, outer = "", []  # the open quote, and the quotes around each open $(
+    lines = iter(text.split("\n"))
+    for line in lines:
+        kept.append(line)
+        bodies, i = [], 0
+        while i < len(line):
+            c = line[i]
+            if quote == "'":
+                quote = "" if c == "'" else quote
+            elif c == "\\":
+                i += 1
+            elif quote == '"' and c == '"':
+                quote = ""
+            elif line.startswith("$(", i):
+                outer.append(quote)
+                quote, i = "", i + 1
+            elif c == ")" and not quote and outer:
+                quote = outer.pop()
+            elif quote:
+                pass
+            elif c in "'\"":
+                quote = c
+            elif c == "#" and (i == 0 or line[i - 1] in " \t;&|()"):
+                kept[-1] = line[:i]
+                break
+            elif found := re.match(r"<<-?\s*(['\"]?)(\w+)\1", line[i:]):
+                bodies.append((found[2], bool(found[1])))
+                i += found.end() - 1
+            i += 1
+        for end, quoted in bodies:
+            for body in lines:
+                if body.strip() == end:
+                    break
+                if not quoted and ("$(" in body or "`" in body):
+                    kept.append(body)
+    without = "\n".join(kept)
+    runs_shell = any(SHELLS & {word.rsplit("/", 1)[-1] for word in words}
+                     for words in _commands(without))
+    return text if runs_shell else without
 
 
 def _short(args: list[str]) -> set[str]:
