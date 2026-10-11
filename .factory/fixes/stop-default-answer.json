@@ -35,7 +35,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T07:30:55.492924+00:00",
@@ -56,7 +56,9 @@
   ],
   "stop": {
     "at": "2026-10-11T15:41:44.294897+00:00",
+    "choice": "narrow",
     "file": "src/forge/worker.py",
+    "reason": "Coordinator decision under the owner's low-risk rule (Harm 2, reversible): one more round to make an owner's later choice after a recorded default reach the worker; no other change",
     "wait_id": "56663803-ad7c-4b60-91ae-9b709b28f628"
   },
   "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves",
