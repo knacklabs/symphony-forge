@@ -1,0 +1,14 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/sync-not-blocked",
+  "done_when": "forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually holds, saying so in one line",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T10:29:38.316552+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge sync refuses whenever any other item's forge work or land is running on the machine, so workers copy the guide by hand"
+}
