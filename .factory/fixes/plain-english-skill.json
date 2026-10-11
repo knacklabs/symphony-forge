@@ -40,7 +40,7 @@
     "id": "b3988984-d1cc-4ace-bb9b-402c7ec60e15",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T12:28:11.381196+00:00",
@@ -59,5 +59,10 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+    "round": 4,
+    "wait_id": "691f46c2-ba08-477f-b41f-685e254c77bf"
+  },
   "why": "People reading Forge's plans, pull request summaries, questions and board get long, uneven English; a controlled-language skill (Simplified Technical English) makes that text short and clear"
 }
