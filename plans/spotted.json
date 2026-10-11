@@ -5213,6 +5213,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 68,
+      "text": "Native read handout stops being valid JSON when the agent line is full",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/READS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
