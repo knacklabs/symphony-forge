@@ -152,7 +152,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
     chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
-              else repo.models(cfg, "explore" if kind == "Ask" else kind.lower(), "codex"))
+              else repo.models(cfg, kind.lower(), "codex"))
     return {OVERRIDES[key]: value for key, value in chosen.items()}
 
 
@@ -326,7 +326,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
-    if not (read or archive_thread or attach_request):  # every turn: work, read and ask
+    if not (read or archive_thread or attach_request):  # every turn: work and read
         require_trust(checkout)
     root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
                          cwd=checkout)).resolve().parent
@@ -338,7 +338,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                            **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
-               "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+               "hooks": FORGE_HOOKS}
     if not (read or archive_thread or attach_request):
         request["fast"] = fast_needed(checkout, item, kind, config)
     if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
@@ -352,10 +352,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     if effort is not None:
         request["config"]["model_reasoning_effort"] = effort
     request["config"].update(QUIET)
-    log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
-           repo.work_log(checkout, item))
+    log = repo.work_log(checkout, item)
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
-    command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
+    command = "read" if kind == "Grill" else "work"
     started: dict[str, Any] = {}
     continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
@@ -551,12 +550,10 @@ def _append(path: Path, line: dict[str, Any]) -> None:
 
 def _item_file(checkout: Path, item: str, suffix: str, kind: str) -> Path:
     """The item's record (.json), lock (.lock) or turn log (.log), in git's folder that every
-    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name>, threads/read/<item>
-    or threads/ask/ask."""
+    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name>, threads/read/<item>."""
     # A cold read's item is its story key or spec slug, so reads get their own folder: a spec and
     # a fix of one name never share a conversation.
-    folder = ("read" if kind == "Grill" else "ask" if kind == "Ask" else
-              "task" if "/" in item else "fix")
+    folder = ("read" if kind == "Grill" else "task" if "/" in item else "fix")
     path = repo.forge_dir(checkout) / "threads" / folder / f"{item}{suffix}"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
@@ -775,7 +772,7 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     if any still run and give the lock back. A lock whose owner is gone is cleared; a live one
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
-    command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
+    command = "read" if kind == "Grill" else "work"
     held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
     if held:
         owner, alive = held

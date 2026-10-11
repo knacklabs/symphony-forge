@@ -232,6 +232,13 @@ def _codex_config(top: Path) -> str:
     if isinstance(data.get("agents"), dict):
         wanted["agents"] = {key: value for key, value in data["agents"].items()
                             if key not in AGENT_PINS}
+    agents = wanted.setdefault("agents", {})
+    if not isinstance(agents, dict):
+        repo.refuse(REFUSALS["cant_merge"], path=rel, problem="agents must be a TOML table")
+    reader = agents.setdefault("reader", {"config_file": "agents/reader.toml"})
+    if not isinstance(reader, dict) or reader.get("config_file") != "agents/reader.toml":
+        repo.refuse(REFUSALS["cant_merge"], path=rel,
+                    problem="the reader role uses another config; rename it, then sync again")
     # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
     exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
     if exact(data):
@@ -274,6 +281,8 @@ def _codex_config(top: Path) -> str:
         table = (table[:line.start()] + "hooks = true" + table[line.end():] if line
                  else "\nhooks = true" + table)
         merged = text[:header.end()] + table + text[end:]
+    if "reader" not in data.get("agents", {}):
+        merged = f'{merged.rstrip()}\n\n[agents.reader]\nconfig_file = "agents/reader.toml"\n'
     try:
         safe = bool(merged) and exact(tomllib.loads(merged))
     except tomllib.TOMLDecodeError:
