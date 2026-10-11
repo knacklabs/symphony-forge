@@ -16,20 +16,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d72ec1c5943673f5af81ea1bd2d72785765c18541857e8a20a09f600b1936bbc",
-    "changed": "9f14752edeace897beb3d144aad37f843567097450cdeea8da85ac7a71be6d63",
-    "commit": "c3fd5a44767126305f72656dffe8920463a04463",
+    "branch_diff": "8f8b51423dba32da0ad128a354a03d94ffb99013e0b54513cd7df4a6925b1380",
+    "changed": "7f93af6969ee3f5d86d1febf984cd946004fe474f2735b389c95ef11922d19a2",
+    "commit": "4fcb9242c033bbd267f2e434b0bd74ee69af0592",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. The new cap permits blocking only on the story diff or an unresolved finding. On a third round, the confirmed spec or `docs/product/BRIEF.md` Answers can change between reads while the relevant story text stays unchanged. The same prompt requires the reader to check those changes (lines 145\u2013150), but this cap makes a newly conflicting plan requirement advisory, allowing the read to pass without resolving it. The changed-spec path is exercised in `tests/test_readloop_rounds.py:509`.",
-        "file": "src/forge/templates/cold-read.md",
-        "line": 208,
+        "body": "An upgraded story can pass round three without blocking on a newly conflicting Answers entry. Raise: Functional. Earlier-release notes have no `answers_seen` field (see `tests/fixtures/forge-v1.2.2/src/forge/story.py:249`), so this line supplies `(not available)` instead of an Answers diff. The round-three prompt then permits blockers only for changed text shown in the plan, spec, or Answers diffs. If a story has completed two reads before upgrade and its Answers section changes before the next read, the reader has no Answers diff on which to base a blocking note. The new upgrade test creates its read notes after upgrading, so it does not cover this path.",
+        "file": "src/forge/story.py",
+        "line": 268,
         "priority": "P1",
-        "title": "Round-three cap downgrades conflicts from changed spec and Answers text"
+        "title": "Legacy read notes leave changed Answers text outside the round-three check"
       }
     ],
-    "id": "573cd380-0df3-42c6-b989-b582e3a3d35b",
+    "id": "064c206b-248c-4013-a2cd-3d0959a59db4",
     "status": "blocked"
   },
   "round": 1,
@@ -49,6 +49,10 @@
     },
     {
       "at": "2026-10-11T15:14:31.658043+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:11:29.391244+00:00",
       "step": "review"
     }
   ],

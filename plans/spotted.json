@@ -804,6 +804,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -2157,6 +2168,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tLegacy read notes leave changed Answers text outside the round-three check\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 268,
+      "text": "Legacy read notes leave changed Answers text outside the round-three check",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2410,6 +2432,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 254,
+      "text": "Not done: Resolve conflicting fix-round directions",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 264,
+      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting\tbrief-close-pushes",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -2626,6 +2670,17 @@
       "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
       "from": "blocking",
       "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 464,
+      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
+      "from": "blocking",
+      "item": "worker-brief-faster",
       "status": "open",
       "closed_by": null
     },
@@ -5167,50 +5222,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 194,
-      "text": "Earlier-release choices can trigger another stop before three new rounds",
-      "from": "blocking",
-      "item": "second-stop-choice",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 254,
-      "text": "Not done: Resolve conflicting fix-round directions",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 264,
-      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 464,
-      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
-      "from": "blocking",
-      "item": "worker-brief-faster",
       "status": "open",
       "closed_by": null
     }
