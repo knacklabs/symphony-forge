@@ -1992,6 +1992,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: Generated gate fails for Makefile pytest commands\tgate-on-split-checks",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 174,
+      "text": "Not done: Generated gate fails for Makefile pytest commands",
+      "from": "blocking",
+      "item": "gate-on-split-checks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tNot done: The generated forge.yml that gates merging runs the tests as the parallel groups, with one required check that passes only when it\tgate-on-split-checks",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -2351,6 +2362,17 @@
       "text": "Not done: forge sync turns the mod on whatever version a repo pins",
       "from": "blocking",
       "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tSync can stop on an unrelated active worker while preserving chats before it generates files.",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 509,
+      "text": "Sync can stop on an unrelated active worker while preserving chats before it generates files.",
+      "from": "worker",
+      "item": "gate-on-split-checks",
       "status": "open",
       "closed_by": null
     },
