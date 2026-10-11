@@ -1,15 +1,15 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-11T08:08:12.258204+00:00
-read_hash: 402721c3de22fdf105fd71f283c1e22dfc60dfd7
-round: 1
+read_at: 2026-10-11T08:30:22.281390+00:00
+read_hash: 03bc8c31ac3d86f398e6ca132946afcf72225a0d
+round: 2
 passed: no
-doc_seen: 402721c3de22fdf105fd71f283c1e22dfc60dfd7
+doc_seen: 03bc8c31ac3d86f398e6ca132946afcf72225a0d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: eba0d61d88ad48822784aac59ce90d534b64847c
 conversation: 01a129f9-1302-7a41-b794-06da2773a6d8
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -62,3 +62,25 @@ Disposition: cut
 Disposition: cut
 
 Read only; no runtime tests were run.
+
+## Round 2
+
+7. Blocking: The new merge-setting exception contradicts the approved-facing promise in item 1.
+   Raise: Not done. `plans/FORGE-MAINONCE-1.md:82` now requires the owner's merge-setting fix to merge main every round. With an unrelated main update and no up-to-date requirement, that explicitly violates item 1 (`:36`), “no merges from main at all” (`:10`), and the new/existing-repo descriptions (`:43`, `:47`). This is a new contract contradiction introduced by the exception.
+
+Disposition: cut
+
+8. Blocking: The required unchanged recovery test supplies no mergeability information to the newly prescribed close gate.
+   Raise: Plan gap. `plans/FORGE-MAINONCE-1.md:109` still requires `tests/test_merge_refreshes_behind_base.py` unchanged. Its stub supplies `BEHIND`/`DIRTY` only through `pr view` (`tests/test_merge_refreshes_behind_base.py:79`); its `pr list` response contains neither new field (`tests/test_close.py:158`). In its clean-merge cases, the trial merge succeeds and missing fields mean no clash, so retrying close skips the merge. The subsequent merge attempt requires main to be an ancestor (`tests/test_merge_refreshes_behind_base.py:112`) and fails. This concerns missing GitHub evidence, independently of the removed review-reuse promise.
+
+Disposition: cut
+
+9. Blocking: Item 4's prescribed closure proof requires output that `forge next` does not provide.
+   Raise: Plan gap. `plans/FORGE-MAINONCE-1.md:151` requires `forge next` to show an entry done, while `:136` says its consumer needs no change. `_hotspots` emits only open-problem hotspot summaries (`src/forge/nextstep.py:236`); `spotted.hotspots` excludes done entries (`src/forge/spotted.py:92`). It never displays individual entries or their done status. The proposed observable result therefore cannot be asserted through the specified unchanged command.
+
+Disposition: cut
+
+10. Blocking: Unproven: item 3: green checks while GitHub reports `UNKNOWN`.
+    Raise: Test. `plans/FORGE-MAINONCE-1.md:114` explicitly requires waiting on `UNKNOWN`, but the prescribed test covers only an immediately `CONFLICTING` response (`:119`), and the named existing tests contain no `UNKNOWN` case. Moving the conflict lookup outside its current condition while retaining the green-check return (`src/forge/checks.py:87`) would pass that proof yet reach Ready on `UNKNOWN`. The proof skips this state and would not establish the promised waiting behavior.
+
+Disposition: cut

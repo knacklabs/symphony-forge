@@ -79,9 +79,11 @@ are faked, so review outcomes are set by the test; git merges are real.
 1. Today `close.close` calls `_merge_default(top, item, branch, default)` unconditionally
    (`src/forge/close.py` line 139), which runs `git merge origin/<default>` every round. Keep the
    fetch and the stacked follow-up replay branch exactly as they are (their own condition, run
-   first). The owner's merge-setting fix (`switch` in `close.close`) keeps today's merge every
-   round, because its mechanical check compares HEAD directly with `origin/<default>` (close.py
-   lines 154-163). For every other item, merge only when there is a clash, else return:
+   first). The owner's merge-setting fix (`switch` in `close.close`) follows the same rule; its
+   mechanical check (close.py lines 154-163) compares against the merge base instead of
+   `origin/<default>` itself (`origin/<default>...HEAD` for the file list and the forge.toml
+   summary, and the merge base's forge.toml as the original), so an unrelated file added on main
+   is not counted as an extra change. Merge only when there is a clash, else return:
    - HEAD already contains `origin/<default>`: no merge (as today, git would no-op).
    - a trial merge conflicts: `git merge-tree --write-tree --no-messages HEAD origin/<default>`
      exits 1 (writes nothing; Git 2.38+, already relied on in `githooks.fix_base` and the replay
@@ -106,8 +108,10 @@ are faked, so review outcomes are set by the test; git merges are real.
    (tests, a new review or a reused one) stays as today's rules decide; this story promises no
    review reuse.
    `forge merge`'s existing path on a `BEHIND`/`DIRTY` refusal (close, then merge again) now relies
-   on rule (b)/(c) to bring main in; `tests/test_merge_refreshes_behind_base.py` must keep passing
-   unchanged. Existing tests that expected a merge commit from a non-clashing main move change their
+   on rule (b)/(c) to bring main in. `tests/test_merge_refreshes_behind_base.py`'s `gh` stub gains
+   the two fields on its `pr list` answer (`BEHIND` or `CONFLICTING`, matching what its `pr view`
+   reports), and its rule still holds: a merge refused as behind or conflicting brings main in
+   through close and merges. Existing tests that expected a merge commit from a non-clashing main move change their
    expectation, not their rule. Test (one) covers (a), (b) and (c).
 3. `checks._wait` reads `gh pr view <branch> --json mergeable,headRefOid` only when a named check
    is pending. Read it on every look, before judging the checks, so a pull request that is green
@@ -119,7 +123,10 @@ are faked, so review outcomes are set by the test; git merges are real.
    `DIRTY` merge failure (close, then merge again), once. Test (one): the stub reports the head
    `CONFLICTING` with every check green; `forge close` stops at the first look with the new
    message (no `FORGE_CHECKS_WAIT` timeout), and `forge merge` on a Ready item whose pull request
-   turns `CONFLICTING` brings main in through close and merges. The 11-minute median wait in the
+   turns `CONFLICTING` brings main in through close and merges. With every check green, the stub
+   answering `UNKNOWN` then `MERGEABLE` makes close reach Ready only after the second look, and
+   answering `UNKNOWN` throughout with `FORGE_CHECKS_WAIT=0` stops with "not green yet", never
+   Ready. The 11-minute median wait in the
    evidence was not traced to one cause; the every-look read is the guarantee this item makes.
 4. Spotted records move from the one shared `plans/spotted.json` to one flat file per item,
    `plans/spotted/<item>.json`, with a task's `/` written as `.` (`plans/spotted/KEY.TASK.json`;
@@ -146,9 +153,10 @@ are faked, so review outcomes are set by the test; git merges are real.
    each pull request changes only its own spotted file, and merging both into main in a fresh clone
    without Forge's merge rule (as GitHub merges) has no conflict; `forge next` on that main counts
    entries from both and from an existing old list toward a hotspot. Then two more fixes whose
-   Done-when both name the path of one open entry in the old list each close it; both pull
-   requests leave the old list untouched, merge in the fresh clone with no conflict, and
-   `forge next` shows that entry done. A linked `plans/spotted` refuses.
+   Done-when both name the path of three open entries in the old list each close them; both pull
+   requests leave the old list untouched and merge in the fresh clone with no conflict. The old
+   list's three open entries on that path made `forge next` name it as a hotspot before; after
+   both merge it no longer does. A linked `plans/spotted` refuses.
 
 ## Tasks
 
