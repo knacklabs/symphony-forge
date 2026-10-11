@@ -17,11 +17,13 @@ from test_codex_record import _saved
 from test_codex_worker import sdk_data  # noqa: F401 (a fixture)
 from test_worker_and_reader_chats_survive_rounds import _chat, _old_round, _work, _worker
 
+STORY = "sync-not-blocked"
+
 
 @pytest.mark.skipif(os.name == "nt", reason="the held run is stopped with Ctrl-C")
 @pytest.mark.parametrize("command", ["work", "land"])
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2-client"])
-def test_sync_runs_while_another_items_run_holds_its_lock(repo, gh, monkeypatch, sdk_data, tmp_path,
+def test_1_sync_runs_while_another_items_run_holds_its_lock(repo, gh, monkeypatch, sdk_data, tmp_path,
                                                           adopted, command):
     # A client fix whose chat an earlier release left only on this machine.
     folder, item, log, _ = _worker(repo, monkeypatch, sdk_data, "codex", "fix", adopted)
