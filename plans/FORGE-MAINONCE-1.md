@@ -158,6 +158,8 @@ are faked, so review outcomes are set by the test; git merges are real.
    list's three open entries on that path made `forge next` name it as a hotspot before; after
    both merge it no longer does. A linked `plans/spotted` refuses.
 
+**Owner's merge-setting fix after main moves.** ONCLASH also proves the changed mechanical check: extend `tests/test_merge_enable_mechanical_review.py` with a case that advances main by an unrelated file after the first close, re-runs `forge close` on the owner's merge-setting fix, and expects the mechanical check to pass by comparing against the merge base, with no merge from main.
+
 ## Tasks
 
 Every part may add its paragraph to `src/forge/templates/skill.md` and regenerate

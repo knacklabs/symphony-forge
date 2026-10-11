@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-MAINONCE-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-11T07:35:34.985293+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-11T08:08:12.308265+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T08:30:22.311418+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T08:48:36.711467+00:00",
+      "step": "read"
     }
   ],
   "title": "Pull requests take in main only on a real clash",
