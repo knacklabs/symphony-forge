@@ -4,6 +4,7 @@
     ".claude/skills/forge/SKILL.md",
     "src/forge/board.py",
     "src/forge/close.py",
+    "src/forge/codex.py",
     "src/forge/nextstep.py",
     "src/forge/story.py",
     "src/forge/time_records.py",
@@ -11,34 +12,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "60ba37cf87a47d1529e3c70d1824c8e22a0dbbb12023be7671d2631cb23d8658",
-    "changed": "1112c025d8c96ac4453e197cd01bfc9d429d0503b5b45b2bdd2a63c561e01e82",
-    "commit": "6c26dd993e83794894941fa846790d72d74e5ea0",
+    "branch_diff": "f60c3160b89b92686e1dd5e44e4deabd65531bcacd5cedd9f5a9df2979c289d8",
+    "changed": "932fdaf452aef8ac0893d7c9cc4592b1ccec1d8819ebacb8f97d28bdfa4d60e2",
+    "commit": "e091bdc708208cb7bc18ae3d0e6e6c21b87e1f35",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. At line 592, the runway uses only `current[\"children\"]`. The board has already excluded part state files whose last change was more than seven days ago (`board.py:526`, `board.py:803-805`). An ongoing story with an older merged part therefore loses that part's recorded time. The runway also begins at its first retained part interval or cold read, omitting unknown time between the story's start and that first observation.",
-        "file": "src/forge/board.py",
-        "line": 592,
+        "body": "Raise: Gate. The change to `codex.preserve_chats` resolves a temporary worktree path, and the new `machine-restart` test exercises chat recovery through a symlinked temporary directory. Neither supports the shared time record, publication, story runways, or plain times owned by RECORD. Both `src/forge/codex.py` and the unrelated test additions in `tests/test_worker_and_reader_chats_survive_rounds.py` are outside Scope.",
+        "file": "src/forge/codex.py",
+        "line": 306,
         "priority": "P1",
-        "title": "An ongoing story loses older parts from its time runway"
+        "title": "Unrelated chat recovery changes exceed this part's scope"
       },
       {
-        "body": "Raise: Functional. A close of an older PR retains its prior How it went text as `legacy_text` in the new JSON record (`time_records.py:354-381`). For example, 12,000 CJK characters fit in an earlier PR body at roughly 36 KB but expand past 65,536 bytes when JSON escaped. This trimming path retains `legacy_text` and removes only event, timing and clean-review rows. Once those rows are empty, it returns an oversized body, so GitHub refuses the close despite the new body bound. The body-limit test uses records created in the new format and does not exercise this upgrade path.",
-        "file": "src/forge/close.py",
-        "line": 758,
-        "priority": "P1",
-        "title": "A large legacy time history can still make PR publication fail"
-      },
-      {
-        "body": "Item 12 still lacks the approved-but-unstarted count, shared blocking problems in Needs you, the pinned folding sections with story keys and cold-read history, and pane rounding. The story's Tasks table explicitly assigns these to COUNTS, WAITS, NAV and PANE, whose code is not in this branch. The current board still returns its old count fields and card page here.",
+        "body": "Item 12 still lacks the approved-but-unstarted count, blocking problems in Needs you, pinned folding sections with story keys and cold-read history, and pane rounding. The Tasks table assigns these to COUNTS, WAITS, NAV and PANE, whose changes are not in this branch; the current board still renders the old page.",
         "file": "src/forge/board.py",
-        "line": 667,
+        "line": 63,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "31faf6ac-2ffc-47b9-b28e-4268ce132f42",
+    "id": "3f097bbd-25f1-467e-befa-27bc18b45ea2",
     "status": "blocked"
   },
   "round": 13,
@@ -78,6 +72,10 @@
     },
     {
       "at": "2026-10-11T07:02:46.710154+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T09:19:01.545161+00:00",
       "step": "review"
     }
   ],
