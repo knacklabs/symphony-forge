@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
+from forge import __version__, approval, board, close, codex, machine, records, repo, review, spotted, story, upgrade
 from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
@@ -400,6 +400,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     """A story's lines, and its tasks' states."""
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
+    if held := _native_round(top, key, title, "Grill"):
+        return held, []
     if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
         return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], []
     ref = story.plan_ref(top, key, history)
@@ -606,9 +608,22 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     return status, receipt
 
 
+def _native_round(top: Path, item: str, label: str, kind: str) -> list[str]:
+    """A handed-out round waits for its session's result, rather than another launch."""
+    pending = codex._json(codex._item_file(top, item, ".json", kind)).get("pending") or {}
+    entry = pending.get("entry") or {}
+    if not entry.get("native") or not any(run["id"] == entry["id"] for run in machine.entries()):
+        return []
+    return [f"The session holds a round for {label}; wait for its subagent to finish.",
+            f"Next: forge handback {item} --round {pending['result']['round']} "
+            '--subagent <id> --text "<message>"']
+
+
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
+    if held := _native_round(top, item, label, "Build"):
+        return held
     pr = (prs or {}).get(state.get("branch", "")) or {}
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0]
     status, receipt = _item_readiness(item, state, top, checks)
@@ -634,7 +649,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     runs = board.active_runs(top, item, round_number=state.get("round"))
     if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
             and not any(run.get("kind") in ("work", "worker") for run in runs)):
-        sentence, step = "{label}'s worker has stopped.", "forge close {item}"
+        native_round = codex._json(lock.with_suffix(".json")).get("native_round")
+        sentence, step = "{label}'s worker has stopped.", "forge work {item}" if native_round else "forge close {item}"
     if (status not in ("merged", "done") and any(run.get("kind") == "test" for run in runs)
             and not any(run.get("kind") in ("work", "worker", "review") for run in runs)
             and (not lock.exists() or codex._alive(codex._json(lock)) is False)):

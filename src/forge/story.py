@@ -168,6 +168,9 @@ def read(args: Any) -> int:
     top, doc, notes, is_story = _paths(target)
     # ponytail: CORE's branch rule, so a read never writes on the default branch.
     repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
+    config, here = repo.config(top), repo.coordinator()
+    if here is None:
+        repo.route(config, config["tools"], command="read", item=target)
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
     blocked_rounds = _blocked_reads(top, record, findings)
@@ -202,13 +205,11 @@ def read(args: Any) -> int:
     number = undisposed(findings) if later else ""
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
-    here = repo.coordinator()
     if here is None:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
     installed = {"claude": shutil.which("claude") is not None, "codex": codex.installed()}
     installed[here] = True  # the coordinating app needs no external driver to read natively
     other = "claude" if here == "codex" else "codex"
-    config = repo.config(top)
     # One tool always reads its own plans; both keep the earlier reader while it is installed.
     saved = codex.record(top, target, "Grill")
     recorded = ("codex" if record.get("conversation") else "claude" if record.get("session") else
@@ -223,7 +224,7 @@ def read(args: Any) -> int:
            f"its reader, {NAMES[recorded]}, is no longer installed" if gone else "")
     left = codex.record(top, target, "Grill") if gone else {}
     left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
-    is_native = repo.route(config, reader) == "native"
+    is_native = repo.route(config, reader, command="read", item=target) == "native"
     models = worker.ready(top, config, "Grill", reader == "codex", native=is_native)
     if gone:
         codex._record(codex._item_file(top, target, ".json", "Grill"),
@@ -249,6 +250,8 @@ def read(args: Any) -> int:
                  "\nNo linked confirmed spec was found in the local branches.\n") if is_story else ""}
     prompt = fresh_prompt = Template(first).safe_substitute(fill)
     round_number = int(record.get("round") or 1) + 1 if later else 1
+    if is_native:
+        round_number = max(round_number, saved.get("native_round", 0) + 1)
     if later:
         # What the last round's reader saw, to send only what changed since. Old notes have none.
         seen = {name: repo.run("git", "cat-file", "blob", record.get(name) or "-", cwd=top)
