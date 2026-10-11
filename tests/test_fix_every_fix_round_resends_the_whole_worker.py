@@ -52,7 +52,22 @@ def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
     assert "+Coordinator change" in prompt
     assert _sent(calls, "thread/resume")
 
+    # Lost Forge metadata keeps the conversation and its short follow-up instructions.
     record.unlink()
+    resumed = repo.forge("work", "show-a-greeting")
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert "Starting a new" not in resumed.stdout
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == saved["conversation"]
+    assert "earlier brief" in _text(calls)
+    assert "## The fix" not in _text(calls) and "## Tests first" not in _text(calls)
+
+    # Only the provider losing the conversation now requires the whole brief in a fresh chat.
+    store = repo.bin / "threads.json"
+    threads = json.loads(store.read_text("utf-8"))
+    del threads[saved["conversation"]]
+    store.write_text(json.dumps(threads), encoding="utf-8")
     fresh = repo.forge("work", "show-a-greeting")
     assert fresh.returncode == 0, fresh.stdout + fresh.stderr
+    assert "Starting a new Codex conversation" in fresh.stdout
+    assert "no rollout found" in fresh.stdout
     assert "## The fix" in _text(calls) and "## Tests first" in _text(calls)

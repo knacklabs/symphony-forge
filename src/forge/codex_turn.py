@@ -145,7 +145,9 @@ def main() -> int:
             return 0
         if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
-                turns = client.thread_read(request["thread"], include_turns=True).thread.turns
+                thread = client.thread_read(request["thread"], include_turns=True).thread
+                turns = thread.turns
+                begun = thread.git_info.sha if thread.git_info else None
             except InvalidRequestError as error:
                 # Only Codex saying it has no such conversation means it reports no status. Its
                 # other failures, such as history it can't load, name the id too but prove
@@ -153,7 +155,8 @@ def main() -> int:
                 if error.message != f"thread not loaded: {request['thread']}":
                     raise
                 turns = []
-            emit(read=[[turn.id, turn.status.value] for turn in turns])
+                begun = None
+            emit(read=[[turn.id, turn.status.value] for turn in turns], start=begun)
             return 0
         # deny_all is the SDK's approval policy "never" with no reviewer: Codex never asks and its
         # automatic reviewer isn't used. The SDK's only other mode, auto_review, uses it.
@@ -217,7 +220,16 @@ def main() -> int:
                     except JsonRpcError as retry_error:
                         reason = retry_error.message
                 if resumed is None:
-                    emit(fresh=f"Codex couldn't resume its conversation: {reason}")
+                    if reason == (f"session {request['thread']} is archived. Run "
+                                  f"`codex unarchive {request['thread']}` to unarchive it first."):
+                        emit(fresh="the earlier Codex conversation was archived")
+                    else:
+                        if reason not in (f"no rollout found for {request['thread']}",
+                                          f"no rollout found for thread id {request['thread']}",
+                                          f"thread not found: {request['thread']}",
+                                          f"thread not loaded: {request['thread']}"):
+                            raise
+                        emit(fresh=f"Codex couldn't resume its conversation: {reason}")
         if request.get("ephemeral"):
             settings["ephemeral"] = True
         thread = resumed or codex.thread_start(**settings)
