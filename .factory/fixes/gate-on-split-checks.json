@@ -16,27 +16,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "414a6ae28d299b50f172b0098ba8e9f1f3a545b53cb3b243ce6a251eb9d17b14",
-    "changed": "8bfc797bb6b41004485e081b9aba1efc2bff13a45f10ab38e5dc195d69c95876",
-    "commit": "c967e8ea5a2c841359d8e4e83bf7c274193f265e",
+    "branch_diff": "f948b192d323d2b7fa2bdd7d0df4e07607b3a1113d3f2d374d802251e52efb71",
+    "changed": "9c6bbfd213a01e8c24d438ce261b62954e10636cb6b196b7e2715c1276c79d72",
+    "commit": "a89abd958cc385ed8a1b708f6b13519a81470e06",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. For any repo whose generated workflow has six groups, `ships()` appends split flags to `cfg[\"test\"]` before writing the `run:` line. The unchanged `forge doctor` check at `src/forge/doctor.py:409-410` looks for the original command as an exact `run:` line, so it reports that the tests check does not run the configured command and exits with an error even immediately after a successful sync. This affects Forge's own repo and split-enabled clients.",
+        "body": "Raise: Functional. A client with pytest-split in pyproject.toml and `test = \"uv run --group test pytest\"` calls pytest directly, but the matcher cannot consume the named `test` argument after `--group`. Init and sync therefore generate only `group: [1]`, leaving that client on the serial merge gate after upgrade too. The same gap affects `uv run --extra test pytest`. [uv documents these options](https://docs.astral.sh/uv/reference/cli/).",
         "file": "src/forge/prcheck.py",
-        "line": 179,
+        "line": 175,
         "priority": "P1",
-        "title": "forge doctor rejects healthy split workflows"
+        "title": "Not done: Direct pytest calls with named uv options remain serial"
       },
       {
-        "body": "Raise: Test. The proof list names `test_1` for new clients, but its init assertion checks only a one-group workflow. It adds a pytest-split pyproject and checks six groups only after `forge sync` (lines 43-46 and 70-81). A regression where `forge init` fails to generate six groups for a new client that already lists pytest-split would leave this proof green, so the Done-when init behavior lacks its command-level test.",
+        "body": "Raise: Gate. The submitted proof list names only the six-group init/doctor test and the stale-doctor test. It omits `test_1_one_tests_check_passes_only_when_every_group_passes`, which checks the required aggregate gate for new, previously adopted, and Forge-source repos after sync, and `test_2_small_split_suite_passes_without_hiding_errors`, which checks the accepted empty-group behavior. Neither listed entry proves those outcomes, so the pull request's proof list leaves the main Done-when behavior unaccounted for.",
         "file": "tests/test_fix_gate_on_split_checks.py",
-        "line": 45,
+        "line": 39,
         "priority": "P1",
-        "title": "Not done: test six split groups at new-client init"
+        "title": "Not done: proof list omits the merge-gate and small-suite proofs"
       }
     ],
-    "id": "d9a111f7-59d5-4532-ab92-e67fc166a974",
+    "id": "c10a95a3-4196-450f-8dc0-6d5090740fca",
     "status": "blocked"
   },
   "round": 2,
@@ -56,6 +56,10 @@
     },
     {
       "at": "2026-10-11T15:28:26.522930+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:35:04.663917+00:00",
       "step": "review"
     }
   ],
