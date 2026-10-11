@@ -1226,6 +1226,7 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 When a cold read or review loop stops, ask the human the question it printed, in its words, one
 item per question. It names the item and what it delivers, says each open note or finding in plain
