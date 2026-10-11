@@ -1,0 +1,14 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/plain-english-skill",
+  "done_when": "forge init and forge sync install a bundled Simplified Technical English skill for Claude and Codex (its MIT instructions, writing rules, substitutions and check tool, with its license and notice, and without the standard's word list), and the guide and worker brief tell agents to write plans' top sections, pull request summaries, questions and board or next lines with it, for new and upgraded repos",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T12:28:11.381196+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "People reading Forge's plans, pull request summaries, questions and board get long, uneven English; a controlled-language skill (Simplified Technical English) makes that text short and clear"
+}
