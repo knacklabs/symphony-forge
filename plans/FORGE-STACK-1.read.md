@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-11T10:30:13.485056+00:00
-read_hash: eaabe33cada1910757f70a1e6e49188cd567dac3
-round: 3
+read_at: 2026-10-11T11:23:58.214877+00:00
+read_hash: 307830905b591cccadbf1eb4b2f7bd2c5cb4b817
+round: 4
 passed: no
-doc_seen: eaabe33cada1910757f70a1e6e49188cd567dac3
+doc_seen: 307830905b591cccadbf1eb4b2f7bd2c5cb4b817
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 65179a9e308d303fcb8fc64c52d2092279510f42
+notes_seen: 499798e4d26a85a251ef88e7146ad187bb23f918
 conversation: 01a12a0d-b795-74e2-83ae-0c4b25007a01
 session:
-blocked_rounds: 3
-loop_choice: narrow
-loop_reason: Owner chose narrow: stacking follows only merges Forge itself makes; after a person's own merge on GitHub the next part waits as it does today
+blocked_rounds: 1
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -84,3 +84,14 @@ No files changed; runtime tests were not run. The replay-before-start guarantee 
 Disposition: cut
 
 No files changed; runtime tests were not run. The new check does not establish replay completion for merge commits.
+
+## Round 4
+
+8. Blocking: Unproven: item 4: recovery after the new manual-merge refusal.
+   Raise: Test.
+   `plans/FORGE-STACK-1.md:134–135` tells the user to retarget the pull request and rerun close, after which replay should proceed. The test at lines 140–141 stops after asserting the refusal.
+   An implementation that refuses whenever the parent's merge lacks the trailer, even after retargeting, would pass every named case while leaving the existing stacked part unable to finish after the user follows the printed action.
+
+Disposition: cut
+
+No files changed; runtime tests were not run. The documented recovery remains unproven.

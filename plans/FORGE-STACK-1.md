@@ -131,14 +131,19 @@ use).
    `"retarget": ("Forge could not point {other}'s pull request at {default}, so it kept {item}'s branch.", "check that pull request, then forge merge {item}")`.
    `close` of a stacked part whose base has merged retargets its own pull request when it still
    targets the base's branch refuses, since only Forge's merges are followed:
-   `"base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.", "gh pr edit <its number> --base {default}, then forge close {item}")`.
+   `"base_merged_by_hand": ("{item} builds on {base}, which was merged on GitHub outside Forge, so its pull request still targets {base}'s branch.", "gh pr edit {number} --base {default}, then forge close {item}")`,
+   with the pull request's real number. It fires only while the pull request targets the base's
+   branch, never because the base's merge lacks the trailer, so once retargeted close carries on.
    Otherwise close replays as follow-up fixes do, then runs a new review (no reuse of the pre-replay review, whose commit the replay
    removed), waits for checks and records ready as usual. Test: after `forge merge` of A (stub
    `gh`), the retarget call comes before the branch delete; `forge close B` then replays B onto the
    squashed default branch, B's head no longer holds A's original commits, the real `forge hook
    pr-check` passes on B's new head against the default branch, and `forge merge B` merges; with A
    merged on GitHub (merge commit) and its branch kept, `forge close B` refuses with its line and
-   D After B refuses to start (`base_stacked`); a clash in B's own changes stops with the existing
+   D After B refuses to start (`base_stacked`); the test then runs the printed `gh pr edit <n>
+   --base main` (the stub `gh` then reports base main) and `forge close B` again, which replays B
+   onto the default branch, reviews it afresh, waits for checks and records it ready, and `forge
+   merge B` merges; a clash in B's own changes stops with the existing
    replay refusal.
 5. `forge next` lists a stackable part with `Next: forge task start <item>  # <worker> builds it on
    top of <base item>`; a started stacked part's line says `<item> is building on <base item>.`,
