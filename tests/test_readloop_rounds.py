@@ -551,7 +551,8 @@ def _one_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     codex.dispose(FIRST, "cut")
     native = _native_round(codex)
     assert native["subagent"] == "readloop-reader"
-    assert "Round 2 of your cold read" in native["prompt"]
+    # Removing notes does not reuse this item's earlier Claude handout numbers.
+    assert "Round 4 of your cold read" in native["prompt"]
     assert codex.calls() == 0
 
 
