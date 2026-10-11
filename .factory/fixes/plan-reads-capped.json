@@ -17,24 +17,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4e59a76675c3c8ef373bf90cfef696cdba82aee736e324ed6b9d8f7229a2e46f",
-    "changed": "3e0501ba4ad6275cba573ec9c6a277f079df3bdcd8b3ef15212c5cb615261004",
-    "commit": "30f5d0e565ea3a9410b4ea99284b8d2aaf584376",
+    "branch_diff": "9631e2ac0c91092a57f2225d1ee3fde0caf3467093c59c2076a8e68cf135a90f",
+    "changed": "2072aacf2920d9de02dcc66abb670204142d1c27d127fb29bd994355c261059d",
+    "commit": "e648a3acfd15cacf633067e4599b69736d0f8c75",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The upgrade test creates every read note after upgrading, so it cannot catch a regression in how round three handles changed Answers for stories already being read on an earlier release. Raise: Test. The test calls `_client` before `new_story` and the first `forge read` (lines 57\u201369), while earlier-release notes have no `answers_seen` field (`tests/fixtures/forge-v1.2.2/src/forge/story.py:249`). Removing the new fallback for that missing field would leave all nine named tests passing, yet an upgraded story could miss a blocking conflict in changed Answers text.",
-        "file": "tests/test_fix_plan_reads_capped.py",
-        "line": 58,
-        "priority": "P1",
-        "title": "Not done: test the changed Answers rule with pre-upgrade read notes"
-      }
-    ],
-    "id": "4238703c-7e7d-4219-8a20-5fcb1f20cc64",
-    "status": "blocked"
+    "findings": [],
+    "id": "2ea1f674-ba3d-48e2-b788-131ceadc4ce9",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T07:32:02.888915+00:00",
@@ -58,6 +50,10 @@
     },
     {
       "at": "2026-10-11T18:40:14.793938+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:25:30.172466+00:00",
       "step": "review"
     }
   ],
