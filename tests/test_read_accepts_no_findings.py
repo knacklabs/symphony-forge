@@ -99,6 +99,6 @@ def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
         assert repo.git("status", "--porcelain", cwd=shop) == ""
     else:
         assert "passed: no\n" in notes
-        assert "give every finding a disposition" in read.stdout
+        assert "give every blocking finding a disposition" in read.stdout
         assert "disposition" in next_step.stdout
     assert "write exactly `No findings.` and nothing else" in " ".join(prompt.split())
