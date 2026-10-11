@@ -804,6 +804,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tDifferent failing tests in one check can falsely stop an item\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 402,
+      "text": "Different failing tests in one check can falsely stop an item",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -877,6 +888,17 @@
       "text": "Not done: merge-enable close must check the final published change",
       "from": "blocking",
       "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: single-tool clients cannot choose the other tool\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 422,
+      "text": "Not done: single-tool clients cannot choose the other tool",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
       "status": "open",
       "closed_by": null
     },
@@ -3750,6 +3772,17 @@
       "item": "simplify-ci-workflow",
       "status": "done",
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
+    },
+    {
+      "key": "bug\ttests/test_stuck_worker_asks.py\tNot done: test repeated findings and the worker round after a choice\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "tests/test_stuck_worker_asks.py",
+      "line": 57,
+      "text": "Not done: test repeated findings and the worker round after a choice",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
