@@ -19,34 +19,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b7d2fc3fef0aba0022805f6f36a20152c4cbf48bc65a826b0be7f847377dde44",
-    "changed": "817388b333726a74013ba59176f55b272cbe47f5ee61b58b8b71a14b90b3e564",
-    "commit": "772ebc929c4769965f4d75d7e21b2b76351328c0",
+    "branch_diff": "201ddf2df328d37f1d06fc93015de31ddb35e9a250bcb2b12303666cdacbb66c",
+    "changed": "1db94fbf02ef04a719b75bacb4f48230545f8d995700835b69da9cc27e2985d5",
+    "commit": "2b36df5ad3e080f04e04b7ef62de5e6772b6b766",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. On a stopped review with both blocking findings and advice, the question lists only blocking findings and says Accept will \u201cdismiss these findings\u201d (`src/forge/review.py:218-222`). But `forge close --resolve accept` dismisses every finding in the review, including the advice (`src/forge/close.py:93-99`). The owner is therefore given an inaccurate account of what Accept does for that item.",
-        "file": "src/forge/review.py",
-        "line": 219,
+        "body": "Raise: Not done. A stopped review can still give the owner a gate label and an incomplete account of a blocker instead of one plain sentence saying what goes wrong for whom. At line 991, `plain()` removes `Not done.` but leaves the common `Not done:` finding title intact, then keeps only the body's first sentence. The branch's recorded review in `.factory/fixes/stop-question-plain.json:28-32` is a concrete example: its title begins `Not done:`, and the sentence explaining the effect on the owner comes after the first sentence. The named close proof uses a `Raise:` title, so it passes without exercising this input.",
+        "file": "src/forge/story.py",
+        "line": 991,
         "priority": "P1",
         "title": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names"
-      },
-      {
-        "body": "Raise: Test. The named close and read proofs each create only one blocking finding in the stopped round (`tests/test_close_holds_after_three_blocked_reviews.py:80-81`; `tests/test_reads_wait_for_a_loop_choice.py:63-64`). Both would pass if a question printed only the first blocker. A normal stop with two open blockers would then omit one problem the owner needs to decide about, so the explicit \u201ceach open\u201d behavior has no effective command-level test.",
-        "file": "tests/test_close_holds_after_three_blocked_reviews.py",
-        "line": 80,
-        "priority": "P1",
-        "title": "Not done: test every open blocker in a stopped question"
-      },
-      {
-        "body": "Raise: Gate. The standard says, \u201cWhen you present options, lead with the one you recommend, its reason and how sure you are.\u201d The new ready-to-ask question always presents Accept first, then Narrow and Split, with no recommendation or reason (`src/forge/story.py:1010-1014`). The shipped guide also requires the coordinator to ask that text exactly (`src/forge/templates/skill.md:1240-1242`), conflicting with its existing instruction to put the recommended option first (`src/forge/templates/skill.md:56-57,73-74`).",
-        "file": "src/forge/story.py",
-        "line": 1010,
-        "priority": "P1",
-        "title": "Standard: Give one recommendation"
       }
     ],
-    "id": "6d339101-93d7-4a16-8391-5480efc2a784",
+    "id": "8de452ea-2a22-4ef8-bd96-4d22ac63aebb",
     "status": "blocked"
   },
   "round": 1,
@@ -70,6 +56,10 @@
     },
     {
       "at": "2026-10-11T18:37:04.967061+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:30:00.154580+00:00",
       "step": "review"
     }
   ],
