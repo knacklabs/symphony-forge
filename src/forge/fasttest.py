@@ -282,7 +282,7 @@ def pytest_tests(base: str, command: str) -> int:
     workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
-    excluded, gaps = [], ""
+    excluded = []
     tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
                                             "--exclude-standard")
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
@@ -295,19 +295,24 @@ def pytest_tests(base: str, command: str) -> int:
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
            or not own_version_only(Path(name), base) for name in shared)
+    modules = []
+    for name in changed:
+        path = Path(name)
+        if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
+            continue
+        parts = module_parts(path)
+        if parts[-1] == "__init__":
+            parts.pop()
+        if parts:
+            modules.append((".".join(parts), path))
+    # Tests that run the program from outside never name its files, so say what local runs miss.
+    from forge.review import GAP  # imported late: review's imports lead back here
+    print("".join(f"{GAP}{source.as_posix()}; GitHub's checks will cover it.\n"
+                  for module, source in modules
+                  if not any(mentions(path, module, source) for path in tests)), end="", flush=True)
     if shared_changed:
         selected = [path.as_posix() for path in tests]
     else:
-        modules = []
-        for name in changed:
-            path = Path(name)
-            if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
-                continue
-            parts = module_parts(path)
-            if parts[-1] == "__init__":
-                parts.pop()
-            if parts:
-                modules.append((".".join(parts), path))
         selected = []
         for path in tests:
             if (path.as_posix() in changed
@@ -315,13 +320,8 @@ def pytest_tests(base: str, command: str) -> int:
                            for module, source in modules)):
                 selected.append(path.as_posix())
         selected.sort()
-        # Tests that run the program from outside never name its files, so say what local runs miss.
-        from forge.review import GAP  # imported late: review's imports lead back here
-        gaps = "".join(f"{GAP}{source.as_posix()}; GitHub's checks will cover it.\n"
-                       for module, source in modules
-                       if not any(mentions(path, module, source) for path in tests))
         if not selected:
-            print("No changed or module-related test files to run.\n" + gaps, end="")
+            print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
@@ -342,7 +342,5 @@ def pytest_tests(base: str, command: str) -> int:
                                  + json.dumps(excluded) + "\n", "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        status = subprocess.run(narrow_command(command, excluded, workers), shell=True,
-                                env=environment).returncode
-    print(gaps, end="", flush=True)
-    return status
+        return subprocess.run(narrow_command(command, excluded, workers), shell=True,
+                              env=environment).returncode

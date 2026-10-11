@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 import tomllib
 
+import pytest
+
 from test_close import env, run  # noqa: F401 (pytest fixture)
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 from test_worker import calls, install_claude
@@ -18,7 +20,8 @@ from test_worker import calls, install_claude
 STORY = "test-gap-warning"
 
 
-def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatch):
+@pytest.mark.parametrize("others", [3, 0], ids=["runs-selected", "skips-large-selection"])
+def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatch, others):
     # Forge's own settings and dependencies; only review and GitHub are faked. A second
     # runner prints after pytest, as Jest does after the Python part of a mixed command.
     for rel in ("forge.toml", "pyproject.toml", "uv.lock"):
@@ -32,7 +35,7 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
     for name in ("named", "first", "second"):
         env.repo.write(f"src/app/{name}.py", "VALUE = 1\n")
     env.repo.write("tests/test_named.py", "# app/named.py\ndef test_named():\n    assert True\n")
-    for number in range(3):  # Close skips local tests when over a third would run.
+    for number in range(others):  # Close skips local tests when over a third would run.
         env.repo.write(f"tests/test_other_{number}.py", "def test_other():\n    assert True\n")
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Use Forge's own test settings")
