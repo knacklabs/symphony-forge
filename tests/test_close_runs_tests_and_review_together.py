@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -10,14 +11,58 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, Repo
+from conftest import ROOT, Repo, _end_left
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
 from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
+from test_lanes_agents import alive
 
 STORY = "FIX-REVIEW-ALONGSIDE-TESTS"
 CLOSE_TIMEOUT = 90
 CLEANUP_TIMEOUT = 15
+
+
+def _record_process(path):
+    return f'''import json, os, time
+from pathlib import Path
+marker = Path({json.dumps(path.as_posix())})
+marker.with_suffix(".tmp").write_text(json.dumps({{"pid": os.getpid(), "at_ns": time.time_ns()}}), encoding="utf-8")
+marker.with_suffix(".tmp").replace(marker)
+'''
+
+
+def test_4_a_crashed_overlap_worker_reports_and_stops_its_registered_children(tmp_path):
+    child_pid = tmp_path / "child-pid"
+    crashy = tmp_path / "test_crashy.py"
+    crashy.write_text('''import os, subprocess, sys, time
+
+def test_overlap_worker(tmp_path):
+    child = subprocess.Popen([sys.executable, "-c", "import threading; threading.Event().wait()"],
+        env={key: value for key, value in os.environ.items() if key in ("PATH", "SYSTEMROOT")},
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        start_new_session=True)
+''' + f'    with open({json.dumps(child_pid.as_posix())}, "w") as output:\n        output.write(str(child.pid))\n'
+        + '    import json\n    marker = tmp_path / "child.owned-process.json"\n'
+        + '    marker.write_text(json.dumps({"pid": child.pid, "at_ns": time.time_ns()}), encoding="utf-8")\n'
+        + '    os._exit(1)\n', encoding="utf-8")
+    try:
+        result = subprocess.run([sys.executable, "-m", "pytest", str(crashy), "-p", "conftest",
+            "-p", "no:cacheprovider", "-q", "-o", "addopts=", "-n", "1",
+            "--basetemp", str(tmp_path / "crashed-worker")], cwd=tmp_path,
+            env={**os.environ, "PYTHONPATH": str(ROOT / "tests"), "PYTEST_ADDOPTS": ""},
+            capture_output=True, text=True, timeout=120)
+        pid = int(child_pid.read_text("utf-8"))
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert f"left processes running: {pid} " in result.stdout, result.stdout + result.stderr
+        assert "test_overlap_worker0" in result.stdout
+        assert not alive(pid)
+    finally:
+        if child_pid.exists() and alive(int(child_pid.read_text("utf-8"))):
+            pid = int(child_pid.read_text("utf-8"))
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], capture_output=True, timeout=10)
+            else:
+                os.kill(pid, signal.SIGKILL)
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
@@ -58,7 +103,7 @@ with socket.create_connection({address!r}) as connection:
     connection.sendall({role!r})
     assert connection.recv(1) == b"x"
 '''
-        suite = wait.format(address=address, role=b"tests") + (
+        suite = _record_process(env.tmp / "tests.owned-process.json") + wait.format(address=address, role=b"tests") + (
             '\nprint("client test failed")\nraise SystemExit(1)\n' if red
             else '\nprint("client tests passed")\n')
         env.commit(repo.path, "client-tests.py", suite)
@@ -70,9 +115,14 @@ with socket.create_connection({address!r}) as connection:
         repo.git("push", "-q", "origin", "main")
         helper = Path(os.environ["AUTOREVIEW"])
         helper.write_text(helper.read_text("utf-8").replace(
-            "args = sys.argv[1:]", wait.format(address=address, role=b"review")
+            "args = sys.argv[1:]", _record_process(env.tmp / "review.owned-process.json")
+            + wait.format(address=address, role=b"review")
             + "\nargs = sys.argv[1:]"), encoding="utf-8")
         item, where = env.start_fix()
+        launcher = repo.bin / "forge"
+        launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+            _record_process(env.tmp / "close.owned-process.json") + "from forge.cli import main"),
+            encoding="utf-8")
         # Bound the whole command, including preparation and lane admission, not either start.
         deadline = time.monotonic() + CLOSE_TIMEOUT
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "close", item],
@@ -95,8 +145,12 @@ with socket.create_connection({address!r}) as connection:
             pass  # The roles assertion below includes close's diagnostic output.
         finally:
             for connection in connections:
-                connection.sendall(b"x")
-                connection.close()
+                try:
+                    connection.sendall(b"x")
+                except OSError:
+                    pass
+                finally:
+                    connection.close()
             if roles == {b"tests"}:
                 # Release a late sequential review too, so the red regression owns its cleanup.
                 try:
@@ -112,9 +166,15 @@ with socket.create_connection({address!r}) as connection:
                              if roles == {b"tests", b"review"} else CLEANUP_TIMEOUT)
                 output, errors = process.communicate(timeout=remaining)
             except subprocess.TimeoutExpired:
-                process.kill()
+                # Close's test and review have separate groups; end every owned process.
+                _end_left(env.tmp)
+                if process.poll() is None:
+                    process.kill()
                 process.communicate(timeout=60)
                 raise
+            finally:
+                left = _end_left(env.tmp)
+                assert not left, f"Close left processes running: {left}"
         assert roles == {b"tests", b"review"}, f"Started: {roles!r}\n" + output + errors
     assert process.returncode == (1 if red or priority else 0), output + errors
     assert ("Ready:" in output) == (not red and not priority)
