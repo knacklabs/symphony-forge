@@ -91,6 +91,9 @@ REFUSALS = {
                "so it stopped the driver before any conversation.", "forge {command} {item}"),
     "server": ("Forge can't read the start time and command of the Codex app-server, process "
                "{pid}, so it stopped Codex before any conversation.", "forge {command} {item}"),
+    "old_run": ("forge {command} {item} is running on an earlier Forge release, which doesn't save "
+                "its own chat, so sync can't move that chat yet.",
+                "let forge {command} {item} finish, then forge sync"),
     "busy": ("forge {command} {item} is already running as process {pid}, and only one runs per "
              "item; wait for it to finish.", "forge {command} {item}"),
     "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
@@ -326,10 +329,11 @@ def preserve_chats(top: Path) -> None:
                     if not state or state.get("chat"):
                         continue
                     rel = repo.state_path(item)
-                lock = _item_file(owner, item, ".lock", kind)
-                if lock.exists() and _alive(_json(lock)) is not False:
-                    # The running call records its own chat when its round ends.
+                running = _json(_item_file(owner, item, ".lock", kind))
+                if running and _alive(running) is not False:
                     command = "read" if kind == "Grill" else "work"
+                    if not running.get("saves_chat"):  # an earlier release keeps it only here
+                        repo.refuse(REFUSALS["old_run"], item=item, command=command)
                     print(f"Left {item}'s chat alone: forge {command} {item} is running and keeps it.")
                     continue
                 with hold(owner, item, kind):
@@ -964,7 +968,8 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
     command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
-    held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
+    # This release's runs commit their own chat to their branch, so sync can leave them be.
+    held = _take(lock, {**(identity(os.getpid()) or {"pid": os.getpid()}), "saves_chat": True})
     if held:
         owner, alive = held
         repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock,
