@@ -1,6 +1,13 @@
 {
   "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
   "branch": "fix/reviews-skip-agent-line",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12a89-2e43-7e40-b73d-28f4e45d7a7b",
+    "head": null,
+    "start": "dc09896ed4a33d6a9ed4222cbf28d1f46c80b234"
+  },
   "done_when": "Close's review and plan reads do not wait for an agent place, and a test run limited to a few named test files does not wait for the test place",
   "flagged": [
     "src/forge/review.py",
