@@ -10,32 +10,40 @@
   },
   "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line",
   "flagged": [
-    "src/forge/deny.py"
+    "src/forge/deny.py",
+    "tests/test_deny.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "99cef19a68ef6754c7c8a30534f83edc20c49ed0badc69985e46fc4c72a738e1",
-    "changed": "1c61236c50740459a9cb56a0559d758f17062bfdea8f589cd53829bee87801c3",
-    "commit": "908ec4e1abaed1d2d89d2d953ce080e5cbdc4113",
+    "branch_diff": "04ee5d551cf1b190907e7f4fdc250f7f6f93f4cfdfe8c31a49484d0fbdb549f0",
+    "changed": "dfa5fa471aa592d285e8e54ed0c37412113d6424b5859687a5f92bbb2565d255",
+    "commit": "a21d0524043ae8ccecfa0e6ff5c7f12b8388dc27",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. `git commit -m --no-verify` supplies `--no-verify` as the message, but the unchanged check at deny.py:89 refuses it before the new option parser runs. Also, `_without_heredocs` removes only quoted heredoc bodies, so a message supplied by `git commit -F - <<EOF` that contains the text `git commit -n` is parsed as a command and refused. In both cases the commit itself has neither prohibited option; the named allowed tests cover neither case.",
+        "body": "Raise: Security. The heredoc search treats `<<EOF` inside a quoted argument as a real heredoc opener. For the valid shell input `echo '<<EOF'` followed on the next line by `git commit -n`, it discards the commit line before the guard inspects it. The hook therefore permits a commit that skips Git hooks.",
         "file": "src/forge/deny.py",
-        "line": 102,
+        "line": 189,
+        "priority": "P1",
+        "title": "Literal heredoc marker can hide a prohibited commit"
+      },
+      {
+        "body": "Raise: Not done. Lines 193\u2013194 restore every heredoc body whenever the retained text contains `bash`, even if that word is only in the commit message. A valid `git commit -F - <<'EOF'` message that says `Fix bash hook handling` and later mentions `git commit -n` is refused, although the invoked commit has no prohibited option. The allowed heredoc tests do not contain a shell name in their messages.",
+        "file": "src/forge/deny.py",
+        "line": 194,
         "priority": "P1",
         "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on"
       },
       {
-        "body": "Raise: Security. For `cat <<'EOF' | bash` with `git commit -n` in the heredoc body, this check sees only `cat` before the delimiter and removes the body. The shell on the right side of the pipe executes that body, but the hook never inspects the prohibited commit. The blocked test covers a heredoc given directly to `bash`, which does not catch this pipeline.",
-        "file": "src/forge/deny.py",
-        "line": 181,
+        "body": "Raise: Test. The changed test calls `forge hook deny` directly in the manually initialized `repo` fixture. It does not exercise the corrected decision through a newly initialized client or a client adopted on an earlier release and then upgraded. The existing upgrade test checks that host configuration contains `forge hook deny`, but does not check this flag behavior. The repository's review rule requires tests covering both client lifecycles.",
+        "file": "tests/test_deny.py",
+        "line": 60,
         "priority": "P1",
-        "title": "Quoted heredoc piped to a shell bypasses the commit guard"
+        "title": "Not done: init and earlier-adoption upgrade tests for the corrected hook"
       }
     ],
-    "id": "1e9c3b9a-0000-4dc2-8f76-812c24b1bbb9",
+    "id": "dd8884f5-aae4-4352-8696-68c724078bc2",
     "status": "blocked"
   },
   "round": 1,
@@ -47,6 +55,10 @@
     },
     {
       "at": "2026-10-11T12:57:38.343891+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:08:58.544421+00:00",
       "step": "review"
     }
   ],
