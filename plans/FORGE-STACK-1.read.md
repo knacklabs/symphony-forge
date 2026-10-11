@@ -81,4 +81,6 @@ No files changed; runtime tests were not run. The replay-before-start guarantee 
    `plans/FORGE-STACK-1.md:76–78` treats the parent's state appearing in the shared merge base as proof of replay. After a person merges A with a merge commit, B's unreplayed head already shares A's original head with main, so this check passes. B's existing review also matches that unchanged baseline.
    D can therefore start on B, but `src/forge/close.py:409–435` still replays B: main's new merge commit is not an ancestor of B. That rewrites D's base. Item 4 supports human GitHub merges without restricting their method; its specified merge test covers a squash merge.
 
+Disposition: cut
+
 No files changed; runtime tests were not run. The new check does not establish replay completion for merge commits.
