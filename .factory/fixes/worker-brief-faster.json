@@ -1,0 +1,49 @@
+{
+  "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
+  "branch": "fix/worker-brief-faster",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12a18-13c9-76d3-900c-6c17dcb88a9f",
+    "head": null,
+    "start": "736c345ca5ca04c705d234f77bc128bbabac9f5d"
+  },
+  "done_when": "The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate fix?' and 'record a narrow choice' in advance (out-of-scope problems become Spotted lines; fix only findings inside the Done-when and list the rest in the proof), and ends with the reviewer's checklist the worker checks before handing over",
+  "flagged": [
+    "src/forge/templates/brief.md",
+    "src/forge/worker.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "498686530ffa27f5b32a20a7c3ed5c049e63f57486f7eecac2c5820e838c71a4",
+    "changed": "e82f29700eb5544428259eb7b2d25931e3fa1d8c7f0af613e7237b4ddff5e301",
+    "commit": "eb6da865e5a820451e39a8f7a263d2d9fb2ca2cf",
+    "dismissals": [],
+    "findings": [],
+    "id": "f23dc1c2-4e55-48ab-a0cd-a70b90f5968e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:31:22.979706+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T08:32:43.084863+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T10:34:23.163504+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:00:56.227756+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Worker turns take about 22 minutes: workers re-read the 15,000-word guide and search the whole repo, ask the same two questions, and fail 45% of first reviews",
+  "worker": "codex"
+}

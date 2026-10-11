@@ -28,7 +28,8 @@ def _command(env, command):
 def test_1_close_selects_pytest_tests_and_red_ci_returns_the_item(env, tmp_path):
     receipts = tmp_path / "test-receipts"
     receipts.mkdir()
-    for name in ("app", "changed", "unrelated"):
+    # Two selected files stay at one third; unrelated receipts catch full-suite fallback.
+    for name in ("app", "changed", "unrelated", "other", "extra", "untouched"):
         env.repo.write(f"tests/test_{name}.py", ("import app\n" if name == "app" else "") + "from pathlib import Path\n"
                        "def test_client():\n"
                        f"    Path({json.dumps(str(receipts / name))}).write_text('ran', encoding='utf-8')\n")
@@ -245,6 +246,8 @@ def test_5_close_preserves_setup_arguments_before_selecting_pytest(env, tmp_path
                    "def test_cart():\n"
                    f"    Path({json.dumps(str(receipt))}).write_text('ran', encoding='utf-8')\n")
     env.repo.write("tests/test_unrelated.py", "def test_unrelated():\n    raise AssertionError('unrelated test ran')\n")
+    # One selected file stays at one third, so close must preserve setup and run pytest.
+    env.repo.write("tests/test_other.py", "def test_other():\n    raise AssertionError('other test ran')\n")
     _command(env, setup_command + " && uv run pytest tests -q")
     item, _ = env.start_fix({"tests/test_cart.py": (env.repo.path / "tests/test_cart.py").read_text("utf-8") + "# Changed\n"})
 
