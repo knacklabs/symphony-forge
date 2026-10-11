@@ -35,7 +35,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T07:11:55.850092+00:00",
@@ -54,6 +54,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "file": "tests/test_codex_turn_speed_receipts.py",
+    "round": 4,
+    "wait_id": "bfe603d6-fbbb-4344-ba55-e9b6f479845f"
+  },
   "why": "Codex Fast was added but every Codex turn still runs at normal speed and nothing shows which speed a turn used",
   "worker": "codex"
 }
