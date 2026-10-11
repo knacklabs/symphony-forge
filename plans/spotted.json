@@ -5125,6 +5125,61 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 254,
+      "text": "Not done: Resolve conflicting fix-round directions",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 264,
+      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 464,
+      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

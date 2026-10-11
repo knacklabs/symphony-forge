@@ -260,6 +260,10 @@ command close runs instead of `test`, with `{base}` replaced by the merge base w
 branch, so it runs only the tests related to the changed files plus fast checks (for example
 `npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
 `test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
+When the pytest selection would cover more than a third of the repo's Python test files
+(shared test inputs select them all), close skips the local run, says so in one line, and
+relies on the pull request's required checks. `forge test` still runs its tests. New repos
+get this from init; existing repos get it on upgrade.
 
 ## Merging a ready item
 
