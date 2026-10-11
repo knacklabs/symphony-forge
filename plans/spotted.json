@@ -804,6 +804,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1530,6 +1541,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tLoad per core is understated when Forge has fewer available CPUs than the host\tadmit-by-load",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 57,
+      "text": "Load per core is understated when Forge has fewer available CPUs than the host",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -1926,6 +1948,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 68,
+      "text": "Native read handout stops being valid JSON when the agent line is full",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/READS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2133,6 +2166,17 @@
       "item": "stacked-fix-count",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 296,
+      "text": "Not done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
@@ -2551,6 +2595,28 @@
       "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/NOTICE.md\tNot done: the bundled license and notice describe a word list that is absent\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+      "line": 9,
+      "text": "Not done: the bundled license and notice describe a word list that is absent",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/simplified-technical-english/SKILL.md\tThe installed skill's check command fails from the client repository root\tplain-english-skill",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+      "line": 94,
+      "text": "The installed skill's check command fails from the client repository root",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tNot done: keep gaps in legacy timing history unknown\twhere-time-went",
@@ -3290,6 +3356,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 67,
+      "text": "Not done: the checker test cannot detect a lost semicolon rule",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the proof test misses required guidance and checker behavior\tplain-english-skill",
+      "kind": "bug",
+      "path": "tests/test_fix_plain_english_skill.py",
+      "line": 53,
+      "text": "Not done: the proof test misses required guidance and checker behavior",
+      "from": "blocking",
+      "item": "plain-english-skill",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
       "kind": "bug",
       "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
@@ -3913,6 +4001,39 @@
       "text": "Not done: Test related-test instructions in new and previously adopted client repos",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: proof list\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 60,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: the 1.5 load-per-core boundary test\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 56,
+      "text": "Not done: the 1.5 load-per-core boundary test",
+      "from": "blocking",
+      "item": "admit-by-load",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_runs_wait_for_machine_load.py\tNot done: two-process proof for previously adopted repos\tadmit-by-load",
+      "kind": "bug",
+      "path": "tests/test_worker_runs_wait_for_machine_load.py",
+      "line": 66,
+      "text": "Not done: two-process proof for previously adopted repos",
+      "from": "blocking",
+      "item": "admit-by-load",
       "status": "open",
       "closed_by": null
     },
@@ -5255,28 +5376,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 194,
-      "text": "Earlier-release choices can trigger another stop before three new rounds",
-      "from": "blocking",
-      "item": "second-stop-choice",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
-      "kind": "bug",
-      "path": "src/forge/native.py",
-      "line": 68,
-      "text": "Native read handout stops being valid JSON when the agent line is full",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/READS",
       "status": "open",
       "closed_by": null
     }
