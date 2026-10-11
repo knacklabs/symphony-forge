@@ -446,6 +446,9 @@ def doctor(args: argparse.Namespace) -> int:
     budget = machine.half_cores()
     print(f"This machine: {cores} cores, so {budget} agents at once and "
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+    fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
+            "off": "off", "always": "always on"}[cfg["codex_fast"]]
+    print(f"- Codex Fast: {fast}; models without Fast run normally.")
     claude = shutil.which("claude")
     version = None
     if claude:

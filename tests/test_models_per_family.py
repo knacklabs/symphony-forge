@@ -37,7 +37,7 @@ def _work(repo, folder, workers: str, build: str) -> None:
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch, sdk_data):
+def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
     build = f"[models.build.codex]\n{NOVA}\n[models.build.claude]\n{OPUS}"
@@ -46,11 +46,13 @@ def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch,
     assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
                                                           "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", build)
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
 
 
-def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data):
+def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
@@ -58,11 +60,13 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data)
     assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
                                                           "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{OPUS}")
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
 
 
-def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(repo, monkeypatch, sdk_data):
+def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
@@ -75,6 +79,8 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
                                             / "BOARD" / "PAGE.log")] == ["Build", "Build"]
     assert _sent(calls, "thread/start")[-1]["config"] == {
         **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
     # Omitted Claude entries now default to Sonnet at xhigh, rather than Opus at medium.

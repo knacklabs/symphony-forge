@@ -42,9 +42,14 @@ from forge import codex, machine, repo, task, worker
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
                 'forge story new <KEY> "<title>"'),
-    "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).", "forge roadmap add <spec>"),
     "no_title": ("A new story needs a plain-English title.", 'forge story new {key} "<title>"'),
     "no_fix": ("There is no fix named {fix} in a worktree here.", "forge next"),
+    "fix_roadmap": ("The fix {fix} has no roadmap entry for {key}.",
+                    "add {key} to plans/roadmap.json in {path}, commit it, then "
+                    "forge story new {key} --from-fix {fix}"),
+    "uncommitted_roadmap": ("The roadmap in fix {fix} has uncommitted changes.",
+                            "commit plans/roadmap.json in {path}, then "
+                            "forge story new {key} --from-fix {fix}"),
     "no_story": ("There is no story {key} here.", 'forge story new {key} "<title>"'),
     "no_spec": ("docs/specs/{slug}.md does not exist.", "forge spec save {slug}"),
     "bad_doc": ("{doc} is malformed: {problem}.", "edit {doc}, then run forge next"),
@@ -60,6 +65,11 @@ REFUSALS = {
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
+    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. "
+                  "Ask the human to accept, narrow or split before reading again.",
+                  'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
+    "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
+                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
@@ -71,7 +81,8 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen")
+RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
+          "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
@@ -117,6 +128,10 @@ def new(args: Any) -> int:
         fix_state = repo.read_state(fix, fix_top) if fix_top else None
         if not fix_state:
             repo.refuse(REFUSALS["no_fix"], fix=fix)
+        if key not in {item["key"] for item in repo.roadmap(fix_top)}:
+            repo.refuse(REFUSALS["fix_roadmap"], fix=fix, key=key, path=fix_top)
+        if show(fix_top, "HEAD", "plans/roadmap.json") != _text(fix_top / "plans/roadmap.json"):
+            repo.refuse(REFUSALS["uncommitted_roadmap"], fix=fix, key=key, path=fix_top)
         why = fix_state.get("why") or why
         done = fix_state.get("done_when") or done  # the promoted task covers Done-when item 1
         # The task's Scope is what the fix changed since it left the default branch.
@@ -124,17 +139,18 @@ def new(args: Any) -> int:
         scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
                  if not path.startswith(".factory/")]
         row = f"| SPEC | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
-    elif key not in {item["key"] for item in repo.roadmap(top)}:
-        repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")
     if not title:
         repo.refuse(REFUSALS["no_title"], key=key)
+    if not fix:
+        why = title
+    repo.roadmap(top)  # Validate local input before starting from the default branch.
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
     _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
     changed = [doc]
-    if fix and key not in {item["key"] for item in repo.roadmap(path)}:
+    if not fix and key not in {item["key"] for item in repo.roadmap(path)}:
         changed += add_to_roadmap(path, [{"key": key, "title": title}])
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))
@@ -154,6 +170,28 @@ def read(args: Any) -> int:
     repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
+    blocked_rounds = _blocked_reads(top, record, findings)
+    choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    if choice or reason is not None:
+        if not choice or not reason or not reason.strip() or blocked_rounds < 3:
+            repo.refuse(REFUSALS["bad_choice"], target=target)
+        reason = " ".join(reason.split())
+        record.update(loop_choice=choice, loop_reason=reason)
+        if choice == "accept":
+            # Keep the notes and the owner's evidence; acceptance covers the current document.
+            for block in _findings(findings).values():
+                if undisposed(block):
+                    settled = DISPOSITION.sub("", block, count=1).rstrip()
+                    findings = findings.replace(block, settled + f"\n   Disposition: keep - {reason}", 1)
+            record["read_hash"] = _store(top, doc.read_bytes(), rel)
+        _write(notes, _notes(record, findings))
+        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes), top=top)
+        print(f"Recorded the human's choice: {choice}. " + (
+            "Next: forge next" if choice == "accept" else
+            f"{choice.capitalize()} the part as agreed, then forge read {target}."))
+        return 0
+    if blocked_rounds >= 3:
+        repo.refuse(REFUSALS["read_loop"], target=target)
     later = bool(record.get("read_hash"))
     if is_story:
         text = _text(doc)
@@ -285,6 +323,7 @@ def read(args: Any) -> int:
                   if reader == here else ""),
               "read_at": repo.now(), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
+              "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8"))}
     kept = findings.rstrip("\n") if later else head.strip()
@@ -309,6 +348,8 @@ def read(args: Any) -> int:
     if clean:  # a passing round is committed, so tasks and pull requests carry what passed
         repo.commit_state(f"Round {round_number} of the cold read of {rel} found nothing", *changed,
                           top=top)
+    if not clean and blocked_rounds + 1 >= 3:
+        repo.refuse(REFUSALS["read_loop"], target=target)
     print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every finding a disposition, amend the doc, then forge read {target}")
@@ -577,10 +618,24 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
-    """The latest round's whole text, trimmed, is exactly "No findings."; never the passed flag.
+    """The latest round found nothing or the human accepted it; never trust the passed flag.
     That text runs from the recorded round's heading to the end, so a heading in a reply is text."""
+    if record.get("loop_choice") == "accept" and record.get("loop_reason"):
+        return True
     heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
     return bool(record.get("round") and heading) and findings[heading.end():].strip() == "No findings."
+
+
+def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
+    """Earlier releases' snapshots supply the streak until the first new read records it."""
+    count = 0
+    while count < 3 and record.get("round") and not passed(record, findings) and not record.get("loop_choice"):
+        if record.get("blocked_rounds"):
+            return min(3, count + int(record["blocked_rounds"]))
+        count += 1
+        previous = repo.run("git", "cat-file", "blob", record.get("notes_seen") or "-", cwd=top)
+        record, findings = _record(previous.stdout)
+    return count
 
 
 def rounds(notes: str | None, state: str | None = None) -> bool:
@@ -984,7 +1039,9 @@ COMMANDS = [
      "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
      "help": "Run a round of the cold read of a story doc or spec",
-     "args": [(('target',), {"help": "a story key or a spec slug"})],
+     "args": [(('target',), {"help": "a story key or a spec slug"}),
+              (('--resolve',), {"choices": ["accept", "narrow", "split"]}),
+              (('--reason',), {})],
      "position": 90,
      "listing": '| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |'},
 ]

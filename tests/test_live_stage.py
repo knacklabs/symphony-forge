@@ -106,6 +106,7 @@ def test_2_live_repo_gets_no_prototype_rules(request, repo, rule):
         assert 'forge merge is disabled by merge = "human"' in denied.stderr
     else:
         # _codex_repo's client forge.toml has no stage, so the repo is live.
+        request.getfixturevalue("claude_session")
         _, codex_log = _codex_repo(repo, request.getfixturevalue("monkeypatch"),
                                    request.getfixturevalue("sdk_data"), client=True)
         claude_log = install_claude(repo)
