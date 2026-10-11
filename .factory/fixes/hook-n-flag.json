@@ -31,6 +31,7 @@
     "id": "1e9c3b9a-0000-4dc2-8f76-812c24b1bbb9",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -42,5 +43,6 @@
       "step": "review"
     }
   ],
-  "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit"
+  "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit",
+  "worker": "codex"
 }
