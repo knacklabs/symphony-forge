@@ -146,7 +146,7 @@ def record_run(request):
 def test_2_independent_pytest_invocations_do_not_share_a_pass(env, mode, monkeypatch):
     # The same case under two configured modes is two checks, even on identical files.
     monkeypatch.delenv("PROBE_STRICT", raising=False)
-    log = env.tmp / "checked-modes.jsonl"
+    log, repaired_flag = env.tmp / "checked-modes.jsonl", env.tmp / "mode-prerequisite-ready"
     pytest_command = f'"{sys.executable}" -m pytest tests -q'
     command = (f"{pytest_command} -o xfail_strict=True && "
                f"{pytest_command} -o xfail_strict=False")
@@ -172,13 +172,24 @@ def test_configured_mode(request):
               else request.config.getini("xfail_strict"))
     with pathlib.Path({json.dumps(log.as_posix())}).open("a", encoding="utf-8") as log:
         log.write(json.dumps(strict) + "\\n")
-    assert strict
+    assert strict or pathlib.Path({json.dumps(repaired_flag.as_posix())}).exists()
 '''})
 
     closed = env.close(item)
 
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [True, False]
+
+    still_failing = env.close(item)
+    assert still_failing.returncode == 1, still_failing.stdout + still_failing.stderr
+    assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [True, False, False]
+
+    # Repair the failing variant's external prerequisite without changing either invocation.
+    repaired_flag.write_text("ready\n", "utf-8")
+    repaired = env.close(item)
+    assert repaired.returncode == 0, repaired.stdout + repaired.stderr
+    assert [json.loads(line) for line in log.read_text("utf-8").splitlines()] == [
+        True, False, False, False]
 
 
 def test_3_other_test_runners_repeat_the_full_configured_command_after_a_failure(env):
@@ -251,3 +262,39 @@ def test_child_pytest():
     closed = env.close(item)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
+
+
+def test_5_close_repairs_pytest_commands_run_from_a_repository_subdirectory(env):
+    log, repaired = env.tmp / "subdirectory-tests.jsonl", env.tmp / "subdirectory-ready"
+    command = f'cd "backend with spaces" && "{sys.executable}" -m pytest -q'
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", config + f"test = {json.dumps(command)}\n")
+    env.commit(env.repo.path, ".gitignore", "__pycache__/\n.pytest_cache/\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix({
+        "backend with spaces/conftest.py": f'''import json, pathlib, pytest
+@pytest.fixture(autouse=True)
+def record_run(request):
+    with pathlib.Path({json.dumps(log.as_posix())}).open("a", encoding="utf-8") as log:
+        log.write(json.dumps(request.node.nodeid) + "\\n")
+''',
+        "backend with spaces/test_a_passed.py": "def test_passed():\n    assert 2 + 2 == 4\n",
+        "backend with spaces/test_b_changed.py": "def test_changed():\n    assert 3 + 3 == 6\n",
+        "backend with spaces/test_z_failed.py": f'''from pathlib import Path
+def test_failed():
+    assert Path({json.dumps(repaired.as_posix())}).exists()
+''',
+    })
+    failed = env.close(item)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    initial = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
+    assert initial == ["test_a_passed.py::test_passed", "test_b_changed.py::test_changed",
+                       "test_z_failed.py::test_failed"]
+
+    repaired.write_text("ready\n", "utf-8")
+    env.commit(where, "backend with spaces/test_b_changed.py",
+               "def test_changed():\n    assert 3 * 3 == 9\n")
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    rerun = [json.loads(line) for line in log.read_text("utf-8").splitlines()][len(initial):]
+    assert rerun == ["test_z_failed.py::test_failed", "test_b_changed.py::test_changed"]

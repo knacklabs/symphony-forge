@@ -15,7 +15,7 @@ def pytest_configure(config):
     if not root:
         return
     top = Path(root)
-    if Path(config.invocation_params.dir).resolve() != top:
+    if not Path(config.invocation_params.dir).resolve().is_relative_to(top):
         return
     if not Path(config.rootpath).resolve().is_relative_to(top):
         return  # A test may itself launch pytest in another repository.
@@ -43,7 +43,8 @@ class Repair:
             path for path in environment.get("PYTHONPATH", "").split(os.pathsep)
             if not any((Path(path) / name).is_file() for name in
                        ("_forge_pytest_repair.py", "_forge_pytest_selection.py")))
-        key = hashlib.sha256(json.dumps([args, environment], sort_keys=True).encode()).hexdigest()
+        key = hashlib.sha256(json.dumps([str(Path(config.invocation_params.dir).resolve()),
+                                         args, environment], sort_keys=True).encode()).hexdigest()
         worker = getattr(config, "workerinput", {})
         self.cache = Path(worker.get("forge_repair_cache") or
                           Path(os.environ["FORGE_REPAIR_CACHE"]) / (key + ".json"))
