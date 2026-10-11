@@ -271,6 +271,20 @@ def few_tests(top: Path, command: str, base: str) -> bool:
         return False
     from forge import fasttest  # fasttest imports review in forge test
 
+    test = repo.config(top)["test"]
+    # Only Python tests are bounded by the picker's file count.
+    if re.search(r"[;&|<>\r\n`$]", test):
+        return False
+    test = re.sub(r"^uv run(?: --frozen| --python [\w.-]+)* ", "", test.strip())
+    try:
+        words = shlex.split(test, posix=os.name != "nt")
+    except ValueError:
+        return False
+    runner = Path(words[0].strip('"').replace("\\", "/")).name if words else ""
+    if runner not in {"pytest", "pytest.exe"} and not (
+            re.fullmatch(r"python[\d.]*(?:\.exe)?", runner) and words[1:3] == ["-m", "pytest"]):
+        return False
+
     with contextlib.chdir(top):
         picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
     # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.

@@ -16,10 +16,11 @@ STORY = "reviews-skip-agent-line"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-@pytest.mark.parametrize("file_count, compound", [(5, False), (6, False), (5, True)],
-                         ids=["five-files", "six-files", "compound-command"])
+@pytest.mark.parametrize("file_count, compound, other_suite",
+                         [(5, False, False), (6, False, False), (5, True, False), (5, False, True)],
+                         ids=["five-files", "six-files", "compound-command", "underlying_full_suite"])
 def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
-                                                                 adopted, file_count, compound):
+                                                                 adopted, file_count, compound, other_suite):
     server, connections = release_server
     repo = env.repo
     if adopted:
@@ -43,9 +44,18 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         repo.write(f"tests/test_app_{index}.py", "from app import VALUE\n"
                    "def test_current_app():\n    assert VALUE == 2\n")
     picker = "forge test --pytest {base}"
+    test_command = shell([sys.executable, "-m", "pytest", "tests", "-q"])
     if compound:
-        picker += " && " + shell([sys.executable, "-m", "pytest", "tests", "-q"])
-    repo.write("forge.toml", "test = " + json.dumps(shell([sys.executable, "-m", "pytest", "tests", "-q"]))
+        picker += " && " + test_command
+    if other_suite:
+        # A standalone picker used to admit the unrestricted Node suite in its test command.
+        repo.write("package.json", json.dumps({"scripts": {"test": "node --test tests/full-suite.cjs"}}))
+        repo.write("tests/full-suite.cjs", 'const {test} = require("node:test");\n'
+                   'const assert = require("node:assert/strict");\n'
+                   'test("full Node suite", () => assert.match(\n'
+                   '  require("node:fs").readFileSync("app.py", "utf8"), /VALUE = 2/));\n')
+        test_command += " && npm test"
+    repo.write("forge.toml", "test = " + json.dumps(test_command)
                + "\nfast_test = " + json.dumps(picker) + "\n" + (repo.path / "forge.toml").read_text("utf-8"))
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure a pytest client")
@@ -60,7 +70,7 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         accepted(server, connections, held, holding, output)
         small, small_output = start(folder, tmp_path / "small", repo, "test")
         processes.append(small)
-        if file_count > 5 or compound:
+        if file_count > 5 or compound or other_suite:
             _until(lambda: "in line" in small_output.read_text("utf-8") or small.poll() is not None,
                    "the larger test command to wait for the test place")
             assert small.poll() is None, small_output.read_text("utf-8")
@@ -74,7 +84,9 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
         said = small_output.read_text("utf-8")
         assert status == 0, said
         assert f"{file_count} passed" in said
-        if file_count <= 5 and not compound:
+        if other_suite:
+            assert "full Node suite" in said
+        if file_count <= 5 and not compound and not other_suite:
             assert "in line" not in said
             assert holding.poll() is None
     finally:
