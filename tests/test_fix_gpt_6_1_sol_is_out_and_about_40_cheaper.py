@@ -1,7 +1,7 @@
 """Workers, fixes, design and the Codex cold reader use GPT-6.1 Sol.
 New review settings are left to Autoreview; existing repository settings remain unchanged.
 
-The sign-off pin, the light prototype review and the SDK install are proven by their own tests:
+Sign-off defaults, the light prototype review and the SDK install are proven by their own tests:
 test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py, test_aha_review.py and test_codex_setup.py.
 """
 import tomllib
@@ -15,7 +15,7 @@ REVIEW = {"model": NEW, "effort": "high"}
 HELPERS = {"subagents": "gpt-6-luna", "subagent_effort": "max"}
 
 
-def test_1_forge_init_defaults_work_to_gpt_6_1_sol_and_leaves_review_defaults_external(repo, gh, tmp_path):
+def test_1_forge_init_defaults_work_to_gpt_6_1_sol_and_leaves_reviews_to_autoreview(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     models = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]

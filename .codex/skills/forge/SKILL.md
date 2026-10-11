@@ -41,7 +41,10 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again. In AGENTS.md, only hand edits inside the `forge:begin` and `forge:end` lines hold the file; your rules outside them stay as written when doctor refreshes Forge's block |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
-| "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
+| "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
+| "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
@@ -101,6 +104,32 @@ to the current default branch. Extra changes are refused without review. Tests a
 every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
+
+## Tools
+
+**Who does what.** The coordinator is the app the developer opens: Claude Code or Codex.
+`tools` in `forge.toml` says which tools run Forge's work: `"claude"`, `"codex"`, or
+`"both"` (the default when absent). One tool puts every item on it, including design work
+with its own design model; `workers` is ignored. With both, `workers` keeps its usual meaning.
+Forge's planning, approval, build, review, CI and merge process stays the same.
+Doctor's SDK, project trust and UI skill checks follow the selected tool too.
+
+When a round's tool is the coordinator's, its route is native: that session's own background subagent,
+even with both tools. The other tool runs through its kit: the Codex app server or the Claude
+Agent SDK. No coordinating session open in a one-tool repo means work waits for the session.
+Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
+otherwise Claude. Autoreview uses its own default model and effort for normal, light and
+sign-off reviews. Existing review model entries are ignored; doctor explains this in a note.
+
+**Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
+as a background subagent of the named role. Keep the item's chat while the session is open;
+continue the named subagent when told to, or start fresh with the whole brief in a new session.
+Run `forge handback` with its last message and id when it finishes. Send the nudge when asked;
+never edit the brief. Only the coordinator hands back or starts another round.
+
+**Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
+New repos get the setting's default at init; existing repos get this guide when the upgraded
+Forge syncs, keeping their settings as written.
 
 ## Laptop setup and after cloning
 
@@ -571,7 +600,7 @@ it in `approved_via` and `approved_on`, then run `forge decision accept client-s
 records.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
-Claude when `workers = "claude"`, Codex when `workers = "codex"`. With split workers,
+Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
 it uses Codex when installed and Claude otherwise. Forge pins no review model or effort,
 including when an older `forge.toml` still has `[models.review]` entries. A prototype fix
 before sign-off gets a light review that blocks only on P0 findings.
@@ -865,7 +894,7 @@ discards the answer.
 
 Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
-tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry,
+tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and `forge ask` Codex's. Workers and Claude plan readers with no entry use Forge's defaults.
 Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses its design default.
 Claude workers use model and effort
@@ -891,7 +920,8 @@ If build, fix or lite has a single entry, move it to its family's table before a
 Claude entry. Then run `forge sync` to refresh subagent roles. Legacy review entries stay
 in existing settings but no longer override Autoreview's defaults.
 
-`forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
+With `tools = "both"`, `forge.toml`'s `workers` says who builds each task and fix.
+`forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
 
 - `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
@@ -1017,10 +1047,19 @@ wait; if the merge needs a person, it stops with close's existing conflict next 
 When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
-When the pull request's `tests` check runs the full suite, recommend a fast close command: set
-`fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
-fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
-instead of `test`; the `tests` check keeps running the full `test`.
+When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
+Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
+and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
+`--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
+Forge's initial optional-package Node command uses the same selection once an app adds
+`package.json`; with no package it still runs nothing.
+Go and other runners run the full test command. Compound npm scripts also keep their full
+command because arguments cannot select each runner inside them. Set `fast_test` for a different
+selection. Supported runners with no related tests run none locally. A red CI still sends
+the item back to the worker.
+To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
+`{base}` standing for the merge base with the default branch.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,

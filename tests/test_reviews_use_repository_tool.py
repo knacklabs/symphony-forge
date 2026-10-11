@@ -13,7 +13,8 @@ STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 @pytest.mark.parametrize("light", [False, True], ids=["normal", "light"])
 def test_6_close_uses_repository_tool_without_model_or_effort_overrides(env, family, light):
     toml = env.repo.path / "forge.toml"
-    text = toml.read_text("utf-8").replace('workers = "claude"', f'workers = "{family}"')
+    # The tools setting now owns routing; workers only assigns builds under both.
+    text = toml.read_text("utf-8") + f'\ntools = "{family}"\n'
     # Legacy configured pins must not become overrides of the external program's defaults.
     text += ('\n[models.review.codex]\nmodel = "gpt-6-astra"\neffort = "xhigh"\n'
              '\n[models.review.claude]\nmodel = "custom-claude"\neffort = "low"\n')
@@ -36,7 +37,7 @@ def test_7_signoff_uses_repository_tool_and_accepts_autoreview_default_selection
         repo, tmp_path, monkeypatch, family):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     toml = fix / "forge.toml"
-    toml.write_text(toml.read_text("utf-8") + f'workers = "{family}"\n', "utf-8")
+    toml.write_text(toml.read_text("utf-8") + f'tools = "{family}"\n', "utf-8")
     repo.git("commit", "-qam", "Choose the repository tool", cwd=fix)
     page = _decision(fix, answers)
     # Complete clean review, without a model header: Autoreview owns the selection.

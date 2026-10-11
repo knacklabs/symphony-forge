@@ -195,8 +195,8 @@ def work(args: argparse.Namespace) -> None:
                             session, thread, None if fresh == "first turn" else fresh,
                             before_turn if design else None)
                 except (repo.Refused, OSError) as error:
-                    # Only split falls back: workers = claude means Claude, even when it fails.
-                    if (not design or config["workers"] != "split" or
+                    # Only both with split falls back; one tool keeps its failed round.
+                    if (not design or config["tools"] != "both" or config["workers"] != "split" or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
                     reason = ("claude command missing" if shutil.which("claude") is None else

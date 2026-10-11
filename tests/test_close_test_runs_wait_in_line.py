@@ -3,6 +3,7 @@ its place in line when it starts waiting and each time the place changes. A clos
 while waiting leaves no place behind."""
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
@@ -38,8 +39,9 @@ def _with_test_command(env) -> Path:
     script = env.tmp / "suite.py"
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
     toml = env.repo.path / "forge.toml"
+    command = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}"'
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"'))
+               + "fast_test = " + json.dumps(command) + "\n")
     env.repo.git("push", "-q", "origin", "main")
     return env.tmp / "runs.log"
 
