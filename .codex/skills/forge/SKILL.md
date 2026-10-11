@@ -1217,6 +1217,12 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
+choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
+with that finding as its why. Once the 30 minutes pass, `forge next` says to run
+`forge close <item>`, which records it and carries on; the worker's next round narrows the part.
+The owner can reverse it later with the same `forge close <item> --resolve` command. To always
+wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is

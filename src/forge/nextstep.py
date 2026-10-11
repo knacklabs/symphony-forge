@@ -617,6 +617,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
+        if close.default_due(path or top, state):
+            return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
+                    "records the repo's default choice: narrow.", f"Next: forge close {item}"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
                 "narrow the part, split it, or accept the remaining findings.",
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
@@ -664,7 +667,11 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
-    return [sentence.format(**values), f"Next: {step.format(**values)}"]
+    stop = state.get("stop") or {}
+    answered = ([f"The repo's default answered the review loop stop on {label}: narrow it to its "
+                 "Done-when lines; follow-up fixes own the open findings: "
+                 f"{', '.join(stop.get('fixes') or []) or 'none'}."] if stop.get("by") == "default" else [])
+    return answered + [sentence.format(**values), f"Next: {step.format(**values)}"]
 
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:

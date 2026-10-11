@@ -147,6 +147,12 @@ def work(args: argparse.Namespace) -> None:
             fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
+        stop = state.get("stop") or {}
+        if note is None and stop.get("by") == "default" and stop.get("worker_round") == state.get("round"):
+            note = ("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
+                    "choice: narrow this part to its Done-when lines. Follow-up fixes own the open findings ("
+                    + (", ".join(stop.get("fixes") or []) or "none") + "); remove what goes beyond the "
+                    "Done-when lines instead of fixing those findings here.")
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
