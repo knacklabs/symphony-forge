@@ -1,6 +1,13 @@
 {
   "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
   "branch": "fix/personal-worker-choice",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12af0-96e9-74a2-8c1c-8316c0a126ba",
+    "head": null,
+    "start": "0ea3006cc64e865884c0740fb95776aef9eab262"
+  },
   "done_when": "A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it, overrides only which tools run work, the worker split and the model and effort per kind of work; Forge refuses any other key in it; new and upgraded repos ignore the file in git; forge next and forge doctor show which file each of those settings came from",
   "kind": "fix",
   "round": 1,
