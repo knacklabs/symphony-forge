@@ -13,7 +13,8 @@ from test_story import DOC, new_story, setup, worktree
 from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
                                   unsynced_up)  # noqa: F401
 
-# The pinned helper names its model and thinking, then runs the engine and keeps its output.
+# The pinned helper names its model and thinking, then runs the engine once per pass of a review
+# it splits in two, keeping its output (Codex always with --json).
 HELPER = '''#!{python}
 import json, subprocess, sys, tempfile
 args = sys.argv[1:]
@@ -24,7 +25,8 @@ if engine == "codex":
     command = [args[args.index("--codex-bin") + 1], "exec", "--json", "-C", tempfile.mkdtemp(), "-"]
 else:
     command = [args[args.index("--claude-bin") + 1], "--print", "--output-format", "json"]
-subprocess.run(command, input="Review the change.", capture_output=True, text=True, check=True)
+for _ in range(2):
+    subprocess.run(command, input="Review the change.", capture_output=True, text=True, check=True)
 with open(args[args.index("--json-output") + 1], "w", encoding="utf-8") as out:
     json.dump({report!r}, out)
 '''
@@ -45,6 +47,9 @@ print(json.dumps({{"type": "result", "subtype": "success", "result": "No blockin
                   "usage": {{"input_tokens": 10, "cache_read_input_tokens": 800,
                             "cache_creation_input_tokens": 90, "output_tokens": 120}}}}), flush=True)
 '''
+# Both passes of a review count.
+CODEX_REVIEW_SPENT = {"chat": "thread-review", "input_tokens": 1800, "cached_input_tokens": 1200,
+                      "output_tokens": 240, "reasoning_output_tokens": 80}
 CLAUDE_SPENT = {"chat": "session-claude", "input_tokens": 900, "cached_input_tokens": 800,
                 "output_tokens": 120, "reasoning_output_tokens": None}
 CODEX_SERVER_SPENT = {"input_tokens": 1200, "cached_input_tokens": 1000, "output_tokens": 300,
@@ -66,12 +71,12 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
         if case == 'review_codex':
             (tmp_path / 'autoreview' / 'scripts' / 'autoreview').write_text(helper, 'utf-8')
             conftest._install(repo.bin, 'codex', CODEX.format(python=sys.executable))
-            spent = {"chat": "thread-review", "input_tokens": 900, "cached_input_tokens": 600,
-                     "output_tokens": 120, "reasoning_output_tokens": 40}
+            spent = CODEX_REVIEW_SPENT
         else:
             _claude_only(tmp_path, monkeypatch, repo.bin, helper)
             conftest._install(repo.bin, 'claude', CLAUDE.format(python=sys.executable))
-            spent = CLAUDE_SPENT
+            spent = {**CLAUDE_SPENT, "input_tokens": 1800, "cached_input_tokens": 1600,
+                     "output_tokens": 240}
         item, _ = env.start_fix()
         closed = repo.forge('close', item)
         assert closed.returncode == 0, closed.stderr
@@ -102,8 +107,7 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
         conftest._install(repo.bin, 'codex', CODEX.format(python=sys.executable))
         _repo_adopted_on_the_previous_release(up)
         end = run_end(repo, 'review')
-        spent = {"chat": "thread-review", "input_tokens": 900, "cached_input_tokens": 600,
-                 "output_tokens": 120, "reasoning_output_tokens": 40}
+        spent = CODEX_REVIEW_SPENT
         assert end | spent == end
         assert (end['model'], end['effort']) == ('review-model', 'high')
 
