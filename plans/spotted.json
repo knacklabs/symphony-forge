@@ -804,6 +804,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 194,
+      "text": "Earlier-release choices can trigger another stop before three new rounds",
+      "from": "blocking",
+      "item": "second-stop-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1926,6 +1937,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 68,
+      "text": "Native read handout stops being valid JSON when the agent line is full",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/READS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tDo not report an exited worker as building while tests run\tboard-data-truth",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2190,6 +2212,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 944,
+      "text": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+      "from": "blocking",
+      "item": "record-review-usage",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: Persist reader chats before accepting a read\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2421,6 +2454,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 254,
+      "text": "Not done: Resolve conflicting fix-round directions",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 264,
+      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting\tbrief-close-pushes",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -2615,6 +2670,17 @@
       "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
       "from": "blocking",
       "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 464,
+      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
+      "from": "blocking",
+      "item": "worker-brief-faster",
       "status": "open",
       "closed_by": null
     },
@@ -2868,6 +2934,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     },
@@ -3185,6 +3262,17 @@
       "path": "tests/test_fix_reviews_and_reads_record_their_cost.py",
       "line": 101,
       "text": "Not done: earlier-adopted repo review and plan-read cost test",
+      "from": "blocking",
+      "item": "record-review-usage",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_reviews_and_reads_record_their_cost.py\tNot done: native plan read run-record test\trecord-review-usage",
+      "kind": "bug",
+      "path": "tests/test_fix_reviews_and_reads_record_their_cost.py",
+      "line": 88,
+      "text": "Not done: native plan read run-record test",
       "from": "blocking",
       "item": "record-review-usage",
       "status": "open",
@@ -4214,6 +4302,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -5145,83 +5244,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 254,
-      "text": "Not done: Resolve conflicting fix-round directions",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 264,
-      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'\tworker-brief-faster",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 464,
-      "text": "Not done: The worker brief names the plan's files and related tests, tells the worker not to read the coordinator guide, answers 'separate'",
-      "from": "blocking",
-      "item": "worker-brief-faster",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
-      "kind": "bug",
-      "path": "tests/test_close_skips_large_test_selections.py",
-      "line": 68,
-      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
-      "from": "blocking",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 323,
-      "text": "Follow-up: large Vitest and Jest selections",
-      "from": "review",
-      "item": "skip-large-local-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 194,
-      "text": "Earlier-release choices can trigger another stop before three new rounds",
-      "from": "blocking",
-      "item": "second-stop-choice",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
-      "kind": "bug",
-      "path": "src/forge/native.py",
-      "line": 68,
-      "text": "Native read handout stops being valid JSON when the agent line is full",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/READS",
       "status": "open",
       "closed_by": null
     }

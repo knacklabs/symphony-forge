@@ -11,21 +11,37 @@
   "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
   "flagged": [
     "src/forge/review.py",
+    "src/forge/story.py",
     "tests/test_fix_reviews_and_reads_record_their_cost.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7a401d8555d5e9ec2a02e5af308bcba66a78575a811d8733e3a2d7169f836b0e",
-    "changed": "14359d4562fd8b9a8cba2b31f3790a7d0ab7651c5f5ca9ee30c6865ded86b217",
-    "commit": "a14c4568b02e83a4c5e33fd513a05373612568d2",
+    "branch_diff": "90345448876d823e5f283f2fdfe0e3905fbe6655dede3c42043b52c823dd8329",
+    "changed": "9b6a7f71530b8d0b315894db40b8ff74c38001574843413671a8f242c4a01479",
+    "commit": "d60448ac60ed39fe7063504767e1cb886709ce6c",
     "dismissals": [],
-    "findings": [],
-    "id": "fc4690e0-1a6f-4807-8e08-d7a8f58aea9d",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done. The changed Claude read path adds cost fields only to a kit-driven run. When the reader is the coordinating app, `story.py:295-297` instead returns through `native.offer`; `native.py`'s offer and handback paths never create a run record or collect token use. A normal same-host `forge read` can therefore finish with no run end containing its model, effort, chat id and tokens.",
+        "file": "src/forge/story.py",
+        "line": 944,
+        "priority": "P1",
+        "title": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do"
+      },
+      {
+        "body": "Raise: Test. The five-case proof exercises kit-driven Codex and Claude reads, but no same-host read completed through `forge handback`. It would pass while every native read lacks the run end and token fields required by Done-when. The existing command test needs a native-read case that asserts those fields.",
+        "file": "tests/test_fix_reviews_and_reads_record_their_cost.py",
+        "line": 88,
+        "priority": "P1",
+        "title": "Not done: native plan read run-record test"
+      }
+    ],
+    "id": "19d0441a-43ab-4486-ad5b-48e956d1ee88",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T09:13:38.849775+00:00",
@@ -49,6 +65,10 @@
     },
     {
       "at": "2026-10-11T16:32:44.724452+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:19:01.307634+00:00",
       "step": "review"
     }
   ],
