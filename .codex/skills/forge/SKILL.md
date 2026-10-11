@@ -170,10 +170,12 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
-plan reads and close reviews share a line. Waiting items that other planned work waits on go
+plan reads and close reviews share a line. A work round also waits while the machine's
+one-minute load per core is 1.5 or more, unless no other agent runs; where the OS reports no load
+(Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
+one on four. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
 and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
@@ -806,7 +808,8 @@ when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. Items that other planned work waits on go
+reviews), across all its repos; the rest wait in line. A work round also waits while load per
+core is 1.5 or more and another agent runs. Items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
 each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
@@ -1112,7 +1115,9 @@ set, with `{base}` as the merge base with `origin/<default branch>`, in the same
 test lane as close. It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pytest -n auto` honours
+and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
+a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
+its test command is capped with `--maxprocesses`. `pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
