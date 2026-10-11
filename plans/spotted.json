@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 221,
+      "text": "Not done: synced skill copies match the template",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.claude/skills/forge/SKILL.md\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
       "kind": "bug",
       "path": ".claude/skills/forge/SKILL.md",
@@ -316,6 +327,17 @@
       "text": "Not done: Guide promises Codex fallback for Claude-only workers",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 180,
+      "text": "Not done: the guide describes the split design fallback correctly",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
       "status": "open",
       "closed_by": null
     },
@@ -1321,6 +1343,94 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 391,
+      "text": "Close passes test filenames to Python setup commands",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 260,
+      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 219,
+      "text": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips Jest's default __tests__ files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips Jest's default __tests__ files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips touched NestJS end-to-end test files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 287,
+      "text": "Not done: Close still runs the full client test command locally",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 268,
+      "text": "Not done: Close's default test selection breaks Go clients",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Go test helper edits run no local package check\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 325,
+      "text": "Not done: Go test helper edits run no local package check",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -1398,6 +1508,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 91,
+      "text": "Full board and GitHub reads delay task admission",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -1407,6 +1528,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 286,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends a named running or waiting run in either lane and frees its place\tFORGE-LANES-1/AGENTS",
@@ -1460,6 +1592,17 @@
       "text": "Repeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
       "from": "worker",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 93,
+      "text": "Scanning every historical story delays each agent admission",
+      "from": "blocking",
+      "item": "unblockers-first",
       "status": "open",
       "closed_by": null
     },
@@ -1915,6 +2058,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 503,
+      "text": "Not done: doctor ignores workers under a one-tool setting",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/repo.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "src/forge/repo.py",
@@ -2267,6 +2421,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 169,
+      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
+      "from": "blocking",
+      "item": "read-blocking-only",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/templates/review-tests.py",
@@ -2509,6 +2674,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 33,
+      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
+      "kind": "bug",
+      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
+      "line": 58,
+      "text": "Not done: scope-only blocker admission test",
+      "from": "blocking",
+      "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
       "kind": "bug",
       "path": "tests/test_board_dependency_timelines.py",
@@ -2608,6 +2795,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 80,
+      "text": "Not done: init and upgrade plus sync local-selection test",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_refreshes_pull_request_contract.py\tNot done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale\tskipped-close",
       "kind": "bug",
       "path": "tests/test_close_refreshes_pull_request_contract.py",
@@ -2648,6 +2846,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_skips_large_test_selections.py\tNot done: test green-check completion and the missing-tests-check safeguard\tskip-large-local-tests",
+      "kind": "bug",
+      "path": "tests/test_close_skips_large_test_selections.py",
+      "line": 68,
+      "text": "Not done: test green-check completion and the missing-tests-check safeguard",
+      "from": "blocking",
+      "item": "skip-large-local-tests",
       "status": "open",
       "closed_by": null
     },
@@ -3983,6 +4192,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: large Vitest and Jest selections",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 323,
+      "text": "Follow-up: large Vitest and Jest selections",
+      "from": "review",
+      "item": "skip-large-local-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -4100,6 +4320,17 @@
       "text": "The Python related-test picker cannot select the mod native tests for TypeScript-only changes.",
       "from": "worker",
       "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 338,
+      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "from": "worker",
+      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     },
@@ -4903,215 +5134,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
-      "kind": "bug",
-      "path": "src/forge/templates/cold-read.md",
-      "line": 169,
-      "text": "Not done: Follow-up reader brief contradicts the advisory rule",
-      "from": "blocking",
-      "item": "read-blocking-only",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 91,
-      "text": "Full board and GitHub reads delay task admission",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 286,
-      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tScanning every historical story delays each agent admission\tunblockers-first",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 93,
-      "text": "Scanning every historical story delays each agent admission",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first\tunblockers-first",
-      "kind": "bug",
-      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
-      "line": 33,
-      "text": "Not done: In the machine's agent line, a waiting run for an item that other planned work waits on starts before runs nothing waits on, first",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agent_lane_prioritizes_dependencies.py\tNot done: scope-only blocker admission test\tunblockers-first",
-      "kind": "bug",
-      "path": "tests/test_agent_lane_prioritizes_dependencies.py",
-      "line": 58,
-      "text": "Not done: scope-only blocker admission test",
-      "from": "blocking",
-      "item": "unblockers-first",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": ".claude/skills/forge/SKILL.md",
-      "line": 221,
-      "text": "Not done: synced skill copies match the template",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": "docs/guide.md",
-      "line": 180,
-      "text": "Not done: the guide describes the split design fallback correctly",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 391,
-      "text": "Close passes test filenames to Python setup commands",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 260,
-      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 219,
-      "text": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips Jest's default __tests__ files\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 217,
-      "text": "Not done: Close skips Jest's default __tests__ files",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 217,
-      "text": "Not done: Close skips touched NestJS end-to-end test files",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 287,
-      "text": "Not done: Close still runs the full client test command locally",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 268,
-      "text": "Not done: Close's default test selection breaks Go clients",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Go test helper edits run no local package check\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 325,
-      "text": "Not done: Go test helper edits run no local package check",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 503,
-      "text": "Not done: doctor ignores workers under a one-tool setting",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
-      "kind": "bug",
-      "path": "tests/test_close_keeps_full_tests_in_ci.py",
-      "line": 80,
-      "text": "Not done: init and upgrade plus sync local-selection test",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 338,
-      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
-      "from": "worker",
-      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     }
