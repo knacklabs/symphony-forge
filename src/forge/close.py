@@ -382,7 +382,7 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
         if number in dismissed:
             continue
         why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
-                       f"({finding['file']}:{finding['line']})".split())
+                       f"({finding['file']}:{finding['line']}): {finding.get('body', '')}".split())
         done = " ".join(f"A review no longer finds: {finding['title']}".split())
         out, here = io.StringIO(), os.getcwd()
         try:  # fix start works in the current checkout: the follow-up stacks on this item
@@ -422,8 +422,11 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
-    """"human" for migrate, adopt and the merge switch's fix, else the repo's merge setting."""
-    return "human" if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY else repo.merge_setting(top)
+    """"human" for migrate, adopt, the merge switch's fix and an item whose review loop stop the
+    repo's default answered (the owner can still reverse it before merging), else the repo's
+    merge setting."""
+    return ("human" if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY
+            or (state.get("stop") or {}).get("by") == "default" else repo.merge_setting(top))
 
 
 def _worktree(item: str) -> Path:

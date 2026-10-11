@@ -644,7 +644,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch
-            and repo.merge_setting(top) == "agent"):
+            and close.merger(top, state) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
@@ -663,14 +663,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         # The bulk list missed it (GitHub can time out on it); ask for this branch's link alone.
         view = repo.run("gh", "pr", "view", state["branch"], "--json", "url", "--jq", ".url", cwd=top)
         pr = {"url": view.stdout.strip()} if view.returncode == 0 and view.stdout.strip() else pr
-    if status == "ready" and (url := pr.get("url")):
-        next_step = (step.format(**values) if step == "forge merge {item}"
-                     else f"merge {url}, then forge next")
-        return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
     stop = state.get("stop") or {}
     answered = ([f"The repo's default answered the review loop stop on {label}: narrow it to its "
                  "Done-when lines; follow-up fixes own the open findings: "
                  f"{', '.join(stop.get('fixes') or []) or 'none'}."] if stop.get("by") == "default" else [])
+    if status == "ready" and (url := pr.get("url")):
+        next_step = (step.format(**values) if step == "forge merge {item}"
+                     else f"merge {url}, then forge next")
+        return answered + [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
     return answered + [sentence.format(**values), f"Next: {step.format(**values)}"]
 
 
