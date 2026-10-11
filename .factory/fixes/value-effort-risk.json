@@ -1,0 +1,14 @@
+{
+  "base": "9f73aca70d925fe5e107cb9ed920ff51016e409a",
+  "branch": "fix/value-effort-risk",
+  "done_when": "The guide tells agents to score every option they propose, every plan and every blocking review finding on value, effort and risk from 1 to 5, marked as judgement and not measurement, ranked and shown as a table; stop questions show each finding's scores; the README explains how Forge does this with worked examples; new and upgraded repos get the guide",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-11T15:22:40.205045+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Options, review findings and plans reach the owner as long lists with no sense of which matter most; scoring each on value, effort and risk makes the choice quick"
+}
