@@ -10,20 +10,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c4708da75f281224c6c5af3767acdbab4eb25e4694ad71a378ce10de00ad171b",
-    "changed": "a7e03fa6f12e8befad1477d904e0f7e70fc255158e8f579b448e25b168792b53",
-    "commit": "14883b64930072c7c78f28445c076669e5aa3e93",
+    "branch_diff": "c9dfb6e1d3c45fb951014ca190ab028e3b60965e23f5b27257db622a90a951b7",
+    "changed": "94fef8a2f426eb0ec6021d12f87e2d87fc8012fcad6f2eb50d64877e92256011",
+    "commit": "422fa12576d0d605865f1a41f34bb0ce259ca271",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. `time_records.story` returns intervals, a grouped `time_breakdown` and `total_seconds`, but omits `working_seconds`, `waiting_seconds` and `unknown_seconds`. The board copies this result into story rows, so an approved story with a recorded read and an unknown tail lacks the per-item totals that part and fix rows expose. The named story tests check only `time_breakdown` and miss this gap.",
-        "file": "src/forge/time_records.py",
-        "line": 491,
+        "body": "Raise: Not done. This call builds a story's runway only from `current[\"children\"]` and read rounds. `board.py:526` has already excluded parts merged more than seven days ago, so an ongoing story with an older merged part loses that part's recorded working and waiting time. Separately, `time_records.py:481` starts the runway at the first retained part interval or read; a story created before its first cold read loses that earlier unknown time. Both are normal multi-day stories, and the named tests use recent parts and reads. Item 5 requires the story's time split to count its parts and unknown spans.",
+        "file": "src/forge/board.py",
+        "line": 592,
         "priority": "P1",
-        "title": "Not done: story rows expose the required time totals"
+        "title": "Not done: story runway counts its full elapsed history"
       }
     ],
-    "id": "c65f0c2a-4304-4e4e-b08f-e2ccb52001c2",
+    "id": "a640e1b3-eaa3-439c-9d85-5cbc65ba5ddd",
     "status": "blocked"
   },
   "round": 11,
@@ -55,6 +55,10 @@
     },
     {
       "at": "2026-10-11T06:02:38.744254+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T06:36:15.229631+00:00",
       "step": "review"
     }
   ],

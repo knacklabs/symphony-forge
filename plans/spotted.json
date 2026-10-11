@@ -694,6 +694,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: story runway counts its full elapsed history\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 592,
+      "text": "Not done: story runway counts its full elapsed history",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: teammates see the current PR time record\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/board.py",
