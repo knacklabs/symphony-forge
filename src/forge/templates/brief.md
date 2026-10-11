@@ -151,7 +151,8 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests through `forge test` in the
 foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
 `fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
-base with `origin/<default branch>`. It always runs, including uncommitted changes. Then commit
+base with `origin/<default branch>`, on at most two test processes. It always runs, including
+uncommitted changes. Then commit
 any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;

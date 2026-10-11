@@ -37,6 +37,27 @@ def half_cores() -> int:
     return max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2)
 
 
+def test_cpus() -> str:
+    """The test processes for one test run: a worker's own budget, else half the cores."""
+    return os.environ.get("FORGE_TEST_CPUS") or str(half_cores())
+
+
+def worker_env() -> dict[str, str]:
+    """A worker's test runs, through forge test or pytest -n auto, use at most two processes."""
+    cpus = str(min(2, half_cores()))
+    return {**os.environ, "FORGE_WORKER": "1", "FORGE_TEST_CPUS": cpus, "PYTEST_XDIST_AUTO_NUM_WORKERS": cpus}
+
+
+LOAD_LIMIT = 1.5
+
+
+def _load_per_core() -> float | None:
+    """The one-minute load per core Forge may use; None where the OS has none (Windows keeps the half-cores rule)."""
+    with contextlib.suppress(OSError, AttributeError):
+        return os.getloadavg()[0] / (getattr(os, "process_cpu_count", os.cpu_count)() or 2)
+    return None
+
+
 def test_slots() -> int:
     """One test run per four available cores, with at least one place."""
     return max(1, half_cores() // 2)
@@ -140,7 +161,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
     try:
-        said = 0
+        said: int | str = 0
         while True:
             with _queue() as runs:
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")]
@@ -148,14 +169,29 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 if position is None:
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 place = position - size + 1
-                if place <= 0:
+                busy = None
+                # A work round waits while the machine is busy, unless no other agent runs, since
+                # waiting then never lowers the load.
+                # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
+                # once; space admissions by a minute if that burst shows up in queue waits.
+                if place <= 0 and kind == "work" and any(
+                        run.get("admitted") or run["started_at"] or run.get("legacy")
+                        for run in lane if run["id"] != entry["id"]):
+                    busy = _load_per_core()
+                    busy = busy if busy is not None and busy >= LOAD_LIMIT else None
+                if place <= 0 and busy is None:
                     # Admission holds the place before the model process is launched.
                     lane[position]["admitted"] = True
                     entry["admitted"] = True
-            if place <= 0:
+            if place <= 0 and busy is None:
                 _lane_event(entry, "lane admitted")
                 return entry
-            if place != said:
+            if busy is not None:
+                if said != "busy":
+                    print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
+                          f"until it is under {LOAD_LIMIT}.", flush=True)
+                    said = "busy"
+            elif place != said:
                 print(f"{size} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
                       f"its turn: it is number {place} in line."
                       + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""), flush=True)
