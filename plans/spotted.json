@@ -23,17 +23,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": ".claude/skills/forge/SKILL.md",
-      "line": 221,
-      "text": "Not done: synced skill copies match the template",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\t.claude/skills/forge/SKILL.md\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
       "kind": "bug",
       "path": ".claude/skills/forge/SKILL.md",
@@ -327,17 +316,6 @@
       "text": "Not done: Guide promises Codex fallback for Claude-only workers",
       "from": "blocking",
       "item": "claude-sonnet-default",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": "docs/guide.md",
-      "line": 180,
-      "text": "Not done: the guide describes the split design fallback correctly",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
       "status": "open",
       "closed_by": null
     },
@@ -958,6 +936,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tCheck persisted spec chats before enforcing the work-branch guard\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 236,
+      "text": "Check persisted spec chats before enforcing the work-branch guard",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tFull board scan delays every ordinary first Codex work turn\tcodex-fast-when-needed",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -965,6 +954,17 @@
       "text": "Full board scan delays every ordinary first Codex work turn",
       "from": "blocking",
       "item": "codex-fast-when-needed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: A stale local record can replace the current chat\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 196,
+      "text": "Not done: A stale local record can replace the current chat",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -991,6 +991,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Each task and fix keeps one worker chat per tool from its first round to merge\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 246,
+      "text": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 246,
+      "text": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Failed unchanged-spec reads bind to the upgrade checkout\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 250,
+      "text": "Not done: Failed unchanged-spec reads bind to the upgrade checkout",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1000,6 +1033,28 @@
       "item": "lane-identity-env",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve earlier-release reader chats when local JSON still exists\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 191,
+      "text": "Not done: Preserve earlier-release reader chats when local JSON still exists",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve pre-upgrade chats when local records disappear\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 179,
+      "text": "Not done: Preserve pre-upgrade chats when local records disappear",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
@@ -1013,6 +1068,61 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve recoverable chats during upgrade migration\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 229,
+      "text": "Not done: Preserve recoverable chats during upgrade migration",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve spec-reader chats when their owning worktree is removed\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 254,
+      "text": "Not done: Preserve spec-reader chats when their owning worktree is removed",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Recover earlier-release reader chats after failed reads\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 183,
+      "text": "Not done: Recover earlier-release reader chats after failed reads",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Recover log-only failed spec-reader chats when the spec is unchanged\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 269,
+      "text": "Not done: Recover log-only failed spec-reader chats when the spec is unchanged",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Upgrade can bind a spec reader to the wrong branch\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 245,
+      "text": "Not done: Upgrade can bind a spec reader to the wrong branch",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1020,6 +1130,39 @@
       "text": "Not done: the latest step through every worker path",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tSkip stale spec-reader records before resolving their document paths\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 245,
+      "text": "Skip stale spec-reader records before resolving their document paths",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tSync rescans every branch for already-preserved spec chats\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 269,
+      "text": "Sync rescans every branch for already-preserved spec chats",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex_turn.py\tNot done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/codex_turn.py",
+      "line": 209,
+      "text": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -1174,94 +1317,6 @@
       "text": "Only remove a fix created by this doctor run",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 391,
-      "text": "Close passes test filenames to Python setup commands",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 260,
-      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 219,
-      "text": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips Jest's default __tests__ files\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 217,
-      "text": "Not done: Close skips Jest's default __tests__ files",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 217,
-      "text": "Not done: Close skips touched NestJS end-to-end test files",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 287,
-      "text": "Not done: Close still runs the full client test command locally",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 268,
-      "text": "Not done: Close's default test selection breaks Go clients",
-      "from": "blocking",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: Go test helper edits run no local package check\ttests-once-per-round",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 325,
-      "text": "Not done: Go test helper edits run no local package check",
-      "from": "blocking",
-      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     },
@@ -1860,17 +1915,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 503,
-      "text": "Not done: doctor ignores workers under a one-tool setting",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SETTING",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/repo.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "src/forge/repo.py",
@@ -1966,6 +2010,50 @@
       "text": "New cold-read notes can be lost when a settled note repeats",
       "from": "blocking",
       "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: Persist reader chats before accepting a read\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 253,
+      "text": "Not done: Persist reader chats before accepting a read",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: Recover Claude reader chats reported missing in structured output\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 832,
+      "text": "Not done: Recover Claude reader chats reported missing in structured output",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: Resume reader chats archived by an earlier release\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 251,
+      "text": "Not done: Resume reader chats archived by an earlier release",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: Returning to a reader tool can reuse a stale chat\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 235,
+      "text": "Not done: Returning to a reader tool can reuse a stale chat",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -2300,6 +2388,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Earlier-release Codex fallback is mistaken for a Claude round\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 124,
+      "text": "Not done: Earlier-release Codex fallback is mistaken for a Claude round",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: Explain temporary settings edits and direct extra-suite commands in worker briefs\tworker-no-settings",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -2307,6 +2406,17 @@
       "text": "Not done: Explain temporary settings edits and direct extra-suite commands in worker briefs",
       "from": "blocking",
       "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Preserve the active tool in earlier-release mixed worker records\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 106,
+      "text": "Not done: Preserve the active tool in earlier-release mixed worker records",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -2351,6 +2461,17 @@
       "text": "Not done: worker questions on both worker paths",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tPreserve clean-failure fallback when remembering Claude chats\treuse-worker-chats",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 466,
+      "text": "Preserve clean-failure fallback when remembering Claude chats",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
       "status": "open",
       "closed_by": null
     },
@@ -2483,17 +2604,6 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
-      "kind": "bug",
-      "path": "tests/test_close_keeps_full_tests_in_ci.py",
-      "line": 80,
-      "text": "Not done: init and upgrade plus sync local-selection test",
-      "from": "blocking",
-      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     },
@@ -3455,6 +3565,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_worker_and_reader_chats_survive_rounds.py\tNot done: Client-repo command tests for chat continuity\treuse-worker-chats",
+      "kind": "bug",
+      "path": "tests/test_worker_and_reader_chats_survive_rounds.py",
+      "line": 41,
+      "text": "Not done: Client-repo command tests for chat continuity",
+      "from": "blocking",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tNot done: Test related-test instructions in new and previously adopted client repos\tworker-fast-tests",
       "kind": "bug",
       "path": "tests/test_worker_nudge_names_related_tests.py",
@@ -3983,17 +4104,6 @@
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 338,
-      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
-      "from": "worker",
-      "item": "tests-once-per-round",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
       "kind": "edge",
       "path": "src/forge/githooks.py",
@@ -4500,6 +4610,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/worker.py\tA commit nudge has no full brief to resend if Codex reports its chat unavailable.",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 221,
+      "text": "A commit nudge has no full brief to resend if Codex reports its chat unavailable.",
+      "from": "worker",
+      "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/worker.py\tCheck for a pending merge before parsing a conflicted forge.toml",
       "kind": "edge",
       "path": "src/forge/worker.py",
@@ -4848,6 +4969,149 @@
       "text": "Not done: scope-only blocker admission test",
       "from": "blocking",
       "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.claude/skills/forge/SKILL.md\tNot done: synced skill copies match the template\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 221,
+      "text": "Not done: synced skill copies match the template",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tNot done: the guide describes the split design fallback correctly\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 180,
+      "text": "Not done: the guide describes the split design fallback correctly",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 391,
+      "text": "Close passes test filenames to Python setup commands",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose's Node test command exceeds the Windows shell limit in a realistic repo\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 260,
+      "text": "Close's Node test command exceeds the Windows shell limit in a realistic repo",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 219,
+      "text": "Not done: Close no longer runs the full test command on the laptop when the pull request's CI runs it: it runs fast_test when set, otherwise",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips Jest's default __tests__ files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips Jest's default __tests__ files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close skips touched NestJS end-to-end test files\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 217,
+      "text": "Not done: Close skips touched NestJS end-to-end test files",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close still runs the full client test command locally\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 287,
+      "text": "Not done: Close still runs the full client test command locally",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Close's default test selection breaks Go clients\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 268,
+      "text": "Not done: Close's default test selection breaks Go clients",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: Go test helper edits run no local package check\ttests-once-per-round",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 325,
+      "text": "Not done: Go test helper edits run no local package check",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: doctor ignores workers under a one-tool setting\tFORGE-TOOLS-1/SETTING",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 503,
+      "text": "Not done: doctor ignores workers under a one-tool setting",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 80,
+      "text": "Not done: init and upgrade plus sync local-selection test",
+      "from": "blocking",
+      "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tThe filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 338,
+      "text": "The filename fallback uses Vitest's default file ordering when file shuffling is enabled; CI keeps the configured ordering.",
+      "from": "worker",
+      "item": "tests-once-per-round",
       "status": "open",
       "closed_by": null
     }
