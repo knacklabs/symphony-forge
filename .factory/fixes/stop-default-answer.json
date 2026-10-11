@@ -19,26 +19,12 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fa18218fd2cc468f0342d5251298636bbf34219462104a7e30b290911b1d9859",
-    "changed": "3a79f12c65035f1d7f7742ce7b5bdd70557b2d52285fc737cf548bdb87ab3db9",
-    "commit": "74cbf899210f51eb191ef7c425983c554991a30c",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 2): an owner choice made during the running narrowed round is not heard by that round; the result is reversible by design; recorded as lived-with with a follow-up to apply a choice recorded during a running round before land merges",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Raise: Functional. `forge land` starts the worker after recording the timed default, and this choice is put into the worker brief only when that round starts. If the owner then records `--resolve split` while the worker is running, the current worker never receives the split instruction. Land can accept a clean review and merge without starting another worker round, despite reporting that the owner's choice was recorded. This is a normal minutes-long window; `test_5` covers only a reversal made before `forge work` starts.",
-        "file": "src/forge/worker.py",
-        "line": 159,
-        "priority": "P1",
-        "title": "Owner reversal during an active worker round is ignored"
-      }
-    ],
-    "id": "b6b85959-8808-4201-91a3-b2b36fa178bc",
+    "branch_diff": "f323836a4977fa871826cfbdbea37309705073b21bf93248790b9deceb657820",
+    "changed": "a5903b77f9caa7615b8ea765b11285f6fd40b81f19572c9bb3bc0b0b7889d13b",
+    "commit": "41ce0219645c1c507713e1da5d87e4335cd39efd",
+    "dismissals": [],
+    "findings": [],
+    "id": "0c16d63d-1399-4d43-9040-468d6771d180",
     "status": "clean"
   },
   "round": 1,
@@ -70,6 +56,10 @@
     },
     {
       "at": "2026-10-11T19:49:32.085187+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:46:47.665015+00:00",
       "step": "review"
     }
   ],
