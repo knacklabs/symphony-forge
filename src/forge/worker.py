@@ -37,12 +37,17 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+TEST_RUNS = ("Run the related tests once at the end of your turn; rerun only what failed. "
+             "Keep required red-before-fix regression checks. "
+             "If you already ran the related tests in this turn, do not run them again unless they failed. "
+             "Never poll machine lines (`forge lanes --json` or `forge board --json`) or tail test logs while waiting. "
+             "Wait for the foreground test command to finish.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
                 "the change's related tests through `forge test` in the foreground and wait for them to finish; never "
                 "leave them running in the background. Then commit any fixes on this branch, and end "
-                "your turn only once nothing is left uncommitted.\n")
+                "your turn only once nothing is left uncommitted.\n" + TEST_RUNS + "\n")
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
@@ -382,6 +387,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on: set[str] = set()
     values: dict[str, str] = {
         "settings": SETTINGS,
+        "test_runs": TEST_RUNS,
         "review_loop": REVIEW_LOOP,
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -431,6 +437,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + SETTINGS + "\n"
+        brief += "\n" + TEST_RUNS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
