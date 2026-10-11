@@ -25,6 +25,9 @@ ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 # .gitattributes carries the roadmap's merge rule; .forge/hooks.sh finds forge for the host hooks.
+# The bundled plain English skill's files, the same in both hosts.
+PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.md",
+                 "references/substitutions.md", "examples/before-after.md", "scripts/ste_check.py")
 LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
@@ -32,7 +35,9 @@ LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".forge/review-tests
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
-            for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
+            for name in ("SKILL.md", "NOTICE.md")),
+          *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
+            for name in PLAIN_ENGLISH), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
