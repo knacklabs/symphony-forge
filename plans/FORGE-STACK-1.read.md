@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-11T09:26:58.182344+00:00
-read_hash: adb38ab59435bcf98c85e73ea24b5f50078d4ffb
-round: 2
+read_at: 2026-10-11T10:30:13.485056+00:00
+read_hash: eaabe33cada1910757f70a1e6e49188cd567dac3
+round: 3
 passed: no
-doc_seen: adb38ab59435bcf98c85e73ea24b5f50078d4ffb
+doc_seen: eaabe33cada1910757f70a1e6e49188cd567dac3
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 7e09660d978a17e2ddbba26a7157292f4ccb47d1
+notes_seen: 65179a9e308d303fcb8fc64c52d2092279510f42
 conversation: 01a12a0d-b795-74e2-83ae-0c4b25007a01
 session:
-blocked_rounds: 2
-loop_choice:
-loop_reason:
+blocked_rounds: 3
+loop_choice: narrow
+loop_reason: Owner chose narrow: stacking follows only merges Forge itself makes; after a person's own merge on GitHub the next part waits as it does today
 ---
 # Cold read notes
 
@@ -73,3 +73,12 @@ No files changed; runtime tests were not run. These are plan findings, not runti
 Disposition: cut
 
 No files changed; runtime tests were not run. The replay-before-start guarantee remains unproven.
+
+## Round 3
+
+7. Blocking: The replacement replay check admits a child before replay when a person merges its parent with a merge commit.
+   Raise: Plan gap.
+   `plans/FORGE-STACK-1.md:76–78` treats the parent's state appearing in the shared merge base as proof of replay. After a person merges A with a merge commit, B's unreplayed head already shares A's original head with main, so this check passes. B's existing review also matches that unchanged baseline.
+   D can therefore start on B, but `src/forge/close.py:409–435` still replays B: main's new merge commit is not an ancestor of B. That rewrites D's base. Item 4 supports human GitHub merges without restricting their method; its specified merge test covers a squash merge.
+
+No files changed; runtime tests were not run. The new check does not establish replay completion for merge commits.
