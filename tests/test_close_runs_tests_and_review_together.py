@@ -241,3 +241,20 @@ def test_3_failed_review_keeps_failed_tests_for_the_next_worker(land):
     [worker] = _workers(env)
     assert "### Tests on the close run" in worker["brief"]
     assert "client greeting missing" in worker["brief"]
+
+
+def test_5_tests_passing_later_keep_a_blocked_review_blocked(env):
+    marker = env.tmp / "tests-pass"
+    command = f'"{Path(sys.executable).as_posix()}" -c "import pathlib, sys; sys.exit(not pathlib.Path({str(marker)!r}).exists())"'
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.repo.git("push", "-q", "origin", "main")
+    env.checks(GREEN)
+    env.reviews(blocked(finding("P1", "Greeting loses the basket")))
+    item, where = env.start_fix()
+    assert env.close(item).returncode == 1
+    marker.write_text("", "utf-8")  # the same tests pass on the next close, with no branch change
+    again = env.close(item)
+    assert again.returncode == 1 and "Greeting loses the basket" in again.stdout + again.stderr
+    state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+    assert state["status"] == "fixing"

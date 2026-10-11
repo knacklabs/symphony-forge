@@ -264,7 +264,7 @@ def close(args: argparse.Namespace) -> int:
             state["tests"] = tested
         else:
             state.pop("tests", None)
-        state["status"] = "fixing" if failed else "waiting for checks"
+        state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
         _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
     elif (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
