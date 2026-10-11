@@ -822,8 +822,8 @@
       "text": "A red local test can leave an existing pull request mergeable",
       "from": "blocking",
       "item": "review-alongside-tests",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
@@ -844,8 +844,8 @@
       "text": "Close drops source-file test warnings from large changes",
       "from": "blocking",
       "item": "review-alongside-tests",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
@@ -2344,6 +2344,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tLegacy read notes leave changed Answers text outside the round-three check\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 268,
+      "text": "Legacy read notes leave changed Answers text outside the round-three check",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNew cold-read notes can be lost when a settled note repeats\tsettled-stays-settled",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -2520,6 +2531,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tStandard: Touch only what the task needs\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 275,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "src/forge/sync.py",
@@ -2641,6 +2663,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 204,
+      "text": "Not done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: Follow-up reader brief contradicts the advisory rule\tread-blocking-only",
       "kind": "bug",
       "path": "src/forge/templates/cold-read.md",
@@ -2648,6 +2681,17 @@
       "text": "Not done: Follow-up reader brief contradicts the advisory rule",
       "from": "blocking",
       "item": "read-blocking-only",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/cold-read.md\tRound-three cap downgrades conflicts from changed spec and Answers text\tplan-reads-capped",
+      "kind": "bug",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 208,
+      "text": "Round-three cap downgrades conflicts from changed spec and Answers text",
+      "from": "blocking",
+      "item": "plan-reads-capped",
       "status": "open",
       "closed_by": null
     },
@@ -2681,6 +2725,17 @@
       "text": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands",
       "from": "blocking",
       "item": "skipped-templates",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 138,
+      "text": "Not done: stop guidance for native reads",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
       "status": "open",
       "closed_by": null
     },
@@ -3532,6 +3587,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_plan_reads_capped.py\tNot done: test the changed Answers rule with pre-upgrade read notes\tplan-reads-capped",
+      "kind": "bug",
+      "path": "tests/test_fix_plan_reads_capped.py",
+      "line": 58,
+      "text": "Not done: test the changed Answers rule with pre-upgrade read notes",
+      "from": "blocking",
+      "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
       "kind": "bug",
       "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
@@ -4113,6 +4179,17 @@
       "item": "simplify-ci-workflow",
       "status": "done",
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
+    },
+    {
+      "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
+      "kind": "bug",
+      "path": "tests/test_tools_session_hold.py",
+      "line": 149,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/HOLD",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
@@ -5543,83 +5620,6 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tLegacy read notes leave changed Answers text outside the round-three check\tplan-reads-capped",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 268,
-      "text": "Legacy read notes leave changed Answers text outside the round-three check",
-      "from": "blocking",
-      "item": "plan-reads-capped",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tStandard: Touch only what the task needs\tplan-reads-capped",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 275,
-      "text": "Standard: Touch only what the task needs",
-      "from": "blocking",
-      "item": "plan-reads-capped",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/cold-read.md\tNot done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never\tplan-reads-capped",
-      "kind": "bug",
-      "path": "src/forge/templates/cold-read.md",
-      "line": 204,
-      "text": "Not done: A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never",
-      "from": "blocking",
-      "item": "plan-reads-capped",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/cold-read.md\tRound-three cap downgrades conflicts from changed spec and Answers text\tplan-reads-capped",
-      "kind": "bug",
-      "path": "src/forge/templates/cold-read.md",
-      "line": 208,
-      "text": "Round-three cap downgrades conflicts from changed spec and Answers text",
-      "from": "blocking",
-      "item": "plan-reads-capped",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 138,
-      "text": "Not done: stop guidance for native reads",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/HOLD",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_plan_reads_capped.py\tNot done: test the changed Answers rule with pre-upgrade read notes\tplan-reads-capped",
-      "kind": "bug",
-      "path": "tests/test_fix_plan_reads_capped.py",
-      "line": 58,
-      "text": "Not done: test the changed Answers rule with pre-upgrade read notes",
-      "from": "blocking",
-      "item": "plan-reads-capped",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
-      "kind": "bug",
-      "path": "tests/test_tools_session_hold.py",
-      "line": 149,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/HOLD",
-      "status": "done",
-      "closed_by": "dismissed"
     }
   ]
 }
