@@ -15,45 +15,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c71285cfb9b43921e856a16f8c5c567b2194eaf58c60282b1cec6500bd911c3f",
-    "changed": "01a5dcf61d191c2451704d24677a726adaa6d8511bba1a2c8db21bae70a5fdb3",
-    "commit": "45f1703852fe7228297286c86d9f2fa930a54ca1",
+    "branch_diff": "dff7fb7cc9808f5e1f102ec7bfbe86674bdcb8aafd3952119b300e355555db03",
+    "changed": "c088e4100daa7280224e8b6151ea73174319d525b6093d60067da3a6f3469fe4",
+    "commit": "b24ee69d4af3e9793b7bdc858fd3ddbbe1e5cb48",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The proof list covers a concurrent `forge work` run but omits the Done-when case of a concurrent `forge land` run. Its named test starts only `forge work`, so the list supplies no proof for land.",
-        "file": "tests/test_sync_not_blocked_by_other_runs.py",
-        "line": 23,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      },
-      {
-        "body": "Raise: Test. The only new command-level test holds `forge work`; it never starts `forge land`. Land has a later close phase after `worker.work` returns (`src/forge/land.py:47-54`), so the current test would pass if sync failed during that normally reached phase. The Done-when item explicitly includes land.",
-        "file": "tests/test_sync_not_blocked_by_other_runs.py",
-        "line": 23,
-        "priority": "P1",
-        "title": "Not done: sync while forge land runs"
-      },
-      {
-        "body": "Raise: Test. The test creates one held item and checks the skip message, but creates no second item with an earlier-release chat to preserve. It would still pass if sync skipped every item's chat. The unlocked-item path is the migration under `with hold` at `src/forge/codex.py:335-351`, and the Done-when item requires skipping only what the run holds.",
-        "file": "tests/test_sync_not_blocked_by_other_runs.py",
-        "line": 28,
-        "priority": "P1",
-        "title": "Not done: only the held item's chat is skipped"
-      },
-      {
-        "body": "Raise: Test. Both parameterized cases call `_codex_repo_direct` with its default `client=False`. That helper writes `repo = \"forge-source\"` (`tests/test_codex_worker.py:114-132`); the `repo` fixture also starts as a plain Git repo (`tests/conftest.py:312-324`). Thus neither case exercises a newly initialized client or an earlier-release adopted client as the proof list claims. The repository's review rule requires both client paths for a Forge change.",
-        "file": "tests/test_sync_not_blocked_by_other_runs.py",
-        "line": 21,
-        "priority": "P1",
-        "title": "Not done: concurrent sync in new and adopted client repos"
-      }
-    ],
-    "id": "97bfc7c2-4a29-4fcf-a7f4-65ea3e43a37e",
-    "status": "blocked"
+    "findings": [],
+    "id": "c54a673d-b05d-4951-b7f5-8a34d7523c20",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T10:29:38.316552+00:00",
@@ -61,6 +32,10 @@
     },
     {
       "at": "2026-10-11T12:59:33.420384+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:35:18.799324+00:00",
       "step": "review"
     }
   ],
