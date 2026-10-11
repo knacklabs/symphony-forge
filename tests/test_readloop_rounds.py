@@ -449,61 +449,86 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert "reader: claude (opus)\n" in reader.text()
     reader.dispose(FIRST, "cut")
 
-    # Started from the app that is itself the reader, while the other app is installed: refused.
+    # The old contract refused the recorded reader's coordinating app; it now offers a subagent.
     notes = reader.text()
     reader.coordinate("claude")
-    refused = reader.read()
-    assert (refused.returncode, refused.stderr) == (1, (
-        "Claude Code is the cold reader of plans/SHOP.md, so its next round can't start from "
-        "Claude Code.\nNext: run forge read SHOP from Codex\n"))
+    offered = reader.read()
+    assert offered.returncode == 0, offered.stdout + offered.stderr
+    native = json.loads(offered.stdout)
+    assert (native["role"], native["tool"], native["model"]) == ("reader", "claude", "opus")
     assert reader.text() == notes and not (repo.bin / "codex-app-server.jsonl").exists()
+    finished = repo.forge("handback", "SHOP", "--subagent", "pinned-reader", "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
 
-    # The recorded reader's app is gone: from that same app, the round is no longer refused but
-    # starts fresh on the reader Forge picks now, says so, and records it.
+    # From the other coordinator, a missing recorded app starts a fresh native reader.
+    reader.coordinate("codex")
     _no_claude(repo, monkeypatch, tmp_path)
+    reader.doc.write_text(reader.doc.read_text("utf-8") + "\nSaved baskets expire after thirty days.\n",
+                          encoding="utf-8")
     moved = repo.forge("read", "SHOP")
     assert moved.returncode == 0, moved.stdout + moved.stderr
-    assert FRESH["codex"].format("its reader, Claude Code, is no longer installed") in moved.stdout
-    assert "reader: codex (gpt-6-sol)\n" in reader.text()
-    turn = _sent(repo.bin / "codex-app-server.jsonl", "turn/start")[-1]["input"][0]["text"]
-    assert "Round 2 of your cold read" in turn and "You are doing the one cold read" in turn
+    native = json.loads(moved.stdout)
+    assert native["reason"] == "its reader, Claude Code, is no longer installed"
+    assert native["tool"] == "codex" and native["model"] == "gpt-6-sol"
+    assert "Round 3 of your cold read" in native["fresh_prompt"]
+    assert "You are doing the one cold read" in native["fresh_prompt"]
+    finished = repo.forge("handback", "SHOP", "--subagent", "replacement-reader", "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
 
 
-def _wrong_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
+def _same_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "codex")
     reader.ok(f"1. {FIRST}\n")
     assert "reader: codex (gpt-6-sol)\n" in reader.text()
     reader.dispose(FIRST, "cut")
     reader.coordinate("codex")
-    refused = reader.read()
-    assert refused.stderr == ("Codex is the cold reader of plans/SHOP.md, so its next round can't "
-                              "start from Codex.\nNext: run forge read SHOP from Claude Code\n")
+    offered = reader.read()
+    assert offered.returncode == 0, offered.stdout + offered.stderr
+    native = json.loads(offered.stdout)
+    assert native["role"] == "reader" and native["tool"] == "codex"
+    assert "Round 2 of your cold read" in native["fresh_prompt"]
+    finished = repo.forge("handback", "SHOP", "--subagent", "codex-reader", "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
+
+
+def _native_round(reader, text="No findings."):
+    offered = reader.read()
+    assert offered.returncode == 0, offered.stdout + offered.stderr
+    native = json.loads(offered.stdout)
+    assert native["role"] == "reader" and native["tool"] == reader.app
+    finished = reader.repo.forge("handback", "SHOP", "--subagent", "readloop-reader", "--text", text)
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    return native
 
 
 def _one_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
-    # Only Claude Code: under Claude Code, a separate Claude conversation reads, and continues.
+    # Only Claude Code: the session's reader replaces the old separate CLI conversation.
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "claude")
     reader.coordinate("claude")
     _no_codex(monkeypatch, tmp_path)
-    reader.ok(f"1. {FIRST}\n")
-    assert ("reader: claude (opus), a separate Claude Code conversation because Codex isn't "
-            "installed\n") in reader.text()
+    _native_round(reader, f"1. {FIRST}\n")
+    assert "reader: claude (opus), a subagent of this Claude Code session" in reader.text()
     reader.dispose(FIRST, "cut")
-    reader.ok()
-    assert reader.continued() and "Round 2 of your cold read" in reader.prompt()
+    native = _native_round(reader)
+    assert native["subagent"] == "readloop-reader"
+    assert "Round 2 of your cold read" in native["prompt"]
+    assert reader.calls() == 0
 
-    # Only Codex: under Codex, a separate Codex conversation reads.
+    # Only Codex: the same native flow keeps its reader chat without the other app.
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     _no_claude(repo, monkeypatch, tmp_path)
     codex = Reader(repo, monkeypatch, "codex")
     codex.coordinate("codex")
     codex.notes.unlink()
-    codex.ok(f"1. {FIRST}\n")
-    assert ("reader: codex (gpt-6-sol), a separate Codex conversation because Claude Code isn't "
-            "installed\n") in codex.text()
+    _native_round(codex, f"1. {FIRST}\n")
+    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in codex.text()
     codex.dispose(FIRST, "cut")
-    codex.ok()
-    assert codex.continued() and "Round 2 of your cold read" in codex.prompt()
+    native = _native_round(codex)
+    assert native["subagent"] == "readloop-reader"
+    assert "Round 2 of your cold read" in native["prompt"]
+    assert codex.calls() == 0
 
 
 def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
@@ -553,7 +578,7 @@ def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
 @pytest.mark.parametrize("walk, app", [
     (_continues, "codex"), (_continues, "claude"), (_starts_fresh, "codex"),
-    (_starts_fresh, "claude"), (_stays_pinned, "claude"), (_wrong_app, "codex"),
+    (_starts_fresh, "claude"), (_stays_pinned, "claude"), (_same_app, "codex"),
     (_one_app, "both"), (_spec_diff, "claude")], ids=lambda value: getattr(value, "__name__", value))
 def test_1_the_same_reader_reads_again(repo, monkeypatch, tmp_path, sdk_data, walk, app):  # noqa: F811
     walk(repo, monkeypatch, tmp_path, sdk_data, app)
