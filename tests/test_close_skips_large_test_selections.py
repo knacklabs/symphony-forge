@@ -15,9 +15,10 @@ STORY = "FIX-SKIP-LARGE-LOCAL-TESTS"
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
 @pytest.mark.parametrize("fast", [False, True], ids=["default-picker", "fast-test-picker"])
+@pytest.mark.parametrize("checks", ["red", "green", "without-tests"])
 @pytest.mark.parametrize("selection", [2, 3, "shared"])
 def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
-        env, monkeypatch, adopted, fast, selection):
+        env, monkeypatch, adopted, fast, checks, selection):
     # Real pytest writes the receipt; only review and GitHub are faked.
     if adopted:
         version = env.repo.forge("--version").stdout.split()[-1]
@@ -41,6 +42,8 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
     command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests", "-q"])
     settings = (env.repo.path / "forge.toml").read_text("utf-8")
     settings = re.sub(r"^test = .*\n", "", settings, flags=re.M)
+    if checks == "without-tests":
+        settings = re.sub(r"^checks = .*", 'checks = ["forge-pr-check"]', settings, flags=re.M)
     settings = "test = " + json.dumps(command) + "\n" + settings
     if fast:
         settings = 'fast_test = "forge test --pytest {base}"\n' + settings
@@ -65,15 +68,21 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
                 for number in range(selection)})
     item, where = env.start_fix(changes)
     large = selection != 2
-    env.checks([run("tests", "failure" if large else "success"), run("forge-pr-check")])
+    skipped = large and checks != "without-tests"
+    failed = skipped and checks == "red"
+    env.checks(([run("tests", "failure" if failed else "success")]
+                if checks != "without-tests" else []) + [run("forge-pr-check")])
     closed = env.close(item)
-    assert closed.returncode == (1 if large else 0), closed.stdout + closed.stderr
-    expected = set() if large else {"test_case_0", "test_case_1"}
+    assert closed.returncode == (1 if failed else 0), closed.stdout + closed.stderr
+    count = 6 if selection == "shared" or (not fast and checks == "without-tests") else selection
+    expected = set() if skipped else {f"test_case_{number}" for number in range(count)}
     assert {path.name for path in log.iterdir()} == expected
     message = "More than a third of the test files selected; skipping local tests and relying on the pull request's required checks."
-    assert closed.stdout.count(message) == (1 if large else 0), closed.stdout
-    if large:  # the pull request's failed tests check still stops close
+    assert closed.stdout.count(message) == (1 if skipped else 0), closed.stdout
+    if failed:  # the pull request's failed tests check still stops close
         assert "Checks failed on the pull request: tests." in closed.stderr
+    else:
+        assert "Ready:" in closed.stdout, closed.stdout + closed.stderr
     # Explicit worker runs keep the old contract, even for shared inputs or large selections.
     tested = env.repo.forge("test", cwd=where)
     assert tested.returncode == 0, tested.stdout + tested.stderr
