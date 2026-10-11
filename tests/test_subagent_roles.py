@@ -2,14 +2,19 @@
 from __future__ import annotations
 
 import re
+import shutil
 import tomllib
 from pathlib import Path
+
+import pytest
+
+from conftest import patient
 
 STORY = "a-codex-or-claude-session-opened-directl"
 ROOT = Path(__file__).resolve().parents[1]
 ROLES = {"worker": "build", "coder": "build", "frontend": "build", "tester": "build",
          "refactorer": "build", "explorer": "lite", "planner": "design", "architect": "design",
-         "debugger": "review", "security": "review", "performance": "review"}
+         "debugger": "review", "security": "review", "performance": "review", "reader": "grill"}
 MODELS = """
 [models.build]
 model = "claude-opus-5-5"
@@ -29,6 +34,10 @@ effort = "xhigh"
 
 [models.grill.claude]
 model = "opus"
+effort = "high"
+
+[models.grill.codex]
+model = "gpt-6.1-sol"
 effort = "high"
 
 [models.review]
@@ -63,10 +72,18 @@ def _settings(top: Path, name: str) -> tuple[tuple, tuple]:
             (claude.get("model"), claude.get("effort")))
 
 
-def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+def test_1_sync_writes_roles_for_both_hosts_from_forge_toml(repo, adopted):
+    if adopted:
+        patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client",
+                                         repo.path, dirs_exist_ok=True))
+        repo.git("add", "-A")
+        repo.git("commit", "-qm", "Adopt earlier Forge files")
     result = _synced(repo)
 
     assert result.returncode == 0, result.stderr
+    config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    assert config["agents"]["reader"]["config_file"] == "agents/reader.toml"
     for name in ROLES:
         assert f"Wrote .codex/agents/{name}.toml" in result.stdout
         assert f"Wrote .claude/agents/{name}.md" in result.stdout
@@ -97,9 +114,15 @@ def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
     by_kind = {"build": ((None, "medium"), ("claude-opus-5-5", "medium")),
                "lite": (("gpt-6-luna", "ultra"), ("claude-sonnet-5-5", "xhigh")),
                "design": (("gpt-6.1-sol", "xhigh"), ("opus", "high")),
-               "review": (("gpt-6-sol", None), ("claude-opus-5-5", "high"))}
+               "review": (("gpt-6-sol", None), ("claude-opus-5-5", "high")),
+               "grill": (("gpt-6.1-sol", "high"), ("opus", "high"))}
     for name, kind in ROLES.items():
         assert _settings(repo.path, name) == by_kind[kind], name
+    # The reader reviews the plan without writing and reports only new blocking defects.
+    for instructions in (_codex(repo.path, "reader")["developer_instructions"],
+                         _claude(repo.path, "reader")[1]):
+        assert "No findings." in instructions
+        assert "settled" in instructions
 
     # A second sync changes nothing.
     before = {path: path.read_bytes() for path in repo.path.glob(".*/agents/*")}
@@ -169,7 +192,7 @@ def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_mod
         front = text.split("---\n")[1]
         assert not re.search(r"^tools:", front, re.M) and "permissionMode" not in front, name
     assert _claude(repo.path, "worker")[0]["effort"] == "medium\\ntools: Bash"
-    for name in ("planner", "architect"):
+    for name in ("planner", "architect", "reader"):
         assert _settings(repo.path, name)[1] == ("custom-opus", "high"), name
 
 
@@ -186,6 +209,7 @@ def test_6_codex_roles_without_a_model_are_not_pinned_by_old_subagent_defaults(r
 
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
     assert config["agents"] == {"max_depth": 1,
-                                "worker": {"config_file": "agents/worker.toml"}}
+                                "worker": {"config_file": "agents/worker.toml"},
+                                "reader": {"config_file": "agents/reader.toml"}}
     assert _settings(repo.path, "worker")[0] == (None, "medium")
     assert repo.forge("sync").stdout.startswith("Nothing to change")

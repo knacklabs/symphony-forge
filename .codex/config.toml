@@ -48,6 +48,9 @@ description = "Use for performance diagnosis and measurement."
 config_file = "agents/planner.toml"
 description = "Use for implementation planning and contract reconciliation."
 
+[agents.reader]
+config_file = "agents/reader.toml"
+
 [agents.refactorer]
 config_file = "agents/refactorer.toml"
 description = "Use for behavior-preserving implementation refactors."
