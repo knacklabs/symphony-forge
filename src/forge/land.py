@@ -39,6 +39,9 @@ def land(args: argparse.Namespace) -> int:
         status = state.get("status", "started")
         start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--",
                          repo.state_path(item), cwd=top)
+        if _pending(top, item):  # a round is out with the session's subagent, whatever the status
+            say(f"Next: run the subagent, forge handback {item}, then forge land {item}")
+            return 0
         head = repo.git("rev-parse", "HEAD", cwd=top)
         # A completed session round handed back at this HEAD made no commit; it goes to close.
         handed = codex.record(top, item).get("native") or {}
@@ -124,11 +127,16 @@ def land(args: argparse.Namespace) -> int:
 def _handed_out(step: argparse.Namespace, top: Path) -> bool:
     """Run a round; a round handed to the session's subagent stops land until its hand-back."""
     worker.work(step)
-    pending = codex._json(codex._item_file(top, step.item, ".json", "Build")).get("pending") or {}
-    if not any(run["id"] == (pending.get("entry") or {}).get("id") for run in machine.entries()):
+    if not _pending(top, step.item):
         return False
     say(f"Next: run the subagent, forge handback {step.item}, then forge land {step.item}")
     return True
+
+
+def _pending(top: Path, item: str) -> bool:
+    """A round handed to the session's subagent that its session still holds."""
+    pending = codex._json(codex._item_file(top, item, ".json", "Build")).get("pending") or {}
+    return any(run["id"] == (pending.get("entry") or {}).get("id") for run in machine.entries())
 
 
 def _wait_for_choice(top: Path, item: str) -> dict:

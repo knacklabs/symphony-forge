@@ -213,12 +213,21 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
                    if line.startswith("worktree ") and line.endswith("tidy-words"))
         with (home / "config.toml").open("a", encoding="utf-8") as trusted:
             trusted.write(f'[projects.{json.dumps(str(fix))}]\ntrust_level = "trusted"\n')
+        # Close's failed test run makes this round a fix round.
+        record = fix / ".factory/fixes/tidy-words.json"
+        record.write_text(json.dumps({**json.loads(record.read_text("utf-8")),
+                                      "tests": "FAILED tests/test_words.py"}), "utf-8")
         gh.respond("pr", "list", stdout="[]")
         landed = host.forge("land", "tidy-words")
         assert landed.returncode == 0, landed.stdout + landed.stderr
         assert "background fixer subagent" in landed.stdout
         assert "Next: run the subagent, forge handback tidy-words, then forge land tidy-words" in landed.stdout
         assert "Closing" not in landed.stdout
+        assert json.loads(record.read_text("utf-8"))["status"] == "fixing"
+        again = host.forge("land", "tidy-words")
+        assert again.returncode == 0, again.stdout + again.stderr
+        assert "Next: run the subagent, forge handback tidy-words" in again.stdout
+        assert "Closing" not in again.stdout
         # A round that commits nothing still closes after its hand-back.
         number = int(re.search(r"--round (\d+)", landed.stdout)[1])
         assert handback("tidy-words", number, "Tidied.").returncode == 0
