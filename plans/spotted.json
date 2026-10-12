@@ -2274,8 +2274,8 @@
       "text": "Close runs listed tests twice when they are inside pytest's collection root",
       "from": "blocking",
       "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/fasttest.py\tClose skips listed test files outside pytest's collection roots\tclose-always-tests",
