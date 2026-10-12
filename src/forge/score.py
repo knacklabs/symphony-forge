@@ -36,6 +36,11 @@ def normalise(title: str, body: str) -> tuple[Scores | None, str]:
     return (gain, work, harm), LINE.sub(lambda match: match[1] + line, body, count=1)
 
 
+def strip(body: str) -> str:
+    """A body without its score line, for names, slugs and one-line summaries."""
+    return LINE.sub("", body, count=1).strip("\n")
+
+
 def notes(said: str) -> str:
     """A reader's numbered notes with the Harm floor applied to each scored one."""
     def one(block: str) -> str:

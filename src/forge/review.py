@@ -223,7 +223,7 @@ def plain(title: str, body: str = "") -> str:
             return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
                                                  rest[0][:1].lower() + rest[0][1:])
         return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
-    title, body = sentences(title, 1), sentences(score.LINE.sub("", body), 2)
+    title, body = sentences(title, 1), sentences(score.strip(body), 2)
     if not body:
         return title
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])

@@ -16,14 +16,16 @@ from conftest import ROOT, _install
 from test_close import CLEAN, blocked, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_setup import _fresh_client
+from test_stop_default_answer import follow_ups, later
+from test_hotspot_stop import rounds, seed
 from test_story import DOC, READER, new_story
 
 STORY = "FORGE-SCORE-1"
 
 
-def _scored(priority: str, title: str, body: str) -> dict:
+def _scored(priority: str, title: str, body: str, file: str = "app.py") -> dict:
     return {"title": title, "body": body, "priority": priority,
-            "code_location": {"file_path": "app.py", "line": 1}}
+            "code_location": {"file_path": file, "line": 1}}
 
 
 def _client_repo(env, tmp_path, previous: bool) -> None:
@@ -51,7 +53,7 @@ def _client_repo(env, tmp_path, previous: bool) -> None:
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")
 
 
-@pytest.mark.parametrize("case", ["init", "earlier-adoption-upgrade-sync", "sign-off"])
+@pytest.mark.parametrize("case", ["init", "earlier-adoption-upgrade-sync", "sign-off", "narrowed"])
 def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path, monkeypatch, case):
     repo = env.repo
     if case == "sign-off":
@@ -66,6 +68,21 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         call = json.loads(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()[-1])
         prompt = call["args"][call["args"].index("--prompt") + 1]
         assert "Gain <g>, Work <w>, Harm <h>" in prompt and "judgement, not measurement" in prompt
+        return
+    if case == "narrowed":  # a follow-up fix's name and summary leave the score line out
+        seed(env, "src/a.py")
+        item, where = env.start_fix()
+        rounds(env, item, where, ["src/a.py"] * 2)
+        env.commit(where, "app.py", "print(3)\n")
+        env.reviews(blocked(_scored("P1", "Round 3 defect",
+                                    "Gain 3, Work 2, Harm 1\nSaving drops the basket.", "src/a.py")))
+        env.close(item)
+        later(monkeypatch, 31)
+        env.close(item)
+        [branch] = follow_ups(env)
+        subject = repo.git("log", "-1", "--format=%s", branch)
+        assert "Round 3 defect" in subject
+        assert "Gain" not in subject and "gain" not in branch
         return
     _client_repo(env, tmp_path, case != "init")
 
