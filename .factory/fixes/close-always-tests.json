@@ -4,48 +4,29 @@
   "done_when": "A repo lists tests every change must run in forge.toml's always_test, close runs them locally beside the picked tests, and this repo lists its rules, every-refusal and view-contract tests",
   "flagged": [
     "src/forge/fasttest.py",
+    "src/forge/templates/skill.md",
     "tests/test_close_always_tests.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bcd70862ec53315590fde5ad3f9a0acb81dba6d401725d07fd55a0fa8e4bfe1b",
-    "changed": "5468ace16b4cdf16952d67dcb056ee6fa27a8e7f4be7ebe9de2f48435443fbea",
-    "commit": "ef2ef9df855a9305b84b90d8b06d612798ca10b3",
+    "branch_diff": "d80591dc3505383034cd1262de196babbce96376d74bbd0c7fb0991bc6dc4bc0",
+    "changed": "7314e06bc99a8ec532b0935e9a87c595aaa7000dbe132928f894ea92b20940b3",
+    "commit": "e2d419596b4e0819206b06fc37f13bc91c2ab9d2",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done\nWhen the picker selects more than a third of the test files, this branch returns before running any tests, including those listed in `always_test`. That defeats the Done-when requirement that close run those tests locally on every change. The new proof covers only a small selection.",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 363,
-        "priority": "P1",
-        "title": "Not done: close skips always_test when the picked selection is large",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nThe file check validates only the path before `::`. With a valid file and a mistyped node ID, the collection hook deselects every test in that file. If another picked test passes, pytest and close can succeed even though the listed test never ran. This is a normal configuration mistake that needs a refusal.",
-        "file": "src/forge/fasttest.py",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nThe new guide promises that close runs `always_test` on every change, but `src/forge/review.py:388-394` returns before invoking the pytest picker when a fix changes only `forge.toml`, docs, plans, Markdown, or Forge records. A fix that adds `always_test` to `forge.toml` therefore closes without running any listed test. The named proof at `tests/test_close_always_tests.py:64-76` covers only changes to test files, so it misses this path.",
+        "file": "src/forge/templates/skill.md",
         "gain": 3,
         "harm": 2,
-        "line": 341,
+        "line": 1145,
         "priority": "P1",
-        "title": "Close can succeed without running a listed pytest node",
+        "title": "Not done: close skips always_test for settings and docs changes",
         "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Test\nThe named proof asserts only that each guide contains the token `always_test`. It still passes if the explanation of where to list tests, what entries mean, or when close runs them is removed while the token remains. It therefore cannot verify the proof list's claim that the guides explain the setting.",
-        "file": "tests/test_close_always_tests.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 87,
-        "priority": "P1",
-        "title": "Not done: the guide proof does not check the always_test instructions",
-        "work": 1
       }
     ],
-    "id": "2bd5c323-beff-4eec-9169-8e50c2cb404c",
+    "id": "774d1c74-61b1-434d-8d77-ea2d5e8c96e4",
     "status": "blocked"
   },
   "status": "fixing",
@@ -56,6 +37,10 @@
     },
     {
       "at": "2026-10-12T20:32:21.501329+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T21:25:25.538439+00:00",
       "step": "review"
     }
   ],
