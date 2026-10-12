@@ -52,7 +52,8 @@ def test_13_close_tests_after_worker_exit_show_tests_running(
         row = _row(data, item)
         # The build worker has exited; close's review may already run alongside the tests.
         assert row["worker"] is None or row["worker"]["kind"] == "review", row["worker"]
-        running = r"tests?.*running|running.*tests?" + ("|review running" if row["worker"] else "")
+        # The review can start between the board read and forge next, so either may name it.
+        running = r"tests?.*running|running.*tests?|review running|being reviewed"
         assert row["tests"] is not None
         assert next(stage for stage in row["stages"] if stage["name"] == "Tests")["status"] == "running"
         assert re.search(running, row["status"], re.I), row["status"]
