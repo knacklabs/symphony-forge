@@ -1167,6 +1167,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 963,
+      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: The owner cannot reverse the default after automatic merge\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -5435,6 +5446,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
+      "kind": "bug",
+      "path": "tests/test_last_task_records_story_outcome.py",
+      "line": 46,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-green-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -7488,17 +7510,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
-      "kind": "bug",
-      "path": "tests/test_last_task_records_story_outcome.py",
-      "line": 46,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "windows-green-3",
       "status": "open",
       "closed_by": null
     }

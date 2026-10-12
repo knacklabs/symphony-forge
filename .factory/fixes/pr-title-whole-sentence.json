@@ -9,12 +9,37 @@
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/pr-title-whole-sentence",
   "done_when": "A pull request's title is the first sentence of the item's why, never cut at a comma or inside a version number, and shortened at a word boundary to at most 70 characters",
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b60cc006522d376df0a930dcb868aa05160585eb2030f5af8e52fe163989c8d5",
+    "changed": "40c09855e68aada8b2ea8b35699c27fa426664376fbe68f0287a67a1cce3cf94",
+    "commit": "a1c4031b9172a566046d5a5a9b0cdb76d5c1aaa9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. A fix why such as `The command prints \"Failed.\" Retry it.` produces a title containing both sentences: the expression on line 963 does not recognize sentence-ending punctuation followed by a closing quote. Line 965 also fails the 70-character limit when the first word is longer than 71 characters: `rfind` returns -1, so the slice removes only the final character. The named command tests use unquoted sentence endings and have spaces before character 70, so they pass in both cases.",
+        "file": "src/forge/close.py",
+        "line": 963,
+        "priority": "P1",
+        "title": "Not done: PR titles can include a second sentence or exceed 70 characters"
+      }
+    ],
+    "id": "528b230e-4df8-4451-b4ba-73e87f257560",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:28.924353+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T16:11:43.194194+00:00",
+      "step": "review"
     }
   ],
   "why": "Pull request titles stop at the first comma of the fix's why, so titles read 'On Windows' or 'Clients and this repo need v1'"
