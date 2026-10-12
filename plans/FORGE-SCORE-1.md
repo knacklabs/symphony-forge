@@ -206,7 +206,13 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    scored note at the bar blocks; a scored note below it passes, and `forge read` writes
    `Disposition: keep - below the bar (follow-up)` or `(live with)` under it, so it needs no
    disposition by hand. `close._block` lists the review's below-bar findings under "Follow-ups" and
-   "Lived with", each with its score line, inside the folded section. The templates' "What blocks
+   "Lived with", each with its score line, inside the folded section. The same below-bar findings,
+   and every accepted finding with the owner's or coordinator's reason, also stay in the item's own
+   state as a `known` list (title, file, line, scores, outcome, reason), carried across every review
+   round so a squash merge keeps them on main: the earlier rounds' findings no longer vanish with
+   the branch. Later rounds append; a finding fixed in a later round leaves the list. (Owner,
+   2026-10-12: kept so a production bug can be traced to a known issue; a later board part shows
+   them by file.) The templates' "What blocks
    the merge" section and the read's Blocking/Advisory rule say the bar decides; labels and
    priority stay only as Autoreview's field and for old notes. Test (one): a fix whose review has a
    P1 scored Gain 2, Work 1, Harm 1 and a P2 scored Gain 4, Work 4, Harm 2 reaches Ready, and its
