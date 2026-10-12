@@ -176,77 +176,89 @@ bullet lines, and makes `story.stop_question`, `story.read_question` and `close.
 pass each row's scores and call it (a one-line call site each). GUIDE then fills `score.table`
 alone, so BAR and GUIDE share no path and build in parallel after SCORES.
 
-**README text** (owner asked for it on 2026-10-12; README uses this, after "How it works", adjusted only where the shipped behaviour differs):
+**README text** (owner asked for it on 2026-10-12, written in Simplified Technical English and checked with the bundled STE checker; README uses this after "How it works", changed only where the shipped behaviour differs):
 
 > ## How Forge weighs a note
 >
-> Two checks read your work before it ships. The **cold read** reads a story's plan before you
-> approve it. The **code review** reads each change before it merges. Both use the same three
-> scores and the same bar, so a plan note and a code finding are judged the same way.
+> Two checks read your work before Forge ships it. The **cold read** reads the plan of a story
+> before you approve it. The **code review** reads each change before it merges. Both checks use
+> the same three scores and the same bar. Thus Forge judges a plan note and a code finding in the
+> same way.
 >
 > ### Three scores
 >
-> The reader gives every note three scores from 1 to 5. The scores are a judgement, not a
+> The reader gives each note three scores from 1 to 5. The scores are a judgement. They are not a
 > measurement.
 >
 > | Score | 1 | 3 | 5 |
 > |---|---|---|---|
-> | **Gain**: how much fixing it helps | wording, a rare case nobody named | part of a "Done when" fails for a named case | security, data loss, or the main case of a "Done when" fails |
-> | **Work**: how much the fix costs | one line, no new test | one file and one test, under an hour | a new module, another platform, a migration |
-> | **Harm**: what breaks if it goes wrong | nothing; a revert undoes it | something you can see changes, and a revert undoes it | one way: data, a migration, a release clients upgrade to |
+> | **Gain**: how much the fix helps | the words of a sentence, or a rare case that no one named | one case that the "Done when" names does not work | security, data loss, or the main case of a "Done when" does not work |
+> | **Work**: how much the fix costs | one line, no new test | one file and one test, less than one hour | a new module, a different platform, or a migration |
+> | **Harm**: what breaks if the problem stays | no part breaks, and a revert removes the change | a change that people can see, and a revert removes it | a change that you cannot reverse: data, a migration, or a release that clients install |
 >
-> A note about security, data loss or a migration always gets Harm 4 or more, whatever the
-> reader wrote. Forge raises it and shows why, for example `Harm 4 (floor: security)`.
+> A note about security, data loss or a migration always gets Harm 4 or more. Forge sets this
+> floor if the reader gave a lower Harm. Forge shows the reason, for example
+> `Harm 4 (floor: security)`.
 >
 > ### The bar
 >
-> | When | What happens |
+> | When | What occurs |
 > |---|---|
-> | Harm 4 or 5, or Gain 5 | It holds the work. Fix it now. |
+> | Harm 4 or 5, or Gain 5 | The note stops the work. The worker fixes it now. |
 > | Gain 3 or 4, and Work 1 or 2 | The worker fixes it in this round. |
-> | Gain 3 or 4, and Work 3 or more | It becomes a follow-up fix. The work goes on. |
-> | Gain 1 or 2 | Forge lives with it and records it. |
-> | Harm 3 that adds new scope or undoes your decision | The agent asks you. |
+> | Gain 3 or 4, and Work 3 or more | The note becomes a follow-up fix. The work continues. |
+> | Gain 1 or 2 | Forge keeps the note in its record and does not fix it. |
+> | Harm 3, and the note adds new scope or reverses your decision | The agent asks you. |
 >
-> A Gain 1 or 2 note never holds work back, even when the reader calls it serious. Only Harm 4 or
-> more overrides that.
+> A Gain 1 or 2 note never stops the work. This is true also when the reader calls the note
+> serious. Only Harm 4 or more can stop the work for such a note.
 >
 > ### Who decides
 >
-> - **The reader scores.** The worker and the coordinating agent never change a score.
-> - **Forge applies the bar.** A plan passes its read, and a change becomes ready, when no note is
->   at the bar.
-> - **The agent settles small things.** It decides reversible Harm 1 and 2 notes itself and tells
->   you after.
-> - **You decide the rest.** The agent asks you only for Harm 3 or more, new scope beyond the
->   approved "Done when", your approval and merge steps, or undoing a decision you made.
+> - **The reader gives the scores.** The worker and the agent do not change a score.
+> - **Forge applies the bar.** A plan passes its read, and a change is ready to merge, when no
+>   note is at the bar.
+> - **The agent decides small items.** The agent decides each note with Harm 1 or 2 that a revert
+>   can remove. Then the agent tells you.
+> - **You decide the other items.** The agent asks you about Harm 3 or more, about new scope
+>   outside the approved "Done when", about your approval and merge steps, and about a change to a
+>   decision that you made.
 >
-> ### Nothing is lost, and nothing comes back without a reason
+> ### Forge keeps each note, and a settled note does not come back
 >
-> - **Every note below the bar is kept.** The read notes and the pull request list it with its
->   scores, as a follow-up or as lived with. Each item's record on the default branch keeps it too,
->   so a later bug can be traced to a known issue.
-> - **A settled note stays settled.** A note you, the agent or Forge already settled goes to every
->   later read and review as known and accepted. A reader can raise it again only with new
->   evidence of harm.
-> - **The cold read's decisions carry into the code review.** A plan note you chose to live with is
->   not raised again when the code is reviewed.
+> - **Forge keeps each note below the bar.** The read notes, the pull request and the record of
+>   the item on the default branch show each note with its scores. Thus you can find a known
+>   problem when a bug occurs later.
+> - **A settled note stays settled.** You, the agent or Forge can settle a note. Each later read
+>   and review gets the settled note as known and accepted. A reader can show the note again only
+>   with new evidence of harm.
+> - **The cold read gives its decisions to the code review.** If you accepted a plan note, the
+>   code review does not show that note again.
 >
 > ### When a loop stops
 >
-> Forge stops a change after three rounds only when a note at the bar comes back, or a note with
-> Harm 3 or more is still open. The question you get lists the open notes in one table, ranked by
-> score, and says what accept, narrow and split each do. If you don't answer in 30 minutes, Forge
-> narrows the change on its own only when every open note has Harm 1 or 2.
+> Forge stops a change after three rounds only in two conditions:
+>
+> 1. A note at the bar comes back.
+> 2. A note with Harm 3 or more is open.
+>
+> Then Forge asks you a question. The question shows the open notes in one table, in the order
+> of their scores. It tells you the result of accept, of narrow, and of split.
+>
+> If you do not answer in 30 minutes, Forge can narrow the change. Forge does this only when each
+> open note has Harm 1 or 2.
 >
 > ### Three examples
 >
-> 1. **"Close's default test selection breaks Go repos."** Gain 3, Work 4, Harm 2. It helps, but
->    the fix needs another language's tooling. It becomes a follow-up fix, and the change merges.
-> 2. **"The migration drops a column that still has data."** The reader wrote Harm 2. Forge raises
->    it to Harm 4 (floor: migration). It holds the merge until it is fixed.
-> 3. **"This sentence in the plan could be clearer."** Gain 1, Work 1, Harm 1. Forge lives with it,
->    lists it in the read notes, and the plan goes on to your approval.
+> 1. **"The default test selection of close breaks Go repos."** Gain 3, Work 4, Harm 2. The fix
+>    helps, but it needs the tools of a different language. The note becomes a follow-up fix, and
+>    the change merges.
+>
+> 2. **"The migration removes a column that contains data."** The reader gave Harm 2. Forge sets
+>    Harm 4 (floor: migration). The note stops the merge until the worker fixes it.
+>
+> 3. **"This sentence in the plan is not clear."** Gain 1, Work 1, Harm 1. Forge keeps the note in
+>    the read notes and does not fix it. The plan goes to you for approval.
 
 ### Done-when details
 
