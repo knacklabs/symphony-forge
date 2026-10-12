@@ -359,8 +359,8 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    Area repeats, for review findings only (read notes keep the three-round rule above): an area
    is (file, enclosing function). `review.area(top, commit, file, line)`, in BAR's
    `src/forge/review.py`, reads the file at the reviewed commit. For a Python file it parses it
-   with `ast` and returns the innermost `def`, `async def` or `class` whose `lineno` to
-   `end_lineno` holds the finding's line. For any other language, a file that doesn't parse, or a
+   with `ast` and returns the innermost `def` or `async def` (a method counts; a class body does not) whose
+   `lineno` to `end_lineno` holds the finding's line. For any other language, a file that doesn't parse, or a
    line outside every definition, the area is the file alone. Close counts distinct findings per area
    across the item's rounds, from `known` and the saved results together, one per identity (item
    2). At the third distinct finding in one area that is not settled, close records a review-loop
