@@ -1020,8 +1020,8 @@
       "text": "Not done: an earlier stop suppresses the size-limit question",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
@@ -1064,8 +1064,8 @@
       "text": "Not done: narrow and split choices do not reach the next worker",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: one failed close can be counted as two stuck rounds\tstuck-worker-asks",
@@ -1119,8 +1119,8 @@
       "text": "Not done: the question omits what a worker without commits tried",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: two rounds leaving the same new failure do not stop the item\tstuck-worker-asks",
@@ -1141,8 +1141,8 @@
       "text": "Not done: unchanged review findings can loop indefinitely",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tPreserve ownership references across copied plans and follow-up replay\tstart-is-claim",
@@ -3286,8 +3286,8 @@
       "text": "Not done: a stuck item waits for a worker slot before asking the owner",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
