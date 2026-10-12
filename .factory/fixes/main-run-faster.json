@@ -22,26 +22,12 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6ffde94a3114bd60de6a86159202a9b5f8c58cb3f58eb1b6981ada82966ff27f",
-    "changed": "0ac07d7bdb3e641e4a15d5d17934aafb2a2f18d354ad7396b77629ecd2cc0f50",
-    "commit": "846ca6000fffce75afdb08998c15be32f19ad427",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the Done-when was narrowed to a timing file refreshed with the suite as of this change; tests merged after the refresh use pytest-split's average until the next refresh at release",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "chunk 3/3:\n\nRaise: Not done. The refreshed timing file has no entries for the six parametrized cases in `tests/test_sync_not_blocked_by_other_runs.py`, which the configured `pytest tests` command collects. Around this line, the file moves from other sync tests to task tests without those cases. CI therefore assigns them fallback durations instead of recorded timings, so the file does not cover today's suite. This is new evidence beyond the earlier ruling that a one-time refresh, rather than a permanent coverage test, would suffice.",
-        "file": ".test_durations",
-        "line": 2220,
-        "priority": "P1",
-        "title": "Not done: timing file does not cover today's suite"
-      }
-    ],
-    "id": "da908f90-d71a-4a8f-9440-c04309f44103",
+    "branch_diff": "18d3e511d425e67e423c4cbb8137b2508f8c835d8d5b508c8d3a66547464f34f",
+    "changed": "f3bb329aafeb68626d08ffe8e5e844562e4d0b22e42609e177d3f895860877f2",
+    "commit": "a0963090cd1528a0f06ff57b7fb1685258997979",
+    "dismissals": [],
+    "findings": [],
+    "id": "e180ef03-8056-4d3e-9168-acff6a9c26b3",
     "status": "clean"
   },
   "status": "waiting for checks",
@@ -60,6 +46,10 @@
     },
     {
       "at": "2026-10-12T10:04:03.986295+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T12:25:42.086827+00:00",
       "step": "review"
     }
   ],
