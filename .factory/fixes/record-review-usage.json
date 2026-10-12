@@ -24,31 +24,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "90345448876d823e5f283f2fdfe0e3905fbe6655dede3c42043b52c823dd8329",
-    "changed": "9b6a7f71530b8d0b315894db40b8ff74c38001574843413671a8f242c4a01479",
-    "commit": "d60448ac60ed39fe7063504767e1cb886709ce6c",
+    "branch_diff": "3062c6c29e56d544d35775f4fa411b05b79e0cd8dcf531f98600c8130b17ffab",
+    "changed": "2b4b2b150f1b5777a0aacf90eaf616717a07ebd91dd21f38676ad61b42fefaaa",
+    "commit": "ef731e27bbea5ccad90847b93c07ebf3d815a989",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The changed Claude read path adds cost fields only to a kit-driven run. When the reader is the coordinating app, `story.py:295-297` instead returns through `native.offer`; `native.py`'s offer and handback paths never create a run record or collect token use. A normal same-host `forge read` can therefore finish with no run end containing its model, effort, chat id and tokens.",
-        "file": "src/forge/story.py",
-        "line": 944,
-        "priority": "P1",
-        "title": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do"
-      },
-      {
-        "body": "Raise: Test. The five-case proof exercises kit-driven Codex and Claude reads, but no same-host read completed through `forge handback`. It would pass while every native read lacks the run end and token fields required by Done-when. The existing command test needs a native-read case that asserts those fields.",
-        "file": "tests/test_fix_reviews_and_reads_record_their_cost.py",
-        "line": 88,
-        "priority": "P1",
-        "title": "Not done: native plan read run-record test"
-      }
-    ],
-    "id": "19d0441a-43ab-4486-ad5b-48e956d1ee88",
-    "status": "blocked"
+    "findings": [],
+    "id": "ebad3696-3eeb-46d5-8bc0-7188ed7b3c25",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T09:13:38.849775+00:00",
@@ -76,6 +61,10 @@
     },
     {
       "at": "2026-10-11T17:19:01.307634+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:57:05.209369+00:00",
       "step": "review"
     }
   ],
