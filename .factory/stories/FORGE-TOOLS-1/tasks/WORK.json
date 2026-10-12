@@ -12,7 +12,13 @@
     "branch_diff": "830cddfe1803d01839cf556a12e96277fe44ba6a8deb633bd9eba70d90ecc583",
     "changed": "c965fa91cae35c9503f9b2cdda020136e8f83f5bb87912a8bee352f4f5085845",
     "commit": "bb058946178000b20a974ab384349914f9e4b199",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-4 finding is fixed in commit 63ddb7a4d: separate uncommitted and committed settings-restore cases, the committed one asserting a new reversing commit, and a hand-back after the work is committed",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Test. The uncommitted invalid forge.toml edit at line 155 is layered on top of a committed change. The test would still pass if the uncommitted restore were removed, because the committed restore checks out the handout version. It also checks the final file and clean status without proving the committed edit was reversed in a new commit. Earlier, the second handback occurs while work is still uncommitted; the test commits only afterward, so it never proves the named handback-after-commit path. These Done-when outcomes need independent command-level assertions.",
@@ -23,9 +29,9 @@
       }
     ],
     "id": "97b85ec0-ff6d-4100-b4be-d1a92150a58b",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T05:42:50.219272+00:00",
@@ -46,8 +52,12 @@
   ],
   "stop": {
     "at": "2026-10-12T13:35:34.425406+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "tests/test_tools_native_work.py",
+    "reason": "Owner rule for Harm 1-2: the round-4 finding is fixed in commit 63ddb7a4d: separate uncommitted and committed settings-restore cases, the committed one asserting a new reversing commit, and a hand-back after the work is committed",
     "round": 4,
-    "wait_id": "46f78cc8-8373-4c0c-ad04-4923942ad7b2"
+    "wait_id": "46f78cc8-8373-4c0c-ad04-4923942ad7b2",
+    "worker_round": null
   }
 }
