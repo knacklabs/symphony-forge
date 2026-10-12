@@ -9,11 +9,16 @@
       "at": "2026-10-12T10:02:01.139439+00:00",
       "because": "Git may delete part of the folder before the removal fails, so Forge should not claim it kept the worktree; a held-open folder on Windows cannot be reproduced on other OSes, and a refused removal stands in for it",
       "done_when": "When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes, keeps the worktree and its branch, and says so"
+    },
+    {
+      "at": "2026-10-12T10:12:34.064839+00:00",
+      "because": "forge doctor --fix finds finished work through git worktree list, so it cannot see a folder git already unregistered; deleting the folder is the instruction that works",
+      "done_when": "When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes and exits 0, says the folder could not be fully removed, and tells the user to close any program using it and run forge doctor --fix"
     }
   ],
   "base": "2e7db401994df42f51fbc0698cb0b67f5a997813",
   "branch": "fix/pin-switch-leaves-worktree",
-  "done_when": "When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes and exits 0, says the folder could not be fully removed, and tells the user to close any program using it and run forge doctor --fix",
+  "done_when": "When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes and exits 0, keeps the local branch, says the folder could not be fully removed, and tells the user to close any program using it and delete the folder",
   "flagged": [
     "src/forge/merge.py",
     "tests/test_merge_command.py"
