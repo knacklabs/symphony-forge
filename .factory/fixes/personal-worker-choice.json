@@ -18,31 +18,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98c7884353f223c10e332622080b0b30dad500d27c23f9f0a2236b2f3c0e76b6",
-    "changed": "93991fa1a20751a724c0dc3e9a8f859d20ff87ef7ec12ba16becad0d89674d41",
-    "commit": "b8b0a3961646c42c28b2c26b4923f9c89baa691f",
+    "branch_diff": "d4152fe139b949bd1bab7ac414b0963dbc667127ba7dff8d1c0f234bcceec036",
+    "changed": "903eeab5e184833f6f04f0db0e1bcfb9232df2fc3c36618e4434fa371d893076",
+    "commit": "605598f14218aa97a8601f10be9b23ef01281235",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. At repo.py:566, source lookup checks the shared model table even when a local table has replaced that entire kind. If forge.toml defines both build workers, while forge.local.toml defines only the Codex build model and selects Claude, forge work uses Claude's built-in default, but forge next labels its model as coming from forge.toml. Doctor has the same effective-source gap at doctor.py:436: it labels every local model kind as local, even when the selected worker uses a built-in default. The named tests do not exercise a local model entry for the other worker.",
-        "file": "src/forge/repo.py",
-        "line": 566,
+        "body": "Raise: Not done. New evidence beyond the settled doctor finding: with `[models.build.codex]` in `forge.toml` and only `tools = \"claude\"` in `forge.local.toml`, `forge work` uses Claude's built-in build model because the shared table has no Claude entry (`src/forge/repo.py:513\u2013530`). Doctor checks only model kinds present in the local file, then says everything else comes from `forge.toml` at line 440. It therefore gives the wrong source for `models.build`. The named doctor test covers a built-in fallback for a locally overridden kind, but not this shared-kind case.",
+        "file": "src/forge/doctor.py",
+        "line": 440,
         "priority": "P1",
-        "title": "Not done: forge next and doctor misidentify model sources"
-      },
-      {
-        "body": "Raise: Not done. The new preview treats every fix as non-design work at nextstep.py:715, while forge work treats a prototype fix with the recorded allowance as design work (worker.py:97). With split workers, forge next therefore names Codex while forge work selects Claude. The preview also assigns every non-started item models.fix at nextstep.py:718, but a non-design Claude retry still uses models.build for a task or models.lite for a fix (worker.py:102\u2013110). These normal fix and retry paths can show the wrong worker or model source; the named proof checks only a started, non-prototype fix.",
-        "file": "src/forge/nextstep.py",
-        "line": 715,
-        "priority": "P1",
-        "title": "Not done: forge next misidentifies prototype fix workers and Claude retry model sources"
+        "title": "Not done: doctor misses a shared model's built-in fallback after a local tool switch"
       }
     ],
-    "id": "1f55466f-af73-4a8c-880b-f03f06879986",
+    "id": "c7505ea7-6d34-4656-aba9-64158f10778d",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
@@ -71,13 +64,16 @@
     {
       "at": "2026-10-12T01:16:48.094339+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:49:46.336674+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "accept",
-    "file": "src/forge/nextstep.py",
-    "reason": "Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
-    "wait_id": "e17ff264-3398-4001-bf65-922c465b2cd2"
+    "at": "2026-10-12T01:49:46.353893+00:00",
+    "file": "src/forge/doctor.py",
+    "wait_id": "dc01dcc0-f6d6-422b-aab5-48fb11800839"
   },
   "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings",
   "worker": "codex"
