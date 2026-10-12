@@ -1145,6 +1145,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: 2 \u2014 below-bar findings can lose their scores in the pull request\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 977,
+      "text": "Not done: 2 \u2014 below-bar findings can lose their scores in the pull request",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 250,
+      "text": "Not done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -3407,6 +3429,28 @@
       "text": "Nested pytest config lets doctests bypass the test place",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 3 \u2014 settled findings disappear from later accepted context\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 618,
+      "text": "Not done: 3 \u2014 settled findings disappear from later accepted context",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 4 \u2014 same-named methods collapse into one area\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 233,
+      "text": "Not done: 4 \u2014 same-named methods collapse into one area",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
       "status": "open",
       "closed_by": null
     },
