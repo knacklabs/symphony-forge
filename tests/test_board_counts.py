@@ -97,11 +97,15 @@ def expected(previous, *, ready=1, progress=1):
             "finished_last_7_days": {"parts": 1, "fixes": 1 + previous}}
 
 
-@pytest.mark.parametrize("case", ["counts", "newer-push", "github-once", "approved-not-started", "newer-findings"])
+@pytest.mark.parametrize("case", ["counts", "newer-push", "github-once", "approved-not-started", "newer-findings",
+                                  "older-part"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, monkeypatch, previous, case):
     if case == "github-once":
         github_read_once(env, monkeypatch, previous)
+        return
+    if case == "older-part":
+        older_part(env, monkeypatch, previous)
         return
     if case == "newer-push":
         newer_push(env, monkeypatch, previous)
@@ -361,3 +365,51 @@ def newer_findings(env, monkeypatch, previous):
     assert row["findings"]["titles"] == ["Basket disappears"]
     assert row["round"] == newer["round"]
     assert row["gates"]["review"]["status"] == "blocked"
+
+
+def older_part(env, monkeypatch, previous):
+    """A part of an unfinished story merged before the weekly searches still brings its time from
+    its pull request, asked for once by its branch."""
+    client(env, previous)
+    conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
+    configure(env, "agent")
+    then = datetime.now(timezone.utc) - timedelta(weeks=8)
+    for name in ("FORGE_NOW", "GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
+        monkeypatch.setenv(name, then.isoformat())
+    approve_story(env.repo, PLAN)
+    env.repo.git("merge", "-q", "--no-edit", "story/SHOP")
+    env.repo.git("push", "-q", "origin", "main")
+    started = env.repo.forge("task", "start", "SHOP/T1")
+    assert started.returncode == 0, started.stdout + started.stderr
+    env.commit(Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1]), "t1.py", "print('T1')\n")
+    at = lambda hours: (then - timedelta(hours=hours)).isoformat()  # noqa: E731
+    with (env.repo.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as events:
+        for event in ({"id": "T1-phase", "event": "work phase", "phase": "building", "at": at(2)},
+                      {"id": "T1-start", "event": "run start", "kind": "worker", "round": 1, "at": at(2)},
+                      {"id": "T1-end", "event": "run end", "kind": "worker", "run_id": "T1-start", "at": at(1)}):
+            events.write(json.dumps({**event, "item": "SHOP/T1"}) + "\n")
+    closed = env.close("SHOP/T1")
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    pr = {**ready_pr(env, "SHOP/T1", "task/SHOP-T1"), "state": "MERGED", "mergedAt": then.isoformat()}
+    env.repo.git("merge", "-q", "--no-edit", "task/SHOP-T1")
+    env.repo.git("push", "-q", "origin", "main")
+    github(env, [pr])
+    env.gh.respond("pr", "list", "--state", "merged", "--limit", "1000", stdout="[]")  # the weekly searches
+    for name in ("GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
+        monkeypatch.delenv(name)
+    clock(monkeypatch, datetime.now(timezone.utc))
+    for log in ("events.jsonl", "timings.jsonl"):  # only the pull request remembers the part's time
+        (env.repo.path / ".git/forge" / log).unlink(missing_ok=True)
+    asked = lambda: [call for call in env.gh_calls("pr", "list") if "--head" in call  # noqa: E731
+                     and "task/SHOP-T1" in call and "merged" in call]
+    shop = rows(board(env.repo))["SHOP"]
+    assert shop["state"] == "building" and "SHOP/T1" not in [c["id"] for c in shop["children"]]
+    board(env.repo)
+    assert len(asked()) == 1, "asked once a minute"
+    # Without the record in its pull request, the part's recorded time is gone from the runway.
+    github(env, [{**pr, "body": ""}])
+    env.gh.respond("pr", "list", "--state", "merged", "--limit", "1000", stdout="[]")
+    clock(monkeypatch, datetime.now(timezone.utc) + timedelta(minutes=2))
+    bare = rows(board(env.repo))["SHOP"]
+    first = lambda row: min(datetime.fromisoformat(i["start"]) for i in row["intervals"])  # noqa: E731
+    assert first(shop) <= then - timedelta(hours=2) < first(bare), (shop["intervals"], bare["intervals"])

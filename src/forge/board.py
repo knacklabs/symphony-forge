@@ -566,17 +566,18 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
                 item["children"].append(child)
     older_parts: dict[str, list[Item]] = {}
-    for rel, (state, _) in best.items():
-        match = STATE.fullmatch(rel)
-        if rel not in history["expired"] or not match["task"] or match["key"] not in items:
-            continue
-        key, tid = match["key"], match["task"]
-        branch = state.get("branch") or f"task/{key}-{tid}"
+    older = [(rel, state, match["key"], match["task"], state.get("branch") or f"task/{match['key']}-{match['task']}")
+             for rel, (state, _) in best.items() if rel in history["expired"]
+             and (match := STATE.fullmatch(rel))["task"] and match["key"] in items]
+    # An unfinished story's parts merged before the weekly searches still bring their records.
+    by_branch.update(board_facts.merged_by_branch(top, [branch for _, _, key, _, branch in older
+                                                        if branch not in by_branch and key not in completed]))
+    for rel, state, key, tid, branch in older:
         if rel in merged or branch in merged_prs or key in completed:
             state = {**state, "status": "merged"}
         older_parts.setdefault(key, []).append(time_records.merged(
             time_records.item(top, f"{key}/{tid}", state, events=recorded, timings=timings,
-                              ended_at=merged_dates.get(branch)),
+                              ended_at=by_branch.get(branch, {}).get("mergedAt")),
             time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
     notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
                       for key, current in items.items() if current["kind"] == "story"}
