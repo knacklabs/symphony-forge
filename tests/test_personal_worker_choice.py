@@ -137,7 +137,8 @@ def test_3_new_and_upgraded_repos_ignore_the_local_file_and_doctor_names_its_set
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "-qm", "Ignore my settings", "--allow-empty", cwd=client)
     (main / "forge.local.toml").write_text(
-        'tools = "claude"\n' + LOCAL + '\n[models.fix.codex]\nmodel = "gpt-6-sol"\neffort = "low"\n', "utf-8")
+        'tools = "claude"\n' + LOCAL + '\n[models.fix.codex]\nmodel = "gpt-6-sol"\neffort = "low"\n'
+        'subagents = "gpt-6-luna"\nsubagent_effort = "max"\n', "utf-8")
     roles = (client / ".claude/agents/worker.md").read_bytes()
     assert repo.forge("sync", cwd=client).returncode == 0
     # Personal models never reach the committed subagent roles.
@@ -160,5 +161,6 @@ def test_3_new_and_upgraded_repos_ignore_the_local_file_and_doctor_names_its_set
     _stub_forge(tmp_path, monkeypatch)
     checked = repo.forge("doctor", cwd=client)
     assert ("- Note: forge.local.toml overrides tools = claude, workers = claude, "
-            "models.build = claude-sonnet-5 at medium effort, models.fix.codex = gpt-6-sol at low effort."
+            "models.build (model claude-sonnet-5, effort medium), models.fix.codex (model gpt-6-sol, "
+            "effort low, subagents gpt-6-luna, subagent_effort max)."
             ) in checked.stdout, checked.stdout + checked.stderr

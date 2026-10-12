@@ -436,7 +436,7 @@ def doctor(args: argparse.Namespace) -> int:
                    for tool, entry in ([("", table)] if "model" in table else table.items())]
         print(f"- Note: {repo.LOCAL} overrides " + ", ".join(
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
-            + [f"models.{name} = {entry['model']}" + (f" at {entry['effort']} effort" if "effort" in entry else "")
+            + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
                for name, entry in entries]) + ".")
     if "review" in cfg.get("models", {}):
         print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
