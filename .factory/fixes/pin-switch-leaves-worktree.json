@@ -1,0 +1,14 @@
+{
+  "base": "2e7db401994df42f51fbc0698cb0b67f5a997813",
+  "branch": "fix/pin-switch-leaves-worktree",
+  "done_when": "When the pin changes mid-run, Forge starts the new release from the main checkout, so forge merge and forge land run from inside an item's worktree can remove it on Windows",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T09:42:03.657961+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows, forge merge or forge land run from inside an item's worktree stops with 'could not remove the worktree' when main's pinned release changes mid-run: the old forge processes keep the worktree folder open"
+}
