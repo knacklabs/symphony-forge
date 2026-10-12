@@ -1,0 +1,14 @@
+{
+  "base": "85531bb0524852ddf4ac994ed6fbe3ab592a56cb",
+  "branch": "fix/main-run-time-limits",
+  "done_when": "Main's full test run gives Linux and macOS groups 20 minutes and Windows groups 35, so each group finishes within its limit, and the job-budget test checks those limits",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T06:40:33.127775+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's full test run never finishes: every platform's groups hit their time limit (Linux and macOS 10 minutes, Windows 20), which GitHub reports as cancelled, so main has had no complete run for a day"
+}
