@@ -75,7 +75,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert handed["role"] == "reader"
         assert Path(handed["checkout"]).resolve() == shop.resolve()
         assert (handed["tool"], handed["model"], handed["effort"]) == (tool, model, "high")
-        assert DOC in handed["fresh_prompt"]
+        assert DOC in handed["fresh_prompt"].replace("\r\n", "\n")
         [entry] = lane()
         assert entry["native"] is True and entry["kind"] == "read"
         assert entry["model"] == model
@@ -95,7 +95,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     trusted.write_text(trusted.read_text("utf-8") +
                        f'\n[projects.{json.dumps(str(wish))}]\ntrust_level = "trusted"\n', "utf-8")
     initial = handout()
-    assert DOC in initial["prompt"]
+    assert DOC in initial["prompt"].replace("\r\n", "\n")
     assert not notes.exists()
     scratch = shop / "scratch.txt"
     scratch.write_text("changed during the read\n", "utf-8")

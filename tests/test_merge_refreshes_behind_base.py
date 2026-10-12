@@ -91,10 +91,10 @@ if args[:2] in (["pr", "merge"], ["pr", "view"]):
         git("clone", "-q", remote, str(checkout))
         text = (checkout / "README.md").read_text(encoding="utf-8")
         text = text.replace("Original greeting", "Other greeting") if conflict else text.replace("Old closing", "Other closing")
-        (checkout / "README.md").write_text(text, encoding="utf-8")
+        (checkout / "README.md").write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         git("add", "README.md", cwd=checkout)
         if upgraded is not None:
-            (checkout / "forge.toml").write_text(upgraded, encoding="utf-8")
+            (checkout / "forge.toml").write_bytes(upgraded.encode("utf-8"))
             git("add", "forge.toml", cwd=checkout)
         if failing_test:
             (checkout / "verify.py").write_text("raise AssertionError('The upgraded client test fails')\\n", encoding="utf-8")
