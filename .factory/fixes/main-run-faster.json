@@ -25,7 +25,13 @@
     "branch_diff": "036af7101bf1c321fe230ca379f524899d75e9c470a8064dd307e8c58f887973",
     "changed": "3430358f8dffa5ec41bc15eb9b4b83e0579a63943bbe1e9722ed00e22190bec5",
     "commit": "846ca6000fffce75afdb08998c15be32f19ad427",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the Done-when was narrowed to a timing file refreshed with the suite as of this change; tests merged after the refresh use pytest-split's average until the next refresh at release",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "chunk 3/3:\n\nRaise: Not done. The refreshed timing file has no entries for the six parametrized cases in `tests/test_sync_not_blocked_by_other_runs.py`, which the configured `pytest tests` command collects. Around this line, the file moves from other sync tests to task tests without those cases. CI therefore assigns them fallback durations instead of recorded timings, so the file does not cover today's suite. This is new evidence beyond the earlier ruling that a one-time refresh, rather than a permanent coverage test, would suffice.",
@@ -36,9 +42,9 @@
       }
     ],
     "id": "da908f90-d71a-4a8f-9440-c04309f44103",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T06:54:36.261499+00:00",
@@ -59,9 +65,13 @@
   ],
   "stop": {
     "at": "2026-10-12T11:51:44.439298+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": ".test_durations",
+    "reason": "Owner rule for Harm 1-2: the Done-when was narrowed to a timing file refreshed with the suite as of this change; tests merged after the refresh use pytest-split's average until the next refresh at release",
     "round": 4,
-    "wait_id": "bda6b9be-df46-4f53-a1b5-1ce95e453697"
+    "wait_id": "bda6b9be-df46-4f53-a1b5-1ce95e453697",
+    "worker_round": null
   },
   "why": "Main's full run takes 20 to 35 minutes on every merge and fills the shared runners that pull requests wait for: all three platforms run on each merge, superseded runs are not cancelled, and the test timing file is a week old so groups are uneven"
 }
