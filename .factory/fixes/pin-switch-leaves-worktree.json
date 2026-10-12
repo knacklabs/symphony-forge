@@ -1,0 +1,95 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T09:53:44.801851+00:00",
+      "because": "Starting the new release elsewhere changed how every client starts a release and still failed when the user's own shell sits in the worktree; the pull request is already merged, so the leftover folder is only cleanup",
+      "done_when": "When the pin changes mid-run, Forge starts the new release from the main checkout, so forge merge and forge land run from inside an item's worktree can remove it on Windows"
+    },
+    {
+      "at": "2026-10-12T10:02:01.139439+00:00",
+      "because": "Git may delete part of the folder before the removal fails, so Forge should not claim it kept the worktree; a held-open folder on Windows cannot be reproduced on other OSes, and a refused removal stands in for it",
+      "done_when": "When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes, keeps the worktree and its branch, and says so"
+    },
+    {
+      "at": "2026-10-12T10:12:34.064839+00:00",
+      "because": "forge doctor --fix finds finished work through git worktree list, so it cannot see a folder git already unregistered; deleting the folder is the instruction that works",
+      "done_when": "When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes and exits 0, says the folder could not be fully removed, and tells the user to close any program using it and run forge doctor --fix"
+    }
+  ],
+  "base": "2e7db401994df42f51fbc0698cb0b67f5a997813",
+  "branch": "fix/pin-switch-leaves-worktree",
+  "done_when": "When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes and exits 0, keeps the local branch, says the folder could not be fully removed, and tells the user to close any program using it and delete the folder",
+  "flagged": [
+    "src/forge/merge.py",
+    "src/forge/templates/skill.md",
+    "tests/test_merge_command.py",
+    "tests/test_merge_refreshes_behind_base.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fe02f717f2c81692358c77030304b45e97ddd7e7f9a3a981ad33894873196897",
+    "changed": "e01d19245db1fa0f5d6b8ccfbeadb1a9a7f7b15fca406784fccd04324fdd6ecf",
+    "commit": "9752e12d4b7c60251a9f891ff667f941da3625e5",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both are covered in commit 282cc61fa: tests/test_land.py::test_3 drives forge land into a failed worktree removal and checks exit 0, the delete-the-folder line and the kept branch; tests/test_merge_docs.py::test_6 checks the cleanup sentence in the synced guides",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both are covered in commit 282cc61fa: tests/test_land.py::test_3 drives forge land into a failed worktree removal and checks exit 0, the delete-the-folder line and the kept branch; tests/test_merge_docs.py::test_6 checks the cleanup sentence in the synced guides",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "chunk 1/2:\n\nRaise: Test \u2014 The proof list names `test_merge_docs.py`, `test_trim_skills.py`, and `test_tools_guide.py` as proof of the new cleanup guidance. The first does not assert the new outcome or deletion instruction; the other two check delivery and equality of the guide copies. Removing this sentence from the template and both host guides would leave all three tests passing, so the named proof does not detect loss of the guidance.",
+        "file": "src/forge/templates/skill.md",
+        "line": 65,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Test \u2014 The only test that forces `git worktree remove` to fail runs `forge merge`. The named `forge land` proof checks the failure message only if a folder happens to remain on Windows; when removal succeeds, it never exercises the Done-when failure path. It also does not check that the branch remains or that the user is told to close programs and delete the folder. A `forge land` regression in that outcome could pass the named proofs.",
+        "file": "tests/test_merge_refreshes_behind_base.py",
+        "line": 250,
+        "priority": "P1",
+        "title": "Not done: test failed worktree removal through forge land"
+      }
+    ],
+    "id": "c6a10ff0-cb82-4cdd-8a78-8db91e941245",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T09:42:03.657961+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T10:01:19.809994+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:12:14.017895+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:16:56.521928+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T13:05:46.458717+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/templates/skill.md",
+    "reason": "Owner rule for Harm 1-2: both are covered in commit 282cc61fa: tests/test_land.py::test_3 drives forge land into a failed worktree removal and checks exit 0, the delete-the-folder line and the kept branch; tests/test_merge_docs.py::test_6 checks the cleanup sentence in the synced guides",
+    "round": 4,
+    "wait_id": "1bba76a9-ff56-4ceb-98f4-170f3f2ce435",
+    "worker_round": null
+  },
+  "why": "On Windows, forge merge or forge land run from inside an item's worktree stops with 'could not remove the worktree' when main's pinned release changes mid-run: the old forge processes keep the worktree folder open"
+}

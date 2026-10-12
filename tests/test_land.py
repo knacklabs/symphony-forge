@@ -566,8 +566,20 @@ def _remote_branch_kept_then_tidied(env):
     assert not where.exists()
 
 
+def _worktree_not_removed_still_finishes(env):
+    _agent(env)
+    where = _fix(env, "working", worked=True)
+    # A lock makes git worktree remove fail, as a program holding the folder open does on Windows.
+    env.repo.git("worktree", "lock", str(where))
+    done = _land(env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"Merged {ITEM}. Forge could not fully remove its worktree at " in done.stdout
+    assert "; close any program using that folder, then delete the folder " in done.stdout
+    assert env.repo.git("rev-parse", "--verify", BRANCH)
+
+
 THREE = [_agent_merges_once, _human_merges, _prototype_before_signoff_merges, "migrate", "adopt",
-         _head_moved_after_ready, _remote_branch_kept_then_tidied]
+         _head_moved_after_ready, _remote_branch_kept_then_tidied, _worktree_not_removed_still_finishes]
 
 
 @pytest.mark.parametrize("case", THREE, ids=lambda case: case if isinstance(case, str) else case.__name__.strip("_"))
