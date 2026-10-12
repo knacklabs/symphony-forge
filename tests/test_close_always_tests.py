@@ -39,9 +39,10 @@ def set_up(env, monkeypatch, adopted, always, changed=1):
     command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests", "-q"])
     settings = re.sub(r"^test = .*\n", "", (env.repo.path / "forge.toml").read_text("utf-8"), flags=re.M)
     settings = "test = " + json.dumps(command) + "\n" + settings
-    if always is not None:
-        settings = "always_test = " + (always if isinstance(always, str) else json.dumps(always)) + "\n" + settings
-    env.repo.write("forge.toml", settings)
+    listed = ("always_test = " + (always if isinstance(always, str) else json.dumps(always)) + "\n"
+              if always is not None else "# no always_test\n")
+    # changed=0: the fix changes only forge.toml, adding always_test there.
+    env.repo.write("forge.toml", settings if changed == 0 else listed + settings)
     env.repo.write("conftest.py", "import pathlib, pytest\n"
                    "@pytest.fixture(autouse=True)\ndef receipt(request):\n"
                    f"    (pathlib.Path({json.dumps(log.as_posix())}) / request.node.name).touch()\n")
@@ -56,7 +57,7 @@ def set_up(env, monkeypatch, adopted, always, changed=1):
         env.repo.git("merge", "-q", "--ff-only", "fix/adopt")
     env.repo.git("-c", "core.hooksPath=/dev/null", "push", "-q", "origin", "main")
     item, _ = env.start_fix({f"tests/test_case_{number}.py": f"def test_case_{number}():\n    assert 2 + 2 == 4\n"
-                             for number in range(changed)})
+                             for number in range(changed)} or {"forge.toml": listed + settings})
     env.checks([run("tests"), run("forge-pr-check")])
     return item, log
 
@@ -64,9 +65,9 @@ def set_up(env, monkeypatch, adopted, always, changed=1):
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
 @pytest.mark.parametrize("always", [None, ["tests/test_case_5.py", "tests/test_case_6.py::test_other_6"]],
                          ids=["unset", "set"])
-@pytest.mark.parametrize("changed", [1, 4], ids=["small", "large"])
+@pytest.mark.parametrize("changed", [1, 4, 0], ids=["small", "large", "settings-only"])
 def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adopted, always, changed):
-    # A large change skips the picked tests for CI, but the listed ones still run.
+    # A large or settings-only change skips the picked tests, but the listed ones still run.
     item, log = set_up(env, monkeypatch, adopted, always, changed)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
