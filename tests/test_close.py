@@ -557,7 +557,7 @@ def test_18_close(env, kind):
     # Only the repeated advice is settled: it was known below the bar from the earlier round.
     assert [line for line in body(env.gh_calls("pr", "edit")[-1]).splitlines() if "dismissed" in line] == [
         "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): dismissed because known: "
-        "below the bar (live with)"]
+        "below the bar (live with); Gain 2, Work 1, Harm 1"]
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
 
     # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,

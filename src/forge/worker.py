@@ -438,8 +438,8 @@ def _changes(top: Path, start: str) -> str:
 
 
 def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
-    """The open findings at the bar, at any priority, and the failing checks, close's own test run
-    among them, once close has run."""
+    """The open serious findings and the failing checks, close's own test run among them, once
+    close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
     review = state.get("review")
     if not review:  # no review yet: no pull request to read checks from

@@ -282,7 +282,6 @@ def read(args: Any) -> int:
         # Only story plans cap notes on unchanged text; specs still get a full read.
         again = edit if passed(record, findings) else again.replace(
             "${look}", cap if is_story and round_number >= 3 else look)
-        # Every settled note, below-bar ones included, goes to the reader with its scores.
         blocking = {n: block for n, block in blocks.items() if DISPOSITION.search(block)}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
         # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
@@ -714,8 +713,7 @@ def passed(record: dict[str, str], findings: str) -> bool:
 
 
 def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
-    """Earlier releases' snapshots supply the streak until the first new read records it. A third
-    blocked round stops only when the bar's stop rule holds for its notes; else it counts as two."""
+    """Earlier releases' snapshots supply the streak until the first new read records it."""
     count = _streak(top, record, findings)
     return 2 if count >= 3 and not score.read_stops(list(_latest(record, findings).values())) else count
 

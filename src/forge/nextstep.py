@@ -643,8 +643,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
 
 
 def default_due(top: Path, state: dict[str, Any]) -> bool:
-    """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on,
-    whose open findings all have Harm 1 or 2; with Harm 3 or more open it waits for the owner."""
+    """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
     stop = state.get("stop") or {}
     if (not stop or stop.get("choice") or "question" in stop or repo.config(top)["stop_default"] == "off"
             or not score.mild(state.get("review") or {})):

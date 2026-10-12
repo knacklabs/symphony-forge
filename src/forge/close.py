@@ -247,7 +247,7 @@ def close(args: argparse.Namespace) -> int:
         choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
     if (not switch and not fresh and round_number - choice_round >= 3 and
             _three_blocked_reviews(top, item) and
-            score.loop_stops(previous, state.get("known", []), round_number)):
+            score.loop_stops(previous, _known(top, item, state, f"origin/{default}", previous), round_number)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
@@ -348,11 +348,8 @@ def close(args: argparse.Namespace) -> int:
     stopped = None
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh or dismissals:
-        if "known" not in state:  # an item reviewed before the known list: its saved rounds first
-            for number, old in enumerate(review._history(top, item, f"origin/{default}", previous), 1):  # pyright: ignore[reportPrivateUsage]
-                state["known"] = score.remember(state.get("known", []), old, number, _areas(top, old))
-        state["known"] = score.remember(state.get("known", []), result, round_number,
-                                        {} if fresh else areas)
+        score.remember(_known(top, item, state, f"origin/{default}", previous), result, round_number,
+                       {} if fresh else areas)
     if not fresh:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
@@ -456,9 +453,17 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
 
 
 def _settled_areas(state: dict[str, Any]) -> list[str]:
-    """The areas the owner's answers settled; an earlier release's answered stop settles its file."""
     stop = state.get("stop") or {}
     return [*state.get("settled_areas", []), *([stop["file"]] if stop.get("choice") and stop.get("file") else [])]
+
+
+def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dict[str, Any]) -> list[Any]:
+    """The item's known findings; an item reviewed before the list gets its saved rounds first."""
+    if "known" not in state:
+        state["known"] = []
+        for number, old in enumerate(review._history(top, item, base, previous), 1):  # pyright: ignore[reportPrivateUsage]
+            score.remember(state["known"], old, number, _areas(top, old))
+    return state["known"]
 
 
 def _areas(top: Path, result: dict[str, Any]) -> dict[tuple[str, str], str]:
@@ -973,13 +978,16 @@ def _block(result: dict[str, Any], check: str) -> str:
     because = {d["finding"]: d for d in result["dismissals"]}
     blocking, rest, below = [], [], {"follow-up": [], "live with": []}
     for n, finding in enumerate(result["findings"], 1):
-        outcome = score.bar(score.of(finding))
+        outcome, scores = score.bar(score.of(finding)), score.of(finding)
+        line = "Gain {}, Work {}, Harm {}".format(*scores) if scores else ""
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if score.holds(finding, result.get("blocking_level"))
-                else "Gain {}, Work {}, Harm {}".format(*score.of(finding)) if outcome in below
+                else line if outcome in below
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
+        # Every finding that doesn't hold the work shows its scores.
+        note += f"; {line}" if line and note != "blocks the merge" and note != line else ""
         (blocking if note == "blocks the merge" else below[outcome] if note.startswith("Gain ")
          else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
                            f"({finding['file']}:{finding['line']}): {note}")

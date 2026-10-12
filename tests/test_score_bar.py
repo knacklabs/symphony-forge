@@ -177,6 +177,13 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Saving drops the basket (app.py): accepted by the owner" in known
     assert "Sign-in is out of scope" in known
+    # It stays known in every later review, after the repeat that was dismissed as settled.
+    env.commit(where, "app.py", "print('saved three times')\n")
+    env.reviews(CLEAN)
+    assert env.close("SHOP/T1").returncode == 0
+    known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
+    assert "Saving drops the basket (app.py): accepted by the owner" in known
+    assert "Label wording (app.py): known: below the bar (live with)" in known
 
 
 def _round(env, item, where, number, *findings, code=1):
@@ -188,11 +195,13 @@ def _round(env, item, where, number, *findings, code=1):
 
 
 SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n"
-        "def load(\n        basket,\n        user):\n    return basket\n")
+        "def load(\n        basket,\n        user):\n    return basket\n\n\n"
+        "class A:\n    def __init__(self):\n        self.x = 1\n\n\n"
+        "class B:\n    def __init__(self):\n        self.y = 2\n")
 
 
 @pytest.mark.parametrize("case", CASES)
-@pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "area"])
+@pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "only-harm-2-saved-before-known", "area"])
 def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, case, loop):
     _client_on_this_release(env, tmp_path, case)
     item, where = env.start_fix()
@@ -215,9 +224,14 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         held = env.close(item)
         assert held.returncode == 1 and "Ask the human" in held.stderr
         assert len(env.review_calls()) == 3 and follow_ups(env) == before
-    elif loop == "only-harm-2":  # a finding at the bar that keeps coming back; the default narrows
+    elif loop.startswith("only-harm-2"):  # a finding at the bar that keeps coming back; the default narrows
         for number in (1, 2, 3):
             _round(env, item, where, number, at_bar("Saving drops the basket", "docs/1.md", harm=2))
+        if loop.endswith("saved-before-known"):  # rounds an earlier release saved without the known list
+            path = ".factory/fixes/tidy-readme.json"
+            state = json.loads((where / path).read_text("utf-8"))
+            state.pop("known")
+            env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
         assert "Ask the human" in _round(env, item, where, 4).stderr
         assert len(env.review_calls()) == 3
         later(monkeypatch, 31)
@@ -228,10 +242,13 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         env.commit(where, "src/shop.py", SHOP)
         shop = "src/shop.py"
         _round(env, item, where, 1, at_bar("Save keeps no total", shop, line=2),
-               at_bar("The limit is too low", shop, line=6), at_bar("Load ignores the user", shop, line=10))
-        # One finding raised twice counts once; module-level code and load() are areas of their own.
+               at_bar("The limit is too low", shop, line=6), at_bar("Load ignores the user", shop, line=10),
+               at_bar("A starts without a name", shop, line=17))
+        # One finding raised twice counts once; module-level code, load(), A.__init__ and
+        # B.__init__ are areas of their own.
         second = _round(env, item, where, 2, at_bar("Save keeps no total", shop, line=2),
-                        at_bar("Save returns early", shop, line=3))
+                        at_bar("Save returns early", shop, line=3),
+                        at_bar("B starts empty", shop, line=21), at_bar("B keeps a stale y", shop, line=22))
         assert "The review left serious findings open" in second.stderr
         third = _round(env, item, where, 3, at_bar("Save rounds down", shop, line=2))
         assert "still finds serious problems in save() in src/shop.py" in third.stderr

@@ -219,18 +219,23 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
 
 
 def area(top: Path, commit: str, file: str, line: Any) -> str:
-    """A finding's area: the innermost Python def or async def holding its line at the reviewed
-    commit, else (another language, a file that doesn't parse, a line outside every def) the file."""
+    """A finding's area: the qualified name of the innermost Python def holding its line at the
+    commit, else (another language, no parse, a line outside every def) the file."""
     text = repo.run("git", "show", f"{commit}:{file}", cwd=top).stdout if file.endswith(".py") else ""
     try:
         tree = ast.parse(text)
     except (SyntaxError, ValueError):
         return file
     line = int(line) if str(line).isdigit() else 0
-    holding = [node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-               and node.lineno <= line <= (node.end_lineno or node.lineno)]
-    inner = max(holding, key=lambda node: node.lineno, default=None)
-    return f"{inner.name}() in {file}" if inner else file
+    found, todo = file, [(tree, "")]
+    while todo:  # a parent comes before its children, so the innermost def holding the line wins
+        node, prefix = todo.pop()
+        for child in ast.iter_child_nodes(node):
+            name = prefix + child.name + "." if isinstance(child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) else prefix
+            if not isinstance(child, ast.ClassDef) and name != prefix and child.lineno <= line <= (child.end_lineno or child.lineno):
+                found = f"{name[:-1]}() in {file}"
+            todo.append((child, name))
+    return found
 
 
 def plain(title: str, body: str = "") -> str:
@@ -614,8 +619,9 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
             if dismissal.get("accepted"):
                 accepted.add(key)
                 settled[key] = "accepted by the owner: " + dismissal["because"]
-            else:
-                settled[key] = "dismissed because " + dismissal["because"]
+            else:  # a repeat dismissed as known or accepted keeps that reason
+                settled[key] = (dismissal["because"] if dismissal["because"].startswith(
+                    ("known:", "accepted by the owner:")) else "dismissed because " + dismissal["because"])
         earlier = (earlier | current) - accepted
     return settled
 
