@@ -20,7 +20,18 @@
     "branch_diff": "d21be600920555905cce6d820b70a77c6d64635cce8cbca2ae2802b99e048cec",
     "changed": "ffd53d6ddca673f79462e9eda64cb7caa1fe4f75c2b4d3fea9a7938c338d421e",
     "commit": "43c86289f3af78d20f3fc73292f6b2342b1b19a9",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both round-9 findings are fixed in commit ceaa0d634 (a rerun close with no worker round never counts; unittest FAIL and ERROR lines are keyed one per line), with tests",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both round-9 findings are fixed in commit ceaa0d634 (a rerun close with no worker round never counts; unittest FAIL and ERROR lines are keyed one per line), with tests",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. This event is recorded on every `forge close`, even if no worker has run since the previous close. After one worker round leaves a finding or test failing, rerunning `forge close` creates another event ID. `stuck_round` at close.py:492-500 treats that ID as a new round and asks the owner before two worker rounds have left the same failure. The `work twice` proof covers two work calls without a close, but not two close calls without work.",
@@ -38,9 +49,9 @@
       }
     ],
     "id": "97bbe17f-c784-4965-ad07-4904956675fd",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -85,8 +96,12 @@
   ],
   "stop": {
     "at": "2026-10-12T02:13:29.458180+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/close.py",
-    "wait_id": "2ced4520-6e61-45a2-9f34-b11e1c0236c9"
+    "reason": "Owner rule for Harm 1-2: both round-9 findings are fixed in commit ceaa0d634 (a rerun close with no worker round never counts; unittest FAIL and ERROR lines are keyed one per line), with tests",
+    "wait_id": "2ced4520-6e61-45a2-9f34-b11e1c0236c9",
+    "worker_round": null
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }
