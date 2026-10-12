@@ -1,0 +1,14 @@
+{
+  "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
+  "branch": "fix/main-run-faster",
+  "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand; and the test timing file covers today's suite so each platform's groups take about the same time",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T06:54:36.261499+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's full run takes 20 to 35 minutes on every merge and fills the shared runners that pull requests wait for: all three platforms run on each merge, superseded runs are not cancelled, and the test timing file is a week old so groups are uneven"
+}
