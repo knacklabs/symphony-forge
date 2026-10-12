@@ -59,12 +59,19 @@ def test_21_first_close_without_a_worker_round_keeps_its_real_lane_wait_in_round
     queued = re.search(r"in line \d+ (?:seconds?|minutes?|hours?|days?)", attempt["line"])
     assert queued, attempt["line"]
     observed = records(env.repo, "events.jsonl")
-    seconds = 0
-    for joined in (e for e in observed if e.get("item") == "waiting" and e["event"] == "lane joined"):
-        admitted = next(e for e in observed if e["event"] == "lane admitted"
-                        and e.get("lane_id") == joined["lane_id"])
-        seconds += (datetime.fromisoformat(admitted["at"]) -
-                    datetime.fromisoformat(joined["at"])).total_seconds()
+    at = lambda e: datetime.fromisoformat(e["at"])  # noqa: E731
+    mine = [e for e in observed if e.get("item") == "waiting"]
+    # Close runs its tests and its review side by side, so the test lane and review lane waits
+    # can overlap each other and the item's own test run. Each instant counts once, and own
+    # tests take precedence over waiting in line.
+    waits = [(at(joined), at(next(e for e in observed if e["event"] == "lane admitted"
+                                  and e.get("lane_id") == joined["lane_id"])))
+             for joined in mine if joined["event"] == "lane joined"]
+    tests = [(at(start), at(next(e for e in mine if e["event"] == "run end" and e.get("run_id") == start["id"])))
+             for start in mine if start["event"] == "run start" and start.get("kind") == "test"]
+    points = sorted({point for span in waits + tests for point in span})
+    seconds = sum((b - a).total_seconds() for a, b in zip(points, points[1:])
+                  if any(x <= a and b <= y for x, y in waits) and not any(x <= a and b <= y for x, y in tests))
     assert seconds > 0
     assert current["time_breakdown"]["waiting_in_line"] == round(seconds, 3)
     # Publication and board derive from the same recorded attempt rather than reclassifying it.
