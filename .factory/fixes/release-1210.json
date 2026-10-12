@@ -1,0 +1,14 @@
+{
+  "base": "434fdfd3871e63bb011136515f6e803128106b84",
+  "branch": "fix/release-1210",
+  "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and new and upgraded clients install v1.2.10",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T03:29:04.774471+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.10 for the speed fixes merged since v1.2.9: tests run once, reviews run alongside tests, stops ask plain questions and wait 30 minutes, personal worker choice"
+}
