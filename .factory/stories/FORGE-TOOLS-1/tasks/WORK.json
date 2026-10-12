@@ -10,26 +10,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a2a2534369884798ee682ccfecd106ac0c1fe5cc94cead898c6f0c51321ae223",
-    "changed": "c921683d2cfa121e631c5763b4e540fe0326925d5341957ae7bc391c286325f0",
-    "commit": "7d959db85709e4f63a9442836e6dd7e9654b390d",
+    "branch_diff": "a00abdbe1c3ebe829c9c6f9593b786edf87665f6f7e33329e869109084cd1c1a",
+    "changed": "b42ffc5c565e98a2ed8c7d589478488e78eebfe99e37d36b64370d0390e716d5",
+    "commit": "30ad9a3be2b1591cecaf795f018b3bae5958e0fb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 3, Harm 2\nRaise: Functional. `forge work` uses the model from `repo.config(top)` and prints it for the native round, but the `worker`, `fixer`, and `frontend` role files are generated from shared `forge.toml` settings. `sync.files` at src/forge/sync.py:364 explicitly removes `forge.local.toml` overrides before generating those files. When a developer sets a documented local model override, Forge prints that model while the instructed subagent role runs on the shared model. The native work test never supplies a local override, so it misses this mismatch.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 125,
-        "priority": "P1",
-        "title": "Native rounds ignore local model overrides when selecting a subagent role",
-        "work": 3
-      }
-    ],
-    "id": "35c0139c-a669-4b4e-a3bb-0d5f8e7c537b",
-    "status": "blocked"
+    "findings": [],
+    "id": "c481d604-64e8-4543-a8a0-71408346b574",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T05:42:50.219272+00:00",
@@ -69,6 +58,10 @@
     },
     {
       "at": "2026-10-12T17:16:44.118617+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T18:12:06.059296+00:00",
       "step": "review"
     }
   ],
