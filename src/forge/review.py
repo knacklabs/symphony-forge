@@ -313,19 +313,16 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
                    for path in changed if path):
                 said = DOCS_ONLY.format(command=command)
-                print(said, flush=True)
                 return 0, said
-        from forge import codex, fasttest  # both import review indirectly
+        from forge import codex  # imports review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
         if passed and passed.exists():
-            print(skipped, flush=True)
             return 0, skipped
         entry = machine.join("test", top, item, None, None, small=few_tests(top, command, base))
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
-                print(skipped, flush=True)
                 return 0, skipped
             from forge import fasttest
 
@@ -397,8 +394,6 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 passed.touch()
         finally:
             machine.leave(entry)
-        if fasttest.LARGE in done.stdout:
-            print(fasttest.LARGE, flush=True)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))

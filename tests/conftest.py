@@ -212,11 +212,23 @@ def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 
 def _left(tmp_path: Path) -> list[str]:
     """This test's processes still running or stopped: every process a test starts names its temp
-    folder in its command or its environment, which holds the XDG_CONFIG_HOME set above."""
+    folder in its command/environment or records its identity before it can outlive the worker."""
+    recorded = []
+    for marker in tmp_path.rglob("*.owned-process.json"):
+        from test_lanes_agents import alive
+
+        process = json.loads(marker.read_text("utf-8"))
+        # Windows process creation times use 100-nanosecond ticks since 1601.
+        before = (process["at_ns"] // 100 + 116444736000000000 if os.name == "nt"
+                  else process["at_ns"] // 1000000000)
+        if process["pid"] != os.getpid() and alive(process["pid"], before):
+            recorded.append(f'{process["pid"]} {marker}')
+    if os.name == "nt":
+        return recorded
     listed = subprocess.run(["ps", "axeww", "-o", "pid=,stat=,command="], capture_output=True,
                             text=True, env={"PATH": "/bin:/usr/bin"}).stdout  # ps's own env is clean
     mark = f"{tmp_path}{os.sep}"
-    return [" ".join(line.split()[:1] + line.split()[2:]) for line in listed.splitlines()
+    return recorded + [" ".join(line.split()[:1] + line.split()[2:]) for line in listed.splitlines()
             if mark in line and not line.split()[1].startswith("Z")
             and int(line.split()[0]) != os.getpid()]
 
@@ -230,9 +242,17 @@ def _end_left(path: Path) -> list[str]:
         time.sleep(0.5)
     for line in left:
         try:
-            os.kill(int(line.split()[0]), signal.SIGKILL)  # SIGKILL ends a stopped process too
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", line.split()[0]],
+                               capture_output=True, timeout=10)
+            else:
+                os.kill(int(line.split()[0]), signal.SIGKILL)  # SIGKILL ends a stopped process too
         except ProcessLookupError:
             pass
+    for _ in range(20):
+        if not _left(path):
+            break
+        time.sleep(0.05)
     return left
 
 
@@ -240,8 +260,6 @@ def _end_left(path: Path) -> list[str]:
 def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
     # Autouse, so it runs its check after the test's own fixtures have cleaned up.
     yield
-    if os.name == "nt":  # ponytail: no ps on Windows; add a process-tree walk if leaks show there
-        return
     left = _end_left(tmp_path)
     if left:
         pytest.fail(f"{request.node.name} left processes running: "
@@ -251,13 +269,14 @@ def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
 def pytest_sessionfinish(session: pytest.Session) -> None:
     """At the end of the run, once more over every test's temp folder: a test whose worker crashed
     never reached its own check. Each folder is named after its test."""
-    if os.name == "nt" or hasattr(session.config, "workerinput"):  # the controller checks once
+    if hasattr(session.config, "workerinput"):  # the controller checks once
         return
     base = session.config._tmp_path_factory.getbasetemp()  # type: ignore[attr-defined]
     left = _end_left(base)
     if not left:
         return
-    folder = re.compile(re.escape(f"{base}{os.sep}") + r"(?:popen-gw\d+/)?([^/\s]+)")
+    folder = re.compile(re.escape(f"{base}{os.sep}")
+                        + rf"(?:popen-gw\d+{re.escape(os.sep)})?([^/\\\s]+)")
     report = session.config.pluginmanager.get_plugin("terminalreporter")
     report.line("")
     for line in left:

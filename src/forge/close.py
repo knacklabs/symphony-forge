@@ -17,6 +17,7 @@ import sys
 import tempfile
 import time
 import tomllib
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +66,7 @@ REFUSALS = {
                        "so it can't tell whether the {kind}'s files are what {pinned} writes.",
                        "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
                        "then forge close {item}"),
-    "tests_failed": ("`{command}` failed on this machine, so close stopped before the review; the "
+    "tests_failed": ("`{command}` failed on this machine; the "
                      "next worker round gets its output.", "forge work {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
@@ -214,56 +215,72 @@ def close(args: argparse.Namespace) -> int:
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
+    failed = 0
     if not fresh:
         if pending := time_records.pending_merge_wait(top, item):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
-        failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
-        print("".join(line + "\n" for line in tested.splitlines()
-                      if line.startswith(review.GAP)), end="", flush=True)
-        if failed:  # a review would only report the same failure
-            state.update(tests=tested, status="fixing")
-            _save(top, item, state, f"Tests of {item} failed")
-            repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
-        state.pop("tests", None)
         _push(top, branch)
         pr = _publish(top, item, state, branch, default, pr,
                       {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
-        try:
-            if switch:
-                head = repo.git("rev-parse", "HEAD", cwd=top)
-                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
-                                             review_round=review.round_number(top, item, state))
-                result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
-                          "changed": changed, "branch_diff": branch_diff, "mechanical": True}
-            else:
-                result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
-                                    light=light, tested=tested)
-            dismissed = {}
-            for dismissal in previous.get("dismissals", []):
-                if dismissal.get("accepted"):
-                    continue  # Acceptance covers this review, not later code or scope.
-                number = dismissal["finding"]
-                if not 1 <= number <= len(previous["findings"]):
-                    continue
-                finding = previous["findings"][number - 1]
-                dismissed[(finding["file"], finding["title"])] = dismissal
-            carried = {d["finding"] for d in result.get("dismissals", [])}
-            result["dismissals"] = result.get("dismissals", []) + [dict(dismissed[(finding["file"], finding["title"])],
-                                         finding=number)
-                                    for number, finding in enumerate(result["findings"], 1)
-                                    if number not in carried and (finding["file"], finding["title"]) in dismissed]
-            outcome = "blocked" if review.blocking(result) else "clean"
-        finally:
-            if outcome == "failed":
-                repo.record_event(top, item, "review result", outcome=outcome, findings=None,
-                                  review_round=review.round_number(top, item, state))
-            repo.record_timing(top, item, "review", start, clock, outcome, selected)
+        # shortcut: an interrupted review waits for tests; add cancellation if immediate interruption is needed.
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            testing = pool.submit(review.test_run, top, command, f"origin/{default}", always=switch)
+            try:
+                if switch:
+                    head = repo.git("rev-parse", "HEAD", cwd=top)
+                    identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
+                                                 review_round=review.round_number(top, item, state))
+                    result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
+                              "changed": changed, "branch_diff": branch_diff, "mechanical": True}
+                else:
+                    result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
+                                        light=light, tested="Tests are running alongside this review; close waits for "
+                                        f"both results before continuing. Command: `{command}`.")
+                dismissed = {}
+                for dismissal in previous.get("dismissals", []):
+                    if dismissal.get("accepted"):
+                        continue  # Acceptance covers this review, not later code or scope.
+                    number = dismissal["finding"]
+                    if not 1 <= number <= len(previous["findings"]):
+                        continue
+                    finding = previous["findings"][number - 1]
+                    dismissed[(finding["file"], finding["title"])] = dismissal
+                carried = {d["finding"] for d in result.get("dismissals", [])}
+                result["dismissals"] = result.get("dismissals", []) + [dict(dismissed[(finding["file"], finding["title"])],
+                                             finding=number)
+                                        for number, finding in enumerate(result["findings"], 1)
+                                        if number not in carried and (finding["file"], finding["title"]) in dismissed]
+                outcome = "blocked" if review.blocking(result) else "clean"
+            finally:
+                if outcome == "failed":
+                    repo.record_event(top, item, "review result", outcome=outcome, findings=None,
+                                      review_round=review.round_number(top, item, state))
+                repo.record_timing(top, item, "review", start, clock, outcome, selected)
+                failed, tested = testing.result()
+                print(tested, flush=True)
+                if failed:
+                    state["tests"] = tested
+                    if outcome == "failed":
+                        state["status"] = "fixing"
+                        _save(top, item, state, f"Tests of {item} failed")
+                else:
+                    state.pop("tests", None)
         repo.add_step(state, "review")
+    elif state.get("tests"):
+        command = review.close_test(top, f"origin/{default}")
+        failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
+        print(tested, flush=True)
+        if failed:
+            state["tests"] = tested
+        else:
+            state.pop("tests", None)
+        state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
+        _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
     elif (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
@@ -299,7 +316,7 @@ def close(args: argparse.Namespace) -> int:
     if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
-                     "fixing" if serious else "waiting for checks")
+                     "fixing" if serious or failed else "waiting for checks")
         message = f"Review of {item}: {result['status']}"
         if stopped:
             message += f"; {stopped['file']} keeps breaking"
@@ -311,6 +328,7 @@ def close(args: argparse.Namespace) -> int:
     pr = _publish(top, item, state, branch, default, pr, result, evidence)
     _attach(top, item, branch)
 
+    print(f"Review: {result['status']}.", flush=True)
     for number, finding in serious:
         print(f"{number}. {finding['priority']} {finding['title']} "
               f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
@@ -321,6 +339,8 @@ def close(args: argparse.Namespace) -> int:
         for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    if failed and not stopped:
+        repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:
         if stopped:
             repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
@@ -596,7 +616,7 @@ def _synced(top: Path, item: str) -> None:
 def generated_fix_proof(done: str, evidence: str, item: str) -> str:
     """Generated fixes give their first review the same proof as a worker commit."""
     return (f"Proof list:\n- {done} Evidence: {evidence} "
-            f"forge close {item} supplies its test run result to the review "
+            f"forge close {item} reports its test run result alongside the review result "
             "(including any skip reason).")
 
 
@@ -669,11 +689,12 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
              pr: dict[str, Any] | None, result: dict[str, Any],
              evidence: tuple[str, str]) -> dict[str, Any]:
     """Open the pull request, or refresh its contract and Forge's block. While the review is
-    blocked, the pull request is a draft."""
+    blocked or the local tests failed, the pull request is a draft."""
     check, proof = evidence
     history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
-    draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
+    draft = (result["status"] == "blocked" or bool(state.get("tests")) or
+             (pr is None and result["status"] == "reviewing"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
