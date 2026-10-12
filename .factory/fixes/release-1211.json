@@ -1,0 +1,14 @@
+{
+  "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
+  "branch": "fix/release-1211",
+  "done_when": "Forge's version is 1.2.11 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T16:44:38.490426+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.11 for the Windows fixes, the process-id fix, the kept-worktree merge, the commit-hook fix, sync fixes and the faster main run merged since v1.2.10"
+}
