@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T09:25:28.767449+00:00",
+      "because": "Forge cannot see a session subagent's token use: the coordinating app runs it, and the hand-back carries only the result",
+      "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do"
+    }
+  ],
   "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
   "branch": "fix/record-review-usage",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "93e3211e03539c404ef810f605fd57973b697c84"
   },
-  "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+  "done_when": "Every review and every plan read Forge runs through Codex or the Claude SDK records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do; a plan read handed to the coordinating session's own subagent records no token use, because Forge cannot see it",
   "flagged": [
     "src/forge/review.py",
     "src/forge/story.py",
