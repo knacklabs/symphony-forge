@@ -38,7 +38,7 @@
     "id": "da908f90-d71a-4a8f-9440-c04309f44103",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T06:54:36.261499+00:00",
@@ -57,5 +57,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-12T11:51:44.439298+00:00",
+    "file": ".test_durations",
+    "round": 4,
+    "wait_id": "bda6b9be-df46-4f53-a1b5-1ce95e453697"
+  },
   "why": "Main's full run takes 20 to 35 minutes on every merge and fills the shared runners that pull requests wait for: all three platforms run on each merge, superseded runs are not cancelled, and the test timing file is a week old so groups are uneven"
 }
