@@ -15,20 +15,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b60cc006522d376df0a930dcb868aa05160585eb2030f5af8e52fe163989c8d5",
-    "changed": "40c09855e68aada8b2ea8b35699c27fa426664376fbe68f0287a67a1cce3cf94",
-    "commit": "a1c4031b9172a566046d5a5a9b0cdb76d5c1aaa9",
+    "branch_diff": "a92b5365ba5ca5699b02b84746a5d7a4b29cdd5ceb8ba748e8e81c8d420f51b4",
+    "changed": "bf37ad8f2201d34db13dd507cadc1b64670072237ed77e871de1c0d0824df328",
+    "commit": "256a5f11f0912605475e80197630d536868da69d",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A fix why such as `The command prints \"Failed.\" Retry it.` produces a title containing both sentences: the expression on line 963 does not recognize sentence-ending punctuation followed by a closing quote. Line 965 also fails the 70-character limit when the first word is longer than 71 characters: `rfind` returns -1, so the slice removes only the final character. The named command tests use unquoted sentence endings and have spaces before character 70, so they pass in both cases.",
+        "body": "Raise: Not done. The sentence split on line 964 requires the next sentence to begin with a capital letter. For the ordinary why `The release is ready. v1.2.10 is available.`, the PR title becomes `The release is ready. v1.2.10 is available`, including both sentences. It can also cut inside an abbreviation: `Support e.g. Windows paths. Deploy it.` becomes `Support e.g`. The named command test covers a version within the first sentence, but neither case.",
         "file": "src/forge/close.py",
-        "line": 963,
+        "line": 964,
         "priority": "P1",
-        "title": "Not done: PR titles can include a second sentence or exceed 70 characters"
+        "title": "Not done: A version-led second sentence remains in the PR title"
       }
     ],
-    "id": "528b230e-4df8-4451-b4ba-73e87f257560",
+    "id": "5f41587f-c27d-4168-b828-421b043fa59f",
     "status": "blocked"
   },
   "status": "fixing",
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-10-12T16:11:43.194194+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:35:21.273002+00:00",
       "step": "review"
     }
   ],

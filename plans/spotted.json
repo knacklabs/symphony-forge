@@ -1123,6 +1123,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A version-led second sentence remains in the PR title",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
       "kind": "bug",
       "path": "src/forge/close.py",
