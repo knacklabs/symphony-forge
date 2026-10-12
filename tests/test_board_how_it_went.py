@@ -57,18 +57,23 @@ def github_list_fields(env):
                                           ("warm-checks-cache", False), ("story-full-runway", False),
                                           ("story-full-runway", True), ("bad-null-event", False),
                                           ("bad-infinite-seconds", False), ("bad-huge-seconds", False),
-                                          ("bad-deep-nesting", False)],
+                                          ("bad-deep-nesting", False),
+                                          ("story-done-runway", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
                               "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted",
                               "bad-null-event", "bad-infinite-seconds", "bad-huge-seconds",
-                              "bad-deep-nesting"])
+                              "bad-deep-nesting", "story-done-runway"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-full-runway":
         client(env, previous)
         story_full_runway(env, monkeypatch)
+        return
+    if case == "story-done-runway":
+        client(env, previous)
+        story_full_runway(env, monkeypatch, done=True)
         return
     if case == "warm-checks-cache":
         warm_checks_cache(env, monkeypatch)
@@ -533,6 +538,16 @@ def conflict_wait(env, monkeypatch):
                 if interval["category"] == "waiting_for_owner"
                 and datetime.fromisoformat(interval["start"]) == at)
     assert datetime.fromisoformat(wait["end"]) == at + timedelta(seconds=30)
+    # A later conflict keeps the pull request's earlier findings instead of a made-up result.
+    env.commit(where, "app.py", "print('branch basket again')\n")
+    env.reviews(blocked(finding("P1", "Basket disappears")))
+    assert env.close(item).returncode == 1
+    published(env, item)
+    env.commit(env.repo.path, "app.py", "print('newer main basket')\n")
+    env.repo.git("push", "-q", "origin", "main")
+    conflicted = env.close(item)
+    assert conflicted.returncode == 1 and "conflicts in app.py" in conflicted.stderr
+    assert "Basket disappears" in body(env.gh_calls("pr", "edit")[-1]).split("## How it went")[0]
 
 
 def malformed_record(env, case):
@@ -605,7 +620,7 @@ def rebuilt_history(env):
     assert row(env.repo, item)["rebuilt"] is True
 
 
-def story_full_runway(env, monkeypatch):
+def story_full_runway(env, monkeypatch, done=False):
     began = datetime(2026, 9, 20, 10, tzinfo=timezone.utc)
     at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
 
@@ -639,6 +654,24 @@ def story_full_runway(env, monkeypatch):
         "body": "Saved baskets remain available", "title": "Save a basket", "isDraft": False,
         "headRefOid": env.repo.git("rev-parse", "task/SHOP-T1"),
         "url": "https://github.com/acme/shop/pull/7"}]))
+    if done:
+        # The story is recorded done 40 seconds after its last part merged; that tail still counts.
+        record = env.repo.path / ".factory/stories/SHOP/story.json"
+        state = json.loads(record.read_text("utf-8"))
+        env.commit(env.repo.path, ".factory/stories/SHOP/story.json",
+                   json.dumps({**state, "status": "done", "finished": at(100)}))
+        env.repo.git("push", "-q", "origin", "main")
+        top = env.repo.path / ".git/forge"
+        (top / "events.jsonl").write_text("".join(json.dumps(event) + "\n" for event in [
+            {"id": "T1-start", "item": "SHOP/T1", "event": "run start", "kind": "worker", "at": at(30)},
+            {"id": "T1-end", "item": "SHOP/T1", "event": "run end", "kind": "worker",
+             "run_id": "T1-start", "at": at(50)}]), "utf-8")
+        clock(200)
+        current = row(env.repo, "SHOP")
+        assert current["stage"] == "done"
+        assert current["intervals"][-1]["end"] == at(100)
+        assert current["total_seconds"] == 100
+        return
     clock(864000)
     second = env.repo.forge("task", "start", "SHOP/T2")
     assert second.returncode == 0, second.stdout + second.stderr

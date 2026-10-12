@@ -163,8 +163,11 @@ def close(args: argparse.Namespace) -> int:
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
                 repo.record_event(top, item, "owner wait start", reason="merge conflict")
             _push(top, branch)
-            _publish(top, item, state, branch, default, pr,
-                     {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
+            if pr:  # keep its review block; only the shared time record changes
+                _refresh_record(top, item, state, pr)
+            else:
+                _publish(top, item, state, branch, default, pr,
+                         {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
         raise
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])

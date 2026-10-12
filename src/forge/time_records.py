@@ -458,7 +458,7 @@ def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str
 
 
 def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unfinished: bool = True,
-          started_at: str | None = None) -> dict[str, Any]:
+          started_at: str | None = None, finished_at: str | None = None) -> dict[str, Any]:
     spans = [span for part in parts for span in part.get("intervals", [])]
     for read in read_rounds:
         end, seconds = when(read.get("read_at")), read.get("seconds")
@@ -469,8 +469,10 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
     points = sorted({at for span in spans for name in ("start", "end") if (at := when(span.get(name)))})
     if start := when(started_at):
         points = sorted({start, *points})
-    if points and unfinished and (now := when(repo.now())) and now > points[-1]:
-        points.append(now)
+    # A done story ends when it was recorded done, which may come after its last part merged.
+    end = when(repo.now()) if unfinished else when(finished_at)
+    if points and end and end > points[-1]:
+        points.append(end)
     intervals, totals = [], dict.fromkeys(("working", "waiting", "unknown"), 0.0)
     for a, b in zip(points, points[1:]):
         kinds = {span.get("kind") for span in spans if (x := when(span.get("start")))

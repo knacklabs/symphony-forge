@@ -605,7 +605,8 @@ def machine_board(top: Path, history: Item | None = None,
         started = _step(best.get(repo.state_path(key), ({}, landed))[0], "start")
         current.update(time_records.story([*current["children"], *older_parts.get(key, [])], read_rounds,
                                           unfinished=current["stage"] != "done",
-                                          started_at=started.isoformat() if started else None))
+                                          started_at=started.isoformat() if started else None,
+                                          finished_at=completed.get(key, {}).get("finished")))
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
     active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}
