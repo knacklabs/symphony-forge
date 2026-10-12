@@ -17,41 +17,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "39dec1d60bdcb8b5d2125dde75bb4243205305110a90bed663e6ef8f688a44aa",
-    "changed": "695f89197a59ac34cd433707dd1cc6a79d563bc0a186c0a5e1d0460b1e8cd300",
-    "commit": "43c86289f3af78d20f3fc73292f6b2342b1b19a9",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both round-9 findings are fixed in commit ceaa0d634 (a rerun close with no worker round never counts; unittest FAIL and ERROR lines are keyed one per line), with tests",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both round-9 findings are fixed in commit ceaa0d634 (a rerun close with no worker round never counts; unittest FAIL and ERROR lines are keyed one per line), with tests",
-        "finding": 2
-      }
-    ],
+    "branch_diff": "c794b2c1026bdcc7196c128a28752e7f70be61e85e9ebd208d6a71b9cb5e1080",
+    "changed": "a6cc1bf851275e79d82ca31d7744d65dc599e91dd003c658d3941fcf41e0567b",
+    "commit": "beef104fcbd57d50f3ce96c7743dc86fdc931577",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. This event is recorded on every `forge close`, even if no worker has run since the previous close. After one worker round leaves a finding or test failing, rerunning `forge close` creates another event ID. `stuck_round` at close.py:492-500 treats that ID as a new round and asks the owner before two worker rounds have left the same failure. The `work twice` proof covers two work calls without a close, but not two close calls without work.",
+        "body": "Raise: Functional. The local close runner keeps only the last 30 output lines (`src/forge/review.py:397-404`). In a normal unittest failure with a traceback longer than that, the `FAIL: test_a` header is discarded while the generic `FAILED (failures=1)` summary remains. If the next round instead fails `test_b` with the same summary, this fallback gives both rounds the same key and asks the owner even though no test failed twice. The named unittest proof uses short synthetic failure lines, so it does not cover this local-output case. This is separate from the previously dismissed truncated CI excerpt.",
         "file": "src/forge/close.py",
-        "line": 237,
+        "line": 486,
         "priority": "P1",
-        "title": "Not done: repeated close calls count one worker round twice"
-      },
-      {
-        "body": "Raise: Not done. For failure lines without a `\u2715` or `\u00d7` marker, this combines every matching line into one key. A normal `unittest` run that leaves `FAIL: test_a` and `FAIL: test_b`, followed by one that leaves `FAIL: test_b` and `FAIL: test_c`, produces different keys. Forge misses the unchanged failure of `test_b` and sends the item to another worker round. The named A-and-B then B-and-C proof uses Jest markers, which take the separate-line path.",
-        "file": "src/forge/close.py",
-        "line": 485,
-        "priority": "P1",
-        "title": "Not done: persistent id-less failures are missed when another failure changes"
+        "title": "Not done: truncated unittest output treats different failures as the same test"
       }
     ],
-    "id": "97bbe17f-c784-4965-ad07-4904956675fd",
-    "status": "clean"
+    "id": "ba6510c6-371b-4472-8255-dfd9c9bb0fc7",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -91,6 +73,10 @@
     },
     {
       "at": "2026-10-12T02:13:29.448845+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:46:12.414294+00:00",
       "step": "review"
     }
   ],
