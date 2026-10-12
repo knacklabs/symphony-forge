@@ -1,0 +1,14 @@
+{
+  "base": "23bb1db61aaf907943e1ca73b05a063722d65bca",
+  "branch": "fix/test-audit-superseded",
+  "done_when": "Each removed test's contract is still asserted by a named stronger test, and the suite is smaller",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T11:05:55.523101+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Older tests are superseded by stronger ones: a test of another test, fake-Husky and CLAUDE.md move tests, duplicate review-tool cases, a Windows soak, copied-fixture and brief-string checks, and old read-loop and chat-recovery tests"
+}
