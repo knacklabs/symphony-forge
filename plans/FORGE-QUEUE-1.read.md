@@ -55,7 +55,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 5. Blocking: The overlap check misses the shared spotted file that close itself adds.
    Raise: Plan gap. [Plan:108](/plans/FORGE-QUEUE-1.md:108) checks existing git diffs. Two initially disjoint fixes can both gain advisory findings during their reviews; [spotted.py:187](/src/forge/spotted.py:187) records them in the shared `plans/spotted.json`, which [close.py:349](/src/forge/close.py:349) commits. Both closes then edit the same file concurrently. The plan explicitly requires no dependency on the in-flight change that removes this shared file, and its overlap test does not exercise generated spotted records.
-   Gain 3, Work 1, Harm 2
+   Gain 3, Work 2, Harm 2
    Disposition: cut - Gain 3, Work 1, Harm 2: the overlap check leaves out Forge's own record files (`.factory/`, generated files, the roadmap and spotted lists), which close's merge step resolves by itself; the test records spotted lines in two changes.
 
 6. Blocking: The parent has no rule for surviving deletion of its starting worktree.
