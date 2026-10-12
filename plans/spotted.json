@@ -8051,6 +8051,237 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/agent-merge.read.md\tScope: unrelated agent-merge read record changed\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "docs/specs/agent-merge.read.md",
+      "line": 4,
+      "text": "Scope: unrelated agent-merge read record changed",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tCache the HTML board's additional merged pull request list\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 876,
+      "text": "Cache the HTML board's additional merged pull request list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: HTML item states and times match board JSON\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 63,
+      "text": "Not done: HTML item states and times match board JSON",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: completed stories retain older parts in their runway\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 573,
+      "text": "Not done: completed stories retain older parts in their runway",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: show finished-last-seven-days counts on the page\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1168,
+      "text": "Not done: show finished-last-seven-days counts on the page",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: approval counting must honor a stale cold read\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 127,
+      "text": "Not done: approval counting must honor a stale cold read",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: changed plans must lose their approved story count\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 91,
+      "text": "Not done: changed plans must lose their approved story count",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: connect the go-live clause to the team sentence\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 179,
+      "text": "Not done: connect the go-live clause to the team sentence",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 75,
+      "text": "Not done: older merged parts lose their shared runway",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tOlder merged parts cause unbounded GitHub requests\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 102,
+      "text": "Older merged parts cause unbounded GitHub requests",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next loses started remote items before a pull request exists\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 605,
+      "text": "Not done: forge next loses started remote items before a pull request exists",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next must fetch a newer review head before reading it\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 666,
+      "text": "Not done: forge next must fetch a newer review head before reading it",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready fixes without a worktree\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 725,
+      "text": "Not done: forge next omits ready fixes without a worktree",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready parts without a worktree\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 718,
+      "text": "Not done: forge next omits ready parts without a worktree",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: read review history from the selected review ref\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 614,
+      "text": "Not done: read review history from the selected review ref",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: readiness must use the current pull request head\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 648,
+      "text": "Not done: readiness must use the current pull request head",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: shared clean reviews grant readiness\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 632,
+      "text": "Not done: shared clean reviews grant readiness",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: shared readiness needs a valid next step when the worktree is behind\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 705,
+      "text": "Not done: shared readiness needs a valid next step when the worktree is behind",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRemote started items offer a command that cannot run here\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 609,
+      "text": "Remote started items offer a command that cannot run here",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: proof list\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 99,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_github_once.py\tNot done: test_board_github_once verifies unknown facts on failure\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "tests/test_board_github_once.py",
+      "line": 39,
+      "text": "Not done: test_board_github_once verifies unknown facts on failure",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

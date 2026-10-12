@@ -240,10 +240,15 @@ parts, plain titles, labelled states and `waits_for` item references, including 
 dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
 distinguish merged, running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
-`stage_counts` counts each roadmap story and fix once, including recorded completed items;
-`kind_stage_counts` separates those totals into `stories` and `fixes`. Parts belong to their
-parent story's count. The page labels the two groups separately, with six totals each:
-needs a spec, planning, waiting for approval, building, ready to merge and done.
+Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
+`go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and
+fix row has one `state`, and `team.counts` counts each kind apart, finished ones included:
+`stories` (done, building, approved but not started, waiting for approval, planning, no plan yet),
+`parts` of approved stories and `fixes` (done, ready to merge, in progress, to do), and
+`finished_last_7_days`. A story is building only once one of its parts has started. Rows also
+carry `merged_at`, and `approved_by` is a name or null. The page prints the same totals.
+GitHub's pull request lists are read at most once a minute: the open ones and one search per
+week for the last six full weeks and this one.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
@@ -268,8 +273,13 @@ end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
 state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
-Tasks and fixes are ready only while close's clean-review receipt matches the
-branch's current commit and the pull request's checks are not failing. A failed
+Tasks and fixes are ready only while close's clean review matches the pull request's head
+(the local branch when it already holds that head) and the checks are not failing. The clean
+review is this machine's receipt or the readiness close published in the pull request, so every
+machine agrees. On a machine with no worktree for a ready item, its next step names the person
+who started it to merge it from their machine (or, in a human-merge repo, the pull request to
+merge); with the worktree here but no receipt, it is `forge close <item>`, which checks it again
+and writes the receipt that `forge merge` needs. A failed
 rerun shows `checks failed` with `forge work` as its next step, even after a successful
 close. A running rerun or unavailable checks retain a matching receipt's readiness;
 green checks alone cannot grant it. The item's next step uses the same evidence.
