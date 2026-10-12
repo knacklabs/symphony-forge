@@ -4012,8 +4012,8 @@
       "text": "Not done: board test does not exercise an active review alongside tests",
       "from": "blocking",
       "item": "board-test-review-row",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test still rejects a review running alongside tests\tboard-test-review-row",
