@@ -58,7 +58,7 @@ def client_templates(repo, gh, tmp_path, monkeypatch, request):
 def test_2_dependency_guide_names_both_yarn_generations(client_templates):
     client, _ = client_templates
     for host in (".codex", ".claude"):
-        guide = (client / host / "skills/forge/SKILL.md").read_text()
+        guide = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert "`yarn upgrade` (Yarn 1)" in guide
         # Recursive up starts in Yarn 3; Yarn 2 must re-resolve the lockfile
         # without raising any workspace's dependency ranges.

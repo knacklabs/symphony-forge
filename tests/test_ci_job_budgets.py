@@ -18,8 +18,9 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 @pytest.mark.parametrize("runner,count,minutes", [
     # Main's full run only, not the merge gate: groups ran past 10 minutes (Linux, macOS)
     # and 18 of 20 (Windows) on 12 October, so the limits leave room for the suite to grow.
+    # macOS groups then ran 15 to 19 minutes of tests plus setup, so macOS gets 30.
     ("ubuntu-latest", 3, 20),
-    ("macos-latest", 6, 20),
+    ("macos-latest", 6, 30),
     ("windows-latest", 8, 35),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes, tmp_path):
@@ -37,9 +38,10 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count
         budgets = [int(timeout) for _, _, timeout in rows]
     else:
         dispatch = re.fullmatch(
-            r"\$\{\{ matrix.os == '([^']+)' && (\d+) \|\| (\d+) \}\}", limit)
+            r"\$\{\{ ((?:matrix.os == '[^']+' && \d+ \|\| )+)(\d+) \}\}", limit)
         assert dispatch, f"Unrecognized platform budget: {limit}"
-        budgets = [int(dispatch[2] if runner == dispatch[1] else dispatch[3])] * len(rows)
+        named = dict(re.findall(r"matrix.os == '([^']+)' && (\d+)", dispatch[1]))
+        budgets = [int(named.get(runner, dispatch[2]))] * len(rows)
     assert budgets == [minutes] * count
     assert "--splits ${{ matrix.groups }} --group ${{ matrix.group }}" in tests_job
     # Exercise CI's actual pytest options for this runner: pytest-split silently uses equal
