@@ -267,7 +267,7 @@ def _setup(repo, monkeypatch, tmp_path, sdk_data, app: str) -> Reader:  # noqa: 
     monkeypatch.setenv("FORGE_NOW", "2026-09-29T10:00:00+00:00")
     new_story(repo, "SHOP")
     reader = Reader(repo, monkeypatch, app)
-    reader.doc.write_text(DOC, encoding="utf-8")
+    reader.doc.write_bytes(DOC.encode("utf-8"))  # Windows would write CRLF; forge reads the raw bytes.
     return reader
 
 
