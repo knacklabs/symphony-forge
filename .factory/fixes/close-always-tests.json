@@ -1,0 +1,14 @@
+{
+  "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
+  "branch": "fix/close-always-tests",
+  "done_when": "A repo lists tests every change must run in forge.toml's always_test, close runs them locally beside the picked tests, and this repo lists its rules, every-refusal and view-contract tests",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:28:16.357909+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close picks local tests by imports and mentions, so cross-cutting tests such as the rules and every-refusal checks fail only in CI, a round later"
+}
