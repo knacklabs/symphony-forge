@@ -925,6 +925,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 75,
+      "text": "Not done: older merged parts lose their shared runway",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/checks.py\tBound doctor's job-history requests\tqueued-not-stop",
       "kind": "bug",
       "path": "src/forge/checks.py",
@@ -2987,6 +2998,17 @@
       "path": "src/forge/nextstep.py",
       "line": 666,
       "text": "Not done: forge next must fetch a newer review head before reading it",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready fixes without a worktree\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 725,
+      "text": "Not done: forge next omits ready fixes without a worktree",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",

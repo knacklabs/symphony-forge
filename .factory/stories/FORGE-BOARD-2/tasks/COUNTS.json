@@ -10,51 +10,37 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "347e04cf6a4e643906925d49927d1ca8a45af3c52d984bc29a610f43e9273bf8",
-    "changed": "2fa0504bb8c109d84c43668a47ca342c41553ed7b384f99e392f38b1b2f72f70",
-    "commit": "ce7cbe459b19fdc979ec9c8adbfe5d2b0485d120",
+    "branch_diff": "5963f627ffd5ebd2a67fb041aa87906d8b6f6b4dade1f71f1e674765b1fb738e",
+    "changed": "f3b4fa39b5ce0d491a848f0e8cd584366d2ea1f3bc18fd8bd7ed024f52c437c6",
+    "commit": "c70eaf2bd22d4d3b423314e535f228095e789fbe",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. This new no-worktree advice is unreachable in `forge next` for a part that exists only on a fetched remote branch. `_task` returns an empty state when there is no local worktree (`nextstep.py:598`), and `_story` calls `_item` only for nonempty states (`nextstep.py:453\u2013458`). A second clone can therefore show the part as ready in `forge board --json` while `forge next` offers to start it instead of naming its starter.",
-        "file": "src/forge/nextstep.py",
-        "line": 718,
-        "priority": "P1",
-        "title": "Not done: forge next omits ready parts without a worktree"
-      },
-      {
-        "body": "Raise: Functional. `forge next` does not fetch before `_item` calls `at_ref`. After another machine pushes a reviewed commit, GitHub supplies its new `headRefOid`, but this clone may not have that Git object. `story.show` then finds no state and this fallback keeps the older worktree's findings and round. The new test calls `forge board` first, whose fetch masks this normal `forge next` path.",
-        "file": "src/forge/nextstep.py",
-        "line": 666,
-        "priority": "P1",
-        "title": "Not done: forge next must fetch a newer review head before reading it"
-      },
-      {
-        "body": "Raise: Not done. `approved` checks only `story.approval_hash`, which covers \u201cWhat changes for you\u201d and \u201cDone when\u201d (`story.py:645\u2013654`). Editing another section above `## For the builders`, such as Why or Tasks, leaves that hash unchanged but makes `story.gate` fail (`story.py:671\u2013684`). This branch still counts the story as approved or building while `forge next` requires another read. The added test edits a hashed section, so it does not catch this case.",
+        "body": "Raise: Not done. The cached searches cover only the current week and six full weeks. For a story still in progress with a part merged eight weeks ago, a teammate without local timing logs cannot get that part's PR body. `board.py:577\u2013580` then builds its runway without the published intervals, so the story's working and waiting time differs between machines.",
         "file": "src/forge/board_facts.py",
-        "line": 127,
+        "line": 75,
         "priority": "P1",
-        "title": "Not done: approval counting must honor a stale cold read"
+        "title": "Not done: older merged parts lose their shared runway"
       },
       {
-        "body": "Raise: Test. The GitHub-failure case asserts only that the fixes count object exists. That object exists without GitHub, so the test would pass if a failed fetch exposed stale PR facts instead of marking GitHub facts unknown. The Done-when rule explicitly requires the failure result to be unknown in `forge board --json`.",
-        "file": "tests/test_board_github_once.py",
-        "line": 39,
+        "body": "Raise: Functional. The new no-worktree advice handles a ready fix when `_item` is called, but `forge next` reaches fixes only by iterating local worktrees (`nextstep.py:206\u2013217`). On a second clone with the fix's fetched branch and shared clean record but no fix worktree, `forge board --json` shows it ready while `forge next` never names it or its starter.",
+        "file": "src/forge/nextstep.py",
+        "line": 725,
         "priority": "P1",
-        "title": "Not done: test_board_github_once verifies unknown facts on failure"
+        "title": "Not done: forge next omits ready fixes without a worktree"
       },
       {
-        "body": "Raise: Gate. The supplied proof list has five headings with no proof beneath any of them. It identifies no runnable check or result for counts, review-head history, cached GitHub reads, approval counts, or the complete story runway, so the required proof entries are missing.",
+        "body": "Raise: Gate. The supplied proof list is `missing`. It provides no runnable proof or result for the counts, shared readiness, cached GitHub reads, approval gate, or full story runway delivered by this branch.",
         "file": "tests/test_board_counts.py",
         "line": 100,
         "priority": "P1",
         "title": "Not done: proof list"
       }
     ],
-    "id": "bf65abe3-cc9a-4ba0-8c04-2d17166d6076",
+    "id": "60d94a76-bcdb-44e2-a102-ee5102eafd9f",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T12:45:31.934037+00:00",
@@ -67,6 +53,15 @@
     {
       "at": "2026-10-12T15:46:31.759560+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:40:11.329583+00:00",
+      "step": "review"
     }
-  ]
+  ],
+  "stop": {
+    "at": "2026-10-12T16:40:11.365433+00:00",
+    "file": "src/forge/nextstep.py",
+    "wait_id": "f87bd72d-d9e6-4eea-8931-c4ad720481f9"
+  }
 }
