@@ -146,6 +146,11 @@ The session holds the item's lock and machine place until handback or the sessio
 `forge stop` frees Forge's hold; stop the subagent in your session too. Stale rounds record nothing.
 Forge checks for changed files, numbers and records findings. Init and upgrade deliver the reader role.
 
+**Native build rounds.** `forge work` and `forge land` print the role (`worker`, `fixer` for a fix,
+`frontend` for design work), the model to start it on (over the role's own), the checkout and the brief. Pipe its last message to
+`forge handback <item> --round <n> --subagent <id>`; send any printed nudge, then hand back again.
+Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land` or `forge close`.
+
 **Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
 New repos get the setting's default at init; existing repos get this guide when the upgraded
 Forge syncs, keeping their settings as written.

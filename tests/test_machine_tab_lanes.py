@@ -127,8 +127,12 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
 
     try:
         for index, (item, name) in enumerate(items):
-            process, output = start(other.path if index == 1 else repo.path, tmp_path / str(index), repo, "work", item,
-                                    launcher=old_launcher if index == 1 else None)
+            with monkeypatch.context() as coordinator:
+                if index == 1:  # its Claude worker runs through the kit, not a session subagent
+                    coordinator.delenv("CLAUDECODE", raising=False)
+                    coordinator.setenv("CODEX_THREAD_ID", "older-coordinator")
+                process, output = start(other.path if index == 1 else repo.path, tmp_path / str(index), repo,
+                                        "work", item, launcher=old_launcher if index == 1 else None)
             processes.append(process)
             marker = repo.bin / f"started-{name}"
             _until(lambda: process.poll() is not None or

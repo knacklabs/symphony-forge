@@ -2,7 +2,9 @@
 import json
 import os
 import sys
-from contextlib import redirect_stdout
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager, redirect_stdout
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +12,7 @@ from forge import codex, machine, repo
 
 COMMANDS = [{"words": "handback", "run": "handback", "changes_state": True, "position": 36,
              "help": "Record the result of a session subagent",
-             "args": [(("target",), {}), (("--text",), {}),
+             "args": [(("item",), {"metavar": "target"}), (("--text",), {}),
                       (("--round",), {"type": int, "required": True}),
                       (("--subagent",), {"required": True})],
              "listing": "| `forge handback <target>` | Records a session subagent result and frees its held place |"}]
@@ -52,21 +54,50 @@ def session() -> dict[str, Any]:
     return {"id": f"{tool}:{owner['pid']}:{owner['started']}", "process": owner}
 
 
-def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_prompt: str,
-          why: str, models: dict[str, str]) -> int:
+@contextmanager
+def hold(top: Path, item: str, kind: str, models: dict[str, str]) -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
+    """The session takes the item's lock and joins the agent line; both stay held until handback,
+    and only a failure before the handout gives them back."""
     owner = session()
-    lock = codex._item_file(top, target, ".lock", "Grill")
-    path = lock.with_suffix(".json")
+    command = "read" if kind == "Grill" else "work"
+    lock = codex._item_file(top, item, ".lock", kind)
     held = codex._take(lock, owner["process"])
     if held:
         process, alive = held
         repo.refuse(codex.REFUSALS["busy" if alive else "unknown"], pid=process.get("pid"),
-                    lock=lock, item=target, command="read")
+                    lock=lock, item=item, command=command)
     entry = None
     try:
-        _, unknown = codex._stop_leftover(path)
+        _, unknown = codex._stop_leftover(lock.with_suffix(".json"))
         if unknown:
-            repo.refuse(codex.REFUSALS["leftover"], pid=unknown, item=target, command="read")
+            repo.refuse(codex.REFUSALS["leftover"], pid=unknown, item=item, command=command)
+        with redirect_stdout(sys.stderr):
+            entry = machine.join(command, top, item, models.get("model"), models.get("effort"))
+        entry.update(native=True, session=owner["id"], process=owner["process"], forge=owner["process"])
+        yield owner, entry
+    except BaseException:
+        if entry:
+            machine.leave(entry)
+        lock.unlink(missing_ok=True)
+        raise
+
+
+def _start(top: Path, item: str, kind: str, owner: dict[str, Any], entry: dict[str, Any],
+           **pending: Any) -> None:
+    """The session's process now holds the place, and the item's record names the pending round."""
+    lock = codex._item_file(top, item, ".lock", kind)
+    entry["round"] = pending["result"]["round"]
+    with codex._one_at_a_time(lock):
+        machine.started(entry, owner["process"]["pid"])
+        codex._record(lock.with_suffix(".json"), native_round=entry["round"],
+                      pending={"checkout": top.resolve().as_posix(), "session": owner["id"],
+                               "entry": entry, **pending})
+
+
+def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_prompt: str,
+          why: str, models: dict[str, str]) -> int:
+    with hold(top, target, "Grill", models) as (owner, entry):
+        path = codex._item_file(top, target, ".json", "Grill")
         previous = codex.record(top, target, "Grill").get("native") or {}
         resume = previous.get("subagent") if not why and previous.get("session") == owner["id"] else None
         round_number = max(result["round"], codex._json(path).get("native_round", 0) + 1)
@@ -74,21 +105,9 @@ def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_pro
         reason = why or ("continue this session's reader" if resume else
                          "because the session that ran its last round has ended" if previous else
                          "start a reader in this session")
-        with redirect_stdout(sys.stderr):
-            entry = machine.join("read", top, target, models.get("model"), models.get("effort"))
-        entry.update(native=True, session=owner["id"], round=round_number,
-                     process=owner["process"], forge=owner["process"])
-        with codex._one_at_a_time(lock):
-            machine.started(entry, owner["process"]["pid"])
-            codex._record(path, **({"claude": None} if result["reader"] == "codex" else
-                                  {"conversation": None, "start": None}), native_round=round_number,
-                          pending={"checkout": top.resolve().as_posix(), "session": owner["id"],
-                                   "entry": entry, "result": result})
-    except BaseException:
-        if entry:
-            machine.leave(entry)
-        lock.unlink(missing_ok=True)
-        raise
+        codex._record(path, **({"claude": None} if result["reader"] == "codex" else
+                              {"conversation": None, "start": None}))
+        _start(top, target, "Grill", owner, entry, result=result)
     instruction = ("Continue the named reader with the short brief as a background subagent.\n"
                    "Start fresh with the whole brief if this session cannot reach that subagent."
                    if resume else "Start a reader as a background subagent with the whole brief.")
@@ -99,6 +118,41 @@ def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_pro
                       "prompt": prompt if resume else fresh_prompt, "fresh_prompt": fresh_prompt,
                       "subagent": resume, "reason": reason, "instruction": instruction}))
     return 0
+
+
+def resumable(top: Path, item: str, owner: dict[str, Any]) -> tuple[dict[str, Any], str | None, str]:
+    """A build round's last subagent record, the subagent to continue, and why it starts fresh."""
+    previous = codex.record(top, item).get("native") or {}
+    resume = previous.get("subagent") if previous.get("session") == owner["id"] else None
+    return previous, resume, ("" if resume or not previous else
+                              "because the session that ran its last round has ended")
+
+
+def hand_out(top: Path, item: str, owner: dict[str, Any], entry: dict[str, Any], round_number: int,
+             role: str, brief: str, fresh_brief: str, resume: str | None, why: str,
+             chosen: dict[str, str], family: str) -> None:
+    """Write the round's briefs beside the item's record, record it pending and say how to run it."""
+    short, whole = (codex._item_file(top, item, suffix, "Build") for suffix in (".brief.md", ".fresh.md"))
+    whole.write_text(fresh_brief, encoding="utf-8")
+    short.write_text(brief, encoding="utf-8")
+    run_id = repo.record_event(top, item, "run start", kind="work", round=round_number,
+                               family=family, model=chosen.get("model"), effort=chosen.get("effort"))
+    _start(top, item, "Build", owner, entry, result={"round": round_number}, role=role,
+           head=repo.git("rev-parse", "HEAD", cwd=top), started=time.time(), at=repo.now(),
+           model=chosen, run_id=run_id)
+    place = top.resolve().as_posix()
+    print(f"Run this round as a background {role} subagent of this session, working in {place}.")
+    # forge.local.toml can change the model, and role files hold only forge.toml's.
+    print(f"Start it on {chosen['model']} at {chosen['effort']} effort, over the role's own model.")
+    if resume:
+        print(f"Continue subagent {resume} with: Read {short.as_posix()} and follow it.")
+        print(f"If this session can't reach it, start a new {role} subagent with: Read "
+              f"{whole.as_posix()} and follow it.")
+    else:
+        print(f"Start a new {role} subagent with: Read {whole.as_posix()} and follow it."
+              + (f" ({why})" if why else ""))
+    print(f"When it ends: forge handback {item} --round {round_number} --subagent <its id>, "
+          "with its last message on stdin.")
 
 
 def cancel(entry: dict[str, Any]) -> None:
@@ -119,8 +173,11 @@ def handback(args: Any) -> int:
     from forge import story
 
     owner, top = session(), repo.root()
-    path = codex._item_file(top, args.target, ".json", "Grill")
+    path = codex._item_file(top, args.item, ".json", "Build")
+    if not codex._json(path).get("pending"):
+        path = codex._item_file(top, args.item, ".json", "Grill")
     lock = path.with_suffix(".lock")
+    kept = False
     with codex._one_at_a_time(lock):
         pending = codex._json(path).get("pending")
         held = codex._json(lock)
@@ -128,17 +185,70 @@ def handback(args: Any) -> int:
             raise repo.Refused("That round was stopped or replaced, so Forge recorded nothing.", "")
         if pending["session"] != owner["id"] or any(
                 held.get(key) != owner["process"][key] for key in ("pid", "started")):
-            raise repo.Refused("This session has no pending read for that target.", "forge read " + args.target)
+            what, command = ("build round", "work") if "role" in pending else ("read", "read")
+            raise repo.Refused(f"This session has no pending {what} for that target.",
+                               f"forge {command} {args.item}")
         if not args.subagent.strip():
-            raise repo.Refused("Give the reader subagent's id with its result.", "")
+            raise repo.Refused("Give the subagent's id with its result.", "")
         live = any(entry["id"] == pending["entry"]["id"] for entry in machine.entries())
         if not live:
             raise repo.Refused("That round was stopped or replaced, so Forge recorded nothing.", "")
+        said = (args.text if args.text is not None else sys.stdin.read()).strip()
         try:
+            if "role" in pending:
+                kept = _work_result(path, args.item, pending, said, owner, args.subagent)
+                return 0
             codex._record(path, native={"session": owner["id"], "subagent": args.subagent})
-            return story.read_result(Path(pending["checkout"]), args.target, pending["result"],
-                                     (args.text if args.text is not None else sys.stdin.read()).strip())
+            return story.read_result(Path(pending["checkout"]), args.item, pending["result"], said)
         finally:
-            codex._record(path, pending=None)
-            machine.leave(pending["entry"])
-            lock.unlink(missing_ok=True)
+            if not kept:
+                codex._record(path, pending=None)
+                machine.leave(pending["entry"])
+                lock.unlink(missing_ok=True)
+
+
+def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owner: dict[str, Any],
+                 subagent: str) -> bool:
+    """What a build round does once its worker ends; True keeps the place for the commit nudge."""
+    from forge import task, worker
+
+    top, head = Path(pending["checkout"]), pending["head"]
+    state = repo.read_state(item, top) or {}
+    worker._restore_settings(item, top, state)
+    # A session subagent has no worker guard in the commit hook, so a committed change comes back too.
+    if repo.git("diff", "--name-only", head, "HEAD", "--", "forge.toml", cwd=top) and not (
+            task.settings_allowed(item, top, state)):
+        repo.git("checkout", head, "--", "forge.toml", cwd=top)
+        repo.git("commit", "-q", "-m", "Restore forge.toml; settings change in their own fix",
+                 "--", "forge.toml", cwd=top)
+        print("Restored forge.toml changes committed on this branch; settings change in their own fix.",
+              flush=True)
+    left = repo.git("status", "--porcelain", "-uall", cwd=top).splitlines()
+    if said and left and not pending.get("nudged"):
+        codex._record(path, pending={**pending, "nudged": True, "said": said})
+        print(f"Send this to subagent {subagent}, then hand back again:\n{worker.COMMIT_NUDGE}")
+        return True
+    outcome = "completed" if said else "failed"
+    asked = worker.questions(pending.get("said", ""), said)
+    identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
+    codex._record(path, question=asked or None, question_id=identity,
+                  **({"native_round": None} if said else {}),  # finished: next offers close
+                  native={"session": owner["id"], "subagent": subagent,
+                          "head": repo.git("rev-parse", "HEAD", cwd=top),
+                          "rounds": pending["result"]["round"], "outcome": outcome})
+    repo.record_event(top, item, "run end", kind="work", round=pending["result"]["round"],
+                      run_id=pending["run_id"], outcome=outcome)
+    if asked:
+        print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
+        if worker.is_published(top, item):  # the pull request's record shows the open question
+            from forge import close
+            close._refresh_record(top, item, state)
+    repo.record_timing(top, item, "worker round", pending["at"],
+                       time.monotonic() - (time.time() - pending["started"]), outcome, pending["model"])
+    if left:
+        print("Warning: the worker ended its round with changes left uncommitted, so the review "
+              f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
+    if not said:
+        raise repo.Refused("The subagent ended with no message, so Forge recorded the round as failed.",
+                           f"forge work {item}")
+    return False
