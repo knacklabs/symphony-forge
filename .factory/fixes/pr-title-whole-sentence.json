@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T15:54:51.220729+00:00",
+      "because": "An earlier owner-facing output fix set titles to at most 70 characters; only the cut at the first comma was wrong",
+      "done_when": "A pull request's title is the whole first sentence of the item's why, shortened at a word boundary only when it passes GitHub's title length"
+    }
+  ],
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/pr-title-whole-sentence",
-  "done_when": "A pull request's title is the whole first sentence of the item's why, shortened at a word boundary only when it passes GitHub's title length",
+  "done_when": "A pull request's title is the first sentence of the item's why, never cut at a comma or inside a version number, and shortened at a word boundary to at most 70 characters",
   "kind": "fix",
   "status": "started",
   "steps": [
