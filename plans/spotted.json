@@ -991,6 +991,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: a persistent failing test is missed when another failure changes\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 484,
+      "text": "Not done: a persistent failing test is missed when another failure changes",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: a stale review finding can stop an item after a different failure\tstuck-worker-asks",
       "kind": "bug",
       "path": "src/forge/close.py",

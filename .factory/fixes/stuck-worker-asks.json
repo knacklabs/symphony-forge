@@ -17,27 +17,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9ead119039fe0eb3a11d3ee29675255afa0f8246bb898639d5f32e98c48cb8db",
-    "changed": "59b11b77d99f4a1da60a3121aa26dd4907b91f5b9f45ec199344ac7ce59a9e8f",
-    "commit": "23e718ee739826345bb31caeedc9a5b04b16ca26",
+    "branch_diff": "dd544bd92652c096f1b8334b5f43247269c5200b71267dfa83fae52b19bcccd0",
+    "changed": "0696df3f908d08030e022836ba4e65f63aa5277196438b5c220205bbf4581f7e",
+    "commit": "a5858b2040125f01b3106340d9ff8b7d17161338",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The new size-question path applies only when the item name contains `/`, so it covers story parts but not fixes. A fix that grows beyond its five-code-file limit is instead refused by the existing pre-commit rule in `src/forge/githooks.py:213-215`, with no ready-to-ask question or recorded choice among switch, same, narrow and split. The named size proof exercises only a story part.",
+        "body": "Raise: Not done. For runners without test IDs, this code combines all failure lines from a check into one key. If one round leaves `\u2715 A` and `\u2715 B`, and the next leaves `\u2715 B` and `\u2715 C`, B's unchanged failure line never reaches a count of two because the combined keys differ. Forge sends the item to another worker round instead of asking the owner. The named test covers only one such failure per round.",
         "file": "src/forge/close.py",
-        "line": 159,
+        "line": 484,
         "priority": "P1",
-        "title": "Not done: oversized fixes never produce the required owner question"
-      },
-      {
-        "body": "Raise: Not done. For Jest or Vitest output without a `FAILED ...::...` identifier, the failure key includes the first 200 characters of every matching failure line. If a worker changes an implementation but leaves the same test failing with a different `AssertionError` value, that key changes and the consecutive-round count resets. Forge keeps sending the item back instead of asking the owner. The named Jest proof varies only the duration, which this line removes.",
-        "file": "src/forge/close.py",
-        "line": 482,
-        "priority": "P1",
-        "title": "Not done: changed assertion text hides a repeated failing test"
+        "title": "Not done: a persistent failing test is missed when another failure changes"
       }
     ],
-    "id": "1ff6536e-f199-4a12-bc27-eb4d675e78d4",
+    "id": "86968b26-083e-4a65-b9d1-66b5f02a9660",
     "status": "blocked"
   },
   "status": "fixing",
@@ -72,6 +65,10 @@
     },
     {
       "at": "2026-10-12T01:52:46.254959+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:59:57.664861+00:00",
       "step": "review"
     }
   ],
