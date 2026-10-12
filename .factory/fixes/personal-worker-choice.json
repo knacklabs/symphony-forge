@@ -25,24 +25,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3e2c2277ee5a41a661a891ab4d14599ef1f7244f620f958d4c4d5d08150f2c4f",
-    "changed": "b2b45338cd866aec6c282d8491c247a9795851ec5c8bc8ff88235aef0faa4550",
-    "commit": "58731e54b0ba8b5f93bc0d178675dd7c994442e0",
+    "branch_diff": "fe2fd2262137b6850ce2c5b646a5da1b13b0fa49567cdc658117e169d84af3c4",
+    "changed": "eefb49cc9d92e6b995229990663f541a0c20e7e2d9f11af39b5ad4a1aa0b7e06",
+    "commit": "32ec957328d5a2c8501200c7a757b5d43ffb373f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. `forge.local.toml` accepts `subagents` and `subagent_effort` in build, fix, lite and explore model entries (`src/forge/repo.py:616`), and Codex uses both settings (`src/forge/codex.py:59\u201361`). This doctor note lists only each entry's `model` and `effort`, so a developer cannot see all the settings their local file overrides. The named doctor test supplies no subagent settings and does not catch the omission.",
-        "file": "src/forge/doctor.py",
-        "line": 439,
-        "priority": "P1",
-        "title": "Not done: forge doctor omits local subagent model and effort overrides"
-      }
-    ],
-    "id": "95816752-294c-4d21-9575-87af79081c2d",
-    "status": "blocked"
+    "findings": [],
+    "id": "0d573867-0a1c-4170-bbd0-04e74d042fd5",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
@@ -82,6 +74,10 @@
     },
     {
       "at": "2026-10-12T02:10:26.973376+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:19:52.737091+00:00",
       "step": "review"
     }
   ],
