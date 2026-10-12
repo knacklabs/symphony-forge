@@ -2399,6 +2399,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: forge next and doctor misidentify model sources\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 566,
+      "text": "Not done: forge next and doctor misidentify model sources",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/repo.py\tNot done: forge next does not show which file each work setting came from\tpersonal-worker-choice",
       "kind": "bug",
       "path": "src/forge/repo.py",

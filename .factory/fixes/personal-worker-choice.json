@@ -18,27 +18,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "04a571992f19af80e9a88c8fb1678edccbacf6ad41391048243f13eae40e9924",
+    "branch_diff": "98c7884353f223c10e332622080b0b30dad500d27c23f9f0a2236b2f3c0e76b6",
     "changed": "93991fa1a20751a724c0dc3e9a8f859d20ff87ef7ec12ba16becad0d89674d41",
-    "commit": "e9d01745478a037017a891b58638fc2a2e5c2be1",
+    "commit": "b8b0a3961646c42c28b2c26b4923f9c89baa691f",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. On a prototype fix, `forge work` treats the fix as design work when its state says `Prototype before sign-off` (`src/forge/worker.py:97`), but this new `forge next` path sets `design` to false for every fix. With local `workers = \"split\"`, `forge next` says Codex will build the fix while `forge work` selects Claude and its design model. The kind calculation at line 718 also labels a non-design Claude retry as `models.fix`, although `forge work` continues to use `models.build` for a task or `models.lite` for a fix (`src/forge/worker.py:102\u2013110`). Thus the required source display can name the wrong worker or model file on normal fix and retry paths; the named test covers only a started, non-prototype fix.",
+        "body": "Raise: Not done. At repo.py:566, source lookup checks the shared model table even when a local table has replaced that entire kind. If forge.toml defines both build workers, while forge.local.toml defines only the Codex build model and selects Claude, forge work uses Claude's built-in default, but forge next labels its model as coming from forge.toml. Doctor has the same effective-source gap at doctor.py:436: it labels every local model kind as local, even when the selected worker uses a built-in default. The named tests do not exercise a local model entry for the other worker.",
+        "file": "src/forge/repo.py",
+        "line": 566,
+        "priority": "P1",
+        "title": "Not done: forge next and doctor misidentify model sources"
+      },
+      {
+        "body": "Raise: Not done. The new preview treats every fix as non-design work at nextstep.py:715, while forge work treats a prototype fix with the recorded allowance as design work (worker.py:97). With split workers, forge next therefore names Codex while forge work selects Claude. The preview also assigns every non-started item models.fix at nextstep.py:718, but a non-design Claude retry still uses models.build for a task or models.lite for a fix (worker.py:102\u2013110). These normal fix and retry paths can show the wrong worker or model source; the named proof checks only a started, non-prototype fix.",
         "file": "src/forge/nextstep.py",
         "line": 715,
         "priority": "P1",
         "title": "Not done: forge next misidentifies prototype fix workers and Claude retry model sources"
-      },
-      {
-        "body": "Raise: Not done. The new doctor note lists every local model kind as coming from `forge.local.toml` and says everything else comes from `forge.toml`, without checking the selected worker's model entry. For example, local `tools = \"claude\"` plus `[models.build.codex]` replaces the shared build table, so `forge work` uses Claude's built-in build default (`src/forge/repo.py:445, 510\u2013533`); doctor instead presents `models.build` as local and never identifies the built-in default. This is a different doctor path from the previously fixed `forge next` model-source check, and it misses the required effective source display after a worker switch.",
-        "file": "src/forge/doctor.py",
-        "line": 436,
-        "priority": "P1",
-        "title": "Not done: doctor attributes built-in model defaults to configuration files"
       }
     ],
-    "id": "e17a6ec7-dfd7-4b3f-809f-31effbc384b5",
+    "id": "1f55466f-af73-4a8c-880b-f03f06879986",
     "status": "blocked"
   },
   "round": 1,
@@ -66,6 +66,10 @@
     },
     {
       "at": "2026-10-12T00:49:36.100950+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:16:48.094339+00:00",
       "step": "review"
     }
   ],
