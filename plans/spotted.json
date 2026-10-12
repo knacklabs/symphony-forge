@@ -947,6 +947,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA merge conflict erases the pull request's review findings and proof\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 166,
+      "text": "A merge conflict erases the pull request's review findings and proof",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tA merge conflict replaces an existing PR's review and proof\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/close.py",
