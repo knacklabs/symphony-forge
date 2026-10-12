@@ -23,7 +23,33 @@
     "branch_diff": "3110a581e4edfea88b270df5760f4a395faae380fb4f62fa3782721d1748d3c5",
     "changed": "0b34877def6c2b7a51bccc15cc4be4124380f9bfb65c3304f0343420c5fdf0ce",
     "commit": "d76b72d3733e9aa0739681b6a2de09e47ee8ed07",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the record-shape finding is fixed in commit 55413144b (any error reading a PR's time record counts as no record); the merge-conflict republish and done-story time findings were accepted earlier as follow-ups",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the record-shape finding is fixed in commit 55413144b (any error reading a PR's time record counts as no record); the merge-conflict republish and done-story time findings were accepted earlier as follow-ups",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the record-shape finding is fixed in commit 55413144b (any error reading a PR's time record counts as no record); the merge-conflict republish and done-story time findings were accepted earlier as follow-ups",
+        "finding": 3
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the record-shape finding is fixed in commit 55413144b (any error reading a PR's time record counts as no record); the merge-conflict republish and done-story time findings were accepted earlier as follow-ups",
+        "finding": 4
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the record-shape finding is fixed in commit 55413144b (any error reading a PR's time record counts as no record); the merge-conflict republish and done-story time findings were accepted earlier as follow-ups",
+        "finding": 5
+      }
+    ],
     "findings": [
       {
         "body": "chunk 1/2:\n\nRaise: Security. A pull request author can place a deeply nested JSON value in the hidden time record while keeping the body well below GitHub's size limit. `json.loads` raises `RecursionError` at sufficient nesting depth, but this parser does not catch it. Reading that pull request then crashes `forge board` or `forge next` instead of treating the record as malformed.",
@@ -62,10 +88,10 @@
       }
     ],
     "id": "23473034-bd02-4bd3-9ca9-e01716d0382a",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 15,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -142,8 +168,12 @@
   ],
   "stop": {
     "at": "2026-10-12T11:04:08.126156+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/board.py",
-    "wait_id": "9ffa7210-5633-4b32-8f88-91d0940c1152"
+    "reason": "Owner rule for Harm 1-2: the record-shape finding is fixed in commit 55413144b (any error reading a PR's time record counts as no record); the merge-conflict republish and done-story time findings were accepted earlier as follow-ups",
+    "wait_id": "9ffa7210-5633-4b32-8f88-91d0940c1152",
+    "worker_round": 15
   },
   "worker": "codex"
 }
