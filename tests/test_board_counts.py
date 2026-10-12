@@ -70,13 +70,13 @@ def github(env, prs):
     env.gh.respond("pr", "list", stdout=json.dumps(prs))
 
 
-def ready_pr(env, item, branch):
+def ready_pr(env, item, branch, number=8):
     calls = env.gh_calls("pr", "edit") or env.gh_calls("pr", "create")
-    return {"number": 8, "headRefName": branch, "state": "OPEN", "title": "Show a saved basket",
+    return {"number": number, "headRefName": branch, "state": "OPEN", "title": "Show a saved basket",
             "body": body(calls[-1]), "isDraft": False, "mergedAt": None, "mergedBy": None,
             "author": {"login": "forge-test", "name": "Forge Test"},
             "headRefOid": env.repo.git("ls-remote", "origin", f"refs/heads/{branch}").split()[0],
-            "url": "https://github.com/acme/shop/pull/8"}
+            "url": f"https://github.com/acme/shop/pull/{number}"}
 
 
 def configure(env, merge):
@@ -93,15 +93,18 @@ def expected(previous, *, ready=1, progress=1):
     return {"stories": {"done": 1, "building": 1, "approved, not started": 1,
                         "waiting for approval": 1, "planning": 2, "no plan yet": 1},
             "parts": {"done": 1, "ready to merge": ready, "in progress": progress, "to do": 2},
-            "fixes": {"done": 1 + previous, "ready to merge": 0, "in progress": 1, "to do": 0},
+            "fixes": {"done": 1 + previous, "ready to merge": 1, "in progress": 1, "to do": 0},
             "finished_last_7_days": {"parts": 1, "fixes": 1 + previous}}
 
 
-@pytest.mark.parametrize("case", ["counts", "github-once", "approved-not-started", "newer-findings"])
+@pytest.mark.parametrize("case", ["counts", "newer-push", "github-once", "approved-not-started", "newer-findings"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, monkeypatch, previous, case):
     if case == "github-once":
         github_read_once(env, monkeypatch, previous)
+        return
+    if case == "newer-push":
+        newer_push(env, monkeypatch, previous)
         return
     if case == "newer-findings":
         newer_findings(env, monkeypatch, previous)
@@ -153,11 +156,18 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
               {"kind": "fix", "why": "Tidy the readme", "done_when": "It is tidy"}, {"gone.py": "x = 1\n"})
     env.repo.git("push", "-q", "origin", "fix/gone")
     pr = ready_pr(env, "SHOP/T2", "task/SHOP-T2")
+    # A fix closed ready here too.
+    shelf = env.repo.forge("fix", "start", "Shelve a basket", "--done", "A basket can wait", "--slug", "shelf")
+    assert shelf.returncode == 0, shelf.stdout + shelf.stderr
+    env.commit(worktree(env.repo, "fix/shelf"), "shelf.py", "print('shelf')\n")
+    closed = env.close("shelf")
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    shelf_pr = ready_pr(env, "shelf", "fix/shelf", number=10)
     merged = {"number": 9, "headRefName": "fix/gone", "state": "MERGED", "title": "Tidy the readme",
               "body": "", "isDraft": False, "mergedAt": now.isoformat(), "url": "https://github.com/acme/shop/pull/9",
               "mergedBy": {"login": "ana", "name": "Ana"}, "author": {"login": "ana", "name": "Ana"},
               "headRefOid": env.repo.git("rev-parse", "fix/gone")}
-    github(env, [pr, merged])
+    github(env, [pr, shelf_pr, merged])
     clock(monkeypatch, now := now + timedelta(minutes=2))
 
     machine_a = env.repo.path
@@ -191,6 +201,7 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     following = env.repo.forge("next")
     assert "SHOP/T2 is ready to merge; Forge Test merges it from their machine." in following.stdout, following.stdout
     assert "forge task start SHOP/T2" not in following.stdout
+    assert "The fix shelf is ready to merge; Forge Test merges it from their machine." in following.stdout
 
     # In a human-merge repo the same part gives the human-merge line.
     env.repo.path = machine_a
@@ -210,34 +221,56 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert (machine_a / ".git/forge/ready/SHOP/T2.json").is_file()
     assert rows(board(env.repo))["SHOP/T2"]["state"] == "ready to merge"
 
+
+def newer_push(env, monkeypatch, previous):
+    """A newer push ends readiness on every machine; a clean close of it brings readiness back,
+    and a worktree behind a newer ready head is brought up to date and closed before merging."""
+    client(env, previous)
+    conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
+    configure(env, "agent")
+    now = datetime.now(timezone.utc)
+    clock(monkeypatch, now)
+    approve_story(env.repo, PLAN)
+    env.repo.git("merge", "-q", "--no-edit", "story/SHOP")
+    env.repo.git("push", "-q", "origin", "main")
+    started = env.repo.forge("task", "start", "SHOP/T2")
+    assert started.returncode == 0, started.stdout + started.stderr
+    folder = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+    env.commit(folder, "t2.py", "print('T2')\n")
+    closed = env.close("SHOP/T2")
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2")])
+    machine_a = env.repo.path
+    remote = env.repo.git("remote", "get-url", "origin")
+    machine_b = env.tmp / "machine-b"
+    env.repo.git("clone", "-q", remote, str(machine_b))
+
     # A third clone pushes another commit: both machines see the part back in progress.
     third = env.tmp / "machine-c"
     env.repo.git("clone", "-q", "-b", "task/SHOP-T2", remote, str(third))
     env.commit(third, "t2.py", "print('newer')\n")
     env.repo.git("push", "-q", "origin", "task/SHOP-T2", cwd=third)
-    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2"), merged])  # GitHub reports the new head
+    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2")])  # GitHub reports the new head
     clock(monkeypatch, now := now + timedelta(minutes=2))
     for where in (machine_a, machine_b):
         env.repo.path = where
         data, machine = board(env.repo), env.repo.forge("next", "--json")
         assert rows(data)["SHOP/T2"]["state"] == "in progress", where
         assert rows(json.loads(machine.stdout))["SHOP/T2"]["state"] == "in progress", where
-        assert data["team"]["counts"]["parts"] == expected(previous, ready=0, progress=2)["parts"]
 
     # A closes the newer commit clean; after a fetch both machines see it ready again.
     env.repo.path = machine_a
-    env.repo.git("merge", "-q", "--ff-only", "origin/task/SHOP-T2", cwd=folders["T2"])
+    env.repo.git("merge", "-q", "--ff-only", "origin/task/SHOP-T2", cwd=folder)
     closed = env.close("SHOP/T2")
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2"), merged])
+    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2")])
     clock(monkeypatch, now := now + timedelta(minutes=2))
     for where in (machine_a, machine_b):
         env.repo.path = where
         assert rows(board(env.repo))["SHOP/T2"]["state"] == "ready to merge", where
 
-    # B pushes and closes a newer commit in an agent-merge repo: A's worktree is behind it, so A
-    # brings it up to date and closes before merging, since forge merge needs A's own receipt.
-    configure(env, "agent")
+    # B pushes and closes a newer commit: A's worktree is behind it, so A brings it up to date
+    # and closes before merging, since forge merge needs A's own receipt.
     env.repo.path = machine_b
     resumed = env.tmp / "machine-b-T2"
     env.repo.git("fetch", "-q", "origin")
@@ -245,14 +278,14 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     env.commit(resumed, "t2.py", "print('newest')\n")
     closed = env.close("SHOP/T2")
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2"), merged])
+    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2")])
     clock(monkeypatch, now := now + timedelta(minutes=2))
     env.repo.path = machine_a
     part = rows(board(env.repo))["SHOP/T2"]
     assert part["state"] == "ready to merge"
     assert part["next"] == {"command": None, "line": (
         "Show a saved basket is ready to merge, but this worktree is behind its pull request.")}
-    assert f"Next: git -C {folders['T2']} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
+    assert f"Next: git -C {folder} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
 
 
 def approved_not_started(env, previous):
