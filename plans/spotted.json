@@ -987,8 +987,8 @@
       "text": "Not done: connect the go-live clause to the team sentence",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
@@ -3385,8 +3385,8 @@
       "text": "Not done: shared clean reviews grant readiness",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: shared readiness needs a valid next step when the worktree is behind\tFORGE-BOARD-2/COUNTS",
