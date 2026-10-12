@@ -6192,6 +6192,138 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor attributes built-in model defaults to configuration files\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 436,
+      "text": "Not done: doctor attributes built-in model defaults to configuration files",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor attributes plan-read models using the build worker\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 434,
+      "text": "Not done: doctor attributes plan-read models using the build worker",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor misses a shared model's built-in fallback after a local tool switch\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 440,
+      "text": "Not done: doctor misses a shared model's built-in fallback after a local tool switch",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor omits local subagent model and effort overrides\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 439,
+      "text": "Not done: forge doctor omits local subagent model and effort overrides",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 499,
+      "text": "Not done: A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next misidentifies prototype fix workers and Claude retry model sources\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 715,
+      "text": "Not done: forge next misidentifies prototype fix workers and Claude retry model sources",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits setting sources for active tasks and fixes\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 499,
+      "text": "Not done: forge next omits setting sources for active tasks and fixes",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: forge next and doctor misidentify model sources\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 566,
+      "text": "Not done: forge next and doctor misidentify model sources",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: forge next does not show which file each work setting came from\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 552,
+      "text": "Not done: forge next does not show which file each work setting came from",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: model sources are misidentified after a local tool switch\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 557,
+      "text": "Not done: model sources are misidentified after a local tool switch",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_personal_worker_choice.py\tNot done: a local tools override runs the selected worker\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "tests/test_personal_worker_choice.py",
+      "line": 25,
+      "text": "Not done: a local tools override runs the selected worker",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_personal_worker_choice.py\tNot done: init and upgrade ignore forge.local.toml at their own entry points\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "tests/test_personal_worker_choice.py",
+      "line": 78,
+      "text": "Not done: init and upgrade ignore forge.local.toml at their own entry points",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
