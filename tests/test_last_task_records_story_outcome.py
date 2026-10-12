@@ -42,7 +42,8 @@ if args[:2] == ["pr", "merge"]:
         source = args[args.index("--body-file") + 1]
         message += "\\n\\n" + (sys.stdin.buffer.read().decode("utf-8") if source == "-"
                                   else pathlib.Path(source).read_text(encoding="utf-8"))
-    subprocess.run(["git", "commit", "-q", "-m", message], cwd=checkout, check=True)
+    # Windows caps a command line at 32,767 characters; long messages go through stdin.
+    subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=checkout, check=True, input=message.encode("utf-8"))
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     (here / "github-merged").touch()
     sys.exit(0)
