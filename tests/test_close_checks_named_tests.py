@@ -13,6 +13,7 @@ STORY = "forge-writes-proof-list"
 PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::test_returning "
          "(including empty names)\n"
          "- Staff can sign in: tests/test_greeting.py::test_role[staff,active]\n"
+         "- Later readers wait: tests/test_greeting.py::test_later\n"
          "- Empty names are refused: tests/test_greeting.py::test_empty\n"
          "- Old readers stay greeted: tests/test_other.py::test_other\n"
          "- New readers by name: tests/test_greeting.py::test_case[new]\n"
@@ -23,7 +24,8 @@ GREETING = ("import pytest\n\n\ndef test_returning():\n    assert True\n\n\n"
             "@pytest.mark.parametrize(\"who\", [\"new\", \"back\"])\ndef test_case(who):\n"
             "    assert who == \"new\"\n\n\n"
             "@pytest.mark.parametrize(\"role\", [\"staff\"], ids=[\"staff,active\"])\n"
-            "def test_role(role):\n    assert role\n")
+            "def test_role(role):\n    assert role\n\n\n"
+            "@pytest.mark.skip(reason=\"later\")\ndef test_later():\n    pass\n")
 
 
 def _close(env, adopted, command, red=False):
@@ -53,11 +55,13 @@ def _close(env, adopted, command, red=False):
     return env.prompt(), json.loads(sent[-1])
 
 
-@pytest.mark.parametrize("adopted, red", [(False, False), (True, False), (False, True)],
-                         ids=["new-client", "earlier-adoption", "failed-test"])
-def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red):
+@pytest.mark.parametrize("adopted, red, options", [(False, False, ""), (True, False, ""),
+                                                    (False, True, ""), (False, False, " -ra")],
+                         ids=["new-client", "earlier-adoption", "failed-test", "own-report-options"])
+def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red, options):
     python = Path(sys.executable).as_posix()
-    command = f'"{python}" -m pytest -q -p no:cacheprovider tests/test_greeting.py'
+    # The client's own report options, such as -ra, cannot hide close's per-test results.
+    command = f'"{python}" -m pytest -q -p no:cacheprovider tests/test_greeting.py{options}'
     prompt, published = _close(env, adopted, command if red else command + ' -k "not back"', red)
     # Close keeps the worker's words and adds each named test's result next to it.
     assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning "
@@ -72,6 +76,7 @@ def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red):
     assert "- New readers by name: tests/test_greeting.py::test_case[new] (passed in close's run)" in published
     assert ("- Readers coming back by name: tests/test_greeting.py::test_case[back] (failed in close's run)"
             if red else "- Readers coming back by name: not run") in published
+    assert "- Later readers wait: tests/test_greeting.py::test_later (skipped in close's run)" in published
     # A test close cannot match to its run's results is never copied as proof.
     assert "- The page greets readers: src/greet.test.ts (not checked)" in published
     assert "- The page greets readers again: __tests__/greeting.js (not checked)" in published

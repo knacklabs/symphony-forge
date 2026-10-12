@@ -382,6 +382,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     item = (branch_item(branch, top) or (branch, {}))[0]
     start, clock = repo.now(), time.monotonic()
     outcome = "skipped"
+    results = results_path(top)
+    results.unlink(missing_ok=True)  # a run that skips or uses another runner leaves no results
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
@@ -411,7 +413,16 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                    and fasttest.XDIST.search(command) else "")
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rfEsp{cap}".strip()}
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
+            # Every pytest the command starts, the client's own or Forge's picker, loads Forge's
+            # results hook, which no command option can turn off.
+            hook = repo.forge_dir(top) / "pytest"
+            hook.mkdir(exist_ok=True)
+            (hook / "_forge_test_results.py").write_text(fasttest.RESULTS, "utf-8")
+            env.update(FORGE_TEST_RESULTS=str(results),
+                       PYTHONPATH=os.pathsep.join([str(hook), os.environ.get("PYTHONPATH", "")]),
+                       PYTEST_PLUGINS=",".join(filter(None, [os.environ.get("PYTEST_PLUGINS"),
+                                                             "_forge_test_results"])))
             env.pop("FORGE_CLOSE_TESTS", None)
             if closing and "tests" in repo.config(top)["checks"]:
                 env["FORGE_CLOSE_TESTS"] = "1"
@@ -471,21 +482,13 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             if done.returncode == 0 and passed:
                 passed.parent.mkdir(exist_ok=True)
                 # The run's per-test results, so a close that skips this run still lists them.
-                passed.write_text("".join(line for line in done.stdout.splitlines(keepends=True)
-                                          if "short test summary info" in line or re.match(
-                                              r"(?:PASSED|FAILED|ERROR) ", line)), "utf-8")
+                passed.write_text(results.read_text("utf-8") if results.is_file() else "", "utf-8")
         finally:
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
-        named = _named(top, base)
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
-                        | {n for n, line in enumerate(out) if line.startswith(GAP)
-                           or "short test summary info" in line}
-                        # The proof list's tests keep their result lines for close's proof list.
-                        | {n for n, line in enumerate(out) if (found := re.match(
-                            r"(?:PASSED|FAILED|ERROR) (\S+)", line))
-                           and any(_ran(name, found[1]) for name in named)})
+                        | {n for n, line in enumerate(out) if line.startswith(GAP)})
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
@@ -605,9 +608,11 @@ TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*|[\w-]+_test)\.p
                        r"(?:::(?:[^\s,;\[]+|\[[^\]]*\])+)?")
 
 
-def _named(top: Path, base: str) -> list[str]:
-    return list(dict.fromkeys(found[0].rstrip(".:)") for found in
-                              TEST_NAME.finditer(commit_paragraph(top, base, "Proof list:"))))
+def results_path(top: Path) -> Path:
+    """Where Forge's pytest hook writes this branch's last test run's per-test results."""
+    branch = repo.current_branch(top)
+    item = (branch_item(branch, top) or (branch, {}))[0]
+    return repo.forge_dir(top) / f"test-results-{item.replace('/', '-')}.txt"
 
 
 def _ran(name: str, node: str) -> bool:
@@ -624,11 +629,15 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
     the worker's words and puts each named test's result from close's run (`report`) next to it;
     a test the run did not run becomes `not run`. Before the run it names only the tests the
     branch has. A line or test close cannot match to its run's pytest results is `not checked`."""
+    from forge import fasttest  # fasttest imports review in forge test
+
     command = close_test(top, base)
-    passed = passed_record(top, command) if command else None
-    if passed and passed.is_file():  # a cached passing run's per-test results, if its runner lists any
+    passed, results = passed_record(top, command) if command else None, results_path(top)
+    if passed and passed.is_file():  # a cached passing run's per-test results, if pytest ran
         report = passed.read_text("utf-8")
-    ran = re.findall(r"^(PASSED|FAILED|ERROR) (\S+)", report or "", re.M)
+    elif report is not None:
+        report = results.read_text("utf-8") if results.is_file() else ""
+    ran = re.findall(r"^(\w+) (.+)$", report or "", re.M)
 
     def result(found: re.Match) -> str:  # the worker's words stay; a name gains its result
         name = found[0].rstrip(".:)")
@@ -640,10 +649,12 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
             said = "not run"
         elif report is None:
             said = f"{name} (in the branch; close's test run gives its result)"
-        elif "short test summary info" not in report:
+        elif not report.startswith(fasttest.RESULTS_HEADER):  # another runner, or no run
             said = f"{name} (not checked)"
         elif outcomes:
-            said = f"{name} ({'failed' if outcomes - {'PASSED'} else 'passed'} in close's run)"
+            word = ("failed" if outcomes & {"failed", "error"} else
+                    "passed" if "passed" in outcomes else sorted(outcomes)[0])
+            said = f"{name} ({word} in close's run)"
         else:
             said = "not run"  # a list never names a test close did not run
         return said + found[0][len(name):]
