@@ -49,7 +49,7 @@
     "id": "3c1b9ceb-a3aa-4989-910e-4bfc149e4dca",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T12:45:31.934037+00:00",
@@ -82,7 +82,11 @@
   ],
   "stop": {
     "at": "2026-10-12T21:34:26.778279+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/board.py",
-    "wait_id": "24670a82-0e3c-415d-b22a-68bc0568319c"
+    "reason": "Coordinator (all Harm 1-2, reversible; round 6 in board.py, so stop patching the card page): (1) HTML cards matching board JSON moves to the PAGE part, which replaces the card page and renders from the same data; (2) the runway of completed stories whose parts merged before the weekly windows becomes a follow-up (Gain 3, Harm 2); (3) the proof list gets runnable test names this round.",
+    "wait_id": "24670a82-0e3c-415d-b22a-68bc0568319c",
+    "worker_round": null
   }
 }
