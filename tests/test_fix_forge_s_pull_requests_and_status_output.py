@@ -20,11 +20,12 @@ def test_1_pr_title_and_labeled_body(env):
 @pytest.mark.parametrize("why, expected", [
     ("The owner cannot tell which action to take from this very long pull request title "
      "when the first clause runs beyond the stated limit, with more details afterward",
-     "The owner cannot tell which action to take from this very long pull re"),
+     "The owner cannot tell which action to take from this very long pull"),
     ("Readers cannot tell what to do, because the title buries the action",
-     "Readers cannot tell what to do"),
+     "Readers cannot tell what to do, because the title buries the action"),
+    ("x" * 80, "x" * 70),
 ])
-def test_2_fix_title_uses_first_clause_and_seventy_characters(env, why, expected):
+def test_2_fix_title_is_at_most_seventy_characters(env, why, expected):
     item, _ = env.start_fix(why=why)
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0

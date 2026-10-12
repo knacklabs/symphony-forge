@@ -1,0 +1,41 @@
+{
+  "approval": {
+    "at": "2026-10-11T17:07:30+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01JHiPXexycVzygFYmWYnveY",
+    "hash": "f835691d40587675e224a12acfd85c7562dc66d498da5fcb2b5752bd293e7c5a",
+    "round": 4,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-SCORE-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-11T16:12:22.371442+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T16:33:33.397567+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T16:52:45.921576+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T16:59:48.841031+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T17:04:58.252284+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T17:07:30+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Reads and reviews score each note on Gain, Work and Harm, and only notes above the bar hold work back",
+  "touches": 1
+}

@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task, time_records
+from forge import __version__, checks, codex, githooks, init, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -439,7 +439,7 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
         if number in dismissed:
             continue
         why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
-                       f"({finding['file']}:{finding['line']}): {finding.get('body', '')}".split())
+                       f"({finding['file']}:{finding['line']}): {score.strip(finding.get('body', ''))}".split())
         done = " ".join(f"A review no longer finds: {finding['title']}".split())
         out, here = io.StringIO(), os.getcwd()
         try:  # fix start works in the current checkout: the follow-up stacks on this item
@@ -632,7 +632,11 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
             base = Path(folder) / "default"
             repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
             try:
-                generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+                # Forge's own code is never generated, and sync would parse its conflicted copy
+                # when Forge runs from this checkout.
+                ours = Path(__file__).resolve().parent
+                generated = set() if any((top / path).resolve().is_relative_to(ours) for path in files) \
+                    else {Path(path).as_posix() for path in sync.files(base, cfg)}
                 if folder := githooks.husky_folder(base):
                     # Sync adds Forge's line, but the rest of these hooks belongs to the user.
                     generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
@@ -934,7 +938,7 @@ def _block(result: dict[str, Any], check: str) -> str:
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
-                else "advisory: " + " ".join(finding.get("body", "").split()))
+                else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
         (blocking if note == "blocks the merge" else rest).append(
             f"- Finding {n} ({finding['priority']}): {finding['title']} "
             f"({finding['file']}:{finding['line']}): {note}")
@@ -959,7 +963,12 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
         why, summary = doc.get("Why", ""), row.get("what it delivers", "")
     else:
         why, summary = state.get("why", ""), state.get("done_when", "")
-        title = re.split(r"[,;:.!?]", why, maxsplit=1)[0][:70]
+        # The first sentence: it ends at . ! or ? (and any closing quote or bracket) before a
+        # space or the end, never in v1.2.10. The closing quote or bracket stays.
+        first = re.split(r"[.!?]([\"')\]]?)(?=\s|$)", why, maxsplit=1)
+        title = " ".join("".join(first[:2]).split())
+        if len(title) > 70:  # a title the owner reads at a glance; no space: a hard cut
+            title = title[:title.rfind(" ", 0, 71) if " " in title[:71] else 70].rstrip(",;:.!?")
     return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
 
 
