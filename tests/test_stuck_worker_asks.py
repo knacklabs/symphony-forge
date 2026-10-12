@@ -9,7 +9,7 @@ import sys
 import pytest
 
 from conftest import _install
-from test_close import ROOT, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, ROOT, blocked, env, finding  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
 from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
@@ -51,8 +51,10 @@ def question(stuck):
 
 def _rounds(env, case):
     """Start the fix whose every close fails, then run work and close once (twice for a then b)."""
-    if case in ("finding", "finding then test"):
+    if case == "finding":
         env.reviews(blocked(finding("P1", "Saving drops the greeting")))
+    if case == "finding then test":  # the worker fixes the finding, and a test then fails
+        env.reviews(blocked(finding("P1", "Saving drops the greeting")), CLEAN)
     if case != "finding":
         script = env.tmp / "suite.py"
         script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
