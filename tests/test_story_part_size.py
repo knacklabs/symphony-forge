@@ -6,6 +6,7 @@ import pytest
 
 from test_close import STORY_DOC, approve_story, env  # noqa: F401
 from test_setup import _fresh_client
+from test_worker import install_claude
 from test_upgrade_command import (_repo_adopted_on_the_previous_release,
                                  unsynced_up)  # noqa: F401
 
@@ -67,12 +68,26 @@ def test_1_close_stops_large_parts_unless_allowed_or_already_in_flight(env, case
 
     if case in {"401 lines", "deleted lines", "added plus removed"}:
         assert done.returncode == 1, done.stdout + done.stderr
-        assert done.stderr == (
-            'This story part changes 401 lines outside tests, over the limit of 400; '
-            'split it or record a reason with forge fix allow-large "<reason>".\n')
+        # Growing past the limit stops the part and asks the owner, like a stuck worker.
+        assert done.stderr.splitlines()[-4:-2] == [
+            "It changes 401 lines outside tests, over its limit of 400.", "The worker tried: Work."]
+        assert done.stderr.splitlines()[-1] == (
+            f'Next: forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
         assert env.review_calls() == []
         assert env.gh_calls("pr", "create") == []
         assert env.repo.git("rev-parse", "origin/task/SHOP-T1") == published
+        if case == "401 lines":
+            # After the owner answers, close doesn't ask again before the worker's round runs.
+            chosen = env.close(item, "--resolve", "same", "--reason", "Shrink it in one more round")
+            assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+            again = env.close(item)
+            assert again.returncode == 1
+            assert again.stderr.splitlines()[-2:] == [
+                "The owner's choice is recorded; the worker's next round follows it.",
+                f"Next: forge work {item}"]
+            install_claude(env.repo)
+            worked = env.repo.forge("work", item)
+            assert worked.returncode == 0, worked.stdout + worked.stderr
     else:
         assert done.returncode == 0, done.stdout + done.stderr
         assert len(env.review_calls()) == 1

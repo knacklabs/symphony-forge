@@ -86,7 +86,7 @@ proof by the test-audit rules below.
 
 <!-- rules -->
 ## Tests on the close run
-forge close ran the repo's test command before this review, outside your sandbox:
+forge close runs the repo's test command alongside this review, outside your sandbox:
 $test_run
 
 A test skipped in your sandbox that the close run passed is not a missing test. For a pure

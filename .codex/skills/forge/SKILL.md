@@ -45,6 +45,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
+| "Change who builds just for me" | Edit `forge.local.toml` beside `forge.toml` in the main checkout (not a worktree): only `tools`, `workers` and `[models.<kind>]` tables. Git ignores it, so no fix; every worktree of that clone uses it. `forge next` and `forge doctor` name what it sets |
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
@@ -74,9 +75,15 @@ Give each question one line of context and a header of 12 characters or less. Us
 that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
 questions; write for the human's choice.
 
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
+
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
-`runner` selects the GitHub Actions runner label for both jobs in the generated `forge.yml`;
+A developer's own `tools`, `workers` and `[models.<kind>]` choices go in the git-ignored
+`forge.local.toml` instead, which you edit directly when they ask; Forge refuses any other key there.
+`runner` selects the GitHub Actions runner label for every job in the generated `forge.yml`;
 it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 `forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
@@ -124,18 +131,19 @@ sign-off reviews. Existing review model entries are ignored; doctor explains thi
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
 continue the named subagent when told to, or start fresh with the whole brief in a new session.
-Run `forge handback` with its last message and id when it finishes. Send the nudge when asked;
-never edit the brief. Only the coordinator hands back or starts another round.
+If that chat is unreachable in the same session, start fresh with the whole brief too.
+Run `forge handback` with its last message and id and the printed `--round` when it finishes.
+Send the nudge when asked; never edit the brief. Only the coordinator hands back or starts a round.
 
 **Native plan reads.** With one tool, that tool reads every plan. With both, the first read
 chooses the other installed tool, and later rounds keep their reader while it is available.
 When that reader is your session's tool, `forge read <target>` prints a JSON instruction for
 the `reader` role in the plan's checkout. Continue its named subagent with `prompt`, or start
 one with `fresh_prompt` when no subagent is named. Run it in the background, read only, then
-give its final message and id to `forge handback <target> --subagent <id> --text "<message>"`.
-Forge holds the item's lock and machine place until handback, checks for changed files,
-numbers the findings and records the read. A new session starts fresh with the whole prompt.
-New repos get the reader role at init; earlier adopted repos get it on upgrade and sync.
+give its message and id to `forge handback <target> --round <round> --subagent <id> --text "<message>"`.
+The session holds the item's lock and machine place until handback or the session ends.
+`forge stop` frees Forge's hold; stop the subagent in your session too. Stale rounds record nothing.
+Forge checks for changed files, numbers and records findings. Init and upgrade deliver the reader role.
 
 **Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
 New repos get the setting's default at init; existing repos get this guide when the upgraded
@@ -169,11 +177,17 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 ## Machine views
 
-Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
-plan reads and close reviews share a line. Waiting items that other planned work waits on go
+Forge gives agents half the available cores (at least one place), across all repos. Work rounds
+share a line. Plan reads and close reviews wait on the model's service, not this machine, so they
+start at once and take no place. A work round also waits while the machine's
+one-minute load per core is 1.5 or more, unless no other agent runs; where the OS reports no load
+(Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
+one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
+and takes no place when the whole command is the picker, optionally run through `uv run`.
+Compound commands, including the picker's underlying `test` command, keep their place.
+Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
 and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
@@ -186,6 +200,8 @@ Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that
 both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
+This applies to runs Forge launched. A handed-out native run has no process tree, so
+`forge stop` frees its hold and the coordinator stops the subagent in its session.
 
 In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
 repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
@@ -680,7 +696,7 @@ On a live app, every story and fix also follows these:
 
 On the default branch, `forge doctor --fix` commits its dated Forge-files fix with a proof list
 of its Done-when and the files refreshed by the pinned release's sync. Run `forge close <name>`
-as doctor suggests; close supplies its test run result to the first review. New repos get this
+as doctor suggests; close starts tests alongside the first review and reports both results. New repos get this
 at setup, and existing repos get it when they move to this release.
 
 When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
@@ -698,7 +714,7 @@ also stay in place; only recognized cache directories may be discarded.
 1. Ask which release to move to, recommending the newest.
 2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
-   Its commit includes the upgrade's proof list; close supplies its test run result to the review.
+   Its commit includes the upgrade's proof list; close reports tests and review results together.
    It changes only the version in `forge.toml`.
 3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
@@ -758,8 +774,11 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 `## For the builders` heading is shown whole. The approval binds "What changes for you" and
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
-below `## For the builders` needs no new round either; an edit above it does, and that round
-checks only the edit and the sections it touches.
+below `## For the builders` needs no new round either, and `forge read` refuses to run one; an
+edit above it does, and that round checks only the edit and the sections it touches. Unchanged
+text gets two rounds of notes: from round 3 on, a reader blocks only on what changed since its
+last round or on an earlier blocking finding that is not closed.
+This two-round limit applies only to story plans.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
@@ -806,7 +825,8 @@ when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. Items that other planned work waits on go
+reviews), across all its repos; the rest wait in line. A work round also waits while load per
+core is 1.5 or more and another agent runs. Items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
 each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
@@ -961,7 +981,10 @@ Codex app-server turns use the selected model's Fast tier for every fix, from th
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
 Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
 The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
-Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy. New repos
+Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy and whether the last Codex turn ran
+with Fast. When Fast is wanted but the model does not offer it, the run's first line says so.
+Every turn, including capacity retries, records the
+requested tier and the tier Codex reports; an unreported tier stays unknown. New repos
 get the default at init; existing repos get it on upgrade without adding a setting, and sync
 refreshes both host guides. The upgrade's sync announces the default in one line.
 
@@ -1057,13 +1080,18 @@ any other file stops close for the worker to resolve. While waiting for checks, 
 if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
 in the default branch. Land retries close once itself, including a conflict during its merge check
 wait; if the merge needs a person, it stops with close's existing conflict next step.
-When the
-test command fails, close stops before the review and keeps the output for the worker: run
+Close's tests and review run at the same time. Close waits for both and reports their results
+together; a red test or a P0/P1 finding still stops the round. When the
+test command fails, close keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+The generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
+which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
+the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
+and syncing; branch protection keeps the same `tests` check.
 When the pytest selection would cover more than a third of the Python test files (shared
 test inputs select them all), close skips the local run, says so in one line, and relies on
 the pull request's required checks. `forge test` still runs its tests.
@@ -1080,7 +1108,8 @@ For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own r
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
 including package-relative imports. Filenames and references to changed non-Python inputs
-do not select tests. It supports root packages and the `src/` layout, and pytest's
+do not select tests. After the run it names each changed Python file that no test names; tests
+that run the program from outside miss it locally and GitHub's checks cover it. It supports root packages and the `src/` layout, and pytest's
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
@@ -1111,7 +1140,9 @@ set, with `{base}` as the merge base with `origin/<default branch>`, in the same
 test lane as close. It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pytest -n auto` honours
+and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
+a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
+its test command is capped with `--maxprocesses`. `pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
@@ -1164,8 +1195,9 @@ still stops for a pending question and gives open findings or failing tests a wo
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work`, `forge read` and close reviews already queue agent runs across the machine;
-close and worker tests share the separate test lane, with one place per four available cores
+`forge work` already queues work rounds across the machine, while reads and close reviews start
+at once; close and worker tests share the separate test lane, except picker runs of five or fewer
+test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 
 If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:
@@ -1226,7 +1258,9 @@ Close holds the fourth review after three consecutive rounds blocked by serious 
 whatever files they were in. The existing same-file stop still applies from the third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
-Never re-run close or land past this stop until their choice is recorded.
+Run `forge land <item>` in the background after a close stop, or keep the current land running.
+With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
+default; it does not send the worker back while the stop is unanswered.
 After their answer, record it with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
@@ -1234,7 +1268,25 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
+choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
+with that finding as its why. The running land records it and carries on without another
+command; the worker's next round narrows the part. A later close can also record an overdue default.
+The owner can reverse it later with the same `forge close <item> --resolve` command. To always
+wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
+
+When a cold read or review loop stops, ask the human the question it printed, in its words, one
+item per question. It names the item and what it delivers, says each open note or finding in plain
+words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
+
+When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
+the item; close also stops a story part that grows past its line limit. Either prints a
+ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
+choices. Ask the owner exactly that question; never switch tools yourself. Record the answer with
+`forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
+`forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
+every choice buys one more round before Forge asks again.
 
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is

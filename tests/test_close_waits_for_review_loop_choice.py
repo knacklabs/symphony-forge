@@ -14,18 +14,25 @@ from test_setup import _fresh_client
 
 GUIDANCE = (
     "Ask the human to narrow the part, split it, or accept the remaining findings. "
-    "Never re-run close or land past this stop until their choice is recorded."
+    "Run `forge land <item>` in the background after a close stop, or keep the current land running."
 )
 
 
 def stopped(env, kind="fix"):
     seed(env, "src/a.py")
-    item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
+    # A task's plan row may hold markdown and paths; its question names it in plain words.
+    doc = STORY_DOC.replace("Shoppers can save their basket with one click",
+                            "Shoppers can **save** their basket at `app.py:3` with one click")
+    item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
     result = rounds(env, item, where, ["src/a.py"] * 3)
-    assert result.stderr.splitlines()[-2:] == [
+    lines = result.stderr.splitlines()
+    if kind == "task":
+        assert lines[-8] == ("Save a basket (part of Shoppers can save a basket): "
+                             "Shoppers can save their basket with one click")
+    assert [lines[-9], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
-        "to narrow the part, split it, or accept the remaining findings.",
+        "to narrow the part, split it, or accept the remaining findings, in these words:",
         f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
     ]
     return item, where
@@ -33,6 +40,10 @@ def stopped(env, kind="fix"):
 
 @pytest.mark.parametrize("kind", ["fix", "task", "fix-claude"])
 def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, kind):
+    # Human-only waiting is now opt-in; the default keeps land alive for a timed answer.
+    toml = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
+    env.repo.git("push", "-q", "origin", "main")
     if kind == "fix-claude":
         _claude_only(tmp_path, monkeypatch, env.repo.bin,
                      (ROOT / "tests/stubs/autoreview").read_text())

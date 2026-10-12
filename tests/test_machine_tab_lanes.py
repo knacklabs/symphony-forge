@@ -64,10 +64,11 @@ console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture
                           "items": [{**shared["board"]["items"][0], **shared["live"]}]}
         fields(result["board"], board_contract)
     machine = result["text"].split("Machine ·", 1)[1]
-    assert "Current first" in machine and "waiting #2" in machine
+    assert "Current first" in machine
     if scenario == "release":
-        assert "Current third" in machine and "Older second" not in machine
+        assert "Current third" in machine and "Older second" not in machine and "waiting #2" in machine
     else:
+        assert "waiting #1" in machine
         for title in ("Shoppers can save a basket", "Save baskets"):
             line = next(line for line in machine.splitlines() if title in line)
             assert "round " not in line and " · claude" not in line and " · codex" not in line
@@ -76,7 +77,7 @@ console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture
 
 @pytest.mark.parametrize("scenario", ["release", "foreign"])
 def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(env, tmp_path, monkeypatch, lane_adapter, packaged_mod, release_server, scenario):
-    # Separate contracts need three agents each, rather than completing five serially in cleanup.
+    # A read starts outside the agent budget; only work rounds wait for a place.
     # Existing board tests do not exercise the plugin's lanes command or release
     # filtering. Real work commands produce every row; only the model edge waits.
     repo = env.repo
@@ -141,9 +142,13 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
                 coordinator.setenv("CODEX_THREAD_ID", "foreign-coordinator")
                 process, output = start(foreign.path, tmp_path / command, repo, command, item)
             processes.append(process)
-            _until(lambda: process.poll() is not None or "number" in output.read_text("utf-8"),
+            read_marker = repo.bin / f"started-{worktree(foreign, 'story/SHOP').name}"
+            _until(lambda: process.poll() is not None or
+                   (read_marker.exists() if command == "read" else "number" in output.read_text("utf-8")),
                    "foreign story and task admission")
             assert process.poll() is None, output.read_text("utf-8")
+            if command == "read":
+                assert "in line." not in output.read_text("utf-8")
         data = view()
         assert data["version"] == repo.forge("--version").stdout.strip().split()[-1].removeprefix("v")
         assert data["agents"]["size"] == 1 and data["tests"] == {"size": 1, "entries": []}
@@ -154,14 +159,14 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
             assert [row["item"] for row in rows] == [items[0][0], items[2][0]]
             assert [row["place"] for row in rows] == [0, 2]
         else:
-            # A planned prerequisite now precedes the earlier story read in the waiting line.
-            assert [row["item"] for row in rows] == [items[0][0], "BASKET/SAVE", "SHOP"]
-            assert [row["place"] for row in rows] == [0, 1, 2]
+            # The read runs beside the first worker, while the foreign task still waits.
+            assert [row["item"] for row in rows] == [items[0][0], "SHOP", "BASKET/SAVE"]
+            assert [row["place"] for row in rows] == [0, 0, 1]
             assert [(row["item"], row["title"]) for row in rows[1:]] == [
-                ("BASKET/SAVE", "Save baskets"), ("SHOP", "Shoppers can save a basket")]
+                ("SHOP", "Shoppers can save a basket"), ("BASKET/SAVE", "Save baskets")]
             for row in rows[1:]:
                 assert row["repo_root"] == foreign.path.resolve().as_posix()
-                # Admission records carry the known worker round; the unread story's
+                # Admission records carry the known worker round; the reader's
                 # round and unavailable tool/step metadata stay unknown.
                 assert row["round"] == (1 if row["item"] == "BASKET/SAVE" else None)
                 assert "tool" not in row and "step" not in row
@@ -174,7 +179,11 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
             assert datetime.fromisoformat(row["joined_at"])
             assert row["elapsed"] >= 0
             assert row["progress"] is None
-        assert rows[0]["started_at"] and all(row["started_at"] is None for row in rows[1:])
+        assert rows[0]["started_at"]
+        if scenario == "release":
+            assert all(row["started_at"] is None for row in rows[1:])
+        else:
+            assert rows[1]["started_at"] and rows[2]["started_at"] is None
         if scenario == "release":
             first_folder = worktree(repo, "fix/" + items[0][0])
             test_run, test_output = start(first_folder, tmp_path / "test-run", repo, "test")
@@ -190,7 +199,7 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
             assert test_run.wait(timeout=30) == 0, test_output.read_text("utf-8")
         else:
             check_machine_fixture_and_headless(repo, packaged_mod, tmp_path, data, scenario)
-        assert rows[1]["output_path"] is None
+        assert rows[1 if scenario == "release" else 2]["output_path"] is None
         assert rows[0]["output_path"], "Running agents publish their existing live output"
         assert f"forge work {items[0][0]}" in Path(rows[0]["output_path"]).read_text("utf-8")
         if scenario == "release":

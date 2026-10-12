@@ -300,8 +300,14 @@ def merge_attributes(text: str) -> str:
     return text
 
 
+def ignore_local(text: str) -> str:
+    """.gitignore with each developer's own forge.local.toml in it."""
+    return text if repo.LOCAL in text.splitlines() else (f"{text.rstrip()}\n" if text.strip() else "") + f"{repo.LOCAL}\n"
+
+
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg)}
+    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg),
+            ".gitignore": ignore_local(read(top / ".gitignore"))}
 
 
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:
@@ -355,6 +361,7 @@ def _synced_text(source: str, packaged: str) -> str:
 
 def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
+    cfg = cfg.get("shared", cfg)  # a developer's forge.local.toml never reaches committed files
     wanted: dict[str, str] = {}
     for info in pkgutil.iter_modules(forge.__path__):
         if info.ispkg:

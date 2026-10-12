@@ -54,6 +54,9 @@ def pytest_options(arguments: list[str]) -> str:
     return options
 
 
+XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
+
+
 def narrow_command(command: str, excluded: list[str], workers: str) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
@@ -65,7 +68,7 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
             replacements.append((token.start(), token.end(), ""))
     options = ["-p", "_forge_pytest_selection"] if excluded else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
-    if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
+    if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
@@ -269,20 +272,11 @@ LARGE = ("More than a third of the test files selected; skipping local tests and
          "pull request's required checks.")
 
 
-def pytest_tests(base: str, command: str) -> int:
+def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
+    """The selected test files, all test files, whether shared inputs changed (all selected), and
+    the changed sources no test file names."""
     changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    parts = quicktest.test_parts(Path.cwd(), command)
-    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
-    if mixed:
-        command = " && ".join(part for kind, part, _ in parts
-                              if kind not in ("vitest", "jest", "node-install", "node-check"))
-    environment = dict(os.environ)
-    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
-    workers = str(machine.half_cores())
-    environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
-    environment["FORGE_TEST_CPUS"] = workers
-    excluded = []
     tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
                                             "--exclude-standard")
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
@@ -295,31 +289,50 @@ def pytest_tests(base: str, command: str) -> int:
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
            or not own_version_only(Path(name), base) for name in shared)
+    modules = []
+    for name in changed:
+        path = Path(name)
+        if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
+            continue
+        parts = module_parts(path)
+        if parts[-1] == "__init__":
+            parts.pop()
+        if parts:
+            modules.append((".".join(parts), path))
+    missed = [source.as_posix() for module, source in modules
+              if not any(mentions(path, module, source) for path in tests)]
+    everything = [path.as_posix() for path in tests]
     if shared_changed:
-        selected = [path.as_posix() for path in tests]
-    else:
-        modules = []
-        for name in changed:
-            path = Path(name)
-            if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
-                continue
-            parts = module_parts(path)
-            if parts[-1] == "__init__":
-                parts.pop()
-            if parts:
-                modules.append((".".join(parts), path))
-        selected = []
-        for path in tests:
-            if (path.as_posix() in changed
-                    or any(mentions(path, module, source)
-                           for module, source in modules)):
-                selected.append(path.as_posix())
-        selected.sort()
+        return everything, everything, True, missed
+    selected = sorted(path.as_posix() for path in tests
+                      if path.as_posix() in changed
+                      or any(mentions(path, module, source) for module, source in modules))
+    return selected, everything, False, missed
+
+
+def pytest_tests(base: str, command: str) -> int:
+    parts = quicktest.test_parts(Path.cwd(), command)
+    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
+    if mixed:
+        command = " && ".join(part for kind, part, _ in parts
+                              if kind not in ("vitest", "jest", "node-install", "node-check"))
+    environment = dict(os.environ)
+    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
+    workers = machine.test_cpus()
+    environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
+    environment["FORGE_TEST_CPUS"] = workers
+    excluded = []
+    selected, tests, shared_changed, missed = related(base)
+    # Tests that run the program from outside never name its files, so say what local runs miss.
+    from forge.review import GAP  # imported late: review's imports lead back here
+    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+          end="", flush=True)
+    if not shared_changed:
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
+        excluded = [path for path in tests if path not in selected]
     if closing and len(selected) * 3 > len(tests):
         print(LARGE, flush=True)
         return 0
