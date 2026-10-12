@@ -177,13 +177,17 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 ## Machine views
 
-Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
-plan reads and close reviews share a line. A work round also waits while the machine's
+Forge gives agents half the available cores (at least one place), across all repos. Work rounds
+share a line. Plan reads and close reviews wait on the model's service, not this machine, so they
+start at once and take no place. A work round also waits while the machine's
 one-minute load per core is 1.5 or more, unless no other agent runs; where the OS reports no load
 (Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
+one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
+and takes no place when the whole command is the picker, optionally run through `uv run`.
+Compound commands, including the picker's underlying `test` command, keep their place.
+Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
 and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
@@ -974,7 +978,10 @@ Codex app-server turns use the selected model's Fast tier for every fix, from th
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
 Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
 The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
-Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy. New repos
+Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy and whether the last Codex turn ran
+with Fast. When Fast is wanted but the model does not offer it, the run's first line says so.
+Every turn, including capacity retries, records the
+requested tier and the tier Codex reports; an unreported tier stays unknown. New repos
 get the default at init; existing repos get it on upgrade without adding a setting, and sync
 refreshes both host guides. The upgrade's sync announces the default in one line.
 
@@ -1184,8 +1191,9 @@ still stops for a pending question and gives open findings or failing tests a wo
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work`, `forge read` and close reviews already queue agent runs across the machine;
-close and worker tests share the separate test lane, with one place per four available cores
+`forge work` already queues work rounds across the machine, while reads and close reviews start
+at once; close and worker tests share the separate test lane, except picker runs of five or fewer
+test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 
 If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:
@@ -1246,7 +1254,9 @@ Close holds the fourth review after three consecutive rounds blocked by serious 
 whatever files they were in. The existing same-file stop still applies from the third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
-Never re-run close or land past this stop until their choice is recorded.
+Run `forge land <item>` in the background after a close stop, or keep the current land running.
+With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
+default; it does not send the worker back while the stop is unanswered.
 After their answer, record it with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
@@ -1254,6 +1264,12 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
+choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
+with that finding as its why. The running land records it and carries on without another
+command; the worker's next round narrows the part. A later close can also record an overdue default.
+The owner can reverse it later with the same `forge close <item> --resolve` command. To always
+wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and

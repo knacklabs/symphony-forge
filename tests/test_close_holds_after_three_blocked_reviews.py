@@ -55,6 +55,8 @@ def client_item(env, tmp_path, previous):
 def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env, tmp_path, previous, same_file, choice):
     item, where = client_item(env, tmp_path, previous)
+    # With the default on, land waits out the stop; this checks that land refuses until a choice.
+    env.commit(where, "forge.toml", 'stop_default = "off"\n' + (where / "forge.toml").read_text("utf-8"))
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")

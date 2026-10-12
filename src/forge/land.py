@@ -30,8 +30,7 @@ def land(args: argparse.Namespace) -> int:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
     top = close._worktree(item)
     pin = repo.config(top)["version"]
-    state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
-    close.check_stop(item, state)
+    state, branch = _wait_for_choice(top, item), repo.current_branch(top)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
     rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0"))
     conflict_retry = False
@@ -53,6 +52,12 @@ def land(args: argparse.Namespace) -> int:
             try:
                 close.close(step)
             except repo.Refused as error:
+                if error.entry is close.REFUSALS["hotspot"]:
+                    state = _wait_for_choice(top, item)
+                    rounds = step.land_rounds = 0
+                    if (state.get("stop") or {}).get("choice") in ("narrow", "split"):
+                        worker.work(step)
+                    continue
                 if error.entry is checks.REFUSALS["conflict"] and not conflict_retry:
                     conflict_retry = True
                     continue
@@ -96,6 +101,24 @@ def land(args: argparse.Namespace) -> int:
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")
         raise
+
+
+def _wait_for_choice(top: Path, item: str) -> dict:
+    """Keep land alive through a review stop; an owner answer or the default releases it."""
+    said = False
+    while True:
+        state = repo.read_state(item, top) or {}
+        try:
+            close.check_stop(item, state)
+            return state
+        except repo.Refused as error:
+            if error.entry is not close.REFUSALS["hotspot"] or repo.config(top)["stop_default"] == "off":
+                raise
+            if not said:
+                say("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
+                    "the repo's default applies.")
+                said = True
+            time.sleep(15)
 
 
 def _rerun(top: Path, item: str, branch: str) -> bool:

@@ -68,6 +68,20 @@ class Client(CodexClient):
     """The SDK's client, which prints the app-server's id as soon as it starts, before Codex()
     waits on initialize, so Forge has it on record even when Codex never answers."""
 
+    received_tier: str | None = None
+    speed_thread: str = ""
+
+    def _coerce_notification(self, method, params):
+        # Settings receipts are thread-scoped, so the SDK's turn stream omits them.
+        if (method == "thread/settings/updated" and isinstance(params, dict)
+                and self.speed_thread and params.get("threadId") == self.speed_thread):
+            settings = params.get("threadSettings")
+            if isinstance(settings, dict) and "serviceTier" in settings:
+                value = settings["serviceTier"]
+                self.received_tier = ((value or "default")
+                                      if value is None or isinstance(value, str) and value else None)
+        return super()._coerce_notification(method, params)
+
     def start(self) -> None:
         with STARTING:
             super().start()
@@ -183,10 +197,15 @@ def main() -> int:
         # The SDK's high-level Thread discards these settings; null effort follows the model.
         request_raw = client._request_raw
         tier = "default"  # The protocol's standard-speed override also clears inherited Fast.
+        selection = {}
         def selected_request(method, params=None):
-            nonlocal tier
+            nonlocal tier, selection
             if method == "turn/start":
-                params = {**params, "serviceTierForTurn": tier}
+                client.speed_thread = params["threadId"]
+                # Persist the tier too, so Codex reports its effective settings back.
+                if client.received_tier != tier:
+                    client.received_tier = None
+                params = {**params, "serviceTier": tier, "serviceTierForTurn": tier}
             response = request_raw(method, params)
             if method in ("thread/start", "thread/resume"):
                 effort, cursor = response.get("reasoningEffort"), None
@@ -204,7 +223,12 @@ def main() -> int:
                     cursor = page.get("nextCursor")
                     if not cursor:
                         break
-                emit(selection={"model": response["model"], "effort": effort})
+                selection = {"model": response["model"], "effort": effort, "tier": tier,
+                             "fast_wanted": bool(request.get("fast"))}
+                # An unchanged tier may produce no settings notification on the next turn.
+                if "serviceTier" in response and (response["serviceTier"] or "default") == tier:
+                    client.received_tier = response["serviceTier"] or "default"
+                emit(selection=selection)
             return response
         client._request_raw = selected_request
         resumed = None
@@ -268,7 +292,8 @@ def main() -> int:
                   request.get("fresh_prompt", request["prompt"]))
         for attempt in range(RETRIES + 1):
             turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
-            emit(turn=turn.id)
+            emit(turn=turn.id, requested_tier=tier, tier=client.received_tier,
+                 model=selection["model"], fast_wanted=selection["fast_wanted"])
             usage, items, busy = None, [], False
             for event in turn.stream():
                 payload = event.payload
@@ -285,6 +310,8 @@ def main() -> int:
                     error = payload.turn.error
                     busy = payload.turn.status.value == "failed" and overloaded(
                         params["turn"].get("error") or {})
+                    emit(speed={**selection, "turn": turn.id, "requested_tier": tier,
+                                "tier": client.received_tier})
                     # The same final text as the SDK's TurnResult.final_response.
                     emit(status=payload.turn.status.value, error=error and error.message,
                          text=_final_assistant_response_from_items(items), usage=usage)

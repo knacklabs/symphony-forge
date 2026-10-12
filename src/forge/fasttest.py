@@ -272,20 +272,11 @@ LARGE = ("More than a third of the test files selected; skipping local tests and
          "pull request's required checks.")
 
 
-def pytest_tests(base: str, command: str) -> int:
+def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
+    """The selected test files, all test files, whether shared inputs changed (all selected), and
+    the changed sources no test file names."""
     changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    parts = quicktest.test_parts(Path.cwd(), command)
-    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
-    if mixed:
-        command = " && ".join(part for kind, part, _ in parts
-                              if kind not in ("vitest", "jest", "node-install", "node-check"))
-    environment = dict(os.environ)
-    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
-    workers = machine.test_cpus()
-    environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
-    environment["FORGE_TEST_CPUS"] = workers
-    excluded = []
     tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
                                             "--exclude-standard")
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
@@ -308,26 +299,40 @@ def pytest_tests(base: str, command: str) -> int:
             parts.pop()
         if parts:
             modules.append((".".join(parts), path))
+    missed = [source.as_posix() for module, source in modules
+              if not any(mentions(path, module, source) for path in tests)]
+    everything = [path.as_posix() for path in tests]
+    if shared_changed:
+        return everything, everything, True, missed
+    selected = sorted(path.as_posix() for path in tests
+                      if path.as_posix() in changed
+                      or any(mentions(path, module, source) for module, source in modules))
+    return selected, everything, False, missed
+
+
+def pytest_tests(base: str, command: str) -> int:
+    parts = quicktest.test_parts(Path.cwd(), command)
+    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
+    if mixed:
+        command = " && ".join(part for kind, part, _ in parts
+                              if kind not in ("vitest", "jest", "node-install", "node-check"))
+    environment = dict(os.environ)
+    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
+    workers = machine.test_cpus()
+    environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
+    environment["FORGE_TEST_CPUS"] = workers
+    excluded = []
+    selected, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge.review import GAP  # imported late: review's imports lead back here
-    print("".join(f"{GAP}{source.as_posix()}; GitHub's checks will cover it.\n"
-                  for module, source in modules
-                  if not any(mentions(path, module, source) for path in tests)), end="", flush=True)
-    if shared_changed:
-        selected = [path.as_posix() for path in tests]
-    else:
-        selected = []
-        for path in tests:
-            if (path.as_posix() in changed
-                    or any(mentions(path, module, source)
-                           for module, source in modules)):
-                selected.append(path.as_posix())
-        selected.sort()
+    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+          end="", flush=True)
+    if not shared_changed:
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
+        excluded = [path for path in tests if path not in selected]
     if closing and len(selected) * 3 > len(tests):
         print(LARGE, flush=True)
         return 0

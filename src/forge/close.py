@@ -7,6 +7,8 @@ Nothing is committed after the checks: GitHub holds when they finished. A human 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -90,7 +92,8 @@ def close(args: argparse.Namespace) -> int:
                  and state["stop"].get("reason") == reason.strip())
     if choice or reason is not None:
         if (not choice or not reason or not reason.strip() or
-                not state.get("stop") or (state["stop"].get("choice") and not continued) or
+                not state.get("stop") or (state["stop"].get("choice") and not continued
+                                          and state["stop"].get("by") != "default") or
                 args.dismiss or args.because):
             repo.refuse(REFUSALS["bad_choice"], item=item)
         if not continued:
@@ -102,10 +105,14 @@ def close(args: argparse.Namespace) -> int:
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
+            defaulted = state["stop"].get("by") == "default"
+            if defaulted:  # the owner reverses the repo's default; the next worker round hears it
+                state["stop"].update(by="owner", worker_round=state.get("round"))
             state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
-            repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+            if not defaulted:
+                repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
@@ -114,7 +121,7 @@ def close(args: argparse.Namespace) -> int:
             print("Recorded the human's choice.")
     had_stop = bool(state.get("stop"))
     if not switch:
-        check_stop(item, state)
+        check_stop(item, state, top)
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
@@ -201,10 +208,10 @@ def close(args: argparse.Namespace) -> int:
     if (not switch and not fresh and round_number - choice_round >= 3 and
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
-        state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
+        state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
-        check_stop(item, state)
+        check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
     if not fresh:
@@ -283,7 +290,7 @@ def close(args: argparse.Namespace) -> int:
                                 if spotted._path(file))
             if candidates:
                 file = candidates[0]
-                stopped = {"file": file}
+                stopped = {"file": file, "at": repo.now()}
                 stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
@@ -364,12 +371,51 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
     return False
 
 
-def check_stop(item: str, state: dict[str, Any]) -> None:
-    """A human choice or a later clean review releases a review loop stop."""
+def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
+    """Record the repo's default choice, narrow, and start a follow-up fix for each open finding."""
+    from forge import task  # close imports story, which imports task
+
+    fixes = []
+    result = state.get("review") or {}
+    dismissed = {d["finding"] for d in result.get("dismissals", [])}
+    for number, finding in enumerate(result.get("findings", []), 1):
+        if number in dismissed:
+            continue
+        why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
+                       f"({finding['file']}:{finding['line']}): {finding.get('body', '')}".split())
+        done = " ".join(f"A review no longer finds: {finding['title']}".split())
+        out, here = io.StringIO(), os.getcwd()
+        try:  # fix start works in the current checkout: the follow-up stacks on this item
+            os.chdir(top)
+            with contextlib.redirect_stdout(out):
+                task.fix_start(argparse.Namespace(why=why, done=done, slug=None))
+        finally:
+            os.chdir(here)
+        fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])
+    state["stop"].update(choice="narrow", by="default", fixes=fixes, worker_round=state.get("round"),
+                         reason="Nobody answered in 30 minutes; the repo's default narrows the part "
+                                "to its Done-when lines and files each open finding as a follow-up fix")
+    state["status"] = "fixing"
+    _save(top, item, state, "Record the repo's default review loop choice: narrow")
+    repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+    print("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
+          "choice: narrow the part to its Done-when lines. Follow-up fixes own the open findings: "
+          f"{', '.join(fixes) or 'none'}. The owner can reverse it with "
+          f'forge close {item} --resolve <narrow|split|accept> --reason "<their choice>".', flush=True)
+
+
+def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
+    """A human choice, the repo's default after 30 minutes or a later clean review releases a
+    review loop stop."""
     result = state.get("review") or {}
     if (result.get("status") == "clean" and not review.blocking(result) and
             not (state.get("stop") or {}).get("choice")):
         state.pop("stop", None)
+    if state.get("stop") and not state["stop"].get("choice"):
+        top = top or _worktree(item)  # land passes no checkout
+        from forge.nextstep import default_due  # nextstep imports close
+        if default_due(top, state):
+            _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
         repo.refuse(REFUSALS["hotspot"], item=item,
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),

@@ -213,7 +213,7 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
                           'utf-8')
     read = repo.forge('read', 'SHOP')
     assert read.returncode == 0, read.stderr
-    events = [row for row in records(repo, 'events.jsonl') if row['kind'] == 'read']
+    events = [row for row in records(repo, 'events.jsonl') if row.get('kind') == 'read']
     # Agent admission is now recorded alongside the original reader run.
     assert [row['event'] for row in events] == [
         'lane joined', 'lane admitted', 'run start', 'run end', 'lane left']
