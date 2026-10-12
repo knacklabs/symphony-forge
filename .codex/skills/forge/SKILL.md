@@ -1147,6 +1147,13 @@ selection. Supported runners with no related tests run none locally. A red CI st
 the item back to the worker.
 To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
 `{base}` standing for the merge base with the default branch.
+Tests that check the whole repo, such as rules over every test file, name no changed file, so
+the pytest picker never picks them and they fail only in CI. List them in `always_test` in
+`forge.toml` (in a fix), as test files or pytest node IDs such as
+`tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
+them on every change, beside the tests it picks, even when it leaves a large selection to CI.
+Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
+entry that runs no test, for example because `-k` deselects it, fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,

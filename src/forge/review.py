@@ -385,7 +385,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
-        if not always:
+        # forge.toml's always_test runs on every change, settings and docs included.
+        if not always and not repo.config(top)["always_test"]:
             changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                                cwd=top).split("\0")
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
@@ -582,7 +583,9 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
     for _, message, files in repo.commit_log(top, base, head):
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^" + re.escape(label) + r".*", message, re.M | re.S)
+        # Any words between the label and its colon on that line still name the paragraph.
+        found = re.search(r"^" + re.escape(label.removesuffix(":")) + r"\b[^\n]*?:.*",
+                          message, re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 
