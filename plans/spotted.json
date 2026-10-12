@@ -2344,6 +2344,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNative land handouts reset the three-round fix limit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 98,
+      "text": "Native land handouts reset the three-round fix limit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -4434,6 +4445,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNot done: split fallback uses the Codex kit inside a Codex session\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 104,
+      "text": "Not done: split fallback uses the Codex kit inside a Codex session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: switching a design item to Claude can run Codex again\tstuck-worker-asks",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -5523,6 +5545,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
+      "kind": "bug",
+      "path": "tests/test_last_task_records_story_outcome.py",
+      "line": 46,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-green-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -5794,6 +5827,17 @@
       "text": "Not done: init and upgrade ignore forge.local.toml at their own entry points",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
+      "kind": "bug",
+      "path": "tests/test_pid_reuse_keeps_run.py",
+      "line": 21,
+      "text": "Not done: test PID reuse through Codex and an upgraded client",
+      "from": "blocking",
+      "item": "pid-reuse-keeps-run",
       "status": "open",
       "closed_by": null
     },
@@ -7609,28 +7653,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
-      "kind": "bug",
-      "path": "tests/test_pid_reuse_keeps_run.py",
-      "line": 21,
-      "text": "Not done: test PID reuse through Codex and an upgraded client",
-      "from": "blocking",
-      "item": "pid-reuse-keeps-run",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
-      "kind": "bug",
-      "path": "tests/test_last_task_records_story_outcome.py",
-      "line": 46,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "windows-green-3",
       "status": "open",
       "closed_by": null
     }
