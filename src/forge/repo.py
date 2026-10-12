@@ -614,7 +614,7 @@ def route(cfg: dict[str, Any], tool: str, *, command: str, item: str) -> str:
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
     """The design model for a family, including the default in older repos."""
-    return cfg["models"].get("design", {}).get(family, DESIGN_DEFAULTS[family])
+    return cfg.get("models", {}).get("design", {}).get(family, DESIGN_DEFAULTS[family])
 
 
 def _models_problem(table: Any) -> str:
