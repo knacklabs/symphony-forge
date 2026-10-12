@@ -5,33 +5,35 @@
     "src/forge/land.py",
     "src/forge/native.py",
     "src/forge/repo.py",
+    "src/forge/worker.py",
     "tests/test_tools_native_work.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "946fb3d1d699fc00d6f2472e84f93a9dac274259043e069700a802c04aadae14",
-    "changed": "eaff9674ff1c459648405b0a85195d7c9d1d2fd9b08d55cf4dc0656b562746f9",
-    "commit": "bb058946178000b20a974ab384349914f9e4b199",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-4 finding is fixed in commit 63ddb7a4d: separate uncommitted and committed settings-restore cases, the committed one asserting a new reversing commit, and a hand-back after the work is committed",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "97eacfcc2ecc1b4c687a9808507e9c3d46179ab655957d91a407214d3f1c027b",
+    "changed": "b206ebe1a519e7b9b464b53c2befb805b499f4975289e327e4c95693cdcec8c0",
+    "commit": "f65e895fb6ea9c6ccfeba6143154f9fb56ec3992",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Test. The uncommitted invalid forge.toml edit at line 155 is layered on top of a committed change. The test would still pass if the uncommitted restore were removed, because the committed restore checks out the handout version. It also checks the final file and clean status without proving the committed edit was reversed in a new commit. Earlier, the second handback occurs while work is still uncommitted; the test commits only afterward, so it never proves the named handback-after-commit path. These Done-when outcomes need independent command-level assertions.",
-        "file": "tests/test_tools_native_work.py",
-        "line": 155,
+        "body": "Raise: Not done. The `Building ... with` line uses `repo.worker`'s built-in model. In an earlier-adopted repo without a `[models]` table, `roles._chosen` leaves the Codex worker and fixer roles without a model, so they inherit the coordinating session's model. A session using a different model therefore runs the round on that model while Forge prints `gpt-6.1-sol`. Done-when 3 requires the printed line to name the role's model.",
+        "file": "src/forge/worker.py",
+        "line": 118,
         "priority": "P1",
-        "title": "Not done: prove settings restoration and the post-nudge handback"
+        "title": "Not done: printed model matches the native Codex role"
+      },
+      {
+        "body": "Raise: Test. The Codex cases return here before the command-level assertions for a `fixer` handout, land stopping without closing, and land closing after handback with no commit. `test_subagent_roles.py` checks the role files but does not run those commands. The required native build proof can therefore pass with those Codex paths broken, despite the repository rule that the same behaviour be tested through both adapters.",
+        "file": "tests/test_tools_native_work.py",
+        "line": 208,
+        "priority": "P1",
+        "title": "Not done: Codex fixer handout and land proof"
       }
     ],
-    "id": "97b85ec0-ff6d-4100-b4be-d1a92150a58b",
-    "status": "clean"
+    "id": "efaa7c96-8b1f-4055-a185-ad63c522c4b2",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T05:42:50.219272+00:00",
@@ -47,6 +49,10 @@
     },
     {
       "at": "2026-10-12T13:33:26.527582+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T13:58:41.231827+00:00",
       "step": "review"
     }
   ],
