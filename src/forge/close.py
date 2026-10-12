@@ -959,7 +959,10 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
         why, summary = doc.get("Why", ""), row.get("what it delivers", "")
     else:
         why, summary = state.get("why", ""), state.get("done_when", "")
-        title = re.split(r"[,;:.!?]", why, maxsplit=1)[0][:70]
+        # The first sentence: it ends at . ! or ? before a capital or the end, never in v1.2.10.
+        title = " ".join(re.split(r"[.!?](?=\s+[A-Z]|\s*$)", why, maxsplit=1)[0].split())
+        if len(title) > 256:  # GitHub's title limit
+            title = title[:title.rfind(" ", 0, 257)].rstrip(",;:.!?")
     return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
 
 

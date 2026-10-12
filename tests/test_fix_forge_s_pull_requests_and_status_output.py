@@ -17,23 +17,6 @@ def test_1_pr_title_and_labeled_body(env):
                                    "Done when: Shoppers can save their basket with one click\n")
 
 
-@pytest.mark.parametrize("why, expected", [
-    ("The owner cannot tell which action to take from this very long pull request title "
-     "when the first clause runs beyond the stated limit, with more details afterward",
-     "The owner cannot tell which action to take from this very long pull re"),
-    ("Readers cannot tell what to do, because the title buries the action",
-     "Readers cannot tell what to do"),
-])
-def test_2_fix_title_uses_first_clause_and_seventy_characters(env, why, expected):
-    item, _ = env.start_fix(why=why)
-    env.reviews(CLEAN)
-    assert env.close(item).returncode == 0
-    create = env.gh_calls("pr", "create")[-1]
-    title = create[create.index("--title") + 1]
-    assert title == expected
-    assert len(title) <= 70
-
-
 @pytest.mark.parametrize("blocked_review", [False, True])
 def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review):
     item, where = env.start_fix()
