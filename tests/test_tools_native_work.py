@@ -100,6 +100,12 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert lane("BOARD/HELP") == []
         timings = (repo.path / ".git/forge/timings.jsonl").read_text("utf-8")
         assert '"item": "BOARD/HELP", "round": 1, "step": "worker round"' in timings
+        events = [json.loads(line) for line in
+                  (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]
+        [begun] = [e for e in events if e["event"] == "run start" and e["item"] == "BOARD/HELP"]
+        [ended] = [e for e in events if e["event"] == "run end" and e["item"] == "BOARD/HELP"]
+        assert (begun["kind"], begun["round"], begun["family"]) == ("work", 1, tool)
+        assert (ended["run_id"], ended["outcome"]) == (begun["id"], "completed")
 
         # The next round continues the subagent on the role's model; a changed forge.toml, the
         # pin included, is put back, and a closing question is recorded.
@@ -111,7 +117,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         settings = (folder / "forge.toml").read_text("utf-8")
         (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")
         repo.git("commit", "-q", "-am", "Try another release", cwd=folder)
-        (folder / "forge.toml").write_text(settings + "# scratch\n", "utf-8")
+        (folder / "forge.toml").write_text(settings + "[[[ not settings\n", "utf-8")
         asked = handback("BOARD/HELP", number, "Done.\n\nQuestion: Which colour?", cwd=folder)
         assert asked.returncode == 0, asked.stdout + asked.stderr
         assert (folder / "forge.toml").read_text("utf-8") == settings
@@ -140,10 +146,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert "background fixer subagent" in landed.stdout
         assert "Next: run the subagent, forge handback tidy-words, then forge land tidy-words" in landed.stdout
         assert "Closing" not in landed.stdout
-        fix = Path(re.search(r"working in (.+)\.\n", landed.stdout)[1])
-        (fix / "notes.txt").write_text("tidy\n", "utf-8")
-        repo.git("add", "-A", cwd=fix)
-        repo.git("commit", "-q", "-m", "Tidy", cwd=fix)
+        # A round that commits nothing still closes after its hand-back.
         number = int(re.search(r"--round (\d+)", landed.stdout)[1])
         assert handback("tidy-words", number, "Tidied.").returncode == 0
         assert "Closing tidy-words." in host.forge("land", "tidy-words").stdout

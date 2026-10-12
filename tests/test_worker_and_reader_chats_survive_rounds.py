@@ -40,6 +40,9 @@ def _adopted(repo):
 
 
 def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
+    # No coordinating app, so either tool's worker runs through its kit, also after a switch.
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     if adopted:
         _adopted(repo)
     folder, codex, turns = _resuming(repo, monkeypatch, sdk_data, client=True, start_task=kind == "task")

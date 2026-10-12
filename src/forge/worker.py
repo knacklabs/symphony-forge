@@ -210,7 +210,7 @@ def work(args: argparse.Namespace) -> None:
                           phase="fixing_findings" if findings or failing else "building")
         if is_native:
             native.hand_out(top, item, owner, admission, round_number, role, brief,
-                            fresh_brief or brief, thread, fresh, chosen)
+                            fresh_brief or brief, thread, fresh, chosen, family)
             return
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE

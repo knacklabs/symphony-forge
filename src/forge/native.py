@@ -130,14 +130,16 @@ def resumable(top: Path, item: str, owner: dict[str, Any]) -> tuple[dict[str, An
 
 def hand_out(top: Path, item: str, owner: dict[str, Any], entry: dict[str, Any], round_number: int,
              role: str, brief: str, fresh_brief: str, resume: str | None, why: str,
-             chosen: dict[str, str]) -> None:
+             chosen: dict[str, str], family: str) -> None:
     """Write the round's briefs beside the item's record, record it pending and say how to run it."""
     short, whole = (codex._item_file(top, item, suffix, "Build") for suffix in (".brief.md", ".fresh.md"))
     whole.write_text(fresh_brief, encoding="utf-8")
     short.write_text(brief, encoding="utf-8")
+    run_id = repo.record_event(top, item, "run start", kind="work", round=round_number,
+                               family=family, model=chosen.get("model"), effort=chosen.get("effort"))
     _start(top, item, "Build", owner, entry, result={"round": round_number}, role=role,
            head=repo.git("rev-parse", "HEAD", cwd=top), started=time.time(), at=repo.now(),
-           model=chosen)
+           model=chosen, run_id=run_id)
     place = top.resolve().as_posix()
     print(f"Run this round as a background {role} subagent of this session, working in {place}.")
     if resume:
@@ -230,7 +232,9 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     codex._record(path, question=asked or None, question_id=identity,
                   native={"session": owner["id"], "subagent": subagent,
                           "head": repo.git("rev-parse", "HEAD", cwd=top),
-                          "rounds": pending["result"]["round"]})
+                          "rounds": pending["result"]["round"], "outcome": outcome})
+    repo.record_event(top, item, "run end", kind="work", round=pending["result"]["round"],
+                      run_id=pending["run_id"], outcome=outcome)
     if asked:
         print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
     repo.record_timing(top, item, "worker round", pending["at"],

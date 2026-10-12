@@ -39,10 +39,14 @@ def land(args: argparse.Namespace) -> int:
         status = state.get("status", "started")
         start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--",
                          repo.state_path(item), cwd=top)
+        head = repo.git("rev-parse", "HEAD", cwd=top)
+        # A completed session round handed back at this HEAD made no commit; it goes to close.
+        handed = codex.record(top, item).get("native") or {}
         if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
-                status == "started" and repo.git("rev-parse", "HEAD", cwd=top) == start or
+                status == "started" and head == start or
                 status == "working" and
-                repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working"):
+                repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working" and
+                (handed.get("head"), handed.get("outcome")) != (head, "completed")):
             say(f"Building {item}.")
             if _handed_out(step, top):
                 return 0
