@@ -5446,6 +5446,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
+      "kind": "bug",
+      "path": "tests/test_last_task_records_story_outcome.py",
+      "line": 46,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-green-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -5721,6 +5732,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
+      "kind": "bug",
+      "path": "tests/test_pid_reuse_keeps_run.py",
+      "line": 21,
+      "text": "Not done: test PID reuse through Codex and an upgraded client",
+      "from": "blocking",
+      "item": "pid-reuse-keeps-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_pull_request_body_limit.py\tNot done: the pull-request body-limit command test passes\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "tests/test_pull_request_body_limit.py",
@@ -5882,6 +5904,17 @@
       "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
       "from": "blocking",
       "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "tests/test_score_notes.py",
+      "line": 99,
+      "text": "Not done: test the data-loss Harm floor",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
       "status": "open",
       "closed_by": null
     },
@@ -7488,28 +7521,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
-      "kind": "bug",
-      "path": "tests/test_pid_reuse_keeps_run.py",
-      "line": 21,
-      "text": "Not done: test PID reuse through Codex and an upgraded client",
-      "from": "blocking",
-      "item": "pid-reuse-keeps-run",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
-      "kind": "bug",
-      "path": "tests/test_last_task_records_story_outcome.py",
-      "line": 46,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "windows-green-3",
       "status": "open",
       "closed_by": null
     }

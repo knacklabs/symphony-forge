@@ -1,27 +1,28 @@
 {
   "branch": "task/FORGE-SCORE-1-SCORES",
   "flagged": [
-    "src/forge/score.py"
+    "src/forge/score.py",
+    "tests/test_score_notes.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e8f6ef8f42f5c2900d67fdfd06c05c1308d48eb0a0042fb6da9fe5516cfa3638",
-    "changed": "b3bdafdca3da9395d96e416ad2293323079a139b3ce451dc60d9282f71fe7b8d",
-    "commit": "78a643b97861bb34bc47183eb91fadaaccc5b576",
+    "branch_diff": "5ed8f661caa325d8af2b4a51428097976f2f4beed7b97984500059f29620bf03",
+    "changed": "f3062e40066f34a0bac78c5121dc0f4eb5b4e0e7bc64921019a629409dd74653",
+    "commit": "9c8ecf4f246d1cd78d28a336d06d3cced794762e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 The score pattern accepts `Harm 1.5`: the word boundary matches after `1`, and `.*` consumes `.5`. `parse` then returns Harm 1, and `normalise` silently rewrites the reviewer's decimal score to 1. A malformed new finding should be rejected so the review can retry, as it does for a missing score line.",
-        "file": "src/forge/score.py",
+        "body": "Gain 3, Work 1, Harm 4\nRaise: Test \u2014 Done-when item 1 names data loss, but the command-level test covers only Security and migration findings. No test supplies `Raise: Data loss` with Harm below 4 or checks for `(floor: data loss)`. The data-loss branch of `score.normalise` could break while the current tests pass.",
+        "file": "tests/test_score_notes.py",
         "gain": 3,
-        "harm": 2,
-        "line": 11,
+        "harm": 4,
+        "line": 99,
         "priority": "P1",
-        "title": "Not done: scores must be integers from 1 to 5",
+        "title": "Not done: test the data-loss Harm floor",
         "work": 1
       }
     ],
-    "id": "1047ee59-16ef-4720-82dd-4bf0697f6b05",
+    "id": "a72943ac-887b-40b0-9e83-c5b285a2492c",
     "status": "blocked"
   },
   "status": "fixing",
@@ -33,7 +34,10 @@
     {
       "at": "2026-10-12T14:52:50.886140+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T15:26:30.128237+00:00",
+      "step": "review"
     }
-  ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 3545316f0af3c8b1125007b1ac394e5437d61b0d` exited with status 1 on this machine.\nNo local test names src/forge/score.py; GitHub's checks will cover it.\n.. [ 86%]\n.F.....................                                                  [100%]\n=================================== FAILURES ===================================\n___ test_1_every_note_and_finding_shows_scores_and_the_harm_floor[sign-off] ____\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-SCORES/.venv/bin/python\n\nenv = <test_close.Forge object at 0x10b6d0510>\ntmp_path = PosixPath('/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2669/popen-gw0/test_1_every_note_and_finding_0')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b6d2410>\ncase = 'sign-off'\n\n    @pytest.mark.parametrize(\"case\", [\"init\", \"earlier-adoption-upgrade-sync\", \"sign-off\", \"narrowed\"])\n    def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path, monkeypatch, case):\n        repo = env.repo\n        if case == \"sign-off\":\n            (tmp_path / \"sign-off\").mkdir()\n            fix, answers, queue = _client(repo, tmp_path / \"sign-off\", monkeypatch)\n            _decision(fix, answers)\n            queue.write_text(json.dumps([{\"say\": SOL_HIGH, \"report\": {\"review_status\": \"findings\", \"findings\": [\n                _scored(\"P1\", \"Prototype fails\", \"Gain 3, Work 2, Harm 1\\nDemo cannot finish\")]}}]))\n            refused = repo.forge(\"decision\", \"accept\", \"client-signoff\", \"--by\", \"Ravi\", cwd=fix)\n            assert refused.returncode == 1\n            assert \"found a blocking issue: Prototype fails\" in refused.stderr\n            call = json.loads(queue.with_suffix(\".calls.jsonl\").read_text(\"utf-8\").splitlines()[-1])\n>           prompt = call[\"args\"][call[\"args\"].index(\"--prompt\") + 1]\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           ValueError: '--prompt' is not in list\n\ntests/test_score_notes.py:69: ValueError\n1 failed, 166 passed in 732.10s (0:12:12)"
+  ]
 }
