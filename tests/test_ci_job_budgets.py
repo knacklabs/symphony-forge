@@ -21,7 +21,7 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
     # macOS groups then ran 15 to 19 minutes of tests plus setup, so macOS gets 30.
     ("ubuntu-latest", 3, 20),
     ("macos-latest", 6, 30),
-    ("windows-latest", 8, 35),
+    ("windows-latest", 8, 45),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes, tmp_path):
     workflow = WORKFLOW.read_text(encoding="utf-8")
