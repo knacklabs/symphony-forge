@@ -140,8 +140,10 @@ class Forge:
         return [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
 
     def prompt(self) -> str:
-        args = self.review_calls()[-1]["args"]
-        return args[args.index("--prompt") + 1]
+        call = self.review_calls()[-1]
+        args = call["args"]
+        return "\n\n".join([value for flag, value in zip(args, args[1:]) if flag == "--prompt"]
+                           + list(call["prompt_files"].values()))
 
     def codex_calls(self) -> list[dict]:
         return [json.loads(line) for line in
@@ -484,7 +486,7 @@ def test_18_close(env, kind):
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones
     # block), the tests with the test-audit rule, and the Simpler rule with New moving parts.
-    prompt = options["--prompt"]
+    prompt = env.prompt()
     if kind == "task":
         scope, rest = prompt.split("outside that scope")
         outside, rest = rest.split("## Done when")

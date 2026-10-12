@@ -345,14 +345,22 @@ def worker_step(name: str, inputs: dict[str, Any]) -> str:
     return ("editing " if name in ("Edit", "Write", "fileChange") else "reading ") + " ".join(str(path).split()) if path else "using " + name
 
 
-def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> str:
-    """Read the same tool actions and result diagnostics for Claude workers and readers."""
+def claude_output(top: Path, item: str, ran: dict[str, Any], event: dict[str, Any]) -> str:
+    """Read the same tool actions and result diagnostics for Claude workers and readers, and keep
+    the model, effort, session and token use for the run's end."""
+    run_id = ran["run_id"]
     if event.get("type") == "system" and event.get("subtype") == "init":
-        record_progress(top, item, run_id, **{key: event[key] for key in ("model", "effort") if key in event})
+        chosen = {key: event[key] for key in ("model", "effort") if key in event}
+        record_progress(top, item, run_id, **chosen)
+        ran.update(chosen)
     response = event.get("response") or {}
     if event.get("type") == "control_response" and response.get("request_id") == "forge-live-settings":
         applied = (response.get("response") or {}).get("applied") or {}
-        record_progress(top, item, run_id, **{key: applied[key] for key in ("model", "effort") if key in applied})
+        chosen = {key: applied[key] for key in ("model", "effort") if key in applied}
+        record_progress(top, item, run_id, **chosen)
+        ran.update(chosen)
+    if event.get("type") == "result":
+        ran.update(chat=event.get("session_id"), **claude_tokens(event.get("usage") or {}))
     content = (event.get("message") or {}).get("content", [])
     for tool in content:
         if isinstance(tool, dict) and tool.get("type") == "tool_use":
@@ -365,11 +373,23 @@ def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> s
                    if isinstance(c, dict) and c.get("type") == "text")
 
 
+def claude_tokens(usage: dict[str, Any]) -> dict[str, Any]:
+    """Claude's token use in Codex's terms: input counts cached input too; Claude has no
+    reasoning count."""
+    if not isinstance(usage.get("input_tokens"), int):
+        return {}
+    return {"input_tokens": sum(usage.get(key) or 0 for key in (
+                "input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")),
+            "cached_input_tokens": usage.get("cache_read_input_tokens") or 0,
+            "output_tokens": usage.get("output_tokens"), "reasoning_output_tokens": None}
+
+
 @contextmanager
 def record_run(top: Path, item: str, kind: str, **fields: Any):
     """Keep starts and ends even for a run entirely between two board refreshes."""
     identity = record_event(top, item, "run start", kind=kind, **fields)
-    result = {"outcome": "failed", "run_id": identity}
+    result = {"outcome": "failed", "run_id": identity,
+              **{key: fields[key] for key in ("model", "effort") if fields.get(key)}}
     if "round" in fields:
         result["round"] = fields["round"]
     try:
