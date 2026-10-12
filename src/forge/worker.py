@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -15,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, repo, story, task
+from forge import codex, doctor, machine, native, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -97,20 +98,24 @@ def work(args: argparse.Namespace) -> None:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
     family = repo.worker(config, "build", design, state.get("tool"))[0]
     on_codex = family == "codex"
+    # The coordinating app's own tool runs the round as one of the session's subagents.
+    is_native = repo.route(config, family, command="work", item=item) == "native"
+    role = "frontend" if design else "worker" if match["task"] else "fixer"
     if note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
     # round: it continues the item's conversation.
-    later = (on_codex or design) and bool(codex.record(top, item).get("start") or
+    later = not is_native and (on_codex or design) and bool(codex.record(top, item).get("start") or
                                            state.get("status", "started") != "started")
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
-    claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design)
+    claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,
+                                                      native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, state.get("tool"))
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
                 f"because {why}")
-    if not on_codex:
+    if not on_codex or is_native:
         print(building, flush=True)
     if note is not None and (pending := codex.record(top, item).get("question_id")):
         repo.record_event(top, item, "owner wait end", wait_id=pending)
@@ -121,9 +126,14 @@ def work(args: argparse.Namespace) -> None:
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
     # The round then waits for one of the machine's agent slots.
-    with codex.hold(top, item, kind), machine.agent_slot(top, "work", item,
-            chosen.get("model"), chosen.get("effort")) as admission:
-        if on_codex:
+    with contextlib.ExitStack() as holding:
+        if is_native:
+            owner, admission = holding.enter_context(native.hold(top, item, kind, chosen))
+        else:
+            holding.enter_context(codex.hold(top, item, kind))
+            admission = holding.enter_context(machine.agent_slot(
+                top, "work", item, chosen.get("model"), chosen.get("effort")))
+        if on_codex and not is_native:
             codex.recover(top, item)
         saved = codex.record(top, item)
         state = repo.read_state(item, top) or {}
@@ -140,16 +150,19 @@ def work(args: argparse.Namespace) -> None:
         if previous and last != family:  # a failed start leaves nothing of the other to resume
             codex._record(codex._item_file(top, item, ".json", kind), conversation=None,
                           start=None, head=None, claude=None)
-        thread, fresh = (codex.conversation(top, item, approval) if on_codex
-                         and last == family else (None, "first turn"))
-        # A Claude worker continues the item's last session, including in a replacement checkout.
-        session = None if on_codex else codex.record(top, item).get("claude")
-        if last != family:
-            fresh = moved if previous else fresh
-        elif session:
-            thread = session["id"]
-        elif not on_codex and previous:
-            fresh = "Forge has no record of its Claude session on this machine"
+        if is_native:
+            session, (session_record, thread, fresh) = None, native.resumable(top, item, owner)
+        else:
+            thread, fresh = (codex.conversation(top, item, approval) if on_codex
+                             and last == family else (None, "first turn"))
+            # A Claude worker continues the item's last session, including in a replacement checkout.
+            session = None if on_codex else codex.record(top, item).get("claude")
+            if last != family:
+                fresh = moved if previous else fresh
+            elif session:
+                thread = session["id"]
+            elif not on_codex and previous:
+                fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
@@ -176,7 +189,7 @@ def work(args: argparse.Namespace) -> None:
                                     if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
         changes = ""
         if thread:
-            saved = session or codex.record(top, item)
+            saved = session_record if is_native else session or codex.record(top, item)
             changes = _changes(top, saved.get("head") or saved["start"])
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
                                 continued=bool(thread), changes=changes)
@@ -195,6 +208,10 @@ def work(args: argparse.Namespace) -> None:
                           top=top)
         repo.record_event(top, item, "work phase", lane_id=admission["id"],
                           phase="fixing_findings" if findings or failing else "building")
+        if is_native:
+            native.hand_out(top, item, owner, admission, round_number, role, brief,
+                            fresh_brief or brief, thread, fresh, chosen)
+            return
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE
         outcome = "failed"
@@ -285,8 +302,7 @@ def work(args: argparse.Namespace) -> None:
         finally:
             _restore_settings(item, top, state)
             if final is not None:
-                asked = "\n\n".join(dict.fromkeys(match[1] for answer in (final, nudged)
-                    if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
+                asked = questions(final, nudged)
                 identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
                 codex._record(codex._item_file(top, item, ".json", kind),
                               question=asked or None, question_id=identity)
@@ -300,6 +316,12 @@ def work(args: argparse.Namespace) -> None:
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+
+
+def questions(*answers: str) -> str:
+    """The trailing Question: blocks of a round's last messages, each once."""
+    return "\n\n".join(dict.fromkeys(match[1] for answer in answers
+        if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
 
 
 def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
@@ -418,6 +440,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on: set[str] = set()
     values: dict[str, str] = {
         "settings": SETTINGS,
+        "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
@@ -467,6 +490,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        brief += f"Work in the checkout at `{values['checkout']}`.\n"
         brief += "\n" + START_HERE + "\n"
         if match["task"]:
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"

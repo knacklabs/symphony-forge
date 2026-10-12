@@ -12,7 +12,7 @@ import time
 from functools import partial
 from pathlib import Path
 
-from forge import checks, close, merge, repo, review, worker
+from forge import checks, close, codex, machine, merge, repo, review, worker
 
 ROUNDS = 3
 REFUSALS = {
@@ -44,7 +44,8 @@ def land(args: argparse.Namespace) -> int:
                 status == "working" and
                 repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working"):
             say(f"Building {item}.")
-            worker.work(step)
+            if _handed_out(step, top):
+                return 0
         while True:
             repo.resume_pin(top, pin, rounds)
             step.land_rounds = rounds
@@ -55,8 +56,9 @@ def land(args: argparse.Namespace) -> int:
                 if error.entry is close.REFUSALS["hotspot"]:
                     state = _wait_for_choice(top, item)
                     rounds = step.land_rounds = 0
-                    if (state.get("stop") or {}).get("choice") in ("narrow", "split"):
-                        worker.work(step)
+                    if (state.get("stop") or {}).get("choice") in ("narrow", "split") and (
+                            _handed_out(step, top)):
+                        return 0
                     continue
                 if error.entry is checks.REFUSALS["conflict"] and not conflict_retry:
                     conflict_retry = True
@@ -86,7 +88,8 @@ def land(args: argparse.Namespace) -> int:
                     raise
                 rounds += 1
                 say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
-                worker.work(step)
+                if _handed_out(step, top):
+                    return 0
                 continue
             # Merged since close looked: close again, so its merged path reports and tidies.
             if not merged and _merged(top, branch):
@@ -112,6 +115,16 @@ def land(args: argparse.Namespace) -> int:
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")
         raise
+
+
+def _handed_out(step: argparse.Namespace, top: Path) -> bool:
+    """Run a round; a round handed to the session's subagent stops land until its hand-back."""
+    worker.work(step)
+    pending = codex._json(codex._item_file(top, step.item, ".json", "Build")).get("pending") or {}
+    if not any(run["id"] == (pending.get("entry") or {}).get("id") for run in machine.entries()):
+        return False
+    say(f"Next: run the subagent, forge handback {step.item}, then forge land {step.item}")
+    return True
 
 
 def _wait_for_choice(top: Path, item: str) -> dict:

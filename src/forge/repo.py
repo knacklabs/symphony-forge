@@ -666,6 +666,13 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     if done.returncode or not (top / "forge.toml").is_file():
         return
     pinned = config(top)["version"].removeprefix("v")
+    if words == "handback" and ITEM.fullmatch(item):
+        from forge import codex
+        # A build round's hand-back runs on the release its checkout pinned when it was handed out.
+        pending = codex._json(codex._item_file(top, item, ".json", "Build")).get("pending") or {}
+        if pending.get("head"):
+            handed = run("git", "show", f"{pending['head']}:forge.toml", cwd=pending["checkout"])
+            pinned = _pin(handed.stdout) or pinned
     if pinned == __version__:
         return
     from forge import story

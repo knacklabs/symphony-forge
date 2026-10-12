@@ -12,9 +12,10 @@ from conftest import patient
 
 STORY = "a-codex-or-claude-session-opened-directl"
 ROOT = Path(__file__).resolve().parents[1]
-ROLES = {"worker": "build", "coder": "build", "frontend": "build", "tester": "build",
+ROLES = {"worker": "build", "fixer": "lite", "coder": "build", "frontend": "design", "tester": "build",
          "refactorer": "build", "explorer": "lite", "planner": "design", "architect": "design",
          "debugger": "review", "security": "review", "performance": "review", "reader": "grill"}
+BUILDING = ("worker", "fixer", "coder", "frontend", "tester", "refactorer")
 MODELS = """
 [models.build]
 model = "claude-opus-5-5"
@@ -105,7 +106,7 @@ def test_1_sync_writes_roles_for_both_hosts_from_forge_toml(repo, adopted):
                   "and why in your handoff.",
                   "commit your own work with a short plain-English message",
                   "never commit to the default branch, skip the git hooks, push or merge")
-                 if ROLES[name] == "build" else ("Change no files",))
+                 if name in BUILDING else ("Change no files",))
         for rule in rules:
             assert rule in instructions, (name, rule)
     # Every role's (model, effort) on each host, from its kind; None means left out, so the
