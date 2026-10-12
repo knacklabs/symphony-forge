@@ -1,16 +1,16 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-12T16:13:15.516698+00:00
-read_hash: e9013a0247c97db5f09ef5fcdfaeb776df74effe
-round: 5
+read_at: 2026-10-12T16:20:15.138762+00:00
+read_hash: 6c1bde94b4a4ab4dc56ebca325f347fc639dc6d6
+round: 6
 passed: no
-doc_seen: e9013a0247c97db5f09ef5fcdfaeb776df74effe
+doc_seen: 6c1bde94b4a4ab4dc56ebca325f347fc639dc6d6
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 806a05e572a6edf841dd92cc3d419e31ac61128d
+notes_seen: 632c29bb32acba3d07d55cf13ef120e80c26e602
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a12bc8-a7cd-7b21-a693-963671ac740e
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -174,3 +174,17 @@ No findings.
     Disposition: cut - one finding counts once: identity is file and title, normalised, across rounds, known and saved results.
 
 Runtime tests were not run; these findings concern the changed plan and its promised behavior.
+
+## Round 6
+
+26. Blocking: The new indentation rule ends multiline function definitions before their bodies.
+    Raise: Functional
+    `plans/FORGE-SCORE-1.md:358–361` ends a block at any nonblank line at the definition’s indentation. A normal multiline signature closes its parentheses at that indentation, as in `tests/test_fix_no_plugin_context.py:11–14`. Findings inside such functions fall into the file area, combining unrelated functions for stops and suppression. The named module-level test does not exercise this case.
+    Disposition: cut - the area comes from the Python file's ast at the reviewed commit (innermost def or class whose lineno to end_lineno holds the line); other languages and files that don't parse use the file alone.
+
+27. Blocking: The new table-row contract omits the finding number that survives sorting and filtering.
+    Raise: Plan gap
+    Rows contain only text, scores and an optional proposal (`plans/FORGE-SCORE-1.md:187–189`), while the table ranks them by score. Original finding numbers are required by `forge close --dismiss` (`src/forge/close.py:307–313`). When finding 1 is below the bar and finding 2 blocks, a filtered table cannot recover finding 2’s number from this contract; numbering displayed rows can target the wrong dismissal.
+    Disposition: cut - each table row carries the finding's own number, which the # column shows unchanged by ranking or filtering.
+
+Runtime tests were not run; these are defects in the amended plan’s rules.

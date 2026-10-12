@@ -184,8 +184,11 @@ expect P3 and to show the P0-only level applied after scoring.
 
 **Stop-question call sites.** SCORES pins `score.table(rows)` as a stub that returns today's
 bullet lines, and makes `story.stop_question`, `story.read_question` and `close.stop_question`
-pass each row's scores and call it (a one-line call site each). A row is a dict with `text`,
-`gain`, `work`, `harm` and an optional `proposed`, which the table shows in place of the bar's
+pass each row's scores and call it (a one-line call site each). A row is a dict with `number`
+(the finding's or note's own number in its review or read, the one `--dismiss` and dispositions
+use), `text`, `gain`, `work`, `harm` and an optional `proposed`; the table's `#` column shows
+`number`, unchanged by ranking or by leaving rows out, so the owner answers by that number. The
+optional `proposed` which the table shows in place of the bar's
 words (BAR's area stop uses it). GUIDE then fills `score.table`
 alone, so BAR and GUIDE share no path and build in parallel after SCORES.
 
@@ -355,10 +358,10 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    finding at the bar plus a Harm 3 follow-up stays stopped.
    Area repeats, for review findings only (read notes keep the three-round rule above): an area
    is (file, enclosing function). `review.area(top, commit, file, line)`, in BAR's
-   `src/forge/review.py`, reads the file at the reviewed commit and returns the innermost `def`,
-   `function` or method line above the finding's line whose block still holds that line by
-   indentation (a non-blank line indented at or below the definition's own indentation ends its
-   block), or the file alone when no block holds it. Close counts distinct findings per area
+   `src/forge/review.py`, reads the file at the reviewed commit. For a Python file it parses it
+   with `ast` and returns the innermost `def`, `async def` or `class` whose `lineno` to
+   `end_lineno` holds the finding's line. For any other language, a file that doesn't parse, or a
+   line outside every definition, the area is the file alone. Close counts distinct findings per area
    across the item's rounds, from `known` and the saved results together, one per identity (item
    2). At the third distinct finding in one area that is not settled, close records a review-loop
    stop (the same `stop` state, the same accept, narrow or split choices) with the area in it. The
@@ -371,8 +374,8 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    area". Harm 4 floors always hold, so no security, data-loss or migration finding is suppressed.
    No marker line is needed. Test (same test as item 4): three distinct findings in one function
    across rounds stop, naming the function and proposing a structural move; one finding raised in
-   two rounds counts once; a finding in module-level code after that function is in a different
-   area; after `--resolve narrow`, a fourth finding there at the bar with Harm 2 does not hold
+   two rounds counts once; a finding in module-level code after that function, and one in a
+   function with a multiline signature, each fall in their own area; after `--resolve narrow`, a fourth finding there at the bar with Harm 2 does not hold
    work, and one with Harm 3 does.
 5. `score.table(rows)` renders the ranked table `# | Problem, for whom | Gain | Work | Harm |
    Proposed`, ranked by bar (block, fix now, follow-up, live with), then Harm and Gain descending,
