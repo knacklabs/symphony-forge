@@ -170,7 +170,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {
         "review_status": "incomplete", "findings": [], "scope_rejected_findings": [{
-            "priority": "P2", "title": "Outside scope", "body": "Review did not finish",
+            "priority": "P2", "title": "Outside scope", "body": "Gain 2, Work 1, Harm 1\nReview did not finish",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     incomplete = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert incomplete.returncode == 1
@@ -179,7 +179,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "exit": 2, "report": {
         "review_status": "scoped-clean", "findings": [], "scope_rejected_findings": [{
-            "priority": "P2", "title": "Outside scope", "body": "Review stopped early",
+            "priority": "P2", "title": "Outside scope", "body": "Gain 2, Work 1, Harm 1\nReview stopped early",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     unfinished = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert unfinished.returncode == 1
