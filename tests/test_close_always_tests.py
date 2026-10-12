@@ -83,6 +83,7 @@ def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adop
 @pytest.mark.parametrize("value, problem", [
     ('"tests/test_rules.py"', "always_test must be a list of strings"),
     ('["tests/test_missing.py::test_1"]', "tests/test_missing.py::test_1"),
+    ('["--help"]', "always_test lists --help, which is not a test path or node ID; list only tests"),
     ('["tests/unit/test_case_6.py::test_typo"]',
      "always_test names tests/unit/test_case_6.py::test_typo, which collects no test"),
 ])

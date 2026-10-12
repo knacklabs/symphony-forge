@@ -670,6 +670,10 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "version" and not VERSION.fullmatch(value):
             return "version must be a Forge release, such as v1.2.1"
+        flag = next((entry for entry in value if entry.startswith("-")), None) if key == "always_test" else None
+        if flag:
+            return (f"always_test lists {flag}, which is not a test path or node ID; "
+                    "list only tests, such as tests/test_rules.py")
         if key == "runner" and not value.strip():
             return "runner must name a GitHub Actions runner label"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
