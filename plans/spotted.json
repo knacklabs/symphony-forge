@@ -7490,6 +7490,83 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tNot done: When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes,an\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 178,
+      "text": "Not done: When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes,an",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tNot done: When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes,\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 182,
+      "text": "Not done: When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes,",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tUpdate the shipped Forge skill for the new merge cleanup step\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 181,
+      "text": "Update the shipped Forge skill for the new merge cleanup step",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: proof list\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 65,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_merge_command.py\tNot done: test a worktree held open by another process\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "tests/test_merge_command.py",
+      "line": 297,
+      "text": "Not done: test a worktree held open by another process",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_command.py\tNot done: test the required forge doctor --fix cleanup instruction\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "tests/test_merge_command.py",
+      "line": 301,
+      "text": "Not done: test the required forge doctor --fix cleanup instruction",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_refreshes_behind_base.py\tNot done: test failed worktree removal through forge land\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "tests/test_merge_refreshes_behind_base.py",
+      "line": 250,
+      "text": "Not done: test failed worktree removal through forge land",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
