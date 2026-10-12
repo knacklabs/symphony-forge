@@ -10,37 +10,51 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "86d1237cb0fd07a2b8ea450df39451e1fb35c9a9ac5f679f3615f191d27c635f",
-    "changed": "4c117b38e56bb596d0ecec051bc4cb52a027822e640a522dabb8c74b9ea09307",
-    "commit": "c4d54ac5a2e6b2b6ec23a07305c864622eb9df52",
+    "branch_diff": "a9e957f11a884a0e724646d66ee203bd3c72027cfc430fa07960dfa06f28e330",
+    "changed": "8b09d0841e0844234208e0f3ffa3b53cf7cc5b84127d35676118b70a3025e681",
+    "commit": "ca7db87a8c916e79f1d6c265a2751e63d02c2111",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Two worker rounds can leave the same review finding without triggering the required question. When a worker makes no code commit, close reuses the existing review, so `reviewed` stays the same; with no failing test, `tested_head` also stays the same. This equality check returns without counting the next round. The item can continue through repeated unchanged rounds indefinitely.",
+        "body": "Raise: Not done. When a worker completes two rounds without changing product code, close reuses the blocking review and its `commit`; with passing tests, `tested_head` also stays unchanged. This equality check returns without counting the second round, so the same finding can be sent back indefinitely instead of producing the required question. The named finding proof uses a worker that commits a change.",
         "file": "src/forge/close.py",
-        "line": 425,
+        "line": 492,
         "priority": "P1",
-        "title": "Not done: repeated findings without code commits never stop the item"
+        "title": "Not done: unchanged review findings can loop indefinitely"
       },
       {
-        "body": "Raise: Not done. The question derives \u201cThe worker tried\u201d solely from commit subjects and prints \u201cno new commits\u201d when that list is empty. A worker can attempt a fix, leave the test failing, and finish without a commit. Forge then asks the owner without describing the attempt, which the Done-when line requires.",
+        "body": "Raise: Not done. This records a stuck-stop `narrow` or `split` choice, but the next `forge work` passes an owner-choice note only when `stop.by == \"owner\"` and `worker_round` matches (worker.py:156-163). A stuck stop sets neither field, and `stuck_round` removes that stop before building the brief. The worker therefore receives no instruction to narrow or split. The named test checks only that another worker ran.",
         "file": "src/forge/close.py",
-        "line": 453,
+        "line": 120,
+        "priority": "P1",
+        "title": "Not done: narrow and split choices do not reach the next worker"
+      },
+      {
+        "body": "Raise: Not done. A story part can grow past its line limit during the round after the owner resolves an earlier review-loop stop. That recorded stop still exists, so `if not stop` is false and close returns the old split-or-allow-large refusal instead of the required ready-to-ask question about the oversized change. The size proof starts with no earlier stop.",
+        "file": "src/forge/close.py",
+        "line": 170,
+        "priority": "P1",
+        "title": "Not done: an earlier stop suppresses the size-limit question"
+      },
+      {
+        "body": "Raise: Not done. The question gets \u201cThe worker tried\u201d only from commit subjects and prints \u201cno new commits\u201d when that list is empty. A worker can attempt a fix, leave the failure in place, and finish without a code commit; the owner then sees no account of the attempt. The named question proof uses a worker that commits \u201cWorker round.\u201d",
+        "file": "src/forge/close.py",
+        "line": 518,
         "priority": "P1",
         "title": "Not done: the question omits what a worker without commits tried"
       },
       {
-        "body": "Raise: Functional. This stop check runs only after `worker.py:122` enters `machine.agent_slot`. As `machine.py:175-203` shows, another active worker and load of at least 1.5 per core can keep that call waiting. In that normal busy-machine case, Forge queues an item already due to stop and withholds its ready-to-ask question until a worker slot opens.",
+        "body": "Raise: Functional. The stop check runs after `machine.agent_slot` admission at worker.py:124-125. As machine.py:175-203 shows, another active worker and load of at least 1.5 per core can keep admission waiting. On a normally busy machine, an item already due to stop remains queued without its ready-to-ask question until a worker slot opens.",
         "file": "src/forge/worker.py",
-        "line": 155,
+        "line": 166,
         "priority": "P1",
         "title": "Not done: a stuck item waits for a worker slot before asking the owner"
       }
     ],
-    "id": "d591a807-a1f3-4a06-a4a1-630828b691b5",
+    "id": "55addc37-0963-49c3-b02f-3219cf5861e4",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -65,13 +79,16 @@
     {
       "at": "2026-10-11T23:49:04.332746+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:02:21.792464+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "accept",
+    "at": "2026-10-12T01:02:21.802157+00:00",
     "file": "src/forge/close.py",
-    "reason": "Coordinator decision under the owner's bar: finding 1 (false re-count) is fixed at the current head; findings 2 (Jest tail key, Gain 2 Work 2 Harm 1) and 3 (refusal hint, Gain 2 Work 1 Harm 1) are recorded as lived-with",
-    "wait_id": "df761558-9013-4705-b459-eb1ccac87b15"
+    "wait_id": "30d3e463-e524-4201-bf96-bd474571d65d"
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }
