@@ -1,10 +1,81 @@
 {
   "branch": "task/FORGE-BOARD-2-COUNTS",
-  "status": "started",
+  "flagged": [
+    "docs/specs/agent-merge.read.md",
+    "src/forge/board.py",
+    "src/forge/board_facts.py",
+    "src/forge/nextstep.py",
+    "tests/test_board_counts.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a6410a003a112ca684509ef3c61c41b0ef9c16228e8cd00209fe8f26b91c7ec8",
+    "changed": "87f62306ef8692f3a5538c1bbc78a56ccbec89c523b0090114630abc71d6a051",
+    "commit": "4fea0a5608364d6a721e260ab7004ab1b41dcec8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Functional. `review_ref` prefers an existing `origin/<branch>` over `headRefOid` even when that remote ref is stale. `forge next` does not fetch before checking readiness. After another machine pushes a commit, a matching receipt for the old commit can still make `forge next` report the item ready while GitHub reports the newer head.",
+        "file": "src/forge/nextstep.py",
+        "line": 648,
+        "priority": "P1",
+        "title": "Not done: readiness must use the current pull request head"
+      },
+      {
+        "body": "Raise: Functional. A fetched PR head can be ready through the shared record while this machine's worktree is behind it. The `HEAD == receipt['commit']` condition skips `forge close`, then the agent-merge path offers `forge merge`. That command requires a matching local receipt and refuses, so the recommended next step cannot complete.",
+        "file": "src/forge/nextstep.py",
+        "line": 705,
+        "priority": "P1",
+        "title": "Not done: shared readiness needs a valid next step when the worktree is behind"
+      },
+      {
+        "body": "Raise: Not done. `approved` accepts an approval from any historical copy without checking it against the current plan. If an approved plan is edited above `## For the builders`, `forge next` requires another read and approval, but this code still counts the story as building or approved, not started. The board's state and counts then disagree with the approval gate.",
+        "file": "src/forge/board_facts.py",
+        "line": 91,
+        "priority": "P1",
+        "title": "Not done: changed plans must lose their approved story count"
+      },
+      {
+        "body": "Raise: Not done. The new `review_ref` is used for readiness only. The board still builds findings and review status from its selected state copy (`board.py` lines 305\u2013309 and 448), while `forge next` reads the worktree state in `_task` (`nextstep.py` line 598). After a second machine pushes a newer reviewed commit, a machine with an older worktree can show the old findings and round while another shows the PR head's history.",
+        "file": "src/forge/nextstep.py",
+        "line": 614,
+        "priority": "P1",
+        "title": "Not done: read review history from the selected review ref"
+      },
+      {
+        "body": "Raise: Scale. `_prs` reads the cached weekly searches here, then makes another `gh pr list --state merged --limit 25` call at `board.py` line 878 on every HTML board run. The guide promises pull request lists at most once a minute, but repeatedly opening the page always makes this ninth, uncached list call.",
+        "file": "src/forge/board.py",
+        "line": 876,
+        "priority": "P1",
+        "title": "Cache the HTML board's additional merged pull request list"
+      },
+      {
+        "body": "Raise: Gate. This branch changes `docs/specs/agent-merge.read.md`, which is outside COUNTS' Scope and is not needed for shared counts, readiness, caching, or their tests. The edit also removes that separate spec read's `amended_hash`.",
+        "file": "docs/specs/agent-merge.read.md",
+        "line": 4,
+        "priority": "P1",
+        "title": "Scope: unrelated agent-merge read record changed"
+      },
+      {
+        "body": "Raise: Gate. The supplied proof list names `[counts]`, `[github-once]`, and `[approved-not-started]`, but this test also parametrizes `previous`, so none is an actual pytest node ID. The cases have IDs that include `new-client` or `earlier-adoption`; the recorded proof selectors therefore do not identify runnable tests.",
+        "file": "tests/test_board_counts.py",
+        "line": 99,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "2feed219-840a-48e0-8b09-dfdcfca9031a",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T12:45:31.934037+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T15:03:23.641141+00:00",
+      "step": "review"
     }
   ]
 }

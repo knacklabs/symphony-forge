@@ -441,6 +441,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/agent-merge.read.md\tScope: unrelated agent-merge read record changed\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "docs/specs/agent-merge.read.md",
+      "line": 4,
+      "text": "Scope: unrelated agent-merge read record changed",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/specs/board-for-the-team.md\tNot done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back\tspec-graph",
       "kind": "bug",
       "path": "docs/specs/board-for-the-team.md",
@@ -525,6 +536,17 @@
       "text": "Board launches Git once for every historical plan read",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tCache the HTML board's additional merged pull request list\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 876,
+      "text": "Cache the HTML board's additional merged pull request list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -877,6 +899,17 @@
       "text": "Standard: Plain English wherever a human looks",
       "from": "blocking",
       "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: changed plans must lose their approved story count\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 91,
+      "text": "Not done: changed plans must lose their approved story count",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -2971,6 +3004,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: read review history from the selected review ref\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 614,
+      "text": "Not done: read review history from the selected review ref",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: readiness must use the current pull request head\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 648,
+      "text": "Not done: readiness must use the current pull request head",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: shared readiness needs a valid next step when the worktree is behind\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 705,
+      "text": "Not done: shared readiness needs a valid next step when the worktree is behind",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: stopped specs on story branches disappear from forge next\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -4485,6 +4551,17 @@
       "text": "Not done: scope-only blocker admission test",
       "from": "blocking",
       "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: proof list\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 99,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
