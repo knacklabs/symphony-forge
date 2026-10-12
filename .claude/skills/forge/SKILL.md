@@ -61,7 +61,8 @@ Forge leaves a pull request that changes its own merge setting to the repo owner
 the item's merge base with its head, so an older branch can merge after the owner enables agent
 merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
 generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
-commits keep the worktree in place.
+commits keep the worktree in place. When another program holds the worktree open, the merge still
+finishes and keeps the local branch; close that program, then delete the folder the merge names.
 
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
@@ -306,6 +307,33 @@ and sync. Their earlier unrecorded history remains unknown. If a fresh clone or 
 logs cannot reconstruct already published measurements, How it went retains them and shows
 the current checkout's observations separately. Quote each snapshot separately; do not add
 their totals, because their intervals may overlap.
+
+Quote the item's round lines when explaining a long run, then quote the relevant breakdown
+categories rather than adding overlapping stage timers. The pane and `/forge` show these same
+details. The pull request's **How it went** section carries intervals, review rounds (including
+clean reviews), and waits with their ends. Close and merge retain observations from other
+checkouts and recompute repeated findings and overlapping time. The board reads this shared
+record alongside local observations; `source` says which it had. A GitHub merge ends the last
+wait at its merge time and names its merger. Story time counts each instant once: working when
+any part or recorded plan read is working, waiting when none is working and any is waiting,
+otherwise unknown. Human times use rounded plain units; JSON keeps raw seconds. Rebuilt history
+keeps its label and missing evidence remains unknown. New repos get this at init; existing
+repos, including earlier adoptions, get it on upgrade and sync.
+Worker questions and their answers refresh an existing pull request's record; a question before
+its first pull request stays local. A first-close merge conflict opens the pull request so its
+owner wait travels too, and resolving it records the wait's end.
+Resuming work ends a published merge wait even when another checkout started it. History
+refreshes retain the pull request's readiness; close publishes readiness for a newly checked head.
+Board and next reads use the current pull request history and head; cached checks apply only
+to the head they describe.
+Questions on older pull requests without local publication evidence stay local.
+Every pull request body stays within GitHub's size limit. Forge leaves tool-command prose out
+of the shared time record, shortens duplicated and advisory detail before the contract, and
+says plainly when it shortened anything. Exceptionally large time histories retain recent
+evidence and current readiness; omitted time stays unknown. Full contracts and proof stay in git.
+Items report working, waiting and unknown seconds alongside their detailed categories. An
+unfinished story's runway continues through now, including unknown time after its last read
+or recorded part activity; a read without a duration establishes a date, never guessed work.
 
 Live rows add `activity` (status and a running action), `idle_since` and `stalled`
 after 24 idle hours. A recorded worker adds tool, model, effort, round, start,
@@ -967,6 +995,9 @@ errors stop the round and keep its chat.
 Upgrade's sync commits earlier-release chat bindings in their owning work branches, without
 accepting reader findings. It also recovers turn logs when local JSON is missing, moved spec
 worktrees and workers on `forge/` branches. A landed spec's binding travels in the upgrade fix's existing notes.
+Sync never waits for other items' runs: it leaves the chat of an item whose `forge work` or
+`forge read` is running to that run, says so in one line, and refreshes everything else. A run
+on an earlier release doesn't save its own chat, so sync stops until it finishes.
 If several worktrees contain a moved spec and its reader notes, run `forge read <slug>` in its
 owning checkout, then sync again so Forge can preserve that binding without guessing the owner.
 For a log-only Codex spec read, sync asks Codex for the chat's starting commit; if Codex has none,

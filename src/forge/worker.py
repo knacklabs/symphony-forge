@@ -87,6 +87,11 @@ def work(args: argparse.Namespace) -> None:
     match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
+    from forge import time_records
+    # Review and body files can survive a failed first publication; only success needs a refresh.
+    published = (repo.ready_path(item, top).exists() or any(
+        event.get("item") == item and event.get("event") == "pull request published"
+        for event in time_records.read(top, "events")))
     if match["task"]:
         doc = f"plans/{match['key']}.md"
         story._parsed(story._text(top / doc), doc)  # pyright: ignore[reportPrivateUsage]
@@ -112,11 +117,18 @@ def work(args: argparse.Namespace) -> None:
                 f"because {why}")
     if not on_codex:
         print(building, flush=True)
-    if note is not None and (pending := codex.record(top, item).get("question_id")):
-        repo.record_event(top, item, "owner wait end", wait_id=pending)
-    from forge import time_records
-    if pending_merge := time_records.pending_merge_wait(top, item):
+    pr = None
+    if published:
+        from forge import close
+        pr = close._pull_request(top, state.get("branch") or repo.current_branch(top))
+    answered = note is not None and codex.record(top, item).get("question_id")
+    if answered:
+        repo.record_event(top, item, "owner wait end", wait_id=answered)
+    pending_merge = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
+    if pending_merge:
         repo.record_event(top, item, "owner wait end", wait_id=pending_merge["id"])
+    if pr and (answered or pending_merge):
+        close._refresh_record(top, item, state, pr)
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
@@ -199,6 +211,7 @@ def work(args: argparse.Namespace) -> None:
         nudge = COMMIT_NUDGE
         outcome = "failed"
         final = None
+        asked = ""
         nudged = ""
         try:
             if not on_codex:
@@ -293,6 +306,9 @@ def work(args: argparse.Namespace) -> None:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
+            if published and (asked or note is not None or pending_merge):
+                from forge import close
+                close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
                       f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
@@ -584,7 +600,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             except ValueError:
                 event = None
             if isinstance(event, dict):
-                line = repo.claude_output(top, item, ran["run_id"], event)
+                line = repo.claude_output(top, item, ran, event)
                 if event.get("type") == "result":
                     final_result = line.rstrip("\n")
             if line:

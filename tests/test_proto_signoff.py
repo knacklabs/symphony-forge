@@ -218,10 +218,11 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
-    assert "Sign-off person" in options["--prompt"]
-    assert "docs/product/BRIEF.md" in options["--prompt"]
-    assert "| Topic | Question | Options (default first) | Before sign-off |" in options["--prompt"]
-    assert "| Data import | Does data need to come in from today's tools?" in options["--prompt"]
+    prompt = "\n\n".join(calls[-1]["prompt_files"].values())
+    assert "Sign-off person" in prompt
+    assert "docs/product/BRIEF.md" in prompt
+    assert "| Topic | Question | Options (default first) | Before sign-off |" in prompt
+    assert "| Data import | Does data need to come in from today's tools?" in prompt
     assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {
         "README.md", "forge.toml", "app.py", "docs/product/BRIEF.md"}
 

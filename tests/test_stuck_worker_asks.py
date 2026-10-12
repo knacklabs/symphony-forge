@@ -4,6 +4,7 @@ recorded and the next round follows it. Both client hosts get the guide paragrap
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 import pytest
@@ -121,7 +122,8 @@ def test_3_switch_runs_the_next_round_on_the_other_tool(land, sdk_data, monkeypa
     assert "Codex builds it" in env.repo.forge("next").stdout
     # A Codex this project trusts, as test_codex_worker sets it up.
     _install(env.repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
-    monkeypatch.setenv("CODEX_BIN", str(env.repo.bin / "codex-app-server"))
+    monkeypatch.setenv("CODEX_BIN", str(env.repo.bin / (
+        "codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     home = env.tmp / "codex-home"
     home.mkdir()

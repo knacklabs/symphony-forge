@@ -91,6 +91,9 @@ REFUSALS = {
                "so it stopped the driver before any conversation.", "forge {command} {item}"),
     "server": ("Forge can't read the start time and command of the Codex app-server, process "
                "{pid}, so it stopped Codex before any conversation.", "forge {command} {item}"),
+    "old_run": ("forge {command} {item} is running on an earlier Forge release, which doesn't save "
+                "its own chat, so sync can't move that chat yet.",
+                "let forge {command} {item} finish, then forge sync"),
     "busy": ("forge {command} {item} is already running as process {pid}, and only one runs per "
              "item; wait for it to finish.", "forge {command} {item}"),
     "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
@@ -327,6 +330,13 @@ def preserve_chats(top: Path) -> None:
                     if not state or state.get("chat"):
                         continue
                     rel = repo.state_path(item)
+                running = _json(_item_file(owner, item, ".lock", kind))
+                if running and _alive(running) is not False:
+                    command = "read" if kind == "Grill" else "work"
+                    if not running.get("saves_chat"):  # an earlier release keeps it only here
+                        repo.refuse(REFUSALS["old_run"], item=item, command=command)
+                    print(f"Left {item}'s chat alone: forge {command} {item} is running and keeps it.")
+                    continue
                 with hold(owner, item, kind):
                     saved = recovered or record(owner, item, kind)
                     if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
@@ -622,6 +632,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         repo.record_progress(checkout, item, ran["run_id"],
                                              model=said["selection"]["model"],
                                              effort=said["selection"]["effort"])
+                        ran.update(model=said["selection"]["model"], effort=said["selection"]["effort"])
                     text = "\n".join(filter(None, [fast_said(said["selection"]),
                                                   *before_selection]))
                     before_selection.clear()
@@ -678,6 +689,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         "input_tokens": usage.get("inputTokens"),
                         "cached_input_tokens": usage.get("cachedInputTokens"),
                         "output_tokens": usage.get("outputTokens")})
+                    ran.update(chat=result["conversation"], **result["usage"],
+                               reasoning_output_tokens=usage.get("reasoningOutputTokens"))
                     _append(turns, {**started, **continued, "status": said["status"],
                                     "ended": repo.now(), **result["usage"]})
                     _record(record, head=repo.git("rev-parse", "HEAD", cwd=checkout))
@@ -990,7 +1003,8 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
     command = "read" if kind == "Grill" else "work"
-    held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
+    # This release's runs commit their own chat to their branch, so sync can leave them be.
+    held = _take(lock, {**(identity(os.getpid()) or {"pid": os.getpid()}), "saves_chat": True})
     if held:
         owner, alive = held
         repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock,

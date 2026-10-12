@@ -293,17 +293,15 @@ def _check_locked_worktree(env):
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
         "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
     _merge_at_github(env)
+    # A lock makes git worktree remove fail, as a program holding the folder open does on Windows.
     env.repo.git("worktree", "lock", str(where))
-    blocked = env.repo.forge("merge", item)
-    assert blocked.returncode != 0
-    assert blocked.stderr == (f"Forge could not remove the worktree for {item}.\n"
-                              f"Next: unlock it or close programs using it, then forge merge {item}\n")
+    merged = env.repo.forge("merge", item)
+    assert merged.returncode == 0, merged.stdout + merged.stderr
+    assert f"Merged {item}. Forge could not fully remove its worktree at " in merged.stdout
+    assert "; close any program using that folder, then delete the folder " in merged.stdout
     assert where.is_dir()
-    assert (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").is_file()
-    env.repo.git("worktree", "unlock", str(where))
-    retried = env.repo.forge("merge", item)
-    assert retried.returncode == 0, retried.stderr
-    assert not where.exists()
+    assert env.repo.git("rev-parse", "--verify", "fix/tidy-readme")
+    assert f"forge merge {item}" not in env.repo.forge("next").stdout
 
 
 @pytest.mark.parametrize("scenario", ("dirty", "local_commit", "locked_worktree",

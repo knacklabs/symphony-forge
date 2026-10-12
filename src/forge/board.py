@@ -10,7 +10,6 @@ none of those. Without gh the page shows the state and its dates only.
 from __future__ import annotations
 
 import html
-import io
 import json
 import os
 import re
@@ -78,7 +77,7 @@ def repo_root(top: Path) -> str:
 CHECKS_QUERY = """query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes { number headRefName headRefOid title url isDraft
+      nodes { number headRefName headRefOid title url isDraft body
         commits(last: 1) { nodes { commit { oid statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
@@ -141,6 +140,8 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
         return "unknown", [], []
     try:
         commit = pr["commits"]["nodes"][-1]["commit"]
+        if not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]:
+            return "unknown", [], []
         contexts = commit["statusCheckRollup"]["contexts"]
         nodes = contexts["nodes"]
         if not isinstance(nodes, list):
@@ -172,14 +173,15 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
               "unknown" if not statuses or "unknown" in statuses or missing or
               contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
-    if status == "fail" and (not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]):
-        return "unknown", [], []
     return status, events, failures
 
 
 def _rollup(pr: Item) -> list[Item]:
     try:
-        nodes = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+        commit = pr["commits"]["nodes"][-1]["commit"]
+        if not pr.get("headRefOid") or commit.get("oid") != pr["headRefOid"]:
+            return []
+        nodes = commit["statusCheckRollup"]["contexts"]["nodes"]
         return [{**n, "startedAt": n.get("createdAt")} if n.get("__typename") == "StatusContext" else n
                 for n in nodes if isinstance(n, dict)] if isinstance(nodes, list) else []
     except (KeyError, TypeError, IndexError):
@@ -244,13 +246,15 @@ def machine_board(top: Path, history: Item | None = None,
     # A capped all-state snapshot may omit older open or merged PRs.
     complete = prs_snapshot is not None and len(prs_snapshot) < 1000
     older = ([p for p in prs_snapshot if p.get("state") == "OPEN"] if complete else
-             nextstep._prs(top, "open", "number,headRefName,url,isDraft"))
+             nextstep._prs(top, "open", "number,headRefName,headRefOid,url,isDraft,body"))
     for pr in older:
-        by_branch.setdefault(pr["headRefName"], pr)
-    merged_details = {p["headRefName"]: p for p in (prs_snapshot if complete else
-                  nextstep._prs(top, "merged", "headRefName,mergedAt"))
-                  if (not complete or p.get("state") == "MERGED")
-                  and isinstance(p.get("headRefName"), str)} if trees else {}
+        by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
+    finished_prs = [p for p in (prs_snapshot if complete else
+                    nextstep._prs(top, "merged", "headRefName,headRefOid,state,mergedAt,mergedBy,body"))
+                    if p.get("state", "MERGED") == "MERGED"
+                    and isinstance(p.get("headRefName"), str)]
+    by_branch.update({p["headRefName"]: p for p in finished_prs})
+    merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
     readiness: dict[str, Item] = {}
@@ -416,7 +420,7 @@ def machine_board(top: Path, history: Item | None = None,
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
                 stages[-1]["elapsed"] = elapsed(live[0].get("at"))
-        stage, receipt = (nextstep._item_readiness(item, state, top, checks, active)
+        stage, receipt = (nextstep._item_readiness(item, state, top, checks, runs=active, pr=pr)
                           if kind != "story" else (state.get("status"), {}))
         if kind == "story" and not finished:
             stage = readiness.get(item, {}).get("stage", "planning")
@@ -508,11 +512,12 @@ def machine_board(top: Path, history: Item | None = None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                **(time_records.item(top, item, state, events=recorded, timings=timings,
-                                     ended_at=merged_dates.get(branch)) if kind != "story" else {
-                    "total_seconds": sum(r.get("seconds") or 0 for r in timings
-                                         if r.get("item") == item and r.get("round") is not None)
-                                     if round_number is not None else None}),
+                "merged_by": (pr or {}).get("mergedBy"),
+                **({k: v for k, v in time_records.merged(
+                    time_records.item(top, item, state, events=recorded, timings=timings,
+                                      ended_at=merged_dates.get(branch)),
+                    time_records.from_body((pr or {}).get("body") or "")).items()
+                    if k not in ("events", "timings", "state", "ended_at")} if kind != "story" else {}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 
@@ -565,6 +570,43 @@ def machine_board(top: Path, history: Item | None = None,
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
                 item["children"].append(child)
+    older_parts: dict[str, list[Item]] = {}
+    for rel, (state, _) in best.items():
+        match = STATE.fullmatch(rel)
+        if rel not in history["expired"] or not match["task"] or match["key"] not in items:
+            continue
+        key, tid = match["key"], match["task"]
+        branch = state.get("branch") or f"task/{key}-{tid}"
+        if rel in merged or branch in merged_prs or key in completed:
+            state = {**state, "status": "merged"}
+        older_parts.setdefault(key, []).append(time_records.merged(
+            time_records.item(top, f"{key}/{tid}", state, events=recorded, timings=timings,
+                              ended_at=merged_dates.get(branch)),
+            time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
+    notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
+                      for key, current in items.items() if current["kind"] == "story"}
+    past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
+                             if (previous := story._record(notes)[0].get("notes_seen")))), follow_notes=True)
+    for key, notes in notes_by_story.items():
+        current = items[key]
+        read_rounds, seen = [], set()
+        while notes:
+            record, _ = story._record(notes)
+            try:
+                seconds = float(record["seconds"])
+            except (KeyError, ValueError):
+                seconds = None
+            read_rounds.append({"read_at": record.get("read_at"), "seconds": seconds})
+            previous = record.get("notes_seen")
+            if not previous or previous in seen:
+                break
+            seen.add(previous)
+            notes = past_notes.get(previous, "")
+        started = _step(best.get(repo.state_path(key), ({}, landed))[0], "start")
+        current.update(time_records.story([*current["children"], *older_parts.get(key, [])], read_rounds,
+                                          unfinished=current["stage"] != "done",
+                                          started_at=started.isoformat() if started else None,
+                                          finished_at=completed.get(key, {}).get("finished")))
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
     active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}
@@ -728,20 +770,30 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     return stories, fixes, prs
 
 
-def _blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> dict[str, str]:
     """Read git objects in one process; sizes are bytes, including on Windows."""
     if not specs:
         return {}
-    done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
-                          input=("\n".join(specs) + "\n").encode("utf-8"), capture_output=True,
-                          check=True, env={**os.environ, "FORGE_WORKER": "1"})
-    contents, texts = io.BytesIO(done.stdout), {}
-    for spec in specs:
-        header = contents.readline()
-        if not header.endswith(b" missing\n"):
-            text = contents.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+    pending, seen, texts = list(dict.fromkeys(specs)), set(specs), {}
+    with subprocess.Popen([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          env={**os.environ, "FORGE_WORKER": "1"}) as process:
+        assert process.stdin is not None and process.stdout is not None
+        for spec in pending:
+            process.stdin.write((spec + "\n").encode("utf-8"))
+            process.stdin.flush()
+            header = process.stdout.readline()
+            if header.endswith(b" missing\n"):
+                continue
+            text = process.stdout.read(int(header.split()[-1])).decode("utf-8", errors="replace")
             texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
-            contents.read(1)
+            process.stdout.read(1)
+            if follow_notes and (previous := story._record(texts[spec])[0].get("notes_seen")) and previous not in seen:
+                seen.add(previous)
+                pending.append(previous)
+        output, errors = process.communicate()
+        if process.returncode:
+            raise subprocess.CalledProcessError(process.returncode, process.args, output, errors)
     return texts
 
 
@@ -840,7 +892,7 @@ def _prs(top: Path) -> list[Item] | None:
         return None
     # GitHub times out on this repo when it resolves files and checks for every pull request.
     done = repo.run("gh", "pr", "list", "--state", "all", "--limit", "1000", "--json",
-                    "headRefName,state,title,body,mergedAt,url", cwd=top)
+                    "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url", cwd=top)
     try:
         prs = json.loads(done.stdout) if done.returncode == 0 else None
     except ValueError:
@@ -848,7 +900,7 @@ def _prs(top: Path) -> list[Item] | None:
     if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
         return None
     recent = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "25", "--json",
-                      "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup", cwd=top)
+                      "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", cwd=top)
     try:
         details = json.loads(recent.stdout) if recent.returncode == 0 else []
     except ValueError:
@@ -857,7 +909,7 @@ def _prs(top: Path) -> list[Item] | None:
                  and isinstance(pr.get("headRefName"), str)}
     opened = {p["headRefName"]: p for p in _machine_prs(top)}
     return [{**pr, **by_branch.get(pr.get("headRefName"), {}),
-             **({"statusCheckRollup": _rollup(opened.get(pr.get("headRefName")) or {})}
+             **({"statusCheckRollup": _rollup({**opened.get(pr.get("headRefName"), {}), **pr})}
                 if pr.get("state") == "OPEN" else {})} for pr in prs]
 
 
@@ -1042,11 +1094,8 @@ def _working_days(start: datetime, end: datetime) -> int:
 
 
 def _took(delta: timedelta) -> str:
-    minutes = max(1, round(delta.total_seconds() / 60))
-    days, rest = divmod(minutes, 24 * 60)
-    hours, minutes = divmod(rest, 60)
-    shown = [(days, "day"), (hours, "hour")] if days else [(hours, "hour"), (minutes, "minute")]
-    return " ".join(_n(n, word) for n, word in shown if n)
+    from forge.time_records import plain
+    return plain(delta.total_seconds())
 
 
 def _n(n: float, word: str) -> str:
