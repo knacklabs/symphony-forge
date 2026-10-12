@@ -1816,6 +1816,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 296,
+      "text": "Not done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1845,6 +1856,17 @@
       "text": "Skip stale spec-reader records before resolving their document paths",
       "from": "blocking",
       "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tSuccessful sync can leave the only reader binding in disposable local records\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 296,
+      "text": "Successful sync can leave the only reader binding in disposable local records",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
       "status": "open",
       "closed_by": null
     },
@@ -2206,6 +2228,17 @@
       "path": "src/forge/fasttest.py",
       "line": 75,
       "text": "Close can pass without running tests when always_test contains a pytest help option",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed after pytest filters out an always_test entry\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 320,
+      "text": "Close can succeed after pytest filters out an always_test entry",
       "from": "blocking",
       "item": "close-always-tests",
       "status": "open",
@@ -4709,6 +4742,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/conftest.py\tNot done: a suite regression test for inherited coordinator and Forge defaults\tpin-test-defaults",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 303,
+      "text": "Not done: a suite regression test for inherited coordinator and Forge defaults",
+      "from": "blocking",
+      "item": "pin-test-defaults",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tThe live Codex smoke test loses its opt-in in a nested pytest run\tpin-test-defaults",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 306,
+      "text": "The live Codex smoke test loses its opt-in in a nested pytest run",
+      "from": "blocking",
+      "item": "pin-test-defaults",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/stubs/codex-app-server",
@@ -6271,6 +6326,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_sync_in_any_worktree.py\tNot done: the command-level sync proof\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "tests/test_sync_in_any_worktree.py",
+      "line": 35,
+      "text": "Not done: the command-level sync proof",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: concurrent sync in new and adopted client repos\tsync-not-blocked",
       "kind": "bug",
       "path": "tests/test_sync_not_blocked_by_other_runs.py",
@@ -7831,61 +7897,6 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's\tsync-in-any-worktree",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 296,
-      "text": "Not done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's",
-      "from": "blocking",
-      "item": "sync-in-any-worktree",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tSuccessful sync can leave the only reader binding in disposable local records\tsync-in-any-worktree",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 296,
-      "text": "Successful sync can leave the only reader binding in disposable local records",
-      "from": "blocking",
-      "item": "sync-in-any-worktree",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/conftest.py\tNot done: a suite regression test for inherited coordinator and Forge defaults\tpin-test-defaults",
-      "kind": "bug",
-      "path": "tests/conftest.py",
-      "line": 303,
-      "text": "Not done: a suite regression test for inherited coordinator and Forge defaults",
-      "from": "blocking",
-      "item": "pin-test-defaults",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/conftest.py\tThe live Codex smoke test loses its opt-in in a nested pytest run\tpin-test-defaults",
-      "kind": "bug",
-      "path": "tests/conftest.py",
-      "line": 306,
-      "text": "The live Codex smoke test loses its opt-in in a nested pytest run",
-      "from": "blocking",
-      "item": "pin-test-defaults",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_sync_in_any_worktree.py\tNot done: the command-level sync proof\tsync-in-any-worktree",
-      "kind": "bug",
-      "path": "tests/test_sync_in_any_worktree.py",
-      "line": 35,
-      "text": "Not done: the command-level sync proof",
-      "from": "blocking",
-      "item": "sync-in-any-worktree",
-      "status": "done",
-      "closed_by": "dismissed"
     }
   ]
 }
