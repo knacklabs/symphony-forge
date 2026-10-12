@@ -1002,14 +1002,13 @@ Upgrade's sync commits earlier-release chat bindings in their owning work branch
 accepting reader findings. It also recovers turn logs when local JSON is missing, moved spec
 worktrees and workers on `forge/` branches. A landed spec's binding travels in the upgrade fix's existing notes.
 Sync never waits for other items' runs: it leaves the chat of an item whose `forge work` or
-`forge read` is running to that run, says so in one line, and refreshes everything else. A run
-on an earlier release doesn't save its own chat, so sync stops until it finishes.
-If several worktrees contain a moved spec and its reader notes, run `forge read <slug>` in its
-owning checkout, then sync again so Forge can preserve that binding without guessing the owner.
-For a log-only Codex spec read, sync asks Codex for the chat's starting commit; if Codex has none,
-run the read in its owning checkout before retrying sync.
-Keep `.git/forge` until the upgrade finishes. If those chat records have
-uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying.
+`forge read` is running to that run, says so in one line, and refreshes everything else.
+Sync writes every generated file first, then keeps chats. When it can't keep one (a run on an
+earlier release holds it, its record has uncommitted edits, several worktrees hold a moved spec,
+or Codex has no starting commit for a log-only spec read), it prints a warning that names the item,
+the reason and the next step. It leaves that chat on this machine only, so run `forge read <slug>`
+or `forge work <item>` on its own branch before you remove `.git/forge`.
+Keep `.git/forge` until the upgrade finishes.
 
 Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
