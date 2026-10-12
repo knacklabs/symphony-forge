@@ -212,6 +212,7 @@ def plain(title: str, body: str = "") -> str:
     markdown, labels, file paths or hashes."""
     def sentences(text: str, keep: int) -> str:
         text = " ".join(text.replace("**", "").replace("`", "").split())
+        text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)  # a markdown link keeps its words
         text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Functional|Test|"
                       r"Security|Scale|Data loss|Later|Follow-up)\s*[.:\u2014\u2013-]+\s*)+", "", text, flags=re.I)
         text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
@@ -253,7 +254,7 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         except ValueError:
             row = {}
         title = re.search(r"^# (.+)$", text, re.M)
-        name = plain(row.get("Name") or item) + (f" (part of {title[1].strip()})" if title else "")
+        name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
     flagged = [plain(finding["title"], finding.get("body", ""))

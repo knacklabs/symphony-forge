@@ -40,8 +40,12 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     doc = where / ("plans/SHOP.md" if target == "SHOP" else "docs/specs/basket.md")
     doc.parent.mkdir(parents=True, exist_ok=True)
     # A short bold lead-in keeps the sentence after it.
-    original = DOC if target == "SHOP" else SPEC.replace(
-        "Each invoice is emailed as a PDF.", "**Emailed invoices.** Each invoice is emailed as a PDF.")
+    # A title with a markdown link and a path reads in plain words in the question.
+    original = DOC.replace("# Shoppers can save a basket",
+                           "# Shoppers can save a [basket](docs/basket.md) from `src/basket.py`",
+                           1) if target == "SHOP" else SPEC.replace(
+        "Each invoice is emailed as a PDF.", "**Emailed invoices.** Each invoice is emailed as a PDF.").replace(
+        "# Invoices by email", "# Invoices by [email](docs/email.md) at `src/mail.py`", 1)
     doc.write_text(original, "utf-8")
     if target != "SHOP":
         saved = repo.forge("spec", "save", target, cwd=where)
