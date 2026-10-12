@@ -961,8 +961,8 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
         why, summary = state.get("why", ""), state.get("done_when", "")
         # The first sentence: it ends at . ! or ? before a capital or the end, never in v1.2.10.
         title = " ".join(re.split(r"[.!?](?=\s+[A-Z]|\s*$)", why, maxsplit=1)[0].split())
-        if len(title) > 256:  # GitHub's title limit
-            title = title[:title.rfind(" ", 0, 257)].rstrip(",;:.!?")
+        if len(title) > 70:  # a title the owner reads at a glance
+            title = title[:title.rfind(" ", 0, 71)].rstrip(",;:.!?")
     return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
 
 

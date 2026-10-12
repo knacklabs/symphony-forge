@@ -10,7 +10,7 @@ from test_close import CLEAN, env  # noqa: F401 - command-level fixture
 
 STORY = "pr-title-whole-sentence"
 
-LONG = ("Readers " + "cannot tell which step comes next " * 9).strip()
+LONG = ("Readers " + "cannot tell which step comes next " * 3).strip()
 
 
 @pytest.mark.parametrize("client", ["new", "adopted on an earlier release"])
@@ -19,7 +19,7 @@ LONG = ("Readers " + "cannot tell which step comes next " * 9).strip()
      "On Windows, forge merge run from inside a worktree fails"),
     ("Clients and this repo need v1.2.10 to get the fixes. Release it now.",
      "Clients and this repo need v1.2.10 to get the fixes"),
-    (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 257)]),
+    (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 71)]),
 ])
 def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
     if client == "new":
