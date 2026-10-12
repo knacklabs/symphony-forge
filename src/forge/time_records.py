@@ -1,7 +1,6 @@
 """Elapsed time and review history, shared through pull requests and local observations."""
 import json
 import hashlib
-import math
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -388,10 +387,14 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
         "\n<!-- forge:time-record " + json.dumps(shared, separators=(",", ":")) + " -->"
 
 
-def _finite(text: str) -> float:
+TEN_YEARS = 10 * 365 * 86400
+
+
+def _sane(text: str) -> float:
+    """Every number in the record is a duration or a count: never negative, never over ten years."""
     value = float(text)
-    if not math.isfinite(value):
-        raise ValueError(f"{text} is not a finite number")
+    if not 0 <= value <= TEN_YEARS:  # also refuses NaN and infinity
+        raise ValueError(f"{text} is outside the record's range")
     return value
 
 
@@ -401,15 +404,15 @@ def from_body(body: str) -> dict[str, Any]:
     if not match:
         return {}
     # One guard for every reader: anyone can edit a PR body, so the record is read once the way
-    # board, next and close read it, and any wrong type, null or non-finite number makes it no
+    # board, next and close read it, and any wrong type, null or out-of-range number makes it no
     # record instead of a crash.
     try:
-        data = json.loads(match[1], parse_float=_finite, parse_constant=_finite)
+        data = json.loads(match[1], parse_float=_sane, parse_int=lambda text: int(_sane(text)), parse_constant=_sane)
         merged({}, data)
         (data.get("ready") or {}).get("commit")
         "".join([data.get("legacy_text") or ""])
         return data
-    except (ValueError, TypeError, AttributeError, KeyError, IndexError):
+    except (ValueError, TypeError, AttributeError, KeyError, IndexError, OverflowError):
         return {}
 
 
