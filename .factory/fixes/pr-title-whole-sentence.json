@@ -1,0 +1,14 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/pr-title-whole-sentence",
+  "done_when": "A pull request's title is the whole first sentence of the item's why, shortened at a word boundary only when it passes GitHub's title length",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:28.924353+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Pull request titles stop at the first comma of the fix's why, so titles read 'On Windows' or 'Clients and this repo need v1'"
+}
