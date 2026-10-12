@@ -124,7 +124,7 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     def story_state(key: str, row: Item | None) -> str:
         if key in completed or row is None:
             return "done"  # a story left out of the rows finished more than seven days ago
-        if approved(key):
+        if approved(key) and row["gates"]["plan_read"]["status"] != "blocked":  # story.gate, as forge next
             return "building" if f".factory/stories/{key}/tasks/" in stories else "approved, not started"
         if row["gates"]["plan_read"]["status"] == "passed":  # story.gate, as forge next checks it
             return "waiting for approval"

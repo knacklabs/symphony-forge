@@ -9,6 +9,10 @@ from datetime import datetime, timedelta, timezone
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
 
+def row(data, item):
+    return next(r for r in data["items"] if r["id"] == item)
+
+
 def lists(env):
     return [call for call in env.gh_calls("pr", "list") if "--head" not in call]
 
@@ -18,11 +22,15 @@ def github_read_once(env, monkeypatch, previous):
     client(env, previous)
     now = datetime(2026, 10, 14, 15, tzinfo=timezone.utc)  # a Wednesday
     monkeypatch.setenv("FORGE_NOW", now.isoformat())
-    env.gh.respond("pr", "list", stdout="[]")
+    item, _ = env.start_fix()
+    env.gh.respond("pr", "list", stdout=json.dumps([{
+        "number": 7, "headRefName": f"fix/{item}", "state": "OPEN", "title": "Readme greets new readers",
+        "body": "", "isDraft": False, "url": "https://github.com/acme/shop/pull/7"}]))
     before = len(lists(env))
     for _ in range(2):
         shown = env.repo.forge("board", "--json")
         assert shown.returncode == 0, shown.stderr
+    assert row(json.loads(shown.stdout), item)["pr"]["number"] == 7
     calls = lists(env)[before:]
     assert [call[call.index("--state") + 1] for call in calls] == ["open"] + ["merged"] * 7
     monday = datetime(2026, 10, 12, tzinfo=timezone.utc)
@@ -36,5 +44,9 @@ def github_read_once(env, monkeypatch, previous):
     for _ in range(2):
         shown = env.repo.forge("board", "--json")
         assert shown.returncode == 0, shown.stderr
-        assert json.loads(shown.stdout)["team"]["counts"]["fixes"]
+        data = json.loads(shown.stdout)
+        assert data["team"]["counts"]["fixes"]["in progress"] == 1
+        # What only GitHub knows is unknown: the pull request, who merged it and the trends.
+        assert row(data, item)["pr"]["number"] is None and row(data, item)["merged_by"] is None
+        assert all(data["team"][key] is None for key in ("pace", "go_live", "trends", "around_forge"))
     assert len(lists(env)) - before == 8 + 2

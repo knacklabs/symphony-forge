@@ -595,7 +595,12 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
         return {**landed, "status": "merged"}
     branch = f"task/{key}-{task}"
     path = trees.get(branch)
-    state = (repo.read_state(item, path) if path else None) or {}
+    if path:
+        state = repo.read_state(item, path) or {}
+    elif history is not None:  # started on another machine: its pushed branch holds the state
+        state = history["ref_states"].get(f"refs/remotes/origin/{branch}", {}).get(repo.state_path(item)) or {}
+    else:
+        state = story.json_of(story.show(top, f"origin/{branch}", repo.state_path(item)))
     return {**state, "status": "merged"} if branch in merged_prs else state
 
 
@@ -648,6 +653,8 @@ def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
     (GitHub's head, else origin's branch), unless the local branch contains it."""
     local = _commit(top, f"refs/heads/{branch}")
     head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
+    if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it
+        repo.run("git", "fetch", "-q", "origin", head, cwd=top)
     if local and (not head or local == head or repo.run(
             "git", "merge-base", "--is-ancestor", head, local, cwd=top).returncode == 0):
         return local

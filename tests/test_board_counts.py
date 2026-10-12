@@ -188,6 +188,9 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert part["state"] == "ready to merge"
     assert part["next"] == {"command": None,
                             "line": "Show a saved basket is ready to merge; Forge Test merges it from their machine."}
+    following = env.repo.forge("next")
+    assert "SHOP/T2 is ready to merge; Forge Test merges it from their machine." in following.stdout, following.stdout
+    assert "forge task start SHOP/T2" not in following.stdout
 
     # In a human-merge repo the same part gives the human-merge line.
     env.repo.path = machine_a
@@ -278,9 +281,14 @@ def approved_not_started(env, previous):
     text = re.sub(r"<[^>]+>", " ", page.read_text("utf-8"))
     assert "Approved, not started: 1" in text and "Building: 0" in text
 
-    # An edit to what the approval binds needs a new approval: the story is planning again.
-    env.commit(worktree(env.repo, "story/CART"), "plans/CART.md",
-               ONE_PART.replace("come back to it", "come back to it later"))
+    # An edit to the Why after the read stops it counting as approved, as forge next's gate says.
+    plan = worktree(env.repo, "story/CART") / "plans/CART.md"
+    env.commit(plan.parent.parent, "plans/CART.md",
+               plan.read_text("utf-8").replace("leave.", "leave the shop."))
+    assert rows(board(env.repo))["CART"]["state"] == "planning"
+    # An edit to what the approval binds needs a new approval too.
+    env.commit(plan.parent.parent, "plans/CART.md",
+               plan.read_text("utf-8").replace("come back to it", "come back to it later"))
     assert rows(board(env.repo))["CART"]["state"] == "planning"
 
 
@@ -313,9 +321,10 @@ def newer_findings(env, monkeypatch, previous):
     env.repo.path = machine_a
     local = json.loads(env.repo.git("show", f"fix/{item}:.factory/fixes/{item}.json"))
     assert local["round"] != newer["round"] and not local["review"]["findings"]
+    # forge next runs first, before any board fetch, and reads the newer head all the same.
+    following = env.repo.forge("next")
+    assert "Basket disappears" in following.stdout, following.stdout
     row = rows(board(env.repo))[item]
     assert row["findings"]["titles"] == ["Basket disappears"]
     assert row["round"] == newer["round"]
     assert row["gates"]["review"]["status"] == "blocked"
-    following = env.repo.forge("next")
-    assert "Basket disappears" in following.stdout, following.stdout
