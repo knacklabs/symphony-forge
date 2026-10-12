@@ -16,7 +16,8 @@ REVIEW_RULE = "Check every entry against the code and its named proof, including
 
 def checked(proof):
     """The list close writes: a line it cannot match to its test run is marked not checked."""
-    return "\n".join(line if line == "Proof list:" else f"{line} (not checked)" for line in proof.splitlines())
+    first, *rest = proof.splitlines()
+    return "\n".join([first, *(f"{line} (not checked)" for line in rest)])
 
 
 def flat(text):
@@ -73,14 +74,15 @@ def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypat
     assert "pull request" in brief
 
 
-@pytest.mark.parametrize("kind", ["fix", "task"])
+@pytest.mark.parametrize("kind", ["fix", "task", "task-worded-label"])
 def test_2_close_delivers_the_whole_proof_list_to_pr_and_first_review(env, kind):
     if kind == "fix":
         item, where = env.start_fix()
     else:
         item, where = env.start_approved_task(
             (env.repo.path / "plans/SHOP.md").read_text("utf-8"))
-    proof = "Proof list:\n- Greeting, including returning readers: the greeting check passed\n- Empty greeting: missing"
+    label = "Proof list (run on this commit with -n 2: 3 passed):" if kind == "task-worded-label" else "Proof list:"
+    proof = label + "\n- Greeting, including returning readers: the greeting check passed\n- Empty greeting: missing"
     env.repo.git("commit", "--allow-empty", "-q", "-m", "List the proof", "-m", proof, cwd=where)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr

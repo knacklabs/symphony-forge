@@ -385,7 +385,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
-        if not always:
+        # forge.toml's always_test runs on every change, settings and docs included.
+        if not always and not repo.config(top)["always_test"]:
             changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                                cwd=top).split("\0")
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
@@ -591,7 +592,9 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
     for _, message, files in repo.commit_log(top, base, head):
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^" + re.escape(label) + r".*", message, re.M | re.S)
+        # Any words between the label and its colon on that line still name the paragraph.
+        found = re.search(r"^" + re.escape(label.removesuffix(":")) + r"\b[^\n]*?:.*",
+                          message, re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 
@@ -646,10 +649,9 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         return said + found[0][len(name):]
 
     lines = []
-    for line in commit_paragraph(top, base, "Proof list:").splitlines():
+    for number, line in enumerate(commit_paragraph(top, base, "Proof list:").splitlines()):
         if not TEST_NAME.search(line):  # close cannot match a line without pytest names to its run
-            lines.append(line if not line.strip() or line.startswith("Proof list:")
-                         else f"{line} (not checked)")
+            lines.append(line if number == 0 or not line.strip() else f"{line} (not checked)")
             continue
         lines.append(TEST_NAME.sub(result, line))
     return "\n".join(lines)
