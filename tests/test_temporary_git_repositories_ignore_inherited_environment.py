@@ -29,11 +29,18 @@ def test_1_every_test_clears_inherited_git_environment_before_bare_remote_setup(
         "def test_bare_remote_without_repo_fixture(tmp_path):\n"
         "    subprocess.run(['git', 'init', '-q', '--bare', str(tmp_path / 'remote.git')], "
         "check=True)\n"
-        "    assert not any(name.startswith('GIT_') for name in os.environ)\n",
+        "    assert not any(name.startswith('GIT_') for name in os.environ)\n"
+        "    # A Forge run, a helper path and a Claude Code session around the suite leak nothing.\n"
+        "    for name in ('FORGE_LAND_ROUNDS', 'FORGE_WORKER', 'AUTOREVIEW', 'CLAUDECODE'):\n"
+        "        assert name not in os.environ, name\n"
+        "    assert os.environ['CODEX_THREAD_ID'] == 'thr-test-coordinator'\n"
+        "    assert os.environ['FORGE_LIVE_CODEX'] == '0'  # the real-Codex opt-in passes through\n",
         encoding="utf-8")
     environment = {**os.environ, "GIT_DIR": str(sentinel / ".git"),
                    "GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "test.inherited",
-                   "GIT_CONFIG_VALUE_0": "yes", "PYTEST_ADDOPTS": ""}
+                   "GIT_CONFIG_VALUE_0": "yes", "PYTEST_ADDOPTS": "",
+                   "FORGE_LAND_ROUNDS": "1", "FORGE_WORKER": "1", "AUTOREVIEW": "/elsewhere",
+                   "CLAUDECODE": "1", "CODEX_THREAD_ID": "outer-session", "FORGE_LIVE_CODEX": "0"}
     done = subprocess.run([sys.executable, "-m", "pytest", "-q", str(suite)],
                           cwd=tmp_path, env=environment, capture_output=True, text=True,
                           encoding="utf-8", timeout=120)
