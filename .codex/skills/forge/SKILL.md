@@ -967,6 +967,9 @@ errors stop the round and keep its chat.
 Upgrade's sync commits earlier-release chat bindings in their owning work branches, without
 accepting reader findings. It also recovers turn logs when local JSON is missing, moved spec
 worktrees and workers on `forge/` branches. A landed spec's binding travels in the upgrade fix's existing notes.
+Sync never waits for other items' runs: it leaves the chat of an item whose `forge work` or
+`forge read` is running to that run, says so in one line, and refreshes everything else. A run
+on an earlier release doesn't save its own chat, so sync stops until it finishes.
 If several worktrees contain a moved spec and its reader notes, run `forge read <slug>` in its
 owning checkout, then sync again so Forge can preserve that binding without guessing the owner.
 For a log-only Codex spec read, sync asks Codex for the chat's starting commit; if Codex has none,
