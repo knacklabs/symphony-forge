@@ -27,11 +27,17 @@
 - Forge stops a change after three rounds only when a note at the bar comes back, or a note with
   Harm 3 or more is still open. When you don't answer a stop in 30 minutes, Forge narrows the
   change on its own only if every open note has Harm 1 or 2. Otherwise it waits for you.
-- When one area of a change draws its third note in the same item (the same function, or the
-  same Done when item), Forge stops fixing those notes one at a time. The stop question first
-  offers a structural move: cut the code that invites the notes, replace the cases with one
-  general rule, narrow that Done when item, or fail closed for security and safety code. After
-  that, a new note on the settled area holds work back only with new evidence of Harm 3 or more.
+- When review findings keep coming in one area of a change, Forge stops fixing them one at a
+  time. An area is one function, or one file when the finding is outside a function. At the third
+  finding in one area, close stops. The stop question names the area. The coordinator proposes a
+  structural move: cut the code that invites the findings, replace the cases with one general
+  rule, narrow that Done when item, or make security code fail closed. You still answer accept,
+  narrow or split. After your answer, a new finding in that area holds work back only when it is
+  at the bar with Harm 3 or more. A note about security, data loss or a migration always holds
+  work back. Cold reads keep the three-round rule above.
+- Forge never drops a known finding from its record. Each finding shows what happened to it: a
+  follow-up, lived with, accepted, or fixed in a later round. One finding counts once, however
+  many rounds raise it.
 - Stop questions and the coordinator's updates show the open notes as one ranked table: number,
   the problem and who it hits, Gain, Work, Harm, and what the coordinator proposes. Then they say
   what accept, narrow and split each do.
@@ -61,7 +67,7 @@ default answer after 30 minutes.
 1. **Every cold-read note and every review finding shows a Gain, Work and Harm score from 1 to 5, and a note about security, data loss or a migration never shows Harm below 4.**
 2. **A read passes and a change reaches Ready when no note is at the bar; a Gain 1 or 2 note never holds work back unless its Harm is 4 or more, and every note below the bar is listed with its scores in the read notes or the pull request.**
 3. **A note already settled by the owner, the coordinator or Forge reaches every later read and review as known and accepted, and comes back only with new evidence of harm.**
-4. **Forge stops a change after three rounds only when a note at the bar comes back or a note with Harm 3 or more is open, and it also stops at the third note in one area of an item (the same function or Done when item) with cut, general rule, narrow and fail closed offered first; when the owner doesn't answer in 30 minutes it narrows on its own only if every open note has Harm 1 or 2.**
+4. **Forge stops a change after three rounds only when a note at the bar comes back or a note with Harm 3 or more is open, and it also stops at the third review finding in one function or file with a structural move proposed; when the owner doesn't answer in 30 minutes it narrows on its own only if every open note has Harm 1 or 2.**
 5. **Every stop question and coordinator update shows the open notes as one table ranked by score, and the coordinator settles reversible Harm 1 and 2 notes itself and tells the owner after.**
 6. **The README explains the scores and the bar with three worked examples, and a repo that upgrades in the middle of a change keeps its saved reads and reviews holding work back as before until their next round scores them.**
 
@@ -178,7 +184,9 @@ expect P3 and to show the P0-only level applied after scoring.
 
 **Stop-question call sites.** SCORES pins `score.table(rows)` as a stub that returns today's
 bullet lines, and makes `story.stop_question`, `story.read_question` and `close.stop_question`
-pass each row's scores and call it (a one-line call site each). GUIDE then fills `score.table`
+pass each row's scores and call it (a one-line call site each). A row is a dict with `text`,
+`gain`, `work`, `harm` and an optional `proposed`, which the table shows in place of the bar's
+words (BAR's area stop uses it). GUIDE then fills `score.table`
 alone, so BAR and GUIDE share no path and build in parallel after SCORES.
 
 **README text** (owner asked for it on 2026-10-12, written in Simplified Technical English and checked with the bundled STE checker; README uses this after "How it works", changed only where the shipped behaviour differs):
@@ -299,7 +307,12 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    and every accepted finding with the owner's or coordinator's reason, also stay in the item's own
    state as a `known` list (title, file, line, scores, outcome, reason), carried across every review
    round so a squash merge keeps them on main: the earlier rounds' findings no longer vanish with
-   the branch. Later rounds append; a finding fixed in a later round leaves the list. (Owner,
+   the branch. Findings at the bar enter it too, with outcome `open`. Later rounds append and never
+   remove an entry. Outcomes: `follow-up`, `lived with`, `accepted`, `open`, and `fixed in round N`,
+   which only an `open` entry gets, when review N no longer raises it. Below-bar and accepted
+   entries keep their outcome, because reviewers are told not to repeat them, so their absence
+   proves nothing. One finding counts once: its identity is (file, title), with case and spacing
+   folded, across rounds and across `known` and the saved results. (Owner,
    2026-10-12: kept so a production bug can be traced to a known issue; a later board part shows
    them by file.) The templates' "What blocks
    the merge" section and the read's Blocking/Advisory rule say the bar decides; labels and
@@ -340,16 +353,27 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    follow-up stops; with elapsed time
    past 30 minutes, a stop with only Harm 2 findings records narrow, and a stop with a Harm 2
    finding at the bar plus a Harm 3 follow-up stays stopped.
-   Area repeats: an area is (file, enclosing function) for a review finding, found from the
-   finding's file and line at the reviewed commit (the nearest `def` or `function` above the line;
-   the file alone when none), and the Done when item number for a read note. `score.area_counts`
-   counts open and settled notes per area across the item's rounds (from the kept `known` list and
-   the saved results). At the third, close and read stop with the question naming the area and
-   offering, ranked first: cut, one general rule, narrow that Done when item, and fail closed
-   (offered first when the area's Harm floor is security). Later notes in that area count as
-   settled unless they carry Harm 3 or more with a `New evidence:` line. Test (same test as item
-   4): three findings in one function across rounds stop with the structural choices first; a
-   fourth note there at Harm 2 does not hold work back; one at Harm 3 with new evidence does.
+   Area repeats, for review findings only (read notes keep the three-round rule above): an area
+   is (file, enclosing function). `review.area(top, commit, file, line)`, in BAR's
+   `src/forge/review.py`, reads the file at the reviewed commit and returns the innermost `def`,
+   `function` or method line above the finding's line whose block still holds that line by
+   indentation (a non-blank line indented at or below the definition's own indentation ends its
+   block), or the file alone when no block holds it. Close counts distinct findings per area
+   across the item's rounds, from `known` and the saved results together, one per identity (item
+   2). At the third distinct finding in one area that is not settled, close records a review-loop
+   stop (the same `stop` state, the same accept, narrow or split choices) with the area in it. The
+   stop question names the area, and its rows' "Proposed" text is the structural move: cut the
+   code that invites the findings, one general rule, narrow that Done when item, or fail closed
+   (named first when a finding there has the security floor). A cut or general rule goes to the
+   worker as the narrowed round's note. When `forge close --resolve` records the choice, the area
+   joins the item state's `settled_areas`. On a settled area, a later finding holds work only when
+   it is at the bar with Harm ≥ 3; any other is added to `known` as `lived with`, reason "settled
+   area". Harm 4 floors always hold, so no security, data-loss or migration finding is suppressed.
+   No marker line is needed. Test (same test as item 4): three distinct findings in one function
+   across rounds stop, naming the function and proposing a structural move; one finding raised in
+   two rounds counts once; a finding in module-level code after that function is in a different
+   area; after `--resolve narrow`, a fourth finding there at the bar with Harm 2 does not hold
+   work, and one with Harm 3 does.
 5. `score.table(rows)` renders the ranked table `# | Problem, for whom | Gain | Work | Harm |
    Proposed`, ranked by bar (block, fix now, follow-up, live with), then Harm and Gain descending,
    then Work ascending. "Problem, for whom" is `story.plain` of the note (from stop-question-plain);
@@ -394,7 +418,7 @@ and regenerates the copies.
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | SCORES | Scores on every note | New `score.py` with `parse`, `normalise` (Harm floor on title and body), `bar`, the unscored rule and a `table` stub; `review._finding` and the reader-output step of `story.read` score and floor every finding and note; `story.stop_question`, `story.read_question` and `close.stop_question` pass scores to `score.table`; the rubric and score line in the cold-read, review and sign-off templates; existing tests' findings given a default score line | 1 | `src/forge/score.py`, `src/forge/review.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_notes.py`, `tests/test_close.py` | | no | |
-| BAR | The bar decides | `review.blocking`, the sign-off gate in `review.run` and `worker._fix_round` follow the bar; light reviews ask for every priority and apply P0-only after scoring; `story.passed` and `undisposed` pass below-bar notes with an automatic disposition; `close._block` lists follow-ups and lived-with findings; the `$accepted` block and `_settled` carry settled and owner-accepted notes forward; the three-round stops and the 30-minute default judged by the bar | 2, 3, 4 | `src/forge/review.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_bar.py`, `tests/test_close_holds_after_three_blocked_reviews.py`, `tests/test_cold_read_blocking_notes.py`, `tests/test_aha_review.py`, `tests/test_reviews_use_repository_tool.py` | SCORES | no | |
+| BAR | The bar decides | `review.blocking`, the sign-off gate in `review.run` and `worker._fix_round` follow the bar; light reviews ask for every priority and apply P0-only after scoring; `story.passed` and `undisposed` pass below-bar notes with an automatic disposition; `close._block` lists follow-ups and lived-with findings; the `$accepted` block and `_settled` carry settled and owner-accepted notes forward; the three-round stops and the 30-minute default judged by the bar; the `known` list with outcomes and one count per finding; the area stop with `review.area` and `settled_areas` | 2, 3, 4 | `src/forge/review.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/close.py`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md` | `tests/test_score_bar.py`, `tests/test_close_holds_after_three_blocked_reviews.py`, `tests/test_cold_read_blocking_notes.py`, `tests/test_aha_review.py`, `tests/test_reviews_use_repository_tool.py` | SCORES | no | |
 | GUIDE | Ranked table and coordinator rule | `score.table` filled in, so every stop question shows the ranked table; the guide's close-stop and loop paragraphs rewritten to the bar, plus the table rule and the coordinator autonomy rule | 5 | `src/forge/score.py`, `src/forge/templates/skill.md` | `tests/test_score_table.py` | SCORES | yes | |
 | README | README and upgrade | The README section with the three examples; the proof that saved unscored reads and reviews keep holding work back after an upgrade | 6 | `README.md` | `tests/test_score_upgrade.py` | BAR | no | |
 
