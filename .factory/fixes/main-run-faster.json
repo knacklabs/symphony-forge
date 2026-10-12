@@ -11,25 +11,26 @@
   "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand, and those full runs never reuse a Linux-only parent's results; and the test timing file is refreshed to cover today's suite",
   "flagged": [
     ".github/workflows/forge-next.yml",
+    ".test_durations",
     "tests/test_ci_job_budgets.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "675a47b5772863bbe9814285c6edd2e8a5b2e973297d471625521235c3802b39",
-    "changed": "1ec73d29e88a396e8f1d6b7160ad2f2facd827c734f4841458a4018bb1358797",
-    "commit": "c029a3cd9749eea7182a24f99c9ff3dd788cfb57",
+    "branch_diff": "036af7101bf1c321fe230ca379f524899d75e9c470a8064dd307e8c58f887973",
+    "changed": "3430358f8dffa5ec41bc15eb9b4b83e0579a63943bbe1e9722ed00e22190bec5",
+    "commit": "846ca6000fffce75afdb08998c15be32f19ad427",
     "dismissals": [],
     "findings": [
       {
-        "body": "chunk 2/2:\n\nRaise: Functional. The normal release procedure now stalls before tagging. docs/guide.md:319\u2013321 tells maintainers to confirm that the merge commit\u2019s `forge-next` run on main passed the full Linux, Mac and Windows matrix. This changed matrix gives main pushes only the Linux groups, so that required result cannot exist. The guide needs to direct maintainers to a full run that this workflow actually starts.",
-        "file": ".github/workflows/forge-next.yml",
-        "line": 56,
+        "body": "chunk 3/3:\n\nRaise: Not done. The refreshed timing file has no entries for the six parametrized cases in `tests/test_sync_not_blocked_by_other_runs.py`, which the configured `pytest tests` command collects. Around this line, the file moves from other sync tests to task tests without those cases. CI therefore assigns them fallback durations instead of recorded timings, so the file does not cover today's suite. This is new evidence beyond the earlier ruling that a one-time refresh, rather than a permanent coverage test, would suffice.",
+        "file": ".test_durations",
+        "line": 2220,
         "priority": "P1",
-        "title": "Release instructions require a full main run that no longer exists"
+        "title": "Not done: timing file does not cover today's suite"
       }
     ],
-    "id": "3696e952-3ee4-41ff-be26-67482dec80e4",
+    "id": "da908f90-d71a-4a8f-9440-c04309f44103",
     "status": "blocked"
   },
   "status": "fixing",
@@ -44,6 +45,10 @@
     },
     {
       "at": "2026-10-12T09:24:48.833560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:04:03.986295+00:00",
       "step": "review"
     }
   ],

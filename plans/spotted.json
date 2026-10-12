@@ -320,6 +320,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.test_durations\tNot done: timing file does not cover today's suite\tmain-run-faster",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 2220,
+      "text": "Not done: timing file does not cover today's suite",
+      "from": "blocking",
+      "item": "main-run-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
       "kind": "bug",
       "path": "AGENTS.md",
@@ -1618,6 +1629,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,\tsync-not-blocked",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 336,
+      "text": "Not done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,",
+      "from": "blocking",
+      "item": "sync-not-blocked",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1625,6 +1647,17 @@
       "text": "Not done: the latest step through every worker path",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tOld-release runs leave skipped chats only in local records\tsync-not-blocked",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 329,
+      "text": "Old-release runs leave skipped chats only in local records",
+      "from": "blocking",
+      "item": "sync-not-blocked",
       "status": "open",
       "closed_by": null
     },
@@ -5391,6 +5424,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: concurrent sync in new and adopted client repos\tsync-not-blocked",
+      "kind": "bug",
+      "path": "tests/test_sync_not_blocked_by_other_runs.py",
+      "line": 21,
+      "text": "Not done: concurrent sync in new and adopted client repos",
+      "from": "blocking",
+      "item": "sync-not-blocked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: only the held item's chat is skipped\tsync-not-blocked",
+      "kind": "bug",
+      "path": "tests/test_sync_not_blocked_by_other_runs.py",
+      "line": 28,
+      "text": "Not done: only the held item's chat is skipped",
+      "from": "blocking",
+      "item": "sync-not-blocked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: proof list\tsync-not-blocked",
+      "kind": "bug",
+      "path": "tests/test_sync_not_blocked_by_other_runs.py",
+      "line": 23,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "sync-not-blocked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: sync while forge land runs\tsync-not-blocked",
+      "kind": "bug",
+      "path": "tests/test_sync_not_blocked_by_other_runs.py",
+      "line": 23,
+      "text": "Not done: sync while forge land runs",
+      "from": "blocking",
+      "item": "sync-not-blocked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
       "kind": "bug",
       "path": "tests/test_tools_session_hold.py",
@@ -6850,72 +6927,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,\tsync-not-blocked",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 336,
-      "text": "Not done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,",
-      "from": "blocking",
-      "item": "sync-not-blocked",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tOld-release runs leave skipped chats only in local records\tsync-not-blocked",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 329,
-      "text": "Old-release runs leave skipped chats only in local records",
-      "from": "blocking",
-      "item": "sync-not-blocked",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: concurrent sync in new and adopted client repos\tsync-not-blocked",
-      "kind": "bug",
-      "path": "tests/test_sync_not_blocked_by_other_runs.py",
-      "line": 21,
-      "text": "Not done: concurrent sync in new and adopted client repos",
-      "from": "blocking",
-      "item": "sync-not-blocked",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: only the held item's chat is skipped\tsync-not-blocked",
-      "kind": "bug",
-      "path": "tests/test_sync_not_blocked_by_other_runs.py",
-      "line": 28,
-      "text": "Not done: only the held item's chat is skipped",
-      "from": "blocking",
-      "item": "sync-not-blocked",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: proof list\tsync-not-blocked",
-      "kind": "bug",
-      "path": "tests/test_sync_not_blocked_by_other_runs.py",
-      "line": 23,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "sync-not-blocked",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: sync while forge land runs\tsync-not-blocked",
-      "kind": "bug",
-      "path": "tests/test_sync_not_blocked_by_other_runs.py",
-      "line": 23,
-      "text": "Not done: sync while forge land runs",
-      "from": "blocking",
-      "item": "sync-not-blocked",
       "status": "open",
       "closed_by": null
     }
