@@ -8,23 +8,15 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0c8f17c7e46d1016abf48042cff15d2bc9a84641e712156ed6a291d72f129fde",
-    "changed": "48b3979c3b3164a40f52ef2590be7dbb00b5ef7684d686b0c4023cce26198ee2",
-    "commit": "dae9a09c7ea03d2664701d4d3f2ddfff0aff143c",
+    "branch_diff": "8530c11081ee05cc7de0a3adb8913fe71c43b1234a47c9c0ff58317ab6025e3d",
+    "changed": "e6b3585dfc88a3c6f83bc72415840b526003cb993a54d5212fa0064cd2228938",
+    "commit": "68a3d182ad3e61a4333e8fb5a10d1ea600500279",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Test. The regression test modifies only the Claude stub and starts a newly created client repo. It does not exercise the next-agent start through Codex or in a repo adopted on an earlier release, although the repository rules require both adapters and both client histories. The changed older-queue test checks `forge stop`, not whether the next agent starts. Those paths could break while the named proof remains green.",
-        "file": "tests/test_pid_reuse_keeps_run.py",
-        "line": 21,
-        "priority": "P1",
-        "title": "Not done: test PID reuse through Codex and an upgraded client"
-      }
-    ],
-    "id": "cef42721-f384-4103-8db4-495dc5b68393",
-    "status": "blocked"
+    "findings": [],
+    "id": "9c5a8603-084f-4ea3-baa8-b85cb3d97e55",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T14:35:44.769656+00:00",
@@ -32,6 +24,10 @@
     },
     {
       "at": "2026-10-12T14:52:22.415640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T14:58:33.681240+00:00",
       "step": "review"
     }
   ],
