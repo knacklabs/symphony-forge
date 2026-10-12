@@ -298,6 +298,17 @@
       "closed_by": "simplify-ci-workflow"
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d\twindows-green-4",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 80,
+      "text": "Not done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d",
+      "from": "blocking",
+      "item": "windows-green-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: proof list\twindows-test-stubs",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -6223,8 +6234,8 @@
       "text": "Not done: the command-level sync proof",
       "from": "blocking",
       "item": "sync-in-any-worktree",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: concurrent sync in new and adopted client repos\tsync-not-blocked",
@@ -7785,17 +7796,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d\twindows-green-4",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 80,
-      "text": "Not done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d",
-      "from": "blocking",
-      "item": "windows-green-4",
       "status": "open",
       "closed_by": null
     }
