@@ -9,23 +9,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cbf59367cf693fcf3de1244b6f34ade8a23940528a5ed98a9908f6744bc794fd",
-    "changed": "37bea7c4f9977215e937f3426f2e0e93c90e2c5e7e34f79346395f7ea3853f64",
-    "commit": "8af63dc57b6ff85fbc28b9a8a84c6b86e54a873c",
+    "branch_diff": "365036de6270fa1a6422412102a233f92ae561632452e9cec7cef9d3b4128418",
+    "changed": "f0f1865934874d57f5540b02bcb3822551a71db80790b1aa4908aff32fe94513",
+    "commit": "c71be89cd947383554fae34031d38311796886bf",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The multi-worktree test removes and verifies only the Claude and Codex guides (lines 35\u201341). It would pass if sync failed to write another generated file in that condition, so it does not prove the stated \u201cevery generated file\u201d result. The missing-starting-commit case in tests/test_spec_chat_upgrade_amendment.py returns at line 101 after checking the warning; it never runs the next read, so it would also pass if the promised reader chat recovery broke.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The named proof can pass while sync omits generated files: it derives the expected set from sync\u2019s own `Wrote` output, then checks only that set. `src/forge/sync.py:362-378` shows that generated files come from multiple `ships()` providers, so writing just the two guides would satisfy the test. The test also removes the original spec worktree at line 33 before syncing, leaving no second active spec worktree to exercise the stated case.",
         "file": "tests/test_sync_in_any_worktree.py",
         "gain": 3,
         "harm": 2,
-        "line": 35,
+        "line": 38,
         "priority": "P1",
         "title": "Not done: the command-level sync proof",
         "work": 2
       }
     ],
-    "id": "a2532a32-dfdb-40f7-878e-c04a5aa929d9",
+    "id": "95a12e92-85e3-49e3-bd8f-1d6c1ee9ce60",
     "status": "blocked"
   },
   "status": "fixing",
@@ -40,6 +40,10 @@
     },
     {
       "at": "2026-10-12T21:22:08.841205+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T21:57:29.113749+00:00",
       "step": "review"
     }
   ],
