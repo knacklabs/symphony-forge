@@ -55,7 +55,7 @@ def read_story(repo, key, doc):
 
 
 def github(env, prs):
-    """GitHub answers each list with only the rows in the requested state."""
+    """GitHub answers each list with only the rows in the requested state, head and merge dates."""
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
     if "STATE FILTER" not in source:
@@ -66,6 +66,11 @@ def github(env, prs):
         if args[:2] == ["pr", "list"] and "--head" in args and output.startswith("["):
             head = args[args.index("--head") + 1]
             output = json.dumps([pr for pr in json.loads(output) if pr.get("headRefName") == head])
+        if args[:2] == ["pr", "list"] and "--search" in args and output.startswith("["):
+            query = args[args.index("--search") + 1].removeprefix("merged:")
+            low, _, high = query.partition("..")
+            output = json.dumps([pr for pr in json.loads(output) if (day := (pr.get("mergedAt") or "")[:10])
+                                 and (day < query[1:] if query.startswith("<") else low <= day <= high)])
         sys.stdout.write(output)'''), "utf-8")
     env.gh.respond("pr", "list", stdout=json.dumps(prs))
 
@@ -177,6 +182,17 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     machine_a = env.repo.path
     data = board(env.repo)
     assert data["team"]["counts"] == expected(previous)
+    # The page's totals line prints the same counts, finished ones included.
+    page = env.tmp / "counts-board.html"
+    written = env.repo.forge("board", "--out", str(page))
+    assert written.returncode == 0, written.stderr
+    text = " ".join(re.sub(r"<[^>]+>", " ", page.read_text("utf-8")).split())
+    for line in ("Stories — Done: 1; Building: 1; Approved, not started: 1; Waiting for approval: 1; "
+                 "Planning: 2; No plan yet: 1",
+                 "Parts — Done: 1; Ready to merge: 1; In progress: 1; To do: 2",
+                 f"Fixes — Done: {1 + previous}; Ready to merge: 1; In progress: 1; To do: 0",
+                 f"Finished in the last 7 days — Parts: 1; Fixes: {1 + previous}"):
+        assert line in text, (line, text[:800])
     assert set(data["team"]) >= {"sentence", "counts", "needs_you", "in_progress", "blocked", "pace",
                                  "go_live", "trends", "around_forge"}
     assert "stage_counts" not in data and "kind_stage_counts" not in data
@@ -369,7 +385,7 @@ def newer_findings(env, monkeypatch, previous):
 
 def older_part(env, monkeypatch, previous):
     """A part of an unfinished story merged before the weekly searches still brings its time from
-    its pull request, asked for once by its branch."""
+    its pull request, from one request for everything merged before the weekly searches."""
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
     configure(env, "agent")
@@ -394,21 +410,19 @@ def older_part(env, monkeypatch, previous):
     env.repo.git("merge", "-q", "--no-edit", "task/SHOP-T1")
     env.repo.git("push", "-q", "origin", "main")
     github(env, [pr])
-    env.gh.respond("pr", "list", "--state", "merged", "--limit", "1000", stdout="[]")  # the weekly searches
     for name in ("GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
         monkeypatch.delenv(name)
     clock(monkeypatch, datetime.now(timezone.utc))
     for log in ("events.jsonl", "timings.jsonl"):  # only the pull request remembers the part's time
         (env.repo.path / ".git/forge" / log).unlink(missing_ok=True)
-    asked = lambda: [call for call in env.gh_calls("pr", "list") if "--head" in call  # noqa: E731
-                     and "task/SHOP-T1" in call and "merged" in call]
+    asked = lambda: [call for call in env.gh_calls("pr", "list")  # noqa: E731
+                     if any(arg.startswith("merged:<") for arg in call)]
     shop = rows(board(env.repo))["SHOP"]
     assert shop["state"] == "building" and "SHOP/T1" not in [c["id"] for c in shop["children"]]
     board(env.repo)
     assert len(asked()) == 1, "asked once a minute"
     # Without the record in its pull request, the part's recorded time is gone from the runway.
     github(env, [{**pr, "body": ""}])
-    env.gh.respond("pr", "list", "--state", "merged", "--limit", "1000", stdout="[]")
     clock(monkeypatch, datetime.now(timezone.utc) + timedelta(minutes=2))
     bare = rows(board(env.repo))["SHOP"]
     first = lambda row: min(datetime.fromisoformat(i["start"]) for i in row["intervals"])  # noqa: E731

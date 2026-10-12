@@ -570,8 +570,9 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
              for rel, (state, _) in best.items() if rel in history["expired"]
              and (match := STATE.fullmatch(rel))["task"] and match["key"] in items]
     # An unfinished story's parts merged before the weekly searches still bring their records.
-    by_branch.update(board_facts.merged_by_branch(top, [branch for _, _, key, _, branch in older
-                                                        if branch not in by_branch and key not in completed]))
+    if any(branch not in by_branch and key not in completed for _, _, key, _, branch in older):
+        by_branch.update({branch: pr for branch, pr in board_facts.merged_before_weeks(top).items()
+                          if branch not in by_branch})
     for rel, state, key, tid, branch in older:
         if rel in merged or branch in merged_prs or key in completed:
             state = {**state, "status": "merged"}
@@ -1163,9 +1164,9 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
         numbers="".join(f"<li>{esc(_cap(number))}.</li>" for number in _numbers(stories, prs)),
         note=note,
         map=board_visuals.dependencies(view["dependency_maps"]),
-        counts=" · ".join(kind.capitalize() + " — " + "; ".join(
-            f"{name.capitalize()}: {count}" for name, count in counts.items())
-            for kind, counts in view["team"]["counts"].items() if kind != "finished_last_7_days"),
+        counts=" · ".join({"finished_last_7_days": "Finished in the last 7 days"}.get(kind, kind.capitalize())
+                          + " — " + "; ".join(f"{name.capitalize()}: {count}" for name, count in counts.items())
+                          for kind, counts in view["team"]["counts"].items()),
         stories="".join(card(s) for s in stories) or '<p class="card">No story is on the roadmap yet.</p>',
         fixes=f'<section class="card"><ul>{fixed}</ul></section>' if fixed
         else '<p class="card">No small fixes yet.</p>')

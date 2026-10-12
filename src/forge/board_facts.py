@@ -83,35 +83,14 @@ def prs(top: Path) -> Item | None:
     return _cached(top, "prs-cache", fetch)
 
 
-def merged_by_branch(top: Path, branches: list[str]) -> dict[str, Item]:
-    """Each branch's merged pull request, asked once per branch and kept for a minute."""
-    if not branches or not shutil.which("gh"):
-        return {}
-    cache = repo.forge_dir(top) / "prs-older-cache.json"
-    now = time_records.when(repo.now()) or datetime.now(timezone.utc)
-    fetched_at, found = repo.now(), {}
-    try:
-        saved = json.loads(cache.read_text(encoding="utf-8"))
-        at = time_records.when(saved.get("fetched_at"))
-        if at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("data"), dict):
-            fetched_at, found = saved["fetched_at"], saved["data"]
-    except (OSError, ValueError, AttributeError):
-        pass
-    missing = [branch for branch in dict.fromkeys(branches) if branch not in found]
-    for branch in missing:
-        rows = _listing(top, "merged", "--head", branch, limit="1")
-        if rows is not None:  # a failed answer is asked again next time
-            found[branch] = rows[0] if rows else None
-    temp = cache.with_name(f"prs-older-cache-{os.getpid()}.tmp")
-    try:
-        if missing:
-            temp.write_text(json.dumps({"fetched_at": fetched_at, "data": found}), encoding="utf-8")
-            os.replace(temp, cache)
-    except OSError:
-        pass  # A read-only Git directory must not prevent a view.
-    finally:
-        temp.unlink(missing_ok=True)
-    return {branch: pr for branch in branches if (pr := found.get(branch))}
+def merged_before_weeks(top: Path) -> dict[str, Item]:
+    """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
+    kept for a minute. Only asked when an unfinished story has parts merged that long ago."""
+    # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
+    def fetch(now: datetime) -> list[Item] | None:
+        return _listing(top, "merged", "--search", f"merged:<{full_weeks(now, 6)[0]:%Y-%m-%d}")
+    return {pr["headRefName"]: pr for pr in _cached(top, "prs-older-cache", fetch) or []
+            if isinstance(pr.get("headRefName"), str)}
 
 
 def details(top: Path) -> list[Item]:
