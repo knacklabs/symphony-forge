@@ -117,7 +117,6 @@ def close(args: argparse.Namespace) -> int:
                 result["status"] = "clean"
                 score.remember(_known(top, item, state, f"origin/{repo.default_branch(top)}", result),
                                result, sum(step["step"] == "review" for step in state.get("steps", [])), {})
-            # The answer settles the stop's area (a file stop's file): later findings there hold less.
             if area := state["stop"].get("area") or state["stop"].get("file"):
                 state["settled_areas"] = sorted({*state.get("settled_areas", []), area})
             defaulted = state["stop"].get("by") == "default"
@@ -353,7 +352,6 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
-        # The area stop comes first: it settles its area and proposes a structural move.
         crowded = score.crowded(state["known"], result, _settled_areas(state), areas) if serious else ""
         if crowded:
             stopped = {"file": crowded, "area": crowded, "proposed": score.move(result, areas, crowded)}
@@ -467,7 +465,6 @@ def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dic
 
 
 def _areas(top: Path, result: dict[str, Any]) -> dict[tuple[str, str], str]:
-    """Each finding's area at its review's commit."""
     return {score.identity(f["file"], f["title"]): review.area(top, result["commit"], f["file"], f["line"])
             for f in result.get("findings", [])}
 

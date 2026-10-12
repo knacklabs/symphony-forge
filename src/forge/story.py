@@ -272,7 +272,6 @@ def read(args: Any) -> int:
                                 _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
-        saw = _findings(_record(seen["notes_seen"].stdout)[1])
         old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
         touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
                    if old_sections.get(name) != new_sections.get(name)]
@@ -284,9 +283,7 @@ def read(args: Any) -> int:
             "${look}", cap if is_story and round_number >= 3 else look)
         blocking = {n: block for n, block in blocks.items() if DISPOSITION.search(block)}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
-        # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
-        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
-            block for n, block in blocking.items() if saw.get(n, "").split() != block.split()) or "None.")
+        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()) or "None.")
         if any(done.returncode for done in seen.values()):
             prompt = fresh_prompt
     session = saved.get("claude")

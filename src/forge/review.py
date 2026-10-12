@@ -33,11 +33,11 @@ AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
            for host in (".codex", ".claude")]
 PRIORITIES = ("P0", "P1", "P2", "P3")
-SERIOUS = ("P0", "P1")  # an earlier release's close, run during an upgrade, still reads it
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
 SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
+SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -299,10 +299,8 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
                                f"every finding in this review, the {len(rows)} listed and {advice} "
                                "advice notes, is dismissed with your reason and recorded; close then "
                                "goes on to the checks, and merging is still a separate step.")
-    if not stop.get("area"):
-        return said
-    return said.replace("It still has these problems:", f"Findings keep coming in {stop['area']}; "
-                        f"proposed: {stop['proposed']}. It still has these problems:", 1)
+    return said if not stop.get("area") else said.replace("It still has these problems:", (
+        f"Findings keep coming in {stop['area']}; proposed: {stop['proposed']}. It still has these problems:"), 1)
 
 
 # --- the instructions ------------------------------------------------------------------
@@ -543,18 +541,13 @@ def _previous(result: dict[str, Any]) -> str:
 
 
 def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
-    """Known and accepted notes for the review: a task's plan read notes kept or deferred (the
-    automatic below-bar ones and the owner's accept among them), then this item's earlier
-    below-bar findings and the ones the owner accepted. Read from what is already stored."""
+    """A task's kept or deferred plan read notes, then this item's below-bar and accepted findings."""
     from forge import story  # story imports review indirectly
 
     found = []
     if "/" in item:
         key = item.partition("/")[0]
-        notes = story.show(top, f"story/{key}", f"plans/{key}.read.md")
-        if notes is None:
-            path = top / "plans" / f"{key}.read.md"
-            notes = path.read_text(encoding="utf-8") if path.is_file() else ""
+        notes = story.show(top, f"story/{key}", f"plans/{key}.read.md") or story._text(top / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         for number, block in story._findings(story._record(notes)[1]).items():  # pyright: ignore[reportPrivateUsage]
             kept = story.DISPOSITION.search(block)
             if kept and kept[1].lower() in ("keep", "defer"):
@@ -602,20 +595,20 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any]) -> list[
 
 
 def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
-    """Earlier rounds' settled findings: fixed, dismissed, accepted by the owner, or below the bar."""
-    settled = {}
-    earlier = set()
+    """Earlier rounds' settled findings, one per identity under its first spelling."""
+    settled, earlier, names = {}, set(), {}
     for result in history:
-        current = {(f["file"], f["title"]) for f in result.get("findings", [])}
+        current = {score.identity(f["file"], f["title"]) for f in result.get("findings", [])}
+        names = {**{score.identity(f["file"], f["title"]): (f["file"], f["title"]) for f in result.get("findings", [])}, **names}
         for key in earlier - current:
             settled.setdefault(key, "fixed: absent from a later review")
         for finding in score.open_findings(result):
             if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
-                settled.setdefault((finding["file"], finding["title"]), f"known: below the bar ({outcome})")
+                settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
         accepted = set()
         for dismissal in result.get("dismissals", []):
             finding = result["findings"][dismissal["finding"] - 1]
-            key = (finding["file"], finding["title"])
+            key = score.identity(finding["file"], finding["title"])
             if dismissal.get("accepted"):
                 accepted.add(key)
                 settled[key] = "accepted by the owner: " + dismissal["because"]
@@ -623,7 +616,7 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
                 settled[key] = (dismissal["because"] if dismissal["because"].startswith(
                     ("known:", "accepted by the owner:")) else "dismissed because " + dismissal["because"])
         earlier = (earlier | current) - accepted
-    return settled
+    return {names[key]: reason for key, reason in settled.items()}
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:

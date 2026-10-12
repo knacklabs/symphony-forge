@@ -778,10 +778,10 @@ fix's folder:
 
 ## Planning a story
 
-A cold read passes when no note is at the bar: the plan is wrong, contradicts itself,
-or a builder could not act on it. Forge writes the disposition of each note below the bar. A note
-without scores blocks unless marked `Advisory:`; advisory notes need no disposition or another round.
-New repos get this rule on init; existing repos get it on upgrade plus sync.
+A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
+or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
+`Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
+findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.

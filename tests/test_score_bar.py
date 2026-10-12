@@ -144,10 +144,17 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     assert "passed: no\n" in text
     notes.write_text(text.replace("Harm 1\n2.", "Harm 1\n   Disposition: keep - sign-in is out of scope\n2.", 1),
                      encoding="utf-8")
+    # Round 2 raises one more note at the bar; round 3 still gets every settled note, unchanged ones too.
+    (repo.bin / "claude-says.md").write_text(
+        "3. Blocking: Saving needs a button.\n   Raise: Plan gap\n   Gain 3, Work 1, Harm 1\n", encoding="utf-8")
+    assert repo.forge("read", "SHOP").returncode == 0
+    notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - the button is in the doc\n",
+                     encoding="utf-8")
     (repo.bin / "claude-says.md").write_text("No findings.\n", encoding="utf-8")
     assert repo.forge("read", "SHOP").returncode == 0
-    settled = _read_prompt(repo).split("each with its scores and its disposition:", 1)[1]
+    settled = _read_prompt(repo).split("each with its scores and its disposition:", 1)[1].split("For a story,", 1)[0]
     assert "Sign-in is out of scope" in settled and "The title could be shorter" in settled
+    assert "Saving needs a button" in settled
     assert "below the bar (live with)" in settled
 
     where = _approve(env, STORY_DOC, no_hooks)
@@ -212,7 +219,7 @@ SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n
 
 @pytest.mark.parametrize("case", CASES)
 @pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "only-harm-2-saved-before-known", "area",
-                                  "read-below-bar-harm-3"])
+                                  "read-below-bar-harm-3", "case-only-repeat"])
 def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, case, loop):
     _client_on_this_release(env, tmp_path, case)
     item, where = env.start_fix()
@@ -249,6 +256,10 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         narrowed = env.close(item)
         assert "Forge recorded the repo's default choice: narrow" in narrowed.stdout
         assert len(follow_ups(env)) == len(before) + 1
+    elif loop == "case-only-repeat":  # one finding whatever its case: a third round still holds it
+        for number, title in enumerate(("Saving drops the basket", "saving drops the basket", "Saving drops the basket"), 1):
+            held = _round(env, item, where, number, at_bar(title, "docs/1.md"))
+        assert "The review left serious findings open" in held.stderr
     elif loop == "read-below-bar-harm-3":  # a disposed below-bar note never stops the read loop
         shop = new_story(env.repo, "SHOP")
         (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
@@ -271,9 +282,11 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
                         at_bar("Save returns early", shop, line=3),
                         at_bar("B starts empty", shop, line=21), at_bar("B keeps a stale y", shop, line=22))
         assert "The review left serious findings open" in second.stderr
-        third = _round(env, item, where, 3, at_bar("Save rounds down", shop, line=2))
+        # A security finding already scored Harm 4 puts fail closed first.
+        third = _round(env, item, where, 3, {**at_bar("Save trusts any user", shop, line=2),
+                                              "body": "Gain 3, Work 2, Harm 4\nRaise: Security"})
         assert "still finds serious problems in save() in src/shop.py" in third.stderr
-        assert re.search(r"Findings keep coming in save\(\) in src/shop.py; proposed: cut the code", third.stderr)
+        assert re.search(r"Findings keep coming in save\(\) in src/shop.py; proposed: make it fail closed", third.stderr)
         narrow = env.close(item, "--resolve", "narrow", "--reason", "Cut the rounding")
         assert narrow.returncode == 0, narrow.stdout + narrow.stderr
         assert "Ready:" in _round(env, item, where, 4, at_bar("Save adds tax twice", shop, harm=2, line=2),

@@ -170,7 +170,7 @@ def move(result: dict[str, Any], areas: dict[tuple[str, str], str], area: str) -
     """The structural move a stopped area proposes; fail closed first under the security floor."""
     moves = ["cut the code that invites these findings", "replace the cases with one general rule",
              "narrow that Done when item", "make it fail closed"]
-    if any(areas.get(identity(f["file"], f["title"])) == area and "(floor: security)" in f["body"]
+    if any(areas.get(identity(f["file"], f["title"])) == area and FLOORS[0][0].search(f["body"])
            for f in result.get("findings", [])):
         moves.insert(0, moves.pop())
     return "; or ".join(moves)
