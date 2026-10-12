@@ -253,8 +253,8 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         except ValueError:
             row = {}
         title = re.search(r"^# (.+)$", text, re.M)
-        name = (row.get("Name") or item) + (f" (part of {title[1].strip()})" if title else "")
-        delivers = row.get("What it delivers", "")
+        name = plain(row.get("Name") or item) + (f" (part of {title[1].strip()})" if title else "")
+        delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
     flagged = [plain(finding["title"], finding.get("body", ""))
                for _, finding in blocking(result) if isinstance(finding, dict)]

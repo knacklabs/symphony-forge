@@ -220,7 +220,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             record = story._record(text)[0]  # pyright: ignore[reportPrivateUsage]
             spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
             if record.get("blocked_rounds") == "3" and not record.get("loop_choice") and spec.is_file():
-                lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text)
+                lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
     lines = _refresh(top, trees) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
@@ -573,10 +573,12 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
             f"forge read {key}"]
 
 
-def _read_loop(target: str, doc: str, notes: str) -> list[str]:
-    """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step."""
+def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> list[str]:
+    """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step,
+    run in `where` for a spec, which forge read finds only in its own checkout."""
+    cd = f"cd {shlex.quote(str(where))} && " if where else ""
     return [line.format(target=target, question=story.read_question(doc, notes)) for line in
-            (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
+            (story.REFUSALS["read_loop"][0], "Next: " + cd + story.REFUSALS["read_loop"][1])]
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],

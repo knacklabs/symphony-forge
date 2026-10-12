@@ -2,6 +2,7 @@
 STORY = "three-rounds-ask"
 
 import json
+import shlex
 import sys
 
 import pytest
@@ -83,6 +84,9 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     assert held.returncode == 1 and resolution in held.stderr
     said = repo.forge("next", cwd=where).stdout
     assert resolution in said and question in said
+    if target != "SHOP":  # from the main checkout, the spec's step runs in its own checkout
+        main = repo.forge("next", cwd=repo.path).stdout
+        assert f"Next: cd {shlex.quote(str(where))} && {resolution}" in main and question in main
     assert "A gap the owner cut" not in result.stderr + said
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
