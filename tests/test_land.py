@@ -329,7 +329,8 @@ def _three_blocked_reviews_hold_the_fourth(env):
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
-    env.reviews(blocked(BLOCKER))
+    # A new finding each round: the same one twice would stop the worker sooner.
+    env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2, 3)))
     done = _land(env)
     assert done.returncode == 1
     rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
@@ -391,7 +392,9 @@ def _blocked_red_blocked_red(env):
 def _default_stop_shows_the_question_while_it_waits(env):
     # With the default stop setting, land waits for the owner; advance only its clock.
     _fix(env, "working", worked=True)
-    env.reviews(blocked(BLOCKER), blocked(BLOCKER), blocked(BLOCKER), CLEAN)
+    # New findings before the last: the same one twice would stop the stuck worker first.
+    env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2)),
+                blocked(BLOCKER), CLEAN)
     shim = env.repo.bin / "forge"
     clock = """import os, time
 from datetime import datetime, timedelta, timezone

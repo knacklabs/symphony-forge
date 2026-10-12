@@ -1277,6 +1277,14 @@ When a cold read or review loop stops, ask the human the question it printed, in
 item per question. It names the item and what it delivers, says each open note or finding in plain
 words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
 
+When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
+the item; close also stops a story part that grows past its line limit. Either prints a
+ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
+choices. Ask the owner exactly that question; never switch tools yourself. Record the answer with
+`forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
+`forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
+every choice buys one more round before Forge asks again.
+
 Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
 recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.

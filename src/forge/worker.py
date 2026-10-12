@@ -95,7 +95,7 @@ def work(args: argparse.Namespace) -> None:
         design = repo.user_facing(config, row)
     else:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
-    family = repo.worker(config, "build", design)[0]
+    family = repo.worker(config, "build", design, state.get("tool"))[0]
     on_codex = family == "codex"
     if note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
@@ -107,7 +107,7 @@ def work(args: argparse.Namespace) -> None:
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design)
-    _, chosen, why = repo.worker(config, kind.lower(), design)
+    _, chosen, why = repo.worker(config, kind.lower(), design, state.get("tool"))
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
                 f"because {why}")
     if not on_codex:
@@ -160,7 +160,11 @@ def work(args: argparse.Namespace) -> None:
                     "Done-when lines instead of fixing those findings here.")
         elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
             note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
-                    "Follow the owner's choice, not the earlier default narrowing.")
+                    "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
+                    f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
+        from forge import close  # close imports story, which imports this module
+
+        close.stuck_round(top, item, state, config, findings)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -211,8 +215,10 @@ def work(args: argparse.Namespace) -> None:
                             session, thread, None if fresh == "first turn" else fresh,
                             before_turn if design else None)
                 except (repo.Refused, OSError) as error:
-                    # Only both with split falls back; one tool keeps its failed round.
+                    # Only both with split falls back; one tool, or the owner's chosen one, keeps its
+                    # failed round.
                     if (not design or config["tools"] != "both" or config["workers"] != "split" or
+                            state.get("tool") or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
                     reason = ("claude command missing" if shutil.which("claude") is None else

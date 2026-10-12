@@ -629,7 +629,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
 def default_due(top: Path, state: dict[str, Any]) -> bool:
     """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
     stop = state.get("stop") or {}
-    if not stop or stop.get("choice") or repo.config(top)["stop_default"] == "off":
+    if not stop or stop.get("choice") or "question" in stop or repo.config(top)["stop_default"] == "off":
         return False
     # Stops from earlier releases have no time of their own; their owner wait event has one.
     since = time_records.when(stop.get("at") or next(
@@ -661,6 +661,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
+        if "question" in stop:
+            return [f"Forge stopped {label}. Ask the human:", stop["question"],
+                    "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
         if default_due(path or top, state):
             return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
                     "records the repo's default choice: narrow.", f"Next: forge close {item}"]
@@ -717,8 +720,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return answered + [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
-    return answered + [sentence.format(**values), f"Next: {step.format(**values)}" + (
-        _builder(item, state, path or top, refusals) if step == "forge work {item}" else "")]
+    built = _builder(item, state, path or top, refusals) if step == "forge work {item}" else ""
+    if step == "forge work {item}" and not built and state.get("tool"):
+        built = f"  # {state['tool'].title()} builds it"
+    return answered + [sentence.format(**values), f"Next: {step.format(**values)}{built}"]
 
 
 def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:
@@ -732,11 +737,11 @@ def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path
     design = (repo.user_facing(cfg, task.rows(task.sections((folder / "plans" / f"{key}.md").read_text(
         encoding="utf-8"))).get(name, {})) if name else
         state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(folder))
-    later = (repo.worker(cfg, "build", design)[0] == "codex" or design) and bool(
+    later = (repo.worker(cfg, "build", design, state.get("tool"))[0] == "codex" or design) and bool(
         codex.record(folder, item).get("start") or state.get("status", "started") != "started")
     kind = "fix" if later else "build" if name else "lite"
     sources = repo.setting_sources(cfg, kind, design)
-    return f"  # {repo.worker(cfg, kind, design)[0].title()} builds it ({sources})"
+    return f"  # {repo.worker(cfg, kind, design, state.get('tool'))[0].title()} builds it ({sources})"
 
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:

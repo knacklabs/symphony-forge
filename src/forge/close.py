@@ -60,6 +60,10 @@ REFUSALS = {
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
+    "stuck": ("The worker can't get past the same problem, so Forge stopped sending it back. "
+              "Ask the human:\n{question}",
+              'forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'),
+    "chosen": ("The owner's choice is recorded; the worker's next round follows it.", "forge work {item}"),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
@@ -92,14 +96,19 @@ def close(args: argparse.Namespace) -> int:
                  and reason and (state.get("stop") or {}).get("choice") == choice
                  and state["stop"].get("reason") == reason.strip())
     if choice or reason is not None:
+        stuck = "question" in (state.get("stop") or {})
         if (not choice or not reason or not reason.strip() or
                 not state.get("stop") or (state["stop"].get("choice") and not continued
                                           and state["stop"].get("by") != "default") or
-                args.dismiss or args.because):
-            repo.refuse(REFUSALS["bad_choice"], item=item)
+                args.dismiss or args.because or
+                (choice == "accept" if stuck else choice in ("switch", "same"))):
+            repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
+                        else REFUSALS["bad_choice"], item=item)
         if not continued:
-            result = state["review"]
+            if choice == "switch":  # the next forge work runs this item on the other tool
+                state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
             if choice == "accept":
+                result = state["review"]
                 dismissed = {d["finding"] for d in result["dismissals"]}
                 result["dismissals"].extend(
                     {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
@@ -107,13 +116,16 @@ def close(args: argparse.Namespace) -> int:
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
             defaulted = state["stop"].get("by") == "default"
-            if defaulted:  # the owner reverses the repo's default; the next worker round hears it
-                state["stop"].update(by="owner", worker_round=state.get("round"))
+            # the next worker round hears the owner's choice, including one reversing the default
+            state["stop"].update(by="owner", worker_round=state.get("round"))
             state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+        if choice in ("switch", "same"):
+            print(f"Recorded the human's choice.\nNext: forge work {item}")
+            return 0
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
@@ -153,9 +165,16 @@ def close(args: argparse.Namespace) -> int:
         lines = sum(int(number) for record in stats.split("\0")
                     for number in record.split("\t", 2)[:2] if number.isdigit())
         if lines > limit:
-            raise repo.Refused(
-                f"This story part changes {lines} lines outside tests, over the limit of {limit}; "
-                'split it or record a reason with forge fix allow-large "<reason>".', "")
+            stop = state.get("stop") or {}
+            if stop.get("size") and not stop.get("choice"):
+                repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
+            # A recorded answer holds until a worker round has run on it.
+            if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
+                stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
+                           f"over its limit of {limit}.", size=True)
+            repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
+    if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
+        state.pop("stop")
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:
@@ -215,6 +234,7 @@ def close(args: argparse.Namespace) -> int:
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
+    repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
     if not fresh:
         if pending := time_records.pending_merge_wait(top, item):
@@ -430,8 +450,12 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
     review loop stop."""
     result = state.get("review") or {}
     if (result.get("status") == "clean" and not review.blocking(result) and
-            not (state.get("stop") or {}).get("choice")):
+            not (state.get("stop") or {}).get("choice") and "question" not in state.get("stop", {})):
         state.pop("stop", None)
+    if state.get("stop") and "question" in state["stop"]:
+        if not state["stop"].get("choice") and not state["stop"].get("size"):
+            repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
+        return
     if state.get("stop") and not state["stop"].get("choice"):
         top = top or _worktree(item)  # land passes no checkout
         from forge.nextstep import default_due  # nextstep imports close
@@ -442,6 +466,57 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
                     question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
+
+
+def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
+                findings: list[dict[str, Any]]) -> None:
+    """At a round's start: stop when the last two rounds both left close's tests failing or one
+    same finding open. A recorded choice buys exactly one more round."""
+    stop = state.get("stop") or {}
+    if "question" in stop and not stop.get("choice"):
+        repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
+    keys = [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings]
+    keys += ["close's tests failing"] if state.get("tests") else []
+    # Each failure counts the rounds in a row that left it; a cleared one drops out. It counts only
+    # with both a new close and a worker round since the last count, so reruns count once.
+    # ponytail: close events live on this machine; a round on another machine counts once more.
+    stuck = state.get("stuck") or {}
+    closed = next((e["id"] for e in reversed(time_records.read(top, "events"))
+                   if e.get("item") == item and e.get("event") == "close result"), None)
+    if stuck and (stuck.get("close") == closed or stuck.get("round") == state.get("round")):
+        if "question" in stop:
+            state.pop("stop")
+        return
+    before = stuck.get("keys") or {}
+    counts = {key: before.get(key, 0) + 1 for key in keys}
+    same = [key for key, count in counts.items() if count >= 2]
+    if "question" in stop:
+        state.pop("stop")
+    elif same:
+        stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "close": closed,
+                      "round": state.get("round")}
+
+
+def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
+               size: bool = False) -> None:
+    """Stop the item and refuse with a question the coordinator can ask the owner as it is."""
+    title, _, delivers = _title(top, item, state)
+    tool = state.get("tool") or state.get("worker") or repo.worker(cfg, "build", False)[0]
+    since = (state.get("stuck") or {}).get("head") or f"origin/{repo.default_branch(top)}"
+    tried = repo.git("log", "--first-parent", "--no-merges", "--format=%s", f"{since}..HEAD",
+                     "--", ".", ":(exclude).factory", cwd=top).splitlines()
+    other = "claude" if tool == "codex" else "codex"
+    choices = [f"switch this item to {other.title()}", f"keep {tool.title()} for one more round",
+               "or narrow or split it"]
+    question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
+                f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
+                f"Choose one: {'; '.join(choices)}.")
+    state.update(stop={"question": question, "tool": tool, **({"size": True} if size else {})},
+                 status="hotspot")
+    state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
+    _save(top, item, state, f"{item} is stuck; Forge asks the owner")
+    repo.refuse(REFUSALS["stuck"], item=item, question=question)
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
@@ -801,7 +876,7 @@ COMMANDS = [{
     "help": "Close a task or fix by the close rule",
     "args": [(('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
              (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"}),
-             (('--resolve',), {"choices": ["narrow", "split", "accept"]}),
+             (('--resolve',), {"choices": ["narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
     "listing": "| `forge close <item>` | Closes a task or fix by the close rule |",

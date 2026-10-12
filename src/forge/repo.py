@@ -533,12 +533,15 @@ def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]
     return models(cfg, kind, family) or WORKER_DEFAULTS[family]
 
 
-def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
-    """One tool overrides workers; both keeps workers' tool or split's design routing.
-    Design work uses the family's design model. forge work and forge next both ask this."""
-    family = worker_family(cfg, design)
+def worker(cfg: dict[str, Any], kind: str, design: bool,
+           tool: str | None = None) -> tuple[str, dict[str, str], str]:
+    """One tool overrides workers; both keeps workers' tool or split's design routing, unless the
+    owner chose a tool for this item. Design work uses the family's design model. forge work and
+    forge next both ask this."""
+    family = tool or worker_family(cfg, design)
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
-    why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
+    why = ("the owner chose it for this item" if tool else f"tools = {family}"
+           + (", with the design model as it is user-facing" if design else "")
            if cfg["tools"] != "both" else
            ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
            if cfg["workers"] == "split" else f"workers = {family}"

@@ -105,8 +105,9 @@ def test_3_land_carries_on_and_the_worker_narrows(land, entry):
         where = _fix(land, "working", worked=True, changes={
             "app.py": "print('hello')\n", "other.py": "print('hello')\n", "show.py": "print('hello')\n"})
         paths = ["app.py"] * 3 if entry == "same-file" else ["app.py", "other.py", "show.py"]
-        land.reviews(*(blocked(finding("P1", "Greeting is missing", file=file))
-                       for file in paths), CLEAN)
+        # A new finding title each round: the same finding twice would stop the stuck worker first.
+        land.reviews(*(blocked(finding("P1", f"Greeting is missing, case {n}", file=file))
+                       for n, file in enumerate(paths, 1)), CLEAN)
     # Advance only the clock; one real land invocation must wait and resume itself.
     # Rerunning land after moving the clock missed the unattended failure.
     shim = land.repo.bin / "forge"
