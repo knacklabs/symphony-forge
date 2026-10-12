@@ -1,0 +1,14 @@
+{
+  "base": "23bb1db61aaf907943e1ca73b05a063722d65bca",
+  "branch": "fix/test-audit-duplicates",
+  "done_when": "Each removed test's contract is still asserted by a named stronger test, the pyproject dynamic-version guard moves into the release test, and the suite is smaller",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T11:05:52.001080+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The suite runs exact duplicates: old version-pin tests every release edits, three extra copies of the mod's native plugin checks, and a review-model test two stronger tests repeat"
+}
