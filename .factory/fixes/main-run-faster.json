@@ -4,11 +4,16 @@
       "at": "2026-10-12T08:08:07.147456+00:00",
       "because": "A permanent test that every collected test has a timing entry would fail each new test until the file is refreshed; the refresh is a one-time change proven by the file itself",
       "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand; and the test timing file covers today's suite so each platform's groups take about the same time"
+    },
+    {
+      "at": "2026-10-12T10:04:27.663261+00:00",
+      "because": "Each test merged after the refresh would make 'covers today's suite' false again; the refresh is a point-in-time change, repeated at releases",
+      "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand, and those full runs never reuse a Linux-only parent's results; and the test timing file is refreshed to cover today's suite"
     }
   ],
   "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
   "branch": "fix/main-run-faster",
-  "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand, and those full runs never reuse a Linux-only parent's results; and the test timing file is refreshed to cover today's suite",
+  "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand, and those full runs never reuse a Linux-only parent's results; and the test timing file is refreshed with the suite as of this change, so tests added later use pytest-split's average until the next refresh",
   "flagged": [
     ".github/workflows/forge-next.yml",
     ".test_durations",
