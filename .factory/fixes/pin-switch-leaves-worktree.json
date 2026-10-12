@@ -51,7 +51,7 @@
     "id": "c6a10ff0-cb82-4cdd-8a78-8db91e941245",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T09:42:03.657961+00:00",
@@ -70,5 +70,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-12T13:05:46.458717+00:00",
+    "file": "src/forge/templates/skill.md",
+    "round": 4,
+    "wait_id": "1bba76a9-ff56-4ceb-98f4-170f3f2ce435"
+  },
   "why": "On Windows, forge merge or forge land run from inside an item's worktree stops with 'could not remove the worktree' when main's pinned release changes mid-run: the old forge processes keep the worktree folder open"
 }
