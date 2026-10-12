@@ -16,31 +16,38 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7b800daf6544440fec45cdb1c69c9da004c425f4e3292a81f0fd8d5e4d1aa5e3",
-    "changed": "3e7d0005126a855cf79bfcd029312e6da98f3bf9d062a9e8d2e61802002f90d1",
-    "commit": "f4f1897e6cf4521b96864131e985951e5475eec4",
+    "branch_diff": "c78d4d324cb4af34c836e897caf2f825450de66da5646c8a490719b44aec7e3b",
+    "changed": "fa18a9fd5b45b4e1444b47f809df99caa7339eb3cef353966eaeb8765c019fa8",
+    "commit": "7edd13341c1cacf6cd0541731313912ca9447c04",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Security. `_without_data` checks for comments separately on each line. In `echo x\\\n#note; git commit -n`, the shell removes the backslash and newline before parsing, so `#note` becomes part of `x#note` and the commit runs. The scanner instead treats the second line as a comment and removes the prohibited commit. The escaped-space test does not cover this line-continuation form.",
+        "body": "chunk 1/2:\n\nRaise: Not done. For `git commit -F - <<EOF` with a message line `\\$(git commit -n)` before `EOF`, the backslash makes the substitution literal, so the invoked commit has no prohibited option and no second commit runs. Line 229 nevertheless retains that message line because it contains `$(`. The command scanner then parses `git commit -n` from the message and refuses the harmless commit. The named unquoted-heredoc test covers an executable substitution, but not this literal one.",
         "file": "src/forge/deny.py",
-        "line": 209,
-        "priority": "P1",
-        "title": "Backslash continuation can hide a commit that skips hooks"
-      },
-      {
-        "body": "Raise: Not done. The heredoc check recognizes a stdin commit message only when the command starts with literal `git` and uses the listed spellings of `-F -` or `--file=-`. For `env GIT_EDITOR=: git commit --file=- <<'EOF'` with a message line mentioning `git commit -n`, the body is retained and parsed as a command, so Forge refuses a commit that has no prohibited option. The named proof covers `git -C web commit --file=-`, but not this normal command prefix.",
-        "file": "src/forge/deny.py",
-        "line": 216,
+        "line": 229,
         "priority": "P1",
         "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Security. In an unquoted `git commit -F - <<EOF` heredoc, Bash joins a line ending `E\\` with the next line `OF` before checking the delimiter. A following `git commit -n -m x` therefore runs as a shell command. At line 227, the scanner checks the original lines separately, continues discarding text until a later literal `EOF`, and lets the skipped-hooks commit through. The [Bash manual](https://www.gnu.org/software/bash/manual/bash.pdf) confirms that backslash-newline joining precedes delimiter matching.",
+        "file": "src/forge/deny.py",
+        "line": 227,
+        "priority": "P1",
+        "title": "Heredoc line continuation hides a skipped-hooks commit"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Not done. Lines 220\u2013221 recognize stdin commit messages with `-F -`, `--file -`, or `--file=-`, but miss the valid attached form `-F-`. For `git commit -F- <<'EOF'` with a message mentioning `git commit -n`, the scanner retains the message and refuses the commit although it has no skip flag. Line 229 also retains an escaped literal `\\$(git commit -n)` in an unquoted stdin message and refuses it as though the substitution ran. The allowed tests cover neither message form. [Git documents `-F` with `-` as stdin](https://git-scm.com/docs/git-commit).",
+        "file": "src/forge/deny.py",
+        "line": 220,
+        "priority": "P1",
+        "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command"
       }
     ],
-    "id": "3256a980-5bf2-4e5a-b98c-f439c5a72311",
+    "id": "cd210d29-cb2f-44ea-8393-b72a764d8b1d",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:29:43.068718+00:00",
@@ -65,13 +72,16 @@
     {
       "at": "2026-10-12T09:32:22.850556+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:02:09.932026+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "narrow",
+    "at": "2026-10-12T10:02:09.943656+00:00",
     "file": "src/forge/deny.py",
-    "reason": "Coordinator decision (nothing dropped or accepted): one more round; the latest commit fixes both open findings, including the security one, so the review checks it",
-    "wait_id": "8a530c86-6421-4a29-a9c2-52177b98fae4"
+    "wait_id": "f77f4cea-44b5-4349-acc9-07f00886280b"
   },
   "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit",
   "worker": "codex"
