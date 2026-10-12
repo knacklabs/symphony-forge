@@ -10,33 +10,33 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7d5e59f69cd73a59cd7239e7bf8b75cf3c76524ebb7c11af46a184b196269abc",
-    "changed": "fb99a4be5732fc660c311995efc4b48c0a222e32ed894d424863b5b202e8556f",
-    "commit": "f175798ec9f8500a39f165fab7b3c095b89a1be9",
+    "branch_diff": "d75b1954d4f0bb45d0e6cd6ee8b3f4ba62d7aa1ad12233eb2ba83e053928d923",
+    "changed": "54d7100a2ac0a6b9c90703f5da75599474b3e3d12534e8e0d63e58c735938d73",
+    "commit": "ed34a012094041609554404d1a5bcff6c98cf6ad",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. A second `forge close` on an unchanged branch replaces the pull request\u2019s test results with preliminary proof text. This line rebuilds evidence without a run report; the fresh-review path at `close.py:321-323` skips the cached passing test run, then publishes that preliminary evidence. The command test covers the first close only.",
-        "file": "src/forge/close.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 251,
-        "priority": "P1",
-        "title": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u05d2ves",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional. New evidence beyond the earlier JavaScript finding: Forge documents Jest selection including `__tests__` files (`src/forge/templates/skill.md:1123-1124`), but `TEST_NAME` does not recognize a path such as `__tests__/greeting.js`. When the worker names that file, `names` is empty and this branch copies the line unchanged into the final pull request, even if the test did not run. It is not marked `not checked` as the recorded narrow rule requires.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. `TEST_NAME` stops a pytest node ID at a comma or semicolon. A worker can name a valid parameter case such as `tests/test_login.py::test_role[staff,active]`; Close extracts only `tests/test_login.py::test_role[staff`, cannot match it to the case that ran, and publishes `not run` instead of its result. The command test covers parameter IDs without punctuation.",
         "file": "src/forge/review.py",
         "gain": 3,
         "harm": 2,
-        "line": 624,
+        "line": 600,
         "priority": "P1",
-        "title": "Close copies Jest __tests__ filenames without checking them",
+        "title": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves",
         "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate. The worker guidance allows every Done-when detail next to its test, but this line keeps only the text before the first test name. For a line such as `- Greeting: tests/test_greeting.py::test_returning (including empty names)`, Close removes the parenthesized detail from both the pull request and review proof list. The reviewer can then approve a list that omits a required detail.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 648,
+        "priority": "P1",
+        "title": "Not done: proof list drops Done-when details written after a test name",
+        "work": 1
       }
     ],
-    "id": "bc377d7c-9f24-4c10-bc38-0aa9b75061bb",
+    "id": "8179090c-4811-4a27-9047-64688c8cbb37",
     "status": "blocked"
   },
   "status": "fixing",
@@ -59,6 +59,10 @@
     },
     {
       "at": "2026-10-12T22:52:29.919372+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:10:15.950031+00:00",
       "step": "review"
     }
   ],
