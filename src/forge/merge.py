@@ -32,8 +32,6 @@ REFUSALS = {
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
-    "worktree": ("Forge could not remove the worktree for {item}.",
-                 "unlock it or close programs using it, then forge merge {item}"),
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
@@ -176,12 +174,16 @@ def merge(args: argparse.Namespace) -> int:
             os.chdir(main_checkout)
         for shim in generated:
             shim.unlink()
-        removed = repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout)
-        if removed.returncode:
-            repo.refuse(REFUSALS["worktree"], item=item)
-        if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
-            repo.git("branch", "-D", branch, cwd=main_checkout)
-        print(f"Merged {item} and removed its worktree and local branch.")
+        # The pull request is merged, so a worktree another program holds open is only cleanup.
+        if repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout).returncode:
+            dirty = True
+            print(f"Merged {item}. Another program still has its worktree at {worktree} open, so Forge "
+                  "left it and its local branch in place; close that program and run forge doctor "
+                  "--fix to tidy it.")
+        else:
+            if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
+                repo.git("branch", "-D", branch, cwd=main_checkout)
+            print(f"Merged {item} and removed its worktree and local branch.")
     if dirty or advanced:
         receipt["tidied"] = True
         _save_ready(path, receipt)
