@@ -44,6 +44,7 @@ def test_3_specs_keep_full_document_blocking_in_later_rounds(repo, gh, tmp_path,
         "Three consecutive cold-read rounds of invoices still have blocking notes. "
         "Ask the human to accept, narrow or split before reading again, in these words:",
         f"Next: {resolution}"]
+    assert "- The unchanged PDF rule exposes private invoice data." in lines[1:-1]
     held = repo.forge("read", "invoices", cwd=where)
     assert held.returncode == 1 and resolution in held.stderr
     assert len(calls.read_text("utf-8").splitlines()) == 3

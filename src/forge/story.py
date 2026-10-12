@@ -1006,7 +1006,7 @@ def read_question(doc: str, notes: str) -> str:
     flagged = []
     for block in _findings(findings[heading.end():] if heading else "").values():
         title, _, body = block.split(". ", 1)[1].partition("\n")
-        if not ADVISORY.match(title):
+        if not ADVISORY.match(title) and not DISPOSITION.search(body):  # cut, deferred or kept
             flagged.append(review.plain(title, "\n".join(line for line in body.splitlines()
                                                   if not DISPOSITION.match(line))))
     title = re.search(r"^# (.+)$", doc, re.M)

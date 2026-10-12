@@ -49,7 +49,9 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         # Settled repeats are clean; each round must still find a distinct blocking gap.
         say(repo, f"1. Blocking: Basket recovery is missing for case {number}.\n"
                   "   Raise: Not done. A shopper who signs out at `src/basket.py:12` loses the saved basket. "
-                  "The doc never says when it comes back.\n")
+                  "The doc never says when it comes back.\n"
+                  # A note already disposed of is not asked about again.
+                  + ("2. Blocking: A gap the owner cut.\n   Disposition: cut\n" if number == 3 else ""))
         result = repo.forge("read", target, cwd=where)
         assert result.returncode == (1 if number == 3 else 0), result.stdout + result.stderr
         if number < 3:
@@ -81,6 +83,7 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     assert held.returncode == 1 and resolution in held.stderr
     said = repo.forge("next", cwd=where).stdout
     assert resolution in said and question in said
+    assert "A gap the owner cut" not in result.stderr + said
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
     assert invalid.returncode == 1

@@ -243,7 +243,7 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
     """A stopped item's question for the human: what it is, its open serious findings, the choices."""
     from forge import story as story_  # story imports review
 
-    name, delivers = state.get("why") or item, state.get("done_when", "")
+    name, delivers = plain(state.get("why") or item), plain(state.get("done_when", ""))
     if "/" in item:  # a task: its row in the story's plan, which its worktree holds
         key, task = item.split("/")
         doc = top / "plans" / f"{key}.md"
