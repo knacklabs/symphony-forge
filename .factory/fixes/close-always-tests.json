@@ -13,7 +13,13 @@
     "branch_diff": "cfe117c46fd198904b01af8866e72db94495ad35c7fb60f4dd3031f476d4b881",
     "changed": "eadf0c136e8b419138d4314a26bdd600de975187158c9232a858da7bbc64d93f",
     "commit": "de28d34c135ff74321a140c873bb67c91a6a0ccb",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (Harm 2, reversible): after the area answer, a new finding in fasttest.py holds work only at Harm 3 or more (approved scoring rule). Duplicate runs on older pytest cost time but give the right result; deduplicating selected items by node id is a follow-up.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nWith `test = \"pytest tests/unit\"` and an `always_test` file under `tests/unit`, this line passes the file to pytest explicitly while the command already collects it through the directory. On supported older pytest versions, including 8.3, [both paths collect the test](https://docs.pytest.org/en/8.3.x/_modules/_pytest/main.html), and Forge's selection hook retains both. Close therefore runs the listed tests twice on each normal change, adding cost and potentially failing tests with nonrepeatable fixture effects. The named proof records receipt filenames in a set, so it cannot detect duplicate runs.",
@@ -27,9 +33,9 @@
       }
     ],
     "id": "216a1f45-3913-440d-8d27-c1ef4d901be8",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T18:28:16.357909+00:00",
@@ -62,8 +68,12 @@
   ],
   "stop": {
     "at": "2026-10-12T23:04:51.402655+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/fasttest.py",
-    "wait_id": "aa174b83-237d-4082-aa49-065a645abfd6"
+    "reason": "Coordinator (Harm 2, reversible): after the area answer, a new finding in fasttest.py holds work only at Harm 3 or more (approved scoring rule). Duplicate runs on older pytest cost time but give the right result; deduplicating selected items by node id is a follow-up.",
+    "wait_id": "aa174b83-237d-4082-aa49-065a645abfd6",
+    "worker_round": null
   },
   "why": "Close picks local tests by imports and mentions, so cross-cutting tests such as the rules and every-refusal checks fail only in CI, a round later"
 }
