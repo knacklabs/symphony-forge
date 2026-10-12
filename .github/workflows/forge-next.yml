@@ -81,10 +81,19 @@ jobs:
         run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
+      - uses: actions/setup-go@v5
+        if: runner.os == 'macOS' && steps.parent-tests.outputs.reuse != 'true'
+        with:
+          go-version: stable
+      # Download the runners the tests start once, so no test spends its time limit on it.
+      - run: |
+          npm exec --yes --package=jest@30.2.0 -- jest --version
+          npm exec --yes --package=vitest@3.2.4 -- vitest --version
+        if: steps.parent-tests.outputs.reuse != 'true'
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path .test_durations
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path .test_durations
         if: steps.parent-tests.outputs.reuse != 'true'
 
   net-lines:
