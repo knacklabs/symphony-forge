@@ -10,27 +10,43 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9d85580319769353e938d98b0523934568a7bf35d1b1f9b28973b29b8e6fc0d3",
-    "changed": "d44817a03ae008bea165676c1b36c40a182a6b41626371843407510421e8a09c",
-    "commit": "ef9b8a594b9d191982757fbb8d8c31a1e4c822b4",
+    "branch_diff": "844d00b98690838c57410f42d0e3509ffd97abd7c54906c59f00e75fdf4d4881",
+    "changed": "e0b21722a34ef04fd9795bc323a9f3c83ed6eae6b0c21d7da6e729217160cfbb",
+    "commit": "d91c5cd3518b9b63ff595193d1b9766454553a6c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done. The cached searches stop at the current week and six full weeks. For an unfinished story with a part merged eight weeks ago, a teammate without local timing logs cannot obtain that part's PR body. The runway assembled at board.py:577\u2013580 then omits its published intervals, so working, waiting and unknown time differs between machines. The changed tests do not cover an older merged part.",
+        "body": "Gain 4, Work 3, Harm 2\nRaise: Scale. Each unfinished story part merged before the seven weekly search windows triggers a separate `gh pr list --head` request. A project with 30 such parts makes at least 38 list calls on the first board run each minute, instead of the specified eight, making normal board reads slow. The added older-part test covers only one branch.",
         "file": "src/forge/board_facts.py",
-        "line": 75,
+        "gain": 4,
+        "harm": 2,
+        "line": 102,
         "priority": "P1",
-        "title": "Not done: older merged parts lose their shared runway"
+        "title": "Older merged parts cause unbounded GitHub requests",
+        "work": 3
       },
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is `missing`. It identifies no runnable proof or result for this branch's counts, shared readiness, cached GitHub reads, approval gate or complete story runway.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done. The HTML totals explicitly omit `finished_last_7_days`, although `team.counts` includes its part and fix counts and the guide says the page prints the same totals. A merged item from yesterday appears in the JSON seven-day count but has no corresponding count on the page.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 1168,
+        "priority": "P1",
+        "title": "Not done: show finished-last-seven-days counts on the page",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list now says only `passed` twice beneath each claim. It names no runnable test selector or check result for the parametrized cases starting here, so the required proof cannot be matched to counts, shared readiness, caching, approval, or the older-part runway.",
         "file": "tests/test_board_counts.py",
+        "gain": 3,
+        "harm": 1,
         "line": 100,
         "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: proof list",
+        "work": 1
       }
     ],
-    "id": "0e47ba85-9401-46c5-91c5-b49aefcbab54",
+    "id": "d13e516d-e025-4382-ab5c-e9446e811421",
     "status": "blocked"
   },
   "status": "fixing",
@@ -53,6 +69,10 @@
     },
     {
       "at": "2026-10-12T18:14:57.435419+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T20:43:37.381073+00:00",
       "step": "review"
     }
   ],
