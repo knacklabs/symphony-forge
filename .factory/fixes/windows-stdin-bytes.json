@@ -1,0 +1,29 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/windows-stdin-bytes",
+  "done_when": "repo.run sends its input as UTF-8 bytes with the newlines unchanged and decodes output the same way on every OS, so a pull request body Forge bounds to GitHub's limit is accepted on Windows",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "358dfd808b13821b7d5ef83065aa9faf8d2d6bba3db5272c4e4bfcc2d175d57b",
+    "changed": "c011c87c8f2387aa7ba0e48488d003c7888d1eebb1333f067610e59340a11a14",
+    "commit": "808874a2ea1e02c7660a99ca529709a4c2841874",
+    "dismissals": [],
+    "findings": [],
+    "id": "111b4b3b-13bb-4a95-877e-239cd7c7f901",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:52:16.095974+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T18:06:45.343642+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "On Windows, everything Forge pipes into another program through repo.run gains a carriage return per line, so a pull request body at GitHub's 65,536-byte limit is refused and git messages sent on stdin change"
+}

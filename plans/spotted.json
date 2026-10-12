@@ -452,6 +452,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/codex-chat-view.read.md\tGate: unrelated cold-read notes changed outside Scope\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "docs/specs/codex-chat-view.read.md",
+      "line": 5,
+      "text": "Gate: unrelated cold-read notes changed outside Scope",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
       "kind": "bug",
       "path": "forge.toml",
@@ -2311,6 +2322,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tLand can close an unreturned fix round after its session ends\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 42,
+      "text": "Land can close an unreturned fix round after its session ends",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tLand can close while a native fix round is still running\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 45,
+      "text": "Land can close while a native fix round is still running",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNative land handouts reset the three-round fix limit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 98,
+      "text": "Native land handouts reset the three-round fix limit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2329,6 +2373,17 @@
       "text": "Not done: forge land omits the question during a review hold with the default setting",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: land proceeds to close after a handed-back round with no commit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 47,
+      "text": "Not done: land proceeds to close after a handed-back round with no commit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
       "status": "open",
       "closed_by": null
     },
@@ -2817,6 +2872,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tNot done: record the native build run end\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 236,
+      "text": "Not done: record the native build run end",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tPublished pull requests miss native worker questions\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 231,
+      "text": "Published pull requests miss native worker questions",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tSuccessful handback makes forge next say the worker stopped\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 203,
+      "text": "Successful handback makes forge next say the worker stopped",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3165,6 +3253,17 @@
       "text": "Not done: forge next does not show which file each work setting came from",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: handback restores an invalid forge.toml edit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 669,
+      "text": "Not done: handback restores an invalid forge.toml edit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
       "status": "open",
       "closed_by": null
     },
@@ -4280,6 +4379,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNative rounds ignore local model overrides when selecting a subagent role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 125,
+      "text": "Native rounds ignore local model overrides when selecting a subagent role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: Earlier-release Codex fallback is mistaken for a Claude round\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -4355,6 +4465,28 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: printed model matches the native Codex role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 118,
+      "text": "Not done: printed model matches the native Codex role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: split fallback uses the Codex kit inside a Codex session\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 104,
+      "text": "Not done: split fallback uses the Codex kit inside a Codex session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: switching a design item to Claude can run Codex again\tstuck-worker-asks",
@@ -6062,6 +6194,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: Codex fixer handout and land proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 208,
+      "text": "Not done: Codex fixer handout and land proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work in new and earlier-adopted client repos\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 40,
+      "text": "Not done: native work in new and earlier-adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work's named handout and failure outcomes have proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 68,
+      "text": "Not done: native work's named handout and failure outcomes have proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: prove settings restoration and the post-nudge handback\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 155,
+      "text": "Not done: prove settings restoration and the post-nudge handback",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
       "kind": "bug",
       "path": "tests/test_tools_session_hold.py",
@@ -7521,6 +7697,61 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A pull request's title is the first sentence of the item's why",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A version-led second sentence remains in the PR title",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 963,
+      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 639,
+      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
+      "from": "blocking",
+      "item": "merge-clash-names-files",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
+      "kind": "edge",
+      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
+      "line": 23,
+      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
+      "from": "review",
+      "item": "pr-title-whole-sentence",
       "status": "open",
       "closed_by": null
     }

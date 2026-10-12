@@ -7,7 +7,7 @@ including findings already fixed or dismissed. Do not reopen them with the same 
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
 
-You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
+You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
 
 $start_here
