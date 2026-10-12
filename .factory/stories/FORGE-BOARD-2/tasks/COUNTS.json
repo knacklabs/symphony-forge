@@ -5,66 +5,53 @@
     "src/forge/board.py",
     "src/forge/board_facts.py",
     "src/forge/nextstep.py",
-    "tests/test_board_counts.py"
+    "tests/test_board_counts.py",
+    "tests/test_board_github_once.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a6410a003a112ca684509ef3c61c41b0ef9c16228e8cd00209fe8f26b91c7ec8",
-    "changed": "87f62306ef8692f3a5538c1bbc78a56ccbec89c523b0090114630abc71d6a051",
-    "commit": "4fea0a5608364d6a721e260ab7004ab1b41dcec8",
+    "branch_diff": "347e04cf6a4e643906925d49927d1ca8a45af3c52d984bc29a610f43e9273bf8",
+    "changed": "2fa0504bb8c109d84c43668a47ca342c41553ed7b384f99e392f38b1b2f72f70",
+    "commit": "ce7cbe459b19fdc979ec9c8adbfe5d2b0485d120",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. `review_ref` prefers an existing `origin/<branch>` over `headRefOid` even when that remote ref is stale. `forge next` does not fetch before checking readiness. After another machine pushes a commit, a matching receipt for the old commit can still make `forge next` report the item ready while GitHub reports the newer head.",
+        "body": "Raise: Functional. This new no-worktree advice is unreachable in `forge next` for a part that exists only on a fetched remote branch. `_task` returns an empty state when there is no local worktree (`nextstep.py:598`), and `_story` calls `_item` only for nonempty states (`nextstep.py:453\u2013458`). A second clone can therefore show the part as ready in `forge board --json` while `forge next` offers to start it instead of naming its starter.",
         "file": "src/forge/nextstep.py",
-        "line": 648,
+        "line": 718,
         "priority": "P1",
-        "title": "Not done: readiness must use the current pull request head"
+        "title": "Not done: forge next omits ready parts without a worktree"
       },
       {
-        "body": "Raise: Functional. A fetched PR head can be ready through the shared record while this machine's worktree is behind it. The `HEAD == receipt['commit']` condition skips `forge close`, then the agent-merge path offers `forge merge`. That command requires a matching local receipt and refuses, so the recommended next step cannot complete.",
+        "body": "Raise: Functional. `forge next` does not fetch before `_item` calls `at_ref`. After another machine pushes a reviewed commit, GitHub supplies its new `headRefOid`, but this clone may not have that Git object. `story.show` then finds no state and this fallback keeps the older worktree's findings and round. The new test calls `forge board` first, whose fetch masks this normal `forge next` path.",
         "file": "src/forge/nextstep.py",
-        "line": 705,
+        "line": 666,
         "priority": "P1",
-        "title": "Not done: shared readiness needs a valid next step when the worktree is behind"
+        "title": "Not done: forge next must fetch a newer review head before reading it"
       },
       {
-        "body": "Raise: Not done. `approved` accepts an approval from any historical copy without checking it against the current plan. If an approved plan is edited above `## For the builders`, `forge next` requires another read and approval, but this code still counts the story as building or approved, not started. The board's state and counts then disagree with the approval gate.",
+        "body": "Raise: Not done. `approved` checks only `story.approval_hash`, which covers \u201cWhat changes for you\u201d and \u201cDone when\u201d (`story.py:645\u2013654`). Editing another section above `## For the builders`, such as Why or Tasks, leaves that hash unchanged but makes `story.gate` fail (`story.py:671\u2013684`). This branch still counts the story as approved or building while `forge next` requires another read. The added test edits a hashed section, so it does not catch this case.",
         "file": "src/forge/board_facts.py",
-        "line": 91,
+        "line": 127,
         "priority": "P1",
-        "title": "Not done: changed plans must lose their approved story count"
+        "title": "Not done: approval counting must honor a stale cold read"
       },
       {
-        "body": "Raise: Not done. The new `review_ref` is used for readiness only. The board still builds findings and review status from its selected state copy (`board.py` lines 305\u2013309 and 448), while `forge next` reads the worktree state in `_task` (`nextstep.py` line 598). After a second machine pushes a newer reviewed commit, a machine with an older worktree can show the old findings and round while another shows the PR head's history.",
-        "file": "src/forge/nextstep.py",
-        "line": 614,
+        "body": "Raise: Test. The GitHub-failure case asserts only that the fixes count object exists. That object exists without GitHub, so the test would pass if a failed fetch exposed stale PR facts instead of marking GitHub facts unknown. The Done-when rule explicitly requires the failure result to be unknown in `forge board --json`.",
+        "file": "tests/test_board_github_once.py",
+        "line": 39,
         "priority": "P1",
-        "title": "Not done: read review history from the selected review ref"
+        "title": "Not done: test_board_github_once verifies unknown facts on failure"
       },
       {
-        "body": "Raise: Scale. `_prs` reads the cached weekly searches here, then makes another `gh pr list --state merged --limit 25` call at `board.py` line 878 on every HTML board run. The guide promises pull request lists at most once a minute, but repeatedly opening the page always makes this ninth, uncached list call.",
-        "file": "src/forge/board.py",
-        "line": 876,
-        "priority": "P1",
-        "title": "Cache the HTML board's additional merged pull request list"
-      },
-      {
-        "body": "Raise: Gate. This branch changes `docs/specs/agent-merge.read.md`, which is outside COUNTS' Scope and is not needed for shared counts, readiness, caching, or their tests. The edit also removes that separate spec read's `amended_hash`.",
-        "file": "docs/specs/agent-merge.read.md",
-        "line": 4,
-        "priority": "P1",
-        "title": "Scope: unrelated agent-merge read record changed"
-      },
-      {
-        "body": "Raise: Gate. The supplied proof list names `[counts]`, `[github-once]`, and `[approved-not-started]`, but this test also parametrizes `previous`, so none is an actual pytest node ID. The cases have IDs that include `new-client` or `earlier-adoption`; the recorded proof selectors therefore do not identify runnable tests.",
+        "body": "Raise: Gate. The supplied proof list has five headings with no proof beneath any of them. It identifies no runnable check or result for counts, review-head history, cached GitHub reads, approval counts, or the complete story runway, so the required proof entries are missing.",
         "file": "tests/test_board_counts.py",
-        "line": 99,
+        "line": 100,
         "priority": "P1",
         "title": "Not done: proof list"
       }
     ],
-    "id": "2feed219-840a-48e0-8b09-dfdcfca9031a",
+    "id": "bf65abe3-cc9a-4ba0-8c04-2d17166d6076",
     "status": "blocked"
   },
   "status": "fixing",
@@ -75,6 +62,10 @@
     },
     {
       "at": "2026-10-12T15:03:23.641141+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T15:46:31.759560+00:00",
       "step": "review"
     }
   ]

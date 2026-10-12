@@ -903,6 +903,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: approval counting must honor a stale cold read\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 127,
+      "text": "Not done: approval counting must honor a stale cold read",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: changed plans must lose their approved story count\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -2971,6 +2982,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next must fetch a newer review head before reading it\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 666,
+      "text": "Not done: forge next must fetch a newer review head before reading it",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready parts without a worktree\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 718,
+      "text": "Not done: forge next omits ready parts without a worktree",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits setting sources for active tasks and fixes\tpersonal-worker-choice",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -4588,6 +4621,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_github_once.py\tNot done: test_board_github_once verifies unknown facts on failure\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "tests/test_board_github_once.py",
+      "line": 39,
+      "text": "Not done: test_board_github_once verifies unknown facts on failure",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_status_and_times.py\tNot done: required tests check\tboard-data-truth",
       "kind": "bug",
       "path": "tests/test_board_status_and_times.py",
@@ -5794,6 +5838,17 @@
       "text": "Not done: init and upgrade ignore forge.local.toml at their own entry points",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
+      "kind": "bug",
+      "path": "tests/test_pid_reuse_keeps_run.py",
+      "line": 21,
+      "text": "Not done: test PID reuse through Codex and an upgraded client",
+      "from": "blocking",
+      "item": "pid-reuse-keeps-run",
       "status": "open",
       "closed_by": null
     },
@@ -7565,17 +7620,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
-      "kind": "bug",
-      "path": "tests/test_pid_reuse_keeps_run.py",
-      "line": 21,
-      "text": "Not done: test PID reuse through Codex and an upgraded client",
-      "from": "blocking",
-      "item": "pid-reuse-keeps-run",
       "status": "open",
       "closed_by": null
     }
