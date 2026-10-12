@@ -1123,6 +1123,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A pull request's title is the first sentence of the item's why",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A version-led second sentence remains in the PR title",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1167,6 +1189,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 963,
+      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: The owner cannot reverse the default after automatic merge\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1185,6 +1218,17 @@
       "text": "Not done: The stop does not resume unattended after 30 minutes",
       "from": "blocking",
       "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 639,
+      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
+      "from": "blocking",
+      "item": "merge-clash-names-files",
       "status": "open",
       "closed_by": null
     },
@@ -3444,6 +3488,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/score.py\tNot done: scores must be integers from 1 to 5\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 11,
+      "text": "Not done: scores must be integers from 1 to 5",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tA dependent story's roadmap entry never reaches the default branch\tstory-from-goal",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -5435,6 +5490,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
+      "kind": "bug",
+      "path": "tests/test_last_task_records_story_outcome.py",
+      "line": 46,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-green-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -5882,6 +5948,17 @@
       "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
       "from": "blocking",
       "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "tests/test_score_notes.py",
+      "line": 99,
+      "text": "Not done: test the data-loss Harm floor",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
       "status": "open",
       "closed_by": null
     },
@@ -7283,6 +7360,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
+      "kind": "edge",
+      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
+      "line": 23,
+      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
+      "from": "review",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
       "kind": "edge",
       "path": "tests/test_fix_leftover_app_server_bare_command.py",
@@ -7488,17 +7576,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
-      "kind": "bug",
-      "path": "tests/test_last_task_records_story_outcome.py",
-      "line": 46,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "windows-green-3",
       "status": "open",
       "closed_by": null
     }

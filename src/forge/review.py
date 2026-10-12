@@ -2,7 +2,8 @@
 
 Autoreview is a third-party black box. Forge reads only the fields it uses (each finding's
 priority, title, body and code_location, in findings and scope_rejected_findings, then
-review_status and overall_correctness) and ignores everything else it writes.
+review_status and overall_correctness) and ignores everything else it writes. The body's first
+line carries the reviewer's Gain, Work and Harm scores (see score.py).
 """
 from __future__ import annotations
 
@@ -22,7 +23,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import machine, repo, spotted
+from forge import machine, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -232,7 +233,7 @@ def plain(title: str, body: str = "") -> str:
             return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
                                                  rest[0][:1].lower() + rest[0][1:])
         return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
-    title, body = sentences(title, 1), sentences(body, 2)
+    title, body = sentences(title, 1), sentences(score.strip(body), 2)
     if not body:
         return title
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
@@ -242,7 +243,7 @@ def question(name: str, delivers: str, flagged: list[str], accept: str,
                   parts: str = "Done when") -> str:
     """The question a stopped read or review loop asks the human, ready to ask as written."""
     return "\n".join([f"{name}: {delivers}" if delivers else name,
-                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
+                      *(["It still has these problems:", *flagged] if flagged else []),
                       "Accept, narrow or split?",
                       f"- Accept: {accept}",
                       f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
@@ -267,13 +268,14 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    flagged = [plain(finding["title"], finding.get("body", ""))
-               for _, finding in blocking(result) if isinstance(finding, dict)]
+    rows = [(plain(finding["title"], finding.get("body", "")),
+             (finding["gain"], finding["work"], finding["harm"]) if "harm" in finding else None)
+            for _, finding in blocking(result) if isinstance(finding, dict)]
     # Accept dismisses every finding not yet dismissed, advice included.
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
-    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(flagged)
-    return question(name, delivers, flagged,
-                               f"every finding in this review, the {len(flagged)} listed and {advice} "
+    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
+    return question(name, delivers, score.table(rows),
+                               f"every finding in this review, the {len(rows)} listed and {advice} "
                                "advice notes, is dismissed with your reason and recorded; close then "
                                "goes on to the checks, and merging is still a separate step.")
 
@@ -868,9 +870,13 @@ def _finding(raw: Any) -> dict[str, Any] | None:
     where = raw.get("code_location") if isinstance(raw, dict) else None
     if not isinstance(where, dict) or raw.get("priority") not in PRIORITIES:
         return None
-    return {"priority": raw["priority"], "title": str(raw.get("title", "")),
-            "body": str(raw.get("body", "")), "file": str(where.get("file_path", "")),
-            "line": where.get("line", 0)}
+    title = str(raw.get("title", ""))
+    scores, body = score.normalise(title, str(raw.get("body", "")))
+    if not scores:  # a new finding must carry its score line
+        return None
+    return {"priority": raw["priority"], "title": title, "body": body,
+            "gain": scores[0], "work": scores[1], "harm": scores[2],
+            "file": str(where.get("file_path", "")), "line": where.get("line", 0)}
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
