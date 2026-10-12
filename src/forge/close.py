@@ -632,7 +632,11 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
             base = Path(folder) / "default"
             repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
             try:
-                generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+                # Forge's own code is never generated, and sync would parse its conflicted copy
+                # when Forge runs from this checkout.
+                ours = Path(__file__).resolve().parent
+                generated = set() if any((top / path).resolve().is_relative_to(ours) for path in files) \
+                    else {Path(path).as_posix() for path in sync.files(base, cfg)}
                 if folder := githooks.husky_folder(base):
                     # Sync adds Forge's line, but the rest of these hooks belongs to the user.
                     generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
