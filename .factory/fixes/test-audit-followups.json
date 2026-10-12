@@ -1,0 +1,14 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/test-audit-followups",
+  "done_when": "The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:42.456146+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job"
+}
