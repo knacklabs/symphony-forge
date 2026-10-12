@@ -1189,6 +1189,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 639,
+      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
+      "from": "blocking",
+      "item": "merge-clash-names-files",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: When two rounds in a row leave close's tests failing or the same review finding open, or a story part grows past its size limit,\u200b\tstuck-worker-asks",
       "kind": "bug",
       "path": "src/forge/close.py",

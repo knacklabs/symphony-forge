@@ -2,19 +2,29 @@
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/merge-clash-names-files",
   "done_when": "When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never reports a syntax error",
-  "flagged": [],
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "44df9b4a8ad2cc4025d65cf39da2ac163cff039f4f4b36822e16c4faaa3dbcf1",
-    "changed": "b95a5cfc2c3949d38e7f875488f19b85024ccb0e0df4e206af1a65a551a7bd8e",
-    "commit": "bcb6caac0569900f94f8020a4a06d008d6fdfac9",
+    "branch_diff": "201a4a96fd16ad9a39058bfd51df5f3772e6f79cfcc202b00ff2ddcdb6b98f87",
+    "changed": "c04a5b92c5bea907516d2a6bc9c29607759c8fa0703c75848fb0dcdfa84b1c6e",
+    "commit": "0ad2459e9d37be4436000d66c35cde19c98fed17",
     "dismissals": [],
-    "findings": [],
-    "id": "d2c4c6c0-4b1a-44fa-9551-f7196f2d5f3a",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 2, Work 2, Harm 2\nRaise: Not done. If main adds an invalid Forge Python module while app.py also conflicts, no conflicted path is under the running Forge package, so this line calls sync.files. Its module scan raises SyntaxError; close then reports \u201cinvalid syntax\u201d and tells the worker only to rerun close, without naming app.py. The broken-main proof covers only a generated-file conflict, leaving this named case untested.",
+        "file": "src/forge/close.py",
+        "line": 639,
+        "priority": "P1",
+        "title": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re"
+      }
+    ],
+    "id": "c25aaaba-ac9b-4426-a5d4-7efaef5a8ae6",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:23.655368+00:00",
@@ -26,6 +36,10 @@
     },
     {
       "at": "2026-10-12T16:29:27.303364+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:51:27.094924+00:00",
       "step": "review"
     }
   ],
