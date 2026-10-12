@@ -22,23 +22,15 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a71fd8181e896f1a5ffd525dfb11b2c9b0497aa1a3a644b307c143060173206d",
-    "changed": "79aaa92e53fbb2e1b97d95e558b025e5aa4cca200a047556c9828c02cf2a581b",
-    "commit": "e7ca8d753e07f5cc5a67caaacdbf363270897f59",
+    "branch_diff": "fc7d8d480718c861fbb3aa5a6d92b935d825fcd8e2b779f1ab9913f3a942873e",
+    "changed": "e13e3b72b9bd89337d0f727385458e3cea63654225dd82966b886a999b2f3d5a",
+    "commit": "76a31c921e72b8381b8fd98ea07543e050772105",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate. After the owner records `same`, `switch`, `narrow`, or `split` for an oversized story part, rerunning `forge close` before `forge work` skips the question here but reaches the refusal at lines 174\u2013176. That refusal tells the owner to split the part or request an allowance, with no `Next:` command, although the recorded choice entitles them to a worker round. This is a remaining defect after the accepted fix for the repeated question; the size test checks only that the question is absent.",
-        "file": "src/forge/close.py",
-        "line": 171,
-        "priority": "P1",
-        "title": "Answered size stop gives the wrong next action on a close rerun"
-      }
-    ],
-    "id": "3178753c-12fd-4f80-b5d2-e5906b1259d7",
-    "status": "blocked"
+    "findings": [],
+    "id": "02b05f2e-329c-4f43-b684-04de1697e09b",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -94,6 +86,10 @@
     },
     {
       "at": "2026-10-12T03:52:12.993608+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T04:01:34.628498+00:00",
       "step": "review"
     }
   ],
