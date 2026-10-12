@@ -279,11 +279,16 @@ sys.exit(subprocess.call([sys.executable, {model.as_posix()!r}, *sys.argv[1:]]))
         assert refused.stderr == "Forge cannot verify this run's process; nothing was stopped.\n"
         assert process.poll() is None
         child_survives("unverified")
-        # Reused pid: the recorded start differs. Never terminate its new owner.
-        identity["started"] = "not this process's start"
-        queue.write_text(json.dumps(saved), "utf-8")
-        assert repo.forge("stop", "--id", row["id"]).returncode == 0
-        assert process.poll() is None
-        child_survives("reused")
+        # Reused pid: another process now has it. Stop ends the live Forge run, never the pid's new owner.
+        owner = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+        try:
+            identity.update(pid=owner.pid, started="not this process's start")
+            queue.write_text(json.dumps(saved), "utf-8")
+            assert repo.forge("stop", "--id", row["id"]).returncode == 0
+            process.wait(timeout=30)
+            assert alive(owner.pid), "the pid's new owner was terminated"
+        finally:
+            owner.kill()
+            owner.wait()
     finally:
         finish(repo, [process])
