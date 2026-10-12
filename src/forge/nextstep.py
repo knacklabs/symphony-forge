@@ -703,21 +703,25 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                      else f"merge {url}, then forge next")
         return answered + [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
     return answered + [sentence.format(**values), f"Next: {step.format(**values)}" + (
-        _builder(item, status, path or top, refusals) if step == "forge work {item}" else "")]
+        _builder(item, state, path or top, refusals) if step == "forge work {item}" else "")]
 
 
-def _builder(item: str, status: str, folder: Path, refusals: dict[Path, str]) -> str:
-    """The worker beside a forge work line, with where its settings came from, when a
-    forge.local.toml sets any; "" otherwise."""
+def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:
+    """The worker beside a forge work line, chosen as forge work chooses it, with where its
+    settings came from, when a forge.local.toml sets any; "" otherwise."""
     cfg = _report_config(folder, refusals)
+    if "local" not in cfg:
+        return ""
+    # Keep in step with forge work's choice of design and kind in worker.work (worker.py lines 89-106).
     key, _, name = item.partition("/")
-    doc = folder / "plans" / f"{key}.md"
-    design = bool(name) and doc.is_file() and repo.user_facing(
-        cfg, task.rows(task.sections(doc.read_text(encoding="utf-8"))).get(name, {}))
-    # As forge work picks it: a first round builds a task or runs a fix as lite work.
-    kind = "fix" if status != "started" else "build" if name else "lite"
+    design = (repo.user_facing(cfg, task.rows(task.sections((folder / "plans" / f"{key}.md").read_text(
+        encoding="utf-8"))).get(name, {})) if name else
+        state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(folder))
+    later = (repo.worker(cfg, "build", design)[0] == "codex" or design) and bool(
+        codex.record(folder, item).get("start") or state.get("status", "started") != "started")
+    kind = "fix" if later else "build" if name else "lite"
     sources = repo.setting_sources(cfg, kind, design)
-    return f"  # {repo.worker(cfg, kind, design)[0].title()} builds it ({sources})" if sources else ""
+    return f"  # {repo.worker(cfg, kind, design)[0].title()} builds it ({sources})"
 
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:

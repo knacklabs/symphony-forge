@@ -431,9 +431,13 @@ def doctor(args: argparse.Namespace) -> int:
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
     if local := cfg.get("local"):
+        kinds = {kind: repo.model_source(cfg, kind, repo.worker_family(cfg, kind == "design"))
+                 for kind in local.get("models", {})}
+        defaults = [f"models.{kind}" for kind, source in kinds.items() if source != repo.LOCAL]
         print(f"- Note: from {repo.LOCAL}: " + ", ".join(
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
-            + [f"models.{kind}" for kind in local.get("models", {})]) + "; the rest from forge.toml.")
+            + [f"models.{kind}" for kind, source in kinds.items() if source == repo.LOCAL])
+            + (f"; built-in default: {', '.join(defaults)}" if defaults else "") + "; the rest from forge.toml.")
     if "review" in cfg.get("models", {}):
         print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")

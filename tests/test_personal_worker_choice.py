@@ -40,6 +40,13 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     shown = repo.forge("next", cwd=other).stdout
     assert ("Next: forge task start BOARD/HELP  # Codex builds it "
             "(forge.local.toml: tools = both; forge.toml: workers = codex, models.build)") in shown, shown
+    # A local models table replaces the whole kind: with no entry for Codex, Codex runs on
+    # Forge's built-in default, not on forge.toml's build entry.
+    (other / "forge.local.toml").write_text(
+        '[models.build.claude]\nmodel = "claude-sonnet-5"\neffort = "low"\n', "utf-8")
+    shown = repo.forge("next", cwd=other).stdout
+    assert ("Next: forge task start BOARD/HELP  # Codex builds it "
+            "(forge.toml: tools = both, workers = codex; built-in default: models.build)") in shown, shown
 
     claude_log = install_claude(repo)
     started = repo.forge("task", "start", "BOARD/HELP")
@@ -66,6 +73,19 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     shown = repo.forge("next").stdout
     assert (f"Next: forge work {name}  # Claude builds it (forge.local.toml: tools = claude; "
             "forge.toml: workers = codex; built-in default: models.lite)") in shown, shown
+    # A prototype fix is design work, so forge next previews the worker forge work picks for it.
+    config = repo.path / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('repo = "client"', 'repo = "client"\nstage = "prototype"'),
+                      "utf-8")
+    repo.git("commit", "-qam", "Back to the prototype stage")
+    repo.git("push", "-q", "origin", "main")
+    (repo.path / "forge.local.toml").write_text('workers = "split"\n', "utf-8")
+    fixed = repo.forge("fix", "start", "Show the demo", "--done", "The demo shows")
+    assert fixed.returncode == 0, fixed.stdout + fixed.stderr
+    name = fixed.stdout.split()[2]
+    shown = repo.forge("next").stdout
+    assert (f"Next: forge work {name}  # Claude builds it (forge.local.toml: workers = split; "
+            "forge.toml: tools = both; built-in default: models.design)") in shown, shown
     for folder in (repo.path, page, other):
         assert repo.git("status", "--porcelain", "--untracked-files=no", cwd=folder) == ""
 
@@ -110,7 +130,8 @@ def test_3_new_and_upgraded_repos_ignore_the_local_file_and_doctor_names_its_set
     assert "forge.local.toml" in (client / ".gitignore").read_text("utf-8").splitlines()
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "-qm", "Ignore my settings", "--allow-empty", cwd=client)
-    (main / "forge.local.toml").write_text('tools = "claude"\n' + LOCAL, "utf-8")
+    (main / "forge.local.toml").write_text(
+        'tools = "claude"\n' + LOCAL + '\n[models.fix.codex]\nmodel = "gpt-6-sol"\neffort = "low"\n', "utf-8")
     roles = (client / ".claude/agents/worker.md").read_bytes()
     assert repo.forge("sync", cwd=client).returncode == 0
     # Personal models never reach the committed subagent roles.
@@ -133,4 +154,4 @@ def test_3_new_and_upgraded_repos_ignore_the_local_file_and_doctor_names_its_set
     _stub_forge(tmp_path, monkeypatch)
     checked = repo.forge("doctor", cwd=client)
     assert ("- Note: from forge.local.toml: tools = claude, workers = claude, models.build; "
-            "the rest from forge.toml.") in checked.stdout, checked.stdout + checked.stderr
+            "built-in default: models.fix; the rest from forge.toml.") in checked.stdout, checked.stdout + checked.stderr

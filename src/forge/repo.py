@@ -536,7 +536,7 @@ def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]
 def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
     """One tool overrides workers; both keeps workers' tool or split's design routing.
     Design work uses the family's design model. forge work and forge next both ask this."""
-    family = _family(cfg, design)
+    family = worker_family(cfg, design)
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
     why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
            if cfg["tools"] != "both" else
@@ -546,7 +546,8 @@ def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str,
     return family, chosen, why + (f"; {sources}" if (sources := setting_sources(cfg, kind, design)) else "")
 
 
-def _family(cfg: dict[str, Any], design: bool) -> str:
+def worker_family(cfg: dict[str, Any], design: bool) -> str:
+    """Which tool runs work: one tool overrides workers; split sends design work to Claude."""
     return (cfg["tools"] if cfg["tools"] != "both" else
             cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
 
@@ -561,11 +562,16 @@ def setting_sources(cfg: dict[str, Any], kind: str, design: bool) -> str:
     files: dict[str, list[str]] = {LOCAL: [], "forge.toml": [], "built-in default": []}
     for key in ("tools", "workers"):
         files[LOCAL if key in local else "forge.toml"].append(f"{key} = {cfg[key]}")
-    # A file sets this work's models only with an entry for the worker that runs it.
-    family = _family(cfg, design)
-    files[next((name for name, table in ((LOCAL, local.get("models", {})), ("forge.toml", cfg["shared"]["models"]))
-                if models({"models": table}, kind, family)), "built-in default")].append(f"models.{kind}")
+    files[model_source(cfg, kind, worker_family(cfg, design))].append(f"models.{kind}")
     return "; ".join(f"{name}: {', '.join(keys)}" for name, keys in files.items() if keys)
+
+
+def model_source(cfg: dict[str, Any], kind: str, family: str) -> str:
+    """Where a worker's models for this kind come from. A local [models.<kind>] replaces the whole
+    kind, so without an entry for this worker Forge's built-in default applies, as forge work does."""
+    if not models(cfg, kind, family):
+        return "built-in default"
+    return LOCAL if kind in cfg.get("local", {}).get("models", {}) else "forge.toml"
 
 
 def coordinator() -> str | None:
