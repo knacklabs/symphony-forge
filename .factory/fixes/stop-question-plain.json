@@ -29,54 +29,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5d26f0d4475ee2c91cb2ba7afe57d9b0ddafd9b11ff82d17617e25f05702d45d",
-    "changed": "4082bfecffad4252f515e65364250aba2b9a11a0ca1a0125fa9675b68babffdf",
-    "commit": "c05b15060fbd1d12550be481aa7cc5d43091343e",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
-        "finding": 3
-      }
-    ],
+    "branch_diff": "fd70543ac281019dd6c05eff16c8696e9a083bc27b76d2556f64466462d4afef",
+    "changed": "c7830858f07e503d6349e6ed1d1ec8454048e2015881c951e63795111cfffaba",
+    "commit": "b1580df065f73c15b10b0623d4044766b341a5dc",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A fix created by the normal default Narrow path can reach a review stop, but its question names it as \u201cReview finding left open by \u2026\u201d and describes its delivery as \u201cA review no longer finds \u2026\u201d. Those phrases come from the generated fix state at src/forge/close.py:405-407; this line passes them through after stripping paths. The owner still cannot tell in plain words what the fix is or what it delivers.",
+        "body": "Raise: Not done. Task stops copy the plan row's Name and What it delivers directly into the owner's question. The task row in plans/FORGE-DOCTORFIX-1.md:326, for example, describes delivery with command flags, output labels and internal tooling. If that task's review loop stops, the owner receives those implementation details instead of the promised plain-words account of what the item delivers. The named close proof uses a fix, so it does not exercise this task path.",
         "file": "src/forge/review.py",
-        "line": 246,
+        "line": 257,
         "priority": "P1",
-        "title": "Not done: follow-up fixes describe a review record instead of the item"
+        "title": "Not done: stopped task questions expose implementation text instead of a plain delivery"
       },
       {
-        "body": "Raise: Functional. At land's own three-fix-round review stop, this line prints the question and line 86 re-raises the original blocked-review refusal. That refusal's Next line is `forge work`, while the newly recorded stop requires `forge close --resolve` before the review can continue. The command therefore ends with an instruction that contradicts the decision it just requested.",
-        "file": "src/forge/land.py",
-        "line": 85,
+        "body": "Raise: Functional. This scan reports stopped specs from every worktree, but prints a bare `forge read <slug> --resolve ...` command. `forge next` can run from the main checkout, while `forge read` resolves a spec in the current checkout (`src/forge/story.py:901-905`). For a spec stopped on a story or fix branch and absent from main, following the printed next step refuses with `no_spec` instead of recording the owner's choice. The named read proof runs `forge next` from the spec's own worktree, so it misses this normal path.",
+        "file": "src/forge/nextstep.py",
+        "line": 223,
         "priority": "P1",
-        "title": "Stopped land directs the coordinator back to work instead of the owner's choice"
-      },
-      {
-        "body": "Raise: Gate. The named later-round spec proof checks the intro, Next line and one blocker line, but never checks the item's delivery or any of the three choices; it would pass with those parts of the question removed. The named land proofs in tests/test_land.py likewise check only the question's opening lines and that `forge next` repeats them, so they can pass when both commands omit the choices. These entries do not prove the complete ready-to-ask questions they claim.",
-        "file": "tests/test_spec_reads_keep_full_scope.py",
-        "line": 43,
-        "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "forge next gives an unusable resolve command for a stopped spec in another worktree"
       }
     ],
-    "id": "560aaed3-52e2-4e7f-aca8-120e28a87418",
-    "status": "clean"
+    "id": "b33b108e-d96b-4cca-ad5f-3eba49c4f1be",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -116,6 +93,10 @@
     },
     {
       "at": "2026-10-12T02:23:47.583721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:38:09.011636+00:00",
       "step": "review"
     }
   ],
