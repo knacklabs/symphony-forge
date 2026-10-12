@@ -1,0 +1,14 @@
+{
+  "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
+  "branch": "fix/nightly-red-shows-in-next",
+  "done_when": "When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command for them",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T16:41:28.751000+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A failing nightly full run on macOS or Windows is easy to miss, and Windows stayed red for days unseen"
+}
