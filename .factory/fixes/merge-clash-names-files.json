@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T16:51:50.631742+00:00",
+      "because": "The reviewer scored the broken-main case Gain 2, Work 2, Harm 2, below the bar: it needs main itself to hold unparsable Forge code",
+      "done_when": "When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never reports a syntax error"
+    }
+  ],
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/merge-clash-names-files",
-  "done_when": "When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never reports a syntax error",
+  "done_when": "When taking in main clashes in a file Forge does not generate, and main's own Forge code parses, close names the clashing files and the next step instead of a syntax error",
   "flagged": [
     "src/forge/close.py"
   ],
