@@ -1,0 +1,14 @@
+{
+  "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
+  "branch": "fix/windows-test-stubs",
+  "done_when": "The merge stub reads stdin as UTF-8 and the behind-base stub writes README.md with Unix line endings, so those tests pass on Windows as on Linux",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T07:22:02.045364+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's full test run fails more tests on Windows: test stubs read stdin with the Windows code page and write files with Windows line endings"
+}
