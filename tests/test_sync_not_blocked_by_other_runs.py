@@ -93,11 +93,11 @@ def test_2_sync_never_skips_a_chat_an_earlier_release_run_holds(repo, monkeypatc
         other = tmp_path / "upgrade checkout"
         repo.git("worktree", "add", "-qb", "fix/upgrade", str(other), "main")
         synced = repo.forge("sync", cwd=other)
-        assert synced.returncode == 1
-        assert synced.stderr == (
-            f"forge work {item} is running on an earlier Forge release, which doesn't save its own "
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        assert (
+            f"Warning: forge work {item} is running on an earlier Forge release, which doesn't save its own "
             "chat, so sync can't move that chat yet.\n"
-            f"Next: let forge work {item} finish, then forge sync\n")
+            f"Next: let forge work {item} finish, then forge sync\n") in synced.stdout
     finally:
         held.send_signal(signal.SIGINT)
         held.communicate(timeout=30)

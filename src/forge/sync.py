@@ -522,7 +522,6 @@ def sync(args: argparse.Namespace) -> None:
     from forge import codex
     top = repo.root()
     cfg = repo.config(top)
-    codex.preserve_chats(top)
     changed = write(top, cfg)
     if cfg.get("repo") == "forge-source":
         page = command_page()
@@ -540,6 +539,7 @@ def sync(args: argparse.Namespace) -> None:
         print("Installed the git hooks that check each commit and push.")
     elif not changed:
         print(f"Nothing to change: the adapters and git hooks already match Forge {cfg['version']}.")
+    codex.preserve_chats(top)  # after every file is written, so a chat problem only warns
 
 
 def install_mod(top: Path) -> None:

@@ -219,11 +219,10 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
         if app == "claude" and change == "record-missing":
             reader.dispose(FIRST, "cut")
             dirty = reader.text()
-            other, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
-            assert refused.returncode != 0
-            assert (f"The chat record at {reader.shop / 'plans/SHOP.read.md'} has uncommitted changes, "
-                    "so sync left it alone.") in refused.stderr
-            assert "Next: commit or undo those changes, then forge sync" in refused.stderr
+            other, warned = _sync_elsewhere(repo, tmp_path)
+            assert (f"Warning: The chat record at {reader.shop / 'plans/SHOP.read.md'} has uncommitted "
+                    "changes, so sync left it alone.") in warned.stdout
+            assert "Next: commit or undo those changes, then forge sync" in warned.stdout
             assert reader.text() == dirty
             repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)
             repo.git("commit", "-qm", "Keep the reader disposition", "--", "plans/SHOP.read.md", cwd=reader.shop)
@@ -341,9 +340,10 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
                 "Other resume errors stop the round and keep its chat.",
                 "Upgrade's sync commits earlier-release chat bindings in their owning work branches",
-                "without guessing the owner",
+                "Sync writes every generated file first, then keeps chats.",
+                "before you remove `.git/forge`.",
                 "Keep `.git/forge` until the upgrade finishes.",
-                "uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying."):
+                "its record has uncommitted edits"):
             assert sentence in " ".join(guide.split()), sentence
 
 
@@ -805,11 +805,8 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     if change == "ambiguous":
         copied = tmp_path / "copied spec owner"
         repo.git("worktree", "add", "-qb", "fix/copied-spec", str(copied), branch)
-        upgrade, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
-        assert refused.returncode == 1
-        assert refused.stderr.endswith(
-            "More than one worktree contains docs/specs/invoices.md, so sync cannot locate its earlier reader chat.\n"
-            "Next: run forge read invoices in its owning checkout, then forge sync\n")
+        upgrade, left = _sync_elsewhere(repo, tmp_path)
+        assert "The earlier reader conversation for invoices stays on this machine only" in left.stdout
         selected = repo.forge("read", "invoices", cwd=relocated)
         assert selected.returncode == 0, selected.stdout + selected.stderr
         assert _reader_chat(reader, resumed=True) == first
