@@ -20,6 +20,7 @@ LONG = ("Readers " + "cannot tell which step comes next " * 3).strip()
     ("Clients and this repo need v1.2.10 to get the fixes. Release it now.",
      "Clients and this repo need v1.2.10 to get the fixes"),
     (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 71)]),
+    ('The command prints "Failed." Retry it.', 'The command prints "Failed"'),
 ])
 def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
     if client == "new":
