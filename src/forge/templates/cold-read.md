@@ -22,18 +22,11 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-Your scores (see Scores below) decide which notes hold the plan back, by one bar:
-- Harm 4 or 5, or Gain 5: it holds the plan until the agent amends it.
-- Gain 3 or 4, and Work 1 or 2: it holds the plan until the agent amends it.
-- Gain 3 or 4, and Work 3 or more: it becomes a follow-up; the read can pass.
-- Gain 1 or 2: Forge lives with it and records it; the read can pass.
-
-A Gain 1 or 2 note never holds the plan unless its Harm is 4 or more. Forge writes an automatic
-disposition under every note below the bar, so it needs no answer or another round. A read passes
-when no note is at the bar. Score a note at the bar only when the plan is wrong, contradicts
-itself, or a builder could not act on it; wording, style and optional improvements are Gain 1 or 2.
-Still start each note with `Blocking:` or `Advisory:` after its number: Forge reads that label
-only for a note without a score line, and treats an unmarked one as blocking.
+Your scores (see Scores below) decide: a note with Harm 4 or 5, Gain 5, or Gain 3 or 4 and Work 1
+or 2 is at the bar and holds the plan; any other is a follow-up or lived with, and Forge writes its
+disposition. A read passes when no note is at the bar. Score a note at the bar only when
+the plan is wrong, contradicts itself, or a builder could not act on it. Still start each note with
+`Blocking:` or `Advisory:`; Forge reads that label only for a note without scores.
 
 ## What counts
 Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
@@ -202,9 +195,10 @@ Check:
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
 ${look}Write only your new findings, as a numbered list starting at $next, in your first round's format.
-End each finding with its score line, scored as in your first round; the bar decides which
-notes hold the plan. Score a note at the bar only when the plan is wrong, contradicts itself, or a
-builder could not act on it. Keep the `Blocking:` or `Advisory:` label after the number.
+End each finding with its score line, scored as in your first round.
+Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
+advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
 
 <!-- forge:edit -->
@@ -237,9 +231,10 @@ Answers diff, or on an earlier blocking finding that remains open. Other gaps in
 section.
 
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
-End each finding with its score line, scored as in your first round; the bar decides which
-notes hold the plan. Score a note at the bar only when the plan is wrong, contradicts itself, or a
-builder could not act on it. Keep the `Blocking:` or `Advisory:` label after the number.
+End each finding with its score line, scored as in your first round.
+Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
+advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
 
 <!-- forge:look -->
@@ -263,9 +258,9 @@ $traps
 <!-- forge:notes -->
 # Cold read notes
 
-Written by `forge read`. Under every note at the bar, write one disposition line, amend the
-doc, then run `forge read <doc>` again until a round has no note at the bar. Forge writes the
-disposition under each note below the bar; an unscored note marked `Advisory:` needs none:
+Written by `forge read`. Under every blocking finding, write one disposition line, amend the
+doc, then run `forge read <doc>` again until a round has no blocking notes. Notes marked
+`Advisory:` are recorded without requiring a disposition or another round:
 
 - `Disposition: cut` when the doc was edited to remove it;
 - `Disposition: defer` when the item moved to the spec's Out of scope;

@@ -778,12 +778,10 @@ fix's folder:
 
 ## Planning a story
 
-A cold read passes when no note is at the bar. The reader scores each note on Gain, Work and
-Harm; a note is at the bar (Harm 4 or 5, Gain 5, or Gain 3 or 4 with Work 1 or 2) when the plan
-is wrong, contradicts itself, or a builder could not act on it. Forge writes the disposition under
-each note below the bar, so only notes at the bar need yours. A note saved without scores blocks
-unless its reader marked it `Advisory:`. New repos get this rule on init; existing repos get it on
-upgrade plus sync.
+A cold read passes when no note is at the bar: the plan is wrong, contradicts itself,
+or a builder could not act on it. Forge writes the disposition of each note below the bar. A note
+without scores blocks unless marked `Advisory:`; advisory notes need no disposition or another round.
+New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
@@ -1312,15 +1310,9 @@ The owner can reverse it later with the same `forge close <item> --resolve` comm
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
-Close also stops at the third finding that held work in one area of a change: the innermost
-Python function holding the finding's line, else the file. Its question names the area and
-proposes a structural move: cut the code that invites the findings, replace the cases with one
-general rule, narrow that Done when item, or make it fail closed. Ask the owner that question as
-it is and record their accept, narrow or split as usual. Their answer settles the area: a later
-finding there holds work only at the bar with Harm 3 or more, and Forge records the others as
-lived with. Forge keeps every finding of an item in its known list, with what happened to it;
-nobody edits that list by hand. A note the owner, you or Forge settled reaches every later read
-and review as known and accepted.
+Close also stops at the third finding in one area (a Python function, else the file); its question
+proposes a structural move. The owner's answer settles the area: later findings there hold work
+only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
 
 When a cold read or review loop stops, ask the human the question it printed, in its words, one
 item per question. It names the item and what it delivers, says each open note or finding in plain

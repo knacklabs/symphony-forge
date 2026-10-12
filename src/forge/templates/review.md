@@ -133,16 +133,11 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 ## What blocks the merge
-The bar decides, from your scores (see Scores below), whatever a finding's priority:
-- Harm 4 or 5, or Gain 5: it blocks the merge.
-- Gain 3 or 4, and Work 1 or 2: the worker fixes it in this round, so it blocks the merge too.
-- Gain 3 or 4, and Work 3 or more: Forge records it as a follow-up fix; the merge goes on.
-- Gain 1 or 2: Forge lives with it and records it; the merge goes on.
-
-A Gain 1 or 2 finding never blocks the merge, even when you call it serious; only Harm 4 or more
-overrides that. Still give each finding the priority Autoreview asks for: a finding under a Raise
-line is P0 or P1; P2 and P3 are only the advice forms this page names (`Simpler:`, `Later:`,
-`Follow-up:`, `Simpler (existing):`), which need no Raise line. Report nothing else.
+Your scores decide, whatever the priority: Harm 4 or 5, Gain 5, or Gain 3 or 4 with Work 1 or 2
+blocks the merge; any other finding is a follow-up fix or lived with, and the merge goes on.
+Every finding under a Raise line is P0 or P1. P2 and P3 are only the advice
+forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
+`Simpler (existing):`), which need no Raise line. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding

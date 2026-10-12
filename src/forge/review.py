@@ -227,7 +227,6 @@ def area(top: Path, commit: str, file: str, line: Any) -> str:
     except (SyntaxError, ValueError):
         return file
     line = int(line) if str(line).isdigit() else 0
-    # Nested defs lie inside their parents, so the latest start among those holding the line wins.
     holding = [node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                and node.lineno <= line <= (node.end_lineno or node.lineno)]
     inner = max(holding, key=lambda node: node.lineno, default=None)

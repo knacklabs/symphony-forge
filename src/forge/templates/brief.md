@@ -210,8 +210,7 @@ so the coordinator can dismiss it. If it is right, fix every place the same rule
 the coordinator's note says the part was narrowed and follow-up fixes own these findings: then
 remove what goes beyond the Done-when lines instead of fixing them here. Add a test only where
 the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and make it fail without your fix; the review's test audit reports a test that proves nothing.
-These are the findings at the bar. Forge records the ones below it as follow-ups or lived with;
-leave those alone.
+Forge records findings below the bar as follow-ups or lived with; leave those alone.
 
 ### Open serious findings
 
@@ -224,11 +223,10 @@ $checks
 <!-- end -->
 ## Build simple
 
-A plan's cold read passes when no note is at the bar. The reader scores each note on Gain, Work
-and Harm: Harm 4 or 5, Gain 5, or Gain 3 or 4 with Work 1 or 2 is at the bar, which a note gets
-when the plan is wrong, contradicts itself, or a builder could not act on it. Forge gives each note
-below the bar its disposition; an unscored note blocks unless it is marked `Advisory:`. Only notes
-at the bar need the coordinator to amend the plan and read again.
+A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,
+contradicts itself, or a builder could not act on it. Notes below the bar, or unscored and marked
+`Advisory:`, need no disposition or another round; only notes at the bar need the coordinator to amend
+the plan and read again.
 
 Take the first rung that holds: don't build it; reuse what the repo has; the standard library; the
 platform; an installed dependency; one line; then the least code that works. Never simplify away

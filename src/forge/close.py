@@ -115,7 +115,8 @@ def close(args: argparse.Namespace) -> int:
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
-                state["known"] = score.remember(state.get("known", []), result, _rounds(state), {})
+                state["known"] = score.remember(state.get("known", []), result, sum(
+                    step["step"] == "review" for step in state.get("steps", [])), {})
             # The answer settles the stop's area (a file stop's file): later findings there hold less.
             if area := state["stop"].get("area") or state["stop"].get("file"):
                 state["settled_areas"] = sorted({*state.get("settled_areas", []), area})
@@ -458,10 +459,6 @@ def _settled_areas(state: dict[str, Any]) -> list[str]:
     """The areas the owner's answers settled; an earlier release's answered stop settles its file."""
     stop = state.get("stop") or {}
     return [*state.get("settled_areas", []), *([stop["file"]] if stop.get("choice") and stop.get("file") else [])]
-
-
-def _rounds(state: dict[str, Any]) -> int:
-    return sum(step["step"] == "review" for step in state.get("steps", []))
 
 
 def _areas(top: Path, result: dict[str, Any]) -> dict[tuple[str, str], str]:
