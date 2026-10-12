@@ -1,0 +1,14 @@
+{
+  "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
+  "branch": "fix/pin-test-defaults",
+  "done_when": "The shared test setup sets the coordinator route and the other environment defaults explicitly, and a test that needs a different route says so",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:28:20.249336+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Tests pick up the session's coordinator route and other defaults without saying so, so one default change broke 73 tests"
+}
