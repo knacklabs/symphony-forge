@@ -1,0 +1,14 @@
+{
+  "base": "85531bb0524852ddf4ac994ed6fbe3ab592a56cb",
+  "branch": "fix/windows-test-endings",
+  "done_when": "The read-loop, native-read and close test helpers write and compare text the same way on Windows as on Linux, so those tests pass with Windows line endings",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T06:29:23.858134+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's full test run fails five tests on Windows: the tests write files with Windows line endings and compare them with Unix text"
+}
