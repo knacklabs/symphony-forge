@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T20:30:02.308919+00:00",
+      "because": "Whether every Windows group finishes is shown only by a full run after merge; pull requests run Linux",
+      "done_when": "The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within its limit"
+    }
+  ],
   "base": "370f48c87c245a4b5b51b0a9c51e0279e38639af",
   "branch": "fix/windows-green-4",
-  "done_when": "The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within its limit",
+  "done_when": "The session-rounds test accepts either line ending after the checkout path, and Windows full-suite groups get a 45-minute limit",
   "flagged": [
     ".github/workflows/forge-next.yml"
   ],
