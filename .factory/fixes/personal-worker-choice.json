@@ -25,20 +25,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "162bcc9e22d5d80fee5d0668034c14c2fa009d7adc92f998957f4b3dcb8e8131",
-    "changed": "39685056bf574bcc67b717a560cae40322f0b632a2d7c65ac9a8be5da5268b48",
-    "commit": "48c2c532cff7f6dc19711010db25c6ed94c95d87",
+    "branch_diff": "3e2c2277ee5a41a661a891ab4d14599ef1f7244f620f958d4c4d5d08150f2c4f",
+    "changed": "b2b45338cd866aec6c282d8491c247a9795851ec5c8bc8ff88235aef0faa4550",
+    "commit": "58731e54b0ba8b5f93bc0d178675dd7c994442e0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. New evidence beyond the accepted doctor finding: `forge doctor` uses the build worker to choose the source of `models.grill` (doctor.py:434), but plan reads choose their reader independently (story.py:226\u2013227). In a two-tool repo with `workers = \"codex\"` and only `[models.grill.claude]` in `forge.local.toml`, a plan read from Codex uses Claude's local model while doctor reports `models.grill` as a built-in default. This misstates a model source the Done-when requires doctor to show; the named proof tests only build and fix model sources.",
+        "body": "Raise: Not done. `forge.local.toml` accepts `subagents` and `subagent_effort` in build, fix, lite and explore model entries (`src/forge/repo.py:616`), and Codex uses both settings (`src/forge/codex.py:59\u201361`). This doctor note lists only each entry's `model` and `effort`, so a developer cannot see all the settings their local file overrides. The named doctor test supplies no subagent settings and does not catch the omission.",
         "file": "src/forge/doctor.py",
-        "line": 434,
+        "line": 439,
         "priority": "P1",
-        "title": "Not done: doctor attributes plan-read models using the build worker"
+        "title": "Not done: forge doctor omits local subagent model and effort overrides"
       }
     ],
-    "id": "e2a1dcdb-cd50-4fd1-9c92-19bbbe533b39",
+    "id": "95816752-294c-4d21-9575-87af79081c2d",
     "status": "blocked"
   },
   "round": 1,
@@ -78,6 +78,10 @@
     },
     {
       "at": "2026-10-12T02:04:53.517770+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:10:26.973376+00:00",
       "step": "review"
     }
   ],

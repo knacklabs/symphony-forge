@@ -1486,6 +1486,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor omits local subagent model and effort overrides\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 439,
+      "text": "Not done: forge doctor omits local subagent model and effort overrides",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: functional check\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
