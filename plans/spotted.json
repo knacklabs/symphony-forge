@@ -6025,8 +6025,8 @@
       "text": "Not done: prove settings restoration and the post-nudge handback",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/WORK",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
