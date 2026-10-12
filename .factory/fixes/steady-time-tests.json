@@ -1,0 +1,14 @@
+{
+  "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
+  "branch": "fix/steady-time-tests",
+  "done_when": "Time-sensitive tests use the fake clock or a range, and no single test takes over 60 seconds on this machine",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:28:27.551605+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Some tests assert exact elapsed seconds or run for over a minute, so they fail on slow or loaded runners"
+}
