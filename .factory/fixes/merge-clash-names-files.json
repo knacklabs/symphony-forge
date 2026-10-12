@@ -1,0 +1,14 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/merge-clash-names-files",
+  "done_when": "When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never reports a syntax error",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:23.655368+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When close takes in main and a Python file clashes, it reports 'invalid syntax (<unknown>, line N)' instead of naming the clashing files, so workers lose a round finding them"
+}
