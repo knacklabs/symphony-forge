@@ -38,7 +38,7 @@
     "id": "ea4b9d5c-befb-4793-afd7-eae38912831a",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -59,8 +59,12 @@
   ],
   "stop": {
     "at": "2026-10-12T22:23:43.359914+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/review.py",
-    "wait_id": "48d14b1c-2165-4cc2-bb64-66d5727c82cc"
+    "reason": "Coordinator (Harm 1-2, reversible; third finding in review.py, so one general rule instead of per-language cases): any proof line naming a test that close cannot match to its own run's results, in any language, is published as not checked; reading JavaScript runners' per-test results is a follow-up. The failed-test case gets its assertion this round.",
+    "wait_id": "48d14b1c-2165-4cc2-bb64-66d5727c82cc",
+    "worker_round": null
   },
   "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
 }
