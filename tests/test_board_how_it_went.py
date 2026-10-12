@@ -737,7 +737,8 @@ def test_12_plain_times_round_review_times_in_board_and_pull_request(env):
     timings = [json.loads(line) for line in (top / "timings.jsonl").read_text("utf-8").splitlines()]
     for timing in timings:
         if timing.get("item") == item and timing.get("step") == "review":
-            timing["seconds"] = 15.001
+            # 15.4 still rounds to whole seconds and leaves room for overlapping CI waits on slow runners.
+            timing["seconds"] = 15.4
     (top / "timings.jsonl").write_text("".join(json.dumps(t) + "\n" for t in timings), "utf-8")
     current = row(env.repo, item)
     assert "15 seconds" in current["rounds"][0]["line"]
