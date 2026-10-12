@@ -503,8 +503,8 @@
       "text": "Completed stories omit elapsed time after their last part",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board.py\tCompleted stories omit time after their last part merges\tFORGE-BOARD-2/RECORD",
@@ -3880,8 +3880,8 @@
       "text": "Deeply nested pull request records can crash board and next",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tMalformed pull request records can crash board and next\tFORGE-BOARD-2/RECORD",
