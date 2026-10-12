@@ -1,0 +1,15 @@
+{
+  "base": "59cd0dfa29c3f139e70e285532d130723393827f",
+  "branch": "fix/review-finding-left-open-by-forge-board-3",
+  "done_when": "A review no longer finds: Not done: proof list",
+  "kind": "fix",
+  "stacked_on": "FORGE-BOARD-2/COUNTS",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:08:23.762105+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review finding left open by FORGE-BOARD-2/COUNTS: Not done: proof list (tests/test_board_counts.py:100): Raise: Gate. The supplied proof list is `missing`. It provides no runnable proof or result for the counts, shared readiness, cached GitHub reads, approval gate, or full story runway delivered by this branch."
+}
