@@ -1,0 +1,14 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/installer-test-timeout",
+  "done_when": "The installer test gives PowerShell a start budget that fits a cold Windows runner, so it fails only when the installer's explanation is wrong",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:38.122163+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The Windows installer test for Docker's start explanation timed out waiting on PowerShell in a pull request run"
+}
