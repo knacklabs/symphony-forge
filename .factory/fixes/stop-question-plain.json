@@ -9,6 +9,11 @@
       "at": "2026-10-12T02:55:42.541733+00:00",
       "because": "Narrowed under the owner's Harm 1-2 rule: the item's name and delivery come from text people and agents wrote; Forge removes paths and markdown but cannot rewrite command flags into plain words. Third review angle on this clause (Gain 2, Harm 1)",
       "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that"
+    },
+    {
+      "at": "2026-10-12T03:12:59.529190+00:00",
+      "because": "My earlier wording named Done-when for every item; a story's owner-facing delivery is its What changes for you section, which the question already uses",
+      "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item and what it delivers from its own title and Done-when (or plan row) with paths and markdown removed, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that"
     }
   ],
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
@@ -20,7 +25,7 @@
     "head": null,
     "start": "66d0f4a9cc659b278d227b57f9574a532a336a3e"
   },
-  "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item and what it delivers from its own title and Done-when (or plan row) with paths and markdown removed, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
+  "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item and what it delivers from its own text (a story's title and What changes for you, a spec's title, a fix's why and Done-when, a task's plan row) with paths and markdown removed, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
   "flagged": [
     "src/forge/land.py",
     "src/forge/nextstep.py",
