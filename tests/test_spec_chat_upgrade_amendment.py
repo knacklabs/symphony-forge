@@ -98,10 +98,10 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
         assert "The earlier reader conversation for invoices stays on this machine only" in synced.stdout
         for ref in (branch, "fix/chat-upgrade"):
             assert repo.git("ls-tree", "--name-only", ref, "--", "docs/specs/invoices.read.md") == ""
-        return
     assert "Invoices also show their payment date." not in (
         upgrade / "docs/specs/invoices.md").read_text("utf-8")
-    shutil.rmtree(repo.path / ".git/forge")
+    if not missing_origin:  # otherwise the chat stays on this machine only, as the warning says
+        shutil.rmtree(repo.path / ".git/forge")
     recreated = tmp_path / "recreated amendment with spaces"
     repo.git("worktree", "add", "-q", str(recreated), branch)
     read = repo.forge("read", "invoices", cwd=recreated)

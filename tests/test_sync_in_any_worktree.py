@@ -32,13 +32,19 @@ def test_1_sync_writes_generated_files_while_two_worktrees_hold_one_spec(
     repo.git("worktree", "add", "-qb", "fix/copied-plan", str(copied), "fix/plan-invoices")
     repo.git("worktree", "remove", str(owner))
 
-    guides = (".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md")
-    for rel in guides:
-        (copied / rel).unlink(missing_ok=True)
+    # The fresh worktree holds no generated files yet, so this sync lists every file it writes.
+    first_sync = repo.forge("sync", cwd=copied)
+    assert first_sync.returncode == 0, first_sync.stdout + first_sync.stderr
+    generated = {line.removeprefix("Wrote ") for line in first_sync.stdout.splitlines()
+                 if line.startswith("Wrote ")}
+    assert {".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md"} <= generated
+    for rel in generated:
+        (copied / rel).unlink()
     synced = repo.forge("sync", cwd=copied)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    for rel in guides:
-        assert f"Wrote {rel}" in synced.stdout and (copied / rel).is_file()
+    assert {line.removeprefix("Wrote ") for line in synced.stdout.splitlines()
+            if line.startswith("Wrote ")} == generated
+    assert all((copied / rel).is_file() for rel in generated)
     assert synced.stdout.endswith(
         "Warning: More than one worktree holds docs/specs/invoices.md, so sync can't tell which "
         "branch owns its earlier reader chat.\n"
