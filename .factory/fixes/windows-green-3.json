@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T14:39:35.593379+00:00",
+      "because": "The Windows outcome is seen only in the on-demand or nightly full run, after merge; pull requests and main pushes run Linux",
+      "done_when": "The merge stub commits its message from stdin and the boundary stub reads stdin as UTF-8, so the pull-request body tests pass on Windows as on Linux"
+    }
+  ],
   "base": "3545316f0af3c8b1125007b1ac394e5437d61b0d",
   "branch": "fix/windows-green-3",
-  "done_when": "The merge stub commits its message from stdin and the boundary stub reads stdin as UTF-8, so the pull-request body tests pass on Windows as on Linux",
+  "done_when": "The merge stub commits its message from stdin and the boundary stub reads stdin as UTF-8, the way Forge sends a pull request body",
   "flagged": [
     "tests/test_last_task_records_story_outcome.py"
   ],
