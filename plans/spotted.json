@@ -1024,6 +1024,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: changed assertion text hides a repeated failing test\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 482,
+      "text": "Not done: changed assertion text hides a repeated failing test",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1073,6 +1084,17 @@
       "path": "src/forge/close.py",
       "line": 424,
       "text": "Not done: one failed close can be counted as two stuck rounds",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: oversized fixes never produce the required owner question\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 159,
+      "text": "Not done: oversized fixes never produce the required owner question",
       "from": "blocking",
       "item": "stuck-worker-asks",
       "status": "open",

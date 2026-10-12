@@ -10,77 +10,30 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cdf7ee366dca9c19fc8fe1edc02e50e9a2ce8106cc361aca7d12ada42aedbcba",
-    "changed": "d6dd93a5cff0d560438f6134c641f7d118c862b522280a56f57bfc4c968355fa",
-    "commit": "ca7db87a8c916e79f1d6c265a2751e63d02c2111",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
-        "finding": 3
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
-        "finding": 4
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
-        "finding": 5
-      }
-    ],
+    "branch_diff": "9ead119039fe0eb3a11d3ee29675255afa0f8246bb898639d5f32e98c48cb8db",
+    "changed": "59b11b77d99f4a1da60a3121aa26dd4907b91f5b9f45ec199344ac7ce59a9e8f",
+    "commit": "23e718ee739826345bb31caeedc9a5b04b16ca26",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. When a worker completes two rounds without changing product code, close reuses the blocking review and its `commit`; with passing tests, `tested_head` also stays unchanged. This equality check returns without counting the second round, so the same finding can be sent back indefinitely instead of producing the required question. The named finding proof uses a worker that commits a change.",
+        "body": "Raise: Not done. The new size-question path applies only when the item name contains `/`, so it covers story parts but not fixes. A fix that grows beyond its five-code-file limit is instead refused by the existing pre-commit rule in `src/forge/githooks.py:213-215`, with no ready-to-ask question or recorded choice among switch, same, narrow and split. The named size proof exercises only a story part.",
         "file": "src/forge/close.py",
-        "line": 492,
+        "line": 159,
         "priority": "P1",
-        "title": "Not done: unchanged review findings can loop indefinitely"
+        "title": "Not done: oversized fixes never produce the required owner question"
       },
       {
-        "body": "Raise: Not done. This records a stuck-stop `narrow` or `split` choice, but the next `forge work` passes an owner-choice note only when `stop.by == \"owner\"` and `worker_round` matches (worker.py:156-163). A stuck stop sets neither field, and `stuck_round` removes that stop before building the brief. The worker therefore receives no instruction to narrow or split. The named test checks only that another worker ran.",
+        "body": "Raise: Not done. For Jest or Vitest output without a `FAILED ...::...` identifier, the failure key includes the first 200 characters of every matching failure line. If a worker changes an implementation but leaves the same test failing with a different `AssertionError` value, that key changes and the consecutive-round count resets. Forge keeps sending the item back instead of asking the owner. The named Jest proof varies only the duration, which this line removes.",
         "file": "src/forge/close.py",
-        "line": 120,
+        "line": 482,
         "priority": "P1",
-        "title": "Not done: narrow and split choices do not reach the next worker"
-      },
-      {
-        "body": "Raise: Not done. A story part can grow past its line limit during the round after the owner resolves an earlier review-loop stop. That recorded stop still exists, so `if not stop` is false and close returns the old split-or-allow-large refusal instead of the required ready-to-ask question about the oversized change. The size proof starts with no earlier stop.",
-        "file": "src/forge/close.py",
-        "line": 170,
-        "priority": "P1",
-        "title": "Not done: an earlier stop suppresses the size-limit question"
-      },
-      {
-        "body": "Raise: Not done. The question gets \u201cThe worker tried\u201d only from commit subjects and prints \u201cno new commits\u201d when that list is empty. A worker can attempt a fix, leave the failure in place, and finish without a code commit; the owner then sees no account of the attempt. The named question proof uses a worker that commits \u201cWorker round.\u201d",
-        "file": "src/forge/close.py",
-        "line": 518,
-        "priority": "P1",
-        "title": "Not done: the question omits what a worker without commits tried"
-      },
-      {
-        "body": "Raise: Functional. The stop check runs after `machine.agent_slot` admission at worker.py:124-125. As machine.py:175-203 shows, another active worker and load of at least 1.5 per core can keep admission waiting. On a normally busy machine, an item already due to stop remains queued without its ready-to-ask question until a worker slot opens.",
-        "file": "src/forge/worker.py",
-        "line": 166,
-        "priority": "P1",
-        "title": "Not done: a stuck item waits for a worker slot before asking the owner"
+        "title": "Not done: changed assertion text hides a repeated failing test"
       }
     ],
-    "id": "55addc37-0963-49c3-b02f-3219cf5861e4",
-    "status": "clean"
+    "id": "1ff6536e-f199-4a12-bc27-eb4d675e78d4",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -108,6 +61,10 @@
     },
     {
       "at": "2026-10-12T01:02:21.792464+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:52:46.254959+00:00",
       "step": "review"
     }
   ],
