@@ -7,6 +7,7 @@ line carries the reviewer's Gain, Work and Harm scores (see score.py).
 """
 from __future__ import annotations
 
+import ast
 import contextlib
 import hashlib
 import json
@@ -32,11 +33,11 @@ AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
            for host in (".codex", ".claude")]
 PRIORITIES = ("P0", "P1", "P2", "P3")
+SERIOUS = ("P0", "P1")  # an earlier release's close, run during an upgrade, still reads it
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
 SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
-SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -214,8 +215,23 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     return [(n, f) for n, f in enumerate(result.get("findings", []), 1)
             if not isinstance(f, dict) or
-            (f.get("priority") in (("P0",) if result.get("blocking_level") == "P0" else SERIOUS)
-             and n not in dismissed)]
+            (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
+
+
+def area(top: Path, commit: str, file: str, line: Any) -> str:
+    """A finding's area: the innermost Python def or async def holding its line at the reviewed
+    commit, else (another language, a file that doesn't parse, a line outside every def) the file."""
+    text = repo.run("git", "show", f"{commit}:{file}", cwd=top).stdout if file.endswith(".py") else ""
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return file
+    line = int(line) if str(line).isdigit() else 0
+    # Nested defs lie inside their parents, so the latest start among those holding the line wins.
+    holding = [node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+               and node.lineno <= line <= (node.end_lineno or node.lineno)]
+    inner = max(holding, key=lambda node: node.lineno, default=None)
+    return f"{inner.name}() in {file}" if inner else file
 
 
 def plain(title: str, body: str = "") -> str:
@@ -274,10 +290,15 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
     # Accept dismisses every finding not yet dismissed, advice included.
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
-    return question(name, delivers, score.table(rows),
+    stop = state.get("stop") or {}
+    said = question(name, delivers, score.table(rows),
                                f"every finding in this review, the {len(rows)} listed and {advice} "
                                "advice notes, is dismissed with your reason and recorded; close then "
                                "goes on to the checks, and merging is still a separate step.")
+    if not stop.get("area"):
+        return said
+    return said.replace("It still has these problems:", f"Findings keep coming in {stop['area']}; "
+                        f"proposed: {stop['proposed']}. It still has these problems:", 1)
 
 
 # --- the instructions ------------------------------------------------------------------
@@ -301,6 +322,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
                           + "\n\nSettled findings:\n" + _bullets(
                               f"{title} ({file}): {reason}" for (file, title), reason in settled.items()),
               "rulings": _rulings(top, base, history),
+              "accepted": _accepted(top, item, history),
               "test_run": tested,
               "proof_list": commit_paragraph(top, base, "Proof list:") or "missing"}
     if "/" in item:
@@ -516,6 +538,31 @@ def _previous(result: dict[str, Any]) -> str:
         for n, finding in enumerate(findings, 1)) or "- none"
 
 
+def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
+    """Known and accepted notes for the review: a task's plan read notes kept or deferred (the
+    automatic below-bar ones and the owner's accept among them), then this item's earlier
+    below-bar findings and the ones the owner accepted. Read from what is already stored."""
+    from forge import story  # story imports review indirectly
+
+    found = []
+    if "/" in item:
+        key = item.partition("/")[0]
+        notes = story.show(top, f"story/{key}", f"plans/{key}.read.md")
+        if notes is None:
+            path = top / "plans" / f"{key}.read.md"
+            notes = path.read_text(encoding="utf-8") if path.is_file() else ""
+        for number, block in story._findings(story._record(notes)[1]).items():  # pyright: ignore[reportPrivateUsage]
+            kept = story.DISPOSITION.search(block)
+            if kept and kept[1].lower() in ("keep", "defer"):
+                found.append(f"Plan read note {number}: {' '.join(block.split(None, 1)[1].split())}")
+    for (file, title), reason in _settled(history).items():
+        if reason.startswith(("known:", "accepted by the owner:")):
+            scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
+                           if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
+            found.append(f"{title} ({file}): {reason}{scores}")
+    return _bullets(found)
+
+
 def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
     """Every `Ruling:` line in the branch's commit messages, then evidence-based dismissals with
     their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
@@ -551,18 +598,23 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any]) -> list[
 
 
 def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
+    """Earlier rounds' settled findings: fixed, dismissed, accepted by the owner, or below the bar."""
     settled = {}
     earlier = set()
     for result in history:
         current = {(f["file"], f["title"]) for f in result.get("findings", [])}
         for key in earlier - current:
             settled.setdefault(key, "fixed: absent from a later review")
+        for finding in score.open_findings(result):
+            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
+                settled.setdefault((finding["file"], finding["title"]), f"known: below the bar ({outcome})")
         accepted = set()
         for dismissal in result.get("dismissals", []):
             finding = result["findings"][dismissal["finding"] - 1]
             key = (finding["file"], finding["title"])
             if dismissal.get("accepted"):
                 accepted.add(key)
+                settled[key] = "accepted by the owner: " + dismissal["because"]
             else:
                 settled[key] = "dismissed because " + dismissal["because"]
         earlier = (earlier | current) - accepted
@@ -690,7 +742,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
-                "--max-priority", "P0" if light else "P3",
+                "--max-priority", "P3",  # the P0-only level applies after scoring
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
         launcher = _launcher(tmp / "bin", tree, engine)
@@ -707,7 +759,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
-            serious = [f for f in findings if f["priority"] in SERIOUS]
+            serious = [f for f in findings if score.holds(f)]
             repo.record_event(top, item, "review result", commit=head,
                 review_round=round_number(top, item, state),
                 outcome="failed" if reason else "blocked" if serious else "clean",
@@ -727,13 +779,13 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    settled = _settled(_history(top, item, base, previous))
-    findings = [finding for finding in findings
-                if not settled.get((finding["file"], finding["title"]), "").startswith("fixed:")]
+    settled = {score.identity(*key): reason
+               for key, reason in _settled(_history(top, item, base, previous)).items()}
+    findings = [finding for finding in findings if not settled.get(
+        score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
     dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because ")}
                   for number, finding in enumerate(findings, 1)
-                  if (reason := settled.get((finding["file"], finding["title"]), "")).startswith(
-                      "dismissed because ")]
+                  if (reason := settled.get(score.identity(finding["file"], finding["title"]), ""))]
     result = {"findings": findings, "dismissals": dismissals,
               "blocking_level": "P0" if light else "P1"}
     identity = repo.record_event(top, item, "review result", commit=head,

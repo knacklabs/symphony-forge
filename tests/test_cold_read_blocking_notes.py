@@ -90,12 +90,12 @@ def test_1_only_blocking_notes_need_another_round(
         assert follow_up.returncode == 0, follow_up.stdout + follow_up.stderr
         call = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])
         assert ("--resume" in call["args"]) == bool(blocking)
-        dispositions = call["prompt"].split("with its disposition:\n", 1)[1].split(
+        dispositions = call["prompt"].split("with its scores and its disposition:\n", 1)[1].split(
             "For a story,", 1)[0]
         assert "2. " + blocking + "Saving requires an account" in dispositions
         assert "Disposition: keep because sign-in is out of scope" in dispositions
         assert "Use a shorter heading" not in dispositions
-        assert "Previous advisory notes are recorded only; do not reassess or close them." in call["prompt"]
+        assert "A settled note comes back only with new evidence of harm" in call["prompt"]
         recorded = note_path.read_text("utf-8")
         assert advisory in recorded and "3. Advisory: Prefer a shorter title." in recorded
         assert "passed: yes\n" in recorded

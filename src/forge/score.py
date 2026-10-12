@@ -7,12 +7,15 @@ is judged by priority and a saved read note by its label, as before scores.
 from __future__ import annotations
 
 import re
+from typing import Any
 
 # Each score is one integer 1 to 5; "Harm 1.5" or "Harm 12" is no score line.
 LINE = re.compile(r"^([ \t]*)Gain ([1-5]), Work ([1-5]), Harm ([1-5])(?:[ \t].*)?$", re.M)
 FLOORS = ((re.compile(r"^[ \t]*Raise:[ \t]*Security\b", re.I | re.M), "security"),
           (re.compile(r"^[ \t]*Raise:[ \t]*Data loss\b", re.I | re.M), "data loss"),
           (re.compile(r"\bmigrations?\b", re.I), "migration"))
+ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
+HOLD = ("block", "fix now")
 Scores = tuple[int, int, int]
 
 
@@ -43,10 +46,17 @@ def strip(body: str) -> str:
 
 
 def notes(said: str) -> str:
-    """A reader's numbered notes with the Harm floor applied to each scored one."""
+    """A reader's numbered notes with the Harm floor applied to each scored one, and the automatic
+    disposition under each note below the bar, so it needs none by hand."""
     def one(block: str) -> str:
         title, _, body = block.partition("\n")
-        return f"{title}\n{normalise(title, body)[1]}" if body else block
+        if not body:
+            return block
+        scores, body = normalise(title, body)
+        if (outcome := bar(scores)) not in (None, *HOLD):
+            kept = body.rstrip("\n")
+            body = f"{kept}\n   Disposition: keep - below the bar ({outcome})" + body[len(kept):]
+        return f"{title}\n{body}"
     return "".join(one(block) for block in re.split(r"(?=^\d+\.[ \t])", said, flags=re.M))
 
 
@@ -67,3 +77,118 @@ def table(rows: list[tuple[str, Scores | None]]) -> list[str]:
     """The open notes as a stop question lists them: each row is (problem, scores)."""
     # ponytail: today's bullets; the ranked table replaces them when every row has scores.
     return [f"- {problem}" for problem, _ in rows]
+
+
+def of(finding: dict[str, Any]) -> Scores | None:
+    """A review finding's scores, or None for one saved before scores."""
+    return (finding["gain"], finding["work"], finding["harm"]) if "harm" in finding else None
+
+
+def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
+    """Whether a review finding holds the work: the bar for a scored one, only `block` under the
+    P0-only prototype level; by priority as before scores for one saved without them."""
+    outcome = bar(of(finding))
+    if outcome is None:
+        return finding.get("priority") in (("P0",) if level == "P0" else ("P0", "P1"))
+    return outcome == "block" if level == "P0" else outcome in HOLD
+
+
+def note_holds(note: str) -> bool:
+    """Whether a cold-read note (its text after the number) holds the read: the bar for a scored
+    one, else its label as before scores (unmarked holds)."""
+    outcome = bar(parse(note))
+    return outcome in HOLD if outcome else not ADVISORY.match(note)
+
+
+def read_stops(notes: list[str]) -> bool:
+    """A third blocked read round stops on a disputed keep at the bar, a note with Harm 3 or more,
+    or, as before scores, an unscored note that holds the read."""
+    for note in (re.sub(r"^\d+\.[ \t]+", "", note) for note in notes):
+        scores, title = parse(note), note.partition("\n")[0].casefold()
+        if (note_holds(note) and (not scores or "disputed keep" in title)
+                or scores and scores[2] >= 3):
+            return True
+    return False
+
+
+def identity(file: Any, title: Any) -> tuple[str, str]:
+    """One finding however many rounds raise it: its file and title, case and spacing folded."""
+    return " ".join(str(file).split()).casefold(), " ".join(str(title).split()).casefold()
+
+
+def open_findings(result: dict[str, Any]) -> list[dict[str, Any]]:
+    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    return [f for n, f in enumerate(result.get("findings", []), 1) if n not in dismissed]
+
+
+def loop_stops(result: dict[str, Any], known: list[dict[str, Any]], round_number: int) -> bool:
+    """Close's three-round stop: an open finding with Harm 3 or more, a finding at the bar an
+    earlier round raised too, or, as before scores, an unscored open finding that holds."""
+    earlier = {identity(e["file"], e["title"]) for e in known if e.get("round", 0) < round_number}
+    level = result.get("blocking_level")
+    return any(not of(f) and holds(f, level) or of(f) and f["harm"] >= 3
+               or holds(f, level) and identity(f["file"], f["title"]) in earlier
+               for f in open_findings(result))
+
+
+def mild(result: dict[str, Any]) -> bool:
+    """The 30-minute default narrows only when every open finding has Harm 1 or 2; one saved
+    before scores counts as mild, as before."""
+    return all(f.get("harm", 1) <= 2 for f in open_findings(result))
+
+
+def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
+             areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
+    """The item's known findings with one review round added: one entry per finding, never
+    removed. A new entry is open (at the bar), a follow-up or lived with (below it), or accepted
+    (dismissed, with the reason). An open entry takes a later outcome, and becomes fixed in round
+    N when review N no longer raises it; the others keep theirs, since reviewers are told not to
+    repeat them."""
+    because = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
+    by = {identity(e["file"], e["title"]): e for e in known}
+    raised = set()
+    for n, f in enumerate(result.get("findings", []), 1):
+        key = identity(f["file"], f["title"])
+        raised.add(key)
+        reason = because.get(n, "")
+        outcome = ("lived with" if reason.startswith("settled area") else "accepted" if n in because
+                   else "open" if holds(f, result.get("blocking_level"))
+                   else "follow-up" if bar(of(f)) == "follow-up" else "lived with")
+        entry = by.get(key)
+        if entry is None:
+            entry = by[key] = {"title": f["title"], "file": f["file"], "line": f["line"],
+                               "gain": f.get("gain"), "work": f.get("work"), "harm": f.get("harm"),
+                               "outcome": outcome, "reason": reason, "round": round_number,
+                               "area": areas.get(key, f["file"])}
+            known.append(entry)
+        elif entry["outcome"] == "open":
+            entry.update(outcome=outcome, reason=reason)
+    for key, entry in by.items():
+        if entry["outcome"] == "open" and key not in raised:
+            entry["outcome"] = f"fixed in round {round_number}"
+    return known
+
+
+def crowded(known: list[dict[str, Any]], result: dict[str, Any], settled: list[str],
+            areas: dict[tuple[str, str], str]) -> str:
+    """The unsettled area where this round holds work on the third distinct finding that held work
+    there (open, accepted or fixed; follow-ups and lived-with ones never held it), or ""."""
+    level = result.get("blocking_level")
+    for f in open_findings(result):
+        area = areas.get(identity(f["file"], f["title"]), f["file"])
+        if holds(f, level) and area not in settled and sum(
+                e.get("area") == area and e["outcome"] not in ("follow-up", "lived with")
+                for e in known) >= 3:
+            return area
+    return ""
+
+
+def move(result: dict[str, Any], areas: dict[tuple[str, str], str], area: str) -> str:
+    """The structural move a stopped area's question proposes; fail closed first when a finding
+    there has the security floor."""
+    moves = ["cut the code that invites these findings", "replace the cases with one general rule",
+             "narrow that Done when item", "make it fail closed"]
+    if any(areas.get(identity(f["file"], f["title"])) == area and "(floor: security)" in f["body"]
+           for f in result.get("findings", [])):
+        moves.insert(0, moves.pop())
+    return "; or ".join(moves)

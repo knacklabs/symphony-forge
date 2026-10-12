@@ -16,14 +16,13 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, native, repo, story, task
+from forge import codex, doctor, machine, native, repo, score, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
 # The shipped how-to per concern of the client stack; the brief names it and the worker may read it.
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
-SERIOUS = ("P0", "P1")
 REVIEW_LOOP = (
     "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
     "whatever files they were in. The existing same-file stop still applies from the third round. "
@@ -191,6 +190,8 @@ def _work(args: argparse.Namespace) -> bool:
             note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
                     "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
                     f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
+            if stop.get("area"):
+                note += f" Proposed for {stop['area']}: {stop['proposed']}."
         from forge import close  # close imports story, which imports this module
 
         close.stuck_round(top, item, state, config, findings)
@@ -437,15 +438,14 @@ def _changes(top: Path, start: str) -> str:
 
 
 def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
-    """The open serious findings and the failing checks, close's own test run among them, once
-    close has run."""
+    """The open findings at the bar, at any priority, and the failing checks, close's own test run
+    among them, once close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
     review = state.get("review")
     if not review:  # no review yet: no pull request to read checks from
         return [], tests
-    dismissed = {entry.get("finding") for entry in review.get("dismissals") or []}
-    findings = [finding for n, finding in enumerate(review.get("findings") or [], 1)
-                if finding.get("priority") in SERIOUS and n not in dismissed]
+    findings = [finding for finding in score.open_findings(review)
+                if score.holds(finding, review.get("blocking_level"))]
     return findings, tests + _failing(state.get("branch", ""))
 
 

@@ -115,6 +115,10 @@ def close(args: argparse.Namespace) -> int:
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
+                state["known"] = score.remember(state.get("known", []), result, _rounds(state), {})
+            # The answer settles the stop's area (a file stop's file): later findings there hold less.
+            if area := state["stop"].get("area") or state["stop"].get("file"):
+                state["settled_areas"] = sorted({*state.get("settled_areas", []), area})
             defaulted = state["stop"].get("by") == "default"
             # the next worker round hears the owner's choice, including one reversing the default
             state["stop"].update(by="owner", worker_round=state.get("round"))
@@ -241,7 +245,8 @@ def close(args: argparse.Namespace) -> int:
         at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
         choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
     if (not switch and not fresh and round_number - choice_round >= 3 and
-            _three_blocked_reviews(top, item)):
+            _three_blocked_reviews(top, item) and
+            score.loop_stops(previous, state.get("known", []), round_number)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
@@ -290,6 +295,15 @@ def close(args: argparse.Namespace) -> int:
                                              finding=number)
                                         for number, finding in enumerate(result["findings"], 1)
                                         if number not in carried and (finding["file"], finding["title"]) in dismissed]
+                areas = _areas(top, result)
+                # On a settled area only a finding at the bar with Harm 3 or more holds the work.
+                result["dismissals"] += [
+                    {"finding": number, "because": f"settled area: {where}"}
+                    for number, finding in enumerate(result["findings"], 1)
+                    if (where := areas[score.identity(finding["file"], finding["title"])])
+                    in _settled_areas(state) and number not in
+                    {d["finding"] for d in result["dismissals"]} and not (
+                        score.holds(finding, result.get("blocking_level")) and finding.get("harm", 5) >= 3)]
                 outcome = "blocked" if review.blocking(result) else "clean"
             finally:
                 if outcome == "failed":
@@ -332,19 +346,31 @@ def close(args: argparse.Namespace) -> int:
         state.pop("stop", None)
     stopped = None
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if not fresh or dismissals:
+        if "known" not in state:  # an item reviewed before the known list: its saved rounds first
+            for number, old in enumerate(review._history(top, item, f"origin/{default}", previous), 1):  # pyright: ignore[reportPrivateUsage]
+                state["known"] = score.remember(state.get("known", []), old, number, _areas(top, old))
+        state["known"] = score.remember(state.get("known", []), result, round_number,
+                                        {} if fresh else areas)
     if not fresh:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
-        if serious and round_number - choice_round >= 3:
+        # The area stop comes first: it settles its area and proposes a structural move.
+        crowded = score.crowded(state["known"], result, _settled_areas(state), areas) if serious else ""
+        if crowded:
+            stopped = {"file": crowded, "area": crowded, "proposed": score.move(result, areas, crowded)}
+        elif (serious and round_number - choice_round >= 3 and
+                score.loop_stops(result, state["known"], round_number)):
             default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
                                          f"origin/{default}", cwd=top).split("\0"))
             candidates = sorted(file for file in files & flagged & default_files
                                 if spotted._path(file))
             if candidates:
-                file = candidates[0]
-                stopped = {"file": file, "at": repo.now()}
-                stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
-                state["stop"] = stopped
+                stopped = {"file": candidates[0]}
+        if stopped:
+            stopped["at"] = repo.now()
+            stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
+            state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if not switch and spotted.record(
         top, item, state, f"origin/{default}", result) else ()
@@ -367,8 +393,8 @@ def close(args: argparse.Namespace) -> int:
     for number, finding in serious:
         print(f"{number}. {finding['priority']} {finding['title']} "
               f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
-    advice = [(n, f) for n, f in enumerate(result["findings"], 1) if f["priority"] not in
-              (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)]
+    advice = [(n, f) for n, f in enumerate(result["findings"], 1)
+              if not score.holds(f, result.get("blocking_level"))]
     if advice:
         print("Advice that does not block the merge:")
         for number, finding in advice:
@@ -426,6 +452,22 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
         if len(seen) == 3:
             return True
     return False
+
+
+def _settled_areas(state: dict[str, Any]) -> list[str]:
+    """The areas the owner's answers settled; an earlier release's answered stop settles its file."""
+    stop = state.get("stop") or {}
+    return [*state.get("settled_areas", []), *([stop["file"]] if stop.get("choice") and stop.get("file") else [])]
+
+
+def _rounds(state: dict[str, Any]) -> int:
+    return sum(step["step"] == "review" for step in state.get("steps", []))
+
+
+def _areas(top: Path, result: dict[str, Any]) -> dict[tuple[str, str], str]:
+    """Each finding's area at its review's commit."""
+    return {score.identity(f["file"], f["title"]): review.area(top, result["commit"], f["file"], f["line"])
+            for f in result.get("findings", [])}
 
 
 def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
@@ -932,24 +974,30 @@ def _block(result: dict[str, Any], check: str) -> str:
     functional check from its commit message. Each finding is a bullet naming its --dismiss number
     in text, since GitHub renumbers an ordered list."""
     because = {d["finding"]: d for d in result["dismissals"]}
-    blocking, rest = [], []
+    blocking, rest, below = [], [], {"follow-up": [], "live with": []}
     for n, finding in enumerate(result["findings"], 1):
+        outcome = score.bar(score.of(finding))
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
-                else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
+                else "blocks the merge" if score.holds(finding, result.get("blocking_level"))
+                else "Gain {}, Work {}, Harm {}".format(*score.of(finding)) if outcome in below
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
-        (blocking if note == "blocks the merge" else rest).append(
-            f"- Finding {n} ({finding['priority']}): {finding['title']} "
-            f"({finding['file']}:{finding['line']}): {note}")
+        (blocking if note == "blocks the merge" else below[outcome] if note.startswith("Gain ")
+         else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
+                           f"({finding['file']}:{finding['line']}): {note}")
     if result["status"] == "reviewing":
         lines = [BEGIN, "Review: running; CI is running alongside it."]
     elif result["status"] == "blocked":
         lines = [BEGIN, "The review found serious problems.", "", *blocking]
     else:
-        lines = [BEGIN, f"Review: clean, {len(because)} dismissed, {len(rest) - len(because)} advice."]
-    if rest:
-        lines += ["", "<details>", "<summary>Dismissed and advisory findings</summary>", "", *rest,
+        lines = [BEGIN, f"Review: clean, {len(because)} dismissed, "
+                        f"{len(rest) - len(because) + len(below['follow-up']) + len(below['live with'])} advice."]
+    folded = [*rest, *[line for name, title in (("follow-up", "Follow-ups:"), ("live with", "Lived with:"))
+                       if below[name] for line in ("", title, *below[name])]]
+    folded = folded[1:] if folded[:1] == [""] else folded
+    if folded:
+        lines += ["", "<details>", "<summary>Dismissed and advisory findings</summary>", "", *folded,
                   "", "</details>"]
     return "\n".join([*lines, *(["", check] if check else []), END])
 
