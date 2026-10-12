@@ -338,7 +338,7 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
                 "Other resume errors stop the round and keep its chat.",
                 "Upgrade's sync commits earlier-release chat bindings in their owning work branches",
-                "without guessing the owner",
+                "It leaves the chat on this machine, says so in one line and still writes every file",
                 "Keep `.git/forge` until the upgrade finishes.",
                 "uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying."):
             assert sentence in " ".join(guide.split()), sentence
