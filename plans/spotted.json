@@ -265,6 +265,17 @@
       "closed_by": "simplify-ci-workflow"
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: proof list\twindows-test-stubs",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 84,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-test-stubs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tStandard: forge.toml's test command runs everything CI needs\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -4038,6 +4049,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_hang.py\tNot done: Windows per-test timeout budget test\twindows-test-stubs",
+      "kind": "bug",
+      "path": "tests/test_ci_hang.py",
+      "line": 6,
+      "text": "Not done: Windows per-test timeout budget test",
+      "from": "blocking",
+      "item": "windows-test-stubs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "tests/test_ci_job_budgets.py",
@@ -4969,6 +4991,17 @@
       "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
       "from": "worker",
       "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_refreshes_behind_base.py\tNot done: Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line ending\twindows-test-stubs",
+      "kind": "bug",
+      "path": "tests/test_merge_refreshes_behind_base.py",
+      "line": 94,
+      "text": "Not done: Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line ending",
+      "from": "blocking",
+      "item": "windows-test-stubs",
       "status": "open",
       "closed_by": null
     },
