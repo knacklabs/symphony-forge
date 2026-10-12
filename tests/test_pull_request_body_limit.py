@@ -28,7 +28,7 @@ if args[:1] == ["pr"] and len(args) > 1 and args[1] in ("create", "edit", "merge
         target = args[args.index("--body-file") + 1]
         text = sys.stdin.read() if target == "-" else pathlib.Path(target).read_text(encoding="utf-8")
         if target == "-":
-            sys.stdin = io.StringIO(text)
+            sys.stdin = io.TextIOWrapper(io.BytesIO(text.encode("utf-8")), encoding="utf-8")
     elif "--body" in args:
         text = args[args.index("--body") + 1]
     if text is not None:

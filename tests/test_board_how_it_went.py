@@ -55,12 +55,14 @@ def github_list_fields(env):
                                           ("read-history-batching", False), ("refresh-stale-receipt", False),
                                           ("refresh-missing-receipt", False), ("resume-published-wait", False),
                                           ("warm-checks-cache", False), ("story-full-runway", False),
-                                          ("story-full-runway", True)],
+                                          ("story-full-runway", True), ("bad-null-event", False),
+                                          ("bad-infinite-seconds", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
-                              "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted"])
+                              "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted",
+                              "bad-null-event", "bad-infinite-seconds"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-full-runway":
         client(env, previous)
@@ -74,6 +76,9 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
         return
     if case == "rebuilt-history":
         rebuilt_history(env)
+        return
+    if case.startswith("bad-"):
+        malformed_record(env, case)
         return
     if case == "question-wait":
         question_wait(env, monkeypatch)
@@ -526,6 +531,33 @@ def conflict_wait(env, monkeypatch):
                 if interval["category"] == "waiting_for_owner"
                 and datetime.fromisoformat(interval["start"]) == at)
     assert datetime.fromisoformat(wait["end"]) == at + timedelta(seconds=30)
+
+
+def malformed_record(env, case):
+    """A PR author can edit the shared record; any malformed value counts as no record."""
+    item, _ = env.start_fix(round=1)
+    first = env.close(item)
+    assert first.returncode == 0, first.stderr
+    text = body(env.gh_calls("pr", "edit")[-1])
+    def spoil(match):
+        record = json.loads(match[1])
+        record["rebuilt"] = True  # visible only while the record is read
+        if case == "bad-null-event":
+            record["events"][0]["event"] = None
+        else:
+            record["timings"][0]["seconds"] = float("inf")
+        return "<!-- forge:time-record " + json.dumps(record) + " -->"
+    text = re.sub(r"<!-- forge:time-record (\{.*?\}) -->", spoil, text, flags=re.S)
+    env.gh.respond("pr", "list", stdout=json.dumps([{
+        "number": 7, "headRefName": f"fix/{item}", "state": "OPEN", "isDraft": False,
+        "headRefOid": env.repo.git("ls-remote", "origin", f"refs/heads/fix/{item}").split()[0],
+        "body": text, "title": "Keep the basket", "url": "https://github.com/acme/shop/pull/7"}]))
+    shared = row(env.repo, item)
+    assert not shared.get("rebuilt") and shared["rounds"], shared
+    shown = env.repo.forge("next")
+    assert shown.returncode == 0, shown.stdout + shown.stderr
+    again = env.close(item)
+    assert again.returncode == 0, again.stdout + again.stderr
 
 
 def rebuilt_history(env):

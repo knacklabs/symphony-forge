@@ -388,44 +388,28 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
         "\n<!-- forge:time-record " + json.dumps(shared, separators=(",", ":")) + " -->"
 
 
+def _finite(text: str) -> float:
+    value = float(text)
+    if not math.isfinite(value):
+        raise ValueError(f"{text} is not a finite number")
+    return value
+
+
 def from_body(body: str) -> dict[str, Any]:
     block = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", body or "", re.S)
     match = re.search(r"<!-- forge:time-record (\{.*?\}) -->", block[0], re.S) if block else None
+    if not match:
+        return {}
+    # One guard for every reader: anyone can edit a PR body, so the record is read once the way
+    # board, next and close read it, and any wrong type, null or non-finite number makes it no
+    # record instead of a crash.
     try:
-        data = json.loads(match[1]) if match else {}
-        if not isinstance(data, dict) or not all(
-            isinstance(data.get(name), list) and all(isinstance(row, dict) for row in data[name])
-            for name in ("events", "timings")):
-            return {}
-        if not isinstance(data.get("state", {}), dict) or not isinstance(data.get("ready") or {}, dict):
-            return {}
-        steps = data.get("state", {}).get("steps", [])
-        reviews = data.get("clean_reviews", [])
-        if not isinstance(steps, list) or not isinstance(reviews, list):
-            return {}
-        if not isinstance(data.get("legacy_text") or "", str):
-            return {}
-        for row in [*data["events"], *data["timings"], *steps, *reviews]:
-            if not isinstance(row, dict) or any(row.get(key) is not None and not isinstance(row[key], str)
-                    for key in ("id", "run_id", "lane_id", "wait_id", "at", "start", "step", "event",
-                                "kind", "phase", "outcome", "commit")):
-                return {}
-            if any(row.get(key) is not None and not isinstance(row[key], int)
-                   for key in ("round", "review_round")):
-                return {}
-            if row.get("phase") is not None and row["phase"] not in ("building", "fixing_findings", "unknown"):
-                return {}
-            seconds = row.get("seconds")
-            if seconds is not None and (not isinstance(seconds, (int, float)) or
-                                        not math.isfinite(seconds) or seconds < 0):
-                return {}
-            findings = row.get("findings")
-            if findings is not None and (not isinstance(findings, list) or any(
-                    not isinstance(f, dict) or any(f.get(key) is not None and not isinstance(f[key], str)
-                        for key in ("file", "title", "priority")) for f in findings)):
-                return {}
+        data = json.loads(match[1], parse_float=_finite, parse_constant=_finite)
+        merged({}, data)
+        (data.get("ready") or {}).get("commit")
+        "".join([data.get("legacy_text") or ""])
         return data
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, AttributeError, KeyError, IndexError):
         return {}
 
 
