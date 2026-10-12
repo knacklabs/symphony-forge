@@ -10,23 +10,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fa2d8ee2337cc91bb0dacd5712f4064e20c905b9b0950cd04131590daec69101",
-    "changed": "143cb4eb4c6896fbdc2589dd77af89b642fd6f18c93ebccb09bd1cf6fb0706fd",
-    "commit": "812fac4fd58bcfdfba029017d779a948b7ef9190",
+    "branch_diff": "f6a1d9e546c272474025a4398af8e386d1fcc7f103e43ef73a85a0a41bcba58f",
+    "changed": "89494a89f2188bb04b73dbba8ef5478120b4345a2f668fcaa820e0f695d63c34",
+    "commit": "d14248b91067bd7514c37702f8a816c58095745f",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. `_task` reads a part without a local worktree only through an open PR. A teammate who fetches a published start branch before its first PR sees that part in progress on `forge board --json`, but `forge next` treats it as unstarted, producing a self-wait or suggesting a start that `forge task start` refuses. The new fix loop at `nextstep.py:218` likewise omits a started remote fix until it has a PR. The new two-machine counts case creates both kinds of item but checks next-step advice only for ready items.",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. The new remote-state path makes started parts and fixes visible without a local worktree, but `_item` still gives a started item `Next: forge work <item>`. `worker.checkout` refuses that command when the item has no checkout (`worker.py:74\u201377`). In a second clone, `forge next` therefore offers a runnable command that immediately fails for work started by a teammate. The same gap affects remote items in fixing or checks-failed states.",
         "file": "src/forge/nextstep.py",
         "gain": 3,
         "harm": 1,
-        "line": 605,
+        "line": 609,
         "priority": "P1",
-        "title": "Not done: forge next loses started remote items before a pull request exists",
+        "title": "Remote started items offer a command that cannot run here",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list still gives only two bare `passed` lines beneath each claim. It identifies no runnable test selector or check result for the parametrized counts, readiness, caching, approval, and runway cases beginning here, so the required proof cannot be matched to those cases.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is `missing`. It gives no runnable test selectors or results for the counts, shared readiness, cached GitHub reads, approval gate, or full story runway exercised by the cases beginning here. The required proof cannot be checked against the named tests.",
         "file": "tests/test_board_counts.py",
         "gain": 3,
         "harm": 1,
@@ -36,7 +36,7 @@
         "work": 1
       }
     ],
-    "id": "c462324d-857a-435e-9d1d-887562b81b4c",
+    "id": "ca66f614-84a6-4bb1-a428-46a62c5f2b6e",
     "status": "blocked"
   },
   "status": "fixing",
@@ -71,6 +71,10 @@
     },
     {
       "at": "2026-10-12T22:19:01.915787+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:58:11.730237+00:00",
       "step": "review"
     }
   ],
