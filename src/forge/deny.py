@@ -33,7 +33,7 @@ ALONE_BREAKERS = OPERATORS | set("`'\\\n{}=")
 COMMIT_VALUES = {"--message", "--file", "--author", "--date", "--template", "--reuse-message",
                  "--reedit-message", "--fixup", "--squash", "--trailer", "--cleanup",
                  "--pathspec-from-file"}
-HEREDOC = re.compile(r"<<-?[ \t]*(?:'(\w+)'|\"(\w+)\"|(\w+))(?=[\s;&|<>)]|$)")
+HEREDOC = re.compile(r"<<-?[ \t]*(?:'(\w+)'|\"(\w+)\"|\\(\w+)|(\w+))(?=[\s;&|<>)]|$)")
 CONFIG_GETS ={"--get", "--get-all", "--get-regexp"}
 CONFIG_SCOPES = {"--global", "--local", "--system", "--worktree"}
 
@@ -176,11 +176,11 @@ def _commit_skips_hooks(args: list[str]) -> bool:
 
 
 def _without_data(text: str) -> str:
-    """The text without comments, and without the heredoc bodies that git commit -F - (or
-    --file=-) reads as its message. Every other body, even cat's, is checked as commands, so when
-    unsure Forge refuses. Only an unescaped # outside quotes starts a comment, and only a <<
-    redirection (outside quotes and $((...)), to a plain or wholly quoted word) opens a heredoc;
-    an unquoted message keeps its $(...) lines, which run."""
+    """The text without comments, and without the bodies of quoted heredocs (<<'EOF', <<"EOF",
+    <<\\EOF) that git commit reads as its message from stdin (-F -, -F-, --file -, --file=-). Every
+    other body, an unquoted message's included, is checked in full as commands, so when unsure
+    Forge refuses. Only an unescaped # outside quotes starts a comment, and only a << redirection
+    outside quotes and $((...)) opens a heredoc."""
     kept: list[str] = []
     quote, start, outer = "", 0, []  # open quote, where this command starts, each open $( or $((
     lines = iter(text.split("\n"))
@@ -217,16 +217,17 @@ def _without_data(text: str) -> str:
                 owner = line[start:i].split()
                 git = next((k for k, w in enumerate(owner) if w.rsplit("/", 1)[-1] == "git"), -1)
                 sub, rest = _subcommand(owner[git + 1:]) if git >= 0 else ("", [])
-                message = sub == "commit" and ("--file=-" in rest or any(
+                message = sub == "commit" and ({"--file=-", "-F-"} & set(rest) or any(
                     rest[k:k + 2] in (["-F", "-"], ["--file", "-"]) for k in range(len(rest))))
-                bodies.append((found[1] or found[2] or found[3], found[3] is not None, message))
+                bodies.append((found[1] or found[2] or found[3] or found[4],
+                               bool(message) and found[4] is None))
                 i = found.end() - 1
             i += 1
-        for end, unquoted, data in bodies:
+        for end, data in bodies:
             for body in lines:
                 if body.strip() == end:
                     break
-                if not data or unquoted and ("$(" in body or "`" in body):
+                if not data:
                     kept.append(body)
     return "\n".join(kept)
 
