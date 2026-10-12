@@ -140,8 +140,8 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert (begun["kind"], begun["round"], begun["family"]) == ("work", 1, tool)
         assert (ended["run_id"], ended["outcome"]) == (begun["id"], "completed")
 
-        # The next round continues the subagent on the role's model; a changed forge.toml, the
-        # pin included, is put back, and a closing question is recorded.
+        # The next round continues the subagent on the role's model; an uncommitted forge.toml
+        # edit, even a broken one, is put back, and a closing question is recorded.
         given, _, number = handout("BOARD/HELP", "worker")
         model = "sonnet, medium" if tool == "claude" else "gpt-6-sol, high"
         assert f"({model})" in given.stdout
@@ -150,8 +150,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert str(folder.resolve().as_posix()) in short.read_text("utf-8")
         assert "If this session can't reach it, start a new worker subagent with" in given.stdout
         settings = (folder / "forge.toml").read_text("utf-8")
-        (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")
-        repo.git("commit", "-q", "-am", "Try another release", cwd=folder)
+        before = repo.git("rev-parse", "HEAD", cwd=folder)
         (folder / "forge.toml").write_text(settings + "[[[ not settings\n", "utf-8")
         # The item's pull request is published, so its record is refreshed with the question.
         with (repo.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as events:
@@ -165,6 +164,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert asked.returncode == 0, asked.stdout + asked.stderr
         assert (folder / "forge.toml").read_text("utf-8") == settings
         assert repo.git("status", "--porcelain", cwd=folder) == ""
+        assert repo.git("rev-parse", "HEAD", cwd=folder) == before
         assert "Question: Which colour?" in asked.stdout
         waiting = host.forge("work", "BOARD/HELP")
         assert waiting.returncode == 1 and "Which colour?" in waiting.stderr
@@ -179,6 +179,23 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
                 (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]
         assert [e["outcome"] for e in ends if e["event"] == "run end"
                 and e["item"] == "BOARD/HELP"][-1] == "failed"
+
+        # A round that commits its work and a forge.toml change, pin included, hands back from
+        # the item's checkout: no nudge, and the settings change is reversed in a new commit.
+        _, _, number = handout("BOARD/HELP", "worker")
+        handed = repo.git("rev-parse", "HEAD", cwd=folder)
+        (folder / "web/help.py").write_text("WORDS = {'done': 'Done'}\n", "utf-8")
+        (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")
+        repo.git("commit", "-q", "-am", "Finish the words and try another release", cwd=folder)
+        finished = handback("BOARD/HELP", number, "Committed everything.", cwd=folder)
+        assert finished.returncode == 0, finished.stdout + finished.stderr
+        assert "Send this to subagent" not in finished.stdout and "Warning" not in finished.stdout
+        assert lane("BOARD/HELP") == []
+        assert (folder / "forge.toml").read_text("utf-8") == settings
+        assert repo.git("status", "--porcelain", cwd=folder) == ""
+        assert repo.git("log", "-1", "--format=%s", cwd=folder) == (
+            "Restore forge.toml; settings change in their own fix")
+        assert repo.git("rev-list", "--count", f"{handed}..HEAD", cwd=folder) == "2"
 
         if tool == "codex":
             # With one tool and no session open, nothing runs.
