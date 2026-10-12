@@ -4379,6 +4379,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNative rounds ignore local model overrides when selecting a subagent role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 125,
+      "text": "Native rounds ignore local model overrides when selecting a subagent role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: Earlier-release Codex fallback is mistaken for a Claude round\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/worker.py",
