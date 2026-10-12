@@ -1,4 +1,5 @@
 {
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, sync output and the tests that pin them",
   "base": "434fdfd3871e63bb011136515f6e803128106b84",
   "branch": "fix/release-1210",
   "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and new and upgraded clients install v1.2.10",
