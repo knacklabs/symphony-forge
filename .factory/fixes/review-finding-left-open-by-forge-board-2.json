@@ -1,0 +1,15 @@
+{
+  "base": "59cd0dfa29c3f139e70e285532d130723393827f",
+  "branch": "fix/review-finding-left-open-by-forge-board-2",
+  "done_when": "A review no longer finds: Not done: forge next omits ready fixes without a worktree",
+  "kind": "fix",
+  "stacked_on": "FORGE-BOARD-2/COUNTS",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:08:19.748180+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review finding left open by FORGE-BOARD-2/COUNTS: Not done: forge next omits ready fixes without a worktree (src/forge/nextstep.py:725): Raise: Functional. The new no-worktree advice handles a ready fix when `_item` is called, but `forge next` reaches fixes only by iterating local worktrees (`nextstep.py:206\u2013217`). On a second clone with the fix's fetched branch and shared clean record but no fix worktree, `forge board --json` shows it ready while `forge next` never names it or its starter."
+}
