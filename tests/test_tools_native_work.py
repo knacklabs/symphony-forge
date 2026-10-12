@@ -45,8 +45,10 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     version = repo.forge("--version").stdout.split()[-1]
     setting = 'workers = "claude"' if tool == "claude" else 'tools = "codex"\nworkers = "claude"'
     repo.git("switch", "-qc", "fix/settings")
+    # An earlier-adopted repo may have no [models] table: built-in models apply.
+    models = MODELS[tool] if history == "new" else ""
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{setting}\n'
-                             f'test = "pytest -q"\n{MODELS[tool]}')
+                             f'test = "pytest -q"\n{models}')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "BOARD"}]}))
     repo.write(".factory/fixes/settings.json", json.dumps({
         "kind": "fix", "branch": "fix/settings", "status": "working",
@@ -102,6 +104,10 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
 
         # The first round starts no program and hands out the whole brief for the task's checkout.
         given, checkout, number = handout("BOARD/HELP", "worker")
+        # The worker role file names the model forge work prints, built-in ones included.
+        printed = re.search(r"Building BOARD/HELP with \w+ \(([^,]+),", given.stdout)[1]
+        role = folder / (".codex/agents/worker.toml" if tool == "codex" else ".claude/agents/worker.md")
+        assert re.search(rf'^model(:| =) "{re.escape(printed)}"', role.read_text("utf-8"), re.M), printed
         assert checkout.resolve() == folder.resolve()
         assert "Start a new worker subagent with" in given.stdout
         assert calls(claude_log) == [] and not (repo.bin / "codex-app-server.jsonl").exists()
@@ -143,7 +149,9 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         # The next round continues the subagent on the role's model; an uncommitted forge.toml
         # edit, even a broken one, is put back, and a closing question is recorded.
         given, _, number = handout("BOARD/HELP", "worker")
-        model = "sonnet, medium" if tool == "claude" else "gpt-6-sol, high"
+        model = {("claude", "new"): "sonnet, medium", ("codex", "new"): "gpt-6-sol, high",
+                 ("claude", "adopted"): "claude-sonnet-5-5, xhigh",
+                 ("codex", "adopted"): "gpt-6.1-sol, medium"}[tool, history]
         assert f"({model})" in given.stdout
         short = Path(re.search(r"Continue subagent w1 with: Read (.+) and follow it", given.stdout)[1])
         assert "The earlier brief in this conversation still applies." in short.read_text("utf-8")
@@ -197,20 +205,14 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
             "Restore forge.toml; settings change in their own fix")
         assert repo.git("rev-list", "--count", f"{handed}..HEAD", cwd=folder) == "2"
 
-        if tool == "codex":
-            # With one tool and no session open, nothing runs.
-            monkeypatch.delenv("CODEX_THREAD_ID")
-            head = repo.git("rev-parse", "HEAD", cwd=folder)
-            refused = repo.forge("work", "BOARD/HELP")
-            assert refused.returncode == 1
-            assert "none is open here, so nothing ran" in refused.stderr
-            assert repo.git("rev-parse", "HEAD", cwd=folder) == head
-            return
-
         # A fix uses the fixer role; land stops at the handout and closes after the hand-back.
         made = repo.forge("fix", "start", "Tidy the words", "--done", "The words read well",
                           "--slug", "tidy-words")
         assert made.returncode == 0, made.stdout + made.stderr
+        fix = next(Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain").splitlines()
+                   if line.startswith("worktree ") and line.endswith("tidy-words"))
+        with (home / "config.toml").open("a", encoding="utf-8") as trusted:
+            trusted.write(f'[projects.{json.dumps(str(fix))}]\ntrust_level = "trusted"\n')
         gh.respond("pr", "list", stdout="[]")
         landed = host.forge("land", "tidy-words")
         assert landed.returncode == 0, landed.stdout + landed.stderr
@@ -221,6 +223,16 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         number = int(re.search(r"--round (\d+)", landed.stdout)[1])
         assert handback("tidy-words", number, "Tidied.").returncode == 0
         assert "Closing tidy-words." in host.forge("land", "tidy-words").stdout
+
+        if tool == "codex":
+            # With one tool and no session open, nothing runs.
+            monkeypatch.delenv("CODEX_THREAD_ID")
+            head = repo.git("rev-parse", "HEAD", cwd=folder)
+            refused = repo.forge("work", "BOARD/HELP")
+            assert refused.returncode == 1
+            assert "none is open here, so nothing ran" in refused.stderr
+            assert repo.git("rev-parse", "HEAD", cwd=folder) == head
+            return
 
         # Under split, a user-facing part coordinated from Claude Code is a frontend subagent.
         assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0

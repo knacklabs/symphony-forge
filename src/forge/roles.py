@@ -104,6 +104,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     for name, (kind, description, instructions) in ROLES.items():
         building = instructions.startswith(BUILD)
         model, effort = _chosen(cfg, kind, "codex", building)
+        if name in ("worker", "fixer") and not model:  # the built-in model forge work names
+            model, effort = repo.worker_models(cfg, kind, "codex").values()
         wanted[f".codex/agents/{name}.toml"] = "".join([
             f"# {MARK}\n", f"name = {json.dumps(name)}\n", f"description = {json.dumps(description)}\n",
             f"model = {json.dumps(model)}\n" * bool(model),
