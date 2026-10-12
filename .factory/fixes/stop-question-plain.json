@@ -34,31 +34,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fa2a01ea1c0cff44a236c20e304dd233608226fe95df8995b62ab09fb34ab4dd",
-    "changed": "50e1e8238addb99e83b7b3c14e7b922f9341bc5b64c7b0bce34ce146c652a149",
-    "commit": "39e1f9ef17474d9728c8c984411b3b3c90fc9f53",
+    "branch_diff": "71595bdf2539d21ffaca96d68fca895b1ad46dfbcd4535b2c46abf1184b7d4fb",
+    "changed": "a882b6daa3aa464c608db1218b3482aeca5be3acc5939f476c04beb337e2e70c",
+    "commit": "9479f8c26320185a1da10a26fc01a088357a67b7",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. A stopped task can still show implementation details instead of a plain-words account of what it delivers. This line copies the plan row\u2019s delivery through `plain()`, which strips markdown and paths but leaves command flags and internal labels. The REPAIRS row in `plans/FORGE-DOCTORFIX-1.md:326` would still present `--fix`, `- Fixed:` and SDK terminology to the owner. The named task test checks only markdown and path removal.",
-        "file": "src/forge/review.py",
-        "line": 257,
+        "body": "Raise: Not done. `read_question` takes a story's delivery from `What changes for you` and never reads `Done when`. Those sections can differ: the story fixture promises a saved-time display in its second Done-when item, but the named read test accepts a question that mentions only saving and returning to a basket. The owner can therefore be asked to choose without seeing what the item delivers.",
+        "file": "src/forge/story.py",
+        "line": 1014,
         "priority": "P1",
-        "title": "Not done: stopped task questions still expose implementation text"
+        "title": "Not done: stopped story questions omit Done-when delivery"
       },
       {
-        "body": "Raise: Not done. In an upgraded repo with three blocked read rounds recorded before the `blocked_rounds` field existed, `forge read` reconstructs the stop from earlier snapshots (`src/forge/story.py:710-718`). This new spec scan checks only whether the field equals `3`, and the story path makes the same check at `src/forge/nextstep.py:562`. `forge next` therefore omits the stopped spec\u2019s question or offers another story read, even though `forge read` requires the owner\u2019s choice. The upgrade proofs create their blocked rounds after upgrading, so they do not cover this state.",
-        "file": "src/forge/nextstep.py",
-        "line": 222,
+        "body": "Raise: Not done. This line passes a story or spec title directly into the question, without removing paths or Markdown. The task path also appends the plan's raw story title at `src/forge/review.py:256`. A title containing a Markdown link or source path is printed unchanged by forge read and forge next, or by a stopped task's close, land and next output. The named proofs use plain titles, so they do not catch this Done-when gap.",
+        "file": "src/forge/story.py",
+        "line": 1015,
         "priority": "P1",
-        "title": "Not done: older blocked reads lose their question in forge next after upgrade"
+        "title": "Not done: stopped questions can retain paths and Markdown in item names"
       }
     ],
-    "id": "176fd329-6c09-4ef7-8091-6eeaa3a832d8",
+    "id": "ba93810a-6d2d-4163-b818-5bf778c2361d",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -107,14 +107,16 @@
     {
       "at": "2026-10-12T02:55:21.552978+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:12:38.479758+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T02:23:47.593227+00:00",
-    "choice": "accept",
-    "file": "src/forge/land.py",
-    "reason": "Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
-    "wait_id": "66c39de2-86a0-4a9c-b3b1-daebce652f08"
+    "at": "2026-10-12T03:12:38.495130+00:00",
+    "file": "src/forge/story.py",
+    "wait_id": "d6a39f6f-7dd6-4afe-ade3-1f9463c29bac"
   },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
   "worker": "codex"
