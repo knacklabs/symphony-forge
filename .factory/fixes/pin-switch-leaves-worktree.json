@@ -31,7 +31,18 @@
     "branch_diff": "e5f8f130f1d14884e17b3abeef58132a7529d7f3e69ececef187c610207f24c5",
     "changed": "6e68e114e749f131e48802a9065055021449bbeb6c5e4244dc063f1023bd8bf5",
     "commit": "9752e12d4b7c60251a9f891ff667f941da3625e5",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both are covered in commit 282cc61fa: tests/test_land.py::test_3 drives forge land into a failed worktree removal and checks exit 0, the delete-the-folder line and the kept branch; tests/test_merge_docs.py::test_6 checks the cleanup sentence in the synced guides",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both are covered in commit 282cc61fa: tests/test_land.py::test_3 drives forge land into a failed worktree removal and checks exit 0, the delete-the-folder line and the kept branch; tests/test_merge_docs.py::test_6 checks the cleanup sentence in the synced guides",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "chunk 1/2:\n\nRaise: Test \u2014 The proof list names `test_merge_docs.py`, `test_trim_skills.py`, and `test_tools_guide.py` as proof of the new cleanup guidance. The first does not assert the new outcome or deletion instruction; the other two check delivery and equality of the guide copies. Removing this sentence from the template and both host guides would leave all three tests passing, so the named proof does not detect loss of the guidance.",
@@ -49,9 +60,9 @@
       }
     ],
     "id": "c6a10ff0-cb82-4cdd-8a78-8db91e941245",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T09:42:03.657961+00:00",
@@ -72,9 +83,13 @@
   ],
   "stop": {
     "at": "2026-10-12T13:05:46.458717+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/templates/skill.md",
+    "reason": "Owner rule for Harm 1-2: both are covered in commit 282cc61fa: tests/test_land.py::test_3 drives forge land into a failed worktree removal and checks exit 0, the delete-the-folder line and the kept branch; tests/test_merge_docs.py::test_6 checks the cleanup sentence in the synced guides",
     "round": 4,
-    "wait_id": "1bba76a9-ff56-4ceb-98f4-170f3f2ce435"
+    "wait_id": "1bba76a9-ff56-4ceb-98f4-170f3f2ce435",
+    "worker_round": null
   },
   "why": "On Windows, forge merge or forge land run from inside an item's worktree stops with 'could not remove the worktree' when main's pinned release changes mid-run: the old forge processes keep the worktree folder open"
 }
