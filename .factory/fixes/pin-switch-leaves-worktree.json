@@ -9,12 +9,52 @@
   "base": "2e7db401994df42f51fbc0698cb0b67f5a997813",
   "branch": "fix/pin-switch-leaves-worktree",
   "done_when": "When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes, keeps the worktree and its branch, and says so",
+  "flagged": [
+    "src/forge/merge.py",
+    "tests/test_merge_command.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4bcf2df8c0603e318bdf13f4885c3e792dc79e7dff135e5bb1ae7c6a9293e561",
+    "changed": "930c4456e1e25110ae915fb5dce29df5e6b4180c0630427f1644505527e2372e",
+    "commit": "b59577627ef2b5b6bb9fa24333ebe76c6ae720ed",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done \u2014 Forge can report that it kept the worktree after Git has deleted its files and worktree registration. This branch treats every failed `git worktree remove` as preservation, but [Git recursively deletes the directory and then removes its worktree metadata even if directory deletion fails](https://raw.githubusercontent.com/git/git/master/builtin/worktree.c). In the stated Windows case, a process holding the root folder open can prevent the final removal after its contents have been deleted. `forge doctor --fix` discovers registered worktrees (`src/forge/doctor.py:60`), so it cannot perform the advertised cleanup once that metadata is gone.",
+        "file": "src/forge/merge.py",
+        "line": 178,
+        "priority": "P1",
+        "title": "Not done: When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes,an"
+      },
+      {
+        "body": "Raise: Test \u2014 The named proof substitutes `git worktree lock` for an open directory. Git rejects a locked worktree before deleting anything, so this test passes while the Windows failure above can leave a stripped, unregistered folder. The other named proof, `test_2`, does not force removal to fail; when the folder remains on Windows it checks only the message, not the worktree contents, Git registration, or local branch. Neither proof establishes the Done-when behavior for a worktree held open by another process.",
+        "file": "tests/test_merge_command.py",
+        "line": 297,
+        "priority": "P1",
+        "title": "Not done: test a worktree held open by another process"
+      },
+      {
+        "body": "Raise: Gate \u2014 This new merge outcome tells the coordinator to run `forge doctor --fix`, but the change does not update `src/forge/templates/skill.md` or the worker brief. The shipped skill's merge guidance (`src/forge/templates/skill.md:60-64`) covers retained work for uncommitted changes and local commits, but not this outcome or its next step. The repository's review rule requires a same-change template update when a command's behavior or flow changes.",
+        "file": "src/forge/merge.py",
+        "line": 181,
+        "priority": "P1",
+        "title": "Update the shipped Forge skill for the new merge cleanup step"
+      }
+    ],
+    "id": "3f65539c-4880-4d1e-b6d3-b56eb994c336",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T09:42:03.657961+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T10:01:19.809994+00:00",
+      "step": "review"
     }
   ],
   "why": "On Windows, forge merge or forge land run from inside an item's worktree stops with 'could not remove the worktree' when main's pinned release changes mid-run: the old forge processes keep the worktree folder open"
