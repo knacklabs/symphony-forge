@@ -1,0 +1,14 @@
+{
+  "base": "841a08b10e5393ed8b59aef8f7d966c45aea77a9",
+  "branch": "fix/proof-from-own-commits",
+  "done_when": "A story part's proof list and other worker paragraphs come only from the part's own commits, never from default-branch commits merged into it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T22:59:02.531279+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A story part's proof list goes missing after close merges main into it, because Forge reads the newest commit from main as the worker's"
+}
