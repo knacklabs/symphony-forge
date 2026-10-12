@@ -215,12 +215,17 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    for branch, pr in sorted(prs.items()):  # a fix with an open pull request and no worktree here
+    pushed = repo.git("for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/fix/",
+                      "refs/remotes/origin/forge/", cwd=top).splitlines()
+    landed = story.landed_ref(top)
+    for branch in sorted(set(prs) | set(pushed)):  # a fix started elsewhere, with no worktree here
         kind, _, name = branch.partition("/")
-        if (branch in trees or kind not in ("fix", "forge") or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
-                or history is not None and repo.state_path(name) in history["expired"]):
+        if (branch in trees or branch in merged_prs or kind not in ("fix", "forge")
+                or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
+                or history is not None and repo.state_path(name) in history["expired"]
+                or story.show(top, landed, repo.state_path(name)) is not None):  # merged
             continue
-        if state := remote_state(top, name, branch, pr):
+        if state := remote_state(top, name, branch, prs.get(branch), history):
             lines += _item(name, f"The fix {name}", state, top, None, prs, refusals)
     for path in sorted(trees.values()):  # a spec read stopped on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
@@ -602,7 +607,7 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path], merged_prs: se
         return {**landed, "status": "merged"}
     branch = f"task/{key}-{task}"
     path = trees.get(branch)
-    state = ((repo.read_state(item, path) if path else remote_state(top, item, branch, (prs or {}).get(branch)))
+    state = ((repo.read_state(item, path) if path else remote_state(top, item, branch, (prs or {}).get(branch), history))
              or {})
     return {**state, "status": "merged"} if branch in merged_prs else state
 
@@ -647,9 +652,13 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     return status, evidence if status == "ready" else receipt
 
 
-def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None) -> dict[str, Any]:
-    """An item with an open pull request but no worktree here: its state at the pull request's head."""
-    ref = review_ref(top, branch, pr) if pr else ""
+def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = None,
+                 history: dict[str, Any] | None = None) -> dict[str, Any]:
+    """An item started on another machine (its branch is on the remote, as the board reads it, with
+    or without a pull request) and no worktree here: its state at the pull request's head."""
+    if not pr and history is not None:  # the board's own bulk read of the remote branches
+        return history["ref_states"].get(f"refs/remotes/origin/{branch}", {}).get(repo.state_path(item)) or {}
+    ref = review_ref(top, branch, pr)
     return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
 
 

@@ -222,6 +222,11 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert "SHOP/T2 is ready to merge; Forge Test merges it from their machine." in following.stdout, following.stdout
     assert "forge task start SHOP/T2" not in following.stdout
     assert "The fix shelf is ready to merge; Forge Test merges it from their machine." in following.stdout
+    # A part and a fix started on A with no pull request yet are started here too, never offered.
+    assert env.repo.git("ls-remote", "origin", "refs/heads/task/SHOP-T3", "refs/heads/fix/keep").count("\n") == 1
+    assert "forge task start SHOP/T3" not in following.stdout
+    assert [line for line in following.stdout.splitlines() if "SHOP/T3" in line], following.stdout
+    assert [line for line in following.stdout.splitlines() if "The fix keep" in line], following.stdout
 
     # In a human-merge repo the same part gives the human-merge line.
     env.repo.path = machine_a
