@@ -2,7 +2,8 @@
   "branch": "task/FORGE-SCORE-1-BAR",
   "flagged": [
     "src/forge/close.py",
-    "src/forge/review.py"
+    "src/forge/review.py",
+    "src/forge/score.py"
   ],
   "known": [
     {
@@ -11,7 +12,7 @@
       "gain": 3,
       "harm": 2,
       "line": 977,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "title": "Not done: 2 \u2014 below-bar findings can lose their scores in the pull request",
@@ -23,7 +24,7 @@
       "gain": 3,
       "harm": 2,
       "line": 618,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "title": "Not done: 3 \u2014 settled findings disappear from later accepted context",
@@ -35,7 +36,7 @@
       "gain": 3,
       "harm": 2,
       "line": 233,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "title": "Not done: 4 \u2014 same-named methods collapse into one area",
@@ -47,63 +48,67 @@
       "gain": 3,
       "harm": 2,
       "line": 250,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "title": "Not done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 118,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "title": "Not done: 2 and 3 \u2014 accepting a stop loses known history or the owner's reason",
+      "work": 2
+    },
+    {
+      "area": "read_stops() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 104,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "title": "Not done: 4 \u2014 a disposed Harm 3 read note triggers the three-round stop",
       "work": 2
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7eb2d30a030466e952afbef1837ec50ade9c1493aa3a3f74d1f35a351bba44e5",
-    "changed": "e5842852b9da1cb16f611c98671a3a0c2268ab90350c777168d30d86b2d26741",
-    "commit": "fa869de8cae56e09d69cb2071725f35422c57391",
+    "branch_diff": "b6c229f37b0edc4f2ca9ee22732638f73a1436c84bccd3914c61d418c040c1a3",
+    "changed": "0fd80704979a616e104af462e17c9bdab61f478b9234d79583e77618d19e0df9",
+    "commit": "14d7a167e99fcbe285f834cd02a4dc45d63e6f14",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 `close._block` chooses the dismissal text before the scored below-bar text. A below-bar finding dismissed by the owner, or automatically dismissed when repeated, is therefore shown in the updated pull request without Gain, Work or Harm. A scored Gain 3, Work 2, Harm 1 finding in a light review also passes the P0-only gate but falls through to scoreless advisory text, because `score.bar` calls it `fix now`. Both cases break item 2\u2019s requirement to list every below-bar finding with its scores.",
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done \u2014 When a repo upgrades with an already stopped review and no `known` field, `--resolve accept` initializes `known` from the latest review only (close.py:118). Earlier rounds' findings disappear from the item's durable record after squash. Also, accepting a below-bar finding already in `known` leaves its existing outcome and empty reason unchanged because `score.remember` updates only `open` entries (score.py:150). Both paths violate the required carry-forward of findings and acceptance reasons.",
         "file": "src/forge/close.py",
-        "gain": 3,
+        "gain": 4,
         "harm": 2,
-        "line": 977,
+        "line": 118,
         "priority": "P1",
-        "title": "Not done: 2 \u2014 below-bar findings can lose their scores in the pull request",
+        "title": "Not done: 2 and 3 \u2014 accepting a stop loses known history or the owner's reason",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 A repeated below-bar or owner-accepted finding is automatically dismissed in the next review. `_settled` then overwrites its `known:` or `accepted by the owner:` reason with `dismissed because ...`. `_accepted` includes only the former reason prefixes, so the third and later review prompts omit the finding from Known and accepted, despite item 3 requiring it to reach every later review.",
-        "file": "src/forge/review.py",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 `score.read_stops` checks Harm 3 on every note, including one Forge has automatically disposed as below the bar. On a third blocked read with a new at-bar Harm 1 note and a below-bar Harm 3 follow-up, it stops the read loop even though no open note has Harm 3 and no at-bar note is a `Disputed keep`. The stop question then omits the disposed note that triggered the stop.",
+        "file": "src/forge/score.py",
         "gain": 3,
         "harm": 2,
-        "line": 618,
+        "line": 104,
         "priority": "P1",
-        "title": "Not done: 3 \u2014 settled findings disappear from later accepted context",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 The area identifier contains only the function name and file. Common methods such as `__init__` in different classes of one Python file therefore share an area. Findings in those separate methods can trigger a false third-finding stop; resolving it then settles all of them and can dismiss later at-bar Harm 1 or 2 findings in an unrelated class.",
-        "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 233,
-        "priority": "P1",
-        "title": "Not done: 4 \u2014 same-named methods collapse into one area",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 Before launching review four, this gate passes only `state['known']` to `score.loop_stops`. An item with three scored blocked rounds saved before the `known` field was introduced has an empty list here. A repeated at-bar Harm 1 or 2 finding is consequently not recognized, so Forge launches a fourth review instead of stopping after three. The later backfill of saved rounds happens only after that review.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 250,
-        "priority": "P1",
-        "title": "Not done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop",
+        "title": "Not done: 4 \u2014 a disposed Harm 3 read note triggers the three-round stop",
         "work": 2
       }
     ],
-    "id": "2eefe1b8-fcd7-4341-a933-2430252f913a",
+    "id": "26209f2c-bbed-4d33-b5a7-410f6b014bcf",
     "status": "blocked"
   },
   "status": "fixing",
@@ -114,6 +119,10 @@
     },
     {
       "at": "2026-10-12T21:50:39.482910+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:39:22.394452+00:00",
       "step": "review"
     }
   ]
