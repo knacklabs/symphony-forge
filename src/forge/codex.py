@@ -159,7 +159,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
     chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
-              else repo.models(cfg, "explore" if kind == "Ask" else kind.lower(), "codex"))
+              else repo.models(cfg, kind.lower(), "codex"))
     return {OVERRIDES[key]: value for key, value in chosen.items()}
 
 
@@ -191,7 +191,8 @@ def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
                                   sync.read(repo.work_log(checkout, item)), re.M)
             if launches:
                 saved["claude" if launches[-1].startswith("Codex ") else "conversation"] = None
-    if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")) and not (
+    if not (saved.get("native") or saved.get("pending")) and not (
+            saved.get("conversation") or (saved.get("claude") or {}).get("id")) and not (
             chat.get("conversation") or (chat.get("claude") or {}).get("id")):
         lines = sync.read(_item_file(checkout, item, ".log", kind)).splitlines()
         if lines:
@@ -473,6 +474,16 @@ def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
     return False
 
 
+def fast_said(selection: dict[str, Any]) -> str:
+    """Say which speed Forge requested, without claiming Codex confirmed it."""
+    if not selection.get("fast_wanted"):
+        return "Codex speed: normal requested for this turn."
+    if selection.get("tier", "default") != "default":
+        return "Codex Fast: requested for this turn."
+    return (f"Codex Fast: wanted, but {selection['model']} doesn't offer it, so this turn requests "
+            "normal speed.")
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
@@ -501,7 +512,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
-    if not (read or archive_thread or attach_request):  # every turn: work, read and ask
+    if not (read or archive_thread or attach_request):  # every turn: work and read
         require_trust(checkout)
     root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
                          cwd=checkout)).resolve().parent
@@ -513,7 +524,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                            **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
-               "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+               "hooks": FORGE_HOOKS}
     if not (read or archive_thread or attach_request):
         request["fast"] = fast_needed(checkout, item, kind, config)
     if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
@@ -527,15 +538,16 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     if effort is not None:
         request["config"]["model_reasoning_effort"] = effort
     request["config"].update(QUIET)
-    log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
-           repo.work_log(checkout, item))
+    log = repo.work_log(checkout, item)
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
-    command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
+    command = "read" if kind == "Grill" else "work"
     started: dict[str, Any] = {}
     continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
     refused, server, untrusted = "", None, {}
+    before_selection = []
+    selected = read or archive_thread or attach_request is not None
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
@@ -548,7 +560,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             log.open("a", encoding="utf-8", buffering=1) as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
+            errors="replace", env=(machine.worker_env() if command == "work" else
+                                   {**os.environ, "FORGE_WORKER": "1"}), **GROUP) as driver:
         machine.agent_started(driver.pid, log)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
@@ -606,7 +619,17 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     fresh, text = said["fresh"], ""
                 elif "selection" in said:
                     if ran.get("run_id"):
-                        repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
+                        repo.record_progress(checkout, item, ran["run_id"],
+                                             model=said["selection"]["model"],
+                                             effort=said["selection"]["effort"])
+                    text = "\n".join(filter(None, [fast_said(said["selection"]),
+                                                  *before_selection]))
+                    before_selection.clear()
+                    selected = True
+                elif "speed" in said:
+                    started.update(said["speed"])
+                    repo.record_event(checkout, item, "codex speed", run_id=ran.get("run_id"),
+                                      **said["speed"])
                     text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
@@ -635,6 +658,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     result["turn"] = said["turn"]
                     started = {"conversation": result["conversation"], "turn": said["turn"],
                                "kind": kind, "started": repo.now(),
+                               **{key: said[key] for key in ("model", "fast_wanted", "requested_tier", "tier")},
                                **({"note": note} if note is not None else {})}
                     _append(turns, started)
                     _record(record, start=begun, pending=None, **continued)
@@ -673,10 +697,17 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                                                  step=repo.worker_step(tool_name or tool["type"], inputs))
                     text = _event(said)
                 if text:
+                    if not selected:
+                        before_selection.append(text)
+                        continue
                     if echo:
                         print(text, flush=True)
                     out.write(text + "\n")
         finally:  # on an error or Ctrl-C too: the driver ends its group once stdin closes
+            for text in before_selection:
+                if echo:
+                    print(text, flush=True)
+                out.write(text + "\n")
             with contextlib.suppress(OSError):  # a driver that has gone already can't be told
                 driver.stdin.close()
             driver.stdout.close()
@@ -733,12 +764,10 @@ def _append(path: Path, line: dict[str, Any]) -> None:
 
 def _item_file(checkout: Path, item: str, suffix: str, kind: str) -> Path:
     """The item's record (.json), lock (.lock) or turn log (.log), in git's folder that every
-    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name>, threads/read/<item>
-    or threads/ask/ask."""
+    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name>, threads/read/<item>."""
     # A cold read's item is its story key or spec slug, so reads get their own folder: a spec and
     # a fix of one name never share a conversation.
-    folder = ("read" if kind == "Grill" else "ask" if kind == "Ask" else
-              "task" if "/" in item else "fix")
+    folder = ("read" if kind == "Grill" else "task" if "/" in item else "fix")
     path = repo.forge_dir(checkout) / "threads" / folder / f"{item}{suffix}"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
@@ -806,9 +835,12 @@ def identity(pid: int) -> dict[str, Any] | None:
         finally:
             kernel32.CloseHandle(handle)
     done = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-ww", "-o",
-                    "lstart=,command=", "-p", str(pid))  # -ww: whole command
+                    "stat=,lstart=,command=", "-p", str(pid))  # -ww: whole command
     gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
-    *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
+    fields = done.stdout.split(None, 1)
+    if not done.returncode and fields and fields[0].startswith("Z"):
+        return None
+    *start, command = (fields[1] if len(fields) > 1 else "").split(None, 5) or [""]
     started = " ".join(start)
     if gone:
         return None
@@ -957,7 +989,7 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     if any still run and give the lock back. A lock whose owner is gone is cleared; a live one
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
-    command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
+    command = "read" if kind == "Grill" else "work"
     held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
     if held:
         owner, alive = held

@@ -18,12 +18,31 @@ NOTICE = ("Codex Fast is now on for quick work: every fix, after the first repai
           "or when other planned work waits.")
 
 
-def _tiers(repo, tiers):
+def _tiers(repo, tiers, receipt=None):
     # Vendor metadata never chooses Forge's tier; the real command does that.
     stub = (ROOT / "tests/stubs/codex-app-server").read_text("utf-8")
     if tiers != "missing":
         stub = stub.replace('"supportedReasoningEfforts": [',
                             '"serviceTiers": ' + repr(tiers) + ', "supportedReasoningEfforts": [')
+    stub = stub.replace('    cwd, config, asked, turns =',
+                        '    global TURN\n    cwd, config, asked, turns =')
+    stub = stub.replace('            turns += 1',
+                        '            turns += 1\n            TURN = f"turn-stub-{turns}"')
+    reported = ('params.get("serviceTier", "default")'
+                if receipt in (None, "sibling") else repr(receipt))
+    if receipt == "thread":
+        stub = stub.replace('"reasoningEffort": (config or {})',
+                            '"serviceTier": None, "reasoningEffort": (config or {})')
+    elif receipt != "missing":
+        stub = stub.replace('            notify("turn/started",',
+                            '            notify("thread/settings/updated", threadId=THREAD, '
+                            'threadSettings={"serviceTier": ' + reported + '})\n'
+                            '            notify("turn/started",')
+    if receipt == "sibling":
+        stub = stub.replace('            notify("turn/started",',
+                            '            notify("thread/settings/updated", threadId="thr-other", '
+                            'threadSettings={"serviceTier": "default"})\n'
+                            '            notify("turn/started",')
     _install(repo.bin, "codex-app-server", stub)
 
 

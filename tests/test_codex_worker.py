@@ -361,19 +361,22 @@ def test_4_turn_log(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     turns = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
     work_log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
+    # Each turn records the speed it asked for; this stub reports no tier back.
+    speed = {"model": "gpt-6-sol", "fast_wanted": True, "requested_tier": "default", "tier": None}
     started = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
-               "started": NOW}
+               "started": NOW, **speed}
     ended = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
              "continued": False, "fresh_start": "first turn", "status": "completed",
-             "started": NOW, "ended": NOW, "input_tokens": 1200, "cached_input_tokens": 1000,
+             "started": NOW, **speed, "effort": "medium", "ended": NOW, "input_tokens": 1200, "cached_input_tokens": 1000,
              "output_tokens": 300}
 
     # A "started" line when the turn starts, and the end line when Codex reports the end. The
     # driver reports the Codex process first, and none is left once forge work returns.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns) == [started, ended]
-    pid = int(re.fullmatch(r"Codex app-server: process (\d+)",
-                           work_log.read_text("utf-8").splitlines()[1])[1])
+    # The Fast notice may come first; the app-server line follows it.
+    pid = int(next(found[1] for line in work_log.read_text("utf-8").splitlines()
+                   if (found := re.fullmatch(r"Codex app-server: process (\d+)", line))))
     stub = [call for call in _stub(calls) if "pid" in call][-1]
     # On Windows the stub runs through its .cmd shim, so the process the client started, and the
     # driver reports, is the shim's cmd.exe rather than the stub; the real Codex is its own .exe.

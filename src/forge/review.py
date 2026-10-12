@@ -39,6 +39,11 @@ BOOKKEEPING = (".factory/", "plans/")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
+# A file path with an optional line (with the "at" or "in" before it) or a commit hash, for plain().
+PATHLIKE = re.compile(r"(?:\s(?:at|in|on|from|see))?\s*\(?(?:(?:[\w.-]+/)+[\w.-]*\.\w+|\b[\w-]+\.[A-Za-z]{1,5}"
+                      r"(?=:\d))(?::[\d,-]+)?\)?|\s*\(?\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b\)?")
+
+
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
@@ -202,6 +207,67 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
              and n not in dismissed)]
 
 
+def plain(title: str, body: str = "") -> str:
+    """A note or finding in plain words: its title and up to two sentences of its body, without
+    markdown, labels, file paths or hashes."""
+    def sentences(text: str, keep: int) -> str:
+        text = " ".join(text.replace("**", "").replace("`", "").split())
+        text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)  # a markdown link keeps its words
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Functional|Test|"
+                      r"Security|Scale|Data loss|Later|Follow-up)\s*[.:\u2014\u2013-]+\s*)+", "", text, flags=re.I)
+        text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
+        first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
+        # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
+        if keep == 1 and rest and len(first.split()) < 5:
+            return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
+                                                 rest[0][:1].lower() + rest[0][1:])
+        return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
+    title, body = sentences(title, 1), sentences(body, 2)
+    if not body:
+        return title
+    return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
+
+
+def question(name: str, delivers: str, flagged: list[str], accept: str,
+                  parts: str = "Done when") -> str:
+    """The question a stopped read or review loop asks the human, ready to ask as written."""
+    return "\n".join([f"{name}: {delivers}" if delivers else name,
+                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
+                      "Accept, narrow or split?",
+                      f"- Accept: {accept}",
+                      f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
+                      "- Split: move these cases into a new story or fix of their own; this one goes on "
+                      "without them."])
+
+
+def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
+    """A stopped item's question for the human: what it is, its open serious findings, the choices."""
+    from forge import story as story_  # story imports review
+
+    name, delivers = plain(state.get("why") or item), plain(state.get("done_when", ""))
+    if "/" in item:  # a task: its row in the story's plan, which its worktree holds
+        key, task = item.split("/")
+        doc = top / "plans" / f"{key}.md"
+        text = doc.read_text(encoding="utf-8") if doc.is_file() else ""
+        try:
+            row = next((row for row in story_.parse(text)["tasks"] if row["id"] == task), {})
+        except ValueError:
+            row = {}
+        title = re.search(r"^# (.+)$", text, re.M)
+        name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
+        delivers = plain(row.get("What it delivers", ""))
+    result = state.get("review") or {}
+    flagged = [plain(finding["title"], finding.get("body", ""))
+               for _, finding in blocking(result) if isinstance(finding, dict)]
+    # Accept dismisses every finding not yet dismissed, advice included.
+    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(flagged)
+    return question(name, delivers, flagged,
+                               f"every finding in this review, the {len(flagged)} listed and {advice} "
+                               "advice notes, is dismissed with your reason and recorded; close then "
+                               "goes on to the checks, and merging is still a separate step.")
+
+
 # --- the instructions ------------------------------------------------------------------
 
 
@@ -264,6 +330,39 @@ def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
+def few_tests(top: Path, command: str, base: str) -> bool:
+    """Forge's pytest picker narrowed to a few related test files ends in moments."""
+    if not re.fullmatch(r"(?:uv run(?: --frozen| --python [\w.-]+)* )?"
+                        r"forge test --pytest [0-9a-f]+", command.strip()):
+        return False
+    from forge import fasttest  # fasttest imports review in forge test
+
+    test = repo.config(top)["test"]
+    # Only Python tests are bounded by the picker's file count.
+    if re.search(r"[;&|<>\r\n`$]", test):
+        return False
+    test = re.sub(r"^uv run(?: --frozen| --python [\w.-]+)* ", "", test.strip())
+    try:
+        words = shlex.split(test, posix=os.name != "nt")
+    except ValueError:
+        return False
+    runner = Path(words[0].strip('"').replace("\\", "/")).name if words else ""
+    if runner not in {"pytest", "pytest.exe"} and not (
+            re.fullmatch(r"python[\d.]*(?:\.exe)?", runner) and words[1:3] == ["-m", "pytest"]):
+        return False
+    with contextlib.chdir(top):
+        # Doctests collect from every module, not only the picked test files.
+        if "doctest" in test or "doctest" in fasttest.pytest_options(words):
+            return False
+        picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
+    # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.
+    return not picked[2] and len(picked[0]) <= 5
+
+
+# Close shows these fasttest lines, which a later runner's output can push out of the tail.
+GAP = "No local test names "
+
+
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
              closing: bool = True) -> tuple[int, str]:
     """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
@@ -280,24 +379,26 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
                    for path in changed if path):
                 said = DOCS_ONLY.format(command=command)
-                print(said, flush=True)
                 return 0, said
-        from forge import codex, fasttest  # both import review indirectly
+        from forge import codex  # imports review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
         if passed and passed.exists():
-            print(skipped, flush=True)
             return 0, skipped
-        entry = machine.join("test", top, item, None, None)
+        entry = machine.join("test", top, item, None, None, small=few_tests(top, command, base))
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
-                print(skipped, flush=True)
                 return 0, skipped
-            workers = str(machine.half_cores())
+            from forge import fasttest
+
+            workers = machine.test_cpus()
+            # A worker's budget also caps a fixed xdist count; the option wins over the command's -n.
+            cap = (f" --maxprocesses={workers}" if os.environ.get("FORGE_TEST_CPUS")
+                   and fasttest.XDIST.search(command) else "")
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
             env.pop("FORGE_CLOSE_TESTS", None)
             if closing and "tests" in repo.config(top)["checks"]:
                 env["FORGE_CLOSE_TESTS"] = "1"
@@ -359,11 +460,10 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 passed.touch()
         finally:
             machine.leave(entry)
-        if fasttest.LARGE in done.stdout:
-            print(fasttest.LARGE, flush=True)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
-                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
+                        | {n for n, line in enumerate(out) if line.startswith(GAP)})
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]

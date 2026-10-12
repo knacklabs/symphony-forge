@@ -1,0 +1,33 @@
+{
+  "base": "e0a4a9aa0abb497f7c13dd469c79c4c0ebbfd9d7",
+  "branch": "fix/no-duplicate-pr-tests",
+  "done_when": "The gating test groups run the container tests on Linux, and the second workflow no longer runs the test groups on pull requests while still running them on the main branch and on release tags",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6f99feee2c5b44e214131e9b21278429c63afe914d4c5e2c2029c62776bd6bdf",
+    "changed": "84970021a45b3f1a4f0e695465c2e79d1d1db1766aafe5ac5c4ee3e4efce06e7",
+    "commit": "911b32868293d5ad5d62855ed3a30aed47e8fdc4",
+    "dismissals": [],
+    "findings": [],
+    "id": "ad51e977-5f12-4013-b7ad-04ae5c941630",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T17:38:43.502303+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T17:52:25.780566+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T23:23:36.820186+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every pull request runs the Linux test groups twice: once in the gating workflow and again in the second workflow, only because that one runs the container tests"
+}

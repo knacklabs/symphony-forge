@@ -100,7 +100,17 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         env.commit(where, "app.py", "print('upgraded client configuration')\n")
     for number in (1, 2, 3):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        if number == 3:  # a frozen clock: the stuck stop below adds no owner wait
+            monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
         worked = env.repo.forge("work", item)
+        if number == 3 and worked.returncode == 1:
+            # Two rounds left the same finding, so the worker is stuck; the owner keeps the tool for one
+            # more round at once.
+            assert "Two rounds in a row left the review finding" in worked.stderr, worked.stderr
+            chosen = env.close(item, "--resolve", "same", "--reason", "One more round")
+            assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+            worked = env.repo.forge("work", item)
+        monkeypatch.delenv("FORGE_NOW", raising=False)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"
         env.reviews(blocked(finding("P1", title, "app.py")))
