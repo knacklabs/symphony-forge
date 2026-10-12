@@ -37,7 +37,7 @@ def _help(repo, workers: str, models: dict | None = None):
     return folder
 
 
-def test_1_workers_codex_builds_user_facing_and_plain_tasks_on_codex(repo, monkeypatch, sdk_data):
+def test_1_workers_codex_builds_user_facing_and_plain_tasks_on_codex(repo, monkeypatch, sdk_data, claude_session):
     _, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     page = repo.forge("work", "BOARD/PAGE")
@@ -61,19 +61,23 @@ def test_1_workers_codex_builds_user_facing_and_plain_tasks_on_codex(repo, monke
 
 
 def test_2_workers_split_builds_user_facing_on_claude_and_the_rest_on_codex(repo, monkeypatch,
-                                                                          sdk_data):
+                                                                          sdk_data, claude_session):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     _workers(repo, folder, "split")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "high"]
+    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
     assert _sent(codex_log, "turn/start") == []
-    assert ("Building BOARD/PAGE with Claude (claude-opus-5-5, high) because it is user-facing "
+    assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because it is user-facing "
             "(workers = split)") in page.stdout
 
     _help(repo, "split")
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.delenv("CODEX_THREAD_ID")
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
     assert len(calls(claude_log)) == 1
@@ -88,9 +92,9 @@ def test_3_workers_claude_builds_user_facing_and_plain_tasks_on_claude(repo, mon
     _workers(repo, folder, "claude", CLAUDE_BUILD)
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
-                                                 "--effort", "high"]
-    assert ("Building BOARD/PAGE with Claude (claude-opus-5-5, high) because workers = claude, "
+    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
+                                                 "--effort", "xhigh"]
+    assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because workers = claude, "
             "with the design model as it is user-facing") in page.stdout
 
     _help(repo, "claude", CLAUDE_BUILD)
@@ -134,10 +138,12 @@ def test_4_forge_next_shows_the_worker_beside_each_ready_task(repo, monkeypatch,
 
 
 def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findings(
-        repo, monkeypatch, sdk_data):
+        repo, monkeypatch, sdk_data, claude_session):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     _workers(repo, folder, "split")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     first = repo.forge("work", "BOARD/PAGE")
     assert first.returncode == 0, first.stdout + first.stderr
     assert len(calls(claude_log)) == 1
@@ -153,6 +159,8 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "split"', 'workers = "codex"'), encoding="utf-8")
     repo.git("commit", "-qam", "Switch workers", cwd=folder)
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.delenv("CODEX_THREAD_ID")
     to_codex = repo.forge("work", "BOARD/PAGE")
     assert to_codex.returncode == 0, to_codex.stdout + to_codex.stderr
     assert ("Starting a new Codex conversation, because its last round ran on Claude"
@@ -166,6 +174,8 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "codex"', 'workers = "split"'), encoding="utf-8")
     repo.git("commit", "-qam", "Switch workers", cwd=folder)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     to_claude = repo.forge("work", "BOARD/PAGE")
     assert to_claude.returncode == 0, to_claude.stdout + to_claude.stderr
     assert ("Starting a new Claude session with the whole brief, because its last round ran on "
@@ -189,22 +199,25 @@ def test_6_workers_claude_never_falls_back_to_codex(repo, monkeypatch, sdk_data)
 
 
 def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, monkeypatch,
-                                                                     sdk_data):
-    # Like a new repo's forge.toml: build, fix and lite name only gpt models, so Claude has no
-    # entry of its own.
+                                                                     sdk_data, claude_session):
+    # Earlier settings name only gpt models: omitted Claude entries now use Sonnet at xhigh.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     _help(repo, "claude")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
-                                                 "--effort", "medium"]
-    assert ("Building BOARD/HELP with Claude (claude-opus-5-5, medium) because workers = claude"
+    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
+                                                 "--effort", "xhigh"]
+    assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, xhigh) because workers = claude"
             in plain.stdout)
 
     # Codex with no models at all runs, and names, Forge's Codex default.
     help_folder = repo.path.parent / "repo-BOARD-HELP"
     _workers(repo, help_folder, "codex", {})
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.delenv("CODEX_THREAD_ID")
     again = repo.forge("work", "BOARD/HELP")
     assert again.returncode == 0, again.stdout + again.stderr
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
@@ -214,12 +227,14 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
 
 
 def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and_findings(
-        repo, monkeypatch, sdk_data):
+        repo, monkeypatch, sdk_data, claude_session):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     # A Codex round, then a Claude round under split.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     _workers(repo, folder, "split")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     on_claude = repo.forge("work", "BOARD/PAGE")
     assert on_claude.returncode == 0, on_claude.stdout + on_claude.stderr
     assert len(calls(claude_log)) == 1
@@ -233,6 +248,8 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
     repo.git("commit", "-qam", "Review findings", cwd=folder)
 
     # Claude fails cleanly, so split falls back to Codex: a new conversation, not the first one.
+    # With both tools and no coordinating session, both rounds use their kits.
+    monkeypatch.delenv("CODEX_THREAD_ID")
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     fell = repo.forge("work", "BOARD/PAGE")
     assert fell.returncode == 0, fell.stdout + fell.stderr
@@ -247,7 +264,7 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
 
 @pytest.mark.skipif(os.name == "nt", reason="no Ctrl-C to send a process there")
 def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
-        repo, monkeypatch, sdk_data):
+        repo, monkeypatch, sdk_data, claude_session):
     from test_codex_record import _held
 
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
@@ -255,6 +272,8 @@ def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
     # A Codex round, then a Claude round.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     _workers(repo, folder, "split")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert len(calls(claude_log)) == 1
 
@@ -264,6 +283,8 @@ def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
         'workers = "split"', 'workers = "codex"'), encoding="utf-8")
     repo.git("commit", "-qam", "Back to Codex", cwd=folder)
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.delenv("CODEX_THREAD_ID")
     work, _, _ = _held(repo, codex_log, record, "stall")
     work.send_signal(signal.SIGINT)
     work.communicate(timeout=60)

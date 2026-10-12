@@ -21,7 +21,7 @@ def _gaps(calls, before: int) -> list[float]:
     return [later - earlier for earlier, later in zip(starts, starts[1:])]
 
 
-def test_1_capacity_failure_is_retried_with_backoff_before_reporting(repo, monkeypatch, sdk_data):
+def test_1_capacity_failure_is_retried_with_backoff_before_reporting(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     monkeypatch.setenv("FORGE_CODEX_RETRY_WAIT", "0.5")
 

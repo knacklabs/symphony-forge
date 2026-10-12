@@ -80,8 +80,6 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
     stub = (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8")
     stub = stub.replace('THREAD, TURN = "thr-stub-1", "turn-stub-1"',
                         'THREAD, TURN = os.environ.get("STUB_THREAD", "thr-stub-1"), "turn-stub-1"')
-    stub = stub.replace('"text": "stub codex: built it with "',
-                        '"text": os.environ.get("STUB_TEXT") or "stub codex: built it with "')
     stub = stub.replace('        elif method == "turn/start":',
                         '        elif method == "turn/start":\n'
                         '            if os.environ.get("STUB_NO_TURN"):\n'
@@ -311,18 +309,19 @@ def _check_locked_worktree(env):
 @pytest.mark.parametrize("scenario", ("dirty", "local_commit", "locked_worktree",
                                      "record_without_turn"))
 def test_5_merge_cleans_up_and_preserves_local_work(
-        env, sdk_data, tmp_path, monkeypatch, scenario):
+        env, sdk_data, tmp_path, monkeypatch, scenario, request):
     if scenario == "dirty":
         _check_dirty_merge(env, sdk_data, tmp_path, monkeypatch)
     elif scenario == "local_commit":
         _check_later_local_commit(env)
     elif scenario == "record_without_turn":
+        request.getfixturevalue("claude_session")
         _check_record_without_turn(env, sdk_data, tmp_path, monkeypatch)
     else:
         _check_locked_worktree(env)
 
 
-def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
+def test_7_cold_read_keeps_chats_after_writing_notes_even_when_archive_would_fail(
         repo, gh, tmp_path, monkeypatch, sdk_data):
     setup(repo, keys=("SHOP", "PASS", "WISH"))
     stub = _archiving_codex(repo, sdk_data, tmp_path, monkeypatch)
@@ -335,8 +334,7 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
     notes = shop / "plans" / "SHOP.read.md"
     monkeypatch.setenv("STUB_NOTES", str(notes))
     monkeypatch.setenv("STUB_THREAD", "thr-shop-read")
-    # FORGE-READLOOP-1 changed the contract: the read's conversation was archived after every read;
-    # now a round with findings leaves it for the next round, and only a passing round archives it.
+    # Reads once archived passing chats. Both findings and passing rounds now keep their chat.
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stderr
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
@@ -344,7 +342,7 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
     assert notes.is_file() and not [call for call in calls if call.get("method") == "thread/archive"]
     shop_calls = len(calls)
 
-    monkeypatch.setenv("STUB_TEXT", "No findings.")
+    monkeypatch.setenv("STUB_CODEX_TEXT", "No findings.")
     monkeypatch.setenv("STUB_THREAD", "thr-pass-read")
     passing = new_story(repo, "PASS")
     (passing / "plans" / "PASS.md").write_text(DOC, encoding="utf-8")
@@ -353,9 +351,9 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
     read = repo.forge("read", "PASS")
     assert read.returncode == 0, read.stderr
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
-    assert [call["params"]["threadId"] for call in calls[shop_calls:]
-            if call.get("method") == "thread/archive"] == ["thr-pass-read"]
-    assert any(call.get("notes_exist") is True for call in calls[shop_calls:])
+    assert not [call for call in calls[shop_calls:] if call.get("method") == "thread/archive"]
+    assert (passing / "plans" / "PASS.read.md").is_file()
+    assert "passed: yes" in (passing / "plans" / "PASS.read.md").read_text("utf-8")
 
     wish = new_story(repo, "WISH")
     (wish / "plans" / "WISH.md").write_text(DOC, encoding="utf-8")
@@ -367,7 +365,6 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
     assert failed_archive.returncode == 0, failed_archive.stderr
     assert (wish / "plans" / "WISH.read.md").is_file()
     wish_calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()][len(calls):]
-    assert [call["params"]["threadId"] for call in wish_calls
-            if call.get("method") == "thread/archive"] == ["thr-wish-read"]
-    assert (f"Forge could not archive the cold read's Codex conversation for WISH; "
-            "archive it in Codex when it is available.") in failed_archive.stdout
+    assert not [call for call in wish_calls if call.get("method") == "thread/archive"]
+    assert "could not archive" not in failed_archive.stdout
+    assert "passed: yes" in (wish / "plans" / "WISH.read.md").read_text("utf-8")

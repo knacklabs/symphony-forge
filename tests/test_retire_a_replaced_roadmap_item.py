@@ -96,7 +96,7 @@ def test_3_forge_next_no_longer_offers_a_retired_item(repo):
     _on_main(repo, [_item("OLD-1", "pending", 1)])
     assert _ok(repo.forge("next")).splitlines()[:2] == [
         "No story or fix is in progress.",
-        'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json']
+        'Next: forge story new <KEY> "<title>"']
 
     _fix(repo)
     _ok(repo.forge("roadmap", "retire", "OLD-1", "--by", "new-way"))

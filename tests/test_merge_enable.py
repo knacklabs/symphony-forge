@@ -188,7 +188,10 @@ def _prototype_run(env, _):
     assert ready.returncode == 0, ready.stderr
     lines = ready.stdout.splitlines()
     assert lines[-2:] == READY
-    assert lines[:-2] and all(line == "Updated the pull request's review block." for line in lines[:-2])
+    # Close now reports its review result too; the final advice still names only the owner.
+    assert lines[:-2].count("Review: clean.") == 1
+    updates = [line for line in lines[:-2] if line != "Review: clean."]
+    assert updates and all(line == "Updated the pull request's review block." for line in updates)
     shown = next_lines()
     assert f"The fix {FIX} is ready to merge: {URL}\nNext: merge {URL}, then forge next" in shown
     assert f"Next: forge merge {FIX}" not in shown
@@ -316,6 +319,7 @@ CASES_1 = [(_normal_run, "absent"), (_normal_run, "human"), (_normal_run, "crlf 
            (_prototype_run, "prototype"), (_other_fix_changes_merge, "other fix"),
            *((_refusal, case) for case in ("elsewhere", "already on", "same name", "other edits"))]
 CASES_2 = [(_agent_refused, "CODEX_THREAD_ID"), (_agent_refused, "CLAUDECODE"),
+           (_agent_refused, "both identities"),
            (_synced_skill, "skill"), (_merge_item, "merge item")]
 
 
@@ -328,5 +332,7 @@ def test_1_owner_switches_on_agent_merges_with_one_command(owner, check, case):
 def test_2_agent_never_switches_and_points_to_the_command(env, monkeypatch, check, case):
     if check is _agent_refused:  # the command run from an agent's shell
         monkeypatch.delenv("CODEX_THREAD_ID")
-        monkeypatch.setenv(case, "1")
+        # Ambiguous coordinator identity is still an agent, never the owner's terminal.
+        for name in (("CODEX_THREAD_ID", "CLAUDECODE") if case == "both identities" else (case,)):
+            monkeypatch.setenv(name, "1")
     check(env, case)

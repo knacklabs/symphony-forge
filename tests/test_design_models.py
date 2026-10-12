@@ -22,7 +22,7 @@ def test_2_forge_init_writes_design_models(repo, gh, tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     models = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]
     assert models["design"] == {
-        "claude": {"model": "claude-opus-5-5", "effort": "high"},
+        "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
         "codex": {"model": "gpt-6.1-sol", "effort": "high"},
     }
     # Forge's source repo can override these client defaults; its settings test owns that contract.

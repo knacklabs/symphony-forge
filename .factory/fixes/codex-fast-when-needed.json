@@ -1,0 +1,49 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-10T16:36:10.948159+00:00",
+      "because": "Owner: use Fast mode for quick work too",
+      "done_when": "Codex runs through the app server use the model's Fast tier for an item that other planned work waits on and for repair rounds after the first, and run normally otherwise or when the model has no Fast tier; one forge.toml setting turns Fast off or always on; forge doctor shows which applies, and upgrading tells existing repos in one line that Fast is now on when it matters. New and existing client repos get it on init or upgrade plus sync, and a test covers both."
+    }
+  ],
+  "base": "50985997aa6aead4a1d5c08e19fcea4ca4a9f6ce",
+  "branch": "fix/codex-fast-when-needed",
+  "done_when": "Codex runs through the app server use the model's Fast tier for quick work (every fix, every repair round after the first) and for an item that other planned work waits on, and run normally otherwise or when the model has no Fast tier; one forge.toml setting turns Fast off or always on; forge doctor shows which applies, and upgrading tells existing repos in one line that Fast is now on for quick work. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/codex.py",
+    "tests/test_codex_fast_when_work_waits.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "10309985edb973c28efc3de08c80493dc31e1e33891ce2fcf2e204baf7cf5d98",
+    "changed": "e9fe61c305ecfd1465776163709dd281ce035feb8cd347dbdd93071b99ee4564",
+    "commit": "92b2109534739ae2c57c3e1a0776dd732ba9ebc9",
+    "dismissals": [],
+    "findings": [],
+    "id": "771db0f2-4b9d-49cb-a686-b762bf62b3a0",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T15:34:21+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T17:07:35.167058+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T18:25:48.741513+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:27:08.089671+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Codex offers a Fast mode at about twice the speed and Forge never uses it",
+  "worker": "codex"
+}

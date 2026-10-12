@@ -1,7 +1,8 @@
-"""Forge's subagent roles for both hosts, each on the model and effort forge.toml gives its kind.
+"""Forge's subagent roles for both hosts, from forge.toml and the host's built-in defaults.
 
-A role whose kind's model belongs to the other family leaves the model out on that host, so the
-role runs on the session's model. Roles set no tools or permission mode: they inherit the session's.
+A Codex role whose kind's model belongs to the other family inherits the session's model.
+Claude planning uses grill, diagnostics use Opus, and implementation uses its worker settings.
+Roles set no tools or permission mode: they inherit the session's.
 """
 from __future__ import annotations
 
@@ -43,6 +44,10 @@ ROLES = {
                            "must pass unchanged."),
     "explorer": ("explore", "Explores the codebase and traces dependencies without changing files.",
                  "Answer the question you were handed by reading the repo. " + READ_ONLY),
+    "reader": ("grill", "Cold reads a plan for blocking defects without changing files.",
+               "Cold read the plan you were handed against the repo rules and standards. Report "
+               "only blocking defects with distinct text and new evidence; do not repeat settled "
+               "findings. If there are none, return exactly No findings. " + READ_ONLY),
     "planner": ("design", "Turns an approved story into bounded tasks with their tests.",
                 "Split the approved story into the fewest tasks that each prove Done-when items end "
                 "to end, naming each task's Scope and tests. Plan in plain English. " + READ_ONLY),
@@ -71,14 +76,21 @@ def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
     models = cfg.get("models", {})
     if kind == "explore" and kind not in models:
         kind = "lite"
+    if family == "claude":
+        entry = (repo.CLAUDE_GRILL_DEFAULT if kind == "review" else
+                 repo.models(cfg, "grill", family) if kind in ("design", "grill") else
+                 repo.worker_models(cfg, kind, family))
+        effort = entry.get("effort", "")
+        return entry.get("model", ""), "max" if effort == "ultra" else effort
+    if kind == "review" and kind not in models:
+        entry = repo.DESIGN_DEFAULTS[family]
+        return entry["model"], entry["effort"]
     # A kind with no entry for this family gets none: the role inherits the session's settings.
     entry = models.get(kind, {})
     per_family = kind == "design" or any(host in entry for host in repo.FAMILIES)
     if per_family:
         entry = entry.get(family, {})
     model, effort = entry.get("model", ""), entry.get("effort", "")
-    if family == "claude" and effort == "ultra":
-        effort = "max"
     # A per-family entry is already the host's own; a single entry names one model for both hosts.
     return (model if model and (per_family or _family(model) == family) else ""), effort
 

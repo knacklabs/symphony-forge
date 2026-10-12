@@ -30,7 +30,7 @@ def _codex(repo, monkeypatch, sdk_data):
     return repo.bin / "codex-app-server.jsonl"
 
 
-def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatch, sdk_data):
+def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatch, sdk_data, claude_session):
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
     assert config["workers"] == "split"

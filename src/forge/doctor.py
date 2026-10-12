@@ -302,8 +302,10 @@ def doctor(args: argparse.Namespace) -> int:
             said = _last(done) if done.returncode else "no forge is on PATH after uv installed it"
             add(f"{problem} Installing it failed: {said}", install)
         else: add(problem, REPAIR if repairs and not args.fix else install)
-    on_codex = cfg["workers"] != "claude"  # split runs Codex and Claude
-    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE") and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
+    workers = cfg["workers"] if cfg["tools"] == "both" else cfg["tools"]
+    on_codex = workers != "claude"  # split runs Codex and Claude
+    needs_sdk = on_codex or bool(cfg["tools"] == "both" and os.environ.get("CLAUDECODE")
+                                and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
     sdk_failed = ""
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         try: codex.install()
@@ -404,7 +406,9 @@ def doctor(args: argparse.Namespace) -> int:
         add("fast_test still runs python -m forge.fasttest in the client's environment.",
             'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
-    elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read( top / sync.WORKFLOW_PATH):
+    # Test groups append their split options to the command.
+    elif "tests" in cfg["checks"] and not any(f"run: {json.dumps(cfg['test'])[:-1]}{end}" in sync.read(top / sync.WORKFLOW_PATH)
+                                              for end in ('"', " --splits ")):
         add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted = _codex_trusts(top, codex_config)
@@ -419,28 +423,55 @@ def doctor(args: argparse.Namespace) -> int:
     has_frontend = (any((top / path / "package.json").is_file() for path in ("frontend", "web", "apps/web"))
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte", "@angular/core", "next", "vite")))
     if has_frontend:
-        for host in (host for host in skills if cfg["workers"] in (host, "split") or shutil.which(host)):
+        for host in (host for host in skills if cfg["tools"] == host or cfg["tools"] == "both"
+                     and (workers in (host, "split") or shutil.which(host))):
             for skill in ("impeccable", "emil-design-eng"):
                 if not any((folder / "skills" / skill / "SKILL.md").is_file() for folder in skills[host]):
                     add(f"{skill} is required for UI work but isn't installed where the " f"{host} worker reads skills.", INSTALL[skill])
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
+    if local := cfg.get("local"):
+        entries = [(kind, table) if "model" in table else (f"{kind}.{tool}", entry)
+                   for kind, table in local.get("models", {}).items()
+                   for tool, entry in ([("", table)] if "model" in table else table.items())]
+        print(f"- Note: {repo.LOCAL} overrides " + ", ".join(
+            [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
+            + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
+               for name, entry in entries]) + ".")
+    if "review" in cfg.get("models", {}):
+        print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
               "the merge base with the default branch; the pull request's tests check still runs " "the full test command.")
     if on_codex: print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see " "whether you did.")
-    elif not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
+    elif cfg["tools"] == "both" and not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
               f"trust this one yet.\n  Fix: {trust}")
     if rows:
         if compared: print(compared)
     else:
-        print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
+        print(f"Everything {'checks' if trusted or cfg['tools'] == 'claude' else 'else checks'} out for Forge {cfg['version']}.")
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
     budget = machine.half_cores()
     print(f"This machine: {cores} cores, so {budget} agents at once and "
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+    fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
+            "off": "off", "always": "always on"}[cfg["codex_fast"]]
+    events = repo.forge_dir(top) / "events.jsonl"
+    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
+    said = ("" if last is None else " The last Codex turn ran with Fast."
+            if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
+            " Codex reported a different speed from the one Forge requested."
+            if last["tier"] not in (None, "default") else
+            " Codex did not report the last turn's speed." if last["tier"] is None else
+            " The last Codex turn wanted Fast, but Codex reported normal speed."
+            if last.get("fast_wanted") and last["requested_tier"] != "default" else
+            " The last Codex turn ran at normal speed.")
+    if last and last.get("fast_wanted") and last["requested_tier"] == "default":
+        said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
+    print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
     claude = shutil.which("claude")
     version = None
     if claude:

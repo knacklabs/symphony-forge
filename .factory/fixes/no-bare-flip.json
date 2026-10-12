@@ -1,0 +1,43 @@
+{
+  "base": "a729e9f3e557f8a555eb9171ff8ed13119beb34e",
+  "branch": "fix/no-bare-flip",
+  "done_when": "No test and no Forge command can change the real repository's git settings through an inherited git environment: an autouse fixture clears GIT_* variables for every test, not only tests using the repo fixture; Forge's own temporary-repository git calls (migrate's source fetch) run without GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE; one command test runs those paths with GIT_DIR pointing at a separate sentinel repository and checks its core.bare stays false; new and existing client repos get the migrate change on upgrade",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f1458c3acb155778f6e4f4095b47a47178834fb4d71e7bbe75a4352485e4ac6e",
+    "changed": "8504ab40e75af9b1994db8f0b7c5d02ef96819a1da3aa3b44b29e0ec0e618fbe",
+    "commit": "26d38f62a731a0a397d4b286a4efb1a593ee331f",
+    "dismissals": [],
+    "findings": [],
+    "id": "557ccc24-6e90-4077-b3bd-4dd26f1820db",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T05:02:56+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T09:24:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:20:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T11:41:01.330749+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T14:09:14.003769+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's own repo was switched to a bare repository (core.bare = true) while tests ran, which stopped every git command in its main checkout and worktrees",
+  "worker": "codex"
+}

@@ -15,7 +15,7 @@ for a reader that changes a file; STUB_CODEX_COMMIT commits the thread's folder 
 requests, as a worker does, and STUB_CODEX_COMMIT_FROM=<n> does so from the nth turn this stub
 has run. hooks/list lists each hook in the main checkout's .codex/hooks.json as a project hook, once
 CODEX_HOME trusts the project, and trusted unless STUB_CODEX_HOOK_TRUST names another status.
-With STUB_CODEX_RESUME set it resumes a thread as it starts one. `--version` prints the version.
+It resumes a thread as it starts one. `--version` prints the version.
 """
 import json
 import os
@@ -48,8 +48,8 @@ def notify(method, **params):
 
 
 def finish_turn(config, status, overloaded=False):
-    item = {"type": "agentMessage", "id": "msg-1", "text": "stub codex: built it with "
-            + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", "")}
+    item = {"type": "agentMessage", "id": "msg-1", "text": os.environ.get("STUB_CODEX_TEXT",
+            "stub codex: built it with " + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", ""))}
     notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=2, item=item)
     command = {"type": "commandExecution", "id": "cmd-1", "command": "touch ran-stub-ask-1",
                "commandActions": [], "cwd": "/", "status": "declined"}
@@ -174,7 +174,7 @@ def main():
             continue
         method, params = message["method"], message.get("params") or {}
         log(method=method, params=params)
-        if method == "thread/resume" and os.environ.get("STUB_CODEX_RESUME"):
+        if method == "thread/resume":
             method = "thread/start"  # resumed as it starts one
         if "id" not in message:  # a notification, such as initialized
             continue

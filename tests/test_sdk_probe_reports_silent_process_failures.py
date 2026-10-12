@@ -11,7 +11,7 @@ STORY = "agent-allowance"
 
 
 def test_2_work_reports_the_sdk_interpreters_silent_exit_status(repo, monkeypatch, sdk_data,
-                                                             tmp_path):
+                                                             tmp_path, claude_session):
     _, calls = _codex_repo(repo, monkeypatch, sdk_data)
     sdk = sdk_data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
     startup = tmp_path / "failed-sdk-startup"

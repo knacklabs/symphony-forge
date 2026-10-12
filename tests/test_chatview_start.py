@@ -54,7 +54,7 @@ def _ready(repo, monkeypatch, sdk_data, client=False):
     return folder, calls
 
 
-def test_2_worker_joins_only_the_unique_main_checkout_project(repo, monkeypatch, sdk_data):
+def test_2_worker_joins_only_the_unique_main_checkout_project(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _ready(repo, monkeypatch, sdk_data)
     worker_log = repo.path / ".git/forge/work-BOARD-PAGE.log"
     monkeypatch.setenv("STUB_PROJECTS", json.dumps([
@@ -144,7 +144,7 @@ def test_2_worker_joins_only_the_unique_main_checkout_project(repo, monkeypatch,
     assert "stub unavailable" in diagnostic and "Check Codex and try again" in diagnostic
 
 
-def test_6_codex_home_is_throwaway(repo, monkeypatch, sdk_data):
+def test_6_codex_home_is_throwaway(repo, monkeypatch, sdk_data, claude_session):
     _, calls = _ready(repo, monkeypatch, sdk_data)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _sent(calls, "thread/start")

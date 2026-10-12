@@ -18,7 +18,7 @@ STORY = "two-process-tests-fail-intermittently-on"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="the signal scenario requires POSIX")
-def test_1_interrupted_work_releases_its_lock_and_processes(repo, monkeypatch, sdk_data):
+def test_1_interrupted_work_releases_its_lock_and_processes(repo, monkeypatch, sdk_data, claude_session):
     _folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     record = repo.path / ".git/forge/threads/task/BOARD/PAGE.json"
     work, saved, server = _held(repo, calls, record, "stall")

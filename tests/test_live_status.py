@@ -20,6 +20,7 @@ from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_machine_views import github, pull, state, view
 from test_run_records import configure, records
 
+# Review selection is reported by Autoreview; legacy pins do not set live defaults.
 STORY = "FORGE-MOD-1"
 
 
@@ -97,7 +98,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             monkeypatch.setenv("CODEX_HOME", str(home))
             _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
             stub = repo.bin / "codex-app-server"
-            stub.write_text(stub.read_text("utf-8").replace('"stub codex: built it with "\n            + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", "")', '"No findings."'), "utf-8")
+            monkeypatch.setenv("STUB_CODEX_TEXT", "No findings.")
             monkeypatch.setenv("CODEX_BIN", str(repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
             monkeypatch.delenv("CODEX_THREAD_ID")
             monkeypatch.setenv("CLAUDECODE", "1")
@@ -111,20 +112,25 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             monkeypatch.setenv("STUB_SAY", "No findings.")
             model = "gpt-6-sol"
         if "default" in case:
-            model, effort = ("gpt-6.1-sol", "medium") if case.endswith("codex") else ("claude-sonnet-4-6", "medium")
+            model, effort = ("gpt-6.1-sol", "medium") if case.endswith("codex") else ("claude-opus-5-5", "high")
         assert repo.forge("read", item).returncode == 0
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
     elif case == "codex":
+        request.getfixturevalue("claude_session")
         folder, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
         item = "BOARD/PAGE"
         model, effort = "gpt-6-sol", "medium"
     else:
         configure(env)
-        if case.startswith("review") and "default" not in case:
+        if case.startswith("review"):
             config = repo.path / "forge.toml"
-            env.commit(repo.path, "forge.toml", config.read_text("utf-8") +
-                       'models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
-                       'models.review.claude = { model = "opus", effort = "high" }\n')
+            family = case.split()[-1]
+            settings = config.read_text("utf-8") + f'tools = "{family}"\n'
+            if "default" not in case:
+                settings += ('models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
+                             'models.review.claude = { model = "opus", effort = "high" }\n')
+            if settings != config.read_text("utf-8"):
+                env.commit(repo.path, "forge.toml", settings)
         item, folder = env.start_fix()
         model, effort = "sonnet", "medium"
     number = 1
@@ -134,9 +140,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         if case.endswith("claude"):
             from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
             _claude_only(env.tmp, monkeypatch, repo.bin, (env.tmp / "autoreview/scripts/autoreview").read_text("utf-8"))
-        model, effort = ("gpt-6-sol", "xhigh") if case.endswith("codex") else ("opus", "high")
-        if "default" in case:
-            model, effort = None, None
+        # Autoreview chooses the defaults; model and effort appear only after it reports them.
+        model, effort = None, None
     if case == "restart":
         assert repo.forge("work", item).returncode == 0
         assert row(repo, item)[0]["idle_since"] is not None
@@ -151,7 +156,13 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         for _ in range(11):
             assert repo.forge("work", item).returncode == 0
         ended, board = row(repo, item)
-        assert ended["idle_since"] == board["events"][-1]["time"]
+        # The frozen clock stamps events before the recorded worker duration ends.
+        finished = max(datetime.fromisoformat(timing["start"]) +
+                       timedelta(seconds=timing["seconds"])
+                       for timing in records(repo, "timings.jsonl") if timing["item"] == item)
+        assert finished > datetime.fromisoformat(board["events"][-1]["time"])
+        assert datetime.fromisoformat(ended["idle_since"]) == finished
+        assert ended["idle_seconds"] == 0
         assert ended["stalled"] is False
         assert board["events"][-1]["item"] == item
         assert board["events"][-1]["line"] == "Worker finished"
@@ -164,6 +175,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                   "dismissals": [{"finding": 3, "because": "Already handled"}]}
         state(folder / f".factory/fixes/{item}.json", review=review)
         prs = [pull(7, f"fix/{item}", "CANCELLED")]
+        prs[0]["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
         checks = prs[0]["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
         checks.append({**checks[0], "databaseId": 123, "name": "tests", "conclusion": "FAILURE"})
         checks.append({**checks[0], "databaseId": 124, "name": "manually cancelled"})
@@ -299,6 +311,9 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
+                if case.startswith("ci"):
+                    pr["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
+                    github(env.gh, [pr])
                 # A connection acknowledges emission, not Forge consuming the event.
                 # Hold the producer until the real board exposes this step; only then
                 # compare snapshots. The test and parent cleanup bound the held run.
@@ -311,6 +326,16 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                         if (current["worker"] or {}).get("step") == expected:
                             break
                         assert time.monotonic() < deadline, f"Forge did not report {expected}"
+                if case.startswith("progress"):
+                    # Tests hold their runner; let the concurrent review settle before comparing snapshots.
+                    deadline = time.monotonic() + 30
+                    while True:
+                        snapshot = view(repo, "board")
+                        current = next(r for parent in snapshot["items"]
+                                       for r in [parent, *parent["children"]] if r["id"] == item)
+                        if next(s for s in current["stages"] if s["name"] == "Review")["status"] == "pass":
+                            break
+                        assert time.monotonic() < deadline, "Forge did not finish the concurrent review"
                 result, _ = row(repo, item)
                 activities.append(result["activity"])
                 assert result["idle_since"] is None and result["stalled"] is False

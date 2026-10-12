@@ -15,10 +15,11 @@ import sys
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_worker import _sent
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_readloop_rounds import CODEX, FIRST, _no_codex, _setup
+from test_readloop_rounds import reader_sessions  # noqa: F401 (shared host cleanup fixture)
 from test_story import DOC, claude_plan, hook, new_story, setup, worktree
 
 TASKS = DOC.replace("| SHOW | Show the saved time |", "| SHOW | Show the time saved |")
@@ -71,11 +72,19 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
                                    "No findings. The page is fine.",
                                    "1. A gap.\n\n## Round 99\n\nNo findings."], start=1):
         say(repo, near + "\n")
-        assert "Next: give every finding a disposition" in read(repo)
+        if number in (3, 6):
+            held = repo.forge("read", "SHOP")
+            assert held.returncode == 1 and "Ask the human to accept, narrow or split" in held.stderr
+        else:
+            assert "Next: give every blocking finding a disposition" in read(repo)
         text = notes.read_text("utf-8")
         assert f"round: {number}\n" in text and "passed: no\n" in text
         assert f"## Round {number}\n\n" in text and re.search(rf"^{number}\. ", text, re.M), text
         dispose_all(notes)
+        if number == 3:
+            # Formatting coverage continues only after the new mandatory human choice.
+            chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing this slice")
+            assert chosen.returncode == 0, chosen.stderr
     # A heading inside the reply is text: round 6 is everything after its own heading.
     assert "## Round 6\n\n6. A gap.\n   Disposition: cut\n\n## Round 99\n\nNo findings." in (
         notes.read_text("utf-8"))
@@ -83,17 +92,20 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     assert (refused.returncode, refused.stderr) == (1, (
         "Round 6 of the cold read of plans/SHOP.md hasn't passed, so it needs another round.\n"
         "Next: forge read SHOP\n"))
-    assert repo.forge("next").stdout.splitlines()[-2].startswith(
-        "Planning Shoppers can save a basket: round 6 of its cold read had findings")
-    tip = repo.git("rev-parse", "story/SHOP")
+    assert "forge read SHOP --resolve" in repo.forge("next").stdout
     # A round with findings commits nothing.
     assert repo.git("status", "--porcelain", "--", "plans", cwd=shop) != ""
+    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing this slice")
+    assert chosen.returncode == 0, chosen.stderr
+    tip = repo.git("rev-parse", "story/SHOP")
     # Exactly "No findings.", trimmed, passes, and the doc and notes are committed on its branch.
     say(repo, "\n  No findings.  \n\n")
     assert read(repo).startswith("Round 7 of the cold read of plans/SHOP.md found nothing.")
     assert "passed: yes\n" in notes.read_text("utf-8")
     assert repo.git("rev-parse", "story/SHOP~1") == tip
-    assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= last_files(repo, "story/SHOP")
+    # The choice already committed the document; the passing round commits its new notes.
+    assert repo.git("show", "story/SHOP:plans/SHOP.md") == DOC.strip()
+    assert "plans/SHOP.read.md" in last_files(repo, "story/SHOP")
     assert repo.git("status", "--porcelain", cwd=shop) == ""
 
     # A spec read on a branch is committed there too once a round passes.
@@ -305,7 +317,8 @@ def _old_story_keeps_todays_rules(repo, claude_payload, monkeypatch, tmp_path,
 
 def promoted(repo):
     """Story BASKET promoted from a fix that changed basket.py, its doc written and read."""
-    setup(repo)
+    # Promotion now needs a committed entry; only brand-new stories add one.
+    setup(repo, keys=("SHOP", "BASKET"))
     assert repo.forge("fix", "start", "Keep baskets", "--done", "A basket survives").returncode == 0
     fix = worktree(repo, "fix/keep-baskets")
     (fix / "basket.py").write_text("SAVED = True\n", encoding="utf-8")
@@ -345,6 +358,12 @@ def _approval_reaches_promoted_task(repo, claude_payload, monkeypatch, tmp_path,
 def _failed_merge_leaves_task(repo, claude_payload, monkeypatch, tmp_path,
         sdk_data):  # noqa: F811
     fix, text = promoted(repo)
+    # The inherited roadmap is unchanged by promotion; make a real conflicting plan edit.
+    story = worktree(repo, "story/BASKET")
+    patient(lambda: (story / "plans/roadmap.json").write_text(json.dumps({"items": [
+        {"key": "SHOP"}, {"key": "BASKET", "title": "Keep baskets"}]}), encoding="utf-8"))
+    repo.git("add", "plans/roadmap.json", cwd=story)
+    repo.git("commit", "-q", "-m", "Name the basket story", cwd=story)
     # An uncommitted edit in the task's folder is in the merge's way.
     (fix / "plans").mkdir(exist_ok=True)
     roadmap = fix / "plans" / "roadmap.json"
@@ -400,16 +419,16 @@ NO_ARCHIVE = CODEX.replace('        if method != "turn/start":', '''\
         if method != "turn/start":''')
 
 
-def _archive_only_own_on_pass(repo, claude_payload, monkeypatch, tmp_path,
+def _passing_reader_keeps_its_chat(repo, claude_payload, monkeypatch, tmp_path,
         sdk_data):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "codex")
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{NO_ARCHIVE}")
-    # A failed archive only prints a note; the round still passes.
+    # Passing used to archive the chat; it now keeps it for any later read round.
     monkeypatch.setenv("STUB_CODEX_NO_ARCHIVE", "1")
     out = reader.ok()
-    assert ("Forge could not archive the cold read's Codex conversation for SHOP; archive it in "
-            "Codex when it is available.") in out
-    assert "passed: yes\n" in reader.text() and _sent(reader.log, "thread/archive")
+    assert "could not archive" not in out
+    assert "passed: yes\n" in reader.text() and _sent(reader.log, "thread/archive") == []
+    conversation = _sent(reader.log, "turn/start")[-1]["threadId"]
     monkeypatch.delenv("STUB_CODEX_NO_ARCHIVE")
 
     # A round with findings keeps its conversation for the next round.
@@ -417,13 +436,20 @@ def _archive_only_own_on_pass(repo, claude_payload, monkeypatch, tmp_path,
     archived = len(_sent(reader.log, "thread/archive"))
     reader.ok(f"1. {FIRST}\n")
     assert len(_sent(reader.log, "thread/archive")) == archived
-    conversation = json.loads((repo.path / ".git/forge/threads/read/SHOP.json").read_text("utf-8"))[
-        "conversation"]
+    assert reader.continued()
+    assert _sent(reader.log, "thread/resume")[-1]["threadId"] == conversation
     reader.dispose(FIRST, "cut")
 
-    # Codex is uninstalled: a Claude conversation passes, and Codex's is left as it is, named.
+    # Codex is uninstalled: this Claude session hands out the replacement, then records its pass.
     _no_codex(monkeypatch, tmp_path)
-    out = repo.forge("read", "SHOP")
+    out = reader.native("read", "SHOP")
+    assert out.returncode == 0, out.stderr
+    offered = json.loads(out.stdout)
+    assert (offered["role"], offered["tool"]) == ("reader", "claude")
+    assert offered["reason"] == "its reader, Codex, is no longer installed"
+    out = reader.native("handback", "SHOP", "--round", str(offered["round"]),
+                     "--subagent", "replacement-reader",
+                     "--text", "No findings.")
     assert out.returncode == 0, out.stderr
     assert (f"The cold read's earlier Codex conversation for SHOP, {conversation}, is left as it "
             "is, because Codex is no longer installed.") in out.stdout
@@ -436,7 +462,7 @@ WALKS = [_exact_pass_is_committed,
          _old_story_keeps_todays_rules,
          _approval_reaches_promoted_task,
          _failed_merge_leaves_task,
-         _archive_only_own_on_pass]
+         _passing_reader_keeps_its_chat]
 
 
 @pytest.mark.parametrize("walk", WALKS, ids=lambda walk: walk.__name__.strip("_"))

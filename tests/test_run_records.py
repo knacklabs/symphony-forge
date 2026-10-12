@@ -44,7 +44,7 @@ def configure(env):
     command = f'"{sys.executable}" -c "print(123)"'
     config.write_text(config.read_text('utf-8') +
                       'models.lite = { model = "sonnet", effort = "medium" }\n'
-                      f'test = {json.dumps(command)}\n', 'utf-8')
+                      f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n', 'utf-8')
     repo.git('add', 'forge.toml')
     repo.git('commit', '-q', '-m', 'Configure runs')
     repo.git('push', '-q', 'origin', 'main')
@@ -71,6 +71,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         require_worker_environment(repo.bin / 'claude')
         item, where = env.start_fix()
     else:
+        request.getfixturevalue("claude_session")
         where, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))
         require_worker_environment(repo.bin / 'codex-app-server')
         stub = repo.bin / 'codex-app-server'
@@ -83,7 +84,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         config = where / 'forge.toml'
         command = f'"{sys.executable}" -c "print(123)"'
         env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
-                   + f'test = {json.dumps(command)}\n'
+                   + f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n'
                    + config.read_text('utf-8'))
     require_worker_environment(env.queue.parent / 'autoreview' / 'scripts' / 'autoreview')
     for number in (1, 2):
@@ -155,6 +156,7 @@ def _repeated_worker_questions(env, monkeypatch, request, family):
     repo = env.repo
     question = 'Question: May I use the existing parser?'
     if family == 'codex':
+        request.getfixturevalue("claude_session")
         _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))
         require_worker_environment(repo.bin / 'codex-app-server')
         item = 'BOARD/PAGE'
@@ -211,7 +213,7 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
                           'utf-8')
     read = repo.forge('read', 'SHOP')
     assert read.returncode == 0, read.stderr
-    events = [row for row in records(repo, 'events.jsonl') if row['kind'] == 'read']
+    events = [row for row in records(repo, 'events.jsonl') if row.get('kind') == 'read']
     # Agent admission is now recorded alongside the original reader run.
     assert [row['event'] for row in events] == [
         'lane joined', 'lane admitted', 'run start', 'run end', 'lane left']
@@ -302,6 +304,7 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
     initial = question if question_turn != 'nudge' else ''
     nudged = second if question_turn == 'both' else question if question_turn == 'nudge' else ''
     if family == 'codex':
+        request.getfixturevalue("claude_session")
         where, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))
         item = 'BOARD/PAGE'
         stub = repo.bin / 'codex-app-server'

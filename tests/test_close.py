@@ -140,8 +140,10 @@ class Forge:
         return [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
 
     def prompt(self) -> str:
-        args = self.review_calls()[-1]["args"]
-        return args[args.index("--prompt") + 1]
+        call = self.review_calls()[-1]
+        args = call["args"]
+        return "\n\n".join([value for flag, value in zip(args, args[1:]) if flag == "--prompt"]
+                           + list(call["prompt_files"].values()))
 
     def codex_calls(self) -> list[dict]:
         return [json.loads(line) for line in
@@ -164,7 +166,7 @@ class Forge:
 
     def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
-        (where / rel).write_text(text, "utf-8")
+        (where / rel).write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         self.repo.git("add", "-A", cwd=where)
         self.repo.git("commit", "-q", "-m", message, cwd=where)
         return self.repo.git("rev-parse", "HEAD", cwd=where)
@@ -457,7 +459,7 @@ def test_18_close(env, kind):
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
     env.repo.git("push", "-q", "origin", "main")
-    toml = env.repo.path / "forge.toml"  # the review kind's model and effort go to Autoreview
+    toml = env.repo.path / "forge.toml"  # legacy pins remain valid but Autoreview owns selection
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()
@@ -476,16 +478,15 @@ def test_18_close(env, kind):
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     # The old contract passed origin/main, which a clone could resolve to stale local main.
     # The reviewer now gets the exact fetched remote commit.
-    assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority",
-                                             "--model", "--thinking")} == {
+    assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
         "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
-        "--engine": "codex", "--max-priority": "P3",
-        "--model": "codex=gpt-6-astra", "--thinking": "codex=high"}
+        "--engine": "codex", "--max-priority": "P3"}
+    assert "--model" not in options and "--thinking" not in options
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones
     # block), the tests with the test-audit rule, and the Simpler rule with New moving parts.
-    prompt = options["--prompt"]
+    prompt = env.prompt()
     if kind == "task":
         scope, rest = prompt.split("outside that scope")
         outside, rest = rest.split("## Done when")

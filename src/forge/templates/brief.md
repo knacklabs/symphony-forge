@@ -2,14 +2,28 @@ $summary
 
 # Worker brief
 
+Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
+including findings already fixed or dismissed. Do not reopen them with the same finding text
+(cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
+Forge ignores settled repeats, so they cannot block or start another round.
+
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
+$start_here
+
 $review_loop
+
+Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
+review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+
+Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
+line asking you to split them into smaller stories; already approved larger stories stay as they are.
 
 $delegation
 - Edit files only inside this checkout.
 - $settings
+- A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.
@@ -22,6 +36,10 @@ $delegation
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
   started still runs in the background. Commit your work before your turn ends: the review reads
   only what is committed.
+- Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
+  `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- When you change text the program prints (messages, pull request text, board lines), search the
+  tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
@@ -58,6 +76,9 @@ $what
 ### Why
 
 $why
+
+The plan's Why carries the problem. A linked spec is optional; build the approved story without
+adding a separate spec, spec read, confirmation or roadmap fix.
 
 ### Done when
 
@@ -132,7 +153,9 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests through `forge test` in the
 foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
 `fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
-base with `origin/<default branch>`. It always runs, including uncommitted changes. Then commit
+base with `origin/<default branch>`, on at most two test processes; a picker run of five or fewer
+related test files skips the lane's wait unless the test command or pytest config has a doctest
+option. It always runs, including uncommitted changes. Then commit
 any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
@@ -183,9 +206,10 @@ variable. Do not animate keyboard-driven or very frequent actions.
 
 Close stopped on these. Before you change anything, open each finding's cited line and the code it
 calls. If a finding is wrong, change nothing for it and name the file:line that proves it wrong,
-so the coordinator can dismiss it. If it is right, fix every place the same rule applies. Add a
-test only where the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and
-make it fail without your fix; the review's test audit reports a test that proves nothing.
+so the coordinator can dismiss it. If it is right, fix every place the same rule applies, unless
+the coordinator's note says the part was narrowed and follow-up fixes own these findings: then
+remove what goes beyond the Done-when lines instead of fixing them here. Add a test only where
+the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and make it fail without your fix; the review's test audit reports a test that proves nothing.
 
 ### Open serious findings
 
@@ -197,6 +221,11 @@ $checks
 
 <!-- end -->
 ## Build simple
+
+A plan's cold read passes with no blocking notes. A note blocks when the plan is wrong,
+contradicts itself, or a builder could not act on it. Notes marked `Advisory:` are recorded and
+need no disposition or another round; only blocking findings need the coordinator to amend
+the plan and read again.
 
 Take the first rung that holds: don't build it; reuse what the repo has; the standard library; the
 platform; an installed dependency; one line; then the least code that works. Never simplify away
@@ -212,14 +241,20 @@ conventions apply only to a repo on the default stack.
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
 cover and every detail next to the test or check that proves it, or marked `missing`. Include the
-test's file and case name, or the named check and its result. Keep the whole list current in every
-round, not only the entries you changed. Forge copies it into the pull request and gives it to
+test's file and case name, or the named check and its result. Every commit's `Proof list:` carries
+the previous one forward and adds to it, even in a small repair commit; never list only the latest
+change. Forge copies it into the pull request and gives it to
 the reviewer. The first review checks every entry and reports every missing case it finds in
-that one round.
+that one round. When a commit message mentions -n or --no-verify, give it from a file or a quoted
+heredoc (`git commit -F - <<'EOF'`); the shell-command guard checks an unquoted one as commands.
 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
@@ -232,3 +267,5 @@ exception is a bug that stops your item from working: fix it and name it in your
 $standards
 
 <!-- end -->
+
+$handover

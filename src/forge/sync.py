@@ -232,6 +232,13 @@ def _codex_config(top: Path) -> str:
     if isinstance(data.get("agents"), dict):
         wanted["agents"] = {key: value for key, value in data["agents"].items()
                             if key not in AGENT_PINS}
+    agents = wanted.setdefault("agents", {})
+    if not isinstance(agents, dict):
+        repo.refuse(REFUSALS["cant_merge"], path=rel, problem="agents must be a TOML table")
+    reader = agents.setdefault("reader", {"config_file": "agents/reader.toml"})
+    if not isinstance(reader, dict) or reader.get("config_file") != "agents/reader.toml":
+        repo.refuse(REFUSALS["cant_merge"], path=rel,
+                    problem="the reader role uses another config; rename it, then sync again")
     # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
     exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
     if exact(data):
@@ -274,6 +281,8 @@ def _codex_config(top: Path) -> str:
         table = (table[:line.start()] + "hooks = true" + table[line.end():] if line
                  else "\nhooks = true" + table)
         merged = text[:header.end()] + table + text[end:]
+    if "reader" not in data.get("agents", {}):
+        merged = f'{merged.rstrip()}\n\n[agents.reader]\nconfig_file = "agents/reader.toml"\n'
     try:
         safe = bool(merged) and exact(tomllib.loads(merged))
     except tomllib.TOMLDecodeError:
@@ -291,8 +300,14 @@ def merge_attributes(text: str) -> str:
     return text
 
 
+def ignore_local(text: str) -> str:
+    """.gitignore with each developer's own forge.local.toml in it."""
+    return text if repo.LOCAL in text.splitlines() else (f"{text.rstrip()}\n" if text.strip() else "") + f"{repo.LOCAL}\n"
+
+
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg)}
+    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg),
+            ".gitignore": ignore_local(read(top / ".gitignore"))}
 
 
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:
@@ -346,6 +361,7 @@ def _synced_text(source: str, packaged: str) -> str:
 
 def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
+    cfg = cfg.get("shared", cfg)  # a developer's forge.local.toml never reaches committed files
     wanted: dict[str, str] = {}
     for info in pkgutil.iter_modules(forge.__path__):
         if info.ispkg:
@@ -503,8 +519,10 @@ def install_merge_rules(top: Path) -> bool:
 
 
 def sync(args: argparse.Namespace) -> None:
+    from forge import codex
     top = repo.root()
     cfg = repo.config(top)
+    codex.preserve_chats(top)
     changed = write(top, cfg)
     if cfg.get("repo") == "forge-source":
         page = command_page()
@@ -514,6 +532,10 @@ def sync(args: argparse.Namespace) -> None:
             changed.append("docs/commands.md")
     for rel in changed:
         print(f"Wrote {rel}")
+    if (cfg["repo"] == "client" and cfg["codex_fast"] == "needed"
+            and ".codex/skills/forge/SKILL.md" in changed):
+        print("Codex Fast is now on for quick work: every fix, after the first repair round, "
+              "or when other planned work waits.")
     if install_shims(top, cfg):
         print("Installed the git hooks that check each commit and push.")
     elif not changed:

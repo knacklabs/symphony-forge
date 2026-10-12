@@ -8,6 +8,8 @@ AGENTS.md has them. -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
 $delivers
 
+Recorded allowance: $allowance
+
 ## Scope
 This part may change only these paths:
 $scope
@@ -78,13 +80,13 @@ $proof_list
 On every round, check the whole list, not a sample. Check every entry against the code and its
 named proof, including every Done-when detail; compare it with the covered items above so an
 omitted item or detail cannot hide a gap. Report every missing case you find in this round, even
-when another finding already blocks; a case the Done-when doesn't name counts only inside What
-counts below. A missing list or entry is a P1 `Not done: proof list`; judge missing or hollow
+when another finding already blocks; a case the Done-when doesn't name is a P2 `Follow-up:`
+(What blocks the merge, below). A missing list or entry is a P1 `Not done: proof list`; judge missing or hollow
 proof by the test-audit rules below.
 
 <!-- rules -->
 ## Tests on the close run
-forge close ran the repo's test command before this review, outside your sandbox:
+forge close runs the repo's test command alongside this review, outside your sandbox:
 $test_run
 
 A test skipped in your sandbox that the close run passed is not a missing test. For a pure
@@ -132,7 +134,8 @@ loss. Every finding you raise names its line as `Raise: <line>` at the start of 
 
 ## What blocks the merge
 Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only the advice
-forms this page names (`Simpler:`, `Later:`, `Simpler (existing):`), which need no Raise line
+forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
+`Simpler (existing):`), which need no Raise line
 and never block the merge or start another round. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
@@ -140,6 +143,12 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
   naming that task;
 - when the story's Tasks table assigns a test or check to another task, report it as a
   P2 `Later:` finding naming that task, not `Not done`.
+
+A `Not done` finding blocks only when it names a Done-when item the change misses as
+written. A case the Done-when does not name, such as another language, platform, shell,
+tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
+doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
+on the changed code still blocks under its own Raise line.
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
@@ -209,14 +218,16 @@ read and, for an edge case, the realistic scenario. No speculative suggestions: 
 not what might be nicer.
 Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the story's doc and its
 read notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
-The previous review's findings and dismissals are below; recheck them against this branch and
-report any still-open gap alongside new ones:
+All earlier reviews' findings and dismissals are below, including findings fixed in later
+rounds; recheck them against this branch for still-open gaps and report those alongside new ones:
 $previous
 
 The coordinator's rulings and dismissals on this branch so far, with their reasons:
 $rulings
 Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
-weigh, and name that evidence in the finding's body.
+weigh, and name that evidence in the finding's body and a distinct title. Settled findings stay
+settled: Forge ignores a finding with the same title and file as a fixed or dismissed finding,
+even if its line or evidence changes. Human acceptance covers only the accepted version.
 
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.

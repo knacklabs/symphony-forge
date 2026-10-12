@@ -42,6 +42,8 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
         if key in config:
             settings = settings.replace(f'{key} = {json.dumps(config[key])}',
                                         f'{key} = {json.dumps(command)}')
+    if "fast_test" not in config:
+        settings = f'fast_test = {json.dumps(command)}\n' + settings
     if "test" not in config:
         settings = f'test = {json.dumps(command)}\n' + settings
     up.on_main("forge.toml", settings, "Set the client check")
@@ -59,6 +61,11 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert f"Forge {RELEASE}'s forge sync" in proof
     assert f"forge close {NAME}" in proof
     assert "test run" in proof
+    # Review starts with a pending notice; completed results belong to close's report.
+    assert "reports its test run result alongside the review result" in proof
+    for host in (".codex", ".claude"):
+        guide = up.show(f"{host}/skills/forge/SKILL.md")
+        assert "close supplies its test run result" not in guide
     assert tomllib.loads(up.show("forge.toml"))["version"] == RELEASE
     assert [call["args"] for call in up.uv()][-2:] == [
         release_run(RELEASE, "sync"), release_run(RELEASE, "close", NAME)]
@@ -66,6 +73,7 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert len(up.env.review_calls()) == 1
     prompt = up.env.prompt()
     assert proof in prompt
-    assert "client checks passed" in prompt
-    assert "exited with status 0" in prompt
+    assert "Tests are running alongside this review" in prompt
+    assert "client checks passed" in upgraded.stdout
+    assert "exited with status 0" in upgraded.stdout
     assert proof in body(up.env.gh_calls("pr", "create")[-1])

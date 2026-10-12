@@ -370,6 +370,7 @@ def _claude_task(request, repo) -> str:
 
 def _codex_fix(request, repo) -> str:
     monkeypatch = request.getfixturevalue("monkeypatch")
+    request.getfixturevalue("claude_session")
     _, log = _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
     started = repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in")
     assert started.returncode == 0, started.stderr

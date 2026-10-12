@@ -60,6 +60,7 @@ def packaged_mod_refreshes_real_checks_and_returns_headless_text(env, packaged_m
     repo = env.repo
     item, _ = env.start_fix()
     green = pull(7, f"fix/{item}", "SUCCESS")
+    green["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
     checks = green["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
     checks.append({**checks[0], "name": "tests"})
     github(env.gh, [green])
@@ -73,6 +74,7 @@ def packaged_mod_refreshes_real_checks_and_returns_headless_text(env, packaged_m
     module = json.loads((plugin / "hooks/hooks.json").read_text("utf-8"))["modules"][0]
     assert manifest["name"] == "forge"
     red = pull(7, f"fix/{item}", "FAILURE")
+    red["headRefOid"] = green["headRefOid"]
     responses = json.loads((repo.bin / "gh-responses.json").read_text("utf-8"))
     # github() supplies the real external GraphQL envelope used by the stub gh.
     github(env.gh, [red])

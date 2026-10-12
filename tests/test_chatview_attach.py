@@ -41,7 +41,7 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
 
 
 def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
-        repo, gh, monkeypatch, tmp_path, sdk_data):
+        repo, gh, monkeypatch, tmp_path, sdk_data, claude_session):
     _, calls = _closable(repo, gh, monkeypatch, tmp_path, sdk_data)
     # With no recorded chat, close sends Codex nothing and never asks GitHub for the link.
     before = repo.forge("close", "BOARD/PAGE")

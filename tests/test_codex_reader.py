@@ -28,6 +28,7 @@ COORDINATOR = ("Forge can't tell which app is coordinating, so it can't pick the
 
 
 def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_data, tmp_path):
+    monkeypatch.setenv("STUB_CODEX_RESUME", "1")
     monkeypatch.setenv("FORGE_NOW", NOW)
     setup(repo, keys=("SHOP", "WISH"))
     _install(repo.bin, "codex-app-server",
@@ -70,7 +71,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     assert unchanged() and not stub.exists()
 
-    # A failed turn, and a file changed during the read, leave the notes and the state unchanged.
+    # Started reads keep a durable chat binding; failed and discarded findings stay unaccepted.
+    def unaccepted() -> bool:
+        return (state.read_text("utf-8") == planned and "read_hash:\n" in notes.read_text("utf-8")
+                and "## Round " not in notes.read_text("utf-8"))
+
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     failed = repo.forge("read", "SHOP")
     assert failed.stderr == ("The cold read of plans/SHOP.md failed: Codex reported the turn "
@@ -82,7 +87,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                                 "was discarded.\nNext: git status, then forge read SHOP\n")
     monkeypatch.delenv("STUB_CODEX_TOUCH")
     (shop / "scratch.txt").unlink()
-    assert unchanged()
+    assert unaccepted()
 
     if os.name != "nt":  # the crash is made with POSIX signals
         # A crashed read leaves its Codex processes behind, and doctor stops them though the
@@ -92,7 +97,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         _crash(crashed, saved)
         assert ("- Stopped the Codex processes that a crashed forge read SHOP left.\n"
                 in repo.forge("doctor", cwd=shop).stdout)
-        assert _down(server) and _down(saved["driver"]["pid"]) and unchanged()
+        assert _down(server) and _down(saved["driver"]["pid"]) and unaccepted()
 
     # The read: a "Grill" conversation in the story's checkout, read-only with approvals "never"
     # at its start and on its turn, on the grill kind's models. Codex's text becomes the notes.
@@ -101,7 +106,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stdout + read.stderr
     starts, turns = _sent(stub, "thread/start"), _sent(stub, "turn/start")
-    assert len(starts) == len(turns) == 3
+    assert len(starts) == 1 and len(turns) == 3
+    assert all(resume["threadId"] == "thr-stub-1" for resume in _sent(stub, "thread/resume"))
     assert all((start["sandbox"], start["approvalPolicy"]) == ("read-only", "never")
                and start["config"] == {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)
@@ -160,25 +166,29 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
-    # an old one gets the ordinary unknown-key refusal. Work and reviews run on GPT-6.1 Sol.
+    # an old one gets the ordinary unknown-key refusal. Codex work uses GPT-6.1 Sol;
+    # review selection now belongs to Autoreview.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "model" not in written
     # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
-        "build": {"model": "gpt-6.1-sol", "effort": "medium"},
-        "fix": {"model": "gpt-6.1-sol", "effort": "medium"},
-        "lite": {"model": "gpt-6.1-sol", "effort": "medium",
-                 "subagents": "gpt-6-luna", "subagent_effort": "max"},
+        "build": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
+                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+        "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
+                "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+        "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+                           "subagents": "gpt-6-luna", "subagent_effort": "max"},
+                 "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
         "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
                               "subagents": "gpt-6-luna", "subagent_effort": "max"},
                     "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
-                  "claude": {"model": "opus", "effort": "high"}},
-        "design": {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+                  "claude": {"model": "claude-opus-5-5", "effort": "high"}},
+        "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
-        "review": {"model": "gpt-6.1-sol", "effort": "high"}}
+    }
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
     assert old.stderr == ("forge.toml is not usable: 'model' is not a forge.toml key.\n"

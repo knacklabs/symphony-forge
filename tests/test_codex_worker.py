@@ -112,7 +112,7 @@ def _toml(version: str, workers: str, models: dict[str, dict],
 
 
 def _codex_repo(repo, monkeypatch, sdk_data: Path,
-                client: bool = False) -> tuple[Path, Path]:
+                client: bool = False, start_task: bool = True) -> tuple[Path, Path]:
     """Codex workers with the models table, a project Codex trusts, story BOARD approved and
     BOARD/PAGE started. Returns the task's folder and the stub app-server's log."""
     _install(repo.bin, "codex-app-server",
@@ -133,6 +133,8 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path,
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge with Codex workers")
     repo.git("push", "-q", "origin", "main")
+    if not start_task:
+        return repo.path, repo.bin / "codex-app-server.jsonl"
     story(repo)
     started = repo.forge("task", "start", "BOARD/PAGE")
     assert started.returncode == 0, started.stderr
@@ -200,7 +202,7 @@ def _left(work_log: Path, calls: Path) -> bool:
     return _running(int(pid), [call for call in _stub(calls) if "pid" in call][-1]["started"])
 
 
-def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path):
+def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     # Output to a Windows pipe starts in its legacy code page; here on every OS. Forge's output,
     # the names' "·" included, must still reach its reader as UTF-8.
@@ -261,7 +263,7 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert "Why: Fix the login typo" in _sent(calls, "turn/start")[-1]["input"][0]["text"]
 
 
-def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path):
+def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
@@ -294,7 +296,7 @@ def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path):
     assert len(_stub(calls)) == before
 
 
-def test_3_models_per_kind(repo, monkeypatch, sdk_data):
+def test_3_models_per_kind(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     version = repo.forge("--version").stdout.split()[-1]
     toml = folder / "forge.toml"
@@ -318,8 +320,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
 
     # The kind's models, subagents included, reach the new conversation as its settings. They are
     # read again on every call, from the item's checkout; the caller's forge.toml is another. The
-    # second call is a fix round, on the fix kind's models; this stub can't resume a conversation,
-    # so it starts a new one.
+    # second call is a fix round, on the fix kind's models, in the same conversation.
     toml.write_text(_toml(version, "codex", MODELS), encoding="utf-8")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _sent(calls, "thread/start")[-1]["config"] == BUILD
@@ -328,7 +329,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
     config = {**QUIET, "features.multi_agent": True, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
-    assert _sent(calls, "thread/start")[-1]["config"] == config
+    assert _sent(calls, "thread/resume")[-1]["config"] == config
     assert f"stub codex: built it with {json.dumps(config, sort_keys=True)}" in again.stdout
     assert "gpt-6-nova" not in (repo.path / "forge.toml").read_text(encoding="utf-8")
 
@@ -343,6 +344,8 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     claude = install_claude(repo)
     toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus", "effort": "high"}}),
                    encoding="utf-8")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
     sent = claude_calls(claude)
@@ -354,23 +357,26 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
         assert SOL["subagent_effort"] not in call["args"]
 
 
-def test_4_turn_log(repo, monkeypatch, sdk_data):
+def test_4_turn_log(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     turns = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
     work_log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
+    # Each turn records the speed it asked for; this stub reports no tier back.
+    speed = {"model": "gpt-6-sol", "fast_wanted": True, "requested_tier": "default", "tier": None}
     started = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
-               "started": NOW}
+               "started": NOW, **speed}
     ended = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
              "continued": False, "fresh_start": "first turn", "status": "completed",
-             "started": NOW, "ended": NOW, "input_tokens": 1200, "cached_input_tokens": 1000,
+             "started": NOW, **speed, "effort": "medium", "ended": NOW, "input_tokens": 1200, "cached_input_tokens": 1000,
              "output_tokens": 300}
 
     # A "started" line when the turn starts, and the end line when Codex reports the end. The
     # driver reports the Codex process first, and none is left once forge work returns.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns) == [started, ended]
-    pid = int(re.fullmatch(r"Codex app-server: process (\d+)",
-                           work_log.read_text("utf-8").splitlines()[1])[1])
+    # The Fast notice may come first; the app-server line follows it.
+    pid = int(next(found[1] for line in work_log.read_text("utf-8").splitlines()
+                   if (found := re.fullmatch(r"Codex app-server: process (\d+)", line))))
     stub = [call for call in _stub(calls) if "pid" in call][-1]
     # On Windows the stub runs through its .cmd shim, so the process the client started, and the
     # driver reports, is the shim's cmd.exe rather than the stub; the real Codex is its own .exe.
@@ -385,8 +391,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert not _left(repo.path / ".git" / "forge" / "work-fix-the-login-typo.log", calls)
 
     # A failed turn is logged as Codex reported it, with blank tokens when it reports none, and
-    # forge work stops with the log's path. It is a fix round, and this stub can't resume the
-    # conversation, so it started a new one and says why.
+    # forge work stops with the log's path. It is a fix round on the same conversation.
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     monkeypatch.setenv("STUB_CODEX_NO_USAGE", "1")
     failed = repo.forge("work", "BOARD/PAGE")
@@ -395,8 +400,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert "Codex ended the turn: failed (stub codex: the model gave up)" in failed.stdout
     assert not _left(work_log, calls)
     started, ended = {**started, "kind": "Fix"}, {
-        **ended, "kind": "Fix",
-        "fresh_start": "Codex couldn't resume its conversation: stub: no thread/resume"}
+        **ended, "kind": "Fix", "continued": True, "fresh_start": None}
     assert _lines(turns)[2:] == [started, {**ended, "status": "failed", "input_tokens": None,
                                            "cached_input_tokens": None, "output_tokens": None}]
 

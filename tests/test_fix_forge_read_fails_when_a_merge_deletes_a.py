@@ -21,7 +21,8 @@ sys.exit(subprocess.run([{git!r}, *args]).returncode)
 
 
 def test_1_read_skips_a_branch_deleted_between_listing_and_lookup(repo):
-    setup(repo)
+    # Promotion no longer adds an entry; it inherits the committed roadmap entry.
+    setup(repo, keys=("SHOP", "BASKET"))
     assert repo.forge("fix", "start", "Recover the saved basket", "--done", "Saved baskets return").returncode == 0
     fix = worktree(repo, "fix/recover-the-saved-basket")
     body = "# Basket spec\n\n## Why\n\nA saved basket gets lost.\n\n## Roadmap\n\n- BASKET: Recover baskets\n"

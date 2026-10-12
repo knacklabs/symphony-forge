@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import machine, quicktest, repo
+from forge import init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -54,6 +54,9 @@ def pytest_options(arguments: list[str]) -> str:
     return options
 
 
+XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
+
+
 def narrow_command(command: str, excluded: list[str], workers: str) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
@@ -65,7 +68,7 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
             replacements.append((token.start(), token.end(), ""))
     options = ["-p", "_forge_pytest_selection"] if excluded else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
-    if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
+    if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
@@ -209,6 +212,44 @@ def own_version_only(path: Path, base: str) -> bool:
     return snapshots[0] == snapshots[1]
 
 
+def close_tests(base: str) -> int:
+    """Use supported runners' selection; leave other commands unchanged."""
+    command = repo.config(Path.cwd())["test"]
+    parts = quicktest.test_parts(Path.cwd(), command)
+    package = Path("package.json")
+    if command == init.NODE_TEST:
+        if not package.is_file():
+            return 0
+        command = " && ".join(part for _, part, _ in parts)
+    scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
+    # Compound scripts forward npm arguments to the last command, not every runner.
+    if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
+            for kind, part, _ in parts if kind in ("vitest", "jest")
+            for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
+        return subprocess.run(command, shell=True).returncode
+    if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
+        if any(kind == "python" for kind, _, _ in parts):
+            return pytest_tests(base, command)
+        return subprocess.run(command, shell=True).returncode
+    for kind, part, passthrough in parts:
+        if kind == "python":
+            status = pytest_tests(base, part)
+        else:
+            if kind in ("vitest", "jest"):
+                words = shlex.split(part)
+                if words[:2] == ["npm", "exec"] and "--" not in words:
+                    tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', part))
+                    start = tokens[quicktest._npm_runner_index(words)].start()
+                    part = part[:start] + "-- " + part[start:]
+                changed = "--changed" if kind == "vitest" else "--changedSince"
+                argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
+                part += f"{passthrough} {changed} {argument} --passWithNoTests"
+            status = subprocess.run(part, shell=True).returncode
+        if status:
+            return status
+    return 0
+
+
 def test(args) -> int:
     if args.base is None:
         from forge import review
@@ -220,59 +261,85 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        status, report = review.test_run(top, review.close_test(top, base), base, always=True)
+        status, report = review.test_run(top, review.close_test(top, base, closing=False), base,
+                                        always=True, closing=False)
         print(report)
         return status
-    changed = git_files("diff", "--no-renames", "--name-only", args.base)
+    return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
+
+
+LARGE = ("More than a third of the test files selected; skipping local tests and relying on the "
+         "pull request's required checks.")
+
+
+def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
+    """The selected test files, all test files, whether shared inputs changed (all selected), and
+    the changed sources no test file names."""
+    changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
+    tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
+                                            "--exclude-standard")
+             if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
+             and name.endswith(".py") and Path(name).is_file()]
+    shared = [name for name in changed
+              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
+              or Path(name).name.endswith(".lock")
+              or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
+    shared_changed = any(not manifest_test_inputs_unchanged(Path(name), base)
+           if Path(name).name == "pyproject.toml" else
+           Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
+           or not own_version_only(Path(name), base) for name in shared)
+    modules = []
+    for name in changed:
+        path = Path(name)
+        if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
+            continue
+        parts = module_parts(path)
+        if parts[-1] == "__init__":
+            parts.pop()
+        if parts:
+            modules.append((".".join(parts), path))
+    missed = [source.as_posix() for module, source in modules
+              if not any(mentions(path, module, source) for path in tests)]
+    everything = [path.as_posix() for path in tests]
+    if shared_changed:
+        return everything, everything, True, missed
+    selected = sorted(path.as_posix() for path in tests
+                      if path.as_posix() in changed
+                      or any(mentions(path, module, source) for module, source in modules))
+    return selected, everything, False, missed
+
+
+def pytest_tests(base: str, command: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
         command = " && ".join(part for kind, part, _ in parts
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
-    workers = str(machine.half_cores())
+    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
+    workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
-    shared = [name for name in changed
-              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
-              or Path(name).name.endswith(".lock")
-              or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(not manifest_test_inputs_unchanged(Path(name), args.base)
-           if Path(name).name == "pyproject.toml" else
-           Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), args.base) for name in shared):
-        print("Shared test inputs changed; running " +
-              ("all Python tests." if mixed else "the full test command."), flush=True)
-    else:
-        tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
-                                                "--exclude-standard")
-                 if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
-                 and name.endswith(".py") and Path(name).is_file()]
-        modules = []
-        for name in changed:
-            path = Path(name)
-            if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
-                continue
-            parts = module_parts(path)
-            if parts[-1] == "__init__":
-                parts.pop()
-            if parts:
-                modules.append((".".join(parts), path))
-        selected = []
-        for path in tests:
-            if (path.as_posix() in changed
-                    or any(mentions(path, module, source)
-                           for module, source in modules)):
-                selected.append(path.as_posix())
-        selected.sort()
+    selected, tests, shared_changed, missed = related(base)
+    # Tests that run the program from outside never name its files, so say what local runs miss.
+    from forge.review import GAP  # imported late: review's imports lead back here
+    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+          end="", flush=True)
+    if not shared_changed:
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
+        excluded = [path for path in tests if path not in selected]
+    if closing and len(selected) * 3 > len(tests):
+        print(LARGE, flush=True)
+        return 0
+    if shared_changed:
+        print("Shared test inputs changed; running " +
+              ("all Python tests." if mixed else "the full test command."), flush=True)
+    else:
         print("Related tests: " + ", ".join(selected), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:

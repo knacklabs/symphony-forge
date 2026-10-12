@@ -1,0 +1,46 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-10T18:54:00.836087+00:00",
+      "because": "Worker asked which rule governs; the earlier wording contradicted itself since a round with nothing blocking already passes",
+      "done_when": "After three read or review rounds in a row with no blocking note or real finding, Forge stops the loop and asks the human to accept or narrow, and that choice can always be recorded, whichever command stopped the loop. New and existing client repos get it on init or upgrade plus sync, and a test covers both."
+    }
+  ],
+  "base": "4436362fd178474e291311077681bb515dab731e",
+  "branch": "fix/three-rounds-ask",
+  "done_when": "After three cold-read rounds or three review rounds of one item that each still have a blocking note or serious finding, Forge stops the loop and asks the human to accept, narrow or split, and that choice can always be recorded, whichever command stopped the loop (read, close or land). New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "56f0d7e4a31f30e51719cc09319f9400cb179e76b86023a6812cbdd5ba59bc37",
+    "changed": "ab39013f8e2072c5dd6f1fc36dfb7b758969edb515df381cd8e177458218028b",
+    "commit": "2f07c7fab06b14078bfc5475c91280584cef481c",
+    "dismissals": [],
+    "findings": [],
+    "id": "641604c4-8412-415a-97b2-a3147da6a14d",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T14:39:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T20:50:06.962969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:03:21.545645+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:16:24.689821+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Loops keep going past three rounds with nothing real found and the human's choice cannot always be recorded",
+  "worker": "codex"
+}

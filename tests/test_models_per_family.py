@@ -37,7 +37,7 @@ def _work(repo, folder, workers: str, build: str) -> None:
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch, sdk_data):
+def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
     build = f"[models.build.codex]\n{NOVA}\n[models.build.claude]\n{OPUS}"
@@ -46,11 +46,13 @@ def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch,
     assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
                                                           "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", build)
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
 
 
-def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data):
+def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
@@ -58,11 +60,13 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data)
     assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
                                                           "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{OPUS}")
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
 
 
-def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(repo, monkeypatch, sdk_data):
+def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
@@ -75,29 +79,16 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
                                             / "BOARD" / "PAGE.log")] == ["Build", "Build"]
     assert _sent(calls, "thread/start")[-1]["config"] == {
         **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
-    assert args[:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
+    # Omitted Claude entries now default to Sonnet at xhigh, rather than Opus at medium.
+    assert args[:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
     assert "gpt-6-nova" not in args
 
 
-def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, sdk_data):
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-
-    def ask(lite: str):
-        _write(folder, "codex", lite)
-        asked = repo.forge("ask", "Where is the parser?", cwd=folder)
-        assert asked.returncode == 0, asked.stdout + asked.stderr
-        return _sent(calls, "thread/start")[-1].get("config")
-
-    assert ask(f"[models.lite.codex]\n{NOVA}\n[models.lite.claude]\n{OPUS}") == {
-        **QUIET, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
-    # No Codex model entry still means no model override, but output is always quiet.
-    assert ask(f"[models.lite.claude]\n{OPUS}") == QUIET
-    assert ask(f"[models.lite]\n{OPUS}") == QUIET
-
-
-def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
+def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review.codex]\nmodel = "gpt-6-sol"\neffort = "xhigh"\n'
@@ -115,5 +106,5 @@ def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert {name: options[name] for name in ("--engine", "--model", "--thinking")} == {
-        "--engine": "claude", "--model": "claude=sonnet", "--thinking": "claude=medium"}
+    assert options["--engine"] == "claude"
+    assert "--model" not in options and "--thinking" not in options

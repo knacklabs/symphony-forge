@@ -2,6 +2,7 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: debugger
 description: "Finds the root cause of a hard failure."
+model: "claude-opus-5-5"
 effort: "high"
 ---
 

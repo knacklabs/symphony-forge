@@ -1,13 +1,14 @@
 """forge close skips a test command that already passed on the same committed tree on this
-machine, and only one close on a machine runs the test command at a time."""
+machine, and a one-slot machine runs only one close test command at a time."""
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-from conftest import Repo
+from conftest import Repo, machine_cores
 from test_close import CLEAN, FAILED, Forge, env  # noqa: F401
 
 STORY = "FIX-CLOSE-RERUNS-THE-FULL-TEST-COMMAND-EVEN"
@@ -33,8 +34,9 @@ def _with_test_command(env) -> Path:
     script = env.tmp / "suite.py"
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
     toml = env.repo.path / "forge.toml"
+    command = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}"'
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"'))
+               + "fast_test = " + json.dumps(command) + "\n")
     env.repo.git("push", "-q", "origin", "main")
     return env.tmp / "runs.log"
 
@@ -54,11 +56,11 @@ def test_1_close_skips_a_test_command_that_passed_on_the_same_committed_tree(env
     assert _runs(log) == ["start fix-tidy-readme", "end"]
     assert "already passed on this machine" in closed.stdout
     result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
-    assert "already passed on this machine" in result
+    assert "Tests are running alongside this review" in result
 
 
 def test_2_close_reruns_a_test_command_that_failed_on_the_same_committed_tree(env):
-    # A failing test command stops close before the review, so each close here stops on it.
+    # A failing test command stops close after the review, and is rerun on the same tree.
     log = _with_test_command(env)
     (env.tmp / "exit").write_text("1", "utf-8")
     item, _ = env.start_fix()
@@ -75,7 +77,9 @@ def _close(env, item: str) -> subprocess.Popen[str]:
                             stdin=subprocess.DEVNULL, text=True, encoding="utf-8")
 
 
-def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
+def test_3_one_slot_machine_runs_only_one_close_test_command_at_a_time(env):
+    # Four usable cores give one slot; larger-machine capacity has its own command test.
+    machine_cores(env.repo, 4)
     log = _with_test_command(env)
     (env.tmp / "gated").touch()
     first, _ = env.start_fix()

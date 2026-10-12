@@ -222,9 +222,9 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
             FIXTURE / "client" / path).read_text("utf-8").strip()
     assert repo.git("show", f"forge/migrate-v1:docs/context/{DESIGN}") == (
         FIXTURE / "client" / ".gstack/projects/x" / DESIGN).read_text("utf-8").strip()
-    # Only the old Forge's gstack lines go; the client's own stay.
+    # Only the old Forge's gstack lines go; the client's own stay, and sync ignores forge.local.toml.
     assert repo.git("show", "forge/migrate-v1:.gitignore") == (
-        "node_modules/\n.env\n.gstack/slug-cache/")
+        "node_modules/\n.env\n.gstack/slug-cache/\nforge.local.toml")
     # ... and sync adds the roadmap's and the spotted list's merge rules after them.
     assert repo.git("show", "forge/migrate-v1:.gitattributes") == (
         "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
@@ -490,6 +490,7 @@ CASES = {
         and os.name == "nt",
         reason="making a symlink needs extra rights on Windows")) for name in CASES])
 def test_30_migrate(repo, gh, tmp_path, monkeypatch, case):
+    # Migration bootstraps shipped roles before a models table exists.
     monkeypatch.setenv("FORGE_NOW", "2026-09-25T12:00:00+00:00")
     _copied_client(repo, tmp_path, monkeypatch)
     CASES[case](repo, gh, tmp_path, monkeypatch)

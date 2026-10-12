@@ -10,9 +10,10 @@ import time
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_resume import _resuming
 from test_codex_worker import _codex_repo, _lines, _sent, sdk_data  # noqa: F401
+from test_close import env  # noqa: F401
 
 STORY = "FORGE-STEER-1"
 
@@ -39,26 +40,42 @@ def _resumable_question(repo, monkeypatch, sdk_data):
     return folder, calls, turns, record, question
 
 
-@pytest.mark.parametrize("scenario", ("fresh", "resume", "interrupt"))
+@pytest.mark.parametrize("scenario", ("fresh", "resume", "interrupt", "offline-before-pr",
+                                     "offline-after-failed-publish"))
 def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_data, gh,
-                                                         scenario):
+                                                         scenario, claude_session, request):
     if scenario == "resume":
         _answer_continues_the_same_conversation(repo, monkeypatch, sdk_data)
         return
     if scenario == "interrupt":
         _interrupted_answer_keeps_the_question_unanswered(repo, monkeypatch, sdk_data)
         return
+    forge = request.getfixturevalue("env") if scenario == "offline-after-failed-publish" else None
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    if forge:
+        config = folder / "forge.toml"
+        forge.commit(folder, "forge.toml", 'checks = ["tests", "forge-pr-check"]\n'
+                     'test = "echo passed"\n' + config.read_text("utf-8"))
+        forge.commit(folder, "web/board.py", "print('built')\n")
+        gh.respond("pr", "create", exit=1, stderr="GitHub refused the first publication\n")
+        failed_publish = forge.close("BOARD/PAGE")
+        assert failed_publish.returncode == 1
+        assert "GitHub refused the first publication" in failed_publish.stderr
+    if scenario.startswith("offline-"):
+        gh.respond("pr", "list", exit=1, stderr="GitHub is unavailable\n")
     question = "Question: May I use the existing parser?"
     monkeypatch.setenv("STUB_SAY", "\n\n" + question)
     before = repo.git("rev-list", "--count", "HEAD", cwd=folder)
     asked = repo.forge("work", "BOARD/PAGE")
     assert asked.returncode == 0, asked.stderr
     assert question in asked.stdout and 'forge work BOARD/PAGE --note "<answer>"' in asked.stdout
-    assert int(repo.git("rev-list", "--count", "HEAD", cwd=folder)) == int(before) + 1
+    # The status and durable chat binding are Forge commits; the worker commits no answer.
+    assert int(repo.git("rev-list", "--count", "HEAD", cwd=folder)) == int(before) + 2
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     assert json.loads(record.read_text("utf-8"))["question"] == question
 
+    # Initial work may consult GitHub to choose Fast; unanswered work and close must not.
+    patient(lambda: gh.log.write_text("", encoding="utf-8"))
     head = repo.git("rev-parse", "HEAD", cwd=folder)
     blocked = repo.forge("work", "BOARD/PAGE")
     closed = repo.forge("close", "BOARD/PAGE")
@@ -80,6 +97,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     brief = _sent(calls, "turn/start")[-1]["input"][0]["text"]
     assert question in brief and "Yes, use it." in brief
     assert json.loads(record.read_text("utf-8"))["question"] is None
+    if scenario.startswith("offline-"):
+        assert not [call for call in gh.calls() if call[:2] == ["pr", "list"]]
 
 
 def _answer_continues_the_same_conversation(repo, monkeypatch, sdk_data):
