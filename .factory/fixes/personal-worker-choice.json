@@ -18,30 +18,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d4152fe139b949bd1bab7ac414b0963dbc667127ba7dff8d1c0f234bcceec036",
-    "changed": "903eeab5e184833f6f04f0db0e1bcfb9232df2fc3c36618e4434fa371d893076",
-    "commit": "605598f14218aa97a8601f10be9b23ef01281235",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: doctor's note covers the local file's settings and the built-in defaults for the kinds it overrides; a shared kind with no entry for a locally switched worker is shown on forge next's line and the run's Building line. Lived with (Gain 2, Work 1, Harm 1); round 7, each round a new angle on the same note",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "162bcc9e22d5d80fee5d0668034c14c2fa009d7adc92f998957f4b3dcb8e8131",
+    "changed": "39685056bf574bcc67b717a560cae40322f0b632a2d7c65ac9a8be5da5268b48",
+    "commit": "48c2c532cff7f6dc19711010db25c6ed94c95d87",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. New evidence beyond the settled doctor finding: with `[models.build.codex]` in `forge.toml` and only `tools = \"claude\"` in `forge.local.toml`, `forge work` uses Claude's built-in build model because the shared table has no Claude entry (`src/forge/repo.py:513\u2013530`). Doctor checks only model kinds present in the local file, then says everything else comes from `forge.toml` at line 440. It therefore gives the wrong source for `models.build`. The named doctor test covers a built-in fallback for a locally overridden kind, but not this shared-kind case.",
+        "body": "Raise: Not done. New evidence beyond the accepted doctor finding: `forge doctor` uses the build worker to choose the source of `models.grill` (doctor.py:434), but plan reads choose their reader independently (story.py:226\u2013227). In a two-tool repo with `workers = \"codex\"` and only `[models.grill.claude]` in `forge.local.toml`, a plan read from Codex uses Claude's local model while doctor reports `models.grill` as a built-in default. This misstates a model source the Done-when requires doctor to show; the named proof tests only build and fix model sources.",
         "file": "src/forge/doctor.py",
-        "line": 440,
+        "line": 434,
         "priority": "P1",
-        "title": "Not done: doctor misses a shared model's built-in fallback after a local tool switch"
+        "title": "Not done: doctor attributes plan-read models using the build worker"
       }
     ],
-    "id": "c7505ea7-6d34-4656-aba9-64158f10778d",
-    "status": "clean"
+    "id": "e2a1dcdb-cd50-4fd1-9c92-19bbbe533b39",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T09:41:53.088023+00:00",
@@ -73,6 +67,10 @@
     },
     {
       "at": "2026-10-12T01:49:46.336674+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:04:53.517770+00:00",
       "step": "review"
     }
   ],

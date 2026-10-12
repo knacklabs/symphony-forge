@@ -1420,6 +1420,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor attributes plan-read models using the build worker\tpersonal-worker-choice",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 434,
+      "text": "Not done: doctor attributes plan-read models using the build worker",
+      "from": "blocking",
+      "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
