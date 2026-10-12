@@ -1,8 +1,15 @@
 {
   "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, sync output and the tests that pin them",
+  "amendments": [
+    {
+      "at": "2026-10-12T04:48:37.666298+00:00",
+      "because": "The repo's review rules say a release's version bump changes no behaviour and needs no new upgrade test; close requires the generated files to match sync when the version changes",
+      "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and new and upgraded clients install v1.2.10"
+    }
+  ],
   "base": "434fdfd3871e63bb011136515f6e803128106b84",
   "branch": "fix/release-1210",
-  "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and new and upgraded clients install v1.2.10",
+  "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
   "flagged": [
     ".claude/skills/simplified-technical-english/SKILL.md",
     "tests/test_release_version.py"
