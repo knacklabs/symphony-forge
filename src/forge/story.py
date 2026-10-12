@@ -38,7 +38,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, native, repo, task, worker
+from forge import codex, machine, native, repo, review, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -67,7 +67,7 @@ REFUSALS = {
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
     "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. "
-                  "Ask the human to accept, narrow or split before reading again.",
+                  "Ask the human to accept, narrow or split before reading again, in these words:\n{question}",
                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
                    'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
@@ -196,7 +196,7 @@ def read(args: Any) -> int:
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
         return 0
     if blocked_rounds >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target)
+        repo.refuse(REFUSALS["read_loop"], target=target, question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
     doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
     if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
@@ -423,7 +423,8 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
     if not clean and blocked_rounds + 1 >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target)
+        repo.refuse(REFUSALS["read_loop"], target=target,
+                    question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every blocking finding a disposition, amend the doc, then forge read {target}")
@@ -995,6 +996,27 @@ def _diff(old: str, new: str, path: str) -> str:
     """A unified diff, line endings aside, so a Windows checkout's CRLF isn't a change."""
     return "\n".join(difflib.unified_diff(old.splitlines(), new.splitlines(), f"a/{path}", f"b/{path}",
                                           lineterm=""))
+
+
+def read_question(doc: str, notes: str) -> str:
+    """A stopped cold-read loop's question: the doc's title and promise, and the latest round's
+    blocking notes."""
+    record, findings = _record(notes)
+    heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
+    flagged = []
+    for block in _findings(findings[heading.end():] if heading else "").values():
+        title, _, body = block.split(". ", 1)[1].partition("\n")
+        if not ADVISORY.match(title) and not DISPOSITION.search(body):  # cut, deferred or kept
+            flagged.append(review.plain(title, "\n".join(line for line in body.splitlines()
+                                                  if not DISPOSITION.match(line))))
+    title = re.search(r"^# (.+)$", doc, re.M)
+    found = sections(doc)
+    gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
+    return review.question(review.plain(title[1]) if title else "", gives, flagged,
+                         "keep these problems as known and mark the read accepted; approving or "
+                         "confirming the doc is still a separate step.",
+                         "Done when" if "What changes for you" in found else
+                         "Behaviour and Acceptance criteria")
 
 
 def _findings(text: str) -> dict[int, str]:

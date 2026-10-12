@@ -55,7 +55,7 @@ REFUSALS = {
                 '"<file:line> <reason>"'),
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
                 "earlier round flagged too, so Forge stops sending the worker back. Ask the human "
-                "to narrow the part, split it, or accept the remaining findings.",
+                "to narrow the part, split it, or accept the remaining findings, in these words:\n{question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
@@ -364,7 +364,8 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:
         if stopped:
-            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
+                        question=review.stop_question(top, item, state), **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -463,6 +464,7 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
         repo.refuse(REFUSALS["hotspot"], item=item,
+                    question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
 

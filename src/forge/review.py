@@ -39,6 +39,11 @@ BOOKKEEPING = (".factory/", "plans/")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
+# A file path with an optional line (with the "at" or "in" before it) or a commit hash, for plain().
+PATHLIKE = re.compile(r"(?:\s(?:at|in|on|from|see))?\s*\(?(?:(?:[\w.-]+/)+[\w.-]*\.\w+|\b[\w-]+\.[A-Za-z]{1,5}"
+                      r"(?=:\d))(?::[\d,-]+)?\)?|\s*\(?\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b\)?")
+
+
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
@@ -200,6 +205,67 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
             if not isinstance(f, dict) or
             (f.get("priority") in (("P0",) if result.get("blocking_level") == "P0" else SERIOUS)
              and n not in dismissed)]
+
+
+def plain(title: str, body: str = "") -> str:
+    """A note or finding in plain words: its title and up to two sentences of its body, without
+    markdown, labels, file paths or hashes."""
+    def sentences(text: str, keep: int) -> str:
+        text = " ".join(text.replace("**", "").replace("`", "").split())
+        text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)  # a markdown link keeps its words
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Functional|Test|"
+                      r"Security|Scale|Data loss|Later|Follow-up)\s*[.:\u2014\u2013-]+\s*)+", "", text, flags=re.I)
+        text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
+        first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
+        # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
+        if keep == 1 and rest and len(first.split()) < 5:
+            return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
+                                                 rest[0][:1].lower() + rest[0][1:])
+        return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
+    title, body = sentences(title, 1), sentences(body, 2)
+    if not body:
+        return title
+    return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
+
+
+def question(name: str, delivers: str, flagged: list[str], accept: str,
+                  parts: str = "Done when") -> str:
+    """The question a stopped read or review loop asks the human, ready to ask as written."""
+    return "\n".join([f"{name}: {delivers}" if delivers else name,
+                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
+                      "Accept, narrow or split?",
+                      f"- Accept: {accept}",
+                      f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
+                      "- Split: move these cases into a new story or fix of their own; this one goes on "
+                      "without them."])
+
+
+def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
+    """A stopped item's question for the human: what it is, its open serious findings, the choices."""
+    from forge import story as story_  # story imports review
+
+    name, delivers = plain(state.get("why") or item), plain(state.get("done_when", ""))
+    if "/" in item:  # a task: its row in the story's plan, which its worktree holds
+        key, task = item.split("/")
+        doc = top / "plans" / f"{key}.md"
+        text = doc.read_text(encoding="utf-8") if doc.is_file() else ""
+        try:
+            row = next((row for row in story_.parse(text)["tasks"] if row["id"] == task), {})
+        except ValueError:
+            row = {}
+        title = re.search(r"^# (.+)$", text, re.M)
+        name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
+        delivers = plain(row.get("What it delivers", ""))
+    result = state.get("review") or {}
+    flagged = [plain(finding["title"], finding.get("body", ""))
+               for _, finding in blocking(result) if isinstance(finding, dict)]
+    # Accept dismisses every finding not yet dismissed, advice included.
+    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(flagged)
+    return question(name, delivers, flagged,
+                               f"every finding in this review, the {len(flagged)} listed and {advice} "
+                               "advice notes, is dismissed with your reason and recorded; close then "
+                               "goes on to the checks, and merging is still a separate step.")
 
 
 # --- the instructions ------------------------------------------------------------------

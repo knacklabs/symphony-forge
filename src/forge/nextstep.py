@@ -214,6 +214,13 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
+    for path in sorted(trees.values()):  # a spec read stopped on any work branch
+        for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
+            text = notes.read_text(encoding="utf-8")
+            spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
+            if spec.is_file() and story._blocked_reads(  # pyright: ignore[reportPrivateUsage]
+                    path, *story._record(text)) >= 3:  # pyright: ignore[reportPrivateUsage]
+                lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
     lines = _refresh(top, trees) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
@@ -472,7 +479,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                      and (not (assigned := developer(task)) or assigned.casefold() == login.casefold())]
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
-    reread = _next_round(key, notes, doc_hash, title, required, text)
+    reread = _next_round(top, key, notes, doc_hash, title, required, text)
     if readiness is not None:
         readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
@@ -516,7 +523,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str], text: str, readiness: dict[str, Any] | None = None) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
-    reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
+    reread = _next_round(top, key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
                          story.rounds(notes), text)
     if reread:
         return reread
@@ -541,7 +548,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
+def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
     changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
     hash and text."""
@@ -552,9 +559,8 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    if record.get("blocked_rounds") == "3" and not record.get("loop_choice"):
-        return [line.format(target=key) for line in
-                (story.REFUSALS["read_loop"][0], "Next: " + story.REFUSALS["read_loop"][1])]
+    if story._blocked_reads(top, record, findings) >= 3:  # pyright: ignore[reportPrivateUsage]
+        return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
@@ -565,6 +571,14 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
     return [f"Planning {title}: {why}, so round {done + 1} is next.{nudge if done + 1 >= 4 else ''}",
             f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
             f"forge read {key}"]
+
+
+def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> list[str]:
+    """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step,
+    run in `where` for a spec, which forge read finds only in its own checkout."""
+    cd = f"cd {shlex.quote(str(where))} && " if where else ""
+    return [line.format(target=target, question=story.read_question(doc, notes)) for line in
+            (story.REFUSALS["read_loop"][0], "Next: " + cd + story.REFUSALS["read_loop"][1])]
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],
@@ -655,6 +669,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                     "records the repo's default choice: narrow.", f"Next: forge close {item}"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
                 "narrow the part, split it, or accept the remaining findings.",
+                review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:
         return []

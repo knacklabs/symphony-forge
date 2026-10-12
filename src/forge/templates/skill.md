@@ -1273,6 +1273,10 @@ The owner can reverse it later with the same `forge close <item> --resolve` comm
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
+When a cold read or review loop stops, ask the human the question it printed, in its words, one
+item per question. It names the item and what it delivers, says each open note or finding in plain
+words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
+
 When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
 the item; close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the

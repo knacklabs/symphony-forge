@@ -624,7 +624,7 @@ def test_6_forge_next_holds_a_read_that_doesnt_converge(repo, monkeypatch, tmp_p
         reader.dispose(f"Gap number {number}.", "cut")
         said = repo.forge("next").stdout.splitlines()[-2:]
         if number == 3:
-            assert "Ask the human to accept, narrow or split" in said[0]
+            assert "Ask the human to accept, narrow or split" in repo.forge("next").stdout
             assert said[1] == ('Next: forge read SHOP --resolve <accept|narrow|split> '
                                '--reason "<human\'s choice>"')
         else:
