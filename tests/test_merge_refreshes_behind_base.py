@@ -249,6 +249,6 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
         "Branch greeting\n\nKeep this paragraph.\n\nOther closing")
     if sys.platform == "win32" and where.exists():
         # Windows keeps a folder a waiting process is in; the merge still finishes and says so.
-        assert f"Merged {item}. Another program still has its worktree at " in done.stdout
+        assert f"Merged {item}. Forge could not fully remove its worktree at " in done.stdout
     else:
         assert not where.exists()

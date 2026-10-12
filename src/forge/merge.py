@@ -174,12 +174,12 @@ def merge(args: argparse.Namespace) -> int:
             os.chdir(main_checkout)
         for shim in generated:
             shim.unlink()
-        # The pull request is merged, so a worktree another program holds open is only cleanup.
+        # The pull request is merged, so a failed removal is only cleanup. Git may already have
+        # dropped the worktree's registration, which forge doctor needs, so the human deletes it.
         if repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout).returncode:
             dirty = True
-            print(f"Merged {item}. Another program still has its worktree at {worktree} open, so Forge "
-                  "left it and its local branch in place; close that program and run forge doctor "
-                  "--fix to tidy it.")
+            print(f"Merged {item}. Forge could not fully remove its worktree at {worktree}; close any "
+                  f"program using that folder, then delete the folder {worktree}.")
         else:
             if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
                 repo.git("branch", "-D", branch, cwd=main_checkout)

@@ -297,9 +297,8 @@ def _check_locked_worktree(env):
     env.repo.git("worktree", "lock", str(where))
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stdout + merged.stderr
-    assert f"Merged {item}. Another program still has its worktree at " in merged.stdout
-    assert (" open, so Forge left it and its local branch in place; close that program and run "
-            "forge doctor --fix to tidy it.") in merged.stdout
+    assert f"Merged {item}. Forge could not fully remove its worktree at " in merged.stdout
+    assert "; close any program using that folder, then delete the folder " in merged.stdout
     assert where.is_dir()
     assert env.repo.git("rev-parse", "--verify", "fix/tidy-readme")
     assert f"forge merge {item}" not in env.repo.forge("next").stdout

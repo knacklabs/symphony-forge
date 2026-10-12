@@ -61,7 +61,8 @@ Forge leaves a pull request that changes its own merge setting to the repo owner
 the item's merge base with its head, so an older branch can merge after the owner enables agent
 merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
 generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
-commits keep the worktree in place.
+commits keep the worktree in place. When another program holds the worktree open, the merge still
+finishes and keeps the local branch; close that program, then delete the folder the merge names.
 
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
