@@ -611,27 +611,35 @@ def _ran(name: str, node: str) -> bool:
 
 
 def proof_list(top: Path, base: str, report: str | None = None) -> str:
-    """The worker's `Proof list:` and Forge's status of each test it names: from close's test
-    `report` when given, else only whether the branch has the test."""
-    proof, lines = commit_paragraph(top, base, "Proof list:"), []
+    """The proof list close writes from the worker's mapping of Done-when items to tests. Each item
+    names only the tests close's run (`report`) ran, with their results, else `not run`. Before the
+    run it names only the tests the branch has. A runner without single test results gives the
+    command and its result instead."""
     ran = re.findall(r"^(PASSED|FAILED|ERROR) (\S+)", report or "", re.M)
-    for name in _named(top, base):
-        path, _, test = name.partition("::")
-        function = re.sub(r"\[.*", "", test.rsplit("::", 1)[-1])
-        source = (top / path).read_text("utf-8", "replace") if (top / path).is_file() else None
-        if source is None or function and not re.search(
-                rf"^\s*(?:async\s+)?(?:def|class) {re.escape(function)}\b", source, re.M):
-            status = "not run: no such test"
-        elif report is None:
-            status = "in the branch; close's test run gives its result"
-        elif "short test summary info" not in report:  # another runner, or no run
-            status = f"no single test results; {report.splitlines()[0]}"
-        else:
+    single = report is None or "short test summary info" in report
+    lines = []
+    for line in commit_paragraph(top, base, "Proof list:").splitlines():
+        names = [found[0].rstrip(".:)") for found in TEST_NAME.finditer(line)]
+        if not names:  # a check, `missing` or an outside finding stays as the worker wrote it
+            lines.append(line)
+            continue
+        proven = []
+        for name in names:
+            path, _, test = name.partition("::")
+            function = re.sub(r"\[.*", "", test.rsplit("::", 1)[-1])
+            source = (top / path).read_text("utf-8", "replace") if (top / path).is_file() else ""
+            if not source or function and not re.search(
+                    rf"^\s*(?:async\s+)?(?:def|class) {re.escape(function)}\b", source, re.M):
+                continue
             outcomes = {outcome for outcome, node in ran if _ran(name, node)}
-            status = ("failed in close's run" if outcomes - {"PASSED"} else
-                      "passed in close's run" if outcomes else "not run")
-        lines.append(f"- {name}: {status}")
-    return f"{proof}\n\nForge's check of each named test:\n" + "\n".join(lines) if lines else proof
+            if report is None:
+                proven.append(f"{name} (in the branch; close's test run gives its result)")
+            elif outcomes:
+                proven.append(f"{name} ({'failed' if outcomes - {'PASSED'} else 'passed'} in close's run)")
+        label = line[:line.find(names[0])].rstrip(" :")
+        proof = ", ".join(proven) if single else report.splitlines()[0]
+        lines.append(f"{label}: {proof or 'not run'}")
+    return "\n".join(lines)
 
 
 def _bullets(items: Any) -> str:

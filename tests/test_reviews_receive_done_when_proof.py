@@ -75,7 +75,7 @@ def test_2_close_delivers_the_whole_proof_list_to_pr_and_first_review(env, kind)
     else:
         item, where = env.start_approved_task(
             (env.repo.path / "plans/SHOP.md").read_text("utf-8"))
-    proof = "Proof list:\n- Greeting, including returning readers: tests/test_greeting.py::test_returning\n- Empty greeting: missing"
+    proof = "Proof list:\n- Greeting, including returning readers: the greeting check passed\n- Empty greeting: missing"
     env.repo.git("commit", "--allow-empty", "-q", "-m", "List the proof", "-m", proof, cwd=where)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
@@ -86,7 +86,7 @@ def test_2_close_delivers_the_whole_proof_list_to_pr_and_first_review(env, kind)
     assert "Report every missing case you find in this round" in flat(prompt)
     assert proof in body(env.gh_calls("pr", "create")[-1])
     # An empty proof-only commit changes the review input even when the code stays identical.
-    changed = proof.replace("Empty greeting: missing", "Empty greeting: tests/test_greeting.py::test_empty")
+    changed = proof.replace("Empty greeting: missing", "Empty greeting: the empty greeting check passed")
     env.repo.git("commit", "--allow-empty", "-q", "-m", "Complete the proof", "-m", changed, cwd=where)
     assert env.close(item).returncode == 0
     assert len(env.review_calls()) == 2

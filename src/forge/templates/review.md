@@ -73,12 +73,11 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 
 <!-- proof-list -->
 ## Proof list
-The worker's latest commit supplies this list, which Forge copies into the pull request:
+Forge builds this list from the worker's mapping of Done-when items to tests. It names only the
+tests the branch has; close's test run, alongside this review, gives their results in the pull
+request. An item marked `not run` names no test the branch has:
 
 $proof_list
-
-Forge, not the worker, writes the status next to each named test. `not run: no such test` means
-the branch has no such test; a test in the branch gets its result from close's test run.
 
 On every round, check the whole list, not a sample. Check every entry against the code and its
 named proof, including every Done-when detail; compare it with the covered items above so an
