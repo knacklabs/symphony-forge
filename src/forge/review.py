@@ -594,7 +594,8 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
 
 
 # A test file a proof list names, with an optional pytest node after it.
-TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*|[\w-]+_test)\.py(?:::[^\s,;]+)?")
+TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*\.py|[\w-]+_test\.\w+|"
+                       r"[\w.-]+\.(?:test|spec)\.[jt]sx?)(?:::[^\s,;]+)?")
 
 
 def _named(top: Path, base: str) -> list[str]:
@@ -614,10 +615,9 @@ def _ran(name: str, node: str) -> bool:
 def proof_list(top: Path, base: str, report: str | None = None) -> str:
     """The proof list close writes from the worker's mapping of Done-when items to tests. Each item
     names only the tests close's run (`report`) ran, with their results, else `not run`. Before the
-    run it names only the tests the branch has. A runner without single test results gives the
-    command and its result instead."""
+    run it names only the tests the branch has. A test close cannot match to its run's pytest
+    results is `not checked`."""
     ran = re.findall(r"^(PASSED|FAILED|ERROR) (\S+)", report or "", re.M)
-    single = report is None or "short test summary info" in report
     lines = []
     for line in commit_paragraph(top, base, "Proof list:").splitlines():
         names = [found[0].rstrip(".:)") for found in TEST_NAME.finditer(line)]
@@ -627,19 +627,19 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         proven = []
         for name in names:
             path, _, test = name.partition("::")
-            function = re.sub(r"\[.*", "", test.rsplit("::", 1)[-1])
+            case = re.sub(r"\[.*", "", test.rsplit("::", 1)[-1])
             source = (top / path).read_text("utf-8", "replace") if (top / path).is_file() else ""
-            if not source or function and not re.search(
-                    rf"^\s*(?:async\s+)?(?:def|class) {re.escape(function)}\b", source, re.M):
+            if not source or case and not re.search(rf"\b{re.escape(case)}\b", source):
                 continue
             outcomes = {outcome for outcome, node in ran if _ran(name, node)}
             if report is None:
                 proven.append(f"{name} (in the branch; close's test run gives its result)")
+            elif not path.endswith(".py") or "short test summary info" not in report:
+                proven.append(f"{name} (not checked)")
             elif outcomes:
                 proven.append(f"{name} ({'failed' if outcomes - {'PASSED'} else 'passed'} in close's run)")
         label = line[:line.find(names[0])].rstrip(" :")
-        proof = ", ".join(proven) if single else report.splitlines()[0]
-        lines.append(f"{label}: {proof or 'not run'}")
+        lines.append(f"{label}: {', '.join(proven) or 'not run'}")
     return "\n".join(lines)
 
 
