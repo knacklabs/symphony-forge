@@ -16,23 +16,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "210319fbeb55beabd85d827c540f28f1ca80401541e26845f45cc66be9b01c2f",
-    "changed": "c205b5e7a59577cecdec78f93b672659606e785f8545fed54c469fec2ba06048",
-    "commit": "13c073d3b9c969c61b8c494e4a0d1f9cd4fd433b",
+    "branch_diff": "a512344dfc8a1f999676d983efdc5125975f64a82cea3667cef2108ea8f6271a",
+    "changed": "74fd2f71beb3c5a45382f00e371af5d430cf6426380074754ea756234d96076f",
+    "commit": "3859b456c57f26e19f9364a8fa8fbf25022c259c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. When the review is active, the test allows the board row to say \u201cReview running,\u201d but its `forge next` assertion still searches only for tests running or \u201creview running.\u201d `src/forge/nextstep.py:53` instead prints \u201cThe fix ... is being reviewed,\u201d and lines 690\u2013693 suppress the tests-running message while a review is active. The assertion at line 63 therefore fails in the scenario this fix targets. The test does not synchronize on review startup, so the reported passes can exercise only the no-review path.",
+        "body": "Raise: Test. The new assertion permits a review worker but never requires one. The two parameterized cases are client histories, not review states. `accepted()` waits only for the client test to start, while the stub reviewer can finish before `_board()` reads the row. Both cases can therefore pass without exercising the review state that caused the Linux failure; restoring the old no-worker assertion would also pass in those runs. The proof list's two passing cases do not establish active-review coverage.",
         "file": "tests/test_board_tests_after_worker.py",
-        "line": 63,
+        "line": 54,
         "priority": "P1",
-        "title": "Not done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the"
+        "title": "Not done: board test does not exercise an active review alongside tests"
       }
     ],
-    "id": "7a0f0518-3a25-492d-a001-085dc1ae9122",
+    "id": "05a65552-b83d-45d7-9242-e7e01ef8cc54",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T05:31:38.884290+00:00",
@@ -45,7 +45,16 @@
     {
       "at": "2026-10-12T05:36:58.906210+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T05:39:24.619724+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-12T05:39:24.629334+00:00",
+    "file": "tests/test_board_tests_after_worker.py",
+    "wait_id": "95985b0e-8802-4923-8950-82ea1e001b25"
+  },
   "why": "Main's full test run fails on Linux: a board test expects no worker while close's tests run, but the review now runs alongside the tests and shows on the board"
 }
