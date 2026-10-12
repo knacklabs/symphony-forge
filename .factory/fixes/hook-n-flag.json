@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T10:02:44.837769+00:00",
+      "because": "Each review round found a new shell trick in unquoted heredocs (escaped substitutions, line-continued delimiters), one of them a hook bypass; scanning unquoted heredoc bodies in full closes the bypass, and a quoted delimiter is the documented way to write a message that mentions -n",
+      "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line"
+    }
+  ],
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/hook-n-flag",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "60e93db45b593bb0de6dfebf2bc94b289a115b49"
   },
-  "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line",
+  "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line or that sits in a quoted heredoc message (<<'EOF') given to git commit -F -; an unquoted heredoc message is scanned in full, so it fails closed",
   "flagged": [
     "src/forge/deny.py",
     "tests/test_deny.py"
