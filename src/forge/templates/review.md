@@ -75,7 +75,7 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 ## Proof list
 Forge builds this list from the worker's mapping of Done-when items to tests. It names only the
 tests the branch has; close's test run, alongside this review, gives their results in the pull
-request. An item marked `not run` names no test the branch has; a test marked `not checked`
+request. An item marked `not run` names no test the branch has; a line marked `not checked`
 has no result close could match, so judge it by reading it:
 
 $proof_list

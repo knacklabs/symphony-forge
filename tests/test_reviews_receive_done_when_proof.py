@@ -14,6 +14,11 @@ NAMES_RULE = "Name each test by its pytest node ID or file and write no test res
 REVIEW_RULE = "Check every entry against the code and its named proof, including every Done-when detail"
 
 
+def checked(proof):
+    """The list close writes: a line it cannot match to its test run is marked not checked."""
+    return "\n".join(line if line == "Proof list:" else f"{line} (not checked)" for line in proof.splitlines())
+
+
 def flat(text):
     return " ".join(text.split())
 
@@ -81,19 +86,19 @@ def test_2_close_delivers_the_whole_proof_list_to_pr_and_first_review(env, kind)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 1
     prompt = env.prompt()
-    assert proof in prompt
+    assert checked(proof) in prompt
     assert REVIEW_RULE in flat(prompt)
     assert "Report every missing case you find in this round" in flat(prompt)
-    assert proof in body(env.gh_calls("pr", "create")[-1])
+    assert checked(proof) in body(env.gh_calls("pr", "create")[-1])
     # An empty proof-only commit changes the review input even when the code stays identical.
     changed = proof.replace("Empty greeting: missing", "Empty greeting: the empty greeting check passed")
     env.repo.git("commit", "--allow-empty", "-q", "-m", "Complete the proof", "-m", changed, cwd=where)
     assert env.close(item).returncode == 0
     assert len(env.review_calls()) == 2
-    assert changed in env.prompt()
+    assert checked(changed) in env.prompt()
     # A later worker commit must not inherit an older round's list.
     env.repo.git("commit", "--allow-empty", "-q", "-m", "Work without proof", cwd=where)
     assert env.close(item).returncode == 0
     assert len(env.review_calls()) == 3
-    assert changed not in env.prompt()
+    assert checked(changed) not in env.prompt()
     assert "missing list or entry is a P1" in env.prompt()

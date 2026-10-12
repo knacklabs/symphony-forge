@@ -242,7 +242,7 @@ conventions apply only to a repo on the default stack.
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
 cover and every detail next to the test or check that proves it, or marked `missing`. Name each
 test by its pytest node ID or file and write no test results: close checks each named test against
-its own run and writes the list with only the tests it ran and their results, and marks a test it cannot match to its run's results, such as a JavaScript test, `not checked`. Name any other check with
+its own run and writes the list with only the tests it ran and their results, and marks every line it cannot match to its run's per-test results `not checked`. Name any other check with
 its result. Every commit's `Proof list:` carries
 the previous one forward and adds to it, even in a small repair commit; never list only the latest
 change. Forge copies it into the pull request and gives it to

@@ -469,7 +469,10 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
             if done.returncode == 0 and passed:
                 passed.parent.mkdir(exist_ok=True)
-                passed.touch()
+                # The run's per-test results, so a close that skips this run still lists them.
+                passed.write_text("".join(line for line in done.stdout.splitlines(keepends=True)
+                                          if "short test summary info" in line or re.match(
+                                              r"(?:PASSED|FAILED|ERROR) ", line)), "utf-8")
         finally:
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
@@ -594,8 +597,7 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
 
 
 # A test file a proof list names, with an optional pytest node after it.
-TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*\.py|[\w-]+_test\.\w+|"
-                       r"[\w.-]+\.(?:test|spec)\.[jt]sx?)(?:::[^\s,;]+)?")
+TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*|[\w-]+_test)\.py(?:::[^\s,;]+)?")
 
 
 def _named(top: Path, base: str) -> list[str]:
@@ -615,14 +617,19 @@ def _ran(name: str, node: str) -> bool:
 def proof_list(top: Path, base: str, report: str | None = None) -> str:
     """The proof list close writes from the worker's mapping of Done-when items to tests. Each item
     names only the tests close's run (`report`) ran, with their results, else `not run`. Before the
-    run it names only the tests the branch has. A test close cannot match to its run's pytest
-    results is `not checked`."""
+    run it names only the tests the branch has. A line or test close cannot match to its run's
+    pytest results is `not checked`."""
+    command = close_test(top, base)
+    passed = passed_record(top, command) if command else None
+    if passed and passed.is_file():  # a cached passing run's per-test results, if its runner lists any
+        report = passed.read_text("utf-8")
     ran = re.findall(r"^(PASSED|FAILED|ERROR) (\S+)", report or "", re.M)
     lines = []
     for line in commit_paragraph(top, base, "Proof list:").splitlines():
         names = [found[0].rstrip(".:)") for found in TEST_NAME.finditer(line)]
-        if not names:  # a check, `missing` or an outside finding stays as the worker wrote it
-            lines.append(line)
+        if not names:  # close cannot match a line without pytest names to its run
+            lines.append(line if not line.strip() or line.startswith("Proof list:")
+                         else f"{line} (not checked)")
             continue
         proven = []
         for name in names:
