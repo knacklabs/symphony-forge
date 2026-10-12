@@ -68,7 +68,7 @@ jobs:
             {"os":"windows-latest","group":8,"groups":8}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 35 || 20 }}
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 35 || matrix.os == 'macos-latest' && 30 || 20 }}
     steps:
       - uses: actions/checkout@v7
         with:

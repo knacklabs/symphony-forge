@@ -16,6 +16,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SPLIT = " --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration"
 
 
+# On Windows a bare "bash" starts WSL's System32 bash; take the one on PATH (Git's).
+BASH = shutil.which("bash")
+
+
+def bash(*args, **kwargs):
+    assert BASH, "These tests need bash on PATH (Git's bash on Windows)."
+    return subprocess.run([BASH, *args], **kwargs)
+
+
 def jobs(workflow):
     return dict(re.findall(r"^  ([\w-]+):\n(.*?)(?=^  [\w-]+:\n|\Z)", workflow, re.M | re.S))
 
@@ -23,7 +32,7 @@ def jobs(workflow):
 def gate_passes(gate, result):
     # Run the required check's own step with what GitHub reports for the group jobs.
     step = re.search(r"run: (.+)$", gate, re.M)[1]
-    return subprocess.run(["bash", "-c", step], env={"GROUPS": result}).returncode == 0
+    return bash("-c", step, env={"GROUPS": result}).returncode == 0
 
 
 def check_gate(workflow):
@@ -101,8 +110,8 @@ def test_2_small_split_suite_passes_without_hiding_errors(repo):
     command = command.replace("pytest", shlex.quote(sys.executable) + " -m pytest")
 
     def run(group):
-        return subprocess.run(["bash", "-e", "-c", command.replace("${{ matrix.group }}", str(group))],
-                              cwd=repo.path, capture_output=True, text=True)
+        return bash("-e", "-c", command.replace("${{ matrix.group }}", str(group)),
+                    cwd=repo.path, capture_output=True, text=True)
 
     for group in range(1, 7):
         result = run(group)

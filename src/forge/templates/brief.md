@@ -245,7 +245,8 @@ test's file and case name, or the named check and its result. Every commit's `Pr
 the previous one forward and adds to it, even in a small repair commit; never list only the latest
 change. Forge copies it into the pull request and gives it to
 the reviewer. The first review checks every entry and reports every missing case it finds in
-that one round.
+that one round. When a commit message mentions -n or --no-verify, give it from a file or a quoted
+heredoc (`git commit -F - <<'EOF'`); the shell-command guard checks an unquoted one as commands.
 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
