@@ -726,6 +726,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     status = status or "started"
     if statuses is not None:
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
+    if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
+        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+        return [f"{label} was started by {starter} and runs on their machine."]
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         if "question" in stop:

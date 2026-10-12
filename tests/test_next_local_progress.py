@@ -205,7 +205,10 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
         assert row["stage"] == "checks failed" and row["status"] == "Checks failed"
         assert row["pr"]["checks"] == "fail" and row["pr"]["failures"]
         assert any(event["kind"] == "checks_failed" for event in row["occurrences"])
-        assert row["next"]["command"] == "forge work page"
+        # With no checkout here, the work runs on the machine of whoever started it.
+        assert row["next"]["command"] == ("forge work page" if local == "behind" else None)
+        if local == "remote-only":
+            assert row["next"]["line"].endswith("was started by Forge Test and runs on their machine.")
     assert "Checks failed" in text
     if local == "behind":
         plain = repo.forge("next")

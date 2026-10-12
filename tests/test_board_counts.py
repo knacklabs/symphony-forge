@@ -225,8 +225,11 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     # A part and a fix started on A with no pull request yet are started here too, never offered.
     assert env.repo.git("ls-remote", "origin", "refs/heads/task/SHOP-T3", "refs/heads/fix/keep").count("\n") == 1
     assert "forge task start SHOP/T3" not in following.stdout
-    assert [line for line in following.stdout.splitlines() if "SHOP/T3" in line], following.stdout
-    assert [line for line in following.stdout.splitlines() if "The fix keep" in line], following.stdout
+    assert "SHOP/T3 was started by Forge Test and runs on their machine." in following.stdout
+    assert "The fix keep was started by Forge Test and runs on their machine." in following.stdout
+    assert "forge work SHOP/T3" not in following.stdout and "forge work keep" not in following.stdout
+    there = rows(json.loads(env.repo.forge("next", "--json").stdout))
+    assert there["SHOP/T3"]["next"]["command"] is None and there["keep"]["next"]["command"] is None
 
     # In a human-merge repo the same part gives the human-merge line.
     env.repo.path = machine_a
