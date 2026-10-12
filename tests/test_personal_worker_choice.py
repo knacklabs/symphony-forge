@@ -159,5 +159,6 @@ def test_3_new_and_upgraded_repos_ignore_the_local_file_and_doctor_names_its_set
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     _stub_forge(tmp_path, monkeypatch)
     checked = repo.forge("doctor", cwd=client)
-    assert ("- Note: from forge.local.toml: tools = claude, workers = claude, models.build; "
-            "built-in default: models.fix; the rest from forge.toml.") in checked.stdout, checked.stdout + checked.stderr
+    assert ("- Note: forge.local.toml overrides tools = claude, workers = claude, "
+            "models.build = claude-sonnet-5 at medium effort, models.fix.codex = gpt-6-sol at low effort."
+            ) in checked.stdout, checked.stdout + checked.stderr

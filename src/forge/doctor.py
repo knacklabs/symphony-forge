@@ -431,13 +431,13 @@ def doctor(args: argparse.Namespace) -> int:
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
     if local := cfg.get("local"):
-        kinds = {kind: repo.model_source(cfg, kind, repo.worker_family(cfg, kind == "design"))
-                 for kind in local.get("models", {})}
-        defaults = [f"models.{kind}" for kind, source in kinds.items() if source != repo.LOCAL]
-        print(f"- Note: from {repo.LOCAL}: " + ", ".join(
+        entries = [(kind, table) if "model" in table else (f"{kind}.{tool}", entry)
+                   for kind, table in local.get("models", {}).items()
+                   for tool, entry in ([("", table)] if "model" in table else table.items())]
+        print(f"- Note: {repo.LOCAL} overrides " + ", ".join(
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
-            + [f"models.{kind}" for kind, source in kinds.items() if source == repo.LOCAL])
-            + (f"; built-in default: {', '.join(defaults)}" if defaults else "") + "; the rest from forge.toml.")
+            + [f"models.{name} = {entry['model']}" + (f" at {entry['effort']} effort" if "effort" in entry else "")
+               for name, entry in entries]) + ".")
     if "review" in cfg.get("models", {}):
         print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
