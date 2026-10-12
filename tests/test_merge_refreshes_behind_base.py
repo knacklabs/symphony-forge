@@ -10,7 +10,7 @@ import pytest
 from conftest import GH_STUB, _install, patient
 from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
-from test_running_commands_follow_changed_forge_pin import _continued, _earlier_release
+from test_running_commands_follow_changed_forge_pin import _earlier_release
 
 STORY = "merge-behind-base"
 
@@ -213,9 +213,9 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     done = env.repo.forge(command, item, cwd=where)
 
     attempts = env.gh_calls("pr", "merge")
-    resumed = [_continued(env, entry, where)[1] for line in
+    resumed = [entry["args"][5:] for line in
                (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()
-               if (entry := json.loads(line))["args"][:1] == ["tool"]]
+               if (entry := json.loads(line))["args"][5] in {"close", "merge", "land"}]
     # Merge must finish the selected release's close first; land resumes its existing close loop.
     expected = [["land", item]] if command == "land" else (
         [["close", item]] if failing_test else [["close", item], ["merge", item]])
