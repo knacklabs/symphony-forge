@@ -1130,8 +1130,8 @@
       "text": "Not done: A pull request's title is the first sentence of the item's why",
       "from": "blocking",
       "item": "pr-title-whole-sentence",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
