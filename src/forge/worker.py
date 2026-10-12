@@ -89,10 +89,7 @@ def work(args: argparse.Namespace) -> None:
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     from forge import time_records
-    # Review and body files can survive a failed first publication; only success needs a refresh.
-    published = (repo.ready_path(item, top).exists() or any(
-        event.get("item") == item and event.get("event") == "pull request published"
-        for event in time_records.read(top, "events")))
+    published = is_published(top, item)
     if match["task"]:
         doc = f"plans/{match['key']}.md"
         story._parsed(story._text(top / doc), doc)  # pyright: ignore[reportPrivateUsage]
@@ -332,6 +329,14 @@ def work(args: argparse.Namespace) -> None:
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+
+
+def is_published(top: Path, item: str) -> bool:
+    """Review and body files can survive a failed first publication; only success needs a refresh."""
+    from forge import time_records
+    return repo.ready_path(item, top).exists() or any(
+        event.get("item") == item and event.get("event") == "pull request published"
+        for event in time_records.read(top, "events"))
 
 
 def questions(*answers: str) -> str:

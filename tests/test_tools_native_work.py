@@ -2,11 +2,14 @@
 import json
 import os
 import re
+import shutil
 from pathlib import Path
 
 import pytest
 
 from conftest import ROOT, _install
+from test_conflicting_pull_requests_stop_check_waits import _publish_default
+from test_setup import _fresh_client
 from test_task import story
 from test_tools_session_hold import Session
 from test_worker import calls, install_claude
@@ -20,8 +23,15 @@ MODELS = {"claude": ('[models.build]\nmodel = "sonnet"\neffort = "medium"\n'
                     '[models.lite]\nmodel = "gpt-6-mini"\neffort = "medium"\n')}
 
 
+@pytest.mark.parametrize("history", ["new", "adopted"])
 @pytest.mark.parametrize("tool", ["claude", "codex"])
-def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path, tool):
+def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path, tool, history):
+    if history == "new":  # a client repo made by forge init
+        made = _fresh_client(repo, gh, tmp_path)
+        assert made[1].returncode == 0, made[1].stdout + made[1].stderr
+        repo.path = made[0]
+    else:  # a client adopted on an earlier release, moved to this one
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
     claude_log = install_claude(repo)
     _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / (
@@ -34,31 +44,46 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         monkeypatch.setenv("CLAUDECODE", "1")
     version = repo.forge("--version").stdout.split()[-1]
     setting = 'workers = "claude"' if tool == "claude" else 'tools = "codex"\nworkers = "claude"'
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{setting}\n'
+    repo.git("switch", "-qc", "fix/settings")
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{setting}\n'
                              f'test = "pytest -q"\n{MODELS[tool]}')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "BOARD"}]}))
+    repo.write(".factory/fixes/settings.json", json.dumps({
+        "kind": "fix", "branch": "fix/settings", "status": "working",
+        "why": "Choose the tools", "done_when": "forge.toml names the tools"}))
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Pin Forge")
-    repo.git("push", "-q", "origin", "main")
+    repo.git("switch", "-q", "main")
+    repo.git("merge", "-q", "--ff-only", "fix/settings")
+    _publish_default(repo, Path(repo.git("remote", "get-url", "origin")).as_posix())
     story(repo)
     repo.git("worktree", "add", "-q", str(tmp_path / "story"), "story/BOARD")  # next reads it
     folder = repo.path.parent / f"{repo.path.name}-BOARD-HELP"
     home = tmp_path / "codex-home"
     home.mkdir()
-    (home / "config.toml").write_text("".join(
-        f'[projects.{json.dumps(str(path))}]\ntrust_level = "trusted"\n'
-        for path in (folder, repo.path.parent / f"{repo.path.name}-BOARD-PAGE")), "utf-8")
     monkeypatch.setenv("CODEX_HOME", str(home))
     assert repo.forge("task", "start", "BOARD/HELP").returncode == 0
     host = Session(repo, tmp_path / "host", tool + "-session")
     try:
+        if tool == "codex":
+            # A native Codex round still needs Codex to trust the project, for the session's hooks.
+            head = repo.git("rev-parse", "HEAD", cwd=folder)
+            untrusted = host.forge("work", "BOARD/HELP")
+            assert untrusted.returncode == 1 and "Codex doesn't trust this project" in untrusted.stderr
+            assert repo.git("rev-parse", "HEAD", cwd=folder) == head
+        (home / "config.toml").write_text("".join(
+            f'[projects.{json.dumps(str(path))}]\ntrust_level = "trusted"\n'
+            for path in (folder, repo.path.parent / f"{repo.path.name}-BOARD-PAGE")), "utf-8")
+
         def lane(item):
             shown = repo.forge("lanes", "--json")
             return [entry for entry in json.loads(shown.stdout)["agents"]["entries"]
                     if entry["item"] == item]
 
-        def handout(item, role, cwd=None):
-            given = host.forge("work", item, cwd=cwd)
+        def handout(item, role, *note, cwd=None):
+            given = host.forge("work", item, *note, cwd=cwd)
             assert given.returncode == 0, given.stdout + given.stderr
             out = given.stdout
             checkout = re.search(rf"background {role} subagent of this session, working in (.+)\.\n",
@@ -81,23 +106,31 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert "Start a new worker subagent with" in given.stdout
         assert calls(claude_log) == [] and not (repo.bin / "codex-app-server.jsonl").exists()
         assert "subagent" in repo.forge("next").stdout
+        board = repo.forge("board", "--json")
+        assert board.returncode == 0, board.stdout + board.stderr
+        [part] = [child for entry in json.loads(board.stdout)["items"]
+                  for child in entry.get("children", []) if "BOARD/HELP" in (child.get("key"), child.get("id"))]
+        assert part["activity"] == {"status": "running", "action": "work"}
         head = repo.git("rev-parse", "HEAD", cwd=folder)
         busy = host.forge("work", "BOARD/HELP")
         assert busy.returncode == 1 and repo.git("rev-parse", "HEAD", cwd=folder) == head
 
-        # Uncommitted work gets the commit nudge and keeps the place; the second hand-back frees it.
-        (folder / "web").mkdir()
+        # Uncommitted work gets the commit nudge and keeps the place; a second hand-back with the
+        # work still uncommitted warns and frees it.
+        (folder / "web").mkdir(exist_ok=True)
         (folder / "web/help.py").write_text("WORDS = {}\n", "utf-8")
         nudged = handback("BOARD/HELP", number, "Built it.")
         assert nudged.returncode == 0, nudged.stdout + nudged.stderr
         assert "Send this to subagent w1, then hand back again:" in nudged.stdout
         assert "Commit your work on this branch first." in nudged.stdout
         assert lane("BOARD/HELP")
+        done = handback("BOARD/HELP", number, "Still not committed.")
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert "Warning: the worker ended its round with changes left uncommitted" in done.stdout
+        assert "web/help.py" in done.stdout
+        assert lane("BOARD/HELP") == []
         repo.git("add", "-A", cwd=folder)
         repo.git("commit", "-q", "-m", "Add the words", cwd=folder)
-        done = handback("BOARD/HELP", number, "Committed.")
-        assert done.returncode == 0, done.stdout + done.stderr
-        assert lane("BOARD/HELP") == []
         timings = (repo.path / ".git/forge/timings.jsonl").read_text("utf-8")
         assert '"item": "BOARD/HELP", "round": 1, "step": "worker round"' in timings
         events = [json.loads(line) for line in
@@ -112,7 +145,9 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         given, _, number = handout("BOARD/HELP", "worker")
         model = "sonnet, medium" if tool == "claude" else "gpt-6-sol, high"
         assert f"({model})" in given.stdout
-        assert "Continue subagent w1 with: Read " in given.stdout
+        short = Path(re.search(r"Continue subagent w1 with: Read (.+) and follow it", given.stdout)[1])
+        assert "The earlier brief in this conversation still applies." in short.read_text("utf-8")
+        assert str(folder.resolve().as_posix()) in short.read_text("utf-8")
         assert "If this session can't reach it, start a new worker subagent with" in given.stdout
         settings = (folder / "forge.toml").read_text("utf-8")
         (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")
@@ -126,11 +161,22 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         waiting = host.forge("work", "BOARD/HELP")
         assert waiting.returncode == 1 and "Which colour?" in waiting.stderr
 
+        # A subagent that ends with no message fails its round and frees the place.
+        _, _, number = handout("BOARD/HELP", "worker", "--note", "Blue.")
+        empty = handback("BOARD/HELP", number, "")
+        assert empty.returncode == 1
+        assert "ended with no message, so Forge recorded the round as failed" in empty.stderr
+        assert lane("BOARD/HELP") == []
+        ends = [json.loads(line) for line in
+                (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]
+        assert [e["outcome"] for e in ends if e["event"] == "run end"
+                and e["item"] == "BOARD/HELP"][-1] == "failed"
+
         if tool == "codex":
             # With one tool and no session open, nothing runs.
             monkeypatch.delenv("CODEX_THREAD_ID")
             head = repo.git("rev-parse", "HEAD", cwd=folder)
-            refused = repo.forge("work", "BOARD/HELP", "--note", "Blue.")
+            refused = repo.forge("work", "BOARD/HELP")
             assert refused.returncode == 1
             assert "none is open here, so nothing ran" in refused.stderr
             assert repo.git("rev-parse", "HEAD", cwd=folder) == head
