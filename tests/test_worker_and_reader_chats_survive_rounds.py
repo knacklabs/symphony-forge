@@ -802,11 +802,8 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     if change == "ambiguous":
         copied = tmp_path / "copied spec owner"
         repo.git("worktree", "add", "-qb", "fix/copied-spec", str(copied), branch)
-        upgrade, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
-        assert refused.returncode == 1
-        assert refused.stderr.endswith(
-            "More than one worktree contains docs/specs/invoices.md, so sync cannot locate its earlier reader chat.\n"
-            "Next: run forge read invoices in its owning checkout, then forge sync\n")
+        upgrade, left = _sync_elsewhere(repo, tmp_path)
+        assert "Left invoices's reader chat on this machine" in left.stdout
         selected = repo.forge("read", "invoices", cwd=relocated)
         assert selected.returncode == 0, selected.stdout + selected.stderr
         assert _reader_chat(reader, resumed=True) == first

@@ -93,13 +93,9 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
         threads[first].pop("gitInfo")
         store.write_text(json.dumps(threads), encoding="utf-8")
 
-    upgrade, synced = _sync_elsewhere(repo, tmp_path, expect_success=not missing_origin)
+    upgrade, synced = _sync_elsewhere(repo, tmp_path)
     if missing_origin:
-        assert synced.returncode == 1, synced.stdout + synced.stderr
-        assert synced.stderr.endswith(
-            "Codex has no starting commit for the earlier reader chat of docs/specs/invoices.md, "
-            "so sync cannot locate its owner.\n"
-            "Next: run forge read invoices in its owning checkout, then forge sync\n")
+        assert "Left invoices's reader chat on this machine" in synced.stdout
         for ref in (branch, "fix/chat-upgrade"):
             assert repo.git("ls-tree", "--name-only", ref, "--", "docs/specs/invoices.read.md") == ""
         return

@@ -72,10 +72,6 @@ FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
 REFUSALS = {
     "chat_dirty": ("The chat record at {path} has uncommitted changes, so sync left it alone.",
                    "commit or undo those changes, then forge sync"),
-    "chat_owner": ("More than one worktree contains docs/specs/{item}.md, so sync cannot locate its earlier reader chat.",
-                   "run forge read {item} in its owning checkout, then forge sync"),
-    "chat_origin": ("Codex has no starting commit for the earlier reader chat of docs/specs/{item}.md, so sync cannot locate its owner.",
-                    "run forge read {item} in its owning checkout, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
                   "no Codex turn here.", "forge doctor"),
@@ -279,7 +275,9 @@ def preserve_chats(top: Path) -> None:
                     begun = run(top, item, "Grill", "", "", "read-only",
                                 binding["conversation"], read=True, echo=False).get("start")
                     if not begun:
-                        repo.refuse(REFUSALS["chat_origin"], item=item)
+                        print(f"Left {item}'s reader chat on this machine: Codex has no starting "
+                              f"commit for it, so forge read {item} in the branch you build keeps it.")
+                        continue
                 ancestry = repo.run("git", "merge-base", "--is-ancestor", begun,
                                     repo.default_branch(top), cwd=top).returncode if begun else None
                 if (fields.get("conversation") or fields.get("session")) and ancestry == 0:
@@ -296,7 +294,10 @@ def preserve_chats(top: Path) -> None:
                             and (text := story.show(top, name, rel)) is not None and (name in owning or text != landed
                                 or (story.show(top, name, notes) or "") != landed_notes)]
                 if len(matches) > 1:
-                    repo.refuse(REFUSALS["chat_owner"], item=item)
+                    # The record stays on this machine, so a later forge read still resumes it.
+                    print(f"Left {item}'s reader chat on this machine: more than one worktree holds "
+                          f"docs/specs/{item}.md, so forge read {item} in the branch you build keeps it.")
+                    continue
                 branch = matches[0] if matches else ""
                 owner = trees.get(branch)
                 if branch in owning and not (

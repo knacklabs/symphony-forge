@@ -999,10 +999,9 @@ worktrees and workers on `forge/` branches. A landed spec's binding travels in t
 Sync never waits for other items' runs: it leaves the chat of an item whose `forge work` or
 `forge read` is running to that run, says so in one line, and refreshes everything else. A run
 on an earlier release doesn't save its own chat, so sync stops until it finishes.
-If several worktrees contain a moved spec and its reader notes, run `forge read <slug>` in its
-owning checkout, then sync again so Forge can preserve that binding without guessing the owner.
-For a log-only Codex spec read, sync asks Codex for the chat's starting commit; if Codex has none,
-run the read in its owning checkout before retrying sync.
+If several worktrees contain a moved spec, or Codex has no starting commit for a log-only spec
+read, sync can't tell which branch owns that reader chat. It leaves the chat on this machine, says
+so in one line and still writes every file; `forge read <slug>` in the branch you build resumes it.
 Keep `.git/forge` until the upgrade finishes. If those chat records have
 uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying.
 
