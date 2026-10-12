@@ -49,7 +49,9 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count
                    if line.strip().startswith("uv run "))
     command = re.sub(r"\$\{\{ matrix.os == '([^']+)' && (\d+) \|\| (\d+) \}\}",
                      lambda m: m[2] if runner == m[1] else m[3], command)
-    per_test = int(re.search(r"--timeout=(\d+)", command).group(1))
+    # Windows runners start processes slowly enough that a test needs over two minutes there.
+    stacks, per_test = (270, 300) if runner == "windows-latest" else (120, 150)
+    assert f"-o faulthandler_timeout={stacks} --timeout={per_test} " in command
     assert per_test < min(budgets) * 60
     command = command.replace("${{ matrix.groups }}", str(count)).replace(
         "${{ matrix.group }}", "1")
