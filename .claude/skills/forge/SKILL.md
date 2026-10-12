@@ -975,7 +975,10 @@ Codex app-server turns use the selected model's Fast tier for every fix, from th
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
 Other turns run at normal speed; models without Fast also run normally. Fast uses more of your Codex allowance.
 The optional `codex_fast` setting in `forge.toml` defaults to `"needed"`; choose `"off"` to disable
-Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy. New repos
+Fast or `"always"` to request it on every Codex turn. `forge doctor` shows the policy and whether the last Codex turn ran
+with Fast. When Fast is wanted but the model does not offer it, the run's first line says so.
+Every turn, including capacity retries, records the
+requested tier and the tier Codex reports; an unreported tier stays unknown. New repos
 get the default at init; existing repos get it on upgrade without adding a setting, and sync
 refreshes both host guides. The upgrade's sync announces the default in one line.
 
