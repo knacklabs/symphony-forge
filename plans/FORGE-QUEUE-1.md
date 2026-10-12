@@ -6,11 +6,14 @@
 
 - One command, `forge land --all`, takes every change that is ready or in close. It closes and
   merges them for you. You or the coordinator no longer run a hand-made merge lane.
-- The run takes the oldest change first. It runs several changes at once, up to the agent places
-  this machine has, the same count the machine's agent line uses.
+- The run starts the oldest change first. It runs several changes at once, up to the agent places
+  this machine has, the same count the machine's agent line uses. Each change merges when it
+  passes, so a newer change with faster checks can merge before an older one.
+- Only one such run works in a repo at a time. A second run stops and says so.
 - Two changes that edit the same file do not close at the same time. The newer one waits until the
-  older one merges or stops. Then it closes once, on top of the newer main. A merge no longer
-  forces a fresh review round on a change that was already under review.
+  older one merges or stops. Then it closes once, on top of the newer main, so the wait costs it
+  no second review. A change that is already ready never waits. Forge's own record files, such as
+  the spotted-problems list, do not count as the same file.
 - A failed check whose log names none of the change's own files runs again once by itself. A
   second failure stops that change.
 - When a change needs a worker or you, the run stops only that change. It says why and gives the
@@ -33,8 +36,8 @@ lacks the queue.
 
 ## Done when
 
-1. **One land command takes every change that is ready or in close, and closes and merges them oldest first, several at a time, up to the machine's agent places.**
-2. **A change that edits a file an older change in the run also edits waits until that older change merges or stops, then closes once on top of the newer main.**
+1. **One land command takes every change that is ready or in close, starts them oldest first, several at a time up to the machine's agent places, and merges each one when it passes; only one such run works in a repo at a time.**
+2. **A change not yet ready that edits a file an older change in the run also edits waits until that older change merges or stops, then closes once on top of the newer main.**
 3. **A failed check whose log names none of the change's own files runs again once by itself, and a second failure stops that change.**
 4. **When a change needs a worker or the owner, the run stops only that change, names why and the next step, goes on with the others, never answers for the owner, and lists that change under "Needs you" in its final summary.**
 5. **In a repo where a human merges, the run closes every change, merges nothing, and ends with the ready changes listed oldest first with their pull request links.**
@@ -74,9 +77,18 @@ diffs.
 **The shape.** `forge land --all` reuses `land.land` for each change; it adds a queue in front of
 it and nothing else. In `src/forge/land.py`:
 - The command's `item` argument becomes optional (`nargs="?"`, as `forge stop` does) and `--all`
-  is added; exactly one of the two is given, else refuse with the existing `bad_item` entry. The
-  `COMMANDS` listing row names both forms. No new command: principle 6 keeps the command count
-  fixed.
+  is added; exactly one of the two is given, else refuse with a new entry that names both forms:
+  "Give one change or --all, not both and not neither." with next action
+  "forge land <item>, or forge land --all". The `COMMANDS` listing row names both forms, and
+  `forge sync` rewrites `docs/commands.md` from it. No new command: principle 6 keeps the command
+  count fixed.
+- The parent works from the main checkout (`machine.main_checkout`), whatever folder it starts in,
+  and runs every git call and every child there, so a merge that removes a change's worktree never
+  removes the parent's folder.
+- One run per repo: the parent holds a lock file in the main checkout's `repo.forge_dir`, with its
+  process id, for the whole run. A second `forge land --all` in the same repo refuses while that
+  process runs: "A land run already works in this repo." with next action "wait for it to end,
+  then forge land --all". A lock whose process no longer runs is taken over.
 - Each change runs as its own child `forge land <item>` process, because close and merge change
   the working folder (`close.py` line 446, `merge.py` line 165), so threads can't share one
   process. The parent prints each child's lines prefixed with the change's name, and one line
@@ -95,33 +107,51 @@ it and nothing else. In `src/forge/land.py`:
 1. Selection, from `story.worktrees(top)` with each branch's state (`repo.read_state`), as
    `close._worktree` reads it: every task and fix whose status is `reviewing`, `fixing`,
    `waiting for checks` or `ready`. Left out, and named in one line each: `started` and `working`
-   (still with a builder), a change whose pull request already merged, and a change with a
-   running or waiting `work` entry in `machine.entries()` (a worker is on it). A change in a
-   review-loop stop (`hotspot`) goes straight to "Needs you" with its stop question, as item 4
-   says. Order: oldest first, by the commit that added the item's state file (the same
-   `git log -1 --diff-filter=A` that `land.land` already runs), ties by name. The run takes the
-   set it finds at start; a change that becomes ready later waits for the next run.
-   Test (one): three fixes in close, with no shared files. The `gh` stub records each call with a
-   time. The run merges all three, oldest first; the number of changes in close at one time never
-   exceeds the agents size from `forge lanes --json`; and with two or more places, two changes are
-   in close at the same time. A fourth fix still `started` is named as left out and is not touched.
+   (still with a builder), a change whose pull request already merged, and a change with any
+   running or waiting entry in `machine.entries()` for this repo and item, of any kind: a worker,
+   a close's review or a test run already works on it, so the run never starts a second close on
+   it. A change in a review-loop stop (`hotspot`) goes straight to "Needs you" with its stop
+   question, as item 4 says. Order: the run starts changes oldest first, by the commit that added
+   the item's state file (the same `git log -1 --diff-filter=A` that `land.land` already runs),
+   ties by name. Each child merges when its own close passes, so merges need not follow that
+   order; only a shared file (item 2) makes one change wait for another. The run takes the set it
+   finds at start; a change that becomes ready later waits for the next run.
+   Test (one), run from one selected fix's worktree: three fixes in close, with no shared files.
+   The `gh` stub records each call with a time. The run starts their closes oldest first and
+   merges all three; the number of changes in close at one time never exceeds the agents size from
+   `forge lanes --json`; with two or more places, two changes are in close at the same time; the
+   run ends normally after the worktree it started in is removed. A fourth fix still `started` is
+   named as left out and is not touched. A second `forge land --all` started while a live process
+   holds the lock refuses with the one-run message and changes nothing.
 2. Changed files of a change: `git diff --name-only -z --no-renames origin/<default>...HEAD` in its
-   worktree, as `land._rerun` reads them. A change is held while any older change in the run that
-   is still queued, held or in close shares a changed file with it. It goes on when each such
-   change merges or stops. The held line names the older change and one shared file. In a repo
-   where a human merges, nothing merges in the run, so the run holds nothing (item 5). Main comes
-   into the released change through close's own rule; with FORGE-MAINONCE-1 that is only on a real
-   clash. Test (one): fixes A (older) and B both edit one file on different lines, and fix C edits
-   another. B starts its close only after A's merge, which the `gh` stub's call log shows; C closes
-   alongside A; B gets one review (one Autoreview call). In a second case A stops on a blocked
-   review: B then closes and merges, and A is listed under "Needs you".
-3. No new retry code: the child's close path already calls `land._rerun` on a red check (once per
-   pushed head, only when every failure is a first-attempt job whose log names none of the
-   change's files and the tests passed here). On a second red the child refuses with fix rounds
-   off, as item 4 says. Test (one): the `gh` stub reports one failed check whose log names no
-   changed file, then green after the re-run: the change merges and the output says
-   "Re-running ... once". A second change whose check fails again after the re-run is listed
-   under "Needs you" with the failed check and `forge land <item>` as its next step.
+   worktree, as `land._rerun` reads them, less Forge's own record files: everything under
+   `.factory/`, the files `sync.files` generates and `docs/commands.md` (the set close's merge step
+   already treats as generated, `close.py` near line 635), and the files with Forge's merge rule
+   (`plans/roadmap.json`, `plans/spotted.json`, and `plans/spotted/` once FORGE-MAINONCE-1 lands).
+   Close writes these during a run and its merge step resolves them by itself, so they never make
+   a change wait. A change whose status is not `ready` is held while any older change in the run
+   that is still queued, held or in close shares a changed file with it. It goes on when each such
+   change merges or stops. A `ready` change is never held: it goes straight to merge, and a change
+   already reviewed keeps today's rules for a new review. The held line names the older change and
+   one shared file. In a repo where a human merges, nothing merges in the run, so the run holds
+   nothing (item 5). Main comes into the released change through close's own rule; with
+   FORGE-MAINONCE-1 that is only on a real clash. Test (one): fixes A (older) and B, neither
+   reviewed yet, both edit one file on different lines, and fix C edits another; A and C also both
+   record a spotted line in close. B starts its close only after A's merge, which the `gh` stub's
+   call log shows; C closes alongside A; B gets one review (one Autoreview call). In a second case
+   A stops on a blocked review: B then closes and merges, and A is listed under "Needs you".
+3. Land's rule stays: the child's close path calls `land._rerun` on a red check (once per pushed
+   head, only when every failure is a first-attempt job whose log names none of the change's
+   files and the tests passed here). One change: "the tests passed here" counts a passed record
+   (`review.passed_record`) for either `test` or the command close itself ran this round
+   (`fast_test` with its base filled in, as `review.close_test` builds it), since close records
+   only the command it ran. Today `_rerun` (`land.py` line 140) checks `test` alone, so a repo with
+   `fast_test` never re-runs. On a second red the child refuses with fix rounds off, as item 4
+   says. Test (one), in a repo whose `fast_test` differs from `test`: the `gh` stub reports one
+   failed check whose log names no changed file, then green after the re-run: the change merges
+   and the output says "Re-running ... once". A second change whose check fails again after the
+   re-run is listed under "Needs you" with the failed check and `forge land <item>` as its next
+   step.
 4. Stops: a child that ends with a refusal stops only its change. The parent keeps the refusal's
    problem and next action as the reason, and releases the changes held behind it. A blocked
    review, failing tests or failing checks give `forge land <item>` (fix rounds). A review-loop
@@ -146,8 +176,8 @@ it and nothing else. In `src/forge/land.py`:
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| QUEUE | The land queue | `forge land --all`: selection, oldest-first order, children up to the agent places, the overlap hold, fix rounds off with stops and next steps, the final summary; the guide's land row and paragraph | 1, 2, 4 | `src/forge/land.py`, `src/forge/templates/skill.md`, `docs/guide.md`, `.claude/skills/forge/`, `.codex/skills/forge/` (regenerated by `forge sync`) | `tests/test_queue_land_all.py` (`test_1`, `test_2`, `test_4`) | | no | |
-| HUMAN | Human merges and retries | The human-merge run: no holds, no merges, the ready list oldest first with links; the proof that a flaky check re-runs once in the run; the guide's line on both | 3, 5 | `src/forge/land.py`, `src/forge/templates/skill.md`, `docs/guide.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_queue_land_all.py` (`test_3`, `test_5`) | QUEUE | no | |
+| QUEUE | The land queue | `forge land --all`: one run per repo from the main checkout, selection, oldest-first starts, children up to the agent places, the overlap hold, fix rounds off with stops and next steps, the final summary; the guide's land row and paragraph | 1, 2, 4 | `src/forge/land.py`, `src/forge/templates/skill.md`, `docs/guide.md`, `docs/commands.md`, `.claude/skills/forge/`, `.codex/skills/forge/` (the last three regenerated by `forge sync`) | `tests/test_queue_land_all.py` (`test_1`, `test_2`, `test_4`) | | no | |
+| HUMAN | Human merges and retries | The human-merge run: no holds, no merges, the ready list oldest first with links; the proof that a flaky check re-runs once in the run; the guide's line on both | 3, 5 | `src/forge/land.py`, `src/forge/templates/skill.md`, `docs/guide.md`, `docs/commands.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_queue_land_all.py` (`test_3`, `test_5`) | QUEUE | no | |
 
 New moving parts: none
 
