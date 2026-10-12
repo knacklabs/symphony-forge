@@ -19,7 +19,8 @@ STORY = "stuck-worker-asks"
 
 # The repo's test commands: pytest naming the same test every run, pytest failing test_a once
 # then test_b, Jest with the same failure but a different duration, Jest failing a different
-# test on each run, and Jest or unittest failing A and B once, then B and C.
+# test on each run, Jest or unittest failing A and B once, then B and C, and a summary with no
+# failed test named.
 SUITES = {
     "pytest same": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
     "a then b": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
@@ -38,6 +39,7 @@ SUITES = {
                             'run.write_text("x")\n'
                             'print("FAIL: test_a (t.T)\\nFAIL: test_b (t.T)" if first else '
                             '"FAIL: test_b (t.T)\\nERROR: test_c (t.T)")\nraise SystemExit(1)\n'),
+    "summary only": 'print("FAILED (failures=1)")\nraise SystemExit(1)\n',
     "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
                        'run.write_text(run.read_text() + "x" if run.exists() else "x")\n'
                        'print(f"  ✕ greeting case {{len(run.read_text())}} (3 ms)")\nraise SystemExit(1)\n'),
@@ -87,14 +89,15 @@ def _rounds(env, case):
 
 
 @pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest ab then bc",
-                                  "unittest ab then bc", "jest different", "finding",
+                                  "unittest ab then bc", "jest different", "summary only", "finding",
                                   "finding then test", "no change"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
     stuck = env.repo.forge("work", item)
-    # Different failing tests, or a fixed finding followed by a failing test, are progress.
-    if case in ("jest different", "finding then test"):
+    # Different failing tests, or a fixed finding followed by a failing test, are progress; a
+    # summary that names no failed test identifies nothing to be stuck on.
+    if case in ("jest different", "finding then test", "summary only"):
         assert stuck.returncode == 0, stuck.stdout + stuck.stderr
         return
     asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round")

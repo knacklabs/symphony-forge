@@ -381,15 +381,11 @@ def _blocked_red_blocked_red(env):
     _red_checks(env)
     done = _land(env)
     assert done.returncode == 1
-    whats = [FINDINGS_ROUND, "the failing checks"]
-    # Two rounds left the same failing check, so the second fix round stops and asks the owner.
+    whats = [FINDINGS_ROUND, "the failing checks", FINDINGS_ROUND]
     assert _steps(done) == [step for n, what in enumerate(whats, 1) for step in (
         f"Closing {ITEM}.", f"Fix round {n} of 3: the worker fixes {what}.")] + [
-        f"Stopped: {ITEM} needs you."]
-    assert ('Two rounds in a row left the failing check tests ("AssertionError: no greeting in README").'
-            in done.stderr)
-    assert _refusal(done)[-1] == (
-        f'Next: forge close {ITEM} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
+        f"Closing {ITEM}.", f"Stopped after 3 fix rounds: {ITEM} still has the failing checks."]
+    assert _refusal(done) == ["Checks failed on the pull request: tests.", f"Next: forge work {ITEM}"]
 
 
 def _dismissed_before_land(env):
