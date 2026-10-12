@@ -2,12 +2,59 @@
   "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
   "branch": "fix/main-run-faster",
   "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand; and the test timing file covers today's suite so each platform's groups take about the same time",
+  "flagged": [
+    ".github/workflows/forge-next.yml",
+    "tests/test_ci_job_budgets.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b4f85d3705cea684c71fc3e72f79ac75c0c3442f4f856b2b394993d3bd241654",
+    "changed": "c25137b4cd0638f3d8f8a3bb1ed4ca20e9fa4690bb2419ab21196db7a99325b7",
+    "commit": "1c566e94f13cede91bd26a4d3a2c45f06ed7f5b6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "chunk 1/2:\n\nRaise: Not done. Nightly, manual, or release-tag runs can skip every platform group. The tests job uses `.forge/review-tests.py` before pytest. Its lines 17\u201359 return `reuse=true` when the current commit changes only a close record and its parent has a successful push run; the pytest step then skips. With this change, that parent push proves only Linux, so a scheduled or on-demand run on such a main head can report success without running macOS or Windows. The named matrix test does not exercise this reuse path.",
+        "file": ".github/workflows/forge-next.yml",
+        "line": 11,
+        "priority": "P1",
+        "title": "Not done: A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags"
+      },
+      {
+        "body": "chunk 1/2:\n\nRaise: Test. The named timing proof does not fail when the timing file stops covering today's suite: it silently filters collected node IDs to those present in the file, then uses an average for missing IDs. It also inspects only group 1 for each platform and never compares group estimates. Removing most timing entries or badly skewing another group can leave this test green despite breaking the Done-when timing requirement.",
+        "file": "tests/test_ci_job_budgets.py",
+        "line": 73,
+        "priority": "P1",
+        "title": "Not done: timing file coverage and group balance test"
+      },
+      {
+        "body": "chunk 1/2:\n\nThe proof list says a tag run is never cancelled, but tag pushes to the same ref share this concurrency group. GitHub [cancels an existing pending run](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency) when another enters the group even with `cancel-in-progress: false`. If a release tag is pushed again while its earlier run is queued, that queued run is cancelled. The named test compares only one tag run with a main run.",
+        "file": ".github/workflows/forge-next.yml",
+        "line": 17,
+        "priority": "P2",
+        "title": "Follow-up: repeated pushes of one release tag can cancel a queued tag run"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Test \u2014 The named timing proof checks only group 1 and calculates its expected duration using the same fallback average that pytest-split uses for missing entries. It never asserts that every collected test has a timing entry or compares the estimated durations of the other groups. Removing timing entries or making later groups uneven could therefore leave this test green, so the Done-when requirement that today's suite is covered and each platform's groups take about the same time lacks effective proof.",
+        "file": "tests/test_ci_job_budgets.py",
+        "line": 30,
+        "priority": "P1",
+        "title": "Not done: test timing coverage and balance across every platform group"
+      }
+    ],
+    "id": "7e63f60b-b032-4c29-99e0-7fd23639c5e0",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T06:54:36.261499+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T08:07:39.268216+00:00",
+      "step": "review"
     }
   ],
   "why": "Main's full run takes 20 to 35 minutes on every merge and fills the shared runners that pull requests wait for: all three platforms run on each merge, superseded runs are not cancelled, and the test timing file is a week old so groups are uneven"
