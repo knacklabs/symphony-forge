@@ -310,6 +310,19 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     return selected, everything, False, missed
 
 
+NODES = """NODES = {}
+def pytest_collection_modifyitems(config, items):
+    def kept(item):
+        file = item.nodeid.split("::")[0]
+        return file not in NODES or any(item.nodeid == node or item.nodeid.startswith((node + "::", node + "["))
+                                        for node in NODES[file])
+    dropped = [item for item in items if not kept(item)]
+    if dropped:
+        config.hook.pytest_deselected(items=dropped)
+        items[:] = [item for item in items if kept(item)]
+"""
+
+
 def pytest_tests(base: str, command: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
@@ -322,7 +335,21 @@ def pytest_tests(base: str, command: str) -> int:
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
-    selected, tests, shared_changed, missed = related(base)
+    # Read as forge test --pytest reads test: close has already checked forge.toml.
+    always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
+    for name in always:
+        if not Path(name.split("::")[0]).is_file():
+            print(f"forge.toml's always_test names {name.split('::')[0]}, which is not a file; "
+                  "fix or remove it in forge.toml.", flush=True)
+            return 1
+    picked, tests, shared_changed, missed = related(base)
+    # forge.toml's always_test runs beside the picked tests; a node ID narrows a file the picker
+    # did not choose to that test.
+    files = {name.split("::")[0] for name in always}
+    nodes = {} if shared_changed else {
+        file: [name for name in always if name.startswith(file + "::")] for file in files
+        if file not in picked and file not in always}
+    selected = sorted(set(picked) | files)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge.review import GAP  # imported late: review's imports lead back here
     print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
@@ -333,7 +360,7 @@ def pytest_tests(base: str, command: str) -> int:
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path for path in tests if path not in selected]
-    if closing and len(selected) * 3 > len(tests):
+    if closing and len(picked) * 3 > len(tests):
         print(LARGE, flush=True)
         return 0
     if shared_changed:
@@ -347,7 +374,7 @@ def pytest_tests(base: str, command: str) -> int:
             selection = Path(folder) / "_forge_pytest_selection.py"
             selection.write_text("def pytest_configure(config):\n"
                                  "    config.option.ignore = (config.option.ignore or []) + "
-                                 + json.dumps(excluded) + "\n", "utf-8")
+                                 + json.dumps(excluded) + "\n" + NODES.format(json.dumps(nodes)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         return subprocess.run(narrow_command(command, excluded, workers), shell=True,
