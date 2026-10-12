@@ -6,6 +6,7 @@ import pytest
 
 from test_close import STORY_DOC, approve_story, env  # noqa: F401
 from test_setup import _fresh_client
+from test_worker import install_claude
 from test_upgrade_command import (_repo_adopted_on_the_previous_release,
                                  unsynced_up)  # noqa: F401
 
@@ -75,6 +76,15 @@ def test_1_close_stops_large_parts_unless_allowed_or_already_in_flight(env, case
         assert env.review_calls() == []
         assert env.gh_calls("pr", "create") == []
         assert env.repo.git("rev-parse", "origin/task/SHOP-T1") == published
+        if case == "401 lines":
+            # After the owner answers, close doesn't ask again before the worker's round runs.
+            chosen = env.close(item, "--resolve", "same", "--reason", "Shrink it in one more round")
+            assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+            again = env.close(item)
+            assert again.returncode == 1 and "Ask the human" not in again.stderr, again.stderr
+            install_claude(env.repo)
+            worked = env.repo.forge("work", item)
+            assert worked.returncode == 0, worked.stdout + worked.stderr
     else:
         assert done.returncode == 0, done.stdout + done.stderr
         assert len(env.review_calls()) == 1

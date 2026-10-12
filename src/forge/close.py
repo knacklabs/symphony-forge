@@ -167,7 +167,8 @@ def close(args: argparse.Namespace) -> int:
             stop = state.get("stop") or {}
             if stop.get("size") and not stop.get("choice"):
                 repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-            if not stop.get("question") or stop.get("choice"):
+            # A recorded answer holds until a worker round has run on it.
+            if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
                 stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
                            f"over its limit of {limit}.", size=True)
             raise repo.Refused(
