@@ -82,7 +82,7 @@ def land(args: argparse.Namespace) -> int:
                         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start",
                                                                      reason="review loop")
                         close._save(top, item, state, f"{item} stopped after {ROUNDS} fix rounds")
-                        say(review.stop_question(top, item, state))
+                        close.check_stop(item, state, top)  # its question, then close --resolve
                     raise
                 rounds += 1
                 say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")

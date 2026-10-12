@@ -423,15 +423,21 @@ def _findings_after_three_rounds_ask_a_question(env):
     _red_checks(env)
     done = _land(env)
     assert done.returncode == 1
-    stop = done.stdout.splitlines().index(
-        f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}.")
-    assert done.stdout.splitlines()[stop + 1:stop + 4] == [
+    assert f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}." in done.stdout
+    # The stop's own refusal: the question, every choice, then the close --resolve step.
+    lines = done.stderr.splitlines()
+    question = lines[-8:-1]
+    assert question == [
         "Readme greets new readers: The readme opens with a greeting",
         "It still has these problems:",
-        "- Saving loses the reader name: a returning reader sees no name. More."]
+        "- Saving loses the reader name: a returning reader sees no name. More.",
+        "Accept, narrow or split?",
+        question[4], question[5], question[6]]
+    assert [line.split(":")[0] for line in question[4:]] == ["- Accept", "- Narrow", "- Split"]
+    assert lines[-1] == f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"'
     # The stop is recorded, so forge next repeats the question and close records the choice.
     said = env.repo.forge("next").stdout
-    assert "\n".join(done.stdout.splitlines()[stop + 1:stop + 8]) in said
+    assert "\n".join(question) in said
     assert f"forge close {ITEM} --resolve <narrow|split|accept>" in said
     chosen = env.close(ITEM, "--resolve", "narrow", "--reason", "Drop the reader name for now")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
