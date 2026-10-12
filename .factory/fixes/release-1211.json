@@ -1,4 +1,5 @@
 {
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, the tests that pin them, and all sync output close requires when the version changes, including generated skill copies sync writes",
   "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
   "branch": "fix/release-1211",
   "done_when": "Forge's version is 1.2.11 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
