@@ -114,7 +114,25 @@ bar ignores it except for unscored saved results.
 Anchors: "Close's default test selection breaks Go repos" Gain 3, Work 4, Harm 2; "Close skips
 Jest `__tests__` folders" Gain 2, Work 2, Harm 1; "A blocked review is shown as waiting for checks
 when tests pass on retry" Gain 3, Work 2, Harm 1; "Promotion accepts an uncommitted roadmap entry"
-Gain 4, Work 2, Harm 2.
+Gain 4, Work 2, Harm 2. From scoring about 60 findings by hand on 11–12 October: "A stuck stop's
+narrow or split answer never reaches the worker" Gain 4, Work 1, Harm 1 (fix now); "Land shows a
+generic waiting line instead of the stop question" Gain 3, Work 1, Harm 1 (fix now); "Doctor credits
+a model to the wrong file in a rare mix of local settings" Gain 2, Work 1, Harm 1 (live with);
+"Upgrade pull requests are checked by the previous release" Gain 2, Work 4, Harm 1 (live with); "A
+proof test checks only the question's first lines" Gain 2, Work 1, Harm 1 (live with).
+
+**Lessons from scoring by hand** (go into both templates' rubric text, in plain words):
+- Raise a finding only after checking it against the code at the current commit, and name the
+  file and line. Hand scoring found several stop findings already fixed at the reviewed commit, and
+  several suggested changes that could not work.
+- A "Not done" finding scores Gain by how much of the Done-when stays unmet: the main case unmet is
+  Gain 4–5; one more rare combination on a clause whose main case works is Gain 1–2. One fix
+  drew a new rare angle on the same clause in each of four rounds, and another reached nine rounds.
+  When earlier rounds already raised a clause, the body says so and proposes narrowing that clause.
+- Only the reviewer scores. The coordinator and the worker never re-score: they follow the bar's
+  outcome, and the coordinator asks the owner only in the bar's "ask the owner" row. Notes in a
+  proof list do not lower a score; before scoring, a lived-with finding the Done-when names word
+  for word came back every round.
 
 **The bar, as code** (`score.bar`, checked top-down):
 1. Harm ≥ 4, or Gain 5 → `block`.
@@ -240,7 +258,7 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    review-loop and read-loop paragraphs near lines 1217–1235 ("Close holds the fourth review after
    three consecutive rounds blocked by serious findings, whatever files they were in") so they
    state item 4's stop rule. Add: the coordinator shows the same table in every update that lists
-   notes or findings; it settles reversible Harm 1 and 2 notes itself (a disposition or a
+   notes or findings; it never re-scores a note and follows the bar's outcome; it settles reversible Harm 1 and 2 notes itself (a disposition or a
    dismissal, with the scores in its reason) and tells the owner after, in a line; it asks the
    owner only for Harm ≥ 3, new scope beyond the approved Done when, owner gates (approve, merge),
    or undoing an owner decision. Test (one): a stopped review and a stopped read each print the
