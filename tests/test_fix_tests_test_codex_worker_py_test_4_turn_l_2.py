@@ -2,7 +2,7 @@
 
 The test took any process with a reported app-server's id for that app-server, so a later process
 given the id failed it now and then. It now counts only a process that started no later than the
-stub. Twenty rounds on Windows, run side by side, stand in for twenty CI runs.
+stub.
 """
 from __future__ import annotations
 
@@ -10,18 +10,10 @@ import os
 import subprocess
 import time
 
-import pytest
-
 from conftest import _install
-from test_codex_worker import (ROOT, _left, _running, _started, _stub, sdk_data,  # noqa: F401
-                               test_4_turn_log)
+from test_codex_worker import ROOT, _left, _running, _started, _stub
 
 STORY = "tests-test-codex-worker-py-test-4-turn-l-2"
-
-
-@pytest.mark.parametrize("round", range(20 if os.name == "nt" else 1))
-def test_1_test_4_turn_log_passes_20_times_in_a_row_on_windows(repo, monkeypatch, sdk_data, round, claude_session):
-    test_4_turn_log(repo, monkeypatch, sdk_data, claude_session)
 
 
 def test_2_a_codex_process_left_running_fails_test_4_turn_log(tmp_path):

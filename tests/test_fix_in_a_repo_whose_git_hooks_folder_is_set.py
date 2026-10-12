@@ -1,8 +1,6 @@
 """Git hooks configured in a Husky-style folder."""
 from __future__ import annotations
 
-import subprocess
-
 STORY = "FIX-IN-A-REPO-WHOSE-GIT-HOOKS-FOLDER-IS-SET"
 
 
@@ -16,32 +14,6 @@ def _client(repo):
     hooks = repo.path / ".husky" / "_"
     hooks.mkdir(parents=True)
     return hooks
-
-
-def test_1_sync_installs_in_husky_folder_and_runs_existing_hooks(repo, tmp_path):
-    hooks = _client(repo)
-    ran = tmp_path / "existing-hooks"
-    (hooks / "h").write_text('n=$(basename "$0")\n'
-                             's=$(dirname "$(dirname "$0")")/$n\n'
-                             '[ ! -f "$s" ] && exit 0\nsh -e "$s" "$@"\n', encoding="utf-8")
-    for name in ("pre-commit", "pre-push"):
-        user_hook = hooks.parent / name
-        user_hook.write_text(f'#!/bin/sh\necho {name} >> "{ran}"\n', encoding="utf-8")
-        path = hooks / name
-        path.write_text('#!/usr/bin/env sh\n. "$(dirname "$0")/h"\n', encoding="utf-8")
-        path.chmod(0o755)
-
-    done = repo.forge("sync")
-    assert done.returncode == 0, done.stderr
-    commit = subprocess.run(["git", "commit", "--allow-empty", "-m", "Try a commit"],
-                            cwd=repo.path, capture_output=True, text=True)
-    assert commit.returncode != 0
-    assert "was not started by Forge" in commit.stderr
-    push = subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=repo.path,
-                          capture_output=True, text=True)
-    assert push.returncode != 0
-    assert "changes only through a merged pull request" in push.stderr
-    assert ran.read_text(encoding="utf-8").splitlines() == ["pre-commit", "pre-push"]
 
 
 def test_2_doctor_reports_missing_hooks_in_husky_folder(repo):

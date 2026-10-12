@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_1_forge_version_is_1_2_10_everywhere_it_is_recorded(repo):
     assert repo.forge("--version").stdout.split()[-1] == "v1.2.10"
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert "version" in pyproject["project"]["dynamic"]  # pyproject reads the version from __init__
     assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.10"
     assert "FORGE_VERSION=1.2.10\n" in (ROOT / "scripts/install-mac.sh").read_text(encoding="utf-8")
     assert "$ForgeVersion = '1.2.10'" in (ROOT / "scripts/install-windows.ps1").read_text(encoding="utf-8")

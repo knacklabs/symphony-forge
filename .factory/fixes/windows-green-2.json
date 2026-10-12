@@ -1,0 +1,29 @@
+{
+  "base": "23bb1db61aaf907943e1ca73b05a063722d65bca",
+  "branch": "fix/windows-green-2",
+  "done_when": "The split-checks gate tests find Git's bash, the yarn guide test reads UTF-8, the stuck-worker switch test uses the codex-app-server .cmd stub on Windows, and macOS full-suite groups get a 30-minute limit",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "29574bbb59d6c61543985e3c5e9c6980832b9e8b174467ee454ae387bfd55463",
+    "changed": "4f346d2872de4fa441fce3f3e9fe61f8f9c96725783a7303034dc6db38ab819e",
+    "commit": "e4f90527ef2605b752620b4c4dc33f6364adf73c",
+    "dismissals": [],
+    "findings": [],
+    "id": "0e13481b-a824-4667-898e-cb517325ee8c",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T11:13:13.174730+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T11:55:58.052131+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Main's full run still fails on Windows: tests pick up WSL's bash instead of Git's, read a file with the Windows code page, and call a Codex stub without its .cmd wrapper; macOS groups run past 20 minutes"
+}

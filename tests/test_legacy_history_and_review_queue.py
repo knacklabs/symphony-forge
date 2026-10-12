@@ -70,8 +70,8 @@ def test_14_review_round_separates_lane_wait_from_review_time(env, monkeypatch):
     ])
     assert current["time_breakdown"]["reviewing"] == 5
     assert current["time_breakdown"]["waiting_in_line"] == 60
-    assert "review clean (5s)" in current["rounds"][0]["line"]
-    assert "in line 60s" in current["rounds"][0]["line"]
+    assert "review clean (5 seconds)" in current["rounds"][0]["line"]
+    assert "in line 1 minute" in current["rounds"][0]["line"]
 
 
 def test_15_pre_upgrade_run_records_do_not_establish_complete_activity_history(env, monkeypatch):

@@ -88,7 +88,9 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
             "the advice forms this page names") in review
     for rule in ("Write each finding as one line naming the defect and its impact, then brief "
                  "evidence", "No speculative suggestions",
-                 "Sweep the sibling cases normal use reaches",
+                 "Sweep the sibling cases normal use reaches, too: the other states, providers "
+                 "and callers of the same code that people or agents are likely to hit, not "
+                 "every rare combination.",
                  # Kept: the proof-list check and the previous findings carry over.
                  "Check every entry against the code and its named proof",
                  "recheck them against this branch"):

@@ -31,7 +31,8 @@ def _assert_pr_concurrency(workflow):
         "github.event_name == 'pull_request_target' }}")
 
 
-@pytest.mark.parametrize("name", ["forge-next", "forge", "codex-smoke"])
+# forge-next also cancels superseded main runs: test_ci_limits_pull_requests_to_linux.py.
+@pytest.mark.parametrize("name", ["forge", "codex-smoke"])
 def test_1_own_workflows_cancel_only_superseded_runs_of_the_same_pr_and_event(name):
     _assert_pr_concurrency((ROOT / f".github/workflows/{name}.yml").read_text("utf-8"))
 

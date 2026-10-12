@@ -31,6 +31,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -82,7 +83,7 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
+RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
           "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
@@ -318,8 +319,10 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         with codex.hold(top, target, "Grill"), machine.agent_slot(
                 top, "read", target, **repo.models(config, "grill", reader)):
+            clock = time.monotonic()
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why, round_number, remember_reader)
+            read_seconds = time.monotonic() - clock
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
@@ -335,13 +338,16 @@ def read(args: Any) -> int:
                 name = (prefix.rstrip(" -") if name[59] in " -" else
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
+            clock = time.monotonic()
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
                             fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number,
                             on_thread=remember_reader)
+            read_seconds = time.monotonic() - clock
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
     result["before"] = before  # remembering the kit reader changes only its chat binding
+    result["seconds"] = round(read_seconds, 3)
     return read_result(top, target, result, said, failed, problem, ran)
 
 
@@ -398,7 +404,8 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
     record = {"reader": f"{reader} ({model})" + (
                   f", a subagent of this {NAMES[reader]} session because {result['reason']}"
                   if result["native"] else ""),
-              "read_at": repo.now(), "read_hash": read_hash,
+              # A session subagent's read has no measured time, so it records none.
+              "read_at": repo.now(), "seconds": str(result.get("seconds", "")), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
               "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
@@ -960,7 +967,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                     except ValueError:
                         event = None
                     if isinstance(event, dict):
-                        line = repo.claude_output(top, target, ran["run_id"], event)
+                        line = repo.claude_output(top, target, ran, event)
                         if event.get("type") == "result":
                             final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)
