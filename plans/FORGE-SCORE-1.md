@@ -27,6 +27,11 @@
 - Forge stops a change after three rounds only when a note at the bar comes back, or a note with
   Harm 3 or more is still open. When you don't answer a stop in 30 minutes, Forge narrows the
   change on its own only if every open note has Harm 1 or 2. Otherwise it waits for you.
+- When one area of a change draws its third note in the same item (the same function, or the
+  same Done when item), Forge stops fixing those notes one at a time. The stop question first
+  offers a structural move: cut the code that invites the notes, replace the cases with one
+  general rule, narrow that Done when item, or fail closed for security and safety code. After
+  that, a new note on the settled area holds work back only with new evidence of Harm 3 or more.
 - Stop questions and the coordinator's updates show the open notes as one ranked table: number,
   the problem and who it hits, Gain, Work, Harm, and what the coordinator proposes. Then they say
   what accept, narrow and split each do.
@@ -56,7 +61,7 @@ default answer after 30 minutes.
 1. **Every cold-read note and every review finding shows a Gain, Work and Harm score from 1 to 5, and a note about security, data loss or a migration never shows Harm below 4.**
 2. **A read passes and a change reaches Ready when no note is at the bar; a Gain 1 or 2 note never holds work back unless its Harm is 4 or more, and every note below the bar is listed with its scores in the read notes or the pull request.**
 3. **A note already settled by the owner, the coordinator or Forge reaches every later read and review as known and accepted, and comes back only with new evidence of harm.**
-4. **Forge stops a change after three rounds only when a note at the bar comes back or a note with Harm 3 or more is open, and when the owner doesn't answer in 30 minutes it narrows on its own only if every open note has Harm 1 or 2.**
+4. **Forge stops a change after three rounds only when a note at the bar comes back or a note with Harm 3 or more is open, and it also stops at the third note in one area of an item (the same function or Done when item) with cut, general rule, narrow and fail closed offered first; when the owner doesn't answer in 30 minutes it narrows on its own only if every open note has Harm 1 or 2.**
 5. **Every stop question and coordinator update shows the open notes as one table ranked by score, and the coordinator settles reversible Harm 1 and 2 notes itself and tells the owner after.**
 6. **The README explains the scores and the bar with three worked examples, and a repo that upgrades in the middle of a change keeps its saved reads and reviews holding work back as before until their next round scores them.**
 
@@ -335,6 +340,16 @@ alone, so BAR and GUIDE share no path and build in parallel after SCORES.
    follow-up stops; with elapsed time
    past 30 minutes, a stop with only Harm 2 findings records narrow, and a stop with a Harm 2
    finding at the bar plus a Harm 3 follow-up stays stopped.
+   Area repeats: an area is (file, enclosing function) for a review finding, found from the
+   finding's file and line at the reviewed commit (the nearest `def` or `function` above the line;
+   the file alone when none), and the Done when item number for a read note. `score.area_counts`
+   counts open and settled notes per area across the item's rounds (from the kept `known` list and
+   the saved results). At the third, close and read stop with the question naming the area and
+   offering, ranked first: cut, one general rule, narrow that Done when item, and fail closed
+   (offered first when the area's Harm floor is security). Later notes in that area count as
+   settled unless they carry Harm 3 or more with a `New evidence:` line. Test (same test as item
+   4): three findings in one function across rounds stop with the structural choices first; a
+   fourth note there at Harm 2 does not hold work back; one at Harm 3 with new evidence does.
 5. `score.table(rows)` renders the ranked table `# | Problem, for whom | Gain | Work | Harm |
    Proposed`, ranked by bar (block, fix now, follow-up, live with), then Harm and Gain descending,
    then Work ascending. "Problem, for whom" is `story.plain` of the note (from stop-question-plain);
