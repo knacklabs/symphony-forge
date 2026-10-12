@@ -25,7 +25,13 @@
     "branch_diff": "02afb531be76b9e6e64b5998067330f3baef16bce69e670064a60442591cb639",
     "changed": "d495e1869e872ddf2a334fea344f2a93d05c3a1e0a1157aa7d80026e46662beb",
     "commit": "5f46a22ca82241922b95817a199edeb5c679c36b",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-12 finding is fixed in commit 68ba7bf9d (an answered size stop is not re-asked until a worker round has run), with a test that fails without it",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. For an oversized story part, the owner can record `same` and receive `Next: forge work`. If `forge close` is rerun before that work round, this condition sees the recorded choice and immediately creates another unanswered size question. The following `forge work` then refuses at close.py:473-475. The owner's choice therefore does not buy the promised next round. The size proof checks the initial question but does not cover a close rerun after the choice.",
@@ -36,9 +42,9 @@
       }
     ],
     "id": "fc99deea-347d-4559-8abe-db250eccd322",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -95,8 +101,12 @@
   ],
   "stop": {
     "at": "2026-10-12T03:20:32.603378+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/close.py",
-    "wait_id": "f7ee1cd2-3b3e-4e0e-8367-66674166d17a"
+    "reason": "Owner rule for Harm 1-2: the round-12 finding is fixed in commit 68ba7bf9d (an answered size stop is not re-asked until a worker round has run), with a test that fails without it",
+    "wait_id": "f7ee1cd2-3b3e-4e0e-8367-66674166d17a",
+    "worker_round": null
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }
