@@ -210,6 +210,12 @@
       "spec": "docs/specs/board-for-the-team.md",
       "status": "pending",
       "order": 75
+    },
+    {
+      "key": "FORGE-SCORE-1",
+      "title": "Reads and reviews score each note on Gain, Work and Harm, and only notes above the bar hold work back",
+      "status": "pending",
+      "order": 76
     }
   ],
   "epics": [
