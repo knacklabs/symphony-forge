@@ -716,16 +716,27 @@ def resume_pin(top: Path, previous: str, rounds: int | None = None, *, accepted:
         os.environ["FORGE_LAND_ROUNDS"] = str(rounds)
     if accepted:
         os.environ["FORGE_CLOSE_ACCEPTED"] = "1"
-    if before and (status := run_release(release, before, top)):
+    # Windows can't remove a worktree another process is in, so this process and uv wait in the
+    # main checkout; only the release's own process enters the worktree, which merge leaves.
+    home = forge_dir(top).parent.parent
+    os.chdir(home)
+    if before and (status := run_release(release, before, home, top)):
         sys.exit(status)
-    sys.exit(run_release(release, sys.argv[1:], top))
+    sys.exit(run_release(release, sys.argv[1:], home, top))
 
 
-def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
-    """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
+def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None,
+                inside: Path | None = None) -> int:
+    """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code.
+
+    With inside, the release's Python moves there before it starts, while uv stays in cwd.
+    """
+    command = ["forge", *args] if inside is None else [
+        "python", "-c", "import os, sys; os.chdir(sys.argv[1]); from forge.cli import main; "
+        "sys.argv = ['forge', *sys.argv[2:]]; sys.exit(main())", str(inside), *args]
     return subprocess.run(
         [shutil.which("uv") or "uv", "tool", "run", "--from",
-         f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
+         f"git+https://github.com/knacklabs/symphony-forge@{release}", *command],
         cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
 
 

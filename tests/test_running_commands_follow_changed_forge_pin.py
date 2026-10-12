@@ -65,11 +65,23 @@ if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
     exec(args[program + 3])
     sys.exit(0)
 assert args[:3] == ["tool", "run", "--from"], args
+if args[4:6] == ["python", "-c"]:
+    sys.argv = ["-c", *args[7:]]
+    exec(args[6])
 assert args[4] == "forge", args
 from forge.cli import main
 sys.argv = ["forge", *args[5:]]
 sys.exit(main())
 ''')
+
+
+def _continued(env, dispatch, where):
+    """uv's own words and the forge words a changed pin continued with. uv and the old process
+    wait in the main checkout, so Windows can remove the worktree; the release starts in it."""
+    args = dispatch["args"]
+    assert args[4:6] == ["python", "-c"] and Path(args[7]) == where, args
+    assert Path(dispatch["cwd"]).resolve() == env.repo.path.resolve()
+    return args[:4], args[8:]
 
 
 def _upgrade_default(env, upgraded):
@@ -178,9 +190,8 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
             ROOT / "src" / "forge" / "templates" / "skill.md").read_text("utf-8")
     else:
         [dispatch] = dispatches
-    assert dispatch["args"] == ["tool", "run", "--from",
-        f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", command, ITEM]
-    assert Path(dispatch["cwd"]) == where
+    assert _continued(env, dispatch, where) == (["tool", "run", "--from",
+        f"git+https://github.com/knacklabs/symphony-forge@{current}"], [command, ITEM])
 
 
 def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin(
@@ -216,9 +227,8 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     assert not env.gh_calls("pr", "ready")
     [dispatch] = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
-    assert dispatch["args"] == ["tool", "run", "--from",
-        f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", "land", ITEM]
-    assert Path(dispatch["cwd"]) == where
+    assert _continued(env, dispatch, where) == (["tool", "run", "--from",
+        f"git+https://github.com/knacklabs/symphony-forge@{current}"], ["land", ITEM])
 
 
 def test_3_close_continues_the_current_human_accept_choice_under_changed_pin(
@@ -250,9 +260,8 @@ def test_3_close_continues_the_current_human_accept_choice_under_changed_pin(
     assert env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")
     [dispatch] = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
-    assert dispatch["args"] == ["tool", "run", "--from",
-        f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", *args]
-    assert Path(dispatch["cwd"]) == where
+    assert _continued(env, dispatch, where) == (["tool", "run", "--from",
+        f"git+https://github.com/knacklabs/symphony-forge@{current}"], args)
 
     _install(env.repo.bin, "forge", FORGE_SHIM.format(python=sys.executable,
                                                      src=(ROOT / "src").as_posix()))
