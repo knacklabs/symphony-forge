@@ -13,9 +13,13 @@ from typing import Any
 
 from forge import __version__, repo
 
-# The Forge agent runs (work rounds, plan reads, close reviews) one machine runs at once, whatever
+# The Forge work rounds one machine runs at once, whatever
 # the repo, so several repos' agents can't run it out of memory.
 _agent_entry: dict[str, Any] | None = None
+_WAIT_REASONS = {
+    True: "Other planned work waits on this item, so it goes before runs nothing waits on.",
+    False: "Nothing waits on this item; runs other planned work waits on go first.",
+}
 
 COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
     "help": "Show this release's machine-wide runs", "position": 60,
@@ -31,6 +35,27 @@ COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
 def half_cores() -> int:
     """The shared budget for agents and tests, including Python 3.11 and unknown counts."""
     return max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2)
+
+
+def test_cpus() -> str:
+    """The test processes for one test run: a worker's own budget, else half the cores."""
+    return os.environ.get("FORGE_TEST_CPUS") or str(half_cores())
+
+
+def worker_env() -> dict[str, str]:
+    """A worker's test runs, through forge test or pytest -n auto, use at most two processes."""
+    cpus = str(min(2, half_cores()))
+    return {**os.environ, "FORGE_WORKER": "1", "FORGE_TEST_CPUS": cpus, "PYTEST_XDIST_AUTO_NUM_WORKERS": cpus}
+
+
+LOAD_LIMIT = 1.5
+
+
+def _load_per_core() -> float | None:
+    """The one-minute load per core Forge may use; None where the OS has none (Windows keeps the half-cores rule)."""
+    with contextlib.suppress(OSError, AttributeError):
+        return os.getloadavg()[0] / (getattr(os, "process_cpu_count", os.cpu_count)() or 2)
+    return None
 
 
 def test_slots() -> int:
@@ -73,12 +98,44 @@ def remember(top: Path) -> None:
         pass
 
 
-def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
-    """Join either machine-wide lane and wait for admission, first come, first served."""
+def _unblocks(top: Path, item: str) -> bool:
+    """Read current plans and merge state locally; admission needs no board or GitHub history."""
+    from forge import board, story, task
+
+    landed = story.landed_ref(top)
+    paths = set(repo.git("ls-tree", "-r", "--name-only", landed, "--", ".factory/stories", cwd=top).splitlines())
+    keys = {path.split("/")[2] for path in paths if path.endswith("/story.json")}
+    keys.update(story.stories_here(top))
+    keys.update(ref.split("/story/", 1)[1] for ref in repo.git(
+        "for-each-ref", "--format=%(refname)", "refs/heads/story/",
+        "refs/remotes/origin/story/", cwd=top).splitlines())
+    states = board._blob_texts(top, [f"{landed}:{path}" for path in paths if path.endswith("/story.json")])
+    finished = {spec.split(":", 1)[1].split("/")[2] for spec, text in states.items()
+                if story.json_of(text).get("status") == "done"}
+    busy = task._started(landed, top)
+    for key in keys - finished:
+        for tid, part in task.rows(task.sections(story._plan(top, key))).items():
+            dependent = f"{key}/{tid.strip('` ')}"
+            if repo.state_path(dependent) in paths:
+                continue
+            waits = task.waits_for(key, task.cell_list(part.get("After", "")),
+                                   task.cell_list(part.get("Scope", "")) if dependent not in busy else [], busy)
+            if item in waits:
+                return True
+    return False
+
+
+def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None,
+         small: bool = False) -> dict[str, Any]:
+    """Join a lane; prerequisite agents go first, with arrival order within each group.
+
+    Reviews and plan reads wait on a model's API rather than this machine's cores, and a small
+    test run ends in moments, so they start at once and take no place from anyone else."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
     root = main_checkout(repo)
+    unblocks = bool(kind != "test" and item and "/" in item and _unblocks(repo, item))
     title = None
     round_number = None
     if item and (match := repository.ITEM.fullmatch(item)):
@@ -101,27 +158,47 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
-             "agent": None, "round": round_number,
-             "output_path": None, "progress": None}
+             "agent": None, "round": round_number, "unblocks": unblocks,
+             "output_path": None, "progress": None, "free": small or kind in ("read", "review")}
     size = test_slots() if kind == "test" else half_cores()
     with _queue() as runs:
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
     try:
-        said = 0
+        said: int | str = 0
         while True:
             with _queue() as runs:
-                lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")]
-                position = next((n for n, run in enumerate(lane) if run["id"] == entry["id"]), None)
-                if position is None:
+                mine = next((run for run in runs if run["id"] == entry["id"]), None)
+                if mine is None:
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
-                place = position - size + 1
-            if place <= 0:
+                lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
+                        and not run.get("free")]
+                place = 0 if entry["free"] else lane.index(mine) - size + 1
+                busy = None
+                # A work round waits while the machine is busy, unless no other agent runs, since
+                # waiting then never lowers the load.
+                # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
+                # once; space admissions by a minute if that burst shows up in queue waits.
+                if place <= 0 and kind == "work" and any(
+                        run.get("admitted") or run["started_at"] or run.get("legacy")
+                        for run in lane if run["id"] != entry["id"]):
+                    busy = _load_per_core()
+                    busy = busy if busy is not None and busy >= LOAD_LIMIT else None
+                if place <= 0 and busy is None:
+                    # Admission holds the place before the model process is launched.
+                    mine["admitted"] = entry["admitted"] = True
+            if place <= 0 and busy is None:
                 _lane_event(entry, "lane admitted")
                 return entry
-            if place != said:
+            if busy is not None:
+                if said != "busy":
+                    print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
+                          f"until it is under {LOAD_LIMIT}.", flush=True)
+                    said = "busy"
+            elif place != said:
                 print(f"{size} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
-                      f"its turn: it is number {place} in line.", flush=True)
+                      f"its turn: it is number {place} in line."
+                      + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""), flush=True)
                 said = place
             time.sleep(0.5)
     except BaseException:
@@ -139,7 +216,7 @@ def started(entry: dict[str, Any] | int, pid: int | None = None) -> None:
         agent_started(entry)
         return
     assert isinstance(entry, dict)
-    process = codex.identity(pid) or {"pid": pid}
+    process = entry["process"] if entry.get("native") else codex.identity(pid) or {"pid": pid}
     with _queue() as runs:
         for run in runs:
             if run["id"] == entry["id"]:
@@ -147,7 +224,7 @@ def started(entry: dict[str, Any] | int, pid: int | None = None) -> None:
                 entry.update(run)
                 return
     # Stop may win between admission and spawning. Do not leave a cancelled child running.
-    if codex._alive(process) is True:
+    if not entry.get("native") and codex._alive(process) is True:
         codex._stop(process, True)
     raise repo.Refused("This run was stopped; it will not start another agent.", "")
 
@@ -156,7 +233,8 @@ def leave(entry: dict[str, Any]) -> None:
     """Release an entry once its command has ended."""
     with _queue() as runs:
         runs[:] = [run for run in runs if run["id"] != entry["id"] or
-                   (run["process"]["pid"] != os.getpid() and _running(run["process"]))]
+                   (not run.get("native") and run["process"]["pid"] != os.getpid()
+                    and _running(run["process"]))]
 
 
 def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
@@ -172,7 +250,7 @@ def _lane_event(entry: dict[str, Any], event: str, **fields: Any) -> None:
 
 
 def entries() -> list[dict[str, Any]]:
-    """Live running and waiting entries, in arrival order, from both lanes."""
+    """Live running and waiting entries, in admission order, from both lanes."""
     with _queue() as runs:
         return list(runs)
 
@@ -230,10 +308,12 @@ def lanes(args: Any) -> int:
     now = datetime.fromisoformat(repo.now())
     for lane in result.values():
         rows = []
-        for index, run in enumerate(lane["entries"]):
+        counted = [run for run in lane["entries"] if not run.get("free")]
+        for run in lane["entries"]:
             if run.get("version") != __version__:
                 continue
-            run["place"] = 0 if run["started_at"] else max(0, index - lane["size"] + 1)
+            run["place"] = (0 if run["started_at"] or run.get("free")
+                            else max(0, counted.index(run) - lane["size"] + 1))
             at = run["started_at"] or run["joined_at"]
             run["elapsed"] = max(0, (now - datetime.fromisoformat(at)).total_seconds())
             rows.append(run)
@@ -247,7 +327,8 @@ def lanes(args: Any) -> int:
         for name in ("agents", "tests"):
             for run in result[name]["entries"]:
                 state = f"waiting #{run['place']}" if run["place"] else "running"
-                print(f"{run['repo_name']}: {run['item']} ({run['kind']}, {state})")
+                reason = f" {_WAIT_REASONS[bool(run.get('unblocks'))]}" if run["place"] and name == "agents" else ""
+                print(f"{run['repo_name']}: {run['item']} ({run['kind']}, {state}){reason}")
         if not any(result[name]["entries"] for name in ("agents", "tests")):
             print("Nothing running")
     return 0
@@ -288,7 +369,7 @@ def load() -> dict[str, Any]:
 
 def stop(args: Any) -> int:
     """A person cancels waiting entries or ends verified process trees before freeing places."""
-    from forge import codex
+    from forge import codex, native
     if os.environ.get("FORGE_WORKER"):
         raise repo.Refused("Only a person can run forge stop; ask the person to stop the run.", "")
     if bool(args.entry_id) == bool(args.item) or (args.entry_id and args.repo):
@@ -299,17 +380,25 @@ def stop(args: Any) -> int:
                     (root and run["repo_root"] == root.as_posix() and run["item"] == args.item)]
         # Validate every target before signalling any. Unknown identity never grants permission.
         for run in selected:
+            if run.get("native"):
+                continue
             process = run["process"]
             if (run.get("agent") or run["started_at"]) and ("started" not in process or codex._alive(process) is None):
                 raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")
         for run in selected:
+            if run.get("native"):
+                continue
             if (run.get("agent") or run["started_at"]) and codex._alive(run["process"]) is True:
                 ended = codex._stop(run["process"], run["process"] != run.get("forge"))
                 # The tree is confirmed ended even if its leader still awaits reaping.
                 if not ended:
                     raise repo.Refused("Forge could not confirm the run stopped; its place is still held.", "")
             runs.remove(run)
-    print("Stopped the run." if selected else "There is nothing to stop.")
+    held = [run for run in selected if run.get("native")]
+    for run in held:
+        native.cancel(run)
+    print("Stopped Forge's hold; stop the subagent in your session too." if held else
+          "Stopped the run." if selected else "There is nothing to stop.")
     return 0
 
 
@@ -355,6 +444,10 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 run["process"] = run["forge"]
                 retained.append(run)
         runs[:] = retained
+        agents = iter(sorted((run for run in runs if run["kind"] != "test"), key=lambda run:
+            0 if run.get("admitted") or run["started_at"] or run.get("legacy") else
+            1 if run.get("unblocks") else 2))
+        runs[:] = [run if run["kind"] == "test" else next(agents) for run in runs]
         yield runs
         path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
         os.replace(path.with_suffix(".new"), path)

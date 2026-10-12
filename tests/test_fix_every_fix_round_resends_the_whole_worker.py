@@ -8,7 +8,7 @@ STORY = "FIX-EVERY-FIX-ROUND-RESENDS-THE-WHOLE-WORKER"
 
 
 def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
-        repo, monkeypatch, sdk_data, gh):
+        repo, monkeypatch, sdk_data, gh, claude_session):
     _, calls, _ = _resuming(repo, monkeypatch, sdk_data)
     started = repo.forge("fix", "start", "Show a greeting", "--done", "The page greets visitors")
     assert started.returncode == 0, started.stderr
@@ -52,7 +52,32 @@ def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
     assert "+Coordinator change" in prompt
     assert _sent(calls, "thread/resume")
 
+    def new_finding(title):  # a new finding each round, so no round is stuck on the same one
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+        state["review"]["findings"][0]["title"] = title
+        state_file.write_text(json.dumps(state), encoding="utf-8")
+        repo.git("commit", "-qam", "New finding", cwd=fix)
+
+    gh.respond("pr", "checks", state["branch"], stdout="[]")
+    new_finding("Greeting too long")
+
+    # Lost Forge metadata keeps the conversation and its short follow-up instructions.
     record.unlink()
+    resumed = repo.forge("work", "show-a-greeting")
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert "Starting a new" not in resumed.stdout
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == saved["conversation"]
+    assert "earlier brief" in _text(calls)
+    assert "## The fix" not in _text(calls) and "## Tests first" not in _text(calls)
+
+    new_finding("Greeting too short")
+    # Only the provider losing the conversation now requires the whole brief in a fresh chat.
+    store = repo.bin / "threads.json"
+    threads = json.loads(store.read_text("utf-8"))
+    del threads[saved["conversation"]]
+    store.write_text(json.dumps(threads), encoding="utf-8")
     fresh = repo.forge("work", "show-a-greeting")
     assert fresh.returncode == 0, fresh.stdout + fresh.stderr
+    assert "Starting a new Codex conversation" in fresh.stdout
+    assert "no rollout found" in fresh.stdout
     assert "## The fix" in _text(calls) and "## Tests first" in _text(calls)

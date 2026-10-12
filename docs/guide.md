@@ -8,8 +8,10 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 ## Install
 
-You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, Claude Code and Codex.
-Either agent can coordinate the work; the first cold read of a story or spec runs on the other one.
+You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, and the agent your
+repo uses: Claude Code, Codex, or both for split workers. Either agent can coordinate the work;
+with one tool, that tool reads plans; with both, the first cold read uses the other installed tool,
+or the coordinating session's `reader` subagent when the other tool is unavailable.
 `forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
@@ -27,7 +29,7 @@ the install line to fix it.
 - **CI runners:** `runner = "ubuntu-latest"` is the default in `forge.toml`. For an organisation
   using self-hosted Linux runners, use `forge init --runner self-hosted`, or set
   `runner = "self-hosted"` in an existing repo's settings in a fix and run `forge sync`.
-  A custom runner label works too. Sync writes that label into both generated jobs in
+  A custom runner label works too. Sync writes that label into every generated job in
   `.github/workflows/forge.yml`; new repos get it at init and earlier adopted repos get it after
   upgrading Forge and syncing. The jobs install uv and select Python themselves; Node tests
   install Node from the repo's version file or engines, defaulting to the client stack's Node 22.
@@ -86,8 +88,9 @@ the customer's named person for sign-off.
 The customer's named person approves the demo and the quoted answers; fill in their reply and run
 `forge decision accept` again to record it.
 
-Only after accepted client sign-off, add confirmed specs to the roadmap with `forge roadmap add`
-and create stories with `forge story new`. This includes stories promoted from fixes. In a client
+Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
+use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
+existing route: its roadmap entry must already be committed in the fix's branch. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
@@ -103,9 +106,12 @@ You never run the hook commands yourself: git, the host hooks and CI call them.
 
 In a client repo, finish the prototype review and customer sign-off above before starting here.
 
-1. Add the story to the roadmap from its confirmed spec with `forge roadmap add <spec>`.
+1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
+   add its stories with `forge roadmap add <spec>` as before.
 2. `forge story new <KEY> "<title>"` makes the story's branch, worktree and doc. The doc says what
    changes for the client, why, when it's done, the tasks, any new moving parts and the risks.
+   Its own branch adds a missing roadmap entry. The title seeds Why; write the problem,
+   today's workaround and its cost there, without a separate spec read or confirmation.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.
@@ -130,25 +136,66 @@ merging when the repo allows agent merges.
 
 ## Workers and conversations
 
-Ask your agent to set `workers = "codex"` in `forge.toml` if you want Codex to build tasks and fixes.
+Ask your agent to run everything in Claude, run everything in Codex, or use both. In a settings
+fix it sets `tools = "claude"` with `workers = "claude"`, `tools = "codex"` with
+`workers = "codex"`, or `tools = "both"`. Both is the default when the setting is absent;
+with one tool `workers` is ignored, including for design work. Upgrade Forge before adding
+`tools` to an older repo. The planning, approval, build, review, CI and merge process is the same
+with any choice. A round on the coordinating session's tool runs as its background subagent;
+the other tool uses its kit. Reviews use the repo's tool through Autoreview's own default model
+and effort; with both they use Codex when installed, otherwise Claude. Existing review model
+entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
+
+For a native plan read, `forge read <target>` hands out the `reader` role, the plan's checkout
+and its prompt. Run that background subagent in your session, then record its final message
+with `forge handback <target> --subagent <id> --text "<message>"`. Its lock and machine place
+stay held until handback. Forge checks for changed files and records the usual cold-read notes.
+
 The same file holds a `[models]` table: `[models.build]` for the first task build,
 `[models.fix]` for later fix rounds, `[models.lite]` for a fix's first build round,
 `[models.explore]` for the explorer role on both hosts and quick read-only questions,
-`[models.grill.codex]` and `[models.grill.claude]` for cold reads, and `[models.review]` for
-Autoreview. Build, fix, lite, explore and grill set a model and reasoning effort; review sets its model.
-Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite, explore and review may
+`[models.grill.codex]` and `[models.grill.claude]` for cold reads.
+Build, fix, lite, explore and grill set a model and reasoning effort.
+Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite and explore may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no entry for a family, that tool runs on its own settings, except that a review on Claude
-uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
+kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
+Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
+installed tool. Claude planner and architect roles use that plan-read entry; debugger,
+security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
+no entry use Forge's `gpt-6.1-sol` at medium effort; Codex design uses its design default.
+Ask your agent to change these settings in a fix.
 
-In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
-uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at
-high effort. If the `claude` command is missing, or Claude fails before changing the checkout,
+`forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),
+and Opus at high for Claude grill. Existing model entries stay unchanged on
+upgrade. To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those
+four implementation entries, and `"claude-opus-5-5"` at `"high"` in grill. A missing implementation entry
+can be added before the first table with one line per kind, replacing `build` below:
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+For plan reads, use this line:
+`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+Move a single build, fix or lite entry to its family's table first. Run `forge sync` after
+changing settings to refresh subagent roles.
+
+Every normal, light and prototype sign-off review runs through the external Autoreview
+program on the repo's tool: Claude with `tools = "claude"`, Codex with `tools = "codex"`.
+With `tools = "both"`, reviews use Codex when installed and Claude otherwise. Autoreview chooses its own
+default model and effort; Forge passes neither. Legacy `[models.review]` entries stay in
+existing settings but no longer override Autoreview's defaults.
+
+A story task marked User-facing or a client fix allowed as "Prototype before sign-off"
+uses its selected tool's design entry: `[models.design.codex]` on Codex and
+`[models.design.claude]` on Claude. Claude's default is
+`claude-sonnet-5-5` at xhigh effort. With `tools = "both"` and `workers = "split"`, the
+fallback applies only to Claude design rounds run through its kit. If the `claude` command
+is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. Other work, including all work in Forge's own repo, keeps its
-usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
+failure without a Codex retry. When Claude Code coordinates the round, design work runs as
+its native `frontend` subagent; a failed native round gets no automatic Codex retry.
+With one tool selected, Forge reports the failure without a Codex retry.
+Split routing also applies to User-facing story tasks in
+Forge's own repo. Other work keeps its usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
 to change that choice.
 
 Forge names task conversations `Build · <story>/<task> · <task name>` and later turns
@@ -170,13 +217,8 @@ Without an answer, another `forge work <item>` and `forge close <item>` refuse. 
 question and answer in the answering brief and resumes the worker's conversation when possible.
 If that round fails or is interrupted, answer again with `--note`; the question remains open.
 
-Use `forge ask "<question>"` for a quick read-only look at this checkout without starting a
-fix. It uses the Codex entry of `[models.explore]` in `forge.toml` by default, falling back to
-`[models.lite]` when explore is absent; pass `--model <model>` or
-`--effort <effort>` to override either setting for the question. Forge prints the answer and
-keeps its records under `.git/forge/`. The Codex conversation is temporary and does not appear
-in the chat list. If a tracked or untracked file changes during the turn, Forge discards the
-answer and tells you to check `git status` before asking again.
+For a quick read-only question about this checkout, hand it to the session's `explorer`
+subagent role. It uses the explore entry in `forge.toml`; no separate Forge command is needed.
 
 New repos get explore on Claude with `claude-haiku-5-5` at high effort and on Codex with the
 initial lite settings. Upgrading and syncing an existing repo preserves its settings: without
@@ -218,6 +260,15 @@ command close runs instead of `test`, with `{base}` replaced by the merge base w
 branch, so it runs only the tests related to the changed files plus fast checks (for example
 `npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
 `test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
+The `tests` check runs the suite as parallel groups and passes only when every group passes:
+six groups when `test` calls pytest directly (not through make or tox) and the repo lists
+pytest-split, otherwise one.
+New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
+required check keeps its `tests` name, so branch protection doesn't change.
+When the pytest selection would cover more than a third of the repo's Python test files
+(shared test inputs select them all), close skips the local run, says so in one line, and
+relies on the pull request's required checks. `forge test` still runs its tests. New repos
+get this from init; existing repos get it on upgrade.
 
 ## Merging a ready item
 

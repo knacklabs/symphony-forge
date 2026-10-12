@@ -196,7 +196,7 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         assert stages["CI"]["status"] == "running"
         timeline = _svg(page, row["title"] + " stage timeline")
         assert {"Build: 2 minutes", "Tests: 30 seconds", "Review: 1 minute",
-                "CI: unknown; current", "Merge: unknown"} <= _titles(timeline)
+                "CI: 1 minute; current", "Merge: unknown"} <= _titles(timeline)
         painted = " ".join(" ".join(node.itertext()) for node in timeline.iter()
                            if node.tag.rsplit("}", 1)[-1] == "text")
         assert all(label in painted for label in ("Build", "Tests", "Review", "Checks", "Merge",
@@ -212,7 +212,10 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
                        "building": 2, "ready to merge": 0,
                        "done": 3 if history == "adopted-v1.2.2" else 2}
     assert data["stage_counts"] == expected_counts
-    assert all(f"{name.capitalize()}: {count}" in text for name, count in expected_counts.items())
+    # The old header mixed stories and fixes. Each labelled group now matches its JSON counts.
+    for kind, counts in data["kind_stage_counts"].items():
+        assert kind.capitalize() in text
+        assert all(f"{name.capitalize()}: {count}" in text for name, count in counts.items())
     numbers = re.search(r'<ul class="numbers">(.*?)</ul>', page, re.S).group(1)
     assert len(re.findall(r"<li>", numbers)) == 3, "The three factory measures stay"
     # These are the shipped, script-free theme and responsive-page contracts.
@@ -288,7 +291,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert "Next: merge its pull request, then forge next" in plan_next.stdout
     plan_page = repo.forge("board", "--out", str(out))
     assert plan_page.returncode == 0, plan_page.stderr
-    assert "Ready to merge: 2" in seen(out) and "Building: 1" in seen(out)
+    # One ready story and one ready fix remain separate in the labelled header.
+    assert seen(out).count("Ready to merge: 1") == 2 and "Building: 1" in seen(out)
 
     # Task/fix checkouts retain an equally recent inherited story record, but
     # the owning story's live task table is what next and board must both read.

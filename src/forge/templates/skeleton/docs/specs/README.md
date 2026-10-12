@@ -3,8 +3,8 @@
 One file per capability: what it does and how we know it works, never how it is built.
 
 1. `forge spec save <slug>` saves a draft.
-2. `forge read <slug>` gives it a cold read; answer the findings and run it again until a round
-   finds nothing.
+2. `forge read <slug>` gives it a cold read; answer blocking findings and run it again until no
+   notes block building. Advisory notes are recorded and do not need another round.
 3. `forge spec confirm <slug> --by "<name>"` marks it confirmed after the human confirms it.
 4. `forge roadmap add <slug>` adds its stories to `plans/roadmap.json`.
 5. Once every story from it is done and its check date has passed, `forge next` asks for the

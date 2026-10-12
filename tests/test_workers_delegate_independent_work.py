@@ -30,7 +30,7 @@ def _invitation(brief):
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
 def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
-        repo, gh, tmp_path, monkeypatch, sdk_data, previous):
+        repo, gh, tmp_path, monkeypatch, sdk_data, previous, request):
     # Setup and sync deliver roles without requiring a new forge.toml setting. The prompt
     # and SDK settings sent by forge work are the contract; third-party stubs only record them.
     if previous:
@@ -86,6 +86,7 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     started = repo.forge("fix", "start", "Delegate independent work", "--done",
                          "Workers may delegate independent parts", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
+    request.getfixturevalue("claude_session")
     worked = repo.forge("work", "delegate-independent-work", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     config = _sent(codex_log, "thread/start")[-1]["config"]
@@ -99,6 +100,8 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
                     'workers = "claude"').replace('workers = "split"', 'workers = "claude"'),
                     encoding="utf-8")
     repo.git("commit", "-qam", "Choose Claude workers", cwd=folder)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE")
     worked = repo.forge("work", "delegate-independent-work", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     for brief in (codex_brief, calls(claude_log)[0]["brief"]):
@@ -107,10 +110,11 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
 
 @pytest.mark.parametrize("host", ["codex", "claude"])
 def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
-        repo, gh, tmp_path, monkeypatch, sdk_data, host):
+        repo, gh, tmp_path, monkeypatch, sdk_data, host, request):
     # Start the real command with the earlier release's prompt bytes. Keep today's host
     # tracking, so the upgrade resumes rather than restarting for a separate record migration.
     if host == "codex":
+        request.getfixturevalue("claude_session")
         folder, log, _ = _resuming(repo, monkeypatch, sdk_data)
         item = "BOARD/PAGE"
         monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")

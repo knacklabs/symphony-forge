@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import string
 import subprocess
@@ -36,6 +37,11 @@ SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+
+
+# A file path with an optional line (with the "at" or "in" before it) or a commit hash, for plain().
+PATHLIKE = re.compile(r"(?:\s(?:at|in|on|from|see))?\s*\(?(?:(?:[\w.-]+/)+[\w.-]*\.\w+|\b[\w-]+\.[A-Za-z]{1,5}"
+                      r"(?=:\d))(?::[\d,-]+)?\)?|\s*\(?\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b\)?")
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
@@ -201,6 +207,67 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
              and n not in dismissed)]
 
 
+def plain(title: str, body: str = "") -> str:
+    """A note or finding in plain words: its title and up to two sentences of its body, without
+    markdown, labels, file paths or hashes."""
+    def sentences(text: str, keep: int) -> str:
+        text = " ".join(text.replace("**", "").replace("`", "").split())
+        text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)  # a markdown link keeps its words
+        text = re.sub(r"^(?:(?:Blocking|Raise|Advisory):\s*|(?:Not done|Gate|Standard|Functional|Test|"
+                      r"Security|Scale|Data loss|Later|Follow-up)\s*[.:\u2014\u2013-]+\s*)+", "", text, flags=re.I)
+        text = re.sub(r"\s+([,.;:!?])", r"\1", re.sub(r"\(\s*\)", "", PATHLIKE.sub("", text)))
+        first, *rest = re.split(r"(?<=[.!?])\s", text.strip())
+        # ponytail: a lead-in under five words ("The owner's setting.") takes the next sentence too.
+        if keep == 1 and rest and len(first.split()) < 5:
+            return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
+                                                 rest[0][:1].lower() + rest[0][1:])
+        return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
+    title, body = sentences(title, 1), sentences(body, 2)
+    if not body:
+        return title
+    return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
+
+
+def question(name: str, delivers: str, flagged: list[str], accept: str,
+                  parts: str = "Done when") -> str:
+    """The question a stopped read or review loop asks the human, ready to ask as written."""
+    return "\n".join([f"{name}: {delivers}" if delivers else name,
+                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
+                      "Accept, narrow or split?",
+                      f"- Accept: {accept}",
+                      f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
+                      "- Split: move these cases into a new story or fix of their own; this one goes on "
+                      "without them."])
+
+
+def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
+    """A stopped item's question for the human: what it is, its open serious findings, the choices."""
+    from forge import story as story_  # story imports review
+
+    name, delivers = plain(state.get("why") or item), plain(state.get("done_when", ""))
+    if "/" in item:  # a task: its row in the story's plan, which its worktree holds
+        key, task = item.split("/")
+        doc = top / "plans" / f"{key}.md"
+        text = doc.read_text(encoding="utf-8") if doc.is_file() else ""
+        try:
+            row = next((row for row in story_.parse(text)["tasks"] if row["id"] == task), {})
+        except ValueError:
+            row = {}
+        title = re.search(r"^# (.+)$", text, re.M)
+        name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
+        delivers = plain(row.get("What it delivers", ""))
+    result = state.get("review") or {}
+    flagged = [plain(finding["title"], finding.get("body", ""))
+               for _, finding in blocking(result) if isinstance(finding, dict)]
+    # Accept dismisses every finding not yet dismissed, advice included.
+    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(flagged)
+    return question(name, delivers, flagged,
+                               f"every finding in this review, the {len(flagged)} listed and {advice} "
+                               "advice notes, is dismissed with your reason and recorded; close then "
+                               "goes on to the checks, and merging is still a separate step.")
+
+
 # --- the instructions ------------------------------------------------------------------
 
 
@@ -213,10 +280,15 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
     changed = repo.git("diff", "--name-only", f"{base}...HEAD", cwd=top).splitlines()
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
+    history = _history(top, item, base, previous)
+    settled = _settled(history)
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "allowance": state.get("allow_large") or "No recorded allowance",
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous), "rulings": _rulings(top, item, base),
+              "previous": ("\n\n".join(_previous(result) for result in history) or "- none")
+                          + "\n\nSettled findings:\n" + _bullets(
+                              f"{title} ({file}): {reason}" for (file, title), reason in settled.items()),
+              "rulings": _rulings(top, base, history),
               "test_run": tested,
               "proof_list": commit_paragraph(top, base, "Proof list:") or "missing"}
     if "/" in item:
@@ -244,15 +316,55 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
 
-def close_test(top: Path, base: str) -> str:
+def close_test(top: Path, base: str, *, closing: bool = True) -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
-    else its test. The pull request's tests check always runs test."""
+    else supported runner selection when CI runs test. Workers still run test."""
     cfg = repo.config(top)
     command = cfg["fast_test"] or cfg["test"]
+    if closing and command and not cfg["fast_test"] and "tests" in cfg["checks"]:
+        merge_base = repo.git("merge-base", base, "HEAD", cwd=top)
+        code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
+                f"from forge.fasttest import close_tests; sys.exit(close_tests({merge_base!r}))")
+        words = [sys.executable, "-c", code]
+        return subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
     return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
-def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tuple[int, str]:
+def few_tests(top: Path, command: str, base: str) -> bool:
+    """Forge's pytest picker narrowed to a few related test files ends in moments."""
+    if not re.fullmatch(r"(?:uv run(?: --frozen| --python [\w.-]+)* )?"
+                        r"forge test --pytest [0-9a-f]+", command.strip()):
+        return False
+    from forge import fasttest  # fasttest imports review in forge test
+
+    test = repo.config(top)["test"]
+    # Only Python tests are bounded by the picker's file count.
+    if re.search(r"[;&|<>\r\n`$]", test):
+        return False
+    test = re.sub(r"^uv run(?: --frozen| --python [\w.-]+)* ", "", test.strip())
+    try:
+        words = shlex.split(test, posix=os.name != "nt")
+    except ValueError:
+        return False
+    runner = Path(words[0].strip('"').replace("\\", "/")).name if words else ""
+    if runner not in {"pytest", "pytest.exe"} and not (
+            re.fullmatch(r"python[\d.]*(?:\.exe)?", runner) and words[1:3] == ["-m", "pytest"]):
+        return False
+    with contextlib.chdir(top):
+        # Doctests collect from every module, not only the picked test files.
+        if "doctest" in test or "doctest" in fasttest.pytest_options(words):
+            return False
+        picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
+    # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.
+    return not picked[2] and len(picked[0]) <= 5
+
+
+# Close shows these fasttest lines, which a later runner's output can push out of the tail.
+GAP = "No local test names "
+
+
+def test_run(top: Path, command: str, base: str, *, always: bool = False,
+             closing: bool = True) -> tuple[int, str]:
     """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
     branch = repo.current_branch(top)
     item = (branch_item(branch, top) or (branch, {}))[0]
@@ -267,24 +379,29 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
                    for path in changed if path):
                 said = DOCS_ONLY.format(command=command)
-                print(said, flush=True)
                 return 0, said
-        from forge import codex  # codex imports review indirectly
+        from forge import codex  # imports review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
         if passed and passed.exists():
-            print(skipped, flush=True)
             return 0, skipped
-        entry = machine.join("test", top, item, None, None)
+        entry = machine.join("test", top, item, None, None, small=few_tests(top, command, base))
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
-                print(skipped, flush=True)
                 return 0, skipped
-            workers = str(machine.half_cores())
+            from forge import fasttest
+
+            workers = machine.test_cpus()
+            # A worker's budget also caps a fixed xdist count; the option wins over the command's -n.
+            cap = (f" --maxprocesses={workers}" if os.environ.get("FORGE_TEST_CPUS")
+                   and fasttest.XDIST.search(command) else "")
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
+            env.pop("FORGE_CLOSE_TESTS", None)
+            if closing and "tests" in repo.config(top)["checks"]:
+                env["FORGE_CLOSE_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix())
@@ -345,7 +462,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tup
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
-                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
+                        | {n for n, line in enumerate(out) if line.startswith(GAP)})
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
@@ -386,16 +504,15 @@ def _previous(result: dict[str, Any]) -> str:
         for n, finding in enumerate(findings, 1)) or "- none"
 
 
-def _rulings(top: Path, item: str, base: str) -> str:
+def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
     """Every `Ruling:` line in the branch's commit messages, then evidence-based dismissals with
     their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
     commits = list(reversed(repo.commit_log(top, base)))
     found = [line.strip() for _, message, _ in commits
              for line in message.splitlines() if line.startswith("Ruling:")]
-    path = repo.state_path(item)
-    for sha in repo.git("rev-list", "--reverse", f"{base}..HEAD", "--", path,
-                        cwd=top).split():
-        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+    found += [part.strip() for _, message, _ in commits
+              for part in re.findall(r"^Coordinator note:.*\Z", message, re.M | re.S)]
+    for result in history:
         for dismissal in result.get("dismissals", []):
             if dismissal.get("accepted"):
                 continue  # Human acceptance expires before a subsequent review.
@@ -405,6 +522,39 @@ def _rulings(top: Path, item: str, base: str) -> str:
             if line not in found:
                 found.append(line)
     return _bullets(found)
+
+
+def _history(top: Path, item: str, base: str, previous: dict[str, Any]) -> list[dict[str, Any]]:
+    """Git owns earlier reviews; later dismissals replace that round's original result."""
+    path = repo.state_path(item)
+    rounds = {}
+    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..HEAD", "--", path,
+                        cwd=top).split():
+        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        if result.get("commit"):
+            rounds[result["commit"]] = result
+    if previous.get("commit"):
+        rounds[previous["commit"]] = previous
+    return list(rounds.values())
+
+
+def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
+    settled = {}
+    earlier = set()
+    for result in history:
+        current = {(f["file"], f["title"]) for f in result.get("findings", [])}
+        for key in earlier - current:
+            settled.setdefault(key, "fixed: absent from a later review")
+        accepted = set()
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            key = (finding["file"], finding["title"])
+            if dismissal.get("accepted"):
+                accepted.add(key)
+            else:
+                settled[key] = "dismissed because " + dismissal["because"]
+        earlier = (earlier | current) - accepted
+    return settled
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
@@ -523,7 +673,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
             page.write(string.Template(rules).substitute(standards=(
                 Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
-        engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
+        engine = cfg["tools"]
+        if engine == "both":
+            engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
@@ -531,23 +683,16 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
-        # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
-        # for the engine's family, and on Claude with no Claude review entry, its Claude cold-read model.
-        chosen = ({"model": "gpt-6.1-sol", "effort": "medium"} if light and engine == "codex" else
-                  repo.models(cfg, "review", engine)
-                  or (repo.models(cfg, "grill", "claude") if engine == "claude" else {}))
-        if chosen:
-            argv += ["--model", f"{engine}={chosen['model']}"]
-            argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        with machine.agent_slot(top, "review", item, **chosen):
+        with machine.agent_slot(top, "review", item):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
-                with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
+                with repo.record_run(top, item, "review", family=engine) as ran:
                     findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
                                                 strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
+                    ran.update(selected)
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
@@ -555,16 +700,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             serious = [f for f in findings if f["priority"] in SERIOUS]
             repo.record_event(top, item, "review result", commit=head,
                 review_round=round_number(top, item, state),
-                outcome="failed" if reason or selected.get("model") != "gpt-6.1-sol"
-                or selected.get("effort") != "high" else "blocked" if serious else "clean",
+                outcome="failed" if reason else "blocked" if serious else "clean",
                 findings=None if reason else [{key: finding[key] for key in
                     ("title", "priority", "file")} for finding in findings])
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
-                             "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            if selected.get("model") != "gpt-6.1-sol" or selected.get("effort") != "high":
-                repo.refuse(("The sign-off review did not confirm GPT-6.1 Sol at high effort: "
-                             "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
             if serious:
                 repo.refuse(("Customer sign-off review found a blocking issue: "
@@ -577,14 +717,21 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
+    settled = _settled(_history(top, item, base, previous))
+    findings = [finding for finding in findings
+                if not settled.get((finding["file"], finding["title"]), "").startswith("fixed:")]
+    dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because ")}
+                  for number, finding in enumerate(findings, 1)
+                  if (reason := settled.get((finding["file"], finding["title"]), "")).startswith(
+                      "dismissed because ")]
+    result = {"findings": findings, "dismissals": dismissals,
+              "blocking_level": "P0" if light else "P1"}
     identity = repo.record_event(top, item, "review result", commit=head,
                                  review_round=round_number(top, item, state),
-                                 outcome="blocked" if any(f["priority"] in
-                                 (("P0",) if light else SERIOUS) for f in findings) else "clean",
+                                 outcome="blocked" if blocking(result) else "clean",
                                  findings=[{key: finding[key] for key in ("title", "priority", "file")}
                                            for finding in findings])
-    return {"id": identity, "commit": head, "findings": findings,
-            "dismissals": [], "blocking_level": "P0" if light else "P1",
+    return {"id": identity, "commit": head, **result,
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 
@@ -622,7 +769,7 @@ def signoff(top: Path, answers: str) -> str:
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
-    cfg = {"models": {"review": {"model": "gpt-6.1-sol", "effort": "high"}}}
+    cfg = repo.config(top)
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 
 

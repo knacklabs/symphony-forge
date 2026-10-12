@@ -1,0 +1,37 @@
+{
+  "base": "4436362fd178474e291311077681bb515dab731e",
+  "branch": "fix/settled-stays-settled",
+  "done_when": "Each cold reader's and reviewer's brief lists earlier rounds' notes with their answers and the findings already fixed or dismissed, and a note or finding that repeats a settled one cannot block or start another round. New and existing client repos get it on init or upgrade plus sync, and a test covers both.",
+  "flagged": [
+    "src/forge/story.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3d38a1600196ffbc0c28b59bea484d2e87ab6e0826c27a9d8549767765cdcbc8",
+    "changed": "987a8f5c5207f04f00a6fa86fe13a6cefed69b8bfb0cb1e703bf05bc74bb322b",
+    "commit": "3649f9dc81968b815129d9f84c80f56f9fde3190",
+    "dismissals": [],
+    "findings": [],
+    "id": "b01ce3be-f4bf-48ee-86c1-f966056a9863",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T14:39:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T15:49:20.047182+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:44:10.518186+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Readers and reviewers reopen what earlier rounds already settled",
+  "worker": "codex"
+}

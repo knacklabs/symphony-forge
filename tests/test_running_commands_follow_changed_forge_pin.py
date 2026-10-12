@@ -33,6 +33,10 @@ def _earlier_release(env, *, real_uv=False):
                              version.read_text("utf-8")), "utf-8")
     config = source / "forge" / "repo.py"
     config.write_text(config.read_text("utf-8").replace(', "fast_test": str', ''), "utf-8")
+    # The earlier release also ran its full test command locally during close.
+    review = source / "forge" / "review.py"
+    review.write_text(review.read_text("utf-8").replace(
+        "closing: bool = True", "closing: bool = False"), "utf-8")
     _install(env.repo.bin, "forge", FORGE_SHIM.format(python=sys.executable,
                                                      src=source.as_posix()))
     selected_bin = env.tmp / "current-bin"
@@ -188,10 +192,16 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
-    failing_test = json.dumps(f'"{sys.executable}" -c "raise SystemExit(1)"')
+    # The tests pass once, after the second fix round, whose review finds something new, so no two
+    # rounds in a row leave the same problem for the stuck rule; land's own limit still stops it.
+    suite = env.tmp / "suite.py"
+    suite.write_text('import pathlib, sys\nsys.exit(not pathlib.Path("work-2.txt").exists() '
+                     'or pathlib.Path("work-3.txt").exists())\n', "utf-8")
+    failing_test = json.dumps(f'"{sys.executable}" "{suite}"')
     upgraded = original.replace('version = "v1.2.2"',
-        f'version = "{current}"\nfast_test = ""\ntest = {failing_test}')
-    env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
+        f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
+    env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN,
+                blocked(finding("P1", "The greeting is too long")), CLEAN)
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")

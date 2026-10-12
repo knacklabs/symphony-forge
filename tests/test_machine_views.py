@@ -3,6 +3,7 @@
 The old HTML/text tests do not exercise JSON, expiry across processes, or GitHub event ids.
 Only GitHub is faked; commands read real repositories and their owned state fixtures.
 """
+import copy
 import json
 import os
 import shutil
@@ -195,7 +196,12 @@ def view(repo, command, cwd=None):
 def snapshot(board):
     # Repository state remains identical across worktrees/cache reads. OS measurements
     # now refresh on every call; their transport contract belongs to test_lanes_view.
-    return {key: value for key, value in board.items() if key != "machine"}
+    # Idle elapsed also ticks between calls; its exact value is owned by the board idle test.
+    result = json.loads(json.dumps({key: value for key, value in board.items() if key != "machine"}))
+    for parent in result["items"]:
+        for row in [parent, *parent["children"]]:
+            row.pop("idle_seconds", None)
+    return result
 
 
 def state(path, **values):
@@ -215,6 +221,12 @@ def pull(number, branch, conclusion="SUCCESS", completed="2026-10-04T10:00:00Z")
 
 
 def github(gh, prs):
+    # GraphQL returns the queried commit identity; explicit older check commits
+    # remain intact for stale-evidence cases.
+    prs = [copy.deepcopy(pr) for pr in prs]
+    for pr in prs:
+        for node in pr.get("commits", {}).get("nodes", []):
+            node["commit"].setdefault("oid", pr.get("headRefOid"))
     gh.respond("api", "graphql", stdout=json.dumps(
         {"data": {"repository": {"pullRequests": {"nodes": prs}}}}))
 
@@ -274,7 +286,10 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     assert result["version"] == repo.forge("--version").stdout.strip().split()[-1].lstrip("v")
     assert result["repo_root"] == str(repo.path.resolve())
     rows = {r["id"]: r for r in result["items"]}
-    assert set(rows) == {"BOARD", "polish"}
+    # Roadmap-only stories now have the same visible status in JSON and on the page.
+    assert set(rows) == {"BOARD", "SHOP", "polish"}
+    assert rows["SHOP"]["stage"] == "needs a spec"
+    assert rows["SHOP"]["status"] == "Not started yet"
     assert rows["polish"]["title"] == "Polish the guide"
     assert rows["polish"]["kind"] == "fix"
     # Live adds failures and severity; the previous number/checks/count contract stays.
@@ -310,7 +325,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     cache = repo.path / ".git/forge/checks-cache.json"
     state(cache, fetched_at="2000-01-01T00:00:00+00:00")
     offline = {r["id"]: r for r in view(repo, "board")["items"]}
-    assert set(offline) == {"BOARD", "polish"}
+    assert set(offline) == {"BOARD", "SHOP", "polish"}
     assert offline["BOARD"]["children"][0]["pr"]["checks"] == "unknown"
     assert offline["polish"]["pr"]["checks"] == "unknown"
     assert offline["BOARD"]["title"] == item["title"]
@@ -410,6 +425,7 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
     made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
     assert made.returncode == 0, made.stderr
     pr = pull(1, "fix/polish")
+    pr["headRefOid"] = repo.git("rev-parse", "fix/polish")
     nodes = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
     name = "forge-pr-check (macos)" if required else "optional preview"
     nodes.append({**nodes[0], "databaseId": 111371488291, "name": name, "conclusion": conclusion})
@@ -523,6 +539,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     assert {r["id"]: r["pr"]["checks"] for r in first["items"]} == {
         "first": "pass", "second": "pass", "older": "unknown"}
     prs[0] = pull(30, "fix/first", "FAILURE")
+    prs[0]["headRefOid"] = repo.git("rev-parse", "fix/first")
     github(gh, prs)
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:59+00:00")
     # GitHub checks stay cached, but elapsed item time continues to advance.
@@ -549,6 +566,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     running = {r["id"]: r for r in view(repo, "board")["items"]}["first"]
     assert running["pr"]["checks"] == "running" and running["occurrences"] == []
     prs[0] = pull(30, "fix/first", "FAILURE", "2026-10-04T10:03:00Z")
+    prs[0]["headRefOid"] = repo.git("rev-parse", "fix/first")
     contexts = prs[0]["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
     contexts["nodes"].append(json.loads(FIXTURE.read_text("utf-8"))["github"]["commit_status"])
     github(gh, prs)
@@ -624,7 +642,8 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     doc = "\n".join(line for line in STORY_DOC.splitlines() if not line.startswith("| T2 |"))
     item, where = env.start_approved_task(doc)
     row = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")
-    assert row["stage"] == "approved"
+    # Approval is a gate; the visible stage follows the current next-step derivation.
+    assert row["stage"] == "building"
     assert row["children"][0]["next"]["command"] == "forge work SHOP/T1"
     assert view(repo, "next")["next"]["command"] == "forge work SHOP/T1"
     # The shipped views consume the same real run producers on new and upgraded clients.

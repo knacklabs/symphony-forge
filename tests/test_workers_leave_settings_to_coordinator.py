@@ -120,7 +120,7 @@ def test_3_task_permission_comes_from_its_current_covered_done_when(client, monk
 @pytest.mark.parametrize("family", ["claude", "codex"])
 @pytest.mark.parametrize("case", ["unstaged", "staged", "named", "failed"])
 def test_4_worker_round_restores_uncommitted_settings_unless_done_when_names_them(
-        client, monkeypatch, sdk_data, tmp_path, family, case):
+        client, monkeypatch, sdk_data, tmp_path, family, case, request):
     # The fake model edits files; real forge work owns restoration, permission and hand-back.
     if family == "claude":
         install_claude(client)
@@ -131,6 +131,7 @@ def test_4_worker_round_restores_uncommitted_settings_unless_done_when_names_the
         if case == "failed":
             monkeypatch.setenv("STUB_CLAUDE_EXIT", "1")
     else:
+        request.getfixturevalue("claude_session")
         client.git("switch", "-q", "fix/settings-setup")
         client.write("forge.toml", _toml(client.forge("--version").stdout.split()[-1],
                                         "codex", MODELS, "client"))

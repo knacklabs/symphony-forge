@@ -68,6 +68,20 @@ class Client(CodexClient):
     """The SDK's client, which prints the app-server's id as soon as it starts, before Codex()
     waits on initialize, so Forge has it on record even when Codex never answers."""
 
+    received_tier: str | None = None
+    speed_thread: str = ""
+
+    def _coerce_notification(self, method, params):
+        # Settings receipts are thread-scoped, so the SDK's turn stream omits them.
+        if (method == "thread/settings/updated" and isinstance(params, dict)
+                and self.speed_thread and params.get("threadId") == self.speed_thread):
+            settings = params.get("threadSettings")
+            if isinstance(settings, dict) and "serviceTier" in settings:
+                value = settings["serviceTier"]
+                self.received_tier = ((value or "default")
+                                      if value is None or isinstance(value, str) and value else None)
+        return super()._coerce_notification(method, params)
+
     def start(self) -> None:
         with STARTING:
             super().start()
@@ -145,7 +159,9 @@ def main() -> int:
             return 0
         if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
-                turns = client.thread_read(request["thread"], include_turns=True).thread.turns
+                thread = client.thread_read(request["thread"], include_turns=True).thread
+                turns = thread.turns
+                begun = thread.git_info.sha if thread.git_info else None
             except InvalidRequestError as error:
                 # Only Codex saying it has no such conversation means it reports no status. Its
                 # other failures, such as history it can't load, name the id too but prove
@@ -153,7 +169,8 @@ def main() -> int:
                 if error.message != f"thread not loaded: {request['thread']}":
                     raise
                 turns = []
-            emit(read=[[turn.id, turn.status.value] for turn in turns])
+                begun = None
+            emit(read=[[turn.id, turn.status.value] for turn in turns], start=begun)
             return 0
         # deny_all is the SDK's approval policy "never" with no reviewer: Codex never asks and its
         # automatic reviewer isn't used. The SDK's only other mode, auto_review, uses it.
@@ -179,18 +196,39 @@ def main() -> int:
             settings["config"] = {**(settings["config"] or {}), "hooks": {"state": state}}
         # The SDK's high-level Thread discards these settings; null effort follows the model.
         request_raw = client._request_raw
+        tier = "default"  # The protocol's standard-speed override also clears inherited Fast.
+        selection = {}
         def selected_request(method, params=None):
+            nonlocal tier, selection
+            if method == "turn/start":
+                client.speed_thread = params["threadId"]
+                # Persist the tier too, so Codex reports its effective settings back.
+                if client.received_tier != tier:
+                    client.received_tier = None
+                params = {**params, "serviceTier": tier, "serviceTierForTurn": tier}
             response = request_raw(method, params)
             if method in ("thread/start", "thread/resume"):
                 effort, cursor = response.get("reasoningEffort"), None
-                while effort is None:
+                while effort is None or request.get("fast"):
                     page = request_raw("model/list", {"includeHidden": True, "cursor": cursor})
-                    effort = next((model["defaultReasoningEffort"] for model in page["data"]
-                                   if model["model"] == response["model"]), None)
+                    model = next((model for model in page["data"]
+                                  if model["model"] == response["model"]), None)
+                    if model is not None:
+                        effort = effort or model["defaultReasoningEffort"]
+                        if request.get("fast"):
+                            tier = next((entry["id"] for entry in model.get("serviceTiers") or []
+                                         if entry.get("name") == "Fast" or entry["id"] == "priority"),
+                                        "default")
+                        break
                     cursor = page.get("nextCursor")
                     if not cursor:
                         break
-                emit(selection={"model": response["model"], "effort": effort})
+                selection = {"model": response["model"], "effort": effort, "tier": tier,
+                             "fast_wanted": bool(request.get("fast"))}
+                # An unchanged tier may produce no settings notification on the next turn.
+                if "serviceTier" in response and (response["serviceTier"] or "default") == tier:
+                    client.received_tier = response["serviceTier"] or "default"
+                emit(selection=selection)
             return response
         client._request_raw = selected_request
         resumed = None
@@ -206,49 +244,56 @@ def main() -> int:
                     except JsonRpcError as retry_error:
                         reason = retry_error.message
                 if resumed is None:
-                    emit(fresh=f"Codex couldn't resume its conversation: {reason}")
-        if request.get("ephemeral"):
-            settings["ephemeral"] = True
+                    if reason == (f"session {request['thread']} is archived. Run "
+                                  f"`codex unarchive {request['thread']}` to unarchive it first."):
+                        emit(fresh="the earlier Codex conversation was archived")
+                    else:
+                        if reason not in (f"no rollout found for {request['thread']}",
+                                          f"no rollout found for thread id {request['thread']}",
+                                          f"thread not found: {request['thread']}",
+                                          f"thread not loaded: {request['thread']}"):
+                            raise
+                        emit(fresh=f"Codex couldn't resume its conversation: {reason}")
         thread = resumed or codex.thread_start(**settings)
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
-        if not request.get("ephemeral"):
-            try:
-                matches = set()
-                cursor = None
-                root = Path(request["root"]).resolve()
-                while True:
-                    page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
-                    for project in page["data"]:
-                        if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
-                                or not project["id"] or not isinstance(project.get("roots"), list)):
-                            continue
-                        for path in project["roots"]:
-                            path = path.get("path") if isinstance(path, dict) else path
-                            if isinstance(path, str) and path and Path(path).resolve() == root:
-                                matches.add(project["id"])
-                                break
-                    cursor = page.get("nextCursor")
-                    if not cursor:
-                        break
-                if len(matches) == 1:
-                    project_id = next(iter(matches))
-                    client._request_raw("thread/metadata/update", {
-                        "threadId": thread.id, "projectId": project_id})
-                    emit(project=project_id)
-                else:
-                    emit(project_skipped="no matching project" if not matches else
-                         "several matching projects")
-            except Exception as error:
-                emit(project_skipped=f"Codex could not update the chat project: {error}. "
-                     "Check Codex and try again")
-        if not request.get("ephemeral") and resumed is None:
+        try:
+            matches = set()
+            cursor = None
+            root = Path(request["root"]).resolve()
+            while True:
+                page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
+                for project in page["data"]:
+                    if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
+                            or not project["id"] or not isinstance(project.get("roots"), list)):
+                        continue
+                    for path in project["roots"]:
+                        path = path.get("path") if isinstance(path, dict) else path
+                        if isinstance(path, str) and path and Path(path).resolve() == root:
+                            matches.add(project["id"])
+                            break
+                cursor = page.get("nextCursor")
+                if not cursor:
+                    break
+            if len(matches) == 1:
+                project_id = next(iter(matches))
+                client._request_raw("thread/metadata/update", {
+                    "threadId": thread.id, "projectId": project_id})
+                emit(project=project_id)
+            else:
+                emit(project_skipped="no matching project" if not matches else
+                     "several matching projects")
+        except Exception as error:
+            emit(project_skipped=f"Codex could not update the chat project: {error}. "
+                 "Check Codex and try again")
+        if resumed is None:
             thread.set_name(request["name"])
         prompt = (request["prompt"] if resumed is not None else
                   request.get("fresh_prompt", request["prompt"]))
         for attempt in range(RETRIES + 1):
             turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
-            emit(turn=turn.id)
+            emit(turn=turn.id, requested_tier=tier, tier=client.received_tier,
+                 model=selection["model"], fast_wanted=selection["fast_wanted"])
             usage, items, busy = None, [], False
             for event in turn.stream():
                 payload = event.payload
@@ -265,6 +310,8 @@ def main() -> int:
                     error = payload.turn.error
                     busy = payload.turn.status.value == "failed" and overloaded(
                         params["turn"].get("error") or {})
+                    emit(speed={**selection, "turn": turn.id, "requested_tier": tier,
+                                "tier": client.received_tier})
                     # The same final text as the SDK's TurnResult.final_response.
                     emit(status=payload.turn.status.value, error=error and error.message,
                          text=_final_assistant_response_from_items(items), usage=usage)

@@ -3,6 +3,7 @@ a Markdown file, or under .factory/, and still runs the review and waits for eve
 any other changed file runs the test command as before."""
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -20,8 +21,9 @@ def _with_test_command(env) -> Path:
     script = env.tmp / "suite.py"
     script.write_text(f"open({str(log)!r}, 'a').write('ran\\n')\nprint('1 passed')\n", "utf-8")
     toml = env.repo.path / "forge.toml"
+    command = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}"'
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"'))
+               + "fast_test = " + json.dumps(command) + "\n")
     env.repo.git("push", "-q", "origin", "main")
     return log
 
@@ -35,7 +37,7 @@ def test_1_close_skips_the_test_command_for_a_docs_and_plans_only_fix(env):
     said = [line for line in closed.stdout.splitlines() if SKIPPED in line]
     assert len(said) == 1, closed.stdout
     assert len(env.review_calls()) == 1
-    assert SKIPPED in env.prompt()
+    assert "Tests are running alongside this review" in env.prompt()
     # The named checks still gate it: the red tests check stops close.
     assert closed.returncode != 0
     assert "Checks failed on the pull request: tests." in closed.stderr
@@ -52,4 +54,4 @@ def test_2_close_runs_the_test_command_when_a_docs_fix_also_changes_code(env):
     assert closed.returncode == 0, closed.stderr
     assert log.read_text("utf-8") == "ran\n"
     assert SKIPPED not in closed.stdout
-    assert "exited with status 0" in env.prompt()
+    assert "exited with status 0" in closed.stdout

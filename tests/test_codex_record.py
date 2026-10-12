@@ -72,7 +72,7 @@ BARE_SERVER = """#!{python}
 import subprocess, sys
 done = subprocess.run([{ps!r}, *sys.argv[1:]], capture_output=True, text=True)
 if "app-server" in done.stdout:
-    done.stdout = " ".join(done.stdout.split()[:5]) + " python\\n"
+    done.stdout = " ".join(done.stdout.split()[:6]) + " python\\n"
 sys.stdout.write(done.stdout)
 sys.exit(done.returncode)
 """
@@ -205,7 +205,7 @@ def _crash(work: subprocess.Popen, saved: dict) -> None:
     work.communicate()
 
 
-def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
+def test_5_one_worker_per_item(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
@@ -273,15 +273,18 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
 
     if os.name != "nt":
         # Codex waits for Forge to record the app-server: while Forge is slow to read its
-        # identity, no conversation starts.
+        # identity, the existing conversation cannot resume yet.
         seen = repo.path.parent / "seen.jsonl"
-        before = len(_sent(calls, "thread/start"))
+        before = tuple(len(_sent(calls, method)) for method in ("thread/start", "thread/resume"))
         _install(repo.bin, "ps", SLOW_SERVER.format(python=sys.executable, tool=tool,
                                                     calls=str(calls), seen=str(seen)))
         assert repo.forge("work", "BOARD/PAGE").returncode == 0
         (repo.bin / "ps").unlink()
-        assert (len(_sent(seen, "thread/start")), len(_sent(calls, "thread/start"))) == (before,
-                                                                                        before + 1)
+        assert tuple(len(_sent(seen, method)) for method in ("thread/start", "thread/resume")) == before
+        assert (len(_sent(calls, "thread/start")), len(_sent(calls, "thread/resume"))) == (
+            before[0], before[1] + 1)
+        assert _sent(calls, "thread/resume")[-1]["threadId"] == saved["conversation"]
+        assert _saved(record)["conversation"] == saved["conversation"]
 
         # When Forge can't read who holds the lock, the owner counts as running: forge work
         # refuses, naming the lock.
@@ -293,6 +296,29 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
                                 f", so it can't tell who holds {lock}; it counts it as held.\n"
                                 f"Next: delete {lock} once no forge work runs on BOARD/PAGE\n")
         (repo.bin / "ps").unlink()
+
+    if os.name != "nt":
+        # An exited owner still has a PID until its parent collects it. Use a real
+        # zombie, not a ps stand-in, and keep it unreaped throughout the retry.
+        owner = subprocess.Popen([sys.executable, "-c", "import sys; sys.stdin.read()"],
+                                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+        try:
+            snapshot = subprocess.run(["ps", "-ww", "-o", "lstart=,command=", "-p", str(owner.pid)],
+                                      capture_output=True, text=True, check=True,
+                                      env={**os.environ, "TZ": "UTC", "LC_ALL": "C", "LANG": "C"})
+            *started, command = snapshot.stdout.split(None, 5)
+            ended = {"pid": owner.pid, "started": "UTC " + " ".join(started),
+                     "command": command.strip()}
+            saved = _saved(record)
+            record.write_text(json.dumps({**saved, "driver": ended}), encoding="utf-8")
+            owner.stdin.close()
+            assert _down(owner.pid)
+            recovered = repo.forge("work", "BOARD/PAGE")
+            assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+        finally:
+            owner.stdin.close()
+            owner.wait(timeout=30)
 
     # A lock whose process id now belongs to another process is stale and cleared.
     lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
@@ -356,7 +382,7 @@ def _exec_driver_is_stopped(repo) -> None:
 
 # ponytail: four kill-and-wait scenarios; under a full parallel run they need more than the 150 s default.
 @pytest.mark.timeout(600)
-def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
+def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path, claude_session):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"

@@ -59,7 +59,7 @@ def test_2_a_top_part_edit_after_a_pass_needs_a_round_on_the_diff(repo, claude_p
     assert read.returncode == 0, read.stdout + read.stderr
     prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
     for part in ("Round 2 of your cold read of `plans/SHOP.md`",
-                 "Your last round found nothing, and the doc changed since.",
+                 "Your last round passed, and the doc changed since.",
                  "-Shoppers can save a basket and come back to it later.",
                  "+Shoppers can save a basket and come back to it within a week.",
                  "It touches these sections: `## What changes for you`.",

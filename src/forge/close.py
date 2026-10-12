@@ -7,6 +7,8 @@ Nothing is committed after the checks: GitHub holds when they finished. A human 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -15,6 +17,7 @@ import sys
 import tempfile
 import time
 import tomllib
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -52,18 +55,22 @@ REFUSALS = {
                 '"<file:line> <reason>"'),
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
                 "earlier round flagged too, so Forge stops sending the worker back. Ask the human "
-                "to narrow the part, split it, or accept the remaining findings.",
+                "to narrow the part, split it, or accept the remaining findings, in these words:\n{question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
+    "stuck": ("The worker can't get past the same problem, so Forge stopped sending it back. "
+              "Ask the human:\n{question}",
+              'forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'),
+    "chosen": ("The owner's choice is recorded; the worker's next round follows it.", "forge work {item}"),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
                        "so it can't tell whether the {kind}'s files are what {pinned} writes.",
                        "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
                        "then forge close {item}"),
-    "tests_failed": ("`{command}` failed on this machine, so close stopped before the review; the "
+    "tests_failed": ("`{command}` failed on this machine; the "
                      "next worker round gets its output.", "forge work {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
@@ -89,23 +96,36 @@ def close(args: argparse.Namespace) -> int:
                  and reason and (state.get("stop") or {}).get("choice") == choice
                  and state["stop"].get("reason") == reason.strip())
     if choice or reason is not None:
+        stuck = "question" in (state.get("stop") or {})
         if (not choice or not reason or not reason.strip() or
-                not state.get("stop") or (state["stop"].get("choice") and not continued) or
-                args.dismiss or args.because):
-            repo.refuse(REFUSALS["bad_choice"], item=item)
+                not state.get("stop") or (state["stop"].get("choice") and not continued
+                                          and state["stop"].get("by") != "default") or
+                args.dismiss or args.because or
+                (choice == "accept" if stuck else choice in ("switch", "same"))):
+            repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
+                        else REFUSALS["bad_choice"], item=item)
         if not continued:
-            result = state["review"]
+            if choice == "switch":  # the next forge work runs this item on the other tool
+                state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
             if choice == "accept":
+                result = state["review"]
                 dismissed = {d["finding"] for d in result["dismissals"]}
                 result["dismissals"].extend(
                     {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
+            defaulted = state["stop"].get("by") == "default"
+            # the next worker round hears the owner's choice, including one reversing the default
+            state["stop"].update(by="owner", worker_round=state.get("round"))
             state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
-            repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+            if not defaulted:
+                repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+        if choice in ("switch", "same"):
+            print(f"Recorded the human's choice.\nNext: forge work {item}")
+            return 0
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
@@ -114,7 +134,7 @@ def close(args: argparse.Namespace) -> int:
             print("Recorded the human's choice.")
     had_stop = bool(state.get("stop"))
     if not switch:
-        check_stop(item, state)
+        check_stop(item, state, top)
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
@@ -137,6 +157,24 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
+    if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
+        excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
+        excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
+        stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"origin/{default}...HEAD",
+                         "--", ".", *excluded, cwd=top)
+        lines = sum(int(number) for record in stats.split("\0")
+                    for number in record.split("\t", 2)[:2] if number.isdigit())
+        if lines > limit:
+            stop = state.get("stop") or {}
+            if stop.get("size") and not stop.get("choice"):
+                repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
+            # A recorded answer holds until a worker round has run on it.
+            if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
+                stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
+                           f"over its limit of {limit}.", size=True)
+            repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
+    if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
+        state.pop("stop")
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:
@@ -169,7 +207,8 @@ def close(args: argparse.Namespace) -> int:
     fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
     if switch:
         fresh = fresh and result.get("mechanical") is True and not review.blocking(result)
-    if choice != "accept" and any(d.get("accepted") for d in result.get("dismissals", [])):
+    if choice != "accept" and (review.blocking(result) or
+                               any(d.get("accepted") for d in result.get("dismissals", []))):
         fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
                            result.get("branch_diff") != branch_diff)
@@ -178,62 +217,90 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if (not switch and not fresh and round_number >= 3 and not state.get("stop") and
+    choice_round = 0
+    if (state.get("stop") or {}).get("choice"):
+        # Earlier stops omitted the round or stored the attempted next review.
+        path = repo.state_path(item)
+        chosen = repo.git("log", "-1", "--first-parent", "--format=%H",
+                          "-G", '"choice":', "--", path, cwd=top)
+        at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
+        choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
+    if (not switch and not fresh and round_number - choice_round >= 3 and
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
-        state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
+        state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
-        check_stop(item, state)
+        check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
+    repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
+    failed = 0
     if not fresh:
         if pending := time_records.pending_merge_wait(top, item):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
-        failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
-        if failed:  # a review would only report the same failure
-            state.update(tests=tested, status="fixing")
-            _save(top, item, state, f"Tests of {item} failed")
-            repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
-        state.pop("tests", None)
         _push(top, branch)
         pr = _publish(top, item, state, branch, default, pr,
                       {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
-        try:
-            if switch:
-                head = repo.git("rev-parse", "HEAD", cwd=top)
-                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
-                                             review_round=review.round_number(top, item, state))
-                result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
-                          "changed": changed, "branch_diff": branch_diff, "mechanical": True}
-            else:
-                result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
-                                    light=light, tested=tested)
-            dismissed = {}
-            for dismissal in previous.get("dismissals", []):
-                if dismissal.get("accepted"):
-                    continue  # Acceptance covers this review, not later code or scope.
-                number = dismissal["finding"]
-                if not 1 <= number <= len(previous["findings"]):
-                    continue
-                finding = previous["findings"][number - 1]
-                dismissed[(finding["file"], finding["title"])] = dismissal
-            result["dismissals"] = [dict(dismissed[(finding["file"], finding["title"])],
-                                         finding=number)
-                                    for number, finding in enumerate(result["findings"], 1)
-                                    if (finding["file"], finding["title"]) in dismissed]
-            outcome = "blocked" if review.blocking(result) else "clean"
-        finally:
-            if outcome == "failed":
-                repo.record_event(top, item, "review result", outcome=outcome, findings=None,
-                                  review_round=review.round_number(top, item, state))
-            repo.record_timing(top, item, "review", start, clock, outcome, selected)
+        # shortcut: an interrupted review waits for tests; add cancellation if immediate interruption is needed.
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            testing = pool.submit(review.test_run, top, command, f"origin/{default}", always=switch)
+            try:
+                if switch:
+                    head = repo.git("rev-parse", "HEAD", cwd=top)
+                    identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
+                                                 review_round=review.round_number(top, item, state))
+                    result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
+                              "changed": changed, "branch_diff": branch_diff, "mechanical": True}
+                else:
+                    result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
+                                        light=light, tested="Tests are running alongside this review; close waits for "
+                                        f"both results before continuing. Command: `{command}`.")
+                dismissed = {}
+                for dismissal in previous.get("dismissals", []):
+                    if dismissal.get("accepted"):
+                        continue  # Acceptance covers this review, not later code or scope.
+                    number = dismissal["finding"]
+                    if not 1 <= number <= len(previous["findings"]):
+                        continue
+                    finding = previous["findings"][number - 1]
+                    dismissed[(finding["file"], finding["title"])] = dismissal
+                carried = {d["finding"] for d in result.get("dismissals", [])}
+                result["dismissals"] = result.get("dismissals", []) + [dict(dismissed[(finding["file"], finding["title"])],
+                                             finding=number)
+                                        for number, finding in enumerate(result["findings"], 1)
+                                        if number not in carried and (finding["file"], finding["title"]) in dismissed]
+                outcome = "blocked" if review.blocking(result) else "clean"
+            finally:
+                if outcome == "failed":
+                    repo.record_event(top, item, "review result", outcome=outcome, findings=None,
+                                      review_round=review.round_number(top, item, state))
+                repo.record_timing(top, item, "review", start, clock, outcome, selected)
+                failed, tested = testing.result()
+                print(tested, flush=True)
+                if failed:
+                    state["tests"] = tested
+                    if outcome == "failed":
+                        state["status"] = "fixing"
+                        _save(top, item, state, f"Tests of {item} failed")
+                else:
+                    state.pop("tests", None)
         repo.add_step(state, "review")
+    elif state.get("tests"):
+        command = review.close_test(top, f"origin/{default}")
+        failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
+        print(tested, flush=True)
+        if failed:
+            state["tests"] = tested
+        else:
+            state.pop("tests", None)
+        state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
+        _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
     elif (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
@@ -253,14 +320,14 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
-        if serious and round_number >= 3 and not state.get("stop"):
+        if serious and round_number - choice_round >= 3:
             default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
                                          f"origin/{default}", cwd=top).split("\0"))
             candidates = sorted(file for file in files & flagged & default_files
                                 if spotted._path(file))
             if candidates:
                 file = candidates[0]
-                stopped = {"file": file}
+                stopped = {"file": file, "at": repo.now()}
                 stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
@@ -269,7 +336,7 @@ def close(args: argparse.Namespace) -> int:
     if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
-                     "fixing" if serious else "waiting for checks")
+                     "fixing" if serious or failed else "waiting for checks")
         message = f"Review of {item}: {result['status']}"
         if stopped:
             message += f"; {stopped['file']} keeps breaking"
@@ -281,6 +348,7 @@ def close(args: argparse.Namespace) -> int:
     pr = _publish(top, item, state, branch, default, pr, result, evidence)
     _attach(top, item, branch)
 
+    print(f"Review: {result['status']}.", flush=True)
     for number, finding in serious:
         print(f"{number}. {finding['priority']} {finding['title']} "
               f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
@@ -291,9 +359,12 @@ def close(args: argparse.Namespace) -> int:
         for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    if failed and not stopped:
+        repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:
         if stopped:
-            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
+                        question=review.stop_question(top, item, state), **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -341,16 +412,111 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
     return False
 
 
-def check_stop(item: str, state: dict[str, Any]) -> None:
-    """A human choice or a later clean review releases a review loop stop."""
+def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
+    """Record the repo's default choice, narrow, and start a follow-up fix for each open finding."""
+    from forge import task  # close imports story, which imports task
+
+    fixes = []
+    result = state.get("review") or {}
+    dismissed = {d["finding"] for d in result.get("dismissals", [])}
+    for number, finding in enumerate(result.get("findings", []), 1):
+        if number in dismissed:
+            continue
+        why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
+                       f"({finding['file']}:{finding['line']}): {finding.get('body', '')}".split())
+        done = " ".join(f"A review no longer finds: {finding['title']}".split())
+        out, here = io.StringIO(), os.getcwd()
+        try:  # fix start works in the current checkout: the follow-up stacks on this item
+            os.chdir(top)
+            with contextlib.redirect_stdout(out):
+                task.fix_start(argparse.Namespace(why=why, done=done, slug=None))
+        finally:
+            os.chdir(here)
+        fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])
+    state["stop"].update(choice="narrow", by="default", fixes=fixes, worker_round=state.get("round"),
+                         reason="Nobody answered in 30 minutes; the repo's default narrows the part "
+                                "to its Done-when lines and files each open finding as a follow-up fix")
+    state["status"] = "fixing"
+    _save(top, item, state, "Record the repo's default review loop choice: narrow")
+    repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+    print("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
+          "choice: narrow the part to its Done-when lines. Follow-up fixes own the open findings: "
+          f"{', '.join(fixes) or 'none'}. The owner can reverse it with "
+          f'forge close {item} --resolve <narrow|split|accept> --reason "<their choice>".', flush=True)
+
+
+def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
+    """A human choice, the repo's default after 30 minutes or a later clean review releases a
+    review loop stop."""
     result = state.get("review") or {}
     if (result.get("status") == "clean" and not review.blocking(result) and
-            not (state.get("stop") or {}).get("choice")):
+            not (state.get("stop") or {}).get("choice") and "question" not in state.get("stop", {})):
         state.pop("stop", None)
+    if state.get("stop") and "question" in state["stop"]:
+        if not state["stop"].get("choice") and not state["stop"].get("size"):
+            repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
+        return
+    if state.get("stop") and not state["stop"].get("choice"):
+        top = top or _worktree(item)  # land passes no checkout
+        from forge.nextstep import default_due  # nextstep imports close
+        if default_due(top, state):
+            _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
         repo.refuse(REFUSALS["hotspot"], item=item,
+                    question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
+
+
+def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
+                findings: list[dict[str, Any]]) -> None:
+    """At a round's start: stop when the last two rounds both left close's tests failing or one
+    same finding open. A recorded choice buys exactly one more round."""
+    stop = state.get("stop") or {}
+    if "question" in stop and not stop.get("choice"):
+        repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
+    keys = [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings]
+    keys += ["close's tests failing"] if state.get("tests") else []
+    # Each failure counts the rounds in a row that left it; a cleared one drops out. It counts only
+    # with both a new close and a worker round since the last count, so reruns count once.
+    # ponytail: close events live on this machine; a round on another machine counts once more.
+    stuck = state.get("stuck") or {}
+    closed = next((e["id"] for e in reversed(time_records.read(top, "events"))
+                   if e.get("item") == item and e.get("event") == "close result"), None)
+    if stuck and (stuck.get("close") == closed or stuck.get("round") == state.get("round")):
+        if "question" in stop:
+            state.pop("stop")
+        return
+    before = stuck.get("keys") or {}
+    counts = {key: before.get(key, 0) + 1 for key in keys}
+    same = [key for key, count in counts.items() if count >= 2]
+    if "question" in stop:
+        state.pop("stop")
+    elif same:
+        stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "close": closed,
+                      "round": state.get("round")}
+
+
+def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
+               size: bool = False) -> None:
+    """Stop the item and refuse with a question the coordinator can ask the owner as it is."""
+    title, _, delivers = _title(top, item, state)
+    tool = state.get("tool") or state.get("worker") or repo.worker(cfg, "build", False)[0]
+    since = (state.get("stuck") or {}).get("head") or f"origin/{repo.default_branch(top)}"
+    tried = repo.git("log", "--first-parent", "--no-merges", "--format=%s", f"{since}..HEAD",
+                     "--", ".", ":(exclude).factory", cwd=top).splitlines()
+    other = "claude" if tool == "codex" else "codex"
+    choices = [f"switch this item to {other.title()}", f"keep {tool.title()} for one more round",
+               "or narrow or split it"]
+    question = (f"{title} is stuck. It should deliver: {delivers}\n{what}\n"
+                f"The worker tried: {'; '.join(dict.fromkeys(tried)) or 'no new commits'}.\n"
+                f"Choose one: {'; '.join(choices)}.")
+    state.update(stop={"question": question, "tool": tool, **({"size": True} if size else {})},
+                 status="hotspot")
+    state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
+    _save(top, item, state, f"{item} is stuck; Forge asks the owner")
+    repo.refuse(REFUSALS["stuck"], item=item, question=question)
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
@@ -527,7 +693,7 @@ def _synced(top: Path, item: str) -> None:
 def generated_fix_proof(done: str, evidence: str, item: str) -> str:
     """Generated fixes give their first review the same proof as a worker commit."""
     return (f"Proof list:\n- {done} Evidence: {evidence} "
-            f"forge close {item} supplies its test run result to the review "
+            f"forge close {item} reports its test run result alongside the review result "
             "(including any skip reason).")
 
 
@@ -600,11 +766,12 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
              pr: dict[str, Any] | None, result: dict[str, Any],
              evidence: tuple[str, str]) -> dict[str, Any]:
     """Open the pull request, or refresh its contract and Forge's block. While the review is
-    blocked, the pull request is a draft."""
+    blocked or the local tests failed, the pull request is a draft."""
     check, proof = evidence
     history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
-    draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
+    draft = (result["status"] == "blocked" or bool(state.get("tests")) or
+             (pr is None and result["status"] == "reviewing"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -709,7 +876,7 @@ COMMANDS = [{
     "help": "Close a task or fix by the close rule",
     "args": [(('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
              (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"}),
-             (('--resolve',), {"choices": ["narrow", "split", "accept"]}),
+             (('--resolve',), {"choices": ["narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
     "listing": "| `forge close <item>` | Closes a task or fix by the close rule |",

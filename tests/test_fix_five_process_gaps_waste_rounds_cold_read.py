@@ -11,7 +11,8 @@ STORY = "FIX-FIVE-PROCESS-GAPS-WASTE-ROUNDS-COLD-READ"
 
 
 def test_1_read_shows_confirmed_spec_on_promoted_task_branch(repo):
-    setup(repo)
+    # Promotion no longer adds an entry; it inherits the committed roadmap entry.
+    setup(repo, keys=("SHOP", "BASKET"))
     started = repo.forge("fix", "start", "Recover the saved basket", "--done", "Saved baskets return")
     assert started.returncode == 0, started.stderr
     fix = worktree(repo, "fix/recover-the-saved-basket")

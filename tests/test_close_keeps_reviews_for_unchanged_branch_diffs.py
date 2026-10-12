@@ -1,4 +1,6 @@
-"""Close keeps review decisions across a base merge only while the branch diff is unchanged.
+"""Close keeps clean review decisions across an unchanged branch diff.
+
+Open findings also require unchanged reviewed files before numbered dismissals can be used.
 
 The real close command owns review reuse and dismissals; only Autoreview and GitHub are faked.
 """
@@ -72,16 +74,30 @@ def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dism
     moved = env.commit(env.repo.path, "NEWS.md", "New news\n")
     env.repo.git("push", "-q", "origin", "main")
     closed = env.close(item, *(() if dismiss_before_merge else dismissal))
+    if not dismiss_before_merge:
+        # The old contract reused open findings despite changes to their cited file. Close now
+        # reviews that file first; dismissals already saved on a clean review still survive.
+        assert closed.returncode == 1, closed.stdout + closed.stderr
+        assert closed.stderr.splitlines() == [
+            "The branch changed since the review those finding numbers came from.",
+            f"Next: forge close {item}",
+        ]
+        assert len(env.review_calls()) == 1
+        refreshed = env.close(item)
+        assert refreshed.returncode == 1, refreshed.stdout + refreshed.stderr
+        assert "The review left serious findings open:" in refreshed.stderr
+        closed = env.close(item, *dismissal)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
     assert env.repo.git("diff", "--raw", "--no-abbrev", "-z", "origin/main...HEAD",
                         "--", "app.py", cwd=where) == before
-    assert len(env.review_calls()) == 1
+    reviews = 1 if dismiss_before_merge else 2
+    assert len(env.review_calls()) == reviews
     assert "dismissed because app.py:1 the greeting is here" in body(env.gh_calls("pr", "edit")[-1])
     # The persisted decision must also survive another close after the merge.
     again = env.close(item)
     assert again.returncode == 0, again.stderr
-    assert len(env.review_calls()) == 1
+    assert len(env.review_calls()) == reviews
 
 
 def test_2_close_reviews_again_when_main_changes_the_branch_diff(env):

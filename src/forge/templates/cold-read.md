@@ -22,6 +22,12 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
+A note blocks only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Start each blocking finding with `Blocking:` after its number. Wording, style and optional
+improvements do not block: if you record one, start it with `Advisory:` after its number.
+Advisory notes are recorded but need no disposition or another round. A read passes when none
+of its notes is blocking. Unmarked findings are treated as blocking.
+
 ## What counts
 Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
 
@@ -124,16 +130,17 @@ about tests you did not run.
 <!-- forge:round -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
 
-The agent gave your last round's findings a disposition and changed the doc. Do not change any
-file. This read is discarded if any file in the repository changes. Open `$path` and read the
+The agent gave your last round's blocking findings a disposition and changed the doc. Do not
+change any file. This read is discarded if any file in the repository changes. Open `$path` and read the
 whole doc again yourself. Its diff since your last round:
 
 $diff
 
-Your last round's findings, and any older finding whose disposition changed since then, each
-with its disposition:
+All earlier rounds' blocking findings and their answers, each with its disposition:
 
 $dispositions
+
+Previous advisory notes are recorded only; do not reassess or close them.
 
 For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
 
@@ -141,29 +148,30 @@ $spec_diff
 
 When that diff is not empty, check the plan still matches the changed spec. Re-read the
 `## Answers` section of `docs/product/BRIEF.md` from the checkout: it can change between rounds.
+Its diff since your last round, empty when it is unchanged:
+
+$answers_diff
 
 Check:
 
 1. Is each of those findings closed? `cut` means the doc was edited to remove it, `defer` that it
-   moved to the spec's Out of scope, and `keep` that it stays for the stated reason. When a cut
-   or a defer didn't happen in the doc, raise the finding again.
-   - Raise a kept finding again only when you disagree with its stated reason, as
+   moved to the spec's Out of scope, and `keep` that it stays for the stated reason.
+   Settled findings stay settled: do not repeat a disposed note or finding. Forge ignores a
+   repeat with the same finding text, even when its evidence or number changes. Report a new
+   defect as a distinct finding and explain the new evidence.
+   - Raise a kept finding again only with new evidence of a distinct defect, as
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
-2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
-   and What counts: each "Done when" item's rules and the test that proves each, shared
-   names no earlier task pins, task size, and Forge's general traps and this repository's own
-   known traps:
-
-$traps
-
-Write only your new findings, as a numbered list starting at $next, in your first round's format.
+${look}Write only your new findings, as a numbered list starting at $next, in your first round's format.
+Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
+advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
 
 <!-- forge:edit -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
 
-Your last round found nothing, and the doc changed since. Do not change any file. This read is
+Your last round passed, and the doc changed since. Do not change any file. This read is
 discarded if any file in the repository changes. Its diff since your last round:
 
 $diff
@@ -174,20 +182,51 @@ For a story, the confirmed spec's diff since your last round, empty when it is u
 
 $spec_diff
 
-Check only this diff and the sections it touches, not the rest of the doc, which passed: apply
-your first round's checks and What counts to them, including Forge's general traps and
-this repository's own known traps:
+For a story, the diff of the `## Answers` section of `docs/product/BRIEF.md` since your last
+round, empty when it is unchanged:
+
+$answers_diff
+
+Check only this diff and the sections it touches, not the rest of the doc, which passed, plus
+any spec or Answers diff above: apply your first round's checks and What counts to them,
+including Forge's general traps and this repository's own known traps:
 
 $traps
 
+For a story from round 3 on, block only on changed text in the diff, the spec's diff or the
+Answers diff, or on an earlier blocking finding that remains open. Other gaps in unchanged text are `Advisory:`, even inside a touched
+section.
+
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
+Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
+advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
+
+<!-- forge:look -->
+2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
+   and What counts: each "Done when" item's rules and the test that proves each, shared
+   names no earlier task pins, task size, and Forge's general traps and this repository's own
+   known traps:
+
+$traps
+
+<!-- forge:cap -->
+2. This is round $round: the text the diff does not touch has had its two rounds of notes.
+   Block only on changed text in the diff, the spec's diff or the Answers diff, or on one of
+   those findings that is not closed.
+   Any other note on unchanged text is `Advisory:`, even inside a touched section. Apply your first
+   round's checks and What counts to the diff, including Forge's general traps and this
+   repository's own known traps:
+
+$traps
 
 <!-- forge:notes -->
 # Cold read notes
 
-Written by `forge read`. Under every finding, write one disposition line, amend the doc, then run
-`forge read <doc>` again for the next round, until a round finds nothing:
+Written by `forge read`. Under every blocking finding, write one disposition line, amend the
+doc, then run `forge read <doc>` again until a round has no blocking notes. Notes marked
+`Advisory:` are recorded without requiring a disposition or another round:
 
 - `Disposition: cut` when the doc was edited to remove it;
 - `Disposition: defer` when the item moved to the spec's Out of scope;

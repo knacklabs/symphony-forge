@@ -32,11 +32,18 @@ CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),
+    "no_session": ("Forge runs this repo's work inside a Claude Code or Codex session, and none is "
+                   "open here, so nothing ran.",
+                   "open one in this repo and run forge {command} {item} there"),
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
+    "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
+    "local_key": ("forge.local.toml can't set {key}: it holds only tools, workers and [models] tables, "
+                  "so settings the team shares stay in forge.toml.",
+                  "move {key} to forge.toml in a fix, or take it out of forge.local.toml"),
     "pin": (
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
@@ -109,7 +116,7 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
-        input: str | None = None) -> subprocess.CompletedProcess[str]:
+        input: str | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
     exe = shutil.which(args[0])
     if exe is None:
@@ -119,7 +126,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
                               text=True, encoding="utf-8", errors="replace",
                               # Git hooks need the caller's worker identity.
-                              env=os.environ if args[0] == "git" else {**os.environ, "FORGE_WORKER": "1"})
+                              env=(os.environ if env is None else env) if args[0] == "git"
+                              else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
@@ -192,9 +200,10 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
         time.sleep(pause)
 
 
-def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
+def git(*args: str, cwd: str | os.PathLike[str] | None = None,
+        env: dict[str, str] | None = None) -> str:
     """Run git and return its trimmed output. A failure raises CalledProcessError."""
-    done = run("git", *args, cwd=cwd)
+    done = run("git", *args, cwd=cwd, env=env)
     if done.returncode:
         raise subprocess.CalledProcessError(done.returncode, ["git", *args], done.stdout, done.stderr)
     return done.stdout.strip()
@@ -371,15 +380,16 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "fast_test": str,
-        "signoff": str, "runner": str,
+KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
+        "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "checks": list, "interfaces": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
-DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "fast_test": "",
-            "signoff": "", "runner": "ubuntu-latest",
-            "merge": "human", "checks": [], "interfaces": [], "models": {}}
+DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
+            "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
+            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
-           "workers": ("claude", "codex", "split"), "merge": ("agent", "human")}
+           "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
+           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -393,10 +403,11 @@ KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
-WORKER_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "medium"},
+WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "medium"}}
-DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
+CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -405,9 +416,33 @@ def config(top: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
         refuse(REFUSALS["no_config"])
     try:
-        return _config_text(path.read_text(encoding="utf-8"))
+        return _config_text(path.read_text(encoding="utf-8"), path.parent)
     except UnicodeDecodeError as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+
+
+LOCAL = "forge.local.toml"
+
+
+def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
+    """forge.toml's settings with this clone's forge.local.toml laid over them. The file sits in the
+    main checkout, so every worktree of the clone shares it, and sets only tools, workers and
+    [models] kinds. "local" holds what it set; "shared" is forge.toml alone, for committed files."""
+    path = _common_path(top).parent / LOCAL
+    if not path.is_file():
+        return cfg
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
+        refuse(REFUSALS["bad_local"], problem=exc)
+    for key in data:
+        if key not in ("tools", "workers", "models"):
+            refuse(REFUSALS["local_key"], key=key)
+    problem = (_config_problem({"version": cfg["version"], **{k: v for k, v in data.items() if k != "models"}})
+               or _models_problem(data.get("models", {})))
+    if problem:
+        refuse(REFUSALS["bad_local"], problem=problem)
+    return {**cfg, **data, "models": {**cfg["models"], **data.get("models", {})}, "local": data, "shared": cfg}
 
 
 def default_config(top: Path) -> dict[str, Any]:
@@ -451,7 +486,8 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
                    for text in texts if text.startswith("---"))
 
 
-def _config_text(text: str) -> dict[str, Any]:
+def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
+    """forge.toml's text, checked; given its checkout, with that clone's forge.local.toml over it."""
     try:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
@@ -462,7 +498,7 @@ def _config_text(text: str) -> dict[str, Any]:
     problem = _models_problem(data.get("models", {}))
     if problem:
         refuse(REFUSALS["models"], problem=problem)
-    return {**DEFAULTS, **data}
+    return _with_local({**DEFAULTS, **data}, top) if top else {**DEFAULTS, **data}
 
 
 def ready_path(item: str, top: Path) -> Path:
@@ -473,20 +509,22 @@ def ready_path(item: str, top: Path) -> Path:
 
 def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """One kind's entry for a family ("codex" or "claude") from forge.toml's [models] table: its
-    own entry, or a single entry whose model is that family's; {} when the kind has none for it."""
-    if kind == "explore" and kind not in cfg["models"]:
+    own entry, or a single entry whose model is that family's; Claude plan reads default to
+    Opus at high effort, and other missing entries return {}."""
+    if kind == "explore" and kind not in cfg.get("models", {}):
         kind = "lite"
-    chosen = cfg["models"].get(kind) or {}
+    chosen = cfg.get("models", {}).get(kind) or {}
     if "model" not in chosen:
-        return chosen.get(family) or {}
+        return chosen.get(family) or (CLAUDE_GRILL_DEFAULT
+                                     if kind == "grill" and family == "claude" else {})
     # ponytail: gpt models are Codex's and every other model Claude's; name the family's entry
     # when another Codex model family arrives.
     return chosen if chosen["model"].startswith("gpt") == (family == "codex") else {}
 
 
 def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
-    """A User-facing row is design work in clients, or when the source repo opts into split."""
-    return (cfg["repo"] == "client" or cfg["workers"] == "split") and row.get(
+    """A User-facing row is design work in clients, with one tool, or under source split."""
+    return (cfg["repo"] == "client" or cfg["tools"] != "both" or cfg["workers"] == "split") and row.get(
         "User-facing", "").lower() in ("yes", "true")
 
 
@@ -495,16 +533,63 @@ def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]
     return models(cfg, kind, family) or WORKER_DEFAULTS[family]
 
 
-def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
-    """Who builds an item, with which models, and why: workers = codex or claude puts everything on
-    that tool, and split puts user-facing (design) work on Claude and the rest on Codex. Design
-    work uses the family's design model. forge work and forge next both ask this."""
-    family = cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex"
+def worker(cfg: dict[str, Any], kind: str, design: bool,
+           tool: str | None = None) -> tuple[str, dict[str, str], str]:
+    """One tool overrides workers; both keeps workers' tool or split's design routing, unless the
+    owner chose a tool for this item. Design work uses the family's design model. forge work and
+    forge next both ask this."""
+    family = tool or worker_family(cfg, design)
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
-    why = (("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
+    why = ("the owner chose it for this item" if tool else f"tools = {family}"
+           + (", with the design model as it is user-facing" if design else "")
+           if cfg["tools"] != "both" else
+           ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
            if cfg["workers"] == "split" else f"workers = {family}"
            + (", with the design model as it is user-facing" if design else ""))
-    return family, chosen, why
+    return family, chosen, why + (f"; {sources}" if (sources := setting_sources(cfg, kind, design)) else "")
+
+
+def worker_family(cfg: dict[str, Any], design: bool) -> str:
+    """Which tool runs work: one tool overrides workers; split sends design work to Claude."""
+    return (cfg["tools"] if cfg["tools"] != "both" else
+            cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
+
+
+def setting_sources(cfg: dict[str, Any], kind: str, design: bool) -> str:
+    """With a forge.local.toml, which file set tools, workers and this work's models, such as
+    "forge.local.toml: tools = both; forge.toml: workers = codex, models.build"; else ""."""
+    local = cfg.get("local")
+    if local is None:
+        return ""  # ponytail: no local file means forge.toml set them all, so output stays as it was
+    kind = "design" if design else "lite" if kind == "explore" and "explore" not in cfg["models"] else kind
+    files: dict[str, list[str]] = {LOCAL: [], "forge.toml": [], "built-in default": []}
+    for key in ("tools", "workers"):
+        files[LOCAL if key in local else "forge.toml"].append(f"{key} = {cfg[key]}")
+    files[model_source(cfg, kind, worker_family(cfg, design))].append(f"models.{kind}")
+    return "; ".join(f"{name}: {', '.join(keys)}" for name, keys in files.items() if keys)
+
+
+def model_source(cfg: dict[str, Any], kind: str, family: str) -> str:
+    """Where a worker's models for this kind come from. A local [models.<kind>] replaces the whole
+    kind, so without an entry for this worker Forge's built-in default applies, as forge work does."""
+    if not models(cfg, kind, family):
+        return "built-in default"
+    return LOCAL if kind in cfg.get("local", {}).get("models", {}) else "forge.toml"
+
+
+def coordinator() -> str | None:
+    """The session's app, or None when neither or both app identities are present."""
+    apps = [app for variable, app in (("CLAUDECODE", "claude"), ("CODEX_THREAD_ID", "codex"))
+            if os.environ.get(variable)]
+    return apps[0] if len(apps) == 1 else None
+
+
+def route(cfg: dict[str, Any], tool: str, *, command: str, item: str) -> str:
+    """A round runs natively in its coordinating app, otherwise through the tool's kit."""
+    here = coordinator()
+    if cfg["tools"] != "both" and here is None:
+        refuse(REFUSALS["no_session"], command=command, item=item)
+    return "native" if tool == here else "kit"
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:

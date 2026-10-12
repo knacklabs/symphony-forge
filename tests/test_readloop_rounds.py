@@ -25,9 +25,20 @@ from test_codex_worker import _lines, _sent, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_phases import _flat
 from test_story import DOC, new_story, setup, worktree
+from test_tools_session_hold import Session
+
+
+@pytest.fixture(autouse=True)
+def reader_sessions(repo):
+    repo.reader_sessions = {}
+    try:
+        yield
+    finally:
+        for session in repo.reader_sessions.values():
+            session.close()
 
 CODEX = r'''
-import json, os, pathlib, sys
+import json, os, pathlib, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 STORE, LOG = HERE / "threads.json", HERE / "codex-app-server.jsonl"
@@ -51,7 +62,8 @@ def send(**message):
 def thread(id, saved):
     return {"id": id, "cliVersion": "0.159.2", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
             "ephemeral": False, "modelProvider": "openai", "preview": "", "sessionId": "stub",
-            "source": "appServer", "status": {"type": "idle"}, "turns": []}
+            "source": "appServer", "status": {"type": "idle"}, "turns": [],
+            "gitInfo": saved.get("gitInfo")}
 
 
 def main():
@@ -75,8 +87,11 @@ def main():
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"
         saved = threads.setdefault(id, {"cwd": params.get("cwd")}) \
             if method == "thread/start" else threads.get(id)
+        if method == "thread/start":
+            saved["gitInfo"] = {"sha": subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=saved["cwd"], text=True).strip()}
         if saved is None:
-            send(id=message["id"], error={"code": -32600, "message": "no rollout found for " + id})
+            send(id=message["id"], error={"code": -32600, "message": "no rollout found for thread id " + id})
             continue
         save(threads)
         if method != "turn/start":
@@ -84,7 +99,8 @@ def main():
                 "approvalPolicy": "never", "approvalsReviewer": "user", "cwd": saved["cwd"],
                 "model": "stub-model", "modelProvider": "openai",
                 "sandbox": {"type": "readOnly"}, "thread": thread(id, saved)}
-                if method in ("thread/start", "thread/resume") else {})
+                if method in ("thread/start", "thread/resume") else
+                {"thread": thread(id, saved)} if method == "thread/read" else {})
             continue
         turn = f"turn-{id}-{len(_turns(threads)) + 1}"
         send(id=message["id"], result={"turn": {"id": turn, "items": [], "status": "inProgress"}})
@@ -125,8 +141,9 @@ with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
 store = here / "claude-sessions.json"
 sessions = json.loads(store.read_text(encoding="utf-8")) if store.exists() else {}
 if "--resume" in args and args[args.index("--resume") + 1] not in sessions:
-    print(f"No conversation found with session ID: {args[args.index('--resume') + 1]}",
-          file=sys.stderr)
+    print(json.dumps({"type": "result", "subtype": "error_during_execution",
+                      "is_error": True, "result": "Resume failed", "errors": ["Could not load the requested session.",
+                          f"No conversation found with session ID: {args[args.index('--resume') + 1]}"]}))
     sys.exit(1)
 if "--session-id" in args:
     sessions[args[args.index("--session-id") + 1]] = os.getcwd()
@@ -164,12 +181,21 @@ class Reader:
             self.monkeypatch.delenv(variable, raising=False)
         self.monkeypatch.setenv(*(("CLAUDECODE", "1") if app == "claude" else
                                   ("CODEX_THREAD_ID", "thr-coordinator")))
+        self.coordinator = app
+
+    def native(self, *args):
+        # Native rounds require an actual surviving host, not just its environment marker.
+        sessions = self.repo.reader_sessions
+        if self.coordinator not in sessions:
+            sessions[self.coordinator] = Session(
+                self.repo, self.repo.bin / f"{self.coordinator}-host", self.coordinator + "-session")
+        return sessions[self.coordinator].forge(*args)
 
     def say(self, text: str) -> None:
         (self.repo.bin / f"{self.app}-says.md").write_text(text, encoding="utf-8")
 
     def read(self):
-        return self.repo.forge("read", "SHOP")
+        return (self.native if self.coordinator == self.app else self.repo.forge)("read", "SHOP")
 
     def ok(self, text: str = "No findings.\n") -> str:
         self.say(text)
@@ -270,7 +296,7 @@ def _no_claude(repo, monkeypatch, tmp_path) -> None:
 def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
     first = reader.ok(f"1. {FIRST}\n2. {SECOND}\n")
-    assert first.endswith("Next: give every finding a disposition, amend the doc, then forge read SHOP\n")
+    assert first.endswith("Next: give every blocking finding a disposition, amend the doc, then forge read SHOP\n")
     notes = reader.text()
     for fact in ("round: 1\n", "passed: no\n", f"## Round 1\n\n1. {FIRST}\n2. {SECOND}\n"):
         assert fact in notes, notes
@@ -314,10 +340,13 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert "a numbered list starting at 3" in flat
     assert "- Fixture paths break on Windows." in prompt
     assert "Re-read the `## Answers` section of `docs/product/BRIEF.md` from the checkout" in flat
-    # Never the first round's instructions, the whole doc or what the reader re-reads itself.
+    # Never the first round's instructions, the whole doc or what the reader re-reads itself; a
+    # changed Answers section arrives only as its diff, so later rounds can block on it.
     for resent in ("You are doing the one cold read", "Shoppers can save a basket and come back",
-                   "the client's own servers"):
+                   "# Brief"):
         assert resent not in prompt, resent
+    assert prompt.count("the client's own servers") == 1
+    assert "+- Hosting: the client's own servers" in prompt
     notes = reader.text()
     assert "round: 2\n" in notes and "## Round 2\n\n3. Disputed keep 1:" in notes
     assert f"## Round 1\n\n1. {FIRST}\n   Disposition: keep because" in notes
@@ -332,17 +361,17 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.continued()
     prompt = reader.prompt()
     assert "Round 3 of your cold read" in prompt and f"+{decided}" in prompt
-    # The last round's findings, and the older one whose disposition changed; not the unchanged one.
+    # Every earlier answer now remains in the brief, including unchanged dispositions.
     assert f"3. Disputed keep 1: shoppers without an account lose baskets too.\n   Disposition: keep per {decided}" in prompt
     assert f"1. {FIRST}\n   Disposition: keep per {decided}" in prompt
-    assert SECOND not in prompt
+    assert SECOND in prompt
     assert "a numbered list starting at 4" in _flat(prompt)
 
-    # Only exactly "No findings." passes; the conversation is archived once it does.
+    # Only exactly "No findings." passes; the chat stays available for amendments.
     notes = reader.text()
     assert "round: 3\n" in notes and "passed: yes\n" in notes and "## Round 3\n\nNo findings.\n" in notes
     if app == "codex":
-        assert [call["threadId"] for call in _sent(reader.log, "thread/archive")] == ["thr-stub-1"]
+        assert not _sent(reader.log, "thread/archive")
     assert "Next: in Claude Code, show plans/SHOP.md in Plan Mode" in repo.forge("next").stdout
 
 
@@ -352,10 +381,16 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader.dispose(FIRST, "keep because shoppers asked for it")
     notes = reader.text()
 
-    def fresh(why: str, says: str = "No findings.\n") -> str:
+    def fresh(why: str, says: str = "No findings.\n", held: bool = False) -> str:
         """A round that starts a new conversation with the first round's instructions, the whole
         doc and every earlier finding with its disposition, and says why."""
-        out = reader.ok(says)
+        if held:
+            reader.say(says)
+            result = reader.read()
+            assert result.returncode == 1 and "Ask the human to accept, narrow or split" in result.stderr
+            out = result.stdout
+        else:
+            out = reader.ok(says)
         assert FRESH[app].format(why) in out, out
         assert not reader.continued()
         prompt = reader.prompt()
@@ -364,7 +399,19 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
             assert sent in prompt, sent
         return prompt
 
-    # A failed round records nothing and drops its conversation, so the retry starts fresh.
+    def continued(says="No findings.\n", held=False):
+        if held:
+            reader.say(says)
+            result = reader.read()
+            assert result.returncode == 1 and "Ask the human to accept, narrow or split" in result.stderr
+            out = result.stdout
+        else:
+            out = reader.ok(says)
+        assert "Starting a new" not in out
+        assert reader.continued()
+        return reader.prompt()
+
+    # A failed round keeps both the accepted notes and its conversation.
     reader.fail(True)
     calls = reader.calls()
     failed = reader.read()
@@ -375,10 +422,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
                                                      "Next: forge read SHOP\n")
     assert reader.text() == notes
     reader.fail(False)
-    no_record = ("Forge has no record of its conversation on this machine" if app == "codex" else
-                 "Forge has no record of its Claude session on this machine")
     # A reply with no numbered finding becomes one, numbered after the earlier rounds'.
-    prompt = fresh(no_record, "The totals are unclear.\n")
+    prompt = continued("The totals are unclear.\n")
     assert "Round 2 of your cold read" in prompt and "a numbered list starting at 2" in _flat(prompt)
     assert "## Round 2\n\n2. The totals are unclear.\n" in reader.text()
     assert "passed: no" in reader.text()
@@ -395,23 +440,27 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.text() == notes
     reader.touch(None)
     (reader.shop / "scratch.txt").unlink()
-    fresh(no_record, "1. Nothing saves offline.\n")
+    continued("1. Nothing saves offline.\n", held=True)
     assert "## Round 3\n\n3. Nothing saves offline.\n" in reader.text()
     reader.dispose("Nothing saves offline.", "cut")
+    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing session recovery")
+    assert chosen.returncode == 0, chosen.stderr
 
     # The app lost the conversation.
     session = (json.loads((repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.json")
                          .read_text("utf-8")).get("claude") or {}).get("id")
     reader.lose()
-    fresh("Codex couldn't resume its conversation: no rollout found for thr-stub-3" if app == "codex"
+    fresh("Codex couldn't resume its conversation: no rollout found for thread id thr-stub-1" if app == "codex"
           else f"Claude couldn't continue session {session}", "4. Totals need tax.\n")
     reader.dispose("Totals need tax.", "cut")
 
     # Notes written before rounds: no round number and no copy of what was read. That is round 1,
     # and the next round starts fresh with no diff.
-    old = re.sub(r"^(round|passed|doc_seen|spec_seen|notes_seen):.*\n", "", reader.text(), flags=re.M)
+    old = re.sub(r"^(round|passed|doc_seen|spec_seen|notes_seen|blocked_rounds|loop_choice|loop_reason):.*\n",
+                 "", reader.text(), flags=re.M)
     reader.notes.write_text(re.sub(r"^## Round \d+\n\n", "", old, flags=re.M), encoding="utf-8")
-    prompt = fresh("Forge has no copy of what its last round read")
+    prompt = continued()
+    assert "Shoppers can save a basket and come back" in prompt
     assert "Round 2 of your cold read" in prompt and "(not available)" in prompt
     assert "a numbered list starting at 5" in _flat(prompt)
     assert "round: 2\n" in reader.text() and "## Round 2\n\nNo findings.\n" in reader.text()
@@ -423,65 +472,96 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert "reader: claude (opus)\n" in reader.text()
     reader.dispose(FIRST, "cut")
 
-    # Started from the app that is itself the reader, while the other app is installed: refused.
+    # The old contract refused the recorded reader's coordinating app; it now offers a subagent.
     notes = reader.text()
     reader.coordinate("claude")
-    refused = reader.read()
-    assert (refused.returncode, refused.stderr) == (1, (
-        "Claude Code is the cold reader of plans/SHOP.md, so its next round can't start from "
-        "Claude Code.\nNext: run forge read SHOP from Codex\n"))
+    offered = reader.read()
+    assert offered.returncode == 0, offered.stdout + offered.stderr
+    native = json.loads(offered.stdout)
+    assert (native["role"], native["tool"], native["model"]) == ("reader", "claude", "opus")
     assert reader.text() == notes and not (repo.bin / "codex-app-server.jsonl").exists()
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "pinned-reader", "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
 
-    # The recorded reader's app is gone: from that same app, the round is no longer refused but
-    # starts fresh on the reader Forge picks now, says so, and records it.
+    # From the other coordinator, a missing recorded app starts a fresh native reader.
+    reader.coordinate("codex")
     _no_claude(repo, monkeypatch, tmp_path)
-    moved = repo.forge("read", "SHOP")
+    reader.doc.write_text(reader.doc.read_text("utf-8") + "\nSaved baskets expire after thirty days.\n",
+                          encoding="utf-8")
+    moved = reader.native("read", "SHOP")
     assert moved.returncode == 0, moved.stdout + moved.stderr
-    assert FRESH["codex"].format("its reader, Claude Code, is no longer installed") in moved.stdout
-    assert "reader: codex (gpt-6-sol)\n" in reader.text()
-    turn = _sent(repo.bin / "codex-app-server.jsonl", "turn/start")[-1]["input"][0]["text"]
-    assert "Round 2 of your cold read" in turn and "You are doing the one cold read" in turn
+    native = json.loads(moved.stdout)
+    assert native["reason"] == "its reader, Claude Code, is no longer installed"
+    assert native["tool"] == "codex" and native["model"] == "gpt-6-sol"
+    assert "Round 3 of your cold read" in native["fresh_prompt"]
+    assert "You are doing the one cold read" in native["fresh_prompt"]
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "replacement-reader", "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
 
 
-def _wrong_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
+def _same_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "codex")
     reader.ok(f"1. {FIRST}\n")
     assert "reader: codex (gpt-6-sol)\n" in reader.text()
     reader.dispose(FIRST, "cut")
     reader.coordinate("codex")
-    refused = reader.read()
-    assert refused.stderr == ("Codex is the cold reader of plans/SHOP.md, so its next round can't "
-                              "start from Codex.\nNext: run forge read SHOP from Claude Code\n")
+    offered = reader.read()
+    assert offered.returncode == 0, offered.stdout + offered.stderr
+    native = json.loads(offered.stdout)
+    assert native["role"] == "reader" and native["tool"] == "codex"
+    assert "Round 2 of your cold read" in native["fresh_prompt"]
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "codex-reader", "--text", "No findings.")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
+
+
+def _native_round(reader, text="No findings."):
+    offered = reader.native("read", "SHOP")
+    assert offered.returncode == 0, offered.stdout + offered.stderr
+    native = json.loads(offered.stdout)
+    assert native["role"] == "reader" and native["tool"] == reader.app
+    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
+                             "--subagent", "readloop-reader", "--text", text)
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    return native
 
 
 def _one_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
-    # Only Claude Code: under Claude Code, a separate Claude conversation reads, and continues.
+    # Only Claude Code: the session's reader replaces the old separate CLI conversation.
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "claude")
     reader.coordinate("claude")
     _no_codex(monkeypatch, tmp_path)
-    reader.ok(f"1. {FIRST}\n")
-    assert ("reader: claude (opus), a separate Claude Code conversation because Codex isn't "
-            "installed\n") in reader.text()
+    _native_round(reader, f"1. {FIRST}\n")
+    assert "reader: claude (opus), a subagent of this Claude Code session" in reader.text()
     reader.dispose(FIRST, "cut")
-    reader.ok()
-    assert reader.continued() and "Round 2 of your cold read" in reader.prompt()
+    native = _native_round(reader)
+    assert native["subagent"] == "readloop-reader"
+    assert "Round 2 of your cold read" in native["prompt"]
+    assert reader.calls() == 0
 
-    # Only Codex: under Codex, a separate Codex conversation reads.
+    # Only Codex: the same native flow keeps its reader chat without the other app.
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     _no_claude(repo, monkeypatch, tmp_path)
     codex = Reader(repo, monkeypatch, "codex")
     codex.coordinate("codex")
     codex.notes.unlink()
-    codex.ok(f"1. {FIRST}\n")
-    assert ("reader: codex (gpt-6-sol), a separate Codex conversation because Claude Code isn't "
-            "installed\n") in codex.text()
+    _native_round(codex, f"1. {FIRST}\n")
+    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in codex.text()
     codex.dispose(FIRST, "cut")
-    codex.ok()
-    assert codex.continued() and "Round 2 of your cold read" in codex.prompt()
+    native = _native_round(codex)
+    assert native["subagent"] == "readloop-reader"
+    # Removing notes does not reuse this item's earlier Claude handout numbers.
+    assert "Round 4 of your cold read" in native["prompt"]
+    assert codex.calls() == 0
 
 
 def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
-    setup(repo)
+    # Promotion now needs a committed entry; only brand-new stories add one.
+    setup(repo, keys=("SHOP", "BASKET"))
     _install(repo.bin, "claude", f"#!{sys.executable}\n{CLAUDE}")
     assert repo.forge("fix", "start", "Recover the saved basket", "--done",
                       "Saved baskets return").returncode == 0
@@ -526,23 +606,32 @@ def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
 @pytest.mark.parametrize("walk, app", [
     (_continues, "codex"), (_continues, "claude"), (_starts_fresh, "codex"),
-    (_starts_fresh, "claude"), (_stays_pinned, "claude"), (_wrong_app, "codex"),
+    (_starts_fresh, "claude"), (_stays_pinned, "claude"), (_same_app, "codex"),
     (_one_app, "both"), (_spec_diff, "claude")], ids=lambda value: getattr(value, "__name__", value))
 def test_1_the_same_reader_reads_again(repo, monkeypatch, tmp_path, sdk_data, walk, app):  # noqa: F811
     walk(repo, monkeypatch, tmp_path, sdk_data, app)
 
 
-def test_6_forge_next_nudges_a_read_that_doesnt_converge(repo, monkeypatch, tmp_path, sdk_data):  # noqa: F811
+def test_6_forge_next_holds_a_read_that_doesnt_converge(repo, monkeypatch, tmp_path, sdk_data):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "claude")
     for number in range(1, 4):
-        reader.ok(f"{number}. Gap number {number}.\n")
+        if number == 3:
+            reader.say(f"{number}. Gap number {number}.\n")
+            held = reader.read()
+            assert held.returncode == 1 and "Ask the human to accept, narrow or split" in held.stderr
+        else:
+            reader.ok(f"{number}. Gap number {number}.\n")
         reader.dispose(f"Gap number {number}.", "cut")
         said = repo.forge("next").stdout.splitlines()[-2:]
-        assert said[0].startswith(f"Planning Shoppers can save a basket: round {number} of its "
-                                  f"cold read had findings, so round {number + 1} is next.")
-        assert said[1] == "Next: forge read SHOP"
-        nudged = said[0].endswith(" It isn't converging: ask the human whether to split the story "
-                                  "instead of reading on.")
-        assert nudged == (number + 1 >= 4)
+        if number == 3:
+            assert "Ask the human to accept, narrow or split" in repo.forge("next").stdout
+            assert said[1] == ('Next: forge read SHOP --resolve <accept|narrow|split> '
+                               '--reason "<human\'s choice>"')
+        else:
+            assert said[0].startswith(f"Planning Shoppers can save a basket: round {number} of its "
+                                      f"cold read had findings, so round {number + 1} is next.")
+            assert said[1] == "Next: forge read SHOP"
+    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep this slice")
+    assert chosen.returncode == 0, chosen.stderr
     reader.ok()
     assert "Next: in Claude Code, show plans/SHOP.md in Plan Mode" in repo.forge("next").stdout

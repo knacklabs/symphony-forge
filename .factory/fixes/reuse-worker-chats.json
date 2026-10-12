@@ -1,0 +1,161 @@
+{
+  "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
+  "branch": "fix/reuse-worker-chats",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a121a9-01ea-7493-bf3d-49046de562d8",
+    "head": "16286d99fee3ca94facb0be45bc5b311094e1d20",
+    "start": "456f6c1ad34b60fea1386a4b4f46ef4588d798f1"
+  },
+  "done_when": "Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or effort change, a Forge or machine restart, or a fresh worktree of the same item; a fresh chat starts only when the recorded chat truly can't be resumed (the tool reports it gone, or the item moved to the other tool), and then the round says why in one line; plan reads keep their reader chat across rounds the same way; the coordinator guide says so; command tests with stubbed Codex and Claude cover each resume case and each fresh-chat reason, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/codex.py",
+    "src/forge/codex_turn.py",
+    "src/forge/story.py",
+    "src/forge/worker.py",
+    "tests/test_worker_and_reader_chats_survive_rounds.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5be7f31268ffe1a7ec8fd59ada7f1d571b58d10ab9f4583a873a1af79962fd82",
+    "changed": "d1cafc2d4cf685f9be47ea70d747f5cb88e9c5f2c33f31b064555fe1a172ef83",
+    "commit": "9b0930a0bbf3843f50ece6dca60bbea8b72d0d1b",
+    "dismissals": [],
+    "findings": [],
+    "id": "ffee4569-9c6b-4a09-b65f-c4611ea5415f",
+    "status": "clean"
+  },
+  "round": 23,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T16:42:38+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:25:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:54:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:51:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T00:20:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T02:24:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T03:31:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:06:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:18:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T04:43:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T06:14:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T07:51:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T08:42:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T09:23:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T10:15:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T11:10:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T12:52:08.862907+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T14:41:14.349899+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T15:52:52.567414+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T17:49:19.292618+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T19:38:39.028937+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T20:47:58.778050+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:19:40.377523+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T21:37:20.171430+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T04:15:02.054902+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T05:17:14.817109+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T05:42:26.219364+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T06:42:40.674346+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/story.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the two remaining findings: Codex's real missing-rollout wording, and reader chats archived by an earlier release"
+  },
+  "why": "Worker chats should be reused: each task or fix should keep the same worker conversation from its first round until it merges, but today some rounds start a fresh chat (for example when the model or effort changes, after Forge restarts, or when a record is missing), losing context and costing tokens (owner, 2026-10-09)",
+  "worker": "codex"
+}

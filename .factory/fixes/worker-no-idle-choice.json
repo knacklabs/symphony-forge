@@ -1,0 +1,37 @@
+{
+  "base": "b72357514af01e024b15be89ab7b60712c93a649",
+  "branch": "fix/worker-no-idle-choice",
+  "done_when": "The worker brief says a recorded choice is needed only after close has stopped the review loop and otherwise the worker fixes the findings in that round; new repos get it at init and existing repos on sync, with one command test",
+  "flagged": [
+    "src/forge/templates/brief.md"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "106cdec1ce30c909e045c843c5094574ddc57033bb02b1bec3fb591d5fad41fa",
+    "changed": "d08f17f43f97a24531a6ab4718741b11b4f464104d124e73be7cbeb302efe308",
+    "commit": "3a45662d84ccde449e10c3040fa7b9a6a25729d9",
+    "dismissals": [],
+    "findings": [],
+    "id": "3856bbbf-5977-460a-b8b3-3a5a1151d1da",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-10T11:57:15+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-10T12:50:57.767818+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-10T14:09:42.615260+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers sit idle waiting for a choice Forge refuses to record: after a recorded narrow, a worker treats every new finding as needing a fresh choice, but a choice can only be recorded once close stops the loop",
+  "worker": "codex"
+}

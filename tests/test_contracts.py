@@ -154,6 +154,7 @@ def _unknown_setting(repo, gh, tmp_path, monkeypatch, request):
 
 
 def _roadmap_without_items(repo, gh, tmp_path, monkeypatch, request):
+    # A malformed local roadmap must be refused before story creation changes any worktree.
     repo.write("plans/roadmap.json", "[]\n")
     return (("story", "new", "SHOP", "Shoppers can save a basket"), None, "",
             "plans/roadmap.json is not usable: it needs an items list where every item has a key.\n"
@@ -231,6 +232,7 @@ else:
 
 
 def _codex_handler_moved(repo, gh, tmp_path, monkeypatch, request):
+    request.getfixturevalue("claude_session")
     _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
     (tmp_path / "moved").mkdir()
     (tmp_path / "moved" / "sitecustomize.py").write_text(MOVED_LATE, encoding="utf-8")
@@ -320,12 +322,19 @@ def test_3_every_refusal_is_tested(repo, gh, tmp_path, monkeypatch, request, cas
         assert not untested, "refusals no test triggers:\n" + "\n".join(untested)
         return
     args, cwd, stdin, expected = case(repo, gh, tmp_path, monkeypatch, request)
+    if case is _roadmap_without_items:
+        worktrees = repo.git("worktree", "list", "--porcelain")
+        branches = repo.git("branch", "--list")
     done = repo.forge(*args, input=stdin, cwd=cwd)
     assert done.returncode != 0, done.stdout
     if isinstance(expected, re.Pattern):
         assert expected.fullmatch(done.stderr), done.stderr
     else:
         assert done.stderr == expected
+    if case is _roadmap_without_items:
+        assert repo.git("worktree", "list", "--porcelain") == worktrees
+        assert repo.git("branch", "--list") == branches
+        assert (repo.path / "plans/roadmap.json").read_text("utf-8") == "[]\n"
 
 
 # --- criterion 6: third-party contracts ------------------------------------------------------
@@ -410,8 +419,8 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
             assert worked.returncode == 0 and "stub claude: built it" in worked.stdout
             # forge init's build entry is a gpt model, which is Codex's, so Claude takes Forge's
             # default (once its own settings; forge work now names the model it runs).
-            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
-                                                  "--effort", "medium"]
+            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
+                                                  "--effort", "xhigh"]
 
 
 # --- criterion 7: the same result on both hosts ------------------------------------------------
@@ -596,6 +605,7 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
                  ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
+                 ("handback", "tidy-the-readme", "--subagent", "reader", "--text", "No findings."),
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),

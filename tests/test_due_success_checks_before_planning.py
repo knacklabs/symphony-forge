@@ -57,5 +57,5 @@ def test_1_due_success_check_precedes_planning_when_every_roadmap_story_is_done(
     # The crossing contract is that the due check precedes those next-step instructions.
     assert _ok(repo.forge("next")).splitlines()[:6] == DUE + [
         "No story or fix is in progress.",
-        'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+        'Next: forge story new <KEY> "<title>"',
         'Next: forge fix start "<why>" --done "<done when>"']

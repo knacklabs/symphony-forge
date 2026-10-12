@@ -11,8 +11,8 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 ### The flow
 
 1. A story starts as one short doc: `forge story new <KEY> "<title>"`.
-2. It gets rounds of cold read (`forge read <KEY>`) until one finds nothing, then one approval
-   from the human.
+2. It gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
+   approval from the human.
 3. Each task runs in its own branch and worktree: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`.
 4. `forge close <item>` closes it when the tests pass and the review finds no serious problem.
@@ -95,7 +95,7 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 8. The agent does the work; the human decides (approve a story, choose between options, merge). Check: human touches per story are counted; target three or fewer.
 9. Same result from any agent: logic in `forge` commands and git, thin host adapters. Check: the same behaviour tests run through both adapters.
 10. Slow is a bug: close in minutes, CI under 5 minutes. Check: time per step is recorded and shown on the board; over-budget steps get fixes.
-11. Plain English wherever a human looks: no IDs, hashes or jargon on the board, in PR summaries or in questions. Check: reviewed on board and PR text.
+11. Plain English wherever a human looks: no IDs, hashes or jargon on the board, in PR summaries or in questions; the one exception is a story's own key, shown small beside its title on the board so similar titles can be told apart. Check: reviewed on board and PR text.
 12. Reversible by default: every change and every migration is one PR; rollback is a revert. Check: no command changes a client repo outside a branch and PR.
 13. Measure the factory: task cycle time, human touches per story, share of PRs fixing Forge instead of the product. Check: these three are the rebuild's success measure.
 

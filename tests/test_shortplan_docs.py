@@ -53,11 +53,12 @@ def test_2_you_approve_only_the_top_part(repo, claude_payload, codex_payload):
     assert recorded.returncode == 0, recorded.stderr
     assert "Recorded the approval of" in recorded.stdout
 
-    # After its next cold read, a tightened detail keeps the approval; a changed result doesn't.
+    # A tightened builder detail needs no next read and keeps approval; a changed result doesn't.
     doc = shop / "plans" / "SHOP.md"
     doc.write_text(NEW.replace("an empty basket\n   can't be saved", "an empty basket\n   is refused"),
                    encoding="utf-8")
-    assert repo.forge("read", "SHOP").returncode == 0
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 1 and "so it needs no new round." in read.stderr
     shown = repo.forge("next").stdout
     assert "waiting for approval" not in shown and "Next: forge task start SHOP/T1" in shown
     doc.write_text(NEW.replace("A shopper can save a basket.", "A shopper can save two baskets."),

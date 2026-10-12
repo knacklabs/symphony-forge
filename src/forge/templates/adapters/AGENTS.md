@@ -10,8 +10,8 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 ### The flow
 
 1. A story starts as one short doc: `forge story new <KEY> "<title>"`.
-2. It gets rounds of cold read (`forge read <KEY>`) until one finds nothing, then one approval
-   from the human.
+2. It gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
+   approval from the human.
 3. Each task runs in its own branch and worktree: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`.
 4. `forge close <item>` closes it when the tests pass and the review finds no serious problem.
