@@ -13,7 +13,33 @@
     "branch_diff": "a9e957f11a884a0e724646d66ee203bd3c72027cfc430fa07960dfa06f28e330",
     "changed": "8b09d0841e0844234208e0f3ffa3b53cf7cc5b84127d35676118b70a3025e681",
     "commit": "ca7db87a8c916e79f1d6c265a2751e63d02c2111",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
+        "finding": 3
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
+        "finding": 4
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
+        "finding": 5
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. When a worker completes two rounds without changing product code, close reuses the blocking review and its `commit`; with passing tests, `tested_head` also stays unchanged. This equality check returns without counting the second round, so the same finding can be sent back indefinitely instead of producing the required question. The named finding proof uses a worker that commits a change.",
@@ -52,9 +78,9 @@
       }
     ],
     "id": "55addc37-0963-49c3-b02f-3219cf5861e4",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -87,8 +113,12 @@
   ],
   "stop": {
     "at": "2026-10-12T01:02:21.802157+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/close.py",
-    "wait_id": "30d3e463-e524-4201-bf96-bd474571d65d"
+    "reason": "Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
+    "wait_id": "30d3e463-e524-4201-bf96-bd474571d65d",
+    "worker_round": null
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }
