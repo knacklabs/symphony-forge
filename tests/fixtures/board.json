@@ -8,12 +8,34 @@
     "version": "1.2.3",
     "repo_root": "/example/repo",
     "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it."},
+    "team": {
+      "sentence": null,
+      "counts": {
+        "stories": {"done": 0, "building": 0, "approved, not started": 0, "waiting for approval": 0, "planning": 1, "no plan yet": 0},
+        "parts": {"done": 0, "ready to merge": 0, "in progress": 0, "to do": 0},
+        "fixes": {"done": 0, "ready to merge": 1, "in progress": 0, "to do": 0},
+        "finished_last_7_days": {"parts": 0, "fixes": 0}
+      },
+      "needs_you": null, "in_progress": null, "blocked": null,
+      "pace": null, "go_live": null, "trends": null, "around_forge": null
+    },
     "items": [],
     "events": []
   },
   "board": {
     "version": "1.2.3",
     "repo_root": "/example/repo",
+    "team": {
+      "sentence": null,
+      "counts": {
+        "stories": {"done": 0, "building": 0, "approved, not started": 0, "waiting for approval": 0, "planning": 1, "no plan yet": 0},
+        "parts": {"done": 0, "ready to merge": 0, "in progress": 0, "to do": 0},
+        "fixes": {"done": 0, "ready to merge": 1, "in progress": 0, "to do": 0},
+        "finished_last_7_days": {"parts": 0, "fixes": 0}
+      },
+      "needs_you": null, "in_progress": null, "blocked": null,
+      "pace": null, "go_live": null, "trends": null, "around_forge": null
+    },
     "events": [],
     "items": [
       {
@@ -21,6 +43,8 @@
         "kind": "fix",
         "title": "Polish the guide",
         "stage": "ready",
+        "state": "ready to merge",
+        "merged_at": null,
         "activity": {"status": "idle"},
         "idle_since": null,
         "stalled": false,
@@ -48,6 +72,8 @@
         "kind": "story",
         "title": "Board shows each story in plain English",
         "stage": "planning",
+        "state": "planning",
+        "merged_at": null,
         "activity": {"status": "idle"},
         "idle_since": null,
         "stalled": false,

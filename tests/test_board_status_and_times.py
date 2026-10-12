@@ -143,8 +143,8 @@ def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkey
     assert "People keep saved baskets Finished" in text
     assert row["status"] == "Finished"
     assert "People keep saved baskets Finished on" not in text
-    assert data["kind_stage_counts"]["stories"]["done"] == 1
-    assert data["kind_stage_counts"]["stories"]["needs a spec"] == 0
+    assert data["team"]["counts"]["stories"]["done"] == 1
+    assert data["team"]["counts"]["stories"]["no plan yet"] == 0
 
 
 def test_2_finished_story_parts_never_remain_in_progress(client, tmp_path):
@@ -384,7 +384,7 @@ def test_5_ready_receipt_agrees_with_card_header_and_next(client, tmp_path):
     data, text, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["stage"] == "ready" and row["status"] == "Ready to merge"
-    assert data["kind_stage_counts"]["fixes"]["ready to merge"] == 1
+    assert data["team"]["counts"]["fixes"]["ready to merge"] == 1
     assert "Ready to merge: 1" in text
     next_step = client.forge("next")
     assert next_step.returncode == 0, next_step.stderr
@@ -465,8 +465,8 @@ def test_8_header_separates_stories_and_fixes_and_titles_end_at_a_word(client, t
     assert _row(data, "correct-state")["title"] == shortened
     assert shortened in text
     assert "Stories" in text and "Fixes" in text
-    assert set(data["kind_stage_counts"]) == {"stories", "fixes"}
-    assert data["kind_stage_counts"]["fixes"]["building"] == 1
+    assert set(data["team"]["counts"]) == {"stories", "parts", "fixes", "finished_last_7_days"}
+    assert data["team"]["counts"]["fixes"]["in progress"] == 1
 
 
 def test_9_one_person_has_one_display_name_across_approval_history(

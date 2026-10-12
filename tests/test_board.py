@@ -208,6 +208,7 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
 
     # Without gh: the state and its dates, and a plain word that the finished work list is missing.
     gh.respond("pr", "list", exit=1)
+    (repo.path / ".git/forge/prs-cache.json").unlink()  # the last minute's lists have expired
     out = repo.path.parent / "board-offline.html"
     assert repo.forge("board", "--out", str(out)).returncode == 0
     offline = seen(out)
