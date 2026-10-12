@@ -6,26 +6,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5ed8f661caa325d8af2b4a51428097976f2f4beed7b97984500059f29620bf03",
-    "changed": "f3062e40066f34a0bac78c5121dc0f4eb5b4e0e7bc64921019a629409dd74653",
-    "commit": "9c8ecf4f246d1cd78d28a336d06d3cced794762e",
+    "branch_diff": "4400d56bce48d82ecd9c08a4106afbed5e7528099ee22b769f331e0bad749193",
+    "changed": "9691727f44673d45e217347fdd457e24570a0a4ce5af4457235812642593a61c",
+    "commit": "541b2d8413e0794c27e3d1baf47617018b64d69f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 4\nRaise: Test \u2014 Done-when item 1 names data loss, but the command-level test covers only Security and migration findings. No test supplies `Raise: Data loss` with Harm below 4 or checks for `(floor: data loss)`. The data-loss branch of `score.normalise` could break while the current tests pass.",
-        "file": "tests/test_score_notes.py",
-        "gain": 3,
-        "harm": 4,
-        "line": 99,
-        "priority": "P1",
-        "title": "Not done: test the data-loss Harm floor",
-        "work": 1
-      }
-    ],
-    "id": "a72943ac-887b-40b0-9e83-c5b285a2492c",
-    "status": "blocked"
+    "findings": [],
+    "id": "4dfcc5d6-fd73-4970-b55c-fac5776382cc",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T12:36:15.355532+00:00",
@@ -37,6 +26,10 @@
     },
     {
       "at": "2026-10-12T15:26:30.128237+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T15:39:03.719331+00:00",
       "step": "review"
     }
   ]
