@@ -1,0 +1,15 @@
+{
+  "base": "04f4136610ca1711a79680c03bb7d24ffa218340",
+  "branch": "fix/review-finding-left-open-by-forge-tools",
+  "done_when": "A review no longer finds: Native rounds ignore local model overrides when selecting a subagent role",
+  "kind": "fix",
+  "stacked_on": "FORGE-TOOLS-1/WORK",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:01:17.269820+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review finding left open by FORGE-TOOLS-1/WORK: Native rounds ignore local model overrides when selecting a subagent role (src/forge/worker.py:125): Raise: Functional. `forge work` uses the model from `repo.config(top)` and prints it for the native round, but the `worker`, `fixer`, and `frontend` role files are generated from shared `forge.toml` settings. `sync.files` at src/forge/sync.py:364 explicitly removes `forge.local.toml` overrides before generating those files. When a developer sets a documented local model override, Forge prints that model while the instructed subagent role runs on the shared model. The native work test never supplies a local override, so it misses this mismatch."
+}
