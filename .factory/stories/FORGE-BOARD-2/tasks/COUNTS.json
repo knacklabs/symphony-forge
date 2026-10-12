@@ -10,34 +10,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5963f627ffd5ebd2a67fb041aa87906d8b6f6b4dade1f71f1e674765b1fb738e",
-    "changed": "f3b4fa39b5ce0d491a848f0e8cd584366d2ea1f3bc18fd8bd7ed024f52c437c6",
-    "commit": "c70eaf2bd22d4d3b423314e535f228095e789fbe",
+    "branch_diff": "9d85580319769353e938d98b0523934568a7bf35d1b1f9b28973b29b8e6fc0d3",
+    "changed": "d44817a03ae008bea165676c1b36c40a182a6b41626371843407510421e8a09c",
+    "commit": "ef9b8a594b9d191982757fbb8d8c31a1e4c822b4",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The cached searches cover only the current week and six full weeks. For a story still in progress with a part merged eight weeks ago, a teammate without local timing logs cannot get that part's PR body. `board.py:577\u2013580` then builds its runway without the published intervals, so the story's working and waiting time differs between machines.",
+        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done. The cached searches stop at the current week and six full weeks. For an unfinished story with a part merged eight weeks ago, a teammate without local timing logs cannot obtain that part's PR body. The runway assembled at board.py:577\u2013580 then omits its published intervals, so working, waiting and unknown time differs between machines. The changed tests do not cover an older merged part.",
         "file": "src/forge/board_facts.py",
         "line": 75,
         "priority": "P1",
         "title": "Not done: older merged parts lose their shared runway"
       },
       {
-        "body": "Raise: Functional. The new no-worktree advice handles a ready fix when `_item` is called, but `forge next` reaches fixes only by iterating local worktrees (`nextstep.py:206\u2013217`). On a second clone with the fix's fetched branch and shared clean record but no fix worktree, `forge board --json` shows it ready while `forge next` never names it or its starter.",
-        "file": "src/forge/nextstep.py",
-        "line": 725,
-        "priority": "P1",
-        "title": "Not done: forge next omits ready fixes without a worktree"
-      },
-      {
-        "body": "Raise: Gate. The supplied proof list is `missing`. It provides no runnable proof or result for the counts, shared readiness, cached GitHub reads, approval gate, or full story runway delivered by this branch.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is `missing`. It identifies no runnable proof or result for this branch's counts, shared readiness, cached GitHub reads, approval gate or complete story runway.",
         "file": "tests/test_board_counts.py",
         "line": 100,
         "priority": "P1",
         "title": "Not done: proof list"
       }
     ],
-    "id": "60d94a76-bcdb-44e2-a102-ee5102eafd9f",
+    "id": "0e47ba85-9401-46c5-91c5-b49aefcbab54",
     "status": "blocked"
   },
   "status": "fixing",
@@ -56,6 +49,10 @@
     },
     {
       "at": "2026-10-12T16:40:11.329583+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T18:14:57.435419+00:00",
       "step": "review"
     }
   ],
