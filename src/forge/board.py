@@ -24,7 +24,7 @@ from string import Template
 from textwrap import shorten
 from typing import Any
 
-from forge import __version__, approval, board_visuals, codex, machine, repo, story, task
+from forge import __version__, approval, board_facts, board_visuals, codex, machine, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -60,7 +60,7 @@ def board(args: Any) -> int:
     stories, fixes, prs = _gather(top)
     out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(_page(stories, fixes, prs, machine_board(top, prs_snapshot=prs)).encode("utf-8"))  # same bytes on Windows
+    out.write_bytes(_page(stories, fixes, prs, machine_board(top)).encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
     if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
         webbrowser.open(out.resolve().as_uri())
@@ -224,8 +224,7 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
     return runs
 
 
-def machine_board(top: Path, history: Item | None = None,
-                  prs_snapshot: list[Item] | None = None) -> Item:
+def machine_board(top: Path, history: Item | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
     from forge import nextstep, time_records
 
@@ -243,16 +242,11 @@ def machine_board(top: Path, history: Item | None = None,
     prs = _machine_prs(top)
     by_branch = {p.get("headRefName"): p for p in prs}
     # Older open PRs keep their number, but deliberately have unknown checks.
-    # A capped all-state snapshot may omit older open or merged PRs.
-    complete = prs_snapshot is not None and len(prs_snapshot) < 1000
-    older = ([p for p in prs_snapshot if p.get("state") == "OPEN"] if complete else
-             nextstep._prs(top, "open", "number,headRefName,headRefOid,url,isDraft,body"))
-    for pr in older:
-        by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
-    finished_prs = [p for p in (prs_snapshot if complete else
-                    nextstep._prs(top, "merged", "headRefName,headRefOid,state,mergedAt,mergedBy,body"))
-                    if p.get("state", "MERGED") == "MERGED"
-                    and isinstance(p.get("headRefName"), str)]
+    github = board_facts.prs(top)
+    for pr in (github or {}).get("open", []):
+        if isinstance(pr.get("headRefName"), str):
+            by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
+    finished_prs = board_facts.merged_prs(github)
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
@@ -512,7 +506,7 @@ def machine_board(top: Path, history: Item | None = None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                "merged_by": (pr or {}).get("mergedBy"),
+                "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
                 **({k: v for k, v in time_records.merged(
                     time_records.item(top, item, state, events=recorded, timings=timings,
                                       ended_at=merged_dates.get(branch)),
@@ -660,19 +654,7 @@ def machine_board(top: Path, history: Item | None = None,
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    counts = dict.fromkeys(("needs a spec", "planning", "waiting for approval", "building", "ready to merge", "done"), 0)
-    kind_counts = {kind: counts.copy() for kind in ("stories", "fixes")}
-    for entry in maps:
-        counts[entry["stage"]] += 1
-        kind_counts["stories"][entry["stage"]] += 1
-    for rel, (state, _) in best.items():
-        name = STATE.fullmatch(rel)["fix"]
-        if name and state.get("kind") != "story-done":
-            phase = ("done" if rel in merged or state.get("status") in ("merged", "done")
-                     or (state.get("branch") or f"fix/{name}") in merged_prs else
-                     "ready to merge" if items.get(name, {}).get("stage") == "ready" else "building")
-            counts[phase] += 1
-            kind_counts["fixes"][phase] += 1
+    team = board_facts.team(top, history, items, maps, best, completed, github)
     event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
     recent = [{"time": e.get("at"), "item": e.get("item"), "line":
                " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else
@@ -681,7 +663,7 @@ def machine_board(top: Path, history: Item | None = None,
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()),
-            "dependency_maps": maps, "stage_counts": counts, "kind_stage_counts": kind_counts, "events": recent,
+            "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
 
 
@@ -888,17 +870,11 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
 
 def _prs(top: Path) -> list[Item] | None:
     """Every pull request gh can see, newest first, or None without a working gh."""
-    if not shutil.which("gh"):
+    github = board_facts.prs(top)
+    if github is None:
         return None
-    # GitHub times out on this repo when it resolves files and checks for every pull request.
-    done = repo.run("gh", "pr", "list", "--state", "all", "--limit", "1000", "--json",
-                    "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url", cwd=top)
-    try:
-        prs = json.loads(done.stdout) if done.returncode == 0 else None
-    except ValueError:
-        prs = None
-    if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
-        return None
+    prs = list({(pr.get("number"), pr.get("headRefName")): pr
+                for pr in [*github["open"], *board_facts.merged_prs(github)]}.values())
     recent = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "25", "--json",
                       "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", cwd=top)
     try:
@@ -1193,7 +1169,7 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
         map=board_visuals.dependencies(view["dependency_maps"]),
         counts=" · ".join(kind.capitalize() + " — " + "; ".join(
             f"{name.capitalize()}: {count}" for name, count in counts.items())
-            for kind, counts in view["kind_stage_counts"].items()),
+            for kind, counts in view["team"]["counts"].items() if kind != "finished_last_7_days"),
         stories="".join(card(s) for s in stories) or '<p class="card">No story is on the roadmap yet.</p>',
         fixes=f'<section class="card"><ul>{fixed}</ul></section>' if fixed
         else '<p class="card">No small fixes yet.</p>')

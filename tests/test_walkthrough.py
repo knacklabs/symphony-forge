@@ -133,7 +133,7 @@ def walk(env, claude_payload, monkeypatch) -> dict:
                 "title": call[call.index("--title") + 1], "body": body(call),
                 "mergedAt": merged[call[call.index("--head") + 1]], "files": [],
                 "statusCheckRollup": []} for call in env.gh_calls("pr", "create")]
-    gh.respond("pr", "list", "--state", "all", stdout=json.dumps(listing))
+    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(listing))
     page = env.tmp / "board.html"
     step("24T09:00", "board", "--out", str(page))
     seen["board"] = page_text(page)

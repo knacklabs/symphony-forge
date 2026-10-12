@@ -32,6 +32,9 @@ def published(env, item, *, merged_at=None):
           "mergedBy": {"login": "ana", "name": "Ana"},
           "url": "https://github.com/acme/shop/pull/7"}
     env.gh.respond("pr", "list", stdout=json.dumps([pr]))
+    # Every machine's pull request lists are cached for a minute; here that minute has passed.
+    for cache in env.tmp.rglob("prs-cache.json"):
+        cache.unlink()
     return text
 
 
