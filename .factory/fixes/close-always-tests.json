@@ -29,7 +29,7 @@
     "id": "f9231e1b-237e-44ae-86df-5e40091681f7",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T18:28:16.357909+00:00",
@@ -50,8 +50,12 @@
   ],
   "stop": {
     "at": "2026-10-12T21:59:22.391051+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/fasttest.py",
-    "wait_id": "98b2d44b-6dfe-4958-be99-01933b14275d"
+    "reason": "Coordinator (Harm 2, reversible; third finding in fasttest.py, so replace the cases with one general rule): close passes every always_test entry to pytest explicitly as its own argument, whatever the test command's roots, and fails when any entry collects no test. No more per-layout cases.",
+    "wait_id": "98b2d44b-6dfe-4958-be99-01933b14275d",
+    "worker_round": null
   },
   "why": "Close picks local tests by imports and mentions, so cross-cutting tests such as the rules and every-refusal checks fail only in CI, a round later"
 }
