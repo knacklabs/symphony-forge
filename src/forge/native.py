@@ -230,6 +230,7 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     asked = worker.questions(pending.get("said", ""), said)
     identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
     codex._record(path, question=asked or None, question_id=identity,
+                  **({"native_round": None} if said else {}),  # finished: next offers close
                   native={"session": owner["id"], "subagent": subagent,
                           "head": repo.git("rev-parse", "HEAD", cwd=top),
                           "rounds": pending["result"]["round"], "outcome": outcome})

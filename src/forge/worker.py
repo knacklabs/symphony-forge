@@ -121,6 +121,7 @@ def _work(args: argparse.Namespace) -> bool:
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,
                                                       native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
+    why = "Claude failed this design round" if getattr(args, "fallback", None) else why
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
                 f"because {why}")
     if not on_codex or is_native:

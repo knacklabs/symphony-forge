@@ -137,6 +137,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert lane("BOARD/HELP") == []
         repo.git("add", "-A", cwd=folder)
         repo.git("commit", "-q", "-m", "Add the words", cwd=folder)
+        assert "Next: forge close BOARD/HELP" in repo.forge("next").stdout  # the round is finished
         timings = (repo.path / ".git/forge/timings.jsonl").read_text("utf-8")
         assert '"item": "BOARD/HELP", "round": 1, "step": "worker round"' in timings
         events = [json.loads(line) for line in
@@ -245,6 +246,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
             fell = handout("BOARD/PAGE", "frontend")[0]
             monkeypatch.delenv("STUB_CLAUDE_EXIT")
             assert "fell back to Codex" in fell.stdout
+            assert "because Claude failed this design round" in fell.stdout
             assert len(calls(claude_log)) == 1 and not (repo.bin / "codex-app-server.jsonl").exists()
 
             # With one tool and no session open, nothing runs.
