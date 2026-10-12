@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-12T17:05:15.039495+00:00
-seconds: 214.223
-read_hash: 360dd27443554679546cb00f96914cd499144348
-round: 2
+read_at: 2026-10-12T17:09:30.128927+00:00
+seconds: 131.113
+read_hash: 143d83007042fa7dc198c39b00b97441783b8a08
+round: 3
 passed: no
-doc_seen: 360dd27443554679546cb00f96914cd499144348
+doc_seen: 143d83007042fa7dc198c39b00b97441783b8a08
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: c6d268602e073547a6cbe17160ca02b170ad0471
+notes_seen: a0609288b2bca388b7312d9771d6a0776cd15bd1
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13103-5ad1-7cd2-bb82-fa7b99c4c937
 session:
-blocked_rounds: 2
+blocked_rounds: 3
 loop_choice:
 loop_reason:
 ---
@@ -93,3 +93,12 @@ No files changed; runtime tests were not run. These findings are from a static r
    Disposition: cut - Gain 3, Work 2, Harm 2: busy now also means an open run of any kind in the item's events (`board.active_runs`), which covers the `ci` run that `checks.wait` already records; a `ci` start over an hour old counts as ended; item 1's test adds a change waiting on CI.
 
 No files changed; runtime tests were not run. These findings are from a static read.
+
+## Round 3
+
+12. Blocking: The one-hour expiry treats a live CI wait as an ended command.
+   Raise: Functional. [Plan:115](/plans/FORGE-QUEUE-1.md:115) expires every open `ci` run after an hour. However, [checks.py:90](/src/forge/checks.py:90) continually extends the deadline while checks remain queued, so a close waiting over an hour for a busy shared runner is still alive. Its review and local-test entries have ended; expiring its CI entry lets `--all` start another close on that worktree. Age does not establish that the command died. The new test covers only a one-minute-old run and would pass with this defect.
+   Gain 3, Work 3, Harm 2
+   Disposition: cut - busy now follows the recording process's identity, not a time limit: a live CI wait stays busy, a killed close does not (Gain 3, Work 1, Harm 1)
+
+Runtime tests were not run; this is a static plan finding.

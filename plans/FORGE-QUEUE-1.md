@@ -112,8 +112,9 @@ it and nothing else. In `src/forge/land.py`:
    `machine.entries()` for this repo and item (a worker, a review or a test run), or
    `board.active_runs(top, item)` shows a run of any kind, `ci` included, with a start and no end.
    `checks.wait` already records its wait as a `ci` run (`repo.record_run`), so a close or land
-   that waits only for CI counts as busy. A `ci` run whose start is more than an hour old counts
-   as ended, so a killed close never keeps its change busy for good. The run never starts a second
+   that waits only for CI counts as busy while the process that recorded the run is still alive
+   (the same pid-and-start identity the machine lanes check); a run whose process has ended counts
+   as ended, so a killed close never keeps its change busy, and a long CI wait stays busy. The run never starts a second
    close on a busy change. A change in a review-loop stop (`hotspot`) goes straight to "Needs you" with its stop
    question, as item 4 says. Order: the run starts changes oldest first, by the commit that added
    the item's state file (the same `git log -1 --diff-filter=A` that `land.land` already runs),
