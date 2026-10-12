@@ -57,7 +57,7 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def narrow_command(command: str, excluded: list[str], workers: str) -> str:
+def narrow_command(command: str, excluded: list[str], workers: str, plugin: bool) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -66,7 +66,7 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
         value = token.group().strip("\"'")
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
-    options = ["-p", "_forge_pytest_selection"] if excluded else []
+    options = ["-p", "_forge_pytest_selection"] if plugin else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
     if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
@@ -310,12 +310,17 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     return selected, everything, False, missed
 
 
-NODES = """NODES = {}
+NODES = """NODES, LISTED = {}, {}
 def pytest_collection_modifyitems(config, items):
+    def runs(item, node):
+        return item.nodeid == node or item.nodeid.startswith((node + "::", node + "["))
+    for node in LISTED:
+        if not any(runs(item, node) for item in items):
+            raise pytest.UsageError("forge.toml's always_test names " + node
+                                    + ", which collects no test; fix or remove it in forge.toml.")
     def kept(item):
         file = item.nodeid.split("::")[0]
-        return file not in NODES or any(item.nodeid == node or item.nodeid.startswith((node + "::", node + "["))
-                                        for node in NODES[file])
+        return file not in NODES or any(runs(item, node) for node in NODES[file])
     dropped = [item for item in items if not kept(item)]
     if dropped:
         config.hook.pytest_deselected(items=dropped)
@@ -343,26 +348,29 @@ def pytest_tests(base: str, command: str) -> int:
                   "fix or remove it in forge.toml.", flush=True)
             return 1
     picked, tests, shared_changed, missed = related(base)
+    # Tests that run the program from outside never name its files, so say what local runs miss.
+    from forge.review import GAP  # imported late: review's imports lead back here
+    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+          end="", flush=True)
+    if closing and len(picked) * 3 > len(tests):
+        print(LARGE, flush=True)
+        if not always:
+            return 0
+        picked, shared_changed = [], False  # CI runs the rest; forge.toml's always_test runs here.
     # forge.toml's always_test runs beside the picked tests; a node ID narrows a file the picker
     # did not choose to that test.
     files = {name.split("::")[0] for name in always}
     nodes = {} if shared_changed else {
         file: [name for name in always if name.startswith(file + "::")] for file in files
         if file not in picked and file not in always}
+    listed = [name for name in always if "::" in name]
     selected = sorted(set(picked) | files)
-    # Tests that run the program from outside never name its files, so say what local runs miss.
-    from forge.review import GAP  # imported late: review's imports lead back here
-    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
-          end="", flush=True)
     if not shared_changed:
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path for path in tests if path not in selected]
-    if closing and len(picked) * 3 > len(tests):
-        print(LARGE, flush=True)
-        return 0
     if shared_changed:
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
@@ -370,12 +378,14 @@ def pytest_tests(base: str, command: str) -> int:
         print("Related tests: " + ", ".join(selected), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
-        if excluded:
+        plugin = bool(excluded or listed)
+        if plugin:
             selection = Path(folder) / "_forge_pytest_selection.py"
-            selection.write_text("def pytest_configure(config):\n"
+            selection.write_text("import pytest\ndef pytest_configure(config):\n"
                                  "    config.option.ignore = (config.option.ignore or []) + "
-                                 + json.dumps(excluded) + "\n" + NODES.format(json.dumps(nodes)), "utf-8")
+                                 + json.dumps(excluded) + "\n"
+                                 + NODES.format(json.dumps(nodes), json.dumps(listed)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        return subprocess.run(narrow_command(command, excluded, workers), shell=True,
+        return subprocess.run(narrow_command(command, excluded, workers, plugin), shell=True,
                               env=environment).returncode

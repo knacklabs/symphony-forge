@@ -29,7 +29,7 @@ def adopt_earlier(env):
     env.repo.git("commit", "-qm", "Refresh earlier adoption")
 
 
-def set_up(env, monkeypatch, adopted, always):
+def set_up(env, monkeypatch, adopted, always, changed=1):
     if adopted:
         adopt_earlier(env)
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
@@ -55,7 +55,8 @@ def set_up(env, monkeypatch, adopted, always):
         env.repo.git("switch", "-q", "main")
         env.repo.git("merge", "-q", "--ff-only", "fix/adopt")
     env.repo.git("-c", "core.hooksPath=/dev/null", "push", "-q", "origin", "main")
-    item, _ = env.start_fix({"tests/test_case_0.py": "def test_case_0():\n    assert 2 + 2 == 4\n"})
+    item, _ = env.start_fix({f"tests/test_case_{number}.py": f"def test_case_{number}():\n    assert 2 + 2 == 4\n"
+                             for number in range(changed)})
     env.checks([run("tests"), run("forge-pr-check")])
     return item, log
 
@@ -63,17 +64,22 @@ def set_up(env, monkeypatch, adopted, always):
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
 @pytest.mark.parametrize("always", [None, ["tests/test_case_5.py", "tests/test_case_6.py::test_other_6"]],
                          ids=["unset", "set"])
-def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adopted, always):
-    item, log = set_up(env, monkeypatch, adopted, always)
+@pytest.mark.parametrize("changed", [1, 4], ids=["small", "large"])
+def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adopted, always, changed):
+    # A large change skips the picked tests for CI, but the listed ones still run.
+    item, log = set_up(env, monkeypatch, adopted, always, changed)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    expected = {"test_case_0"} | ({"test_case_5", "test_other_5", "test_other_6"} if always else set())
+    expected = ({"test_case_0"} if changed == 1 else set()) | (
+        {"test_case_5", "test_other_5", "test_other_6"} if always else set())
     assert {path.name for path in log.iterdir()} == expected
+    assert ("More than a third of the test files selected" in closed.stdout) == (changed > 1)
 
 
 @pytest.mark.parametrize("value, problem", [
     ('"tests/test_rules.py"', "always_test must be a list of strings"),
     ('["tests/test_missing.py::test_1"]', "always_test names tests/test_missing.py, which is not a file"),
+    ('["tests/test_case_6.py::test_typo"]', "always_test names tests/test_case_6.py::test_typo, which collects no test"),
 ])
 def test_2_close_refuses_an_always_test_it_cannot_run(env, monkeypatch, value, problem):
     item, _ = set_up(env, monkeypatch, False, value)
@@ -84,4 +90,6 @@ def test_2_close_refuses_an_always_test_it_cannot_run(env, monkeypatch, value, p
 
 def test_3_the_guides_name_always_test():
     for rel in ("src/forge/templates/skill.md", ".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md"):
-        assert "`always_test`" in (ROOT / rel).read_text("utf-8"), rel
+        text = " ".join((ROOT / rel).read_text("utf-8").split())
+        assert ("List them in `always_test` in `forge.toml` (in a fix), as test files or pytest node IDs"
+                in text and "close runs them on every change" in text), rel

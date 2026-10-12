@@ -1141,8 +1141,9 @@ To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in
 Tests that check the whole repo, such as rules over every test file, name no changed file, so
 the pytest picker never picks them and they fail only in CI. List them in `always_test` in
 `forge.toml` (in a fix), as test files or pytest node IDs such as
-`tests/test_rules.py::test_1_rules`; it is empty by default. The pytest picker runs them beside
-the tests it picks; a listed file that does not exist stops the run.
+`tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
+them on every change, beside the tests it picks, even when it leaves a large selection to CI.
+A listed file that does not exist, or a node ID that collects no test, stops the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
