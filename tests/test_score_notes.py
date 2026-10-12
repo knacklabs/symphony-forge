@@ -99,7 +99,9 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
                         _scored("P1", "Basket ids are guessable",
                                 "Gain 3, Work 1, Harm 2\nRaise: Security\nAnyone can read a basket."),
                         _scored("P1", "The basket migration drops old rows",
-                                "Gain 4, Work 3, Harm 1\nRaise: Functional\nOld baskets vanish.")))
+                                "Gain 4, Work 3, Harm 1\nRaise: Functional\nOld baskets vanish."),
+                        _scored("P1", "Saving overwrites another shopper's basket",
+                                "Gain 3, Work 2, Harm 2\nRaise: Data loss\nTwo saves at once keep one.")))
     item, _ = env.start_fix()
     closed = env.close(item)
     out = closed.stdout + closed.stderr
@@ -108,6 +110,7 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
     assert "Gain 3, Work 2, Harm 1\n" in closed.stdout
     assert "Gain 3, Work 1, Harm 4 (floor: security)" in closed.stdout
     assert "Gain 4, Work 3, Harm 4 (floor: migration)" in closed.stdout
+    assert "Gain 3, Work 2, Harm 4 (floor: data loss)" in closed.stdout
     assert "Gain <g>, Work <w>, Harm <h>" in env.prompt()
     assert "judgement, not measurement" in env.prompt()
 
