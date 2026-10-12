@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import re
 
-LINE = re.compile(r"^([ \t]*)Gain ([1-5]), Work ([1-5]), Harm ([1-5])\b.*$", re.M)
+# Each score is one integer 1 to 5; "Harm 1.5" or "Harm 12" is no score line.
+LINE = re.compile(r"^([ \t]*)Gain ([1-5]), Work ([1-5]), Harm ([1-5])(?:[ \t].*)?$", re.M)
 FLOORS = ((re.compile(r"^[ \t]*Raise:[ \t]*Security\b", re.I | re.M), "security"),
           (re.compile(r"^[ \t]*Raise:[ \t]*Data loss\b", re.I | re.M), "data loss"),
           (re.compile(r"\bmigrations?\b", re.I), "migration"))
