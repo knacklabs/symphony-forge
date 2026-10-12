@@ -477,12 +477,14 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
     for label, text in failing:
         names = [name for line in text.splitlines() if "FAILED" in line
                  for name in re.findall(r"\S+::\S+", line)]
-        # Without test names (Jest, Vitest), the failure lines stand in, durations removed;
-        # a failure with no such lines is never counted as the same one.
-        excerpt = " ".join(re.sub(r"\(?\d[\d.]*\s*m?s\b\)?", "", " / ".join(
-            line for line in text.splitlines() if re.search(r"fail|error|✕|×", line, re.I))).split())[:200]
+        # Without test ids, each failed-test line (Jest ✕, Vitest ×) is one key, durations removed;
+        # otherwise the failure lines together are one. A failure with no such lines never counts.
+        lines = [" ".join(re.sub(r"\(?\d[\d.]*\s*m?s\b\)?", "", line).split())[:200]
+                 for line in text.splitlines() if re.search(r"fail|error|✕|×", line, re.I)]
+        marked = [line for line in lines if line.startswith(("✕", "×"))]
+        excerpts = marked or ([" / ".join(lines)[:200]] if lines else [])
         keys += ([f"the failing test {name}" for name in names] or
-                 [f'the failing check {label} ("{excerpt}")'] if excerpt else [])
+                 [f'the failing check {label} ("{excerpt}")' for excerpt in excerpts])
     # Each failure counts the rounds in a row that left it; a cleared one drops out. A round with
     # no close since the last one has no new test or review result, so it counts nothing.
     # ponytail: close events live on this machine; a round on another machine counts once more.

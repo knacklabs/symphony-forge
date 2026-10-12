@@ -18,8 +18,8 @@ from test_upgrade_command import _repo_adopted_on_the_previous_release, unsynced
 STORY = "stuck-worker-asks"
 
 # The repo's test commands: pytest naming the same test every run, pytest failing test_a once
-# then test_b, Jest with the same failure but a different duration, and Jest failing a different
-# test on each run.
+# then test_b, Jest with the same failure but a different duration, Jest failing a different
+# test on each run, and Jest failing A and B once, then B and C.
 SUITES = {
     "pytest same": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
     "a then b": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
@@ -30,6 +30,10 @@ SUITES = {
     "work twice": 'print("FAILED test_readme.py::test_greeting")\nraise SystemExit(1)\n',
     "jest same": ('import random\nprint(f"  ✕ greets the reader ({{random.randint(2, 99)}} ms)")\n'
                   'raise SystemExit(1)\n'),
+    "jest ab then bc": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
+                        'run.write_text("x")\n'
+                        'print("  ✕ greets A (2 ms)\\n  ✕ greets B (4 ms)" if first else '
+                        '"  ✕ greets B (5 ms)\\n  ✕ greets C (1 ms)")\nraise SystemExit(1)\n'),
     "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
                        'run.write_text(run.read_text() + "x" if run.exists() else "x")\n'
                        'print(f"  ✕ greeting case {{len(run.read_text())}} (3 ms)")\nraise SystemExit(1)\n'),
@@ -38,6 +42,7 @@ STUCK = {"pytest same": "the failing test test_readme.py::test_greeting",
          "work twice": "the failing test test_readme.py::test_greeting",
          "a then b": "the failing test test_readme.py::test_b",
          "jest same": 'the failing check Tests on the close run ("✕ greets the reader")',
+         "jest ab then bc": 'the failing check Tests on the close run ("✕ greets B")',
          "finding": 'the review finding "Saving drops the greeting" in app.py',
          "no change": 'the review finding "Saving drops the greeting" in app.py'}
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
@@ -76,8 +81,8 @@ def _rounds(env, case):
     return item
 
 
-@pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest different", "finding",
-                                  "finding then test", "no change"])
+@pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest ab then bc",
+                                  "jest different", "finding", "finding then test", "no change"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
