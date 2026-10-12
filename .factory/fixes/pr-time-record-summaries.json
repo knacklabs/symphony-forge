@@ -1,0 +1,14 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/pr-time-record-summaries",
+  "done_when": "The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its whole round history",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:33.693930+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
+}
