@@ -95,7 +95,9 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
 
     upgrade, synced = _sync_elsewhere(repo, tmp_path)
     if missing_origin:
-        assert "The earlier reader conversation for invoices stays on this machine only" in synced.stdout
+        assert ("Warning: Codex has no starting commit for the earlier reader chat of "
+                "docs/specs/invoices.md, so sync can't tell which branch owns it.\n"
+                "The earlier reader conversation for invoices stays on this machine only") in synced.stdout
         for ref in (branch, "fix/chat-upgrade"):
             assert repo.git("ls-tree", "--name-only", ref, "--", "docs/specs/invoices.read.md") == ""
     assert "Invoices also show their payment date." not in (
