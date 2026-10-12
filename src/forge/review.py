@@ -603,9 +603,10 @@ def _named(top: Path, base: str) -> list[str]:
 
 
 def _ran(name: str, node: str) -> bool:
-    """A reported pytest node is the named test, or inside the named file or class. Node IDs can
-    be relative to a test folder, so a name may end with the node."""
-    name, parts = re.sub(r"\[.*", "", name), re.sub(r"\[.*", "", node).split("::")
+    """A reported pytest node is the named test, or inside the named file or class. A name with a
+    parameter id matches only that case. Node IDs can be relative to a test folder, so a name may
+    end with the node."""
+    parts = (node if "[" in name else re.sub(r"\[.*", "", node)).split("::")
     return any(name == part or name.endswith("/" + part)
                for part in ("::".join(parts[:i]) for i in range(1, len(parts) + 1)))
 

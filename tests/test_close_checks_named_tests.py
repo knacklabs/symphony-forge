@@ -7,12 +7,16 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT
-from test_close import body, env  # noqa: F401
+from test_close import env  # noqa: F401
 
 STORY = "forge-writes-proof-list"
 PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::test_returning\n"
          "- Empty names are refused: tests/test_greeting.py::test_empty\n"
-         "- Old readers stay greeted: tests/test_other.py::test_other")
+         "- Old readers stay greeted: tests/test_other.py::test_other\n"
+         "- New readers by name: tests/test_greeting.py::test_case[new]\n"
+         "- Readers coming back by name: tests/test_greeting.py::test_case[back]")
+GREETING = ("import pytest\n\n\ndef test_returning():\n    assert True\n\n\n"
+            "@pytest.mark.parametrize(\"who\", [\"new\", \"back\"])\ndef test_case(who):\n    assert who\n")
 
 
 def _close(env, adopted, command):
@@ -29,24 +33,30 @@ def _close(env, adopted, command):
     repo.git("push", "-q", "origin", "main")
     # The worker maps items to a test that runs, one that does not exist and one close does not
     # run, and writes no results.
-    item, where = env.start_fix({"tests/test_greeting.py": "def test_returning():\n    assert True\n",
+    item, where = env.start_fix({"tests/test_greeting.py": GREETING,
                                  "tests/test_other.py": "def test_other():\n    assert True\n"})
     repo.git("commit", "--allow-empty", "-q", "-m", "List the proof", "-m", PROOF, cwd=where)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    return env.prompt(), body(env.gh_calls("pr", "create")[-1])
+    # The body as gh received it on the last publish, before any later rewrite of its file.
+    sent = (env.repo.bin / "gh-bodies.jsonl").read_text("utf-8").splitlines()
+    assert env.gh_calls("pr", "edit"), "close never refreshed the pull request after its run"
+    return env.prompt(), json.loads(sent[-1])
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted):
     python = Path(sys.executable).as_posix()
     prompt, published = _close(env, adopted,
-                               f'"{python}" -m pytest -q -p no:cacheprovider tests/test_greeting.py')
+                               f'"{python}" -m pytest -q -p no:cacheprovider tests/test_greeting.py -k "not back"')
     assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning "
             "(passed in close's run)") in published
     assert "- Empty names are refused: not run" in published
     assert "- Old readers stay greeted: not run" in published
     assert "test_empty" not in published and "test_other" not in published
+    # A named case matches only itself: the case close did not run is not run.
+    assert "- New readers by name: tests/test_greeting.py::test_case[new] (passed in close's run)" in published
+    assert "- Readers coming back by name: not run" in published
     # The review runs alongside the tests, so its list names only the tests the branch has.
     assert "- Empty names are refused: not run" in prompt
     assert "test_empty" not in prompt
