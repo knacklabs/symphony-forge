@@ -10,26 +10,26 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "537bcfe5bc5fffe358058df9c8d64beb417a9c16a25f510b97ed0776accd6e1d",
-    "changed": "b9529f94d1f3185e7d56f9b05ddf79bde1185ed3a8e9610b86ab913190e30198",
-    "commit": "e61fae452e2db2080286b6087f87eb47fcc59cab",
+    "branch_diff": "cfe117c46fd198904b01af8866e72db94495ad35c7fb60f4dd3031f476d4b881",
+    "changed": "eadf0c136e8b419138d4314a26bdd600de975187158c9232a858da7bbc64d93f",
+    "commit": "de28d34c135ff74321a140c873bb67c91a6a0ccb",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nThe generated selection hook checks that each entry was collected, but it does not check that the entry remains selected after other collection hooks run. For a repo whose test command uses `-k` or `-m`, pytest can deselect a listed test afterward; another picked test can pass and close can report success without running the listed test. Pytest applies those filters in its [mark hook](https://raw.githubusercontent.com/pytest-dev/pytest/main/src/_pytest/mark/__init__.py), and [hook ordering](https://pluggy.readthedocs.io/en/stable/) permits the later registered Forge hook to run first. The refusal proof does not cover a collected entry that is subsequently deselected.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nWith `test = \"pytest tests/unit\"` and an `always_test` file under `tests/unit`, this line passes the file to pytest explicitly while the command already collects it through the directory. On supported older pytest versions, including 8.3, [both paths collect the test](https://docs.pytest.org/en/8.3.x/_modules/_pytest/main.html), and Forge's selection hook retains both. Close therefore runs the listed tests twice on each normal change, adding cost and potentially failing tests with nonrepeatable fixture effects. The named proof records receipt filenames in a set, so it cannot detect duplicate runs.",
         "file": "src/forge/fasttest.py",
         "gain": 3,
         "harm": 2,
-        "line": 320,
+        "line": 75,
         "priority": "P1",
-        "title": "Close can succeed after pytest filters out an always_test entry",
+        "title": "Close runs listed tests twice when they are inside pytest's collection root",
         "work": 2
       }
     ],
-    "id": "621f8e02-1620-43c0-85c6-d06051031e85",
+    "id": "216a1f45-3913-440d-8d27-c1ef4d901be8",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T18:28:16.357909+00:00",
@@ -54,16 +54,16 @@
     {
       "at": "2026-10-12T22:53:04.979657+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:04:51.381798+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T21:59:22.391051+00:00",
-    "by": "owner",
-    "choice": "narrow",
+    "at": "2026-10-12T23:04:51.402655+00:00",
     "file": "src/forge/fasttest.py",
-    "reason": "Coordinator (Harm 2, reversible; third finding in fasttest.py, so replace the cases with one general rule): close passes every always_test entry to pytest explicitly as its own argument, whatever the test command's roots, and fails when any entry collects no test. No more per-layout cases.",
-    "wait_id": "98b2d44b-6dfe-4958-be99-01933b14275d",
-    "worker_round": null
+    "wait_id": "aa174b83-237d-4082-aa49-065a645abfd6"
   },
   "why": "Close picks local tests by imports and mentions, so cross-cutting tests such as the rules and every-refusal checks fail only in CI, a round later"
 }
