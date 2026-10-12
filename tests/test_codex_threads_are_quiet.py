@@ -45,6 +45,10 @@ def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, s
     _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     client, made = _fresh_client(repo, env.gh, tmp_path)
     assert made.returncode == 0, made.stdout + made.stderr
+    started = repo.forge("fix", "start", "Keep the reader quiet", "--done",
+                         "The reader uses quiet settings", cwd=client)
+    assert started.returncode == 0, started.stdout + started.stderr
+    client = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     old = tmp_path / "previous-release"
     shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
     (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
@@ -72,7 +76,12 @@ def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, s
         assert synced.returncode == 0, synced.stdout + synced.stderr
         with home.open("a", encoding="utf-8") as trusted:
             trusted.write(f'\n[projects.{json.dumps(str(checkout))}]\ntrust_level = "trusted"\n')
-        asked = repo.forge("ask", "What does this app do?", cwd=checkout)
+        # Read-only turns now enter through cold reads; questions belong to the session explorer.
+        doc = checkout / "docs/specs/quiet-reader.md"
+        doc.parent.mkdir(parents=True, exist_ok=True)
+        doc.write_text("# Quiet reader\n", "utf-8")
+        monkeypatch.setenv("STUB_CODEX_TEXT", "No findings.")
+        asked = repo.forge("read", "quiet-reader", cwd=checkout)
         assert asked.returncode == 0, asked.stdout + asked.stderr
         request = _sent(calls, "thread/start")[-1]
         assert {key: request["config"].get(key) for key in QUIET} == QUIET

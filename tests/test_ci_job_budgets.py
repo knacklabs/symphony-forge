@@ -16,11 +16,11 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 
 
 @pytest.mark.parametrize("runner,count,minutes", [
-    # Two Ubuntu groups left one job at 7m39s, above the seven-minute target.
-    ("ubuntu-latest", 3, 10),
-    # Five macOS groups left one job at 7m16s, above the same target.
-    ("macos-latest", 6, 10),
-    ("windows-latest", 8, 20),
+    # Main's full run only, not the merge gate: groups ran past 10 minutes (Linux, macOS)
+    # and 18 of 20 (Windows) on 12 October, so the limits leave room for the suite to grow.
+    ("ubuntu-latest", 3, 20),
+    ("macos-latest", 6, 20),
+    ("windows-latest", 8, 35),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes, tmp_path):
     workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -42,14 +42,17 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count
         budgets = [int(dispatch[2] if runner == dispatch[1] else dispatch[3])] * len(rows)
     assert budgets == [minutes] * count
     assert "--splits ${{ matrix.groups }} --group ${{ matrix.group }}" in tests_job
-    per_test = int(re.search(r"--timeout=(\d+)", tests_job).group(1))
-    assert per_test < min(budgets) * 60
-
-    # Exercise CI's actual pytest options: pytest-split silently uses equal
+    # Exercise CI's actual pytest options for this runner: pytest-split silently uses equal
     # weights when its timing file is missing, even with the right group counts.
     root = WORKFLOW.parents[2]
     command = next(line.strip() for line in tests_job.splitlines()
                    if line.strip().startswith("uv run "))
+    command = re.sub(r"\$\{\{ matrix.os == '([^']+)' && (\d+) \|\| (\d+) \}\}",
+                     lambda m: m[2] if runner == m[1] else m[3], command)
+    # Windows runners start processes slowly enough that a test needs over two minutes there.
+    stacks, per_test = (270, 300) if runner == "windows-latest" else (120, 150)
+    assert f"-o faulthandler_timeout={stacks} --timeout={per_test} " in command
+    assert per_test < min(budgets) * 60
     command = command.replace("${{ matrix.groups }}", str(count)).replace(
         "${{ matrix.group }}", "1")
     tokens = shlex.split(command)

@@ -95,7 +95,7 @@ def work(args: argparse.Namespace) -> None:
         design = repo.user_facing(config, row)
     else:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
-    family = repo.worker(config, "build", design)[0]
+    family = repo.worker(config, "build", design, state.get("tool"))[0]
     on_codex = family == "codex"
     if note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
@@ -107,9 +107,11 @@ def work(args: argparse.Namespace) -> None:
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design)
-    _, chosen, why = repo.worker(config, kind.lower(), design)
-    print(f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
-          f"because {why}", flush=True)
+    _, chosen, why = repo.worker(config, kind.lower(), design, state.get("tool"))
+    building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
+                f"because {why}")
+    if not on_codex:
+        print(building, flush=True)
     if note is not None and (pending := codex.record(top, item).get("question_id")):
         repo.record_event(top, item, "owner wait end", wait_id=pending)
     from forge import time_records
@@ -150,6 +152,19 @@ def work(args: argparse.Namespace) -> None:
             fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
+        stop = state.get("stop") or {}
+        if note is None and stop.get("by") == "default" and stop.get("worker_round") == state.get("round"):
+            note = ("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
+                    "choice: narrow this part to its Done-when lines. Follow-up fixes own the open findings ("
+                    + (", ".join(stop.get("fixes") or []) or "none") + "); remove what goes beyond the "
+                    "Done-when lines instead of fixing those findings here.")
+        elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
+            note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
+                    "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
+                    f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
+        from forge import close  # close imports story, which imports this module
+
+        close.stuck_round(top, item, state, config, findings)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -200,13 +215,17 @@ def work(args: argparse.Namespace) -> None:
                             session, thread, None if fresh == "first turn" else fresh,
                             before_turn if design else None)
                 except (repo.Refused, OSError) as error:
-                    # Only both with split falls back; one tool keeps its failed round.
+                    # Only both with split falls back; one tool, or the owner's chosen one, keeps its
+                    # failed round.
                     if (not design or config["tools"] != "both" or config["workers"] != "split" or
+                            state.get("tool") or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
                     reason = ("claude command missing" if shutil.which("claude") is None else
                               str(error).split("\n", 1)[0].removeprefix("The worker "))
                     chosen = repo.design_models(config, "codex")
+                    building = (f"Building {item} with Codex ({chosen['model']}, "
+                                f"{chosen['effort']}) because Claude {reason}")
                     message = (f"Claude {reason}; fell back to Codex with "
                                f"{chosen['model']} at {chosen['effort']} effort.")
                     print(message, flush=True)
@@ -250,7 +269,8 @@ def work(args: argparse.Namespace) -> None:
                         prefix.rsplit(" ", 1)[0] or prefix) + "…"
             result = codex.run(top, item, kind, name, brief, "full-access",
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
-                               design=design)
+                               design=design,
+                               on_thread=(lambda _: print(building, flush=True)) if on_codex else None)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
             _restore_settings(item, top, state)
@@ -291,7 +311,7 @@ def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
 
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
-          design: bool = False) -> list[str]:
+          design: bool = False, native: bool = False) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
     the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
@@ -300,7 +320,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         chosen = (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
                                                                            "claude")
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
-    problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
+    problem = None if native else codex.sdk_problem()  # native sessions need no driver SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
@@ -553,7 +573,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             log.open("a", encoding="utf-8", buffering=1) as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-            env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker, \
+            env=machine.worker_env(), **codex.GROUP) as worker, \
             machine.agent_process(worker, log):
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker._stdin_write(brief)

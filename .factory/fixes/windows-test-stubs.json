@@ -1,0 +1,62 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T07:54:03.661936+00:00",
+      "because": "Two debuggers classified every remaining Windows and macOS failure in main's full run; all are test or runner assumptions, fixed together so main runs once",
+      "done_when": "The merge stub reads stdin as UTF-8 and the behind-base stub writes README.md with Unix line endings, so those tests pass on Windows as on Linux"
+    },
+    {
+      "at": "2026-10-12T08:17:57.280082+00:00",
+      "because": "Whether main's full run passes on Windows and macOS can only be seen after the merge; the full-suite job never runs on pull requests",
+      "done_when": "Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows tests get time budgets that fit Windows runners, and the workflow warms the npm cache and installs Go on macOS"
+    },
+    {
+      "at": "2026-10-12T08:29:26.357001+00:00",
+      "because": "The windows-installers job runs one small test under its own 5-minute job limit; the longer limits are for the full-suite groups that timed out",
+      "done_when": "Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows test runs get 270-second faulthandler and 300-second per-test limits, and the full-suite job warms the npm cache and installs Go on macOS"
+    }
+  ],
+  "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
+  "branch": "fix/windows-test-stubs",
+  "done_when": "Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows full-suite groups get 270-second faulthandler and 300-second per-test limits, and the full-suite job warms the npm cache and installs Go on macOS",
+  "flagged": [
+    ".github/workflows/forge-next.yml",
+    "tests/test_ci_hang.py",
+    "tests/test_merge_refreshes_behind_base.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aa302d2e99cbfe9719c925e67f4652fe7bb46b46e37a5fdc7bba3a3565db0fc4",
+    "changed": "71abb98cc4b3bc197a2ccfd8c86b61a8087f943b7ab966977c0d68e51ee29747",
+    "commit": "ea55c2cee59073ea78201fbe11d0315064260092",
+    "dismissals": [],
+    "findings": [],
+    "id": "ff753deb-f1f3-403a-8ec9-35d27c96cc78",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T07:22:02.045364+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T08:17:31.778887+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T08:29:05.660726+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T08:32:13.937988+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T08:49:19.514655+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Main's full test run fails more tests on Windows: test stubs read stdin with the Windows code page and write files with Windows line endings"
+}

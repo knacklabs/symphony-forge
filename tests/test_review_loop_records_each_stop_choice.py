@@ -31,6 +31,8 @@ STORY = "second-stop-choice"
 def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         env, tmp_path, previous, same_file, first, second, legacy):
     item, where = client_item(env, tmp_path, previous)
+    # With the default on, land waits out the stop; this checks the owner's own choices.
+    env.commit(where, "forge.toml", 'stop_default = "off"\n' + (where / "forge.toml").read_text("utf-8"))
     if legacy:
         # The actual earlier close writes the choice; no synthetic stop record.
         old = tmp_path / "earlier-close"
