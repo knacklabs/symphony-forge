@@ -2,12 +2,45 @@
   "base": "2572c7aa3e2dcaaf99d039dc68fddac81394d188",
   "branch": "fix/board-test-review-row",
   "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown, and main's full test run passes",
+  "flagged": [
+    ".factory/fixes/board-test-review-row.json",
+    "tests/test_board_tests_after_worker.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "566612e06bc90a9c022f833221de33fc8270ff8ef21f212ffcdc915da91e9482",
+    "changed": "a65ff08c3d89a837fb0447642e07ab1db7f6523fa1a169fb63ec3f7cb3d0d5ab",
+    "commit": "0e681360766e842480fd855f29b813a663f59154",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. When the review is active during close's tests, the new assertion accepts `row[\"worker\"][\"kind\"] == \"review\"`, but the next status assertion still requires the row to say tests are running. `src/forge/board.py:483` sets that status to `Review running` whenever a review worker is present, so the test still fails in the Linux scenario this fix targets.",
+        "file": "tests/test_board_tests_after_worker.py",
+        "line": 54,
+        "priority": "P1",
+        "title": "Not done: board test still rejects a review running alongside tests"
+      },
+      {
+        "body": "Raise: Gate. The Done-when includes passing main's full test run, but the commit's proof list names only the focused board test and `tests/test_rules.py`. Neither is the full `pytest tests` run configured in `forge.toml:6`, so the proof list omits that required detail.",
+        "file": ".factory/fixes/board-test-review-row.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "20b567ef-12d2-4595-bc89-6f85b9e90e1a",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T05:31:38.884290+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T05:34:32.473624+00:00",
+      "step": "review"
     }
   ],
   "why": "Main's full test run fails on Linux: a board test expects no worker while close's tests run, but the review now runs alongside the tests and shows on the board"

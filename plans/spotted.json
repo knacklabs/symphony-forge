@@ -89,6 +89,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/board-test-review-row.json\tNot done: proof list\tboard-test-review-row",
+      "kind": "bug",
+      "path": ".factory/fixes/board-test-review-row.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/claude-sonnet-default.json\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
       "kind": "bug",
       "path": ".factory/fixes/claude-sonnet-default.json",
@@ -3979,6 +3990,17 @@
       "text": "Not done: test_3_story_idle_time_tracks_its_parts",
       "from": "blocking",
       "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test still rejects a review running alongside tests\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 54,
+      "text": "Not done: board test still rejects a review running alongside tests",
+      "from": "blocking",
+      "item": "board-test-review-row",
       "status": "open",
       "closed_by": null
     },
