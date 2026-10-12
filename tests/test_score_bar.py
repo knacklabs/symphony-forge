@@ -174,9 +174,6 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
     accepted = env.close("SHOP/T1", "--resolve", "accept", "--reason", "The owner lives with these")
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
-    outcomes = {e["title"]: (e["outcome"], e["reason"]) for e in json.loads((where / path).read_text("utf-8"))["known"]}
-    assert outcomes["Label wording"] == ("lived with", "")
-    assert outcomes["Label spacing"] == ("accepted", "Human accepted the remaining finding: The owner lives with these")
 
     env.commit(where, "app.py", "print('saved again')\n")
     env.reviews(blocked(_scored("P1", "Saving drops the basket", "Gain 3, Work 2, Harm 1\nRaise: Functional")))
@@ -186,6 +183,10 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Saving drops the basket (app.py): accepted by the owner" in known
     assert "Sign-in is out of scope" in known
+    # Every earlier round's finding is listed, the accepted ones with the owner's reason.
+    assert ("Label spacing (app.py): accepted by the owner: Human accepted the remaining finding: "
+            "The owner lives with these") in known
+    assert "Label wording (app.py): known: below the bar (live with)" in known
     # It stays known in every later review, after the repeat that was dismissed as settled.
     env.commit(where, "app.py", "print('saved three times')\n")
     env.reviews(CLEAN)
