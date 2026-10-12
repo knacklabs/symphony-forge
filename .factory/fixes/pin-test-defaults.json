@@ -2,12 +2,50 @@
   "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
   "branch": "fix/pin-test-defaults",
   "done_when": "The shared test setup sets the coordinator route and the other environment defaults explicitly, and a test that needs a different route says so",
+  "flagged": [
+    "tests/conftest.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d1d07b8601dddcf618a2258cfa654f6319ec033d6c1135e97565efab085e6fa5",
+    "changed": "0a9e3a93eeae2fcbdf5c52b9b32254b066eb23439202bc7e495656a9d587761f",
+    "commit": "a5e37dbb8211f72f8ca70779d40f8e0de38b58d5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional \u2014 The shared fixture deletes FORGE_LIVE_CODEX during the outer test. tests/test_fix_codex_test_home.py:64\u201369 then launches a nested pytest with a copy of that environment and requires `1 passed`. The nested smoke test checks FORGE_LIVE_CODEX at collection and is skipped, so the configured codex-smoke job fails when it runs with credentials.",
+        "file": "tests/conftest.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 306,
+        "priority": "P1",
+        "title": "The live Codex smoke test loses its opt-in in a nested pytest run",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 3, Harm 1\nRaise: Test \u2014 The proof list describes a run with leaked FORGE_CHECKS_WAIT, FORGE_LAND_ROUNDS and AUTOREVIEW, but no test in the suite injects those values or a different coordinator route before exercising this fixture. The named land test receives them only when its caller happens to supply them. A normal clean run would therefore still pass if this isolation were removed. The existing nested-environment test covers GIT_ variables only.",
+        "file": "tests/conftest.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 303,
+        "priority": "P1",
+        "title": "Not done: a suite regression test for inherited coordinator and Forge defaults",
+        "work": 3
+      }
+    ],
+    "id": "55fcf545-54bb-4063-8b3e-5b9366f7b277",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T18:28:20.249336+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T22:14:35.683138+00:00",
+      "step": "review"
     }
   ],
   "why": "Tests pick up the session's coordinator route and other defaults without saying so, so one default change broke 73 tests"
