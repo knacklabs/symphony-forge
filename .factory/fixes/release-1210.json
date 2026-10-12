@@ -17,30 +17,15 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a3a18602a11c3397e139cfa3169586633de02fd3e7cdb1c3db4dced580a64667",
-    "changed": "e338c08024df77ffab6f6be2eac2b17fc79756283362226bf878563823a7b514",
-    "commit": "aaba4a7862a095431a51433c526da5299318718f",
+    "branch_diff": "fd4614f79bb7763711f21b58757293f537b53a1e92b6ee88cdeb9391185b591c",
+    "changed": "97f3cbb45282f607cc92f94ada463e3cbd97843b239e79c7dfa8879030ed5421",
+    "commit": "ade0bca03b736e86b5584034f1e94c0ea926d5d3",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate. The allowance covers a version bump and the sync output needed for it. This branch also adds the full Simplified Technical English skill and checker under both `.claude` and `.codex`. The new instruction to apply STE to technical output changes agent behavior in this repo and contains no release-version change. That is a second kind of work outside the recorded version-only allowance.",
-        "file": ".claude/skills/simplified-technical-english/SKILL.md",
-        "line": 15,
-        "priority": "P1",
-        "title": "The recorded allowance does not cover the added writing skill"
-      },
-      {
-        "body": "Raise: Gate. The proof list says `test_release_version.py` proves that new and upgraded clients install v1.2.10. At this line, the test writes a client pin directly and then calls `forge sync` twice. It never runs `forge init`, `forge upgrade`, or an installation. The named installer tests cover the platform scripts, but the list names no proof for the client upgrade path. The claim that sync proves upgraded clients install v1.2.10 is therefore unsupported.",
-        "file": "tests/test_release_version.py",
-        "line": 30,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "70395bd4-3eda-44b5-9943-ce32a9d58e2f",
-    "status": "blocked"
+    "findings": [],
+    "id": "ea4f2d65-f022-4b02-a7dc-57e38c4dac34",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T03:29:04.774471+00:00",
@@ -48,6 +33,10 @@
     },
     {
       "at": "2026-10-12T04:48:16.031085+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T04:51:10.396999+00:00",
       "step": "review"
     }
   ],
