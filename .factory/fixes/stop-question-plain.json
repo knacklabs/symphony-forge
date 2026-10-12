@@ -32,7 +32,23 @@
     "branch_diff": "55b27a2f72e23b1636aac41e09c09143d9e5f504a601e59cdfdc17354c0634bc",
     "changed": "f944c0bdf1b73f31d4014770e2c7ee7bd31a6a27ae4a1f03b9a3a11d5a550ee6",
     "commit": "c05b15060fbd1d12550be481aa7cc5d43091343e",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. A fix created by the normal default Narrow path can reach a review stop, but its question names it as \u201cReview finding left open by \u2026\u201d and describes its delivery as \u201cA review no longer finds \u2026\u201d. Those phrases come from the generated fix state at src/forge/close.py:405-407; this line passes them through after stripping paths. The owner still cannot tell in plain words what the fix is or what it delivers.",
@@ -57,10 +73,10 @@
       }
     ],
     "id": "560aaed3-52e2-4e7f-aca8-120e28a87418",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -105,7 +121,9 @@
   ],
   "stop": {
     "at": "2026-10-12T02:23:47.593227+00:00",
+    "choice": "accept",
     "file": "src/forge/land.py",
+    "reason": "Owner rule for Harm 1-2: findings 2 and 3 are fixed in commit bc9156411 (land's stop ends with the resolve line; tests check delivery and all three choices); finding 1 (follow-up fixes named by the finding title) is Gain 2, lived with: those names come from the follow-up generator",
     "wait_id": "66c39de2-86a0-4a9c-b3b1-daebce652f08"
   },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
