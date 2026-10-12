@@ -1119,8 +1119,8 @@
       "text": "Not done: persistent id-less failures are missed when another failure changes",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: repeated close calls count one worker round twice\tstuck-worker-asks",
@@ -1130,8 +1130,8 @@
       "text": "Not done: repeated close calls count one worker round twice",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: repeated findings without code commits never stop the item\tstuck-worker-asks",
