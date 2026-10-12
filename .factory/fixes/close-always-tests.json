@@ -2,12 +2,61 @@
   "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
   "branch": "fix/close-always-tests",
   "done_when": "A repo lists tests every change must run in forge.toml's always_test, close runs them locally beside the picked tests, and this repo lists its rules, every-refusal and view-contract tests",
+  "flagged": [
+    "src/forge/fasttest.py",
+    "tests/test_close_always_tests.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bcd70862ec53315590fde5ad3f9a0acb81dba6d401725d07fd55a0fa8e4bfe1b",
+    "changed": "5468ace16b4cdf16952d67dcb056ee6fa27a8e7f4be7ebe9de2f48435443fbea",
+    "commit": "ef2ef9df855a9305b84b90d8b06d612798ca10b3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done\nWhen the picker selects more than a third of the test files, this branch returns before running any tests, including those listed in `always_test`. That defeats the Done-when requirement that close run those tests locally on every change. The new proof covers only a small selection.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 363,
+        "priority": "P1",
+        "title": "Not done: close skips always_test when the picked selection is large",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nThe file check validates only the path before `::`. With a valid file and a mistyped node ID, the collection hook deselects every test in that file. If another picked test passes, pytest and close can succeed even though the listed test never ran. This is a normal configuration mistake that needs a refusal.",
+        "file": "src/forge/fasttest.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 341,
+        "priority": "P1",
+        "title": "Close can succeed without running a listed pytest node",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nRaise: Test\nThe named proof asserts only that each guide contains the token `always_test`. It still passes if the explanation of where to list tests, what entries mean, or when close runs them is removed while the token remains. It therefore cannot verify the proof list's claim that the guides explain the setting.",
+        "file": "tests/test_close_always_tests.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 87,
+        "priority": "P1",
+        "title": "Not done: the guide proof does not check the always_test instructions",
+        "work": 1
+      }
+    ],
+    "id": "2bd5c323-beff-4eec-9169-8e50c2cb404c",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T18:28:16.357909+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T20:32:21.501329+00:00",
+      "step": "review"
     }
   ],
   "why": "Close picks local tests by imports and mentions, so cross-cutting tests such as the rules and every-refusal checks fail only in CI, a round later"
