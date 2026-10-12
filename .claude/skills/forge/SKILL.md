@@ -1273,10 +1273,10 @@ The owner can reverse it later with the same `forge close <item> --resolve` comm
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
-When two rounds in a row leave the same failing test or finding, `forge work` stops the item;
-close also stops a story part that grows past its line limit. Either prints a ready-to-ask
-question: what the item delivers, what is stuck, what the worker tried, and the choices. Ask the
-owner exactly that question; never switch tools yourself. Record the answer with
+When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
+the item; close also stops a story part that grows past its line limit. Either prints a
+ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
+choices. Ask the owner exactly that question; never switch tools yourself. Record the answer with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.

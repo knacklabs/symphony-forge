@@ -10,46 +10,27 @@ import pytest
 
 from conftest import _install
 from test_close import CLEAN, ROOT, blocked, env, finding  # noqa: F401
-from test_codex_worker import sdk_data  # noqa: F401
+from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
+from test_worker import install_claude
 from test_upgrade_command import _repo_adopted_on_the_previous_release, unsynced_up  # noqa: F401
 
 STORY = "stuck-worker-asks"
 
-# The repo's test commands: pytest naming the same test every run, pytest failing test_a once
-# then test_b, Jest with the same failure but a different duration, Jest failing a different
-# test on each run, Jest or unittest failing A and B once, then B and C, and a summary with no
-# failed test named.
+# The repo's test commands: failing every run, failing once the worker has built, and failing on
+# the first and third runs only.
 SUITES = {
-    "pytest same": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
-    "a then b": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
-                 'run.write_text("x")\n'
-                 'print("FAILED test_readme.py::test_" + ("a" if first else "b"))\nraise SystemExit(1)\n'),
+    "failing": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
     "finding then test": ('import pathlib, sys\nif pathlib.Path("work-1.txt").exists():\n'
                           '    print("FAILED test_readme.py::test_greeting")\n    sys.exit(1)\n'),
-    "work twice": 'print("FAILED test_readme.py::test_greeting")\nraise SystemExit(1)\n',
-    "jest same": ('import random\nprint(f"  ✕ greets the reader ({{random.randint(2, 99)}} ms)")\n'
-                  'raise SystemExit(1)\n'),
-    "jest ab then bc": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
-                        'run.write_text("x")\n'
-                        'print("  ✕ greets A (2 ms)\\n  ✕ greets B (4 ms)" if first else '
-                        '"  ✕ greets B (5 ms)\\n  ✕ greets C (1 ms)")\nraise SystemExit(1)\n'),
-    "unittest ab then bc": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
-                            'run.write_text("x")\n'
-                            'print("FAIL: test_a (t.T)\\nFAIL: test_b (t.T)" if first else '
-                            '"FAIL: test_b (t.T)\\nERROR: test_c (t.T)")\nraise SystemExit(1)\n'),
-    "summary only": 'print("FAILED (failures=1)")\nraise SystemExit(1)\n',
-    "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
+    "fail pass fail": ('import pathlib, sys\nrun = pathlib.Path("{runs}")\n'
                        'run.write_text(run.read_text() + "x" if run.exists() else "x")\n'
-                       'print(f"  ✕ greeting case {{len(run.read_text())}} (3 ms)")\nraise SystemExit(1)\n'),
+                       'sys.exit(len(run.read_text()) != 2)\n'),
 }
-STUCK = {"pytest same": "the failing test test_readme.py::test_greeting",
-         "work twice": "the failing test test_readme.py::test_greeting",
-         "a then b": "the failing test test_readme.py::test_b",
-         "jest same": 'the failing check Tests on the close run ("✕ greets the reader")',
-         "jest ab then bc": 'the failing check Tests on the close run ("✕ greets B")',
-         "unittest ab then bc": 'the failing check Tests on the close run ("FAIL: test_b (t.T)")',
+SUITES["work twice"] = SUITES["failing"]
+TESTS = "close's tests failing"
+STUCK = {"failing": TESTS, "work twice": TESTS,
          "finding": 'the review finding "Saving drops the greeting" in app.py',
          "no change": 'the review finding "Saving drops the greeting" in app.py'}
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
@@ -63,13 +44,16 @@ def question(stuck, tried="Worker round"):
 
 
 def _rounds(env, case):
-    """Start the fix whose every close fails, then run work and close once (twice for a then b)."""
+    """Start the fix whose every close fails, then run work and close once (twice for fail pass
+    fail)."""
     if case in ("finding", "no change"):
         env.reviews(blocked(finding("P1", "Saving drops the greeting")))
     if case == "no change":  # a worker that commits nothing, so close reuses its review
         _install(env.repo.bin, "claude", (ROOT / "tests/stubs/claude").read_text("utf-8"))
     if case == "finding then test":  # the worker fixes the finding, and a test then fails
         env.reviews(blocked(finding("P1", "Saving drops the greeting")), CLEAN)
+    if case == "fail pass fail":  # a new finding each close keeps the closes failing
+        env.reviews(*(blocked(finding("P1", f"Defect {n}")) for n in (1, 2, 3)))
     if case not in ("finding", "no change"):
         script = env.tmp / "suite.py"
         script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
@@ -78,7 +62,7 @@ def _rounds(env, case):
                    + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
         env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
-    for _ in range(2 if case == "a then b" else 1):
+    for _ in range(2 if case == "fail pass fail" else 1):
         assert env.close(item).returncode == 1
         # A second round with no close between has no new result, so it counts nothing.
         for _ in range(2 if case == "work twice" else 1):
@@ -88,16 +72,14 @@ def _rounds(env, case):
     return item
 
 
-@pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest ab then bc",
-                                  "unittest ab then bc", "jest different", "summary only", "finding",
-                                  "finding then test", "no change"])
+@pytest.mark.parametrize("case", ["failing", "work twice", "fail pass fail", "finding", "finding then test",
+                                  "no change"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
     stuck = env.repo.forge("work", item)
-    # Different failing tests, or a fixed finding followed by a failing test, are progress; a
-    # summary that names no failed test identifies nothing to be stuck on.
-    if case in ("jest different", "finding then test", "summary only"):
+    # A passing round between failing ones, or a fixed finding followed by failing tests, is progress.
+    if case in ("fail pass fail", "finding then test"):
         assert stuck.returncode == 0, stuck.stdout + stuck.stderr
         return
     asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round")
@@ -115,7 +97,7 @@ def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
 @pytest.mark.parametrize("choice", ["same", "narrow", "split"])
 def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land, choice):
     env = land
-    item = _rounds(env, "pytest same")
+    item = _rounds(env, "failing")
     assert env.repo.forge("work", item).returncode == 1
     chosen = env.close(item, "--resolve", choice, "--reason", "One more try")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
@@ -132,7 +114,7 @@ def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land, choice):
 
 def test_3_switch_runs_the_next_round_on_the_other_tool(land, sdk_data, monkeypatch):
     env = land
-    item = _rounds(env, "pytest same")
+    item = _rounds(env, "failing")
     assert env.repo.forge("work", item).returncode == 1
     chosen = env.close(item, "--resolve", "switch", "--reason", "Try the other tool")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
@@ -165,7 +147,7 @@ def test_4_clients_receive_the_stuck_worker_guidance(unsynced_up, adoption):
         client = up.folder
     for host in (".codex", ".claude"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        assert "When two rounds in a row leave the same failing test or finding" in guide
+        assert "When two rounds in a row leave close's tests failing or the same finding open" in guide
         assert ('`forge close <item> --resolve <switch|same|narrow|split> --reason '
                 '"<human\'s choice>"`') in guide
 
@@ -173,7 +155,7 @@ def test_4_clients_receive_the_stuck_worker_guidance(unsynced_up, adoption):
 def test_5_a_rerun_close_without_a_round_counts_once(land):
     env = land
     script = env.tmp / "suite.py"
-    script.write_text(SUITES["pytest same"], "utf-8")
+    script.write_text(SUITES["failing"], "utf-8")
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
@@ -185,3 +167,21 @@ def test_5_a_rerun_close_without_a_round_counts_once(land):
     worked = [result for step, result in zip(steps, results) if step == "work"]
     assert [result.returncode for result in worked] == [0, 0, 1], worked[-1].stdout + worked[-1].stderr
     assert worked[-1].stderr.splitlines()[-1] == NEXT
+
+
+def test_6_the_owners_chosen_tool_never_falls_back(repo, monkeypatch, sdk_data):
+    # The owner switched this item to Claude at a stuck stop; a failed Claude round stays failed.
+    monkeypatch.delenv("CODEX_THREAD_ID")
+    folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    install_claude(repo)
+    config = folder / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'), "utf-8")
+    state = folder / ".factory/stories/BOARD/tasks/PAGE.json"
+    state.write_text(json.dumps({**json.loads(state.read_text("utf-8")), "tool": "claude"}), "utf-8")
+    repo.git("commit", "-qam", "The owner chose Claude", cwd=folder)
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    failed = repo.forge("work", "BOARD/PAGE")
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert "fell back to Codex" not in failed.stdout
+    assert "exit code 3" in failed.stderr
+    assert _sent(codex_log, "turn/start") == []

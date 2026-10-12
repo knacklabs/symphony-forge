@@ -164,7 +164,7 @@ def work(args: argparse.Namespace) -> None:
                     f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
         from forge import close  # close imports story, which imports this module
 
-        close.stuck_round(top, item, state, config, findings, failing)
+        close.stuck_round(top, item, state, config, findings)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -215,8 +215,10 @@ def work(args: argparse.Namespace) -> None:
                             session, thread, None if fresh == "first turn" else fresh,
                             before_turn if design else None)
                 except (repo.Refused, OSError) as error:
-                    # Only both with split falls back; one tool keeps its failed round.
+                    # Only both with split falls back; one tool, or the owner's chosen one, keeps its
+                    # failed round.
                     if (not design or config["tools"] != "both" or config["workers"] != "split" or
+                            state.get("tool") or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
                     reason = ("claude command missing" if shutil.which("claude") is None else

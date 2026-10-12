@@ -467,32 +467,21 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
 
 
 def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-                findings: list[dict[str, Any]], failing: list[tuple[str, str]]) -> None:
-    """At a round's start: stop when the last two rounds both left one same failing test or
-    finding. A recorded choice buys exactly one more round."""
+                findings: list[dict[str, Any]]) -> None:
+    """At a round's start: stop when the last two rounds both left close's tests failing or one
+    same finding open. A recorded choice buys exactly one more round."""
     stop = state.get("stop") or {}
     if "question" in stop and not stop.get("choice"):
         repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
     keys = [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings]
-    for label, text in failing:
-        names = [name for line in text.splitlines() if "FAILED" in line
-                 for name in re.findall(r"\S+::\S+", line)]
-        # Without test ids, each marked failure line (Jest ✕, Vitest ×, unittest FAIL: and ERROR:) is
-        # one key, durations removed; output with neither identifies no failure and adds no key.
-        marked = [" ".join(re.sub(r"\(?\d[\d.]*\s*m?s\b\)?", "", line).split())[:200]
-                  for line in map(str.strip, text.splitlines())
-                  if line.startswith(("✕", "×", "FAIL:", "ERROR:"))]
-        keys += ([f"the failing test {name}" for name in names] or
-                 [f'the failing check {label} ("{line}")' for line in marked])
+    keys += ["close's tests failing"] if state.get("tests") else []
     # Each failure counts the rounds in a row that left it; a cleared one drops out. It counts only
     # with both a new close and a worker round since the last count, so reruns count once.
     # ponytail: close events live on this machine; a round on another machine counts once more.
     stuck = state.get("stuck") or {}
     closed = next((e["id"] for e in reversed(time_records.read(top, "events"))
                    if e.get("item") == item and e.get("event") == "close result"), None)
-    # A round that failed without an identified failure doesn't count at all.
-    if (stuck and (stuck.get("close") == closed or stuck.get("round") == state.get("round"))
-            or failing and not keys):
+    if stuck and (stuck.get("close") == closed or stuck.get("round") == state.get("round")):
         if "question" in stop:
             state.pop("stop")
         return
