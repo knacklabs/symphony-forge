@@ -1,0 +1,15 @@
+{
+  "base": "59cd0dfa29c3f139e70e285532d130723393827f",
+  "branch": "fix/review-finding-left-open-by-forge-board",
+  "done_when": "A review no longer finds: Not done: older merged parts lose their shared runway",
+  "kind": "fix",
+  "stacked_on": "FORGE-BOARD-2/COUNTS",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T18:08:15.695424+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review finding left open by FORGE-BOARD-2/COUNTS: Not done: older merged parts lose their shared runway (src/forge/board_facts.py:75): Raise: Not done. The cached searches cover only the current week and six full weeks. For a story still in progress with a part merged eight weeks ago, a teammate without local timing logs cannot get that part's PR body. `board.py:577\u2013580` then builds its runway without the published intervals, so the story's working and waiting time differs between machines."
+}
