@@ -1,0 +1,14 @@
+{
+  "base": "2572c7aa3e2dcaaf99d039dc68fddac81394d188",
+  "branch": "fix/board-test-review-row",
+  "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown, and main's full test run passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T05:31:38.884290+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's full test run fails on Linux: a board test expects no worker while close's tests run, but the review now runs alongside the tests and shows on the board"
+}
