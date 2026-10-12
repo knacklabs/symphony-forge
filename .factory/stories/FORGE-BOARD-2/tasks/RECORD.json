@@ -20,52 +20,52 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bf007bcbbf25023019fb52c90899185206a5e31cb35e6fc595febe88f7751e72",
-    "changed": "267a43aa479dfe7c2b3e27413e861b9d3a70e214e27b178c0a853052f59c8365",
-    "commit": "8a5beb1f48430dadcaec7d735dd5928deda4a038",
+    "branch_diff": "3110a581e4edfea88b270df5760f4a395faae380fb4f62fa3782721d1748d3c5",
+    "changed": "0b34877def6c2b7a51bccc15cc4be4124380f9bfb65c3304f0343420c5fdf0ce",
+    "commit": "d76b72d3733e9aa0739681b6a2de09e47ee8ed07",
     "dismissals": [],
     "findings": [
       {
-        "body": "chunk 1/2:\n\nRaise: Security. `from_body` accepts any finite number, including `1e308`, and its exception handler omits `OverflowError`. A pull request author can place that value in a review timing; `merged()` passes it to `item()`, where `timedelta(seconds=seconds)` overflows. Reading the editable PR record then crashes `forge board` or `forge next`.",
+        "body": "chunk 1/2:\n\nRaise: Security. A pull request author can place a deeply nested JSON value in the hidden time record while keeping the body well below GitHub's size limit. `json.loads` raises `RecursionError` at sufficient nesting depth, but this parser does not catch it. Reading that pull request then crashes `forge board` or `forge next` instead of treating the record as malformed.",
         "file": "src/forge/time_records.py",
-        "line": 412,
+        "line": 410,
         "priority": "P1",
-        "title": "A finite duration in a PR record can crash board and next"
+        "title": "Deeply nested pull request records can crash board and next"
       },
       {
-        "body": "chunk 1/2:\n\nItem 12 still lacks the corrected approved-but-unstarted count, blocking plan problems in Needs you, pinned folding sections with story keys and cold-read history, and rounded pane times. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE; this branch retains the old count derivation and page.",
+        "body": "chunk 1/2:\n\nItem 12 remains incomplete here: the board retains the old counts and page, blocking plan problems are absent from Needs you, and pane times remain abbreviated. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
         "file": "src/forge/board.py",
         "line": 662,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       },
       {
-        "body": "chunk 2/2:\n\nRaise: Security. `from_body` accepts a finite duration such as `1e308`. Its validation calls `merged()`, which passes that value to `timedelta(seconds=seconds)`; the resulting `OverflowError` is not caught here. A PR author can edit the shared record so `forge board` and `forge next` fail when they read it.",
-        "file": "src/forge/time_records.py",
-        "line": 407,
-        "priority": "P1",
-        "title": "A finite duration in a pull request record can crash board and next"
-      },
-      {
-        "body": "chunk 2/2:\n\nRaise: Functional. On a repeat close that hits a default-branch conflict, this call publishes a fabricated `reviewing` result with no findings or evidence. `_publish` replaces the PR's managed block, so an existing blocked review loses its findings and proof list and appears to be running after close has stopped.",
+        "body": "chunk 2/2:\n\nRaise: Functional. On a repeat close that hits a default-branch conflict, this call publishes a fabricated `reviewing` result with empty findings and evidence. `_publish` replaces the PR's managed block, so a blocked review loses its findings and proof list and appears to be running after close has stopped.",
         "file": "src/forge/close.py",
         "line": 166,
         "priority": "P1",
         "title": "A merge conflict replaces an existing PR's review and proof"
       },
       {
-        "body": "chunk 2/2:\n\nRaise: Functional. The board passes the story start and part/read intervals to `time_records.story`, but supplies no completion bound when `unfinished` is false. `forge story done` can record the outcome after the last part merges; that intervening time is omitted from the story's unknown seconds and total. The runway test covers an unfinished story only.",
+        "body": "chunk 2/2:\n\nRaise: Functional. The board passes part and read intervals plus the story start to `time_records.story`, but supplies no completion bound when `unfinished` is false. If `forge story done` records the outcome after the last part merges, that elapsed time is omitted from the story's unknown seconds and total. The added runway test covers an unfinished story.",
         "file": "src/forge/board.py",
         "line": 606,
         "priority": "P1",
         "title": "Completed stories omit elapsed time after their last part"
+      },
+      {
+        "body": "chunk 2/2:\n\nItem 12 remains incomplete in this branch: the board retains its old counts and card page, blocking plan problems are absent from Needs you, and the pane still uses abbreviated times. The pinned folding sections, story keys and cold-read history are also absent. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
+        "file": "src/forge/board.py",
+        "line": 1193,
+        "priority": "P2",
+        "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "7fb60ac7-96ba-4e9b-9e72-744c0dd98404",
+    "id": "23473034-bd02-4bd3-9ca9-e01716d0382a",
     "status": "blocked"
   },
   "round": 15,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -134,16 +134,16 @@
     {
       "at": "2026-10-12T10:42:11.894570+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T11:04:08.116283+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T09:37:29.178119+00:00",
-    "by": "owner",
-    "choice": "accept",
+    "at": "2026-10-12T11:04:08.126156+00:00",
     "file": "src/forge/board.py",
-    "reason": "Owner rule for Harm 1-2: finding 1 is already guarded (every record row is checked to be a dict); findings 2 and 4 are outside the Done-when with Harm 2 or less and are follow-ups: republish the saved review on a merge conflict; give done stories a finished point; keep the PR time record to summaries",
-    "wait_id": "fe34e60a-daed-4171-926a-47c233d2af41",
-    "worker_round": 15
+    "wait_id": "9ffa7210-5633-4b32-8f88-91d0940c1152"
   },
   "worker": "codex"
 }

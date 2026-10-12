@@ -3015,6 +3015,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tChunked reviews record only the last pass's token use\trecord-review-usage",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 753,
+      "text": "Chunked reviews record only the last pass's token use",
+      "from": "blocking",
+      "item": "record-review-usage",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tCompound test commands can bypass the test place\treviews-skip-agent-line",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3079,6 +3090,17 @@
       "item": "test-gap-warning",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 598,
+      "text": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+      "from": "blocking",
+      "item": "record-review-usage",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: Forge starts a new worker run only while machine load per core is under 1.5, and worker test runs use at most two test processes,\tadmit-by-load",
@@ -3275,6 +3297,17 @@
       "text": "New cold-read notes can be lost when a settled note repeats",
       "from": "blocking",
       "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 944,
+      "text": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
+      "from": "blocking",
+      "item": "record-review-usage",
       "status": "open",
       "closed_by": null
     },
@@ -3834,6 +3867,17 @@
       "path": "src/forge/time_records.py",
       "line": 407,
       "text": "A finite duration in a pull request record can crash board and next",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tDeeply nested pull request records can crash board and next\tFORGE-BOARD-2/RECORD",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 410,
+      "text": "Deeply nested pull request records can crash board and next",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
       "status": "open",
@@ -4936,6 +4980,28 @@
       "text": "Not done: test the changed Answers rule with pre-upgrade read notes",
       "from": "blocking",
       "item": "plan-reads-capped",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_reviews_and_reads_record_their_cost.py\tNot done: earlier-adopted repo review and plan-read cost test\trecord-review-usage",
+      "kind": "bug",
+      "path": "tests/test_fix_reviews_and_reads_record_their_cost.py",
+      "line": 101,
+      "text": "Not done: earlier-adopted repo review and plan-read cost test",
+      "from": "blocking",
+      "item": "record-review-usage",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_reviews_and_reads_record_their_cost.py\tNot done: native plan read run-record test\trecord-review-usage",
+      "kind": "bug",
+      "path": "tests/test_fix_reviews_and_reads_record_their_cost.py",
+      "line": 88,
+      "text": "Not done: native plan read run-record test",
+      "from": "blocking",
+      "item": "record-review-usage",
       "status": "open",
       "closed_by": null
     },
@@ -7147,61 +7213,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tChunked reviews record only the last pass's token use\trecord-review-usage",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 753,
-      "text": "Chunked reviews record only the last pass's token use",
-      "from": "blocking",
-      "item": "record-review-usage",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 598,
-      "text": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
-      "from": "blocking",
-      "item": "record-review-usage",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 944,
-      "text": "Not done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do",
-      "from": "blocking",
-      "item": "record-review-usage",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_reviews_and_reads_record_their_cost.py\tNot done: earlier-adopted repo review and plan-read cost test\trecord-review-usage",
-      "kind": "bug",
-      "path": "tests/test_fix_reviews_and_reads_record_their_cost.py",
-      "line": 101,
-      "text": "Not done: earlier-adopted repo review and plan-read cost test",
-      "from": "blocking",
-      "item": "record-review-usage",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_reviews_and_reads_record_their_cost.py\tNot done: native plan read run-record test\trecord-review-usage",
-      "kind": "bug",
-      "path": "tests/test_fix_reviews_and_reads_record_their_cost.py",
-      "line": 88,
-      "text": "Not done: native plan read run-record test",
-      "from": "blocking",
-      "item": "record-review-usage",
       "status": "open",
       "closed_by": null
     }
