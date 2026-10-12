@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from forge import board_trends, repo, time_records
+from forge import board_trends, repo, story, time_records
 
 Item = dict[str, Any]
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
@@ -27,51 +27,68 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def prs(top: Path) -> Item | None:
-    """Open pull requests, and the merged ones searched one week at a time for six full weeks and
-    this one, cached together for a minute. None when gh is missing or any list fails."""
-    # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
-    cache = repo.forge_dir(top) / "prs-cache.json"
+def _cached(top: Path, name: str, fetch: Any) -> Any:
+    """`fetch()`'s answer, kept for a minute in .git/forge/<name>.json; None is never kept."""
+    cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         at = time_records.when(saved.get("fetched_at"))
-        if at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("weeks"), list):
-            return saved
+        if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
+            return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
     if not shutil.which("gh"):
         return None
-
-    def listing(state: str, *search: str) -> list[Item] | None:
-        done = repo.run("gh", "pr", "list", "--state", state, "--limit", "1000", "--json", FIELDS, *search, cwd=top)
-        try:
-            rows = json.loads(done.stdout) if done.returncode == 0 else None
-        except ValueError:
-            return None
-        return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
-
-    opened = listing("open")
-    if opened is None:
+    data = fetch(now)
+    if data is None:
         return None  # A failed fetch is never cached.
-    weeks = []
-    for start in [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]:
-        found = listing("merged", "--search",
-                        f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
-        if found is None:
-            return None
-        # A capped week need not hold all of its rows, so its counts are unknown.
-        weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
-    fetched = {"fetched_at": repo.now(), "open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
-    temp = cache.with_name(f"prs-cache-{os.getpid()}.tmp")
+    temp = cache.with_name(f"{name}-{os.getpid()}.tmp")
     try:
-        temp.write_text(json.dumps(fetched), encoding="utf-8")
+        temp.write_text(json.dumps({"fetched_at": repo.now(), "data": data}), encoding="utf-8")
         os.replace(temp, cache)
     except OSError:
         pass  # A read-only Git directory must not prevent a view.
     finally:
         temp.unlink(missing_ok=True)
-    return fetched
+    return data
+
+
+def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str = "1000") -> list[Item] | None:
+    done = repo.run("gh", "pr", "list", "--state", state, "--limit", limit, "--json", fields, *args, cwd=top)
+    try:
+        rows = json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        return None
+    return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
+
+
+def prs(top: Path) -> Item | None:
+    """Open pull requests, and the merged ones searched one week at a time for six full weeks and
+    this one, cached together for a minute. None when gh is missing or any list fails."""
+    # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
+    def fetch(now: datetime) -> Item | None:
+        opened = _listing(top, "open")
+        if opened is None:
+            return None
+        weeks = []
+        for start in [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]:
+            found = _listing(top, "merged", "--search",
+                             f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
+            if found is None:
+                return None
+            # A capped week need not hold all of its rows, so its counts are unknown.
+            weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
+        return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
+    return _cached(top, "prs-cache", fetch)
+
+
+def details(top: Path) -> list[Item]:
+    """The last 25 merged pull requests with their files and checks, for the success numbers,
+    cached for a minute like the lists."""
+    return _cached(top, "prs-details-cache", lambda now: _listing(
+        top, "merged", fields="headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup",
+        limit="25")) or []
 
 
 def merged_prs(github: Item | None) -> list[Item]:
@@ -88,13 +105,26 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
          completed: dict[str, Item], github: Item | None) -> Item:
     """Give every row its `state` and return the board's `team` facts."""
     stories = "\0".join(rel for rel in best if rel.startswith(".factory/stories/"))
-    approved = {rel.split("/")[2] for rel, state, _ in history["copies"]
-                if rel.endswith("/story.json") and (state.get("approval") or state.get("status") == "approved")}
+    approvals: dict[str, list[Any]] = {}
+    for rel, state, _ in history["copies"]:
+        if rel.endswith("/story.json") and (state.get("approval") or state.get("status") == "approved"):
+            approvals.setdefault(rel.split("/")[2], []).append((state.get("approval") or {}).get("hash"))
+
+    def approved(key: str) -> bool:
+        """Approved for the current plan, as forge next's approval gate checks it: an edit to what
+        the approval binds needs a new approval. A state from before approvals had a hash counts."""
+        hashes = approvals.get(key, [])
+        if not hashes or None in hashes:
+            return bool(hashes)
+        tree = history.get("worktrees", {}).get(f"story/{key}")
+        doc = tree / "plans" / f"{key}.md" if tree else None
+        text = doc.read_text(encoding="utf-8") if doc and doc.is_file() else story._plan(top, key, history=history)
+        return story.approval_hash(text) in hashes
 
     def story_state(key: str, row: Item | None) -> str:
         if key in completed or row is None:
             return "done"  # a story left out of the rows finished more than seven days ago
-        if key in approved:
+        if approved(key):
             return "building" if f".factory/stories/{key}/tasks/" in stories else "approved, not started"
         if row["gates"]["plan_read"]["status"] == "passed":  # story.gate, as forge next checks it
             return "waiting for approval"

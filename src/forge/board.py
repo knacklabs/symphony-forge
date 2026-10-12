@@ -302,10 +302,11 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                                               readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
                 lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
-        dismissed = {d.get("finding") for d in (state.get("review") or {}).get("dismissals", [])
+        review = nextstep.reviewed(top, item, state, pr) if kind != "story" else state.get("review") or {}
+        dismissed = {d.get("finding") for d in review.get("dismissals", [])
                      if isinstance(d, dict)}
         findings = [{"title": f.get("title") or "Untitled finding", "priority": f.get("priority")} for n, f in
-                    enumerate((state.get("review") or {}).get("findings", []), 1)
+                    enumerate(review.get("findings", []), 1)
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
         lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
@@ -440,12 +441,11 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             else:
                 continue
             events.append({"id": event["id"], "kind": occurrence_kind, "title": message})
-        if kind != "story" and stage == "ready" and (identity := (state.get("review") or {}).get("id")):
+        if kind != "story" and stage == "ready" and (identity := review.get("id")):
             events.append({"id": identity + ":" + receipt["commit"], "kind": "ready_to_merge",
                            "title": "Ready to merge"})
         doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
                and approval.waiting_digest(item, tree) else None)
-        review = state.get("review") or {}
         read_key = item.split("/")[0] if kind != "fix" else None
         read_where = story.plan_ref(top, read_key, history) if read_key else where
         if read_key and read_where == f"story/{read_key}":
@@ -875,14 +875,8 @@ def _prs(top: Path) -> list[Item] | None:
         return None
     prs = list({(pr.get("number"), pr.get("headRefName")): pr
                 for pr in [*github["open"], *board_facts.merged_prs(github)]}.values())
-    recent = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "25", "--json",
-                      "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", cwd=top)
-    try:
-        details = json.loads(recent.stdout) if recent.returncode == 0 else []
-    except ValueError:
-        details = []
-    by_branch = {pr["headRefName"]: pr for pr in details if isinstance(pr, dict)
-                 and isinstance(pr.get("headRefName"), str)}
+    by_branch = {pr["headRefName"]: pr for pr in board_facts.details(top)
+                 if isinstance(pr.get("headRefName"), str)}
     opened = {p["headRefName"]: p for p in _machine_prs(top)}
     return [{**pr, **by_branch.get(pr.get("headRefName"), {}),
              **({"statusCheckRollup": _rollup({**opened.get(pr.get("headRefName"), {}), **pr})}

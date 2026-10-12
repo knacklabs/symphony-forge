@@ -80,6 +80,7 @@ def ready_pr(env, item, branch):
 
 
 def configure(env, merge):
+    env.repo.git("merge", "-q", "--ff-only", "origin/main")
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
                f'merge = "{merge}"\ntest = "echo passed"\nchecks = ["tests", "forge-pr-check"]\n'
@@ -208,6 +209,7 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     env.repo.git("clone", "-q", "-b", "task/SHOP-T2", remote, str(third))
     env.commit(third, "t2.py", "print('newer')\n")
     env.repo.git("push", "-q", "origin", "task/SHOP-T2", cwd=third)
+    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2"), merged])  # GitHub reports the new head
     clock(monkeypatch, now := now + timedelta(minutes=2))
     for where in (machine_a, machine_b):
         env.repo.path = where
@@ -226,6 +228,25 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     for where in (machine_a, machine_b):
         env.repo.path = where
         assert rows(board(env.repo))["SHOP/T2"]["state"] == "ready to merge", where
+
+    # B pushes and closes a newer commit in an agent-merge repo: A's worktree is behind it, so A
+    # brings it up to date and closes before merging, since forge merge needs A's own receipt.
+    configure(env, "agent")
+    env.repo.path = machine_b
+    resumed = env.tmp / "machine-b-T2"
+    env.repo.git("fetch", "-q", "origin")
+    env.repo.git("worktree", "add", "-q", "-b", "task/SHOP-T2", str(resumed), "origin/task/SHOP-T2")
+    env.commit(resumed, "t2.py", "print('newest')\n")
+    closed = env.close("SHOP/T2")
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    github(env, [ready_pr(env, "SHOP/T2", "task/SHOP-T2"), merged])
+    clock(monkeypatch, now := now + timedelta(minutes=2))
+    env.repo.path = machine_a
+    part = rows(board(env.repo))["SHOP/T2"]
+    assert part["state"] == "ready to merge"
+    assert part["next"] == {"command": None, "line": (
+        "Show a saved basket is ready to merge, but this worktree is behind its pull request.")}
+    assert f"Next: git -C {folders['T2']} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
 
 
 def approved_not_started(env, previous):
@@ -253,3 +274,8 @@ def approved_not_started(env, previous):
     assert written.returncode == 0, written.stderr
     text = re.sub(r"<[^>]+>", " ", page.read_text("utf-8"))
     assert "Approved, not started: 1" in text and "Building: 0" in text
+
+    # An edit to what the approval binds needs a new approval: the story is planning again.
+    env.commit(worktree(env.repo, "story/CART"), "plans/CART.md",
+               ONE_PART.replace("come back to it", "come back to it later"))
+    assert rows(board(env.repo))["CART"]["state"] == "planning"
