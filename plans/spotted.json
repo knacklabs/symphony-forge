@@ -1134,6 +1134,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A pull request's title is the first sentence of the item's why",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A version-led second sentence remains in the PR title",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1178,6 +1200,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 963,
+      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: The owner cannot reverse the default after automatic merge\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1196,6 +1229,17 @@
       "text": "Not done: The stop does not resume unattended after 30 minutes",
       "from": "blocking",
       "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 639,
+      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
+      "from": "blocking",
+      "item": "merge-clash-names-files",
       "status": "open",
       "closed_by": null
     },
@@ -3367,6 +3411,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 634,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -4793,6 +4848,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: test_1_a_named_test_that_did_not_run_shows_as_not_run\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "tests/test_close_checks_named_tests.py",
+      "line": 44,
+      "text": "Not done: test_1_a_named_test_that_did_not_run_shows_as_not_run",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     },
@@ -7492,6 +7558,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
+      "kind": "edge",
+      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
+      "line": 23,
+      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
+      "from": "review",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
       "kind": "edge",
       "path": "tests/test_fix_leftover_app_server_bare_command.py",
@@ -7697,61 +7774,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 964,
-      "text": "Not done: A pull request's title is the first sentence of the item's why",
-      "from": "blocking",
-      "item": "pr-title-whole-sentence",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 964,
-      "text": "Not done: A version-led second sentence remains in the PR title",
-      "from": "blocking",
-      "item": "pr-title-whole-sentence",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 963,
-      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
-      "from": "blocking",
-      "item": "pr-title-whole-sentence",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 639,
-      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
-      "from": "blocking",
-      "item": "merge-clash-names-files",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
-      "kind": "edge",
-      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
-      "line": 23,
-      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
-      "from": "review",
-      "item": "pr-title-whole-sentence",
       "status": "open",
       "closed_by": null
     }
