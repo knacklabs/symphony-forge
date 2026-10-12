@@ -6984,6 +6984,116 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tA heredoc written to a script hides a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 219,
+      "text": "A heredoc written to a script hides a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tArithmetic left shift or a partly quoted delimiter can hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 208,
+      "text": "Arithmetic left shift or a partly quoted delimiter can hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tBackslash continuation can hide a commit that skips hooks\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 209,
+      "text": "Backslash continuation can hide a commit that skips hooks",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tEscaped space lets a comment hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 209,
+      "text": "Escaped space lets a comment hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tHeredoc line continuation hides a skipped-hooks commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 227,
+      "text": "Heredoc line continuation hides a skipped-hooks commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tLiteral heredoc marker can hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 189,
+      "text": "Literal heredoc marker can hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 220,
+      "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 102,
+      "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tQuoted heredoc piped to a shell bypasses the commit guard\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 181,
+      "text": "Quoted heredoc piped to a shell bypasses the commit guard",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_deny.py\tNot done: init and earlier-adoption upgrade tests for the corrected hook\thook-n-flag",
+      "kind": "bug",
+      "path": "tests/test_deny.py",
+      "line": 60,
+      "text": "Not done: init and earlier-adoption upgrade tests for the corrected hook",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
