@@ -48,6 +48,7 @@ BLOCKED = {
     "bash -c \"$(cat <<'EOF'\ngit commit -n\nEOF\n)\"": HOOKS,
     "cat > script.sh <<'EOF'\ngit commit -n\nEOF\nbash script.sh": HOOKS,
     "echo x\\ #note; git commit -n": HOOKS,
+    "echo x\\\n#note; git commit -n": HOOKS,
     "git -c core.hooksPath=/dev/null push origin HEAD:main": HOOKS,
     "git -c core.hooksPath=/tmp commit -m 'Fix it'": HOOKS,
     "gh pr merge 12 --squash": MERGE,
@@ -63,7 +64,8 @@ ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
            "git commit -m --no-verify", "git commit --message --no-verify",
            "git commit -F - <<EOF\nProof list: git commit -n --no-verify\nEOF",
            "bash -c true && git commit -F - <<'EOF'\nNo git commit -n here\nEOF",
-           "git -C web commit --file=- <<'EOF'\nNo git commit -n here\nEOF"]
+           "git -C web commit --file=- <<'EOF'\nNo git commit -n here\nEOF",
+           "env GIT_EDITOR=: git commit --file=- <<'EOF'\nNo git commit -n here\nEOF"]
 
 
 def test_23_deny_hook(repo, claude_payload, codex_payload):

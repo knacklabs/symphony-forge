@@ -185,6 +185,8 @@ def _without_data(text: str) -> str:
     quote, start, outer = "", 0, []  # open quote, where this command starts, each open $( or $((
     lines = iter(text.split("\n"))
     for line in lines:
+        while (len(line) - len(line.rstrip("\\"))) % 2:  # a \ before the newline joins the lines
+            line = line[:-1] + next(lines, "")
         kept.append(line)
         bodies, i, start, escaped = [], 0, 0, -1
         while i < len(line):
@@ -213,7 +215,8 @@ def _without_data(text: str) -> str:
                 start = i + 1
             elif line[i - 1:i] != "<" and (found := HEREDOC.match(line, i)):
                 owner = line[start:i].split()
-                sub, rest = _subcommand(owner[1:]) if owner[:1] == ["git"] else ("", [])
+                git = next((k for k, w in enumerate(owner) if w.rsplit("/", 1)[-1] == "git"), -1)
+                sub, rest = _subcommand(owner[git + 1:]) if git >= 0 else ("", [])
                 message = sub == "commit" and ("--file=-" in rest or any(
                     rest[k:k + 2] in (["-F", "-"], ["--file", "-"]) for k in range(len(rest))))
                 bodies.append((found[1] or found[2] or found[3], found[3] is not None, message))
