@@ -5994,6 +5994,127 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tA blocked review is shown as waiting for checks when its tests pass on retry\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 267,
+      "text": "A blocked review is shown as waiting for checks when its tests pass on retry",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tA failed review loses the concurrent test failure from the next worker brief\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 240,
+      "text": "A failed review loses the concurrent test failure from the next worker brief",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tA red local test can leave an existing pull request mergeable\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 335,
+      "text": "A red local test can leave an existing pull request mergeable",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tClose drops source-file test warnings from large changes\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 258,
+      "text": "Close drops source-file test warnings from large changes",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tFull test suite fails on an unchanged review-prompt assertion\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 227,
+      "text": "Full test suite fails on an unchanged review-prompt assertion",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: shipped close guidance contradicts concurrent review\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 216,
+      "text": "Not done: shipped close guidance contradicts concurrent review",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tUpgrade PRs with red local tests can pass the previous release's check\treview-alongside-tests",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 248,
+      "text": "Upgrade PRs with red local tests can pass the previous release's check",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_tests_and_review_together.py\tNot done: tests/test_close_runs_tests_and_review_together.py::test_1_close_starts_tests_and_review_together_and_reports_both\treview-alongside-tests",
+      "kind": "bug",
+      "path": "tests/test_close_runs_tests_and_review_together.py",
+      "line": 51,
+      "text": "Not done: tests/test_close_runs_tests_and_review_together.py::test_1_close_starts_tests_and_review_together_and_reports_both",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_tests_and_review_together.py\tStandard: Tests own and clean up every process they start\treview-alongside-tests",
+      "kind": "bug",
+      "path": "tests/test_close_runs_tests_and_review_together.py",
+      "line": 115,
+      "text": "Standard: Tests own and clean up every process they start",
+      "from": "blocking",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tUpgrade pull requests are checked by the previous release's forge-pr-check, so its failed-local-tests refusal applies only once this release is on main; CI's tests check still stops red tests.",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 248,
+      "text": "Upgrade pull requests are checked by the previous release's forge-pr-check, so its failed-local-tests refusal applies only once this release is on main; CI's tests check still stops red tests.",
+      "from": "worker",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in host guides have unrelated drift from their source template; this change updates only the concurrent-close rule.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 66,
+      "text": "Both checked-in host guides have unrelated drift from their source template; this change updates only the concurrent-close rule.",
+      "from": "worker",
+      "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

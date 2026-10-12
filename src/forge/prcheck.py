@@ -245,6 +245,8 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
+    elif state.get("tests"):  # upgrade PRs run the previous release's check; CI's tests check covers them
+        problem = "blocked by local tests that failed"
     else:
         print(f"forge-pr-check passed for {branch}.")
         return 0
