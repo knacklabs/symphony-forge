@@ -56,6 +56,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.claude/skills/simplified-technical-english/SKILL.md\tThe recorded allowance does not cover the added writing skill\trelease-1210",
+      "kind": "bug",
+      "path": ".claude/skills/simplified-technical-english/SKILL.md",
+      "line": 15,
+      "text": "The recorded allowance does not cover the added writing skill",
+      "from": "blocking",
+      "item": "release-1210",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.codex/skills/forge/SKILL.md\tNot done: The guide names the Yarn 1 and Yarn 2+ update commands\tskipped-templates",
       "kind": "bug",
       "path": ".codex/skills/forge/SKILL.md",
@@ -5035,6 +5046,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-1210",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 30,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "release-1210",
       "status": "open",
       "closed_by": null
     },
