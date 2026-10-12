@@ -10,6 +10,7 @@
   },
   "done_when": "A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it, overrides only which tools run work, the worker split and the model and effort per kind of work; Forge refuses any other key in it; new and upgraded repos ignore the file in git; forge next and forge doctor show which file each of those settings came from",
   "flagged": [
+    "src/forge/doctor.py",
     "src/forge/nextstep.py",
     "src/forge/repo.py",
     "tests/test_personal_worker_choice.py"
@@ -17,39 +18,28 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4a958e984d4b3d0b1d6647218c194605560804e1b10467f07c3b69ad9a097dc4",
-    "changed": "dbb80fda55e74532dae9cf63006742d1ba6905af4b05feac2444a43eae48d94c",
-    "commit": "c86e1dfb36ea710fbb9012ef267e619ffe21c467",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
-        "finding": 2
-      }
-    ],
+    "branch_diff": "04a571992f19af80e9a88c8fb1678edccbacf6ad41391048243f13eae40e9924",
+    "changed": "93991fa1a20751a724c0dc3e9a8f859d20ff87ef7ec12ba16becad0d89674d41",
+    "commit": "e9d01745478a037017a891b58638fc2a2e5c2be1",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. `setting_sources` attributes `models.build` to a file whenever that file has a build table, without checking whether it has an entry for the selected worker. In an upgraded repo with only `[models.build.codex]`, setting local `tools = \"claude\"` makes `forge work` use Claude's built-in default (repo.py:513\u2013530), while `forge next` claims the model came from `forge.toml`. The same check can claim a local model when the local table contains only the other worker's entry. The required per-setting source display is therefore incorrect in a normal worker-switching case.",
-        "file": "src/forge/repo.py",
-        "line": 557,
+        "body": "Raise: Not done. On a prototype fix, `forge work` treats the fix as design work when its state says `Prototype before sign-off` (`src/forge/worker.py:97`), but this new `forge next` path sets `design` to false for every fix. With local `workers = \"split\"`, `forge next` says Codex will build the fix while `forge work` selects Claude and its design model. The kind calculation at line 718 also labels a non-design Claude retry as `models.fix`, although `forge work` continues to use `models.build` for a task or `models.lite` for a fix (`src/forge/worker.py:102\u2013110`). Thus the required source display can name the wrong worker or model file on normal fix and retry paths; the named test covers only a started, non-prototype fix.",
+        "file": "src/forge/nextstep.py",
+        "line": 715,
         "priority": "P1",
-        "title": "Not done: model sources are misidentified after a local tool switch"
+        "title": "Not done: forge next misidentifies prototype fix workers and Claude retry model sources"
       },
       {
-        "body": "Raise: Not done. The new source display is added only to ready-task lines. After `forge task start` or `forge fix start`, `forge next` reports the active item through `_item` (nextstep.py:614 onward), which prints the next `forge work` command without any setting sources. A developer checking which local choices will run that work sees no file attribution, although the Done-when requires `forge next` to show it.",
-        "file": "src/forge/nextstep.py",
-        "line": 499,
+        "body": "Raise: Not done. The new doctor note lists every local model kind as coming from `forge.local.toml` and says everything else comes from `forge.toml`, without checking the selected worker's model entry. For example, local `tools = \"claude\"` plus `[models.build.codex]` replaces the shared build table, so `forge work` uses Claude's built-in build default (`src/forge/repo.py:445, 510\u2013533`); doctor instead presents `models.build` as local and never identifies the built-in default. This is a different doctor path from the previously fixed `forge next` model-source check, and it misses the required effective source display after a worker switch.",
+        "file": "src/forge/doctor.py",
+        "line": 436,
         "priority": "P1",
-        "title": "Not done: forge next omits setting sources for active tasks and fixes"
+        "title": "Not done: doctor attributes built-in model defaults to configuration files"
       }
     ],
-    "id": "53efaa96-d182-49e9-abbe-0fc16e1fd295",
-    "status": "clean"
+    "id": "e17a6ec7-dfd7-4b3f-809f-31effbc384b5",
+    "status": "blocked"
   },
   "round": 1,
   "status": "fixing",
@@ -73,6 +63,10 @@
     {
       "at": "2026-10-11T20:34:05.564465+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T00:49:36.100950+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -81,7 +75,6 @@
     "reason": "Owner rule for Harm 1-2: both findings are fixed in commit 6602663; close re-reviews the current head",
     "wait_id": "e17ff264-3398-4001-bf65-922c465b2cd2"
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 0802dcd68fafa9f5bed7f0aa9456c8f96ed28c5e` exited with status 1 on this machine.\nNo local test names src/forge/nextstep.py; GitHub's checks will cover it.\n    @pytest.mark.parametrize(\"case\", [\n        pytest.param(name, marks=pytest.mark.skipif(\nE             - harness.yaml\nE             Converts 5 active plans into story docs:\nE             - Shoppers can share a basket (DRAFT-1): not carried over, because its plan on main says \"awaiting-approval\", not \"approved\". Its draft is .forge-migrate/replan/DRAFT-1.md; re-plan it with forge story new DRAFT-1.\nE               Needs you in .forge-migrate/replan/DRAFT-1.md: the old plan has no tasks to carry over.\nE             - Shoppers can search the shop (SEARCH-1): its approval on main carries over, and it is finished: every part was done before the move. Outcome: Shoppers now find any product by name from every page.\nE             - Shoppers can save a basket (SHIP-1): not carried over, because the story doc it becomes is malformed: Tasks row T3: Scope is empty. Its draft is .forge-migrate/replan/SHIP-1.md; re-plan it with forge story new SHIP-1.\nE               Parts not done yet:\nE               | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |\nE               |---|---|---|---|---|---|---|---|\nE               | T2 | Show a saved basket | A saved basket shows again after sign-in. | 2 | `src/signin.js`, `src/basket-view.js` | `test/signin.test.js` | T1 | yes |\nE               | T3 | Tidy the basket code | The basket code reads well. |  |  |  | T2 | no |\nE               Needs you in .forge-migrate/replan/SHIP-1.md: T3: no Scope and covers no Done-when item.\nE             - Shoppers stay signed in (SIGNIN-1): its approval on main carries over, and it is finished: every part was done before the move. Outcome: Finished before the move to the new Forge.\nE             - The shop code is easy to change (TIDY-UP): not carried over, because parts are still pending in the old Forge's records. Its draft is .forge-migrate/replan/TIDY-UP.md; re-plan it with forge story new TIDY-UP.\nE               Parts not done yet:\nE               | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |\nE               |---|---|---|---|---|---|---|---|\nE               | T2 | Remove the old helpers | The old checkout helpers are gone. | 2 | `src/helpers.js` | `test/helpers.test.js` | T1 | no |\nE             Replaces AGENTS.md, which is the old Forge's word for word, with the Forge block.\nE             Drops CLAUDE.md's import of .claude/CLAUDE.md, the old Claude adapter.\nE             Moves the old verify commands from .envrc into forge.toml's test: (npm run format:check && npm run check:architecture && npm run lint:changed) && (npm run typecheck || npm run typecheck:legacy) && npm test\nE             Pins your sign-off record, docs/decisions/0001-client-signoff.md, in forge.toml's signoff, as harness.yaml did: a story is approved only once that record is accepted.\nE             Writes forge.toml pinned to Forge v1.2.9, and the adapters for Claude Code and Codex with forge sync.\nE             After this pull request merges, forge close migrate-v1 turns on branch protection for main: changes arrive only through a pull request whose tests and forge-pr-check checks pass, and nobody can push to it directly.\nE\nE           assert '\\n- factory/ (2 files)\\n' in 'Nothing was changed. forge migrate would do this, on its own branch forge/migrate-v1:\\n\\nDeletes the copied-in Forge,...s arrive only through a pull request whose tests and forge-pr-check checks pass, and nobody can push to it directly.\\n'\nE            +  where 'Nothing was changed. forge migrate would do this, on its own branch forge/migrate-v1:\\n\\nDeletes the copied-in Forge,...s arrive only through a pull request whose tests and forge-pr-check checks pass, and nobody can push to it directly.\\n' = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-personal-worker-choice/.venv/bin/python', '/...y through a pull request whose tests and forge-pr-check checks pass, and nobody can push to it directly.\\n', stderr='').stdout\n\ntests/test_migrate.py:148: AssertionError\n1 failed, 97 passed in 106.42s (0:01:46)",
   "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings",
   "worker": "codex"
 }
