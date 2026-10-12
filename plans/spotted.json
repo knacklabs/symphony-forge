@@ -1706,6 +1706,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tStopped land directs the coordinator back to work instead of the owner's choice\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 85,
+      "text": "Stopped land directs the coordinator back to work instead of the owner's choice",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -2538,6 +2549,17 @@
       "text": "Not done: every review result has a fresh id",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: follow-up fixes describe a review record instead of the item\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 246,
+      "text": "Not done: follow-up fixes describe a review record instead of the item",
+      "from": "blocking",
+      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     },
@@ -4639,6 +4661,17 @@
       "text": "Not done: the five-file picker boundary has an end-to-end lane test",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_spec_reads_keep_full_scope.py\tNot done: proof list\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_spec_reads_keep_full_scope.py",
+      "line": 43,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     },

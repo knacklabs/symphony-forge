@@ -29,45 +29,38 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a3af4a692a535ae45e88576d1c83c7075b6df0a6458f9085878edf3421f7f09f",
-    "changed": "095573b5e3a506052bda35fdced56be5c9e1e969d2faf01816f66f509781ab06",
-    "commit": "696249aab61dd8bbe90ee1022866e3733a7036dd",
+    "branch_diff": "55b27a2f72e23b1636aac41e09c09143d9e5f504a601e59cdfdc17354c0634bc",
+    "changed": "f944c0bdf1b73f31d4014770e2c7ee7bd31a6a27ae4a1f03b9a3a11d5a550ee6",
+    "commit": "c05b15060fbd1d12550be481aa7cc5d43091343e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The Done-when line requires one plain sentence per open blocker. `plain()` keeps two body sentences and appends them to the title. The close test expects one blocker to appear as \u201csaving drops the basket. Returning shoppers lose their saved items.\u201d, so the passing test confirms this unmet requirement. The proof-list note does not change the stated Done-when line; no allowance is recorded.",
-        "file": "src/forge/review.py",
-        "line": 223,
-        "priority": "P1",
-        "title": "Not done: blocker summaries still contain multiple sentences"
-      },
-      {
-        "body": "Raise: Not done. `read_question()` includes every non-advisory finding from the latest round without checking its disposition. After a third blocked read, a coordinator can mark one note `Disposition: cut` or `defer` before running `forge read` or `forge next`; both still present it as a problem for the owner to decide. The existing disposition rule treats those notes as settled (`story.py:729-737`), so the question no longer lists only open blocking notes.",
-        "file": "src/forge/story.py",
-        "line": 1009,
-        "priority": "P1",
-        "title": "Not done: stopped reads list notes that have been resolved"
-      },
-      {
-        "body": "Raise: Not done. The question prints a fix's raw `why` and `done_when` as its name and delivery. Normal fixes may name a source location, and Forge itself creates follow-up fixes whose `why` contains a finding's `file:line` (`close.py:405-407`). If such a fix reaches a review stop, the owner gets that path and review jargon instead of the promised plain-words description. Only blocker text passes through `plain()`.",
+        "body": "Raise: Not done. A fix created by the normal default Narrow path can reach a review stop, but its question names it as \u201cReview finding left open by \u2026\u201d and describes its delivery as \u201cA review no longer finds \u2026\u201d. Those phrases come from the generated fix state at src/forge/close.py:405-407; this line passes them through after stripping paths. The owner still cannot tell in plain words what the fix is or what it delivers.",
         "file": "src/forge/review.py",
         "line": 246,
         "priority": "P1",
-        "title": "Not done: stopped fix questions can show paths as the item name"
+        "title": "Not done: follow-up fixes describe a review record instead of the item"
       },
       {
-        "body": "Raise: Gate. The proof list names `test_spec_reads_keep_full_scope.py::test_3` as proof that a later-round spec stop prints the question. Its changed assertion checks only the introductory line and the final `Next:` line; it never checks the question between them. Removing the question while retaining \u201cin these words:\u201d would leave this named proof passing. The other read test checks a spec question, but does not make this proof-list entry true.",
+        "body": "Raise: Functional. At land's own three-fix-round review stop, this line prints the question and line 86 re-raises the original blocked-review refusal. That refusal's Next line is `forge work`, while the newly recorded stop requires `forge close --resolve` before the review can continue. The command therefore ends with an instruction that contradicts the decision it just requested.",
+        "file": "src/forge/land.py",
+        "line": 85,
+        "priority": "P1",
+        "title": "Stopped land directs the coordinator back to work instead of the owner's choice"
+      },
+      {
+        "body": "Raise: Gate. The named later-round spec proof checks the intro, Next line and one blocker line, but never checks the item's delivery or any of the three choices; it would pass with those parts of the question removed. The named land proofs in tests/test_land.py likewise check only the question's opening lines and that `forge next` repeats them, so they can pass when both commands omit the choices. These entries do not prove the complete ready-to-ask questions they claim.",
         "file": "tests/test_spec_reads_keep_full_scope.py",
         "line": 43,
         "priority": "P1",
-        "title": "Not done: proof list claims a spec-question assertion the named test lacks"
+        "title": "Not done: proof list"
       }
     ],
-    "id": "c914014b-4dd1-4095-9fd5-f31c7b370e03",
+    "id": "560aaed3-52e2-4e7f-aca8-120e28a87418",
     "status": "blocked"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -104,13 +97,16 @@
     {
       "at": "2026-10-12T01:30:17.303777+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:23:47.583721+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "choice": "accept",
-    "file": "src/forge/story.py",
-    "reason": "Owner rule for Harm 1-2: both findings are fixed in commit 715dee9; close re-reviews the current head",
-    "wait_id": "999ac8fa-abba-44aa-a3a9-dc359283b2e9"
+    "at": "2026-10-12T02:23:47.593227+00:00",
+    "file": "src/forge/land.py",
+    "wait_id": "66c39de2-86a0-4a9c-b3b1-daebce652f08"
   },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
   "worker": "codex"
