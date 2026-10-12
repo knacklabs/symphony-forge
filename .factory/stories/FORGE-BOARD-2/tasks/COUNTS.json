@@ -10,33 +10,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "272b8cb5c3c153c0b971f656840112593f7840191a1e1559c3452a5224d1e9c2",
-    "changed": "f80f335671bd4f6651d3a270974fd5f8eb293f95353b21661b087ce55603a313",
-    "commit": "e4c105a1972690b55c316fccc33dcd6dd37a37d5",
+    "branch_diff": "fa2d8ee2337cc91bb0dacd5712f4064e20c905b9b0950cd04131590daec69101",
+    "changed": "143cb4eb4c6896fbdc2589dd77af89b642fd6f18c93ebccb09bd1cf6fb0706fd",
+    "commit": "812fac4fd58bcfdfba029017d779a948b7ef9190",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done. The page still renders cards from `_gather` while its totals come from `machine_board`. In the unchanged `_story` logic at `board.py:906\u2013919`, an approved plan edited after its passing read still displays as approved or in progress, while `team.counts` and the JSON row classify it as planning. The separate `_part` logic at `board.py:942\u2013969` also does not use shared-record readiness or the JSON time breakdown. Thus the page can disagree with `forge board --json` for named cases.",
-        "file": "src/forge/board.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 63,
-        "priority": "P1",
-        "title": "Not done: HTML item states and times match board JSON",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. The older merged-PR lookup runs only if an unfinished story has an older part. For a completed story whose part merged before the weekly search windows, `by_branch` lacks that part's PR body; lines 579\u2013582 then assemble its runway from local logs alone. Teammates without those logs see different working, waiting and unknown time. The added older-part proof covers only an unfinished story.",
-        "file": "src/forge/board.py",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. `_task` reads a part without a local worktree only through an open PR. A teammate who fetches a published start branch before its first PR sees that part in progress on `forge board --json`, but `forge next` treats it as unstarted, producing a self-wait or suggesting a start that `forge task start` refuses. The new fix loop at `nextstep.py:218` likewise omits a started remote fix until it has a PR. The new two-machine counts case creates both kinds of item but checks next-step advice only for ready items.",
+        "file": "src/forge/nextstep.py",
         "gain": 3,
-        "harm": 2,
-        "line": 573,
+        "harm": 1,
+        "line": 605,
         "priority": "P1",
-        "title": "Not done: completed stories retain older parts in their runway",
+        "title": "Not done: forge next loses started remote items before a pull request exists",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list gives two bare `passed` lines under each claim, without a runnable test selector or check result that identifies the parametrized cases beginning here. Its counts, readiness, caching, approval and older-part claims therefore cannot be matched to named proof as required.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list still gives only two bare `passed` lines beneath each claim. It identifies no runnable test selector or check result for the parametrized counts, readiness, caching, approval, and runway cases beginning here, so the required proof cannot be matched to those cases.",
         "file": "tests/test_board_counts.py",
         "gain": 3,
         "harm": 1,
@@ -46,7 +36,7 @@
         "work": 1
       }
     ],
-    "id": "3c1b9ceb-a3aa-4989-910e-4bfc149e4dca",
+    "id": "c462324d-857a-435e-9d1d-887562b81b4c",
     "status": "blocked"
   },
   "status": "fixing",
@@ -77,6 +67,10 @@
     },
     {
       "at": "2026-10-12T21:34:26.761179+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:19:01.915787+00:00",
       "step": "review"
     }
   ],
