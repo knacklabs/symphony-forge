@@ -1143,7 +1143,7 @@ the pytest picker never picks them and they fail only in CI. List them in `alway
 `tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
 them on every change, beside the tests it picks, even when it leaves a large selection to CI.
 Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
-entry that collects no test stops the run.
+entry that runs no test, for example because `-k` deselects it, fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,

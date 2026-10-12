@@ -312,29 +312,39 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
-# and stop when an entry collects no test.
+# and fail the run when an entry ran no test. xdist forwards each test's report to the controller.
 SELECTION = """import os, pathlib, pytest
 IGNORE, PICKED, ALWAYS = {}, {}, {}
+RAN, ROOT = set(), []
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
+    ROOT.append(pathlib.Path(str(config.rootdir)))
+def name(nodeid):  # relative to the repo, as forge.toml names it, whatever pytest's rootdir
+    file, _, rest = nodeid.partition("::")
+    return pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+def runs(nodeid, entry):
+    return nodeid == entry or nodeid.startswith((entry + "::", entry + "["))
 def pytest_collection_modifyitems(config, items):
-    def file(item):  # relative to the repo, as forge.toml names it, whatever pytest's rootdir
-        return pathlib.Path(os.path.relpath(getattr(item, "path", None) or item.fspath)).as_posix()
-    def runs(item, entry):
-        name = file(item) + item.nodeid[len(item.nodeid.split("::")[0]):]
-        return name == entry or name.startswith((entry + "::", entry + "["))
-    for entry in ALWAYS:
-        if not any(runs(item, entry) for item in items):
-            raise pytest.UsageError("forge.toml's always_test names " + entry
-                                    + ", which collects no test; fix or remove it in forge.toml.")
     if PICKED is None or not ALWAYS:
         return
     def kept(item):
-        return file(item) in PICKED or any(runs(item, entry) for entry in ALWAYS)
+        nodeid = name(item.nodeid)
+        return nodeid.split("::")[0] in PICKED or any(runs(nodeid, entry) for entry in ALWAYS)
     dropped = [item for item in items if not kept(item)]
     if dropped:
         config.hook.pytest_deselected(items=dropped)
         items[:] = [item for item in items if kept(item)]
+def pytest_runtest_logreport(report):
+    if report.when == "call":
+        RAN.add(name(report.nodeid))
+def pytest_sessionfinish(session):
+    if hasattr(session.config, "workerinput"):
+        return  # the controller sees every worker's reports
+    for entry in ALWAYS:
+        if not any(runs(nodeid, entry) for nodeid in RAN):
+            print("\\nforge.toml's always_test names " + entry
+                  + ", which ran no test; fix or remove it in forge.toml.", flush=True)
+            session.exitstatus = pytest.ExitCode.TESTS_FAILED
 """
 
 

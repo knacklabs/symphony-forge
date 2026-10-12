@@ -29,7 +29,7 @@ def adopt_earlier(env):
     env.repo.git("commit", "-qm", "Refresh earlier adoption")
 
 
-def set_up(env, monkeypatch, adopted, always, changed=1):
+def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
     if adopted:
         adopt_earlier(env)
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
@@ -37,7 +37,7 @@ def set_up(env, monkeypatch, adopted, always, changed=1):
     log = env.tmp / "ran"
     log.mkdir()
     # The test command names only tests/unit; an always_test entry may sit outside it.
-    command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests/unit", "-q"])
+    command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests/unit", "-q", *options])
     settings = re.sub(r"^test = .*\n", "", (env.repo.path / "forge.toml").read_text("utf-8"), flags=re.M)
     settings = "test = " + json.dumps(command) + "\n" + settings
     listed = ("always_test = " + (always if isinstance(always, str) else json.dumps(always)) + "\n"
@@ -80,15 +80,18 @@ def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adop
     assert ("More than a third of the test files selected" in closed.stdout) == (changed > 1)
 
 
-@pytest.mark.parametrize("value, problem", [
-    ('"tests/test_rules.py"', "always_test must be a list of strings"),
-    ('["tests/test_missing.py::test_1"]', "tests/test_missing.py::test_1"),
-    ('["--help"]', "always_test lists --help, which is not a test path or node ID; list only tests"),
-    ('["tests/unit/test_case_6.py::test_typo"]',
-     "always_test names tests/unit/test_case_6.py::test_typo, which collects no test"),
+@pytest.mark.parametrize("value, options, problem", [
+    ('"tests/test_rules.py"', (), "always_test must be a list of strings"),
+    ('["tests/test_missing.py::test_1"]', (), "tests/test_missing.py::test_1"),
+    ('["--help"]', (), "always_test lists --help, which is not a test path or node ID; list only tests"),
+    ('["tests/unit/test_case_6.py::test_typo"]', (),
+     "always_test names tests/unit/test_case_6.py::test_typo, which ran no test"),
+    # The test command's -k deselects the listed test after collection.
+    ('["tests/unit/test_case_6.py::test_other_6"]', ("-k", "not test_other_6"),
+     "always_test names tests/unit/test_case_6.py::test_other_6, which ran no test"),
 ])
-def test_2_close_refuses_an_always_test_it_cannot_run(env, monkeypatch, value, problem):
-    item, _ = set_up(env, monkeypatch, False, value)
+def test_2_close_refuses_an_always_test_it_cannot_run(env, monkeypatch, value, options, problem):
+    item, _ = set_up(env, monkeypatch, False, value, options=options)
     closed = env.close(item)
     assert closed.returncode != 0
     assert problem in closed.stdout + closed.stderr
