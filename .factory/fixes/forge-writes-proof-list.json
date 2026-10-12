@@ -9,36 +9,36 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e92e8af88dc45a5e9bd69a672564d16296ee74b3ddd893031a691d93f005a9f2",
-    "changed": "56a5de5c15c7be166eb51fd510bd6030dac7e9ff873970189bc3b816cb0c7efd",
-    "commit": "851123f483eb07a760cef1d7b110819846d92b17",
+    "branch_diff": "f28ebf42c82ceeccbb755bc3f15ecb22b9abd0158c9f4ef802883ba11cd26d16",
+    "changed": "3ef932931b4defae33020c48a21b14ce145ea24baea8e1b0e91ccc232d852a85",
+    "commit": "a031ddbb8637c12c9803923f4a019788f248cc1e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. `review.py:608` strips parameter IDs from both the worker's named pytest node and the reported node before comparing them. If the proof names `test_case[returning]` but Close runs only `test_case[new]`, Close publishes the unrun `returning` case as passed. The new command-level test uses only unparameterized cases, so it passes with this defect.",
+        "body": "Gain 4, Work 3, Harm 2\nRaise: Functional. `TEST_NAME` recognizes only Python `test_*.py` and `*_test.py` files, so `proof_list` copies a line naming a JavaScript test unchanged when `names` is empty. A default stack client runs `npm test` and Playwright (`src/forge/templates/conventions/testing.md:11,20`); if its worker names a nonexistent or unrun `.test.ts` or `.spec.ts` test, Close publishes that name without checking its run. The new command tests cover only pytest names.",
         "file": "src/forge/review.py",
-        "gain": 3,
+        "gain": 4,
         "harm": 2,
-        "line": 608,
+        "line": 624,
         "priority": "P1",
-        "title": "Not done: Close writes the proof list from tests it ran, with their results, and names no test that did not run",
-        "work": 2
+        "title": "Close leaves JavaScript test names unchecked in client proof lists",
+        "work": 3
       },
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. At `test_close_checks_named_tests.py:37`, the test reads the `pr create` body file after Close finishes. The `body` helper (`tests/test_close.py:221`) opens that path then, and `_publish` rewrites the same file for the later update. The assertion can therefore pass even if `gh pr edit` never publishes the run results, leaving the pull request with its preliminary proof list. The test does not check that edit call.",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. This command-level proof checks only the `passed` result. There is no assertion that a named test which fails in Close's run appears as `failed` in the published pull request. The test would still pass if `proof_list` labeled every reported test as passed, leaving the Done-when requirement to publish test results unproven for a normal failed run.",
         "file": "tests/test_close_checks_named_tests.py",
         "gain": 3,
-        "harm": 2,
-        "line": 37,
+        "harm": 1,
+        "line": 52,
         "priority": "P1",
-        "title": "Not done: test_1_close_writes_the_proof_list_from_the_tests_it_ran",
-        "work": 1
+        "title": "Not done: a failed named test is published as failed",
+        "work": 2
       }
     ],
-    "id": "032df077-f52b-40fc-ba75-d0af6870d94d",
+    "id": "ea4b9d5c-befb-4793-afd7-eae38912831a",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -51,7 +51,16 @@
     {
       "at": "2026-10-12T22:07:07.962339+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:23:43.345061+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-12T22:23:43.359914+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "48d14b1c-2165-4cc2-bb64-66d5727c82cc"
+  },
   "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
 }

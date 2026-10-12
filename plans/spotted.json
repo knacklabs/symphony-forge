@@ -3356,6 +3356,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tClose leaves JavaScript test names unchecked in client proof lists\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 624,
+      "text": "Close leaves JavaScript test names unchecked in client proof lists",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tCompound test commands can bypass the test place\treviews-skip-agent-line",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -4870,6 +4881,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: a failed named test is published as failed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "tests/test_close_checks_named_tests.py",
+      "line": 52,
+      "text": "Not done: a failed named test is published as failed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     },
