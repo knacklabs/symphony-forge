@@ -22,29 +22,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a94e990498348b32a58351bb5068b5714419a3ed1121a56f9bdc61bc3c44c603",
-    "changed": "4511ec59cca6f167c3782b757d9cafedf980eec53a3e4aa35f7a89ae8e06cbcf",
-    "commit": "5f46a22ca82241922b95817a199edeb5c679c36b",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-12 finding is fixed in commit 68ba7bf9d (an answered size stop is not re-asked until a worker round has run), with a test that fails without it",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "a71fd8181e896f1a5ffd525dfb11b2c9b0497aa1a3a644b307c143060173206d",
+    "changed": "79aaa92e53fbb2e1b97d95e558b025e5aa4cca200a047556c9828c02cf2a581b",
+    "commit": "e7ca8d753e07f5cc5a67caaacdbf363270897f59",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. For an oversized story part, the owner can record `same` and receive `Next: forge work`. If `forge close` is rerun before that work round, this condition sees the recorded choice and immediately creates another unanswered size question. The following `forge work` then refuses at close.py:473-475. The owner's choice therefore does not buy the promised next round. The size proof checks the initial question but does not cover a close rerun after the choice.",
+        "body": "Raise: Gate. After the owner records `same`, `switch`, `narrow`, or `split` for an oversized story part, rerunning `forge close` before `forge work` skips the question here but reaches the refusal at lines 174\u2013176. That refusal tells the owner to split the part or request an allowance, with no `Next:` command, although the recorded choice entitles them to a worker round. This is a remaining defect after the accepted fix for the repeated question; the size test checks only that the question is absent.",
         "file": "src/forge/close.py",
-        "line": 170,
+        "line": 171,
         "priority": "P1",
-        "title": "Not done: When two rounds in a row leave close's tests failing or the same review finding open, or a story part grows past its size limit,\u200b"
+        "title": "Answered size stop gives the wrong next action on a close rerun"
       }
     ],
-    "id": "fc99deea-347d-4559-8abe-db250eccd322",
-    "status": "clean"
+    "id": "3178753c-12fd-4f80-b5d2-e5906b1259d7",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -96,6 +90,10 @@
     },
     {
       "at": "2026-10-12T03:20:32.593436+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:52:12.993608+00:00",
       "step": "review"
     }
   ],

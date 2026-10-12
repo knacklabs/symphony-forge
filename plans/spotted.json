@@ -837,6 +837,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tAnswered size stop gives the wrong next action on a close rerun\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 171,
+      "text": "Answered size stop gives the wrong next action on a close rerun",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1992,6 +2003,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: forge land omits the question during a review hold with the default setting\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 85,
+      "text": "Not done: forge land omits the question during a review hold with the default setting",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tStopped land directs the coordinator back to work instead of the owner's choice\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 85,
+      "text": "Stopped land directs the coordinator back to work instead of the owner's choice",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tFull board and GitHub reads delay task admission\tunblockers-first",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -2498,6 +2531,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next does not repeat every stopped question\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 549,
+      "text": "Not done: forge next does not repeat every stopped question",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next loses a stopped story\u2019s question when its draft is malformed\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 556,
+      "text": "Not done: forge next loses a stopped story\u2019s question when its draft is malformed",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next misidentifies prototype fix workers and Claude retry model sources\tpersonal-worker-choice",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2531,6 +2586,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: older blocked reads lose their question in forge next after upgrade\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 222,
+      "text": "Not done: older blocked reads lose their question in forge next after upgrade",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: stopped specs on story branches disappear from forge next\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 214,
+      "text": "Not done: stopped specs on story branches disappear from forge next",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tPublished story state can hide locally recorded question touches in the context hook.",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2549,6 +2626,17 @@
       "text": "The recorded default disappears from next when the item is ready",
       "from": "blocking",
       "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tforge next gives an unusable resolve command for a stopped spec in another worktree\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 223,
+      "text": "forge next gives an unusable resolve command for a stopped spec in another worktree",
+      "from": "blocking",
+      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     },
@@ -2806,6 +2894,39 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 219,
+      "text": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: blocker summaries still contain multiple sentences\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 223,
+      "text": "Not done: blocker summaries still contain multiple sentences",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: blocking notes and findings are not each one sentence\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 223,
+      "text": "Not done: blocking notes and findings are not each one sentence",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2828,6 +2949,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: follow-up fixes describe a review record instead of the item\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 246,
+      "text": "Not done: follow-up fixes describe a review record instead of the item",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: keep timing-only legacy review ordinals and finding counts unknown\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -2835,6 +2967,39 @@
       "text": "Not done: keep timing-only legacy review ordinals and finding counts unknown",
       "from": "blocking",
       "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: stopped fix questions can show paths as the item name\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 246,
+      "text": "Not done: stopped fix questions can show paths as the item name",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: stopped task questions expose implementation text instead of a plain delivery\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 257,
+      "text": "Not done: stopped task questions expose implementation text instead of a plain delivery",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: stopped task questions still expose implementation text\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 257,
+      "text": "Not done: stopped task questions still expose implementation text",
+      "from": "blocking",
+      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     },
@@ -2960,6 +3125,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 991,
+      "text": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -3048,6 +3224,94 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can omit the delivery or who is affected\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 960,
+      "text": "Not done: stopped questions can omit the delivery or who is affected",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can retain paths and Markdown in item names\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 1015,
+      "text": "Not done: stopped questions can retain paths and Markdown in item names",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can retain review labels and omit who is affected\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 991,
+      "text": "Not done: stopped questions can retain review labels and omit who is affected",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped reads list notes that have been resolved\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 1009,
+      "text": "Not done: stopped reads list notes that have been resolved",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped specs omit what they deliver\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 990,
+      "text": "Not done: stopped specs omit what they deliver",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: stopped story questions omit Done-when delivery\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 1014,
+      "text": "Not done: stopped story questions omit Done-when delivery",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: the accept choice describes an action it does not perform\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 972,
+      "text": "Not done: the accept choice describes an action it does not perform",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: the narrow choice names a section specs do not have\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 973,
+      "text": "Not done: the narrow choice names a section specs do not have",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -3077,6 +3341,17 @@
       "text": "Promotion accepts an uncommitted roadmap entry and leaves it off the task branch",
       "from": "blocking",
       "item": "story-from-goal",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tStandard: Give one recommendation\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 1010,
+      "text": "Standard: Give one recommendation",
+      "from": "blocking",
+      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     },
@@ -3741,6 +4016,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_holds_after_three_blocked_reviews.py\tNot done: proof list\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_close_holds_after_three_blocked_reviews.py",
+      "line": 64,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_holds_after_three_blocked_reviews.py\tNot done: test every open blocker in a stopped question\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_close_holds_after_three_blocked_reviews.py",
+      "line": 80,
+      "text": "Not done: test every open blocker in a stopped question",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: init and upgrade plus sync local-selection test\ttests-once-per-round",
       "kind": "bug",
       "path": "tests/test_close_keeps_full_tests_in_ci.py",
@@ -4346,6 +4643,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_land.py\tNot done: proof list\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_land.py",
+      "line": 387,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission survives sequential model launches\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_agents.py",
@@ -4720,6 +5028,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_reads_wait_for_a_loop_choice.py\tNot done: proof list\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_reads_wait_for_a_loop_choice.py",
+      "line": 77,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-126",
       "kind": "bug",
       "path": "tests/test_release_version.py",
@@ -4826,6 +5145,28 @@
       "text": "Not done: the five-file picker boundary has an end-to-end lane test",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_spec_reads_keep_full_scope.py\tNot done: proof list\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_spec_reads_keep_full_scope.py",
+      "line": 43,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_spec_reads_keep_full_scope.py\tNot done: proof list claims a spec-question assertion the named test lacks\tstop-question-plain",
+      "kind": "bug",
+      "path": "tests/test_spec_reads_keep_full_scope.py",
+      "line": 43,
+      "text": "Not done: proof list claims a spec-question assertion the named test lacks",
+      "from": "blocking",
+      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     },
@@ -6344,336 +6685,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: forge land omits the question during a review hold with the default setting\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 85,
-      "text": "Not done: forge land omits the question during a review hold with the default setting",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tStopped land directs the coordinator back to work instead of the owner's choice\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 85,
-      "text": "Stopped land directs the coordinator back to work instead of the owner's choice",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next does not repeat every stopped question\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 549,
-      "text": "Not done: forge next does not repeat every stopped question",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next loses a stopped story\u2019s question when its draft is malformed\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 556,
-      "text": "Not done: forge next loses a stopped story\u2019s question when its draft is malformed",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: older blocked reads lose their question in forge next after upgrade\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 222,
-      "text": "Not done: older blocked reads lose their question in forge next after upgrade",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: stopped specs on story branches disappear from forge next\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 214,
-      "text": "Not done: stopped specs on story branches disappear from forge next",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tforge next gives an unusable resolve command for a stopped spec in another worktree\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 223,
-      "text": "forge next gives an unusable resolve command for a stopped spec in another worktree",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 219,
-      "text": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: blocker summaries still contain multiple sentences\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 223,
-      "text": "Not done: blocker summaries still contain multiple sentences",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: blocking notes and findings are not each one sentence\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 223,
-      "text": "Not done: blocking notes and findings are not each one sentence",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: follow-up fixes describe a review record instead of the item\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 246,
-      "text": "Not done: follow-up fixes describe a review record instead of the item",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: stopped fix questions can show paths as the item name\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 246,
-      "text": "Not done: stopped fix questions can show paths as the item name",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: stopped task questions expose implementation text instead of a plain delivery\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 257,
-      "text": "Not done: stopped task questions expose implementation text instead of a plain delivery",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: stopped task questions still expose implementation text\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 257,
-      "text": "Not done: stopped task questions still expose implementation text",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 991,
-      "text": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can omit the delivery or who is affected\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 960,
-      "text": "Not done: stopped questions can omit the delivery or who is affected",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can retain paths and Markdown in item names\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 1015,
-      "text": "Not done: stopped questions can retain paths and Markdown in item names",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can retain review labels and omit who is affected\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 991,
-      "text": "Not done: stopped questions can retain review labels and omit who is affected",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: stopped reads list notes that have been resolved\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 1009,
-      "text": "Not done: stopped reads list notes that have been resolved",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: stopped specs omit what they deliver\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 990,
-      "text": "Not done: stopped specs omit what they deliver",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: stopped story questions omit Done-when delivery\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 1014,
-      "text": "Not done: stopped story questions omit Done-when delivery",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: the accept choice describes an action it does not perform\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 972,
-      "text": "Not done: the accept choice describes an action it does not perform",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: the narrow choice names a section specs do not have\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 973,
-      "text": "Not done: the narrow choice names a section specs do not have",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tStandard: Give one recommendation\tstop-question-plain",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 1010,
-      "text": "Standard: Give one recommendation",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_holds_after_three_blocked_reviews.py\tNot done: proof list\tstop-question-plain",
-      "kind": "bug",
-      "path": "tests/test_close_holds_after_three_blocked_reviews.py",
-      "line": 64,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_holds_after_three_blocked_reviews.py\tNot done: test every open blocker in a stopped question\tstop-question-plain",
-      "kind": "bug",
-      "path": "tests/test_close_holds_after_three_blocked_reviews.py",
-      "line": 80,
-      "text": "Not done: test every open blocker in a stopped question",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_land.py\tNot done: proof list\tstop-question-plain",
-      "kind": "bug",
-      "path": "tests/test_land.py",
-      "line": 387,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_reads_wait_for_a_loop_choice.py\tNot done: proof list\tstop-question-plain",
-      "kind": "bug",
-      "path": "tests/test_reads_wait_for_a_loop_choice.py",
-      "line": 77,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_spec_reads_keep_full_scope.py\tNot done: proof list\tstop-question-plain",
-      "kind": "bug",
-      "path": "tests/test_spec_reads_keep_full_scope.py",
-      "line": 43,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "stop-question-plain",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_spec_reads_keep_full_scope.py\tNot done: proof list claims a spec-question assertion the named test lacks\tstop-question-plain",
-      "kind": "bug",
-      "path": "tests/test_spec_reads_keep_full_scope.py",
-      "line": 43,
-      "text": "Not done: proof list claims a spec-question assertion the named test lacks",
-      "from": "blocking",
-      "item": "stop-question-plain",
       "status": "open",
       "closed_by": null
     }
