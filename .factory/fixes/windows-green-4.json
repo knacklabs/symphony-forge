@@ -1,0 +1,14 @@
+{
+  "base": "370f48c87c245a4b5b51b0a9c51e0279e38639af",
+  "branch": "fix/windows-green-4",
+  "done_when": "The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within its limit",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T20:25:48.169991+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The session-rounds test fails on Windows because its output pattern expects a Unix line ending after the checkout path, and one Windows full-suite group runs past its 35-minute limit"
+}
