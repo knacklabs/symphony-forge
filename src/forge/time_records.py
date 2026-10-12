@@ -412,7 +412,7 @@ def from_body(body: str) -> dict[str, Any]:
         (data.get("ready") or {}).get("commit")
         "".join([data.get("legacy_text") or ""])
         return data
-    except (ValueError, TypeError, AttributeError, KeyError, IndexError, OverflowError):
+    except Exception:  # a PR body is user-editable text, so no record shape may crash a reader
         return {}
 
 

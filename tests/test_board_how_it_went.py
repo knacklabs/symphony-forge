@@ -56,13 +56,15 @@ def github_list_fields(env):
                                           ("refresh-missing-receipt", False), ("resume-published-wait", False),
                                           ("warm-checks-cache", False), ("story-full-runway", False),
                                           ("story-full-runway", True), ("bad-null-event", False),
-                                          ("bad-infinite-seconds", False), ("bad-huge-seconds", False)],
+                                          ("bad-infinite-seconds", False), ("bad-huge-seconds", False),
+                                          ("bad-deep-nesting", False)],
                          ids=["new-client", "earlier-adoption", "story-runway", "rebuilt-history",
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
                               "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted",
-                              "bad-null-event", "bad-infinite-seconds", "bad-huge-seconds"])
+                              "bad-null-event", "bad-infinite-seconds", "bad-huge-seconds",
+                              "bad-deep-nesting"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
     if case == "story-full-runway":
         client(env, previous)
@@ -544,9 +546,10 @@ def malformed_record(env, case):
         record["rebuilt"] = True  # visible only while the record is read
         if case == "bad-null-event":
             record["events"][0]["event"] = None
-        else:
+        elif case != "bad-deep-nesting":
             record["timings"][0]["seconds"] = float("inf") if case == "bad-infinite-seconds" else 1e308
-        return "<!-- forge:time-record " + json.dumps(record) + " -->"
+        nested = ', "deep": ' + "[" * 100_000 + "]" * 100_000 if case == "bad-deep-nesting" else ""
+        return "<!-- forge:time-record " + json.dumps(record)[:-1] + nested + "} -->"
     text = re.sub(r"<!-- forge:time-record (\{.*?\}) -->", spoil, text, flags=re.S)
     env.gh.respond("pr", "list", stdout=json.dumps([{
         "number": 7, "headRefName": f"fix/{item}", "state": "OPEN", "isDraft": False,
