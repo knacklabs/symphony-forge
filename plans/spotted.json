@@ -1735,8 +1735,8 @@
       "text": "Heredoc line continuation hides a skipped-hooks commit",
       "from": "blocking",
       "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/deny.py\tLiteral heredoc marker can hide a prohibited commit\thook-n-flag",
@@ -1757,8 +1757,8 @@
       "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command",
       "from": "blocking",
       "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on\thook-n-flag",
@@ -1768,8 +1768,8 @@
       "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on",
       "from": "blocking",
       "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/deny.py\tQuoted heredoc piped to a shell bypasses the commit guard\thook-n-flag",
