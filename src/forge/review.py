@@ -302,7 +302,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
                               f"{title} ({file}): {reason}" for (file, title), reason in settled.items()),
               "rulings": _rulings(top, base, history),
               "test_run": tested,
-              "proof_list": commit_paragraph(top, base, "Proof list:") or "missing"}
+              "proof_list": proof_list(top, base) or "missing"}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -410,7 +410,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                    and fasttest.XDIST.search(command) else "")
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rfEsp{cap}".strip()}
             env.pop("FORGE_CLOSE_TESTS", None)
             if closing and "tests" in repo.config(top)["checks"]:
                 env["FORGE_CLOSE_TESTS"] = "1"
@@ -473,9 +473,15 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         finally:
             machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
+        named = _named(top, base)
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
-                        | {n for n, line in enumerate(out) if line.startswith(GAP)})
+                        | {n for n, line in enumerate(out) if line.startswith(GAP)
+                           or "short test summary info" in line}
+                        # The proof list's tests keep their result lines for close's proof list.
+                        | {n for n, line in enumerate(out) if (found := re.match(
+                            r"(?:PASSED|FAILED|ERROR) (\S+)", line))
+                           and any(_ran(name, found[1]) for name in named)})
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
@@ -585,6 +591,47 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
         found = re.search(r"^" + re.escape(label) + r".*", message, re.M | re.S)
         return found[0].strip() if found else ""
     return ""
+
+
+# A test file a proof list names, with an optional pytest node after it.
+TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*|[\w-]+_test)\.py(?:::[^\s,;]+)?")
+
+
+def _named(top: Path, base: str) -> list[str]:
+    return list(dict.fromkeys(found[0].rstrip(".:)") for found in
+                              TEST_NAME.finditer(commit_paragraph(top, base, "Proof list:"))))
+
+
+def _ran(name: str, node: str) -> bool:
+    """A reported pytest node is the named test, or inside the named file or class. Node IDs can
+    be relative to a test folder, so a name may end with the node."""
+    name, parts = re.sub(r"\[.*", "", name), re.sub(r"\[.*", "", node).split("::")
+    return any(name == part or name.endswith("/" + part)
+               for part in ("::".join(parts[:i]) for i in range(1, len(parts) + 1)))
+
+
+def proof_list(top: Path, base: str, report: str | None = None) -> str:
+    """The worker's `Proof list:` and Forge's status of each test it names: from close's test
+    `report` when given, else only whether the branch has the test."""
+    proof, lines = commit_paragraph(top, base, "Proof list:"), []
+    ran = re.findall(r"^(PASSED|FAILED|ERROR) (\S+)", report or "", re.M)
+    for name in _named(top, base):
+        path, _, test = name.partition("::")
+        function = re.sub(r"\[.*", "", test.rsplit("::", 1)[-1])
+        source = (top / path).read_text("utf-8", "replace") if (top / path).is_file() else None
+        if source is None or function and not re.search(
+                rf"^\s*(?:async\s+)?(?:def|class) {re.escape(function)}\b", source, re.M):
+            status = "not run: no such test"
+        elif report is None:
+            status = "in the branch; close's test run gives its result"
+        elif "short test summary info" not in report:  # another runner, or no run
+            status = f"no single test results; {report.splitlines()[0]}"
+        else:
+            outcomes = {outcome for outcome, node in ran if _ran(name, node)}
+            status = ("failed in close's run" if outcomes - {"PASSED"} else
+                      "passed in close's run" if outcomes else "not run")
+        lines.append(f"- {name}: {status}")
+    return f"{proof}\n\nForge's check of each named test:\n" + "\n".join(lines) if lines else proof
 
 
 def _bullets(items: Any) -> str:

@@ -10,6 +10,7 @@ from test_worker import calls, install_claude
 
 STORY = "FIX-REVIEWS-FIND-MISSING-CASES-TWO-OR-THREE"
 WORKER_RULE = "each Done-when item you cover and every detail next to the test or check that proves it, or marked `missing`"
+NAMES_RULE = "Name each test by its pytest node ID or file and write no test results"
 REVIEW_RULE = "Check every entry against the code and its named proof, including every Done-when detail"
 
 
@@ -54,6 +55,7 @@ def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypat
     for host in (".codex", ".claude"):
         skill = flat((where / host / "skills/forge/SKILL.md").read_text("utf-8"))
         assert WORKER_RULE in skill
+        assert NAMES_RULE in skill
         assert REVIEW_RULE in skill
     repo.git("add", "-A", cwd=where)
     repo.git("commit", "-q", "-m", "Configure proof guidance", cwd=where)
@@ -62,6 +64,7 @@ def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypat
     brief = flat(calls(log)[-1]["brief"])
     assert "Proof list:" in brief
     assert WORKER_RULE in brief
+    assert NAMES_RULE in brief
     assert "pull request" in brief
 
 

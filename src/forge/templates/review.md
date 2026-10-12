@@ -77,6 +77,9 @@ The worker's latest commit supplies this list, which Forge copies into the pull 
 
 $proof_list
 
+Forge, not the worker, writes the status next to each named test. `not run: no such test` means
+the branch has no such test; a test in the branch gets its result from close's test run.
+
 On every round, check the whole list, not a sample. Check every entry against the code and its
 named proof, including every Done-when detail; compare it with the covered items above so an
 omitted item or detail cannot hide a gap. Report every missing case you find in this round, even
