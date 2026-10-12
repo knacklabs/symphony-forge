@@ -40,7 +40,7 @@
     "id": "60d94a76-bcdb-44e2-a102-ee5102eafd9f",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T12:45:31.934037+00:00",
@@ -61,7 +61,16 @@
   ],
   "stop": {
     "at": "2026-10-12T16:40:11.365433+00:00",
+    "by": "default",
+    "choice": "narrow",
     "file": "src/forge/nextstep.py",
-    "wait_id": "f87bd72d-d9e6-4eea-8931-c4ad720481f9"
+    "fixes": [
+      "review-finding-left-open-by-forge-board",
+      "review-finding-left-open-by-forge-board-2",
+      "review-finding-left-open-by-forge-board-3"
+    ],
+    "reason": "Nobody answered in 30 minutes; the repo's default narrows the part to its Done-when lines and files each open finding as a follow-up fix",
+    "wait_id": "f87bd72d-d9e6-4eea-8931-c4ad720481f9",
+    "worker_round": null
   }
 }
