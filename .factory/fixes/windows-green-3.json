@@ -2,12 +2,37 @@
   "base": "3545316f0af3c8b1125007b1ac394e5437d61b0d",
   "branch": "fix/windows-green-3",
   "done_when": "The merge stub commits its message from stdin and the boundary stub reads stdin as UTF-8, so the pull-request body tests pass on Windows as on Linux",
+  "flagged": [
+    "tests/test_last_task_records_story_outcome.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "951c1a57738a7714cfcc6956c261795e0e31a68a5ddb7baefa4afb2b84f2baa8",
+    "changed": "c9ed52f1eee6a41e304f56d9fa0b32bef9c834dd3ecf6d85c37d40837b769f76",
+    "commit": "327806a444098ece44c2f6682913bb38e6eac821",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Gate. The proof list says the Windows outcome is proven by main's full run after merge, but `.github/workflows/forge-next.yml` runs the full suite on Linux only for pushes to main. Pull-request tests in `.github/workflows/forge.yml` also use Ubuntu; the Windows pull-request job runs only an installer test. Neither named pull-request body test has the claimed Windows check behind it, so the Windows proof is hollow.",
+        "file": "tests/test_last_task_records_story_outcome.py",
+        "line": 46,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "7e4fb421-1196-4d83-8b7e-8e2cc227b603",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T14:35:40.292577+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T14:39:07.736189+00:00",
+      "step": "review"
     }
   ],
   "why": "The pull-request body tests fail on Windows: one stub commits a 65 KB message on the command line, past Windows' limit, and another reads stdin with the Windows code page"
