@@ -294,7 +294,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 #   A Codex round would run as the session's own subagent, so a test that builds on Codex through
 #   the kit says so with the `claude_session` fixture; a test that needs no session deletes both.
 # - No Forge run around it: every FORGE_ variable (worker marker, test budget, pinned release,
-#   checkout forwarding, waits) is unset; a test that needs one sets it.
+#   checkout forwarding, waits) is unset; a test that needs one sets it. FORGE_LIVE_CODEX stays:
+#   it is the real-Codex opt-in, set only by the codex-smoke workflow.
 # - No tool overrides: CODEX_BIN, CLAUDE_BIN and AUTOREVIEW are unset; a stub sets its own.
 # - No outer git: every GIT_ variable is unset (they leak in when tests run inside a git hook);
 #   the `repo` fixture gives git its own config.
@@ -303,7 +304,7 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in list(os.environ):
-        if name.startswith(("GIT_", "FORGE_")) or name in (
+        if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
