@@ -27,23 +27,15 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ffc096ed1629c7f0c082ed8d0b134249590964aaf566acc78152760da04243f5",
-    "changed": "7dadb5530cf096ae66281da551b3cfcb9471662394fca686d48f2aa108986cc2",
-    "commit": "ce650a838d492014b6eb5b76fc616f17906f81c0",
+    "branch_diff": "ed9fee14669464c9c7c658e4a4f3bf9fe9baca2e7088508f4689788efdfd8ccb",
+    "changed": "c060d94f6d1bfc969a9ff54e39516cc2eb96b81eb54eefc709fd2dc8c06e752a",
+    "commit": "0e4d842b033c0455564415659df970b52a3617f2",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The changed command gives the full-suite matrix 270-second faulthandler and 300-second per-test limits on Windows, but the `windows-installers` job in this workflow also runs pytest on `windows-latest` and still uses 120 and 150 seconds (lines 20\u201326). `tests/test_ci_hang.py` continues to assert those old limits for that job. Thus a Windows test run misses the named limits.",
-        "file": ".github/workflows/forge-next.yml",
-        "line": 96,
-        "priority": "P1",
-        "title": "Not done: Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for"
-      }
-    ],
-    "id": "79637bcc-7b34-45fc-a1b6-b737b2cc8b69",
-    "status": "blocked"
+    "findings": [],
+    "id": "fc3a874d-26f3-4147-9264-64dc4cea4ffe",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T07:22:02.045364+00:00",
@@ -55,6 +47,10 @@
     },
     {
       "at": "2026-10-12T08:29:05.660726+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T08:32:13.937988+00:00",
       "step": "review"
     }
   ],
