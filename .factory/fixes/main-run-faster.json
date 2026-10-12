@@ -16,41 +16,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b4f85d3705cea684c71fc3e72f79ac75c0c3442f4f856b2b394993d3bd241654",
-    "changed": "c25137b4cd0638f3d8f8a3bb1ed4ca20e9fa4690bb2419ab21196db7a99325b7",
-    "commit": "1c566e94f13cede91bd26a4d3a2c45f06ed7f5b6",
+    "branch_diff": "675a47b5772863bbe9814285c6edd2e8a5b2e973297d471625521235c3802b39",
+    "changed": "1ec73d29e88a396e8f1d6b7160ad2f2facd827c734f4841458a4018bb1358797",
+    "commit": "c029a3cd9749eea7182a24f99c9ff3dd788cfb57",
     "dismissals": [],
     "findings": [
       {
-        "body": "chunk 1/2:\n\nRaise: Not done. Nightly, manual, or release-tag runs can skip every platform group. The tests job uses `.forge/review-tests.py` before pytest. Its lines 17\u201359 return `reuse=true` when the current commit changes only a close record and its parent has a successful push run; the pytest step then skips. With this change, that parent push proves only Linux, so a scheduled or on-demand run on such a main head can report success without running macOS or Windows. The named matrix test does not exercise this reuse path.",
+        "body": "chunk 2/2:\n\nRaise: Functional. The normal release procedure now stalls before tagging. docs/guide.md:319\u2013321 tells maintainers to confirm that the merge commit\u2019s `forge-next` run on main passed the full Linux, Mac and Windows matrix. This changed matrix gives main pushes only the Linux groups, so that required result cannot exist. The guide needs to direct maintainers to a full run that this workflow actually starts.",
         "file": ".github/workflows/forge-next.yml",
-        "line": 11,
+        "line": 56,
         "priority": "P1",
-        "title": "Not done: A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags"
-      },
-      {
-        "body": "chunk 1/2:\n\nRaise: Test. The named timing proof does not fail when the timing file stops covering today's suite: it silently filters collected node IDs to those present in the file, then uses an average for missing IDs. It also inspects only group 1 for each platform and never compares group estimates. Removing most timing entries or badly skewing another group can leave this test green despite breaking the Done-when timing requirement.",
-        "file": "tests/test_ci_job_budgets.py",
-        "line": 73,
-        "priority": "P1",
-        "title": "Not done: timing file coverage and group balance test"
-      },
-      {
-        "body": "chunk 1/2:\n\nThe proof list says a tag run is never cancelled, but tag pushes to the same ref share this concurrency group. GitHub [cancels an existing pending run](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency) when another enters the group even with `cancel-in-progress: false`. If a release tag is pushed again while its earlier run is queued, that queued run is cancelled. The named test compares only one tag run with a main run.",
-        "file": ".github/workflows/forge-next.yml",
-        "line": 17,
-        "priority": "P2",
-        "title": "Follow-up: repeated pushes of one release tag can cancel a queued tag run"
-      },
-      {
-        "body": "chunk 2/2:\n\nRaise: Test \u2014 The named timing proof checks only group 1 and calculates its expected duration using the same fallback average that pytest-split uses for missing entries. It never asserts that every collected test has a timing entry or compares the estimated durations of the other groups. Removing timing entries or making later groups uneven could therefore leave this test green, so the Done-when requirement that today's suite is covered and each platform's groups take about the same time lacks effective proof.",
-        "file": "tests/test_ci_job_budgets.py",
-        "line": 30,
-        "priority": "P1",
-        "title": "Not done: test timing coverage and balance across every platform group"
+        "title": "Release instructions require a full main run that no longer exists"
       }
     ],
-    "id": "7e63f60b-b032-4c29-99e0-7fd23639c5e0",
+    "id": "3696e952-3ee4-41ff-be26-67482dec80e4",
     "status": "blocked"
   },
   "status": "fixing",
@@ -61,6 +40,10 @@
     },
     {
       "at": "2026-10-12T08:07:39.268216+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:24:48.833560+00:00",
       "step": "review"
     }
   ],
