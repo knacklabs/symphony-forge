@@ -286,6 +286,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         tree = trees.get(branch)
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
+        state = nextstep.at_ref(top, item, state, pr) if kind != "story" else state
         checks, events, failures = _checks(pr, cfg["checks"])
         plan_text = ""
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
@@ -302,7 +303,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                                               readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
                 lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
-        review = nextstep.reviewed(top, item, state, pr) if kind != "story" else state.get("review") or {}
+        review = state.get("review") or {}
         dismissed = {d.get("finding") for d in review.get("dismissals", [])
                      if isinstance(d, dict)}
         findings = [{"title": f.get("title") or "Untitled finding", "priority": f.get("priority")} for n, f in

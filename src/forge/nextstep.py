@@ -654,15 +654,17 @@ def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
     return head
 
 
-def reviewed(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | None = None) -> dict[str, Any]:
-    """The review board and next show: the state's copy at `review_ref`, the local one when that is
-    the local branch."""
+def at_ref(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The item's state as board and next read it: the copy at `review_ref`, so its status,
+    findings and round match readiness; the local copy when that is the local branch."""
     branch = state.get("branch")
-    ref = review_ref(top, branch, pr) if branch else ""
+    if not branch or state.get("status") in ("merged", "done"):
+        return state
+    ref = review_ref(top, branch, pr)
     if not ref or ref == _commit(top, f"refs/heads/{branch}"):
-        return state.get("review") or {}
+        return state
     there = story.json_of(story.show(top, ref, repo.state_path(item)))
-    return (there.get("review") if there else state.get("review")) or {}
+    return {**there, "branch": branch} if there else state
 
 
 def default_due(top: Path, state: dict[str, Any]) -> bool:
@@ -693,6 +695,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if held := _native_round(top, item, label, "Build"):
         return held
     pr = (prs or {}).get(state.get("branch", "")) or {}
+    state = at_ref(top, item, state, pr)
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks, pr=pr)
     status = status or "started"
@@ -754,7 +757,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
               "reason": str(state.get("reason") or "it has serious findings or red checks").rstrip(".")}
     if status == "fixing":
         findings = [f.get("title", "a serious finding") for _, f in
-                    review.blocking(reviewed(top, item, state, pr)) if isinstance(f, dict)]
+                    review.blocking(state.get("review") or {}) if isinstance(f, dict)]
         if findings:
             values["reason"] = "; ".join(findings)
     if status == "ready" and not pr.get("url") and state.get("branch") and shutil.which("gh"):

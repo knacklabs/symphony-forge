@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 import conftest
-from test_close import STORY_DOC, approve_story, body, env  # noqa: F401
+from test_close import STORY_DOC, approve_story, blocked, body, env, finding  # noqa: F401
 from test_board_github_once import github_read_once
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER, worktree
@@ -97,11 +97,14 @@ def expected(previous, *, ready=1, progress=1):
             "finished_last_7_days": {"parts": 1, "fixes": 1 + previous}}
 
 
-@pytest.mark.parametrize("case", ["counts", "github-once", "approved-not-started"])
+@pytest.mark.parametrize("case", ["counts", "github-once", "approved-not-started", "newer-findings"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, monkeypatch, previous, case):
     if case == "github-once":
         github_read_once(env, monkeypatch, previous)
+        return
+    if case == "newer-findings":
+        newer_findings(env, monkeypatch, previous)
         return
     if case == "approved-not-started":
         approved_not_started(env, previous)
@@ -279,3 +282,40 @@ def approved_not_started(env, previous):
     env.commit(worktree(env.repo, "story/CART"), "plans/CART.md",
                ONE_PART.replace("come back to it", "come back to it later"))
     assert rows(board(env.repo))["CART"]["state"] == "planning"
+
+
+def newer_findings(env, monkeypatch, previous):
+    """Board and next read an item's findings and round at the pull request's head, so an older
+    worktree here shows what the newer review on another machine found."""
+    client(env, previous)
+    configure(env, "human")
+    item, _ = env.start_fix(round=1)
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    github(env, [ready_pr(env, item, f"fix/{item}")])
+    machine_a = env.repo.path
+    machine_b = env.tmp / "findings-machine-b"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(machine_b))
+    env.repo.path = machine_b
+    resumed = env.tmp / "findings-worktree-b"
+    env.repo.git("worktree", "add", "-q", "-b", f"fix/{item}", str(resumed), f"origin/fix/{item}")
+    env.commit(resumed, "app.py", "print('newer')\n")
+    record = resumed / ".factory/fixes" / f"{item}.json"  # a second worker round, as forge work starts it
+    env.commit(resumed, record.relative_to(resumed).as_posix(),
+               json.dumps({**json.loads(record.read_text("utf-8")), "round": 2, "status": "working"}))
+    env.reviews(blocked(finding("P1", "Basket disappears")))
+    stopped = env.close(item)
+    assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    newer = json.loads(env.repo.git("show", f"origin/fix/{item}:.factory/fixes/{item}.json"))
+    github(env, [ready_pr(env, item, f"fix/{item}")])
+    clock(monkeypatch, datetime.now(timezone.utc) + timedelta(minutes=2))
+
+    env.repo.path = machine_a
+    local = json.loads(env.repo.git("show", f"fix/{item}:.factory/fixes/{item}.json"))
+    assert local["round"] != newer["round"] and not local["review"]["findings"]
+    row = rows(board(env.repo))[item]
+    assert row["findings"]["titles"] == ["Basket disappears"]
+    assert row["round"] == newer["round"]
+    assert row["gates"]["review"]["status"] == "blocked"
+    following = env.repo.forge("next")
+    assert "Basket disappears" in following.stdout, following.stdout
