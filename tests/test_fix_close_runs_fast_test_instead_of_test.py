@@ -49,7 +49,7 @@ def test_2_close_runs_the_full_custom_command_when_fast_test_is_unset(env):
     assert closed.returncode == 0, closed.stderr
     # The recorded narrow restores full local execution for unsupported launchers.
     assert log.read_text("utf-8").splitlines() == ["full"]
-    assert "1 passed" in env.prompt()
+    assert "1 passed" in closed.stdout  # close reports the full run's result
 
 
 def test_3_the_generated_workflow_s_tests_job_still_runs_test(env):

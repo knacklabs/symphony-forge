@@ -1,0 +1,44 @@
+{
+  "branch": "task/FORGE-TOOLS-1-READS",
+  "chat": {
+    "approval": "cfc81a0c59c7e0dfa5cdf9a93d176cd9c217c3ccb5cc97f1dc76007ce0b55a05",
+    "claude": null,
+    "conversation": "01a1296f-5066-7491-9445-24fc6b6f14b4",
+    "head": "274b4bddbb5aa674c76ee1b2501339ed8bba6a96",
+    "start": "9073b3e31f7f4de6cf9cad4496ad99e1a3ac80dd"
+  },
+  "flagged": [
+    "src/forge/native.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fa9969366b9a6aa9b1873c6b5cae84fb1ea1e1a71cac860eb80429b14e42d243",
+    "changed": "e5a4ef6b467b3be120f720381a5248655c370c7848a2af95fb4f917dcf6be4f8",
+    "commit": "2259a97ec63eed7c1eae48152f5efdd0ee0fb60b",
+    "dismissals": [],
+    "findings": [],
+    "id": "40476792-affc-41c5-96e4-e6a591464aea",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T05:28:32+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T12:13:03.017940+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:27:33.428871+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:10:49.910170+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}

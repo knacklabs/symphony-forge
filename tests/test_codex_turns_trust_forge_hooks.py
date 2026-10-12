@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -78,6 +79,15 @@ def _refusal(named, path, command, item):
 def _stopped(calls, before):
     sent = [call.get("method") for call in _stub(calls)[before:]]
     return "hooks/list" in sent and not {"thread/start", "thread/resume", "turn/start"} & set(sent)
+
+
+def _canonical_checkout(repo, client, branch):
+    # Keep Forge's real item state while the hook provider lists the canonical checkout's hooks.
+    trees = repo.git("worktree", "list", "--porcelain", cwd=client).split("\n\n")
+    owner = next(Path(tree.splitlines()[0].removeprefix("worktree ")) for tree in trees
+                 if f"branch refs/heads/{branch}" in tree.splitlines())
+    repo.git("worktree", "remove", str(owner), cwd=client)
+    repo.git("checkout", "-q", branch, cwd=client)
 
 
 def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_turns(
@@ -226,39 +236,16 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     assert _stopped(calls, before)
 
 
-def test_4_forge_ask_refuses_a_project_codex_doesn_t_trust_before_codex_starts(
-        repo, monkeypatch, sdk_data):
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    _sync(repo, repo.path)
-    config = repo.path.parent / "codex-home" / "config.toml"
-    trusted = config.read_text(encoding="utf-8")
-    config.write_text("", encoding="utf-8")  # Codex trusts no project
-
-    asked = repo.forge("ask", "Where is the parser?", cwd=folder)
-
-    assert asked.returncode != 0
-    assert asked.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
-                            "Forge starts no Codex turn here.\nNext: forge doctor\n")
-    assert not calls.exists()
-
-    # Once Codex trusts it, the ask runs with Forge's hooks trusted for its thread.
-    config.write_text(trusted, encoding="utf-8")
-    monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")
-    answered = repo.forge("ask", "Where is the parser?", cwd=folder)
-
-    assert answered.returncode == 0, answered.stdout + answered.stderr
-    [start] = _sent(calls, "thread/start")
-    assert start["sandbox"] == "read-only" and start["config"]["hooks"] == _trusted(calls)
-
-
 @pytest.mark.parametrize("lifecycle", ["new", "adopted-on-v1.2.2"])
 def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_foreign_hooks(
-        repo, gh, tmp_path, monkeypatch, sdk_data, lifecycle):
+        repo, gh, tmp_path, monkeypatch, sdk_data, lifecycle, claude_session):
     client = _new_repo(repo, gh, tmp_path)
     if lifecycle == "new":
         made = repo.forge("init", cwd=client)
         assert made.returncode == 0, made.stdout + made.stderr
-        repo.git("checkout", "-q", "-b", "fix/hook-trust", cwd=client)
+        started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted", cwd=client)
+        assert started.returncode == 0, started.stdout + started.stderr
+        _canonical_checkout(repo, client, "fix/hook-trust")
     else:
         # Run the released command, rather than labelling today's generated files as old.
         (client / "README.md").write_text("# An existing app\n", encoding="utf-8")
@@ -271,7 +258,7 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
             cwd=client, capture_output=True, text=True, encoding="utf-8", timeout=120)
         assert made.returncode == 0, made.stdout + made.stderr
         repo.git("merge", "-q", "--ff-only", "fix/adopt-forge", cwd=client)
-        repo.git("checkout", "-q", "-b", "fix/upgrade-forge", cwd=client)
+        _canonical_checkout(repo, client, "fix/adopt-forge")
         config = client / "forge.toml"
         old = config.read_text(encoding="utf-8")
         assert 'version = "v1.2.2"' in old
@@ -297,7 +284,12 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
     hooks_file = client / ".codex" / "hooks.json"
     forge_own = hooks_file.read_text(encoding="utf-8")
 
-    asked = repo.forge("ask", "Where is the parser?", cwd=client)
+    # The removed question command is replaced here by the remaining read-only command.
+    doc = client / "docs/specs/hook-trust.md"
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    doc.write_text("# Hook trust\n", "utf-8")
+    monkeypatch.setenv("STUB_CODEX_TEXT", "1. Read-only trust boundary response.")
+    asked = repo.forge("read", "hook-trust", cwd=client)
 
     assert asked.returncode == 0, asked.stdout + asked.stderr
     assert {hook["eventName"] for hook in _listed(calls)} == {
@@ -306,16 +298,24 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
     assert start["config"]["hooks"] == _trusted(calls)
     assert len(_sent(calls, "turn/start")) == 1
 
+    # Settle the service response so subsequent reads reach the hook trust guard.
+    notes = client / "docs/specs/hook-trust.read.md"
+    text = notes.read_text(encoding="utf-8")
+    notes.write_text(text.replace("1. Read-only trust boundary response.",
+                                 "1. Read-only trust boundary response.\n"
+                                 "   Disposition: defer - This service response only exercises hook trust."),
+                     encoding="utf-8")
+
     for text, named in _edits(forge_own)[1:]:
         hooks_file.write_text(text, encoding="utf-8")
         before = len(_stub(calls))
         status = repo.git("status", "--porcelain", cwd=client)
         trust = config.read_text(encoding="utf-8")
 
-        stopped = repo.forge("ask", "Where is the parser?", cwd=client)
+        stopped = repo.forge("read", "hook-trust", cwd=client)
 
         assert stopped.returncode != 0
-        assert stopped.stderr == _refusal(named, hooks_file, "ask", "ask")
+        assert stopped.stderr == _refusal(named, hooks_file, "read", "hook-trust")
         assert _stopped(calls, before)
         assert hooks_file.read_text(encoding="utf-8") == text
         assert repo.git("status", "--porcelain", cwd=client) == status

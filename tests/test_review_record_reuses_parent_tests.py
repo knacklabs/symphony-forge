@@ -21,7 +21,7 @@ def suite_runs(workflow, reuse):
                          maxsplit=1, flags=re.M)[0]
     steps = re.split(r"^      - ", tests_job, flags=re.M)[1:]
     [suite] = [step for step in steps if step.startswith("run:")
-               and ".forge/review-tests.py" not in step]
+               and ".forge/review-tests.py" not in step and "npm exec" not in step]
     condition = re.search(r"^        if: steps\.parent-tests\.outputs\.reuse != '([^']+)'$",
                           suite, re.M)
     assert condition, "The suite step must use the parent-tests output"

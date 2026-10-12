@@ -42,7 +42,7 @@ def _isolated_home(isolated_codex_home):
 @pytest.mark.skipif(os.environ.get("FORGE_LIVE_CODEX") != "1" or not (ENV / "forge-sdk-ready").is_file(),
                     reason=f"calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK {PIN} "
                            f"installed in {ENV} (forge doctor --fix installs it)")
-def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
+def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path, claude_session):
     real_home = REAL_CODEX_HOME
     test_home = Path(os.environ["CODEX_HOME"])
     assert test_home != real_home and test_home.is_dir()
@@ -58,7 +58,7 @@ def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
 
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "codex"\n'
-               '[models.lite]\nmodel = "gpt-6-sol"\neffort = "low"\n')
+               '[models.grill.codex]\nmodel = "gpt-6-sol"\neffort = "low"\n')
     real_before = json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)}))
     configured_before = json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)}))
     smoke = subprocess.run(
@@ -67,12 +67,16 @@ def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
         env={**os.environ, "HOME": str(other_user_home), "CODEX_HOME": str(configured_home),
              "XDG_DATA_HOME": str(ENV.parents[2])})
     assert smoke.returncode == 0 and "1 passed" in smoke.stdout, smoke.stdout + smoke.stderr
-    # Codex runs project hooks only in a project it trusts, so Forge asks only there.
+    # Codex runs project hooks only in a project it trusts, so Forge reads only there.
     (test_home / "config.toml").write_text(
         f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
-    asked = repo.forge("ask", "Reply with just OK.")
+    # Native questions have no Forge command; use the remaining read-only command to prove
+    # isolation. Its persistent chat is allowed inside the test's own Codex home.
+    repo.git("checkout", "-q", "-b", "fix/isolated-reader")
+    repo.write("docs/specs/isolation.md", "# Keep the test conversation isolated\n")
+    asked = repo.forge("read", "isolation")
     assert asked.returncode == 0, asked.stdout + asked.stderr
     assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})) == real_before
     assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)})) == configured_before
-    ask_threads = json.loads(_sdk(THREADS))
-    assert ask_threads == []
+    read_threads = json.loads(_sdk(THREADS))
+    assert read_threads
