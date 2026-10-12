@@ -4,45 +4,39 @@
     "docs/specs/codex-chat-view.read.md",
     "src/forge/land.py",
     "src/forge/native.py",
-    "src/forge/repo.py"
+    "src/forge/repo.py",
+    "tests/test_tools_native_work.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a72f96778802694cbdf913166fbed3af6609f5c4ade5b82d86981c7794d8574a",
-    "changed": "f6e2ded20f59e352dd40a1e11980bfedeb29937a1705fd12075c0f5b17e5d90f",
-    "commit": "2c5c47fa1206915197287eef8e0efb2d9c38f8a3",
+    "branch_diff": "4d8f7fc143b4ee061d646b4c8c9ad23d6f5b8e271644e2d2a03123b438a6802f",
+    "changed": "84665736639e61085b7ac6a6420e46162e50c7ead840a08fe9b554af55268cda",
+    "commit": "5458682e0b06f044c245426604f4a90f5cda1e37",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. `check_pin` parses the current `forge.toml` at line 668 before the new handback branch reads the pin from the handout's HEAD. If a native subagent leaves an uncommitted malformed edit to `forge.toml` and handback runs from the item's checkout, parsing refuses the command before handback can restore the file. The named restore behavior therefore fails for that edit.",
-        "file": "src/forge/repo.py",
-        "line": 669,
-        "priority": "P1",
-        "title": "Not done: handback restores an invalid forge.toml edit"
-      },
-      {
-        "body": "Raise: Not done. Handback records a timing here, but neither handout nor handback records the promised `run end` event. `machine.leave` only removes the lane entry; kit runs use `repo.record_run` to write their start and end events. Native rounds therefore lack the usual finished-run record, and the new test checks timing without checking that event.",
+        "body": "Raise: Functional. Handback records the worker question locally but never refreshes an existing pull request. The kit path refreshes the PR after a question in `src/forge/worker.py:325`. If a native round asks a question after publication, collaborators reading the PR see stale history until a later command refreshes it.",
         "file": "src/forge/native.py",
-        "line": 236,
+        "line": 231,
         "priority": "P1",
-        "title": "Not done: record the native build run end"
+        "title": "Published pull requests miss native worker questions"
       },
       {
-        "body": "Raise: Not done. On the next `forge land` call after a successful handback with no work commit, the item's HEAD is still the `item is working` status commit. The condition at lines 42\u201345 calls `_handed_out` again, which starts another native build round instead of reaching close. The named after-handback behavior works in the new test only because its subagent commits a file.",
-        "file": "src/forge/land.py",
-        "line": 47,
+        "body": "Raise: Test. The named command proof sets `repo = \"forge-source\"` and exercises only a fresh checkout. The adopted-repo role and guide tests never run client `forge work` through `forge handback`. Native routing, restoration, and landing could break in a new or earlier-adopted client while this proof passes, contrary to the repository's client-coverage rule.",
+        "file": "tests/test_tools_native_work.py",
+        "line": 40,
         "priority": "P1",
-        "title": "Not done: land proceeds to close after a handed-back round with no commit"
+        "title": "Not done: native work in new and earlier-adopted client repos"
       },
       {
-        "body": "Raise: Gate. This change replaces metadata in `docs/specs/codex-chat-view.read.md`, which is outside the allowed paths and is unrelated to the native build-round work. It is not the FORGE-TOOLS-1 story's read notes, which the scope rule excludes from this check.",
-        "file": "docs/specs/codex-chat-view.read.md",
-        "line": 5,
+        "body": "Raise: Test. This test reads the whole brief but never the short brief, checks `forge next` but not the running board, and supplies only trusted Codex settings and nonempty handbacks. It also commits before the second handback. It would therefore pass if the short brief were missing, the board omitted the round, native Codex skipped its trust check, empty stdin failed to record a failed round, or a second handback with leftover changes omitted its warning. Done-when 3 names each behavior.",
+        "file": "tests/test_tools_native_work.py",
+        "line": 68,
         "priority": "P1",
-        "title": "Gate: unrelated cold-read notes changed outside Scope"
+        "title": "Not done: native work's named handout and failure outcomes have proof"
       }
     ],
-    "id": "e7e523b1-3666-4b44-9145-0303b592d76f",
+    "id": "3506fa9c-96e5-4006-ad07-66c14f8f359d",
     "status": "blocked"
   },
   "status": "fixing",
@@ -53,6 +47,10 @@
     },
     {
       "at": "2026-10-12T09:23:37.202265+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T13:13:24.996605+00:00",
       "step": "review"
     }
   ]
