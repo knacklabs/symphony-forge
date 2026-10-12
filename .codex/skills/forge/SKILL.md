@@ -146,6 +146,11 @@ The session holds the item's lock and machine place until handback or the sessio
 `forge stop` frees Forge's hold; stop the subagent in your session too. Stale rounds record nothing.
 Forge checks for changed files, numbers and records findings. Init and upgrade deliver the reader role.
 
+**Native build rounds.** `forge work` and `forge land` print the role (`worker`, `fixer` for a fix,
+`frontend` for design work), the model to start it on (over the role's own), the checkout and the brief. Pipe its last message to
+`forge handback <item> --round <n> --subagent <id>`; send any printed nudge, then hand back again.
+Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land` or `forge close`.
+
 **Upgrade first.** Older Forge refuses the `tools` key. Follow Upgrade Forge before adding it.
 New repos get the setting's default at init; existing repos get this guide when the upgraded
 Forge syncs, keeping their settings as written.
@@ -235,10 +240,15 @@ parts, plain titles, labelled states and `waits_for` item references, including 
 dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
 distinguish merged, running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
-`stage_counts` counts each roadmap story and fix once, including recorded completed items;
-`kind_stage_counts` separates those totals into `stories` and `fixes`. Parts belong to their
-parent story's count. The page labels the two groups separately, with six totals each:
-needs a spec, planning, waiting for approval, building, ready to merge and done.
+Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
+`go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and
+fix row has one `state`, and `team.counts` counts each kind apart, finished ones included:
+`stories` (done, building, approved but not started, waiting for approval, planning, no plan yet),
+`parts` of approved stories and `fixes` (done, ready to merge, in progress, to do), and
+`finished_last_7_days`. A story is building only once one of its parts has started. Rows also
+carry `merged_at`, and `approved_by` is a name or null. The page prints the same totals.
+GitHub's pull request lists are read at most once a minute: the open ones and one search per
+week for the last six full weeks and this one.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
@@ -263,8 +273,13 @@ end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
 state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
-Tasks and fixes are ready only while close's clean-review receipt matches the
-branch's current commit and the pull request's checks are not failing. A failed
+Tasks and fixes are ready only while close's clean review matches the pull request's head
+(the local branch when it already holds that head) and the checks are not failing. The clean
+review is this machine's receipt or the readiness close published in the pull request, so every
+machine agrees. On a machine with no worktree for a ready item, its next step names the person
+who started it to merge it from their machine (or, in a human-merge repo, the pull request to
+merge); with the worktree here but no receipt, it is `forge close <item>`, which checks it again
+and writes the receipt that `forge merge` needs. A failed
 rerun shows `checks failed` with `forge work` as its next step, even after a successful
 close. A running rerun or unavailable checks retain a matching receipt's readiness;
 green checks alone cannot grant it. The item's next step uses the same evidence.
@@ -997,14 +1012,13 @@ Upgrade's sync commits earlier-release chat bindings in their owning work branch
 accepting reader findings. It also recovers turn logs when local JSON is missing, moved spec
 worktrees and workers on `forge/` branches. A landed spec's binding travels in the upgrade fix's existing notes.
 Sync never waits for other items' runs: it leaves the chat of an item whose `forge work` or
-`forge read` is running to that run, says so in one line, and refreshes everything else. A run
-on an earlier release doesn't save its own chat, so sync stops until it finishes.
-If several worktrees contain a moved spec and its reader notes, run `forge read <slug>` in its
-owning checkout, then sync again so Forge can preserve that binding without guessing the owner.
-For a log-only Codex spec read, sync asks Codex for the chat's starting commit; if Codex has none,
-run the read in its owning checkout before retrying sync.
-Keep `.git/forge` until the upgrade finishes. If those chat records have
-uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying.
+`forge read` is running to that run, says so in one line, and refreshes everything else.
+Sync writes every generated file first, then keeps chats. When it can't keep one (a run on an
+earlier release holds it, its record has uncommitted edits, several worktrees hold a moved spec,
+or Codex has no starting commit for a log-only spec read), it prints a warning that names the item,
+the reason and the next step. It leaves that chat on this machine only, so run `forge read <slug>`
+or `forge work <item>` on its own branch before you remove `.git/forge`.
+Keep `.git/forge` until the upgrade finishes.
 
 Codex app-server turns use the selected model's Fast tier for every fix, from the second worker
 round onward, or when other planned work waits on the item (the board's `waits_for` dependencies).
@@ -1133,6 +1147,13 @@ selection. Supported runners with no related tests run none locally. A red CI st
 the item back to the worker.
 To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
 `{base}` standing for the merge base with the default branch.
+Tests that check the whole repo, such as rules over every test file, name no changed file, so
+the pytest picker never picks them and they fail only in CI. List them in `always_test` in
+`forge.toml` (in a fix), as test files or pytest node IDs such as
+`tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
+them on every change, beside the tests it picks, even when it leaves a large selection to CI.
+Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
+entry that runs no test, for example because `-k` deselects it, fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
