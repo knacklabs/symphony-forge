@@ -206,9 +206,10 @@ variable. Do not animate keyboard-driven or very frequent actions.
 
 Close stopped on these. Before you change anything, open each finding's cited line and the code it
 calls. If a finding is wrong, change nothing for it and name the file:line that proves it wrong,
-so the coordinator can dismiss it. If it is right, fix every place the same rule applies. Add a
-test only where the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and
-make it fail without your fix; the review's test audit reports a test that proves nothing.
+so the coordinator can dismiss it. If it is right, fix every place the same rule applies, unless
+the coordinator's note says the part was narrowed and follow-up fixes own these findings: then
+remove what goes beyond the Done-when lines instead of fixing them here. Add a test only where
+the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and make it fail without your fix; the review's test audit reports a test that proves nothing.
 
 ### Open serious findings
 

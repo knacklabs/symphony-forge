@@ -5796,6 +5796,149 @@
       "item": "fast-mode-visible",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Follow-up fixes omit the finding's explanation\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 384,
+      "text": "Not done: Follow-up fixes omit the finding's explanation",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Open advice findings do not get follow-up fixes\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 379,
+      "text": "Not done: Open advice findings do not get follow-up fixes",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: The owner cannot reverse the default after automatic merge\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 109,
+      "text": "Not done: The owner cannot reverse the default after automatic merge",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: The stop does not resume unattended after 30 minutes\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 412,
+      "text": "Not done: The stop does not resume unattended after 30 minutes",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tReversing the default leaves its follow-up fixes active\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 109,
+      "text": "Reversing the default leaves its follow-up fixes active",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 612,
+      "text": "A repo setting change does not reach an already stopped item",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tThe recorded default disappears from next when the item is ready\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 671,
+      "text": "The recorded default disappears from next when the item is ready",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Shipped stop guidance forbids the required retry\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1228,
+      "text": "Not done: Shipped stop guidance forbids the required retry",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNarrowing instruction expires after one worker round\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 154,
+      "text": "Narrowing instruction expires after one worker round",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: The worker receives conflicting instructions about deferred findings\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 152,
+      "text": "Not done: The worker receives conflicting instructions about deferred findings",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tOwner reversal during an active worker round is ignored\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 159,
+      "text": "Owner reversal during an active worker round is ignored",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tThe owner's later split choice does not reach the worker\tstop-default-answer",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 151,
+      "text": "The owner's later split choice does not reach the worker",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_stop_default_answer.py\tNot done: proof list\tstop-default-answer",
+      "kind": "bug",
+      "path": "tests/test_stop_default_answer.py",
+      "line": 154,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

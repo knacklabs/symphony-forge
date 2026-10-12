@@ -324,6 +324,10 @@ def _blocked_once_then_clean(env):
 def _three_blocked_reviews_hold_the_fourth(env):
     # Previously land exhausted its fix budget after a fourth blocked review;
     # now close's any-file hold stops that review before Autoreview runs.
+    # An explicit off setting retains the human-only stop instead of the timed default.
+    toml = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
+    env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
     # A new finding each round: the same one twice would stop the worker sooner.
     env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2, 3)))

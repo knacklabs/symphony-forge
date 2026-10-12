@@ -1251,7 +1251,9 @@ Close holds the fourth review after three consecutive rounds blocked by serious 
 whatever files they were in. The existing same-file stop still applies from the third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
-Never re-run close or land past this stop until their choice is recorded.
+Run `forge land <item>` in the background after a close stop, or keep the current land running.
+With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
+default; it does not send the worker back while the stop is unanswered.
 After their answer, record it with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
@@ -1259,6 +1261,12 @@ of the latest review with the owner's reason and carries on without checking whe
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
 A clean review clears an unanswered review-loop stop.
+When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
+choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
+with that finding as its why. The running land records it and carries on without another
+command; the worker's next round narrows the part. A later close can also record an overdue default.
+The owner can reverse it later with the same `forge close <item> --resolve` command. To always
+wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 When two rounds in a row leave the same failing test or finding, `forge work` stops the item;
