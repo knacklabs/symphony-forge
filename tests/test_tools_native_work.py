@@ -191,7 +191,13 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
 
         # A round that commits its work and a forge.toml change, pin included, hands back from
         # the item's checkout: no nudge, and the settings change is reversed in a new commit.
-        _, _, number = handout("BOARD/HELP", "worker")
+        # forge.local.toml's model reaches the hand-out, which the role files can't carry.
+        local = "gpt-6-local" if tool == "codex" else "claude-local"
+        (repo.path / "forge.local.toml").write_text(
+            f'[models.build]\nmodel = "{local}"\neffort = "low"\n', "utf-8")
+        given, _, number = handout("BOARD/HELP", "worker")
+        (repo.path / "forge.local.toml").unlink()
+        assert f"Start it on {local} at low effort, over the role's own model." in given.stdout
         handed = repo.git("rev-parse", "HEAD", cwd=folder)
         (folder / "web/help.py").write_text("WORDS = {'done': 'Done'}\n", "utf-8")
         (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")

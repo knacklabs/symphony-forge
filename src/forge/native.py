@@ -142,6 +142,8 @@ def hand_out(top: Path, item: str, owner: dict[str, Any], entry: dict[str, Any],
            model=chosen, run_id=run_id)
     place = top.resolve().as_posix()
     print(f"Run this round as a background {role} subagent of this session, working in {place}.")
+    # forge.local.toml can change the model, and role files hold only forge.toml's.
+    print(f"Start it on {chosen['model']} at {chosen['effort']} effort, over the role's own model.")
     if resume:
         print(f"Continue subagent {resume} with: Read {short.as_posix()} and follow it.")
         print(f"If this session can't reach it, start a new {role} subagent with: Read "
