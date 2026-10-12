@@ -42,7 +42,18 @@
     "branch_diff": "71595bdf2539d21ffaca96d68fca895b1ad46dfbcd4535b2c46abf1184b7d4fb",
     "changed": "a882b6daa3aa464c608db1218b3482aeca5be3acc5939f476c04beb337e2e70c",
     "commit": "9479f8c26320185a1da10a26fc01a088357a67b7",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is settled by the corrected Done-when (a story's delivery is its What changes for you); finding 2 is fixed in commit 03cc9dc01 (titles go through plain())",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is settled by the corrected Done-when (a story's delivery is its What changes for you); finding 2 is fixed in commit 03cc9dc01 (titles go through plain())",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Raise: Not done. `read_question` takes a story's delivery from `What changes for you` and never reads `Done when`. Those sections can differ: the story fixture promises a saved-time display in its second Done-when item, but the named read test accepts a question that mentions only saving and returning to a basket. The owner can therefore be asked to choose without seeing what the item delivers.",
@@ -60,10 +71,10 @@
       }
     ],
     "id": "ba93810a-6d2d-4163-b818-5bf778c2361d",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -120,7 +131,9 @@
   ],
   "stop": {
     "at": "2026-10-12T03:12:38.495130+00:00",
+    "choice": "accept",
     "file": "src/forge/story.py",
+    "reason": "Owner rule for Harm 1-2: finding 1 is settled by the corrected Done-when (a story's delivery is its What changes for you); finding 2 is fixed in commit 03cc9dc01 (titles go through plain())",
     "wait_id": "d6a39f6f-7dd6-4afe-ade3-1f9463c29bac"
   },
   "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
