@@ -16,11 +16,11 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 
 
 @pytest.mark.parametrize("runner,count,minutes", [
-    # Two Ubuntu groups left one job at 7m39s, above the seven-minute target.
-    ("ubuntu-latest", 3, 10),
-    # Five macOS groups left one job at 7m16s, above the same target.
-    ("macos-latest", 6, 10),
-    ("windows-latest", 8, 20),
+    # Main's full run only, not the merge gate: groups ran past 10 minutes (Linux, macOS)
+    # and 18 of 20 (Windows) on 12 October, so the limits leave room for the suite to grow.
+    ("ubuntu-latest", 3, 20),
+    ("macos-latest", 6, 20),
+    ("windows-latest", 8, 35),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes, tmp_path):
     workflow = WORKFLOW.read_text(encoding="utf-8")
