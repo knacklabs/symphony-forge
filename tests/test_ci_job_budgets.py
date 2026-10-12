@@ -42,14 +42,17 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count
         budgets = [int(dispatch[2] if runner == dispatch[1] else dispatch[3])] * len(rows)
     assert budgets == [minutes] * count
     assert "--splits ${{ matrix.groups }} --group ${{ matrix.group }}" in tests_job
-    per_test = int(re.search(r"--timeout=(\d+)", tests_job).group(1))
-    assert per_test < min(budgets) * 60
-
-    # Exercise CI's actual pytest options: pytest-split silently uses equal
+    # Exercise CI's actual pytest options for this runner: pytest-split silently uses equal
     # weights when its timing file is missing, even with the right group counts.
     root = WORKFLOW.parents[2]
     command = next(line.strip() for line in tests_job.splitlines()
                    if line.strip().startswith("uv run "))
+    command = re.sub(r"\$\{\{ matrix.os == '([^']+)' && (\d+) \|\| (\d+) \}\}",
+                     lambda m: m[2] if runner == m[1] else m[3], command)
+    # Windows runners start processes slowly enough that a test needs over two minutes there.
+    stacks, per_test = (270, 300) if runner == "windows-latest" else (120, 150)
+    assert f"-o faulthandler_timeout={stacks} --timeout={per_test} " in command
+    assert per_test < min(budgets) * 60
     command = command.replace("${{ matrix.groups }}", str(count)).replace(
         "${{ matrix.group }}", "1")
     tokens = shlex.split(command)

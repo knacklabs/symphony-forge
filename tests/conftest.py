@@ -171,12 +171,12 @@ class Repo:
 
     def forge(self, *args: str, input: str = "", cwd: Path | None = None,
               ) -> subprocess.CompletedProcess[str]:
-        """Run the real forge command; stdin is empty unless given. Windows gets two minutes: its
-        heaviest commands (init, migrate, close) start hundreds of git processes, and starting a
-        process there under a parallel run's load took one past a minute."""
+        """Run the real forge command; stdin is empty unless given. Windows gets four minutes: its
+        heaviest commands (init, migrate, close) start hundreds of git processes, and on a hosted
+        Windows runner under a parallel run's load one took past two minutes."""
         return subprocess.run([sys.executable, str(self.bin / "forge"), *args],
                               cwd=cwd or self.path, input=input, capture_output=True, text=True,
-                              encoding="utf-8", timeout=120 if os.name == "nt" else 60)
+                              encoding="utf-8", timeout=240 if os.name == "nt" else 60)
 
     def write(self, rel: str, text: str) -> Path:
         path = self.path / rel
@@ -218,8 +218,9 @@ def _left(tmp_path: Path) -> list[str]:
         from test_lanes_agents import alive
 
         process = json.loads(marker.read_text("utf-8"))
-        # Windows process creation times use 100-nanosecond ticks since 1601.
-        before = (process["at_ns"] // 100 + 116444736000000000 if os.name == "nt"
+        # Windows process creation times use 100-nanosecond ticks since 1601; Python 3.11's clock
+        # there moves in 15.6 ms steps, so allow one step before the recorded time.
+        before = (process["at_ns"] // 100 + 116444736000000000 + 160_000 if os.name == "nt"
                   else process["at_ns"] // 1000000000)
         if process["pid"] != os.getpid() and alive(process["pid"], before):
             recorded.append(f'{process["pid"]} {marker}')
@@ -303,7 +304,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     # a helper removes a temporary clone; detached maintenance can still write its objects.
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
                          "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n"
-                         "[gc]\n\tautoDetach = false\n",
+                         "[gc]\n\tautoDetach = false\n[core]\n\tlongpaths = true\n",
                          encoding="utf-8")
     # The cold read runs on the family that isn't coordinating, which Forge tells from the variable
     # each app sets. Tests run as if Codex coordinates, so a read runs on the stub claude.
