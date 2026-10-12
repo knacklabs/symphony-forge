@@ -1438,8 +1438,8 @@
       "text": "Not done: doctor misses a shared model's built-in fallback after a local tool switch",
       "from": "blocking",
       "item": "personal-worker-choice",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor never removes its own fix\tFORGE-DOCTORFIX-1/FILES",
