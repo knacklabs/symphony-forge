@@ -998,8 +998,8 @@
       "text": "Not done: When two rounds in a row leave close's tests failing or the same review finding open, or a story part grows past its size limit,\u200b",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: a persistent failing test is missed when another failure changes\tstuck-worker-asks",
