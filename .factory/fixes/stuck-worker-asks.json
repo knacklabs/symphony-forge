@@ -22,44 +22,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d34c0b3e3d2215960ac1284307f326eeb6904c554e88217b3c090f344de889de",
-    "changed": "8e9bd3c1de5a9b627bff6e5d4b1a19a64b2622e5772c5bef29e1e1dc577028e0",
-    "commit": "c231b3dde2cbca64204cc59193973d2dbe5dc4aa",
+    "branch_diff": "02afb531be76b9e6e64b5998067330f3baef16bce69e670064a60442591cb639",
+    "changed": "d495e1869e872ddf2a334fea344f2a93d05c3a1e0a1157aa7d80026e46662beb",
+    "commit": "5f46a22ca82241922b95817a199edeb5c679c36b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. For a user-facing item with `tools = \"both\"` and split workers, a Codex round can be stopped and the owner can choose to switch to Claude. This line selects Claude, but the existing fallback at worker.py:217-228 runs Codex when Claude is unavailable and the checkout is unchanged. The next round therefore uses the tool the owner chose to leave. The named switch proof tests only Claude-to-Codex switching.",
-        "file": "src/forge/worker.py",
-        "line": 98,
-        "priority": "P1",
-        "title": "Not done: switching a design item to Claude can run Codex again"
-      },
-      {
-        "body": "Raise: Functional. After round A records a test ID, a round whose failed output contains only a summary takes this return path without clearing `stuck.keys`. If a later round reports A again, Forge counts two and asks the owner, although the two identified A failures were not in consecutive rounds. A normal example is a worker temporarily breaking test collection between two runs of the same test. The summary-only proof starts with no earlier identified failure, so it misses this sequence.",
+        "body": "Raise: Not done. For an oversized story part, the owner can record `same` and receive `Next: forge work`. If `forge close` is rerun before that work round, this condition sees the recorded choice and immediately creates another unanswered size question. The following `forge work` then refuses at close.py:473-475. The owner's choice therefore does not buy the promised next round. The size proof checks the initial question but does not cover a close rerun after the choice.",
         "file": "src/forge/close.py",
-        "line": 494,
+        "line": 170,
         "priority": "P1",
-        "title": "Not done: an unidentified failure does not break the consecutive-round count"
-      },
-      {
-        "body": "Raise: Not done. The `names or marked` selection discards every Jest, Vitest or unittest failure line whenever the same failing check output also contains one `FAILED ...::...` test ID. A combined repository test command can run both suites: if the ID-bearing failure changes while the same ID-less failure persists, Forge never counts the persistent failure twice or asks the owner. The named proofs run these output formats separately.",
-        "file": "src/forge/close.py",
-        "line": 485,
-        "priority": "P1",
-        "title": "Not done: mixed test output drops failures without IDs"
-      },
-      {
-        "body": "Raise: Not done. `review.test_run` retains only the last 30 ordinary output lines at review.py:397-404. A unittest failure with a traceback longer than that loses its `FAIL: test_a` header while retaining the generic `FAILED (failures=1)` summary. This parser finds no marked failure line, and the guard at close.py:493-498 never counts the same failing test across two rounds. The named unittest proof uses short synthetic output.",
-        "file": "src/forge/close.py",
-        "line": 484,
-        "priority": "P1",
-        "title": "Not done: long local test output hides repeated failures"
+        "title": "Not done: When two rounds in a row leave close's tests failing or the same review finding open, or a story part grows past its size limit,\u200b"
       }
     ],
-    "id": "e6ff42e8-b54a-4d0d-bfbc-ce627627696a",
+    "id": "fc99deea-347d-4559-8abe-db250eccd322",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -108,16 +87,16 @@
     {
       "at": "2026-10-12T03:02:52.790497+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:20:32.593436+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T02:13:29.458180+00:00",
-    "by": "owner",
-    "choice": "accept",
+    "at": "2026-10-12T03:20:32.603378+00:00",
     "file": "src/forge/close.py",
-    "reason": "Owner rule for Harm 1-2: both round-9 findings are fixed in commit ceaa0d634 (a rerun close with no worker round never counts; unittest FAIL and ERROR lines are keyed one per line), with tests",
-    "wait_id": "2ced4520-6e61-45a2-9f34-b11e1c0236c9",
-    "worker_round": null
+    "wait_id": "f7ee1cd2-3b3e-4e0e-8367-66674166d17a"
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }
