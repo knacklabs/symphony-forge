@@ -960,7 +960,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                     except ValueError:
                         event = None
                     if isinstance(event, dict):
-                        line = repo.claude_output(top, target, ran["run_id"], event)
+                        line = repo.claude_output(top, target, ran, event)
                         if event.get("type") == "result":
                             final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)

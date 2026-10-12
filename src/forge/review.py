@@ -33,6 +33,8 @@ HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autorevie
 PRIORITIES = ("P0", "P1", "P2", "P3")
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
+SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
+TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
@@ -82,7 +84,15 @@ elif "--tools" in argv:
     i = argv.index("--tools") + 1
     argv[i] = ",".join(filter(None, ["Read", "Grep", "Glob", argv[i]]))
     argv.append("--restricted")
-sys.exit(subprocess.call([{real!r}, *argv], cwd={tree!r}))
+# The engine's chat and token use go to a side file, as the helper keeps no copy.
+with open({spent!r}, "ab") as spent, subprocess.Popen(
+        [{real!r}, *argv], cwd={tree!r}, stdout=subprocess.PIPE) as engine:
+    for line in engine.stdout:
+        sys.stdout.buffer.write(line)
+        sys.stdout.buffer.flush()
+        if any(kind in line for kind in (b"thread.started", b"turn.completed", b"session_id")):
+            spent.write(line)
+sys.exit(engine.returncode)
 '''
 
 
@@ -692,7 +702,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
                                                 strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
-                    ran.update(selected)
+                    ran.update(selected, **_spent(tmp / SPENT))
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
@@ -827,6 +837,34 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     return findings, ""  # type: ignore[return-value]
 
 
+def _spent(path: Path) -> dict[str, Any]:
+    """The review engine's token use summed over its runs (a chunked review has one per pass,
+    a retry one more) and its first chat, read once: Codex's `exec --json` events or Claude's
+    results."""
+    runs: list[dict[str, Any]] = []
+    with contextlib.suppress(OSError):
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            usage = event.get("usage")
+            if event.get("type") == "thread.started":
+                runs.append({"chat": event.get("thread_id")})
+            elif event.get("type") == "turn.completed" and isinstance(usage, dict) and runs:
+                # Codex reports the thread's running total, so its last turn holds the run's use.
+                runs[-1].update({key: usage.get(key) for key in TOKENS})
+            elif event.get("type") == "result" and isinstance(usage, dict):
+                runs.append({"chat": event.get("session_id"), **repo.claude_tokens(usage)})
+        path.unlink()
+    if not runs:
+        return {}
+    return {"chat": runs[0]["chat"], **{key: sum(counts) if (counts := [
+        run[key] for run in runs if isinstance(run.get(key), int)]) else None for key in TOKENS}}
+
+
 def _finding(raw: Any) -> dict[str, Any] | None:
     """The fields Forge uses from one finding, or None when they can't be read."""
     where = raw.get("code_location") if isinstance(raw, dict) else None
@@ -848,7 +886,8 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     script = folder / f"{engine}_in_tree.py"
     from forge.codex import QUIET
     quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
-    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet), encoding="utf-8")
+    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet,
+                                      spent=str(folder.parent / SPENT)), encoding="utf-8")
     if os.name == "nt":
         launcher = folder / f"{engine}.cmd"
         launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")
