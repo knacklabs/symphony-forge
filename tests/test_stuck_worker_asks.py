@@ -19,7 +19,7 @@ STORY = "stuck-worker-asks"
 
 # The repo's test commands: pytest naming the same test every run, pytest failing test_a once
 # then test_b, Jest with the same failure but a different duration, Jest failing a different
-# test on each run, and Jest failing A and B once, then B and C.
+# test on each run, and Jest or unittest failing A and B once, then B and C.
 SUITES = {
     "pytest same": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
     "a then b": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
@@ -34,6 +34,10 @@ SUITES = {
                         'run.write_text("x")\n'
                         'print("  ✕ greets A (2 ms)\\n  ✕ greets B (4 ms)" if first else '
                         '"  ✕ greets B (5 ms)\\n  ✕ greets C (1 ms)")\nraise SystemExit(1)\n'),
+    "unittest ab then bc": ('import pathlib\nrun = pathlib.Path("{runs}")\nfirst = not run.exists()\n'
+                            'run.write_text("x")\n'
+                            'print("FAIL: test_a (t.T)\\nFAIL: test_b (t.T)" if first else '
+                            '"FAIL: test_b (t.T)\\nERROR: test_c (t.T)")\nraise SystemExit(1)\n'),
     "jest different": ('import pathlib\nrun = pathlib.Path("{runs}")\n'
                        'run.write_text(run.read_text() + "x" if run.exists() else "x")\n'
                        'print(f"  ✕ greeting case {{len(run.read_text())}} (3 ms)")\nraise SystemExit(1)\n'),
@@ -43,6 +47,7 @@ STUCK = {"pytest same": "the failing test test_readme.py::test_greeting",
          "a then b": "the failing test test_readme.py::test_b",
          "jest same": 'the failing check Tests on the close run ("✕ greets the reader")',
          "jest ab then bc": 'the failing check Tests on the close run ("✕ greets B")',
+         "unittest ab then bc": 'the failing check Tests on the close run ("FAIL: test_b (t.T)")',
          "finding": 'the review finding "Saving drops the greeting" in app.py',
          "no change": 'the review finding "Saving drops the greeting" in app.py'}
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
@@ -82,7 +87,8 @@ def _rounds(env, case):
 
 
 @pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest ab then bc",
-                                  "jest different", "finding", "finding then test", "no change"])
+                                  "unittest ab then bc", "jest different", "finding",
+                                  "finding then test", "no change"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
@@ -159,3 +165,20 @@ def test_4_clients_receive_the_stuck_worker_guidance(unsynced_up, adoption):
         assert "When two rounds in a row leave the same failing test or finding" in guide
         assert ('`forge close <item> --resolve <switch|same|narrow|split> --reason '
                 '"<human\'s choice>"`') in guide
+
+
+def test_5_a_rerun_close_without_a_round_counts_once(land):
+    env = land
+    script = env.tmp / "suite.py"
+    script.write_text(SUITES["pytest same"], "utf-8")
+    toml = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+               + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix()
+    # Work, close, close, work: no question; one more close and round: the question.
+    steps = ["work", "close", "close", "work", "close", "work"]
+    results = [env.repo.forge("work", item) if step == "work" else env.close(item) for step in steps]
+    worked = [result for step, result in zip(steps, results) if step == "work"]
+    assert [result.returncode for result in worked] == [0, 0, 1], worked[-1].stdout + worked[-1].stderr
+    assert worked[-1].stderr.splitlines()[-1] == NEXT

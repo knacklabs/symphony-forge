@@ -477,21 +477,22 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
     for label, text in failing:
         names = [name for line in text.splitlines() if "FAILED" in line
                  for name in re.findall(r"\S+::\S+", line)]
-        # Without test ids, each failed-test line (Jest ✕, Vitest ×) is one key, durations removed;
+        # Without test ids, each failed-test line (Jest ✕, Vitest ×, unittest FAIL: and ERROR:) is
+        # one key, durations removed;
         # otherwise the failure lines together are one. A failure with no such lines never counts.
         lines = [" ".join(re.sub(r"\(?\d[\d.]*\s*m?s\b\)?", "", line).split())[:200]
                  for line in text.splitlines() if re.search(r"fail|error|✕|×", line, re.I)]
-        marked = [line for line in lines if line.startswith(("✕", "×"))]
+        marked = [line for line in lines if line.startswith(("✕", "×", "FAIL:", "ERROR:"))]
         excerpts = marked or ([" / ".join(lines)[:200]] if lines else [])
         keys += ([f"the failing test {name}" for name in names] or
                  [f'the failing check {label} ("{excerpt}")' for excerpt in excerpts])
-    # Each failure counts the rounds in a row that left it; a cleared one drops out. A round with
-    # no close since the last one has no new test or review result, so it counts nothing.
+    # Each failure counts the rounds in a row that left it; a cleared one drops out. It counts only
+    # with both a new close and a worker round since the last count, so reruns count once.
     # ponytail: close events live on this machine; a round on another machine counts once more.
     stuck = state.get("stuck") or {}
     closed = next((e["id"] for e in reversed(time_records.read(top, "events"))
                    if e.get("item") == item and e.get("event") == "close result"), None)
-    if stuck and stuck.get("close") == closed:
+    if stuck and (stuck.get("close") == closed or stuck.get("round") == state.get("round")):
         if "question" in stop:
             state.pop("stop")
         return
@@ -502,7 +503,8 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
         state.pop("stop")
     elif same:
         stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
-    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "close": closed}
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "close": closed,
+                      "round": state.get("round")}
 
 
 def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
