@@ -584,7 +584,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             except ValueError:
                 event = None
             if isinstance(event, dict):
-                line = repo.claude_output(top, item, ran["run_id"], event)
+                line = repo.claude_output(top, item, ran, event)
                 if event.get("type") == "result":
                     final_result = line.rstrip("\n")
             if line:
