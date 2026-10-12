@@ -107,10 +107,14 @@ it and nothing else. In `src/forge/land.py`:
 1. Selection, from `story.worktrees(top)` with each branch's state (`repo.read_state`), as
    `close._worktree` reads it: every task and fix whose status is `reviewing`, `fixing`,
    `waiting for checks` or `ready`. Left out, and named in one line each: `started` and `working`
-   (still with a builder), a change whose pull request already merged, and a change with any
-   running or waiting entry in `machine.entries()` for this repo and item, of any kind: a worker,
-   a close's review or a test run already works on it, so the run never starts a second close on
-   it. A change in a review-loop stop (`hotspot`) goes straight to "Needs you" with its stop
+   (still with a builder), a change whose pull request already merged, and a busy change. Busy
+   means another command already works on it: it has a running or waiting entry in
+   `machine.entries()` for this repo and item (a worker, a review or a test run), or
+   `board.active_runs(top, item)` shows a run of any kind, `ci` included, with a start and no end.
+   `checks.wait` already records its wait as a `ci` run (`repo.record_run`), so a close or land
+   that waits only for CI counts as busy. A `ci` run whose start is more than an hour old counts
+   as ended, so a killed close never keeps its change busy for good. The run never starts a second
+   close on a busy change. A change in a review-loop stop (`hotspot`) goes straight to "Needs you" with its stop
    question, as item 4 says. Order: the run starts changes oldest first, by the commit that added
    the item's state file (the same `git log -1 --diff-filter=A` that `land.land` already runs),
    ties by name. Each child merges when its own close passes, so merges need not follow that
@@ -122,22 +126,27 @@ it and nothing else. In `src/forge/land.py`:
    `forge lanes --json`; with two or more places, two changes are in close at the same time; the
    run ends normally after the worktree it started in is removed. A fourth fix still `started` is
    named as left out and is not touched. A second `forge land --all` started while a live process
-   holds the lock refuses with the one-run message and changes nothing.
+   holds the lock refuses with the one-run message and changes nothing. A fifth fix whose events
+   show a `ci` run start with no end, from a minute ago, is named as busy and is not closed.
 2. Changed files of a change: `git diff --name-only -z --no-renames origin/<default>...HEAD` in its
-   worktree, as `land._rerun` reads them, less Forge's own record files: everything under
-   `.factory/`, the files `sync.files` generates and `docs/commands.md` (the set close's merge step
-   already treats as generated, `close.py` near line 635), and the files with Forge's merge rule
-   (`plans/roadmap.json`, `plans/spotted.json`, and `plans/spotted/` once FORGE-MAINONCE-1 lands).
-   Close writes these during a run and its merge step resolves them by itself, so they never make
-   a change wait. A change whose status is not `ready` is held while any older change in the run
+   worktree, as `land._rerun` reads them, less exactly two of Forge's own record paths:
+   `plans/spotted.json` and everything under `.factory/`. Close writes these during a run and its
+   merge step resolves them by itself, so they never make a change wait. Every other file counts,
+   generated or not (a user's Husky hook among them). FORGE-MAINONCE-1's per-change spotted files
+   need no exemption: each change writes only its own. Readiness is the one `forge next` uses,
+   `nextstep._item_readiness(item, state, top)`: a clean ready receipt whose commit matches the
+   branch head, and checks not failing. Close leaves a passed change's stored status at
+   `waiting for checks`, so the stored status alone never decides this. A change that is not ready
+   by that rule is held while any older change in the run
    that is still queued, held or in close shares a changed file with it. It goes on when each such
-   change merges or stops. A `ready` change is never held: it goes straight to merge, and a change
+   change merges or stops. A ready change is never held: it goes straight to merge, and a change
    already reviewed keeps today's rules for a new review. The held line names the older change and
    one shared file. In a repo where a human merges, nothing merges in the run, so the run holds
    nothing (item 5). Main comes into the released change through close's own rule; with
    FORGE-MAINONCE-1 that is only on a real clash. Test (one): fixes A (older) and B, neither
    reviewed yet, both edit one file on different lines, and fix C edits another; A and C also both
-   record a spotted line in close. B starts its close only after A's merge, which the `gh` stub's
+   record a spotted line in close. Fix D, closed to ready earlier (its receipt matches its head),
+   edits A's file and merges without a wait. B starts its close only after A's merge, which the `gh` stub's
    call log shows; C closes alongside A; B gets one review (one Autoreview call). In a second case
    A stops on a blocked review: B then closes and merges, and A is listed under "Needs you".
 3. Land's rule stays: the child's close path calls `land._rerun` on a red check (once per pushed

@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-12T16:57:39.014654+00:00
-seconds: 597.307
-read_hash: d196daf4c45e2c93cc34a35a1f46ac3c944a0bd5
-round: 1
+read_at: 2026-10-12T17:05:15.039495+00:00
+seconds: 214.223
+read_hash: 360dd27443554679546cb00f96914cd499144348
+round: 2
 passed: no
-doc_seen: d196daf4c45e2c93cc34a35a1f46ac3c944a0bd5
+doc_seen: 360dd27443554679546cb00f96914cd499144348
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: c6d268602e073547a6cbe17160ca02b170ad0471
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13103-5ad1-7cd2-bb82-fa7b99c4c937
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -72,5 +72,24 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Gate. [Plan:77](/plans/FORGE-QUEUE-1.md:77) uses `bad_item` when both forms are supplied. For `forge land valid-fix --all`, [repo.py:54](/src/forge/repo.py:54) says the valid fix name is invalid and directs the user to `forge next`. It does not identify the conflicting arguments or give the usable invocation, contrary to the repository's refusal rule. No proposed test covers either invalid combination.
    Gain 2, Work 1, Harm 1
    Disposition: cut - Gain 2, Work 1, Harm 1, below the bar but a one-line wording fix: the plan names a new refusal that says to give one change or --all, with both forms as the next step.
+
+No files changed; runtime tests were not run. These findings are from a static read.
+
+## Round 2
+
+9. Blocking: The ready bypass uses a stored status that close does not write.
+   Raise: Not done. [Plan:132](/plans/FORGE-QUEUE-1.md:132) exempts changes whose status is `ready`, using selection from `repo.read_state`. Successful close leaves that status as `waiting for checks` ([close.py:353](/src/forge/close.py:353)) and writes a separate ready receipt ([close.py:403](/src/forge/close.py:403)). Forge derives readiness from a matching receipt and head ([nextstep.py:637](/src/forge/nextstep.py:637)). The specified predicate therefore holds ordinary ready changes; the revised test exercises only unreviewed changes and misses this.
+   Gain 3, Work 2, Harm 2
+   Disposition: cut - Gain 3, Work 1, Harm 2: readiness is now `forge next`'s own rule (`nextstep._item_readiness`: a clean receipt matching the head, checks not failing), never the stored status; item 2's test adds a ready change that merges without a wait.
+
+10. Blocking: The new generated-file exemption includes user-owned Husky hooks.
+   Raise: Plan gap. [Plan:128](/plans/FORGE-QUEUE-1.md:128) excludes every file returned by `sync.files`, claiming this matches close's automatic conflict handling. That inventory includes Husky `pre-commit` and `pre-push` hooks ([githooks.py:87](/src/forge/githooks.py:87)), but close explicitly removes them because their remaining content belongs to the user ([close.py:636](/src/forge/close.py:636)). Two fixes changing the same user hook would close concurrently, contrary to Done-when 2. The spotted-record test does not cover this exclusion.
+   Gain 3, Work 2, Harm 2
+   Disposition: cut - Gain 3, Work 1, Harm 2: the exemption now names exactly `plans/spotted.json` and `.factory/`; every other file, Husky hooks included, counts as overlap.
+
+11. Blocking: The new busy-item exclusion cannot see a close waiting only for CI.
+   Raise: Functional. After review and local tests finish, their machine entries are released ([review.py:699](/src/forge/review.py:699), [review.py:474](/src/forge/review.py:474)), while close continues waiting in `checks.wait` ([close.py:387](/src/forge/close.py:387)). Its state remains `waiting for checks`, so [plan:111](/plans/FORGE-QUEUE-1.md:111) selects it without finding a machine entry. The new queue lock covers another `--all` parent, not an existing single-item close or land waiting for CI; the proposed second-run test cannot catch this phase.
+   Gain 3, Work 3, Harm 2
+   Disposition: cut - Gain 3, Work 2, Harm 2: busy now also means an open run of any kind in the item's events (`board.active_runs`), which covers the `ci` run that `checks.wait` already records; a `ci` start over an hour old counts as ended; item 1's test adds a change waiting on CI.
 
 No files changed; runtime tests were not run. These findings are from a static read.
