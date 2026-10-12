@@ -81,7 +81,10 @@ def test_1_close_stops_large_parts_unless_allowed_or_already_in_flight(env, case
             chosen = env.close(item, "--resolve", "same", "--reason", "Shrink it in one more round")
             assert chosen.returncode == 0, chosen.stdout + chosen.stderr
             again = env.close(item)
-            assert again.returncode == 1 and "Ask the human" not in again.stderr, again.stderr
+            assert again.returncode == 1
+            assert again.stderr.splitlines()[-2:] == [
+                "The owner's choice is recorded; the worker's next round follows it.",
+                f"Next: forge work {item}"]
             install_claude(env.repo)
             worked = env.repo.forge("work", item)
             assert worked.returncode == 0, worked.stdout + worked.stderr

@@ -63,6 +63,7 @@ REFUSALS = {
     "stuck": ("The worker can't get past the same problem, so Forge stopped sending it back. "
               "Ask the human:\n{question}",
               'forge close {item} --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'),
+    "chosen": ("The owner's choice is recorded; the worker's next round follows it.", "forge work {item}"),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
@@ -171,9 +172,7 @@ def close(args: argparse.Namespace) -> int:
             if not stop.get("question") or stop.get("choice") and stop.get("worker_round") != state.get("round"):
                 stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
                            f"over its limit of {limit}.", size=True)
-            raise repo.Refused(
-                f"This story part changes {lines} lines outside tests, over the limit of {limit}; "
-                'split it or record a reason with forge fix allow-large "<reason>".', "")
+            repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
     if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
         state.pop("stop")
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
