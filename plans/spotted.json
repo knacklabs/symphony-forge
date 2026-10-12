@@ -1134,6 +1134,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A pull request's title is the first sentence of the item's why",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A version-led second sentence remains in the PR title",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1178,6 +1200,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 963,
+      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: The owner cannot reverse the default after automatic merge\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1196,6 +1229,17 @@
       "text": "Not done: The stop does not resume unattended after 30 minutes",
       "from": "blocking",
       "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 639,
+      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
+      "from": "blocking",
+      "item": "merge-clash-names-files",
       "status": "open",
       "closed_by": null
     },
@@ -1761,6 +1805,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 296,
+      "text": "Not done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1790,6 +1845,17 @@
       "text": "Skip stale spec-reader records before resolving their document paths",
       "from": "blocking",
       "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tSuccessful sync can leave the only reader binding in disposable local records\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 296,
+      "text": "Successful sync can leave the only reader binding in disposable local records",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
       "status": "open",
       "closed_by": null
     },
@@ -6150,6 +6216,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_sync_in_any_worktree.py\tNot done: the command-level sync proof\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "tests/test_sync_in_any_worktree.py",
+      "line": 35,
+      "text": "Not done: the command-level sync proof",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: concurrent sync in new and adopted client repos\tsync-not-blocked",
       "kind": "bug",
       "path": "tests/test_sync_not_blocked_by_other_runs.py",
@@ -7492,6 +7569,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
+      "kind": "edge",
+      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
+      "line": 23,
+      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
+      "from": "review",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
       "kind": "edge",
       "path": "tests/test_fix_leftover_app_server_bare_command.py",
@@ -7697,61 +7785,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 964,
-      "text": "Not done: A pull request's title is the first sentence of the item's why",
-      "from": "blocking",
-      "item": "pr-title-whole-sentence",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 964,
-      "text": "Not done: A version-led second sentence remains in the PR title",
-      "from": "blocking",
-      "item": "pr-title-whole-sentence",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 963,
-      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
-      "from": "blocking",
-      "item": "pr-title-whole-sentence",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 639,
-      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
-      "from": "blocking",
-      "item": "merge-clash-names-files",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
-      "kind": "edge",
-      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
-      "line": 23,
-      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
-      "from": "review",
-      "item": "pr-title-whole-sentence",
       "status": "open",
       "closed_by": null
     }
