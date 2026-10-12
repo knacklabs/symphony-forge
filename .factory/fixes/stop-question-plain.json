@@ -16,32 +16,47 @@
     "src/forge/story.py",
     "tests/test_close_holds_after_three_blocked_reviews.py",
     "tests/test_land.py",
-    "tests/test_reads_wait_for_a_loop_choice.py"
+    "tests/test_reads_wait_for_a_loop_choice.py",
+    "tests/test_spec_reads_keep_full_scope.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "552fd8f593098a45c246f451defdc1145eec8334313523c0de3ef0d8f3329cad",
-    "changed": "0826f24392006f116be8a6911b52f6811c4100aa3891e74fe209a869d9242148",
-    "commit": "c23cef2c1f9fe2296b051ad1d793f509642d38a7",
+    "branch_diff": "a3af4a692a535ae45e88576d1c83c7075b6df0a6458f9085878edf3421f7f09f",
+    "changed": "095573b5e3a506052bda35fdced56be5c9e1e969d2faf01816f66f509781ab06",
+    "commit": "696249aab61dd8bbe90ee1022866e3733a7036dd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. With the default `stop_default = \"narrow\"`, a review-loop stop in `forge land` never prints its ready-to-ask question. Land catches the question-bearing refusal at `src/forge/land.py:55\u201360`; `_wait_for_choice` catches it again at lines 125\u2013131 and prints only a generic waiting message. This new print at line 85 covers a separate three-fix-round stop. The named close test sets `stop_default = \"off\"`, so it passes without exercising the default path.",
-        "file": "src/forge/land.py",
-        "line": 85,
-        "priority": "P1",
-        "title": "Not done: forge land omits the question during a review hold with the default setting"
-      },
-      {
-        "body": "Raise: Not done. `plain()` retains up to two sentences from a finding body and appends both to its title, so one blocker can occupy multiple sentences instead of the required one plain sentence saying what goes wrong for whom. The named read and close tests explicitly expect two-sentence blocker lines, so they pass while this Done-when detail remains unmet.",
+        "body": "Raise: Not done. The Done-when line requires one plain sentence per open blocker. `plain()` keeps two body sentences and appends them to the title. The close test expects one blocker to appear as \u201csaving drops the basket. Returning shoppers lose their saved items.\u201d, so the passing test confirms this unmet requirement. The proof-list note does not change the stated Done-when line; no allowance is recorded.",
         "file": "src/forge/review.py",
         "line": 223,
         "priority": "P1",
-        "title": "Not done: blocking notes and findings are not each one sentence"
+        "title": "Not done: blocker summaries still contain multiple sentences"
+      },
+      {
+        "body": "Raise: Not done. `read_question()` includes every non-advisory finding from the latest round without checking its disposition. After a third blocked read, a coordinator can mark one note `Disposition: cut` or `defer` before running `forge read` or `forge next`; both still present it as a problem for the owner to decide. The existing disposition rule treats those notes as settled (`story.py:729-737`), so the question no longer lists only open blocking notes.",
+        "file": "src/forge/story.py",
+        "line": 1009,
+        "priority": "P1",
+        "title": "Not done: stopped reads list notes that have been resolved"
+      },
+      {
+        "body": "Raise: Not done. The question prints a fix's raw `why` and `done_when` as its name and delivery. Normal fixes may name a source location, and Forge itself creates follow-up fixes whose `why` contains a finding's `file:line` (`close.py:405-407`). If such a fix reaches a review stop, the owner gets that path and review jargon instead of the promised plain-words description. Only blocker text passes through `plain()`.",
+        "file": "src/forge/review.py",
+        "line": 246,
+        "priority": "P1",
+        "title": "Not done: stopped fix questions can show paths as the item name"
+      },
+      {
+        "body": "Raise: Gate. The proof list names `test_spec_reads_keep_full_scope.py::test_3` as proof that a later-round spec stop prints the question. Its changed assertion checks only the introductory line and the final `Next:` line; it never checks the question between them. Removing the question while retaining \u201cin these words:\u201d would leave this named proof passing. The other read test checks a spec question, but does not make this proof-list entry true.",
+        "file": "tests/test_spec_reads_keep_full_scope.py",
+        "line": 43,
+        "priority": "P1",
+        "title": "Not done: proof list claims a spec-question assertion the named test lacks"
       }
     ],
-    "id": "a0302af2-114f-4353-b263-c37227908df6",
+    "id": "c914014b-4dd1-4095-9fd5-f31c7b370e03",
     "status": "blocked"
   },
   "round": 1,
@@ -77,6 +92,10 @@
     },
     {
       "at": "2026-10-12T00:37:20.263915+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:30:17.303777+00:00",
       "step": "review"
     }
   ],
