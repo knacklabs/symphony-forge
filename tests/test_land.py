@@ -388,6 +388,31 @@ def _blocked_red_blocked_red(env):
     assert _refusal(done) == ["Checks failed on the pull request: tests.", f"Next: forge work {ITEM}"]
 
 
+def _default_stop_shows_the_question_while_it_waits(env):
+    # With the default stop setting, land waits for the owner; advance only its clock.
+    _fix(env, "working", worked=True)
+    env.reviews(blocked(BLOCKER), blocked(BLOCKER), blocked(BLOCKER), CLEAN)
+    shim = env.repo.bin / "forge"
+    clock = """import os, time
+from datetime import datetime, timedelta, timezone
+def advance(seconds):
+    current = datetime.fromisoformat(os.environ.get('FORGE_NOW') or datetime.now(timezone.utc).isoformat())
+    os.environ['FORGE_NOW'] = (current + timedelta(seconds=seconds)).isoformat()
+time.sleep = advance
+"""
+    shim.write_text(shim.read_text().replace("from forge.cli import main", clock + "from forge.cli import main"))
+    done = _land(env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    waiting = lines.index("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
+                          "the repo's default applies.")
+    assert lines[waiting - 7:waiting - 4] == [
+        "Readme greets new readers: The readme opens with a greeting",
+        "It still has these problems:",
+        "- Saving drops the greeting: evidence for: Saving drops the greeting"]
+    assert lines.count("It still has these problems:") == 1
+
+
 def _findings_after_three_rounds_ask_a_question(env):
     _fix(env, "working", worked=True)
     # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
@@ -444,7 +469,7 @@ def _codex_question_stops(repo, monkeypatch, sdk_data, gh):
 
 TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_check_gives_a_fix_round,
        ("cancelled", "cancel"), ("skipped", "skipping"), _blocked_red_blocked_red,
-       _findings_after_three_rounds_ask_a_question,
+       _findings_after_three_rounds_ask_a_question, _default_stop_shows_the_question_while_it_waits,
        _dismissed_before_land, _codex_question_stops]
 
 

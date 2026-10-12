@@ -126,6 +126,7 @@ def _wait_for_choice(top: Path, item: str) -> dict:
             if error.entry is not close.REFUSALS["hotspot"] or repo.config(top)["stop_default"] == "off":
                 raise
             if not said:
+                say(review.stop_question(top, item, state))  # the question forge next repeats
                 say("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
                     "the repo's default applies.")
                 said = True
