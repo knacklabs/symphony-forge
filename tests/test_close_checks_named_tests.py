@@ -10,7 +10,9 @@ from conftest import ROOT
 from test_close import env  # noqa: F401
 
 STORY = "forge-writes-proof-list"
-PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::test_returning\n"
+PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::test_returning "
+         "(including empty names)\n"
+         "- Staff can sign in: tests/test_greeting.py::test_role[staff,active]\n"
          "- Empty names are refused: tests/test_greeting.py::test_empty\n"
          "- Old readers stay greeted: tests/test_other.py::test_other\n"
          "- New readers by name: tests/test_greeting.py::test_case[new]\n"
@@ -19,7 +21,9 @@ PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::
          "- The page greets readers again: __tests__/greeting.js")
 GREETING = ("import pytest\n\n\ndef test_returning():\n    assert True\n\n\n"
             "@pytest.mark.parametrize(\"who\", [\"new\", \"back\"])\ndef test_case(who):\n"
-            "    assert who == \"new\"\n")
+            "    assert who == \"new\"\n\n\n"
+            "@pytest.mark.parametrize(\"role\", [\"staff\"], ids=[\"staff,active\"])\n"
+            "def test_role(role):\n    assert role\n")
 
 
 def _close(env, adopted, command, red=False):
@@ -55,7 +59,11 @@ def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red):
     python = Path(sys.executable).as_posix()
     command = f'"{python}" -m pytest -q -p no:cacheprovider tests/test_greeting.py'
     prompt, published = _close(env, adopted, command if red else command + ' -k "not back"', red)
+    # Close keeps the worker's words and adds each named test's result next to it.
     assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning "
+            "(passed in close's run) (including empty names)") in published
+    # A parameter id runs to its closing bracket, commas and all.
+    assert ("- Staff can sign in: tests/test_greeting.py::test_role[staff,active] "
             "(passed in close's run)") in published
     assert "- Empty names are refused: not run" in published
     assert "- Old readers stay greeted: not run" in published
@@ -75,6 +83,6 @@ def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red):
 def test_2_a_runner_without_test_results_shows_named_tests_as_not_checked(env):
     python = Path(sys.executable).as_posix()
     _, published = _close(env, False, f'"{python}" -c "print(1)"')
-    assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning (not checked)"
-            in published)
+    assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning (not checked) "
+            "(including empty names)") in published
     assert "test_empty" not in published
