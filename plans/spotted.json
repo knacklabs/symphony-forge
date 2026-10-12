@@ -7721,6 +7721,182 @@
       "item": "pr-title-whole-sentence",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/codex-chat-view.read.md\tGate: unrelated cold-read notes changed outside Scope\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "docs/specs/codex-chat-view.read.md",
+      "line": 5,
+      "text": "Gate: unrelated cold-read notes changed outside Scope",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tLand can close an unreturned fix round after its session ends\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 42,
+      "text": "Land can close an unreturned fix round after its session ends",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tLand can close while a native fix round is still running\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 45,
+      "text": "Land can close while a native fix round is still running",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNative land handouts reset the three-round fix limit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 98,
+      "text": "Native land handouts reset the three-round fix limit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: land proceeds to close after a handed-back round with no commit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 47,
+      "text": "Not done: land proceeds to close after a handed-back round with no commit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tNot done: record the native build run end\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 236,
+      "text": "Not done: record the native build run end",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tPublished pull requests miss native worker questions\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 231,
+      "text": "Published pull requests miss native worker questions",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tSuccessful handback makes forge next say the worker stopped\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 203,
+      "text": "Successful handback makes forge next say the worker stopped",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: handback restores an invalid forge.toml edit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 669,
+      "text": "Not done: handback restores an invalid forge.toml edit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNative rounds ignore local model overrides when selecting a subagent role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 125,
+      "text": "Native rounds ignore local model overrides when selecting a subagent role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: printed model matches the native Codex role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 118,
+      "text": "Not done: printed model matches the native Codex role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: split fallback uses the Codex kit inside a Codex session\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 104,
+      "text": "Not done: split fallback uses the Codex kit inside a Codex session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: Codex fixer handout and land proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 208,
+      "text": "Not done: Codex fixer handout and land proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work in new and earlier-adopted client repos\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 40,
+      "text": "Not done: native work in new and earlier-adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work's named handout and failure outcomes have proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 68,
+      "text": "Not done: native work's named handout and failure outcomes have proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: prove settings restoration and the post-nudge handback\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 155,
+      "text": "Not done: prove settings restoration and the post-nudge handback",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
