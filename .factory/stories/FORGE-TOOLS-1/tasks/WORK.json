@@ -10,27 +10,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "97eacfcc2ecc1b4c687a9808507e9c3d46179ab655957d91a407214d3f1c027b",
-    "changed": "b206ebe1a519e7b9b464b53c2befb805b499f4975289e327e4c95693cdcec8c0",
-    "commit": "f65e895fb6ea9c6ccfeba6143154f9fb56ec3992",
+    "branch_diff": "e5277f7fdc00fc75b819fdc1fc30c682c40ae7c79515740c4f16e7ce0477a72c",
+    "changed": "dcaf519cebbee43d00037fddd6f67a87e01e1b1ef458f10cd0a5292abc8c7e8c",
+    "commit": "a0fd755af8cb32f6eca91fc68fca409f753a4871",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The `Building ... with` line uses `repo.worker`'s built-in model. In an earlier-adopted repo without a `[models]` table, `roles._chosen` leaves the Codex worker and fixer roles without a model, so they inherit the coordinating session's model. A session using a different model therefore runs the round on that model while Forge prints `gpt-6.1-sol`. Done-when 3 requires the printed line to name the role's model.",
-        "file": "src/forge/worker.py",
-        "line": 118,
+        "body": "Raise: Functional. After `forge land` hands out a fix round, `worker.work` records the item as `fixing`. A subsequent `forge land` skips this startup condition, which covers only `started` and `working`, and enters `close.close` while the subagent still holds the round. Close can run tests or review against unfinished work before the busy lock is checked. A rerun during a handed-out fix round should stop at that round.",
+        "file": "src/forge/land.py",
+        "line": 45,
         "priority": "P1",
-        "title": "Not done: printed model matches the native Codex role"
-      },
-      {
-        "body": "Raise: Test. The Codex cases return here before the command-level assertions for a `fixer` handout, land stopping without closing, and land closing after handback with no commit. `test_subagent_roles.py` checks the role files but does not run those commands. The required native build proof can therefore pass with those Codex paths broken, despite the repository rule that the same behaviour be tested through both adapters.",
-        "file": "tests/test_tools_native_work.py",
-        "line": 208,
-        "priority": "P1",
-        "title": "Not done: Codex fixer handout and land proof"
+        "title": "Land can close while a native fix round is still running"
       }
     ],
-    "id": "efaa7c96-8b1f-4055-a185-ad63c522c4b2",
+    "id": "b89d6986-4488-496f-9a61-d1e1d4e6ed43",
     "status": "blocked"
   },
   "status": "fixing",
@@ -53,6 +46,10 @@
     },
     {
       "at": "2026-10-12T13:58:41.231827+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T14:17:10.193954+00:00",
       "step": "review"
     }
   ],
