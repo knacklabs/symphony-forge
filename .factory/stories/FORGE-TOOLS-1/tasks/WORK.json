@@ -29,7 +29,7 @@
     "id": "35c0139c-a669-4b4e-a3bb-0d5f8e7c537b",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T05:42:50.219272+00:00",
@@ -74,7 +74,14 @@
   ],
   "stop": {
     "at": "2026-10-12T17:16:44.135791+00:00",
+    "by": "default",
+    "choice": "narrow",
     "file": "src/forge/worker.py",
-    "wait_id": "2d0dee63-70f0-4c02-a42f-0647ee2b702c"
+    "fixes": [
+      "review-finding-left-open-by-forge-tools"
+    ],
+    "reason": "Nobody answered in 30 minutes; the repo's default narrows the part to its Done-when lines and files each open finding as a follow-up fix",
+    "wait_id": "2d0dee63-70f0-4c02-a42f-0647ee2b702c",
+    "worker_round": null
   }
 }
