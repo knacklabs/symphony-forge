@@ -10,23 +10,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ab44622b104c255f7649a41772aeae91045a6310fc1f66391f16a85f95a3b24a",
-    "changed": "559801e835ee08a0f65ac689165d2e317eb023f6305ca42da992836aeb5cf329",
-    "commit": "0e61cb378831211edbfbe18a71610b7d6c8f8976",
+    "branch_diff": "b55c87e9b553c6d55dc600243c364536be3663af15845c718374c2995f945e51",
+    "changed": "ffcf97604b9c404ba8229ee34a39ac64f3192a3595afc0b1416dee3a7db34e81",
+    "commit": "9c4f23858afa67c19a95c52ac464ce615608f4bf",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\nA repo whose test command is `pytest tests/unit` can list `tests/contracts/test_rules.py` in `always_test`. The file-existence check passes, but close never adds that file to pytest's command, and the collection hook verifies only node IDs. If a picked unit test passes, close succeeds without running the listed file. The named proof uses `pytest tests`, so it does not cover this common layout.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional\n`always_test` accepts any list of strings, and this line passes each string directly to pytest as an argument. With `always_test = [\"--help\"]`, pytest prints help and exits successfully before collection, so the collection hook cannot reject the entry and close reports success without running the listed tests. The refusal proof covers missing paths and node IDs, but not this accepted input.",
         "file": "src/forge/fasttest.py",
         "gain": 3,
         "harm": 2,
-        "line": 366,
+        "line": 75,
         "priority": "P1",
-        "title": "Close skips listed test files outside pytest's collection roots",
+        "title": "Close can pass without running tests when always_test contains a pytest help option",
         "work": 2
       }
     ],
-    "id": "f9231e1b-237e-44ae-86df-5e40091681f7",
+    "id": "7e21c8f2-a83c-49a6-9c48-862148237891",
     "status": "blocked"
   },
   "status": "fixing",
@@ -45,6 +45,10 @@
     },
     {
       "at": "2026-10-12T21:59:22.365434+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:23:16.379816+00:00",
       "step": "review"
     }
   ],
