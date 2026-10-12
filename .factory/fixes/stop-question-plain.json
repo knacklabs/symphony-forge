@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T02:02:06.328796+00:00",
+      "because": "Narrowed under the owner's Harm 1-2 rule: a finding's title plus who is affected needs two sentences; one sentence would drop who is affected (Gain 1, Harm 1)",
+      "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding as one plain sentence saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that"
+    }
+  ],
   "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
   "branch": "fix/stop-question-plain",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "66d0f4a9cc659b278d227b57f9574a532a336a3e"
   },
-  "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding as one plain sentence saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
+  "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
   "flagged": [
     "src/forge/land.py",
     "src/forge/nextstep.py",
