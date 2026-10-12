@@ -3499,6 +3499,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/review.py\tClose mislabels tests that ran under common pytest reporting options\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 414,
+      "text": "Close mislabels tests that ran under common pytest reporting options",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tCompound test commands can bypass the test place\treviews-skip-agent-line",
       "kind": "bug",
       "path": "src/forge/review.py",
