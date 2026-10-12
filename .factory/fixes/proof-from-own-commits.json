@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T23:02:04.602727+00:00",
+      "because": "The builder showed the real cause: the proof label had extra words before its colon; commits from main never reach the lookup",
+      "done_when": "A story part's proof list and other worker paragraphs come only from the part's own commits, never from default-branch commits merged into it"
+    }
+  ],
   "base": "841a08b10e5393ed8b59aef8f7d966c45aea77a9",
   "branch": "fix/proof-from-own-commits",
-  "done_when": "A story part's proof list and other worker paragraphs come only from the part's own commits, never from default-branch commits merged into it",
+  "done_when": "Review finds a worker's proof list whatever words follow 'Proof list' before the colon, so a labelled proof list is never reported missing",
   "kind": "fix",
   "status": "started",
   "steps": [
