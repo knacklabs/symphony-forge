@@ -153,7 +153,15 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         (folder / "forge.toml").write_text(settings.replace(version, "v9.9.9"), "utf-8")
         repo.git("commit", "-q", "-am", "Try another release", cwd=folder)
         (folder / "forge.toml").write_text(settings + "[[[ not settings\n", "utf-8")
+        # The item's pull request is published, so its record is refreshed with the question.
+        with (repo.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as events:
+            events.write(json.dumps({"id": "published", "item": "BOARD/HELP", "round": 1,
+                                     "event": "pull request published", "at": "2026-10-01T00:00:00+00:00"}) + "\n")
+        gh.respond("pr", "list", stdout=json.dumps([{"number": 7, "state": "OPEN", "body": "<!-- forge:begin -->\nOld record\n<!-- forge:end -->",
+                                                     "isDraft": False}]))
+        gh.respond("pr", "edit")
         asked = handback("BOARD/HELP", number, "Done.\n\nQuestion: Which colour?", cwd=folder)
+        assert any(call[:3] == ["pr", "edit", "7"] for call in gh.calls())
         assert asked.returncode == 0, asked.stdout + asked.stderr
         assert (folder / "forge.toml").read_text("utf-8") == settings
         assert repo.git("status", "--porcelain", cwd=folder) == ""
