@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, close, codex, machine, records, repo, review, spotted, story,
-                   time_records, upgrade)
+                   task, time_records, upgrade)
 from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
@@ -493,15 +493,18 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             # A task takes forge.toml from the branch forge task start branches it from.
             settings = story.show(top, start_base(landed, key, rows[name]), "forge.toml")
             try:
-                cfg = (repo._config_text(settings) if settings  # pyright: ignore[reportPrivateUsage]
+                cfg = (repo._config_text(settings, top) if settings  # pyright: ignore[reportPrivateUsage]
                        else _report_config(top, refusals))
             except repo.Refused:  # unreadable there: what forge next reads here
                 cfg = _report_config(top, refusals)
             # The worker beside each task, as a shell comment so the line still pastes as a command.
-            builds[name] = repo.worker(cfg, "build", repo.user_facing(cfg, rows[name]))[0].title()
+            design = repo.user_facing(cfg, rows[name])
+            sources = repo.setting_sources(cfg, "build", design)
+            builds[name] = repo.worker(cfg, "build", design)[0].title() + " builds it" + (
+                f" ({sources})" if sources else "")
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
-                  *(f"Next: forge task start {key}/{task}  # {builds[task]} builds it"
+                  *(f"Next: forge task start {key}/{task}  # {builds[task]}"
                     for task in ready)]
     if waiting:
         lines += waiting + ([] if ready else ["Next: git fetch origin, then forge next"])
@@ -702,8 +705,28 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return answered + [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
-    chosen = f"  # {state['tool'].title()} builds it" if state.get("tool") and "forge work" in step else ""
-    return answered + [sentence.format(**values), f"Next: {step.format(**values)}{chosen}"]
+    built = _builder(item, state, path or top, refusals) if step == "forge work {item}" else ""
+    if step == "forge work {item}" and not built and state.get("tool"):
+        built = f"  # {state['tool'].title()} builds it"
+    return answered + [sentence.format(**values), f"Next: {step.format(**values)}{built}"]
+
+
+def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:
+    """The worker beside a forge work line, chosen as forge work chooses it, with where its
+    settings came from, when a forge.local.toml sets any; "" otherwise."""
+    cfg = _report_config(folder, refusals)
+    if "local" not in cfg:
+        return ""
+    # Keep in step with forge work's choice of design and kind in worker.work (worker.py lines 89-106).
+    key, _, name = item.partition("/")
+    design = (repo.user_facing(cfg, task.rows(task.sections((folder / "plans" / f"{key}.md").read_text(
+        encoding="utf-8"))).get(name, {})) if name else
+        state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(folder))
+    later = (repo.worker(cfg, "build", design, state.get("tool"))[0] == "codex" or design) and bool(
+        codex.record(folder, item).get("start") or state.get("status", "started") != "started")
+    kind = "fix" if later else "build" if name else "lite"
+    sources = repo.setting_sources(cfg, kind, design)
+    return f"  # {repo.worker(cfg, kind, design, state.get('tool'))[0].title()} builds it ({sources})"
 
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
