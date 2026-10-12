@@ -10,46 +10,46 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "844d00b98690838c57410f42d0e3509ffd97abd7c54906c59f00e75fdf4d4881",
-    "changed": "e0b21722a34ef04fd9795bc323a9f3c83ed6eae6b0c21d7da6e729217160cfbb",
-    "commit": "d91c5cd3518b9b63ff595193d1b9766454553a6c",
+    "branch_diff": "272b8cb5c3c153c0b971f656840112593f7840191a1e1559c3452a5224d1e9c2",
+    "changed": "f80f335671bd4f6651d3a270974fd5f8eb293f95353b21661b087ce55603a313",
+    "commit": "e4c105a1972690b55c316fccc33dcd6dd37a37d5",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Scale. Each unfinished story part merged before the seven weekly search windows triggers a separate `gh pr list --head` request. A project with 30 such parts makes at least 38 list calls on the first board run each minute, instead of the specified eight, making normal board reads slow. The added older-part test covers only one branch.",
-        "file": "src/forge/board_facts.py",
+        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done. The page still renders cards from `_gather` while its totals come from `machine_board`. In the unchanged `_story` logic at `board.py:906\u2013919`, an approved plan edited after its passing read still displays as approved or in progress, while `team.counts` and the JSON row classify it as planning. The separate `_part` logic at `board.py:942\u2013969` also does not use shared-record readiness or the JSON time breakdown. Thus the page can disagree with `forge board --json` for named cases.",
+        "file": "src/forge/board.py",
         "gain": 4,
         "harm": 2,
-        "line": 102,
+        "line": 63,
         "priority": "P1",
-        "title": "Older merged parts cause unbounded GitHub requests",
+        "title": "Not done: HTML item states and times match board JSON",
         "work": 3
       },
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done. The HTML totals explicitly omit `finished_last_7_days`, although `team.counts` includes its part and fix counts and the guide says the page prints the same totals. A merged item from yesterday appears in the JSON seven-day count but has no corresponding count on the page.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. The older merged-PR lookup runs only if an unfinished story has an older part. For a completed story whose part merged before the weekly search windows, `by_branch` lacks that part's PR body; lines 579\u2013582 then assemble its runway from local logs alone. Teammates without those logs see different working, waiting and unknown time. The added older-part proof covers only an unfinished story.",
         "file": "src/forge/board.py",
         "gain": 3,
-        "harm": 1,
-        "line": 1168,
+        "harm": 2,
+        "line": 573,
         "priority": "P1",
-        "title": "Not done: show finished-last-seven-days counts on the page",
-        "work": 1
+        "title": "Not done: completed stories retain older parts in their runway",
+        "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list now says only `passed` twice beneath each claim. It names no runnable test selector or check result for the parametrized cases starting here, so the required proof cannot be matched to counts, shared readiness, caching, approval, or the older-part runway.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list gives two bare `passed` lines under each claim, without a runnable test selector or check result that identifies the parametrized cases beginning here. Its counts, readiness, caching, approval and older-part claims therefore cannot be matched to named proof as required.",
         "file": "tests/test_board_counts.py",
         "gain": 3,
         "harm": 1,
-        "line": 100,
+        "line": 105,
         "priority": "P1",
         "title": "Not done: proof list",
         "work": 1
       }
     ],
-    "id": "d13e516d-e025-4382-ab5c-e9446e811421",
+    "id": "3c1b9ceb-a3aa-4989-910e-4bfc149e4dca",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T12:45:31.934037+00:00",
@@ -74,20 +74,15 @@
     {
       "at": "2026-10-12T20:43:37.381073+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T21:34:26.761179+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T16:40:11.365433+00:00",
-    "by": "default",
-    "choice": "narrow",
-    "file": "src/forge/nextstep.py",
-    "fixes": [
-      "review-finding-left-open-by-forge-board",
-      "review-finding-left-open-by-forge-board-2",
-      "review-finding-left-open-by-forge-board-3"
-    ],
-    "reason": "Nobody answered in 30 minutes; the repo's default narrows the part to its Done-when lines and files each open finding as a follow-up fix",
-    "wait_id": "f87bd72d-d9e6-4eea-8931-c4ad720481f9",
-    "worker_round": null
+    "at": "2026-10-12T21:34:26.778279+00:00",
+    "file": "src/forge/board.py",
+    "wait_id": "24670a82-0e3c-415d-b22a-68bc0568319c"
   }
 }
