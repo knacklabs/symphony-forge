@@ -1,5 +1,5 @@
 {
-  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, sync output and the tests that pin them",
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, the tests that pin them, and all sync output close requires when the version changes, including generated skill copies sync writes",
   "amendments": [
     {
       "at": "2026-10-12T04:48:37.666298+00:00",
