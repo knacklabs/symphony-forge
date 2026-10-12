@@ -20,45 +20,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "193938992f46e4e892d3ec41dfede354ac2643bec51f5364771f44ea193c6aff",
-    "changed": "652e7dfe1b96e17b8edff42b68c0c3de0734158c9a9251a6c40760908bc62e01",
-    "commit": "4bb9b343ec4a72715600427d3ff980f8f3df346a",
+    "branch_diff": "144f4c26c888c7f77a1c7e19e36dc15944d3b590af99306b2c11713840c18665",
+    "changed": "5c6723ba616433169d9788ec4095240f4ab8440960a5bbbb293d1f7056212f07",
+    "commit": "c8fb10aebf8b71ae6e7f7045a530f0209c99f7d0",
     "dismissals": [],
     "findings": [
       {
-        "body": "chunk 1/2:\n\nItem 12 remains incomplete in this part. The board still derives the old counts here and renders the old card page; blocking plan problems are absent from Needs you, and the pane still uses abbreviated times. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
+        "body": "chunk 1/2:\n\nItem 12 remains incomplete in this part. The board still derives its old counts and renders the old card page; it does not add blocking plan problems to Needs you or provide the pinned folding sections, story keys and cold-read history. The pane still uses abbreviated times. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
         "file": "src/forge/board.py",
-        "line": 662,
+        "line": 663,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       },
       {
-        "body": "chunk 2/2:\n\nRaise: Functional. On a repeat close with a default-branch conflict, this call publishes a fabricated running review with empty findings and evidence. `_publish` replaces the existing managed block, so a blocked review loses its findings and proof list and appears to be running after close has stopped.",
-        "file": "src/forge/close.py",
-        "line": 166,
-        "priority": "P1",
-        "title": "A merge conflict erases the pull request's review findings and proof"
-      },
-      {
-        "body": "chunk 2/2:\n\nRaise: Functional. The board passes part and read intervals plus the story's start to `time_records.story`, but supplies no completion bound when the story is done. If `forge story done` records an outcome hours after the last part merges, that interval is absent from the story's unknown seconds and total. The added runway test covers an unfinished story only.",
+        "body": "chunk 2/2:\n\nItem 12 remains incomplete in this branch. The board still renders the old card page and count fields, so it lacks the pinned folding sections, story keys and cold-read history; blocking plan problems are absent from Needs you, and pane times remain abbreviated. The story\u2019s Tasks table assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
         "file": "src/forge/board.py",
-        "line": 606,
-        "priority": "P1",
-        "title": "Completed stories omit elapsed time after their last part"
-      },
-      {
-        "body": "chunk 2/2:\n\nItem 12 remains incomplete here: the board retains its old counts and card page, blocking plan problems are absent from Needs you, and pane times remain abbreviated. The pinned folding sections, story keys and cold-read history are also absent. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
-        "file": "src/forge/board.py",
-        "line": 662,
+        "line": 1193,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "efd887f2-2120-447a-97db-74089d001de9",
-    "status": "blocked"
+    "id": "9baad30f-98d2-4e07-8b40-46aa0e00a35f",
+    "status": "clean"
   },
   "round": 15,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-10T15:42:26+00:00",
@@ -134,6 +120,10 @@
     },
     {
       "at": "2026-10-12T11:40:05.616658+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T12:06:17.907393+00:00",
       "step": "review"
     }
   ],
