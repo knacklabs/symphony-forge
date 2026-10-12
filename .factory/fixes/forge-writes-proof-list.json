@@ -10,36 +10,36 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d75b1954d4f0bb45d0e6cd6ee8b3f4ba62d7aa1ad12233eb2ba83e053928d923",
-    "changed": "54d7100a2ac0a6b9c90703f5da75599474b3e3d12534e8e0d63e58c735938d73",
-    "commit": "ed34a012094041609554404d1a5bcff6c98cf6ad",
+    "branch_diff": "33ab107299978536cf7ad90312f5d42272cd0bde7546207b9e6500662d7b9dfb",
+    "changed": "669bd8633d1487597f9ac22b515b7766128e2070151d23593ae936c5263bbfa4",
+    "commit": "5700b6752208b56e193ceeaf111ecf03bc6864b6",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. `TEST_NAME` stops a pytest node ID at a comma or semicolon. A worker can name a valid parameter case such as `tests/test_login.py::test_role[staff,active]`; Close extracts only `tests/test_login.py::test_role[staff`, cannot match it to the case that ran, and publishes `not run` instead of its result. The command test covers parameter IDs without punctuation.",
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. `_ran` accepts a reported node whenever the worker's name ends with `/<reported node>`. In a repo with both `app/tests/test_auth.py::test_login` and `admin/app/tests/test_auth.py::test_login`, a run of only the first test matches a proof entry for the second. Because the second source file exists, Close publishes its unrun test as passed. The command test uses only one file at each path.",
         "file": "src/forge/review.py",
-        "gain": 3,
+        "gain": 4,
         "harm": 2,
-        "line": 600,
+        "line": 618,
         "priority": "P1",
-        "title": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves",
+        "title": "Close credits a different nested test file as passed",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate. The worker guidance allows every Done-when detail next to its test, but this line keeps only the text before the first test name. For a line such as `- Greeting: tests/test_greeting.py::test_returning (including empty names)`, Close removes the parenthesized detail from both the pull request and review proof list. The reviewer can then approve a list that omits a required detail.",
+        "body": "Gain 2, Work 1, Harm 1\nRaise: Functional. A valid parameter ID such as `test_role[staff active]` appears with that space in pytest's short summary. The `\\S+` match captures only `test_role[staff`, so Close cannot match the case and publishes `not run` even though it ran. The new command test covers a comma in an ID but no whitespace.",
         "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 648,
+        "gain": 2,
+        "harm": 1,
+        "line": 631,
         "priority": "P1",
-        "title": "Not done: proof list drops Done-when details written after a test name",
+        "title": "Close loses results for pytest parameter IDs containing spaces",
         "work": 1
       }
     ],
-    "id": "8179090c-4811-4a27-9047-64688c8cbb37",
+    "id": "0cbb61dc-82bc-4f18-8f55-0f6fcf2711d9",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -64,16 +64,16 @@
     {
       "at": "2026-10-12T23:10:15.950031+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:29:20.930791+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T22:23:43.359914+00:00",
-    "by": "owner",
-    "choice": "narrow",
+    "at": "2026-10-12T23:29:20.942329+00:00",
     "file": "src/forge/review.py",
-    "reason": "Coordinator (Harm 1-2, reversible; third finding in review.py, so one general rule instead of per-language cases): any proof line naming a test that close cannot match to its own run's results, in any language, is published as not checked; reading JavaScript runners' per-test results is a follow-up. The failed-test case gets its assertion this round.",
-    "wait_id": "48d14b1c-2165-4cc2-bb64-66d5727c82cc",
-    "worker_round": null
+    "wait_id": "6936c86e-13bb-4544-8fec-b38ff52e5709"
   },
   "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
 }

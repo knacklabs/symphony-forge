@@ -2234,6 +2234,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can pass without running tests when always_test contains a pytest help option\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 75,
+      "text": "Close can pass without running tests when always_test contains a pytest help option",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed after pytest filters out an always_test entry\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 320,
+      "text": "Close can succeed after pytest filters out an always_test entry",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed without running a listed pytest node\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 341,
+      "text": "Close can succeed without running a listed pytest node",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -2241,6 +2274,28 @@
       "text": "Close passes test filenames to Python setup commands",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose runs listed tests twice when they are inside pytest's collection root\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 75,
+      "text": "Close runs listed tests twice when they are inside pytest's collection root",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose skips listed test files outside pytest's collection roots\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 366,
+      "text": "Close skips listed test files outside pytest's collection roots",
+      "from": "blocking",
+      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     },
@@ -2340,6 +2395,17 @@
       "text": "Not done: Go test helper edits run no local package check",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: close skips always_test when the picked selection is large\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 363,
+      "text": "Not done: close skips always_test when the picked selection is large",
+      "from": "blocking",
+      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     },
@@ -3400,11 +3466,33 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tClose credits a different nested test file as passed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 618,
+      "text": "Close credits a different nested test file as passed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tClose leaves JavaScript test names unchecked in client proof lists\tforge-writes-proof-list",
       "kind": "bug",
       "path": "src/forge/review.py",
       "line": 624,
       "text": "Close leaves JavaScript test names unchecked in client proof lists",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose loses results for pytest parameter IDs containing spaces\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 631,
+      "text": "Close loses results for pytest parameter IDs containing spaces",
       "from": "blocking",
       "item": "forge-writes-proof-list",
       "status": "open",
@@ -4247,6 +4335,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: close skips always_test for settings and docs changes\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1145,
+      "text": "Not done: close skips always_test for settings and docs changes",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: proof list\tpin-switch-leaves-worktree",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -4969,6 +5068,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_always_tests.py\tNot done: the guide proof does not check the always_test instructions\tclose-always-tests",
+      "kind": "bug",
+      "path": "tests/test_close_always_tests.py",
+      "line": 87,
+      "text": "Not done: the guide proof does not check the always_test instructions",
+      "from": "blocking",
+      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     },
@@ -7928,94 +8038,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose can pass without running tests when always_test contains a pytest help option\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 75,
-      "text": "Close can pass without running tests when always_test contains a pytest help option",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed after pytest filters out an always_test entry\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 320,
-      "text": "Close can succeed after pytest filters out an always_test entry",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed without running a listed pytest node\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 341,
-      "text": "Close can succeed without running a listed pytest node",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose runs listed tests twice when they are inside pytest's collection root\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 75,
-      "text": "Close runs listed tests twice when they are inside pytest's collection root",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose skips listed test files outside pytest's collection roots\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 366,
-      "text": "Close skips listed test files outside pytest's collection roots",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: close skips always_test when the picked selection is large\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 363,
-      "text": "Not done: close skips always_test when the picked selection is large",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: close skips always_test for settings and docs changes\tclose-always-tests",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 1145,
-      "text": "Not done: close skips always_test for settings and docs changes",
-      "from": "blocking",
-      "item": "close-always-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_always_tests.py\tNot done: the guide proof does not check the always_test instructions\tclose-always-tests",
-      "kind": "bug",
-      "path": "tests/test_close_always_tests.py",
-      "line": 87,
-      "text": "Not done: the guide proof does not check the always_test instructions",
-      "from": "blocking",
-      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     }
