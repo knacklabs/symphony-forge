@@ -1,4 +1,4 @@
-"""A source conflict that cannot be parsed leaves close's checkout clean and retryable."""
+"""A conflict in Forge's own source names the files and leaves close's checkout clean."""
 
 import shutil
 import subprocess
@@ -14,7 +14,7 @@ STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_5_close_aborts_merge_when_conflicted_source_raises_syntax_error(env, previous):
+def test_5_close_aborts_merge_and_names_conflicted_source(env, previous):
     client(env, previous)
     repo = env.repo
     shutil.copytree(conftest.ROOT / "src", repo.path / "src",
@@ -37,9 +37,10 @@ def test_5_close_aborts_merge_when_conflicted_source_raises_syntax_error(env, pr
     before = repo.git("rev-parse", "HEAD", cwd=where)
     closed = repo.forge("close", item, cwd=where)
     assert closed.returncode == 1, closed.stdout + closed.stderr
-    assert "Merging main into fix/tidy-readme failed; the merge was aborted:" in closed.stderr
-    assert "invalid syntax" in closed.stderr
-    assert f"Next: forge close {item}" in closed.stderr
+    assert f"Merging main into fix/tidy-readme conflicts in {module}." in closed.stderr
+    assert "syntax" not in closed.stderr
+    assert f"Next: git -C {where} merge origin/main" in closed.stderr
+    assert f"then forge close {item}" in closed.stderr
     assert repo.git("rev-parse", "HEAD", cwd=where) == before
     assert repo.git("status", "--porcelain", cwd=where) == ""
     assert subprocess.run(["git", "rev-parse", "--verify", "MERGE_HEAD"], cwd=where,
