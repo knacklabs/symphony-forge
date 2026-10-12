@@ -99,9 +99,9 @@ def note_holds(note: str) -> bool:
 def read_stops(notes: list[str]) -> bool:
     """A third blocked read stops on an unscored or disputed-keep note at the bar, or any Harm 3+."""
     for note in (re.sub(r"^\d+\.[ \t]+", "", note) for note in notes):
-        scores = parse(note)
-        if note_holds(note) and (not scores or "disputed keep" in note.partition("\n")[0].casefold()) \
-                or scores and scores[2] >= 3:
+        scores, held = parse(note), note_holds(note)  # a note below the bar is settled by its disposition
+        if held and (not scores or "disputed keep" in note.partition("\n")[0].casefold()) \
+                or scores and scores[2] >= 3 and (held or "Disposition:" not in note):
             return True
     return False
 
@@ -131,8 +131,8 @@ def mild(result: dict[str, Any]) -> bool:
 
 def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
              areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
-    """Add a review round to the item's known findings, one entry per finding, never removed. Only
-    an open entry changes outcome later; it is fixed in round N when review N no longer raises it."""
+    """Add a review round to the known findings, never removed: an open entry changes later (fixed
+    in round N when review N doesn't raise it), and the owner's accept marks any entry."""
     because = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
     by = {identity(e["file"], e["title"]): e for e in known}
     raised = set()
@@ -147,7 +147,7 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
                 "title": f["title"], "file": f["file"], "line": f["line"], "gain": f.get("gain"),
                 "work": f.get("work"), "harm": f.get("harm"), "outcome": outcome, "reason": reason,
                 "round": round_number, "area": areas.get(key, f["file"])}))
-        elif by[key]["outcome"] == "open":
+        elif by[key]["outcome"] == "open" or any(d.get("accepted") and d["finding"] == n for d in result["dismissals"]):
             by[key].update(outcome=outcome, reason=reason)
     for key, entry in by.items():
         if entry["outcome"] == "open" and key not in raised:

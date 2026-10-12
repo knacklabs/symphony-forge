@@ -115,8 +115,8 @@ def close(args: argparse.Namespace) -> int:
                      "accepted": True}
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
-                state["known"] = score.remember(state.get("known", []), result, sum(
-                    step["step"] == "review" for step in state.get("steps", [])), {})
+                score.remember(_known(top, item, state, f"origin/{repo.default_branch(top)}", result),
+                               result, sum(step["step"] == "review" for step in state.get("steps", [])), {})
             # The answer settles the stop's area (a file stop's file): later findings there hold less.
             if area := state["stop"].get("area") or state["stop"].get("file"):
                 state["settled_areas"] = sorted({*state.get("settled_areas", []), area})

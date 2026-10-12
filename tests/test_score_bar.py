@@ -161,13 +161,22 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     env.commit(where, "app.py", "print('saved twice')\n")
     env.reviews(blocked(*[_scored("P1", title, "Gain 3, Work 2, Harm 1\nRaise: Functional")
                           for title in ("Saving drops the basket", "Saving skips the coupon",
-                                        "Saving forgets the address")]))
+                                        "Saving forgets the address")],
+                        _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
     stopped = env.close("SHOP/T1")
     assert stopped.returncode == 1 and "Ask the human" in stopped.stderr
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Label wording (app.py): known: below the bar (live with); Gain 2, Work 1, Harm 1" in known
+    # An item saved before the known list: the owner's accept rebuilds it from every saved round.
+    path = ".factory/stories/SHOP/tasks/T1.json"
+    state = json.loads((where / path).read_text("utf-8"))
+    state.pop("known")
+    env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
     accepted = env.close("SHOP/T1", "--resolve", "accept", "--reason", "The owner lives with these")
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    outcomes = {e["title"]: (e["outcome"], e["reason"]) for e in json.loads((where / path).read_text("utf-8"))["known"]}
+    assert outcomes["Label wording"] == ("lived with", "")
+    assert outcomes["Label spacing"] == ("accepted", "Human accepted the remaining finding: The owner lives with these")
 
     env.commit(where, "app.py", "print('saved again')\n")
     env.reviews(blocked(_scored("P1", "Saving drops the basket", "Gain 3, Work 2, Harm 1\nRaise: Functional")))
@@ -201,7 +210,8 @@ SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n
 
 
 @pytest.mark.parametrize("case", CASES)
-@pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "only-harm-2-saved-before-known", "area"])
+@pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "only-harm-2-saved-before-known", "area",
+                                  "read-below-bar-harm-3"])
 def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, case, loop):
     _client_on_this_release(env, tmp_path, case)
     item, where = env.start_fix()
@@ -238,6 +248,16 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         narrowed = env.close(item)
         assert "Forge recorded the repo's default choice: narrow" in narrowed.stdout
         assert len(follow_ups(env)) == len(before) + 1
+    elif loop == "read-below-bar-harm-3":  # a disposed below-bar note never stops the read loop
+        shop = new_story(env.repo, "SHOP")
+        (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
+        for number in (1, 2, 3):
+            _says(env.repo, f"1. Blocking: Gap {number}.\n   Raise: Plan gap\n   Gain 3, Work 1, Harm 1\n"
+                  + ("2. Advisory: Wording.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 3\n" if number == 3 else ""))
+            read = env.repo.forge("read", "SHOP")
+            assert read.returncode == 0 and "Three consecutive" not in read.stderr, read.stdout + read.stderr
+            notes = shop / "plans/SHOP.read.md"
+            notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - fine\n", encoding="utf-8")
     else:
         env.commit(where, "src/shop.py", SHOP)
         shop = "src/shop.py"
