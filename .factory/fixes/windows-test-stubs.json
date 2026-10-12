@@ -9,11 +9,16 @@
       "at": "2026-10-12T08:17:57.280082+00:00",
       "because": "Whether main's full run passes on Windows and macOS can only be seen after the merge; the full-suite job never runs on pull requests",
       "done_when": "Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows tests get time budgets that fit Windows runners, and the workflow warms the npm cache and installs Go on macOS"
+    },
+    {
+      "at": "2026-10-12T08:29:26.357001+00:00",
+      "because": "The windows-installers job runs one small test under its own 5-minute job limit; the longer limits are for the full-suite groups that timed out",
+      "done_when": "Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows test runs get 270-second faulthandler and 300-second per-test limits, and the full-suite job warms the npm cache and installs Go on macOS"
     }
   ],
   "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
   "branch": "fix/windows-test-stubs",
-  "done_when": "Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows test runs get 270-second faulthandler and 300-second per-test limits, and the full-suite job warms the npm cache and installs Go on macOS",
+  "done_when": "Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for both shells, Windows full-suite groups get 270-second faulthandler and 300-second per-test limits, and the full-suite job warms the npm cache and installs Go on macOS",
   "flagged": [
     ".github/workflows/forge-next.yml",
     "tests/test_ci_hang.py",
