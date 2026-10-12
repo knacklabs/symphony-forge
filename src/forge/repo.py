@@ -122,12 +122,18 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
+    # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
+    # bounded pull request body past GitHub's limit and changes messages and hashes.
     def execute():
-        return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                              text=True, encoding="utf-8", errors="replace",
+        done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
+                              capture_output=True,
                               # Git hooks need the caller's worker identity.
                               env=(os.environ if env is None else env) if args[0] == "git"
                               else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
+        # Text mode's universal newlines, the same on every OS.
+        done.stdout, done.stderr = (data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+                                    for data in (done.stdout, done.stderr))
+        return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
@@ -402,11 +408,12 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
-        "merge": str, "checks": list, "interfaces": list, "models": dict}
+        "merge": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
-            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "models": {}}
+            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "always_test": [],
+            "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off")}
@@ -614,7 +621,7 @@ def route(cfg: dict[str, Any], tool: str, *, command: str, item: str) -> str:
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
     """The design model for a family, including the default in older repos."""
-    return cfg["models"].get("design", {}).get(family, DESIGN_DEFAULTS[family])
+    return cfg.get("models", {}).get("design", {}).get(family, DESIGN_DEFAULTS[family])
 
 
 def _models_problem(table: Any) -> str:
@@ -663,6 +670,10 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "version" and not VERSION.fullmatch(value):
             return "version must be a Forge release, such as v1.2.1"
+        flag = next((entry for entry in value if entry.startswith("-")), None) if key == "always_test" else None
+        if flag:
+            return (f"always_test lists {flag}, which is not a test path or node ID; "
+                    "list only tests, such as tests/test_rules.py")
         if key == "runner" and not value.strip():
             return "runner must name a GitHub Actions runner label"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
@@ -685,7 +696,16 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
         return
-    pinned = config(top)["version"].removeprefix("v")
+    pinned = ""
+    if words == "handback" and ITEM.fullmatch(item):
+        from forge import codex
+        # A build round's hand-back runs on the release its checkout pinned when it was handed out,
+        # before reading a forge.toml the round may have broken, which the hand-back restores.
+        pending = codex._json(codex._item_file(top, item, ".json", "Build")).get("pending") or {}
+        if pending.get("head"):
+            handed = run("git", "show", f"{pending['head']}:forge.toml", cwd=pending["checkout"])
+            pinned = _pin(handed.stdout)
+    pinned = pinned or config(top)["version"].removeprefix("v")
     if pinned == __version__:
         return
     from forge import story

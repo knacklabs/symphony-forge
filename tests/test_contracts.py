@@ -371,7 +371,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         closed = env.close(env.start_fix()[0])
         assert closed.returncode == 0, closed.stdout + closed.stderr
         assert env.gh_calls("pr", "edit") and not env.gh_calls("pr", "create")
-        env.gh.respond("pr", "list", "--state", "all", stdout=json.dumps([{
+        env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([{
             "headRefName": "fix/tidy-readme", "state": "MERGED",
             "title": "Readme greets new readers", "body": "The readme opens with a greeting.\n",
             "mergedAt": "2026-09-24T10:00:00Z",
@@ -515,7 +515,7 @@ def test_8_plain_english(env):
     assert 'question "Approve this plan?", header "Approve plan"' in repo.forge("next").stdout
 
     # The board, once both pull requests merged.
-    gh.respond("pr", "list", "--state", "all", stdout=json.dumps([
+    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([
         {"headRefName": call[call.index("--head") + 1], "state": "MERGED",
          "title": call[call.index("--title") + 1], "body": body(call),
          "mergedAt": "2026-09-25T10:00:00Z", "files": [], "statusCheckRollup": []}

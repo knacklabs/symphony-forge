@@ -26,7 +26,7 @@ if args[:1] == ["pr"] and len(args) > 1 and args[1] in ("create", "edit", "merge
     text = None
     if "--body-file" in args:
         target = args[args.index("--body-file") + 1]
-        text = sys.stdin.read() if target == "-" else pathlib.Path(target).read_text(encoding="utf-8")
+        text = sys.stdin.buffer.read().decode("utf-8") if target == "-" else pathlib.Path(target).read_text(encoding="utf-8")
         if target == "-":
             sys.stdin = io.TextIOWrapper(io.BytesIO(text.encode("utf-8")), encoding="utf-8")
     elif "--body" in args:
@@ -92,7 +92,7 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
         diagnostics = [finding("P2", f"Basket diagnostic {n}: " + "Recorded quantity detail. " * 80)
                        for n in range(80)]
         for diagnostic in diagnostics:
-            diagnostic["body"] = "Recorded basket diagnostic detail. " * 80
+            diagnostic["body"] = "Gain 2, Work 1, Harm 1\n" + "Recorded basket diagnostic detail. " * 80
     env.reviews(blocked(blocker, *diagnostics))
     reject_oversized_bodies(env)
     first = env.close(item)

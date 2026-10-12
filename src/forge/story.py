@@ -39,7 +39,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, native, repo, review, task, worker
+from forge import codex, machine, native, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -397,8 +397,8 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         # ponytail: unstructured output is one finding, so it still needs a disposition. Findings
         # number on from earlier rounds', whatever numbers the reader used.
         numbers = itertools.count(max(blocks, default=0) + 1)
-        said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
-                           said if FINDING.search(said) else f"1. {said}")
+        said = score.notes(FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
+                                       said if FINDING.search(said) else f"1. {said}"))
         clean = passed({"round": str(round_number)}, f"## Round {round_number}\n\n{said}")
     model = result["model"]
     record = {"reader": f"{reader} ({model})" + (
@@ -1014,12 +1014,12 @@ def read_question(doc: str, notes: str) -> str:
     for block in _findings(findings[heading.end():] if heading else "").values():
         title, _, body = block.split(". ", 1)[1].partition("\n")
         if not ADVISORY.match(title) and not DISPOSITION.search(body):  # cut, deferred or kept
-            flagged.append(review.plain(title, "\n".join(line for line in body.splitlines()
-                                                  if not DISPOSITION.match(line))))
+            flagged.append((review.plain(title, "\n".join(line for line in body.splitlines()
+                                                   if not DISPOSITION.match(line))), score.parse(body)))
     title = re.search(r"^# (.+)$", doc, re.M)
     found = sections(doc)
     gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
-    return review.question(review.plain(title[1]) if title else "", gives, flagged,
+    return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else

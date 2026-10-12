@@ -32,8 +32,6 @@ REFUSALS = {
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
-    "worktree": ("Forge could not remove the worktree for {item}.",
-                 "unlock it or close programs using it, then forge merge {item}"),
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
@@ -167,12 +165,16 @@ def merge(args: argparse.Namespace) -> int:
             os.chdir(main_checkout)
         for shim in generated:
             shim.unlink()
-        removed = repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout)
-        if removed.returncode:
-            repo.refuse(REFUSALS["worktree"], item=item)
-        if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
-            repo.git("branch", "-D", branch, cwd=main_checkout)
-        print(f"Merged {item} and removed its worktree and local branch.")
+        # The pull request is merged, so a failed removal is only cleanup. Git may already have
+        # dropped the worktree's registration, which forge doctor needs, so the human deletes it.
+        if repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout).returncode:
+            dirty = True
+            print(f"Merged {item}. Forge could not fully remove its worktree at {worktree}; close any "
+                  f"program using that folder, then delete the folder {worktree}.")
+        else:
+            if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
+                repo.git("branch", "-D", branch, cwd=main_checkout)
+            print(f"Merged {item} and removed its worktree and local branch.")
     if dirty or advanced:
         receipt["tidied"] = True
         _save_ready(path, receipt)

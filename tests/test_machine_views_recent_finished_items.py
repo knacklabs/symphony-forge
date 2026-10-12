@@ -193,7 +193,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     second, more_count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
     # Active rows and advice still ignore archived inventory. Maps and counts now
     # retain that history; verify their additions separately from the live OS load.
-    changing = {"machine", "dependency_maps", "stage_counts", "kind_stage_counts"}
+    changing = {"machine", "dependency_maps", "team"}
     assert rows["LIVE"]["status"] == "In progress: 2 of 3 parts finished"
     # The progress sentence includes the twelve archived parts in the current plan.
     expected = {**first, "items": [
@@ -213,10 +213,9 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
              "waits_for": [f"PAST-{n}/SAVE"]}]} for n in range(12)})
     assert {entry["id"]: entry for entry in second["dependency_maps"]} == expected_maps
     assert len(second["dependency_maps"]) == len(first["dependency_maps"]) + 12
-    assert second["stage_counts"] == {**first["stage_counts"], "done": first["stage_counts"]["done"] + 24}
-    assert second["kind_stage_counts"] == {
-        kind: {**counts, "done": counts["done"] + 12}
-        for kind, counts in first["kind_stage_counts"].items()}
+    before, after = first["team"]["counts"], second["team"]["counts"]
+    assert {kind: after[kind]["done"] - before[kind]["done"] for kind in ("stories", "parts", "fixes")} == {
+        "stories": 12, "parts": 36, "fixes": 12}
     assert more_count == count, f"Old finished inventory added {more_count - count} git commands"
     # Bulk dependency lookup keeps the real validator and local plan precedence.
     live_plans = [repo.path / "plans/LIVE.md", tmp_path / "old-fix-worktree/plans/LIVE.md",

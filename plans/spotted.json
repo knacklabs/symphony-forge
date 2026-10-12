@@ -254,6 +254,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags\tmain-run-faster",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 11,
+      "text": "Not done: A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags",
+      "from": "blocking",
+      "item": "main-run-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -287,6 +298,17 @@
       "closed_by": "simplify-ci-workflow"
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d\twindows-green-4",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 80,
+      "text": "Not done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d",
+      "from": "blocking",
+      "item": "windows-green-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: proof list\twindows-test-stubs",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -294,6 +316,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "windows-test-stubs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tRelease instructions require a full main run that no longer exists\tmain-run-faster",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 56,
+      "text": "Release instructions require a full main run that no longer exists",
+      "from": "blocking",
+      "item": "main-run-faster",
       "status": "open",
       "closed_by": null
     },
@@ -307,6 +340,17 @@
       "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.test_durations\tNot done: timing file does not cover today's suite\tmain-run-faster",
+      "kind": "bug",
+      "path": ".test_durations",
+      "line": 2220,
+      "text": "Not done: timing file does not cover today's suite",
+      "from": "blocking",
+      "item": "main-run-faster",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
@@ -408,6 +452,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/agent-merge.read.md\tScope: unrelated agent-merge read record changed\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "docs/specs/agent-merge.read.md",
+      "line": 4,
+      "text": "Scope: unrelated agent-merge read record changed",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/specs/board-for-the-team.md\tNot done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back\tspec-graph",
       "kind": "bug",
       "path": "docs/specs/board-for-the-team.md",
@@ -415,6 +470,17 @@
       "text": "Not done: docs/specs/board-for-the-team.md describes the dependency graph of every roadmap story plus a Fixes row, the six-week upgrade back",
       "from": "blocking",
       "item": "spec-graph",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/codex-chat-view.read.md\tGate: unrelated cold-read notes changed outside Scope\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "docs/specs/codex-chat-view.read.md",
+      "line": 5,
+      "text": "Gate: unrelated cold-read notes changed outside Scope",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
       "status": "open",
       "closed_by": null
     },
@@ -492,6 +558,17 @@
       "text": "Board launches Git once for every historical plan read",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tCache the HTML board's additional merged pull request list\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 876,
+      "text": "Cache the HTML board's additional merged pull request list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -595,6 +672,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: HTML item states and times match board JSON\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 63,
+      "text": "Not done: HTML item states and times match board JSON",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: a running plan reader's actual round\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -602,6 +690,17 @@
       "text": "Not done: a running plan reader's actual round",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: completed stories retain older parts in their runway\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 573,
+      "text": "Not done: completed stories retain older parts in their runway",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -771,6 +870,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: show finished-last-seven-days counts on the page\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 1168,
+      "text": "Not done: show finished-last-seven-days counts on the page",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: story runway counts its full elapsed history\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -844,6 +954,61 @@
       "text": "Standard: Plain English wherever a human looks",
       "from": "blocking",
       "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: approval counting must honor a stale cold read\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 127,
+      "text": "Not done: approval counting must honor a stale cold read",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: changed plans must lose their approved story count\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 91,
+      "text": "Not done: changed plans must lose their approved story count",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: connect the go-live clause to the team sentence\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 179,
+      "text": "Not done: connect the go-live clause to the team sentence",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 75,
+      "text": "Not done: older merged parts lose their shared runway",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tOlder merged parts cause unbounded GitHub requests\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 102,
+      "text": "Older merged parts cause unbounded GitHub requests",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -1090,6 +1255,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: A pull request's title is the first sentence of the item's why\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A pull request's title is the first sentence of the item's why",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: A version-led second sentence remains in the PR title\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 964,
+      "text": "Not done: A version-led second sentence remains in the PR title",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1134,6 +1321,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: PR titles can include a second sentence or exceed 70 characters\tpr-title-whole-sentence",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 963,
+      "text": "Not done: PR titles can include a second sentence or exceed 70 characters",
+      "from": "blocking",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: The owner cannot reverse the default after automatic merge\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1152,6 +1350,17 @@
       "text": "Not done: The stop does not resume unattended after 30 minutes",
       "from": "blocking",
       "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 639,
+      "text": "Not done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re",
+      "from": "blocking",
+      "item": "merge-clash-names-files",
       "status": "open",
       "closed_by": null
     },
@@ -1717,6 +1926,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 296,
+      "text": "Not done: forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1746,6 +1966,17 @@
       "text": "Skip stale spec-reader records before resolving their document paths",
       "from": "blocking",
       "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tSuccessful sync can leave the only reader binding in disposable local records\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 296,
+      "text": "Successful sync can leave the only reader binding in disposable local records",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
       "status": "open",
       "closed_by": null
     },
@@ -1801,6 +2032,105 @@
       "text": "Not done: running Codex readers' effort with default settings",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tA heredoc written to a script hides a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 219,
+      "text": "A heredoc written to a script hides a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tArithmetic left shift or a partly quoted delimiter can hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 208,
+      "text": "Arithmetic left shift or a partly quoted delimiter can hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tBackslash continuation can hide a commit that skips hooks\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 209,
+      "text": "Backslash continuation can hide a commit that skips hooks",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tEscaped space lets a comment hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 209,
+      "text": "Escaped space lets a comment hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tHeredoc line continuation hides a skipped-hooks commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 227,
+      "text": "Heredoc line continuation hides a skipped-hooks commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tLiteral heredoc marker can hide a prohibited commit\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 189,
+      "text": "Literal heredoc marker can hide a prohibited commit",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 220,
+      "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 102,
+      "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on",
+      "from": "blocking",
+      "item": "hook-n-flag",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/deny.py\tQuoted heredoc piped to a shell bypasses the commit guard\thook-n-flag",
+      "kind": "bug",
+      "path": "src/forge/deny.py",
+      "line": 181,
+      "text": "Quoted heredoc piped to a shell bypasses the commit guard",
+      "from": "blocking",
+      "item": "hook-n-flag",
       "status": "open",
       "closed_by": null
     },
@@ -2003,6 +2333,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can pass without running tests when always_test contains a pytest help option\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 75,
+      "text": "Close can pass without running tests when always_test contains a pytest help option",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed after pytest filters out an always_test entry\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 320,
+      "text": "Close can succeed after pytest filters out an always_test entry",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose can succeed without running a listed pytest node\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 341,
+      "text": "Close can succeed without running a listed pytest node",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -2010,6 +2373,28 @@
       "text": "Close passes test filenames to Python setup commands",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose runs listed tests twice when they are inside pytest's collection root\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 75,
+      "text": "Close runs listed tests twice when they are inside pytest's collection root",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose skips listed test files outside pytest's collection roots\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 366,
+      "text": "Close skips listed test files outside pytest's collection roots",
+      "from": "blocking",
+      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     },
@@ -2113,6 +2498,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: close skips always_test when the picked selection is large\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 363,
+      "text": "Not done: close skips always_test when the picked selection is large",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -2179,6 +2575,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tLand can close an unreturned fix round after its session ends\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 42,
+      "text": "Land can close an unreturned fix round after its session ends",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tLand can close while a native fix round is still running\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 45,
+      "text": "Land can close while a native fix round is still running",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNative land handouts reset the three-round fix limit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 98,
+      "text": "Native land handouts reset the three-round fix limit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2197,6 +2626,17 @@
       "text": "Not done: forge land omits the question during a review hold with the default setting",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: land proceeds to close after a handed-back round with no commit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 47,
+      "text": "Not done: land proceeds to close after a handed-back round with no commit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
       "status": "open",
       "closed_by": null
     },
@@ -2322,6 +2762,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/merge.py\tNot done: When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes,an\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 178,
+      "text": "Not done: When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes,an",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tNot done: When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes,\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 182,
+      "text": "Not done: When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes,",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\tNot done: add How it went when merging a pre-upgrade pull request\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/merge.py",
@@ -2362,6 +2824,17 @@
       "text": "Standard: Data is protected against loss",
       "from": "blocking",
       "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tUpdate the shipped Forge skill for the new merge cleanup step\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 181,
+      "text": "Update the shipped Forge skill for the new merge cleanup step",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
       "status": "open",
       "closed_by": null
     },
@@ -2652,6 +3125,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tNot done: record the native build run end\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 236,
+      "text": "Not done: record the native build run end",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tPublished pull requests miss native worker questions\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 231,
+      "text": "Published pull requests miss native worker questions",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/native.py\tSuccessful handback makes forge next say the worker stopped\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 203,
+      "text": "Successful handback makes forge next say the worker stopped",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2762,6 +3268,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next loses started remote items before a pull request exists\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 605,
+      "text": "Not done: forge next loses started remote items before a pull request exists",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next misidentifies prototype fix workers and Claude retry model sources\tpersonal-worker-choice",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2769,6 +3286,39 @@
       "text": "Not done: forge next misidentifies prototype fix workers and Claude retry model sources",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next must fetch a newer review head before reading it\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 666,
+      "text": "Not done: forge next must fetch a newer review head before reading it",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready fixes without a worktree\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 725,
+      "text": "Not done: forge next omits ready fixes without a worktree",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready parts without a worktree\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 718,
+      "text": "Not done: forge next omits ready parts without a worktree",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -2806,6 +3356,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: read review history from the selected review ref\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 614,
+      "text": "Not done: read review history from the selected review ref",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: readiness must use the current pull request head\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 648,
+      "text": "Not done: readiness must use the current pull request head",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: shared clean reviews grant readiness\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 632,
+      "text": "Not done: shared clean reviews grant readiness",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: shared readiness needs a valid next step when the worktree is behind\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 705,
+      "text": "Not done: shared readiness needs a valid next step when the worktree is behind",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: stopped specs on story branches disappear from forge next\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2824,6 +3418,17 @@
       "text": "Published story state can hide locally recorded question touches in the context hook.",
       "from": "worker",
       "item": "skipped-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRemote started items offer a command that cannot run here\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 609,
+      "text": "Remote started items offer a command that cannot run here",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -3000,6 +3605,17 @@
       "text": "Not done: forge next does not show which file each work setting came from",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: handback restores an invalid forge.toml edit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 669,
+      "text": "Not done: handback restores an invalid forge.toml edit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
       "status": "open",
       "closed_by": null
     },
@@ -3275,6 +3891,17 @@
       "text": "Standalone picker runs a full second suite without a test place",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: scores must be integers from 1 to 5\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 11,
+      "text": "Not done: scores must be integers from 1 to 5",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
       "status": "open",
       "closed_by": null
     },
@@ -3818,6 +4445,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: close skips always_test for settings and docs changes\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1145,
+      "text": "Not done: close skips always_test for settings and docs changes",
+      "from": "blocking",
+      "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: proof list\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 65,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -4093,6 +4742,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNative rounds ignore local model overrides when selecting a subagent role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 125,
+      "text": "Native rounds ignore local model overrides when selecting a subagent role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: Earlier-release Codex fallback is mistaken for a Claude round\treuse-worker-chats",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -4168,6 +4828,28 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: printed model matches the native Codex role\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 118,
+      "text": "Not done: printed model matches the native Codex role",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: split fallback uses the Codex kit inside a Codex session\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 104,
+      "text": "Not done: split fallback uses the Codex kit inside a Codex session",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: switching a design item to Claude can run Codex again\tstuck-worker-asks",
@@ -4280,6 +4962,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/conftest.py\tNot done: a suite regression test for inherited coordinator and Forge defaults\tpin-test-defaults",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 303,
+      "text": "Not done: a suite regression test for inherited coordinator and Forge defaults",
+      "from": "blocking",
+      "item": "pin-test-defaults",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tThe live Codex smoke test loses its opt-in in a nested pytest run\tpin-test-defaults",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 306,
+      "text": "The live Codex smoke test loses its opt-in in a nested pytest run",
+      "from": "blocking",
+      "item": "pin-test-defaults",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/stubs/codex-app-server",
@@ -4313,6 +5017,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_counts.py\tNot done: proof list\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 99,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
       "kind": "bug",
       "path": "tests/test_board_dependency_timelines.py",
@@ -4331,6 +5046,17 @@
       "text": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data",
       "from": "blocking",
       "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_github_once.py\tNot done: test_board_github_once verifies unknown facts on failure\tFORGE-BOARD-2/COUNTS",
+      "kind": "bug",
+      "path": "tests/test_board_github_once.py",
+      "line": 39,
+      "text": "Not done: test_board_github_once verifies unknown facts on failure",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/COUNTS",
       "status": "open",
       "closed_by": null
     },
@@ -4434,6 +5160,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_job_budgets.py\tNot done: test timing coverage and balance across every platform group\tmain-run-faster",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 30,
+      "text": "Not done: test timing coverage and balance across every platform group",
+      "from": "blocking",
+      "item": "main-run-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_job_budgets.py\tNot done: timing file coverage and group balance test\tmain-run-faster",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 73,
+      "text": "Not done: timing file coverage and group balance test",
+      "from": "blocking",
+      "item": "main-run-faster",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
       "kind": "bug",
       "path": "tests/test_ci_job_budgets.py",
@@ -4452,6 +5200,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "claude-sonnet-default",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_always_tests.py\tNot done: the guide proof does not check the always_test instructions\tclose-always-tests",
+      "kind": "bug",
+      "path": "tests/test_close_always_tests.py",
+      "line": 87,
+      "text": "Not done: the guide proof does not check the always_test instructions",
+      "from": "blocking",
+      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     },
@@ -4782,6 +5541,17 @@
       "text": "The doctor interrupt check times out locally on this branch and on the default branch.",
       "from": "worker",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_deny.py\tNot done: init and earlier-adoption upgrade tests for the corrected hook\thook-n-flag",
+      "kind": "bug",
+      "path": "tests/test_deny.py",
+      "line": 60,
+      "text": "Not done: init and earlier-adoption upgrade tests for the corrected hook",
+      "from": "blocking",
+      "item": "hook-n-flag",
       "status": "open",
       "closed_by": null
     },
@@ -5226,6 +5996,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_last_task_records_story_outcome.py\tNot done: proof list\twindows-green-3",
+      "kind": "bug",
+      "path": "tests/test_last_task_records_story_outcome.py",
+      "line": 46,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-green-3",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -5380,6 +6161,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_merge_command.py\tNot done: test a worktree held open by another process\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "tests/test_merge_command.py",
+      "line": 297,
+      "text": "Not done: test a worktree held open by another process",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_command.py\tNot done: test the required forge doctor --fix cleanup instruction\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "tests/test_merge_command.py",
+      "line": 301,
+      "text": "Not done: test the required forge doctor --fix cleanup instruction",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_merge_refreshes_behind_base.py\tNot done: Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line ending\twindows-test-stubs",
       "kind": "bug",
       "path": "tests/test_merge_refreshes_behind_base.py",
@@ -5389,6 +6192,17 @@
       "item": "windows-test-stubs",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_refreshes_behind_base.py\tNot done: test failed worktree removal through forge land\tpin-switch-leaves-worktree",
+      "kind": "bug",
+      "path": "tests/test_merge_refreshes_behind_base.py",
+      "line": 250,
+      "text": "Not done: test failed worktree removal through forge land",
+      "from": "blocking",
+      "item": "pin-switch-leaves-worktree",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
@@ -5464,6 +6278,17 @@
       "text": "Not done: init and upgrade ignore forge.local.toml at their own entry points",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
+      "kind": "bug",
+      "path": "tests/test_pid_reuse_keeps_run.py",
+      "line": 21,
+      "text": "Not done: test PID reuse through Codex and an upgraded client",
+      "from": "blocking",
+      "item": "pid-reuse-keeps-run",
       "status": "open",
       "closed_by": null
     },
@@ -5633,6 +6458,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "tests/test_score_notes.py",
+      "line": 99,
+      "text": "Not done: test the data-loss Harm floor",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_small_test_runs_skip_the_test_line.py\tNot done: the five-file picker boundary has an end-to-end lane test\treviews-skip-agent-line",
       "kind": "bug",
       "path": "tests/test_small_test_runs_skip_the_test_line.py",
@@ -5732,6 +6568,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_sync_in_any_worktree.py\tNot done: the command-level sync proof\tsync-in-any-worktree",
+      "kind": "bug",
+      "path": "tests/test_sync_in_any_worktree.py",
+      "line": 35,
+      "text": "Not done: the command-level sync proof",
+      "from": "blocking",
+      "item": "sync-in-any-worktree",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_sync_not_blocked_by_other_runs.py\tNot done: concurrent sync in new and adopted client repos\tsync-not-blocked",
       "kind": "bug",
       "path": "tests/test_sync_not_blocked_by_other_runs.py",
@@ -5774,6 +6621,50 @@
       "item": "sync-not-blocked",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: Codex fixer handout and land proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 208,
+      "text": "Not done: Codex fixer handout and land proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work in new and earlier-adopted client repos\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 40,
+      "text": "Not done: native work in new and earlier-adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work's named handout and failure outcomes have proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 68,
+      "text": "Not done: native work's named handout and failure outcomes have proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: prove settings restoration and the post-nudge handback\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 155,
+      "text": "Not done: prove settings restoration and the post-nudge handback",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
@@ -5882,6 +6773,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\t.github/workflows/forge-next.yml\tFollow-up: repeated pushes of one release tag can cancel a queued tag run",
+      "kind": "edge",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 17,
+      "text": "Follow-up: repeated pushes of one release tag can cancel a queued tag run",
+      "from": "review",
+      "item": "main-run-faster",
       "status": "open",
       "closed_by": null
     },
@@ -7019,6 +7921,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_fix_forge_s_pull_requests_and_status_output.py\tFollow-up: prove punctuation is removed at a shortening boundary",
+      "kind": "edge",
+      "path": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
+      "line": 23,
+      "text": "Follow-up: prove punctuation is removed at a shortening boundary",
+      "from": "review",
+      "item": "pr-title-whole-sentence",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
       "kind": "edge",
       "path": "tests/test_fix_leftover_app_server_bare_command.py",
@@ -7224,116 +8137,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tA heredoc written to a script hides a prohibited commit\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 219,
-      "text": "A heredoc written to a script hides a prohibited commit",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tArithmetic left shift or a partly quoted delimiter can hide a prohibited commit\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 208,
-      "text": "Arithmetic left shift or a partly quoted delimiter can hide a prohibited commit",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tBackslash continuation can hide a commit that skips hooks\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 209,
-      "text": "Backslash continuation can hide a commit that skips hooks",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tEscaped space lets a comment hide a prohibited commit\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 209,
-      "text": "Escaped space lets a comment hide a prohibited commit",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tHeredoc line continuation hides a skipped-hooks commit\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 227,
-      "text": "Heredoc line continuation hides a skipped-hooks commit",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tLiteral heredoc marker can hide a prohibited commit\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 189,
-      "text": "Literal heredoc marker can hide a prohibited commit",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 220,
-      "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tNot done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 102,
-      "text": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/deny.py\tQuoted heredoc piped to a shell bypasses the commit guard\thook-n-flag",
-      "kind": "bug",
-      "path": "src/forge/deny.py",
-      "line": 181,
-      "text": "Quoted heredoc piped to a shell bypasses the commit guard",
-      "from": "blocking",
-      "item": "hook-n-flag",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_deny.py\tNot done: init and earlier-adoption upgrade tests for the corrected hook\thook-n-flag",
-      "kind": "bug",
-      "path": "tests/test_deny.py",
-      "line": 60,
-      "text": "Not done: init and earlier-adoption upgrade tests for the corrected hook",
-      "from": "blocking",
-      "item": "hook-n-flag",
       "status": "open",
       "closed_by": null
     }
