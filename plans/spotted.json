@@ -7523,6 +7523,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: scores must be integers from 1 to 5\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 11,
+      "text": "Not done: scores must be integers from 1 to 5",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "tests/test_score_notes.py",
+      "line": 99,
+      "text": "Not done: test the data-loss Harm floor",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

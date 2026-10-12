@@ -71,7 +71,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     page = _decision(fix, answers)
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
-        "priority": "P1", "title": "Prototype fails", "body": "Demo cannot finish",
+        "priority": "P1", "title": "Prototype fails", "body": "Gain 3, Work 2, Harm 1\nDemo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     blocked = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert blocked.returncode == 1
@@ -80,7 +80,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
-        "priority": "P0", "title": "Prototype exposes data", "body": "Demo leaks records",
+        "priority": "P0", "title": "Prototype exposes data", "body": "Gain 5, Work 2, Harm 4\nDemo leaks records",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     critical = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert critical.returncode == 1
@@ -170,7 +170,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {
         "review_status": "incomplete", "findings": [], "scope_rejected_findings": [{
-            "priority": "P2", "title": "Outside scope", "body": "Review did not finish",
+            "priority": "P2", "title": "Outside scope", "body": "Gain 2, Work 1, Harm 1\nReview did not finish",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     incomplete = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert incomplete.returncode == 1
@@ -179,7 +179,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "exit": 2, "report": {
         "review_status": "scoped-clean", "findings": [], "scope_rejected_findings": [{
-            "priority": "P2", "title": "Outside scope", "body": "Review stopped early",
+            "priority": "P2", "title": "Outside scope", "body": "Gain 2, Work 1, Harm 1\nReview stopped early",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     unfinished = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert unfinished.returncode == 1

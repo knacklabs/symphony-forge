@@ -57,9 +57,14 @@ Risks: none
 """
 
 
+# A default score line per priority that keeps each finding's outcome under today's rule.
+SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 3, Work 2, Harm 1"}
+
+
 def finding(priority: str, title: str, file: str = "app.py", line: int = 1) -> dict:
     # confidence, category and column are fields Forge doesn't use; it must ignore them.
-    return {"title": title, "body": f"Evidence for: {title}", "priority": priority,
+    return {"title": title, "body": f"{SCORES.get(priority, 'Gain 2, Work 1, Harm 1')}\n"
+                                    f"Evidence for: {title}", "priority": priority,
             "confidence": 0.8, "category": "bug",
             "code_location": {"file_path": file, "line": line, "column": 1}}
 
@@ -574,8 +579,8 @@ def test_18_close(env, kind):
 # --- criterion 19: the functional check -----------------------------------------------------
 
 MISSING_CHECK = finding("P1", "Not done: functional check", "show.py")
-HOLLOW_CHECK = {**MISSING_CHECK, "body": "The check says only 'it works'; nothing was exercised."}
-STALE_CHECK = {**MISSING_CHECK, "body": "The only check is in an older commit's message."}
+HOLLOW_CHECK = {**MISSING_CHECK, "body": "Gain 3, Work 2, Harm 1\nThe check says only 'it works'; nothing was exercised."}
+STALE_CHECK = {**MISSING_CHECK, "body": "Gain 3, Work 2, Harm 1\nThe only check is in an older commit's message."}
 
 
 @pytest.mark.parametrize("task, answer, refused", [
