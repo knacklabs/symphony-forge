@@ -16,26 +16,12 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4d38f2254bae10eef6e1488d3e21db4e413a0a87bd677a173e5ede063fa33f10",
-    "changed": "cb5ddf4bff5c884abe21cce9d811f263db09ec5a06341df25b77de2198d52150",
-    "commit": "ce887a7a3302688ee376e095c512fbf9e1cf99cc",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): during an upgrade with an older-release run still going, sync stops with a plain next step instead of refreshing other files; nothing is lost. Recorded as lived-with.",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Raise: Not done. During an upgrade, another item's earlier-release `forge work` run can hold a chat lock. This branch refuses `forge sync` at this line before `sync.write` refreshes any generated files (`src/forge/sync.py:509-510`); it neither waits for that run nor refreshes the files while leaving its chat alone. The named old-release test asserts that refusal, so it does not prove the Done-when behavior for this case. The refusal also prints a problem and a `Next:` line rather than saying what it is waiting for in one line.",
-        "file": "src/forge/codex.py",
-        "line": 336,
-        "priority": "P1",
-        "title": "Not done: forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually has,"
-      }
-    ],
-    "id": "3d0f7d17-fa18-4931-8063-869200231007",
+    "branch_diff": "afedef2fdf15901dec8965c70b925203f4eee65013211ee2e9efde519b5cae2f",
+    "changed": "408dc848651fa6602299f282dced51f7777ab9cc0c5241bd4a0b538e9232ba8a",
+    "commit": "64bbd4ba2b79b9757d9b49b1782918f732373e42",
+    "dismissals": [],
+    "findings": [],
+    "id": "29233e94-b0d9-4b45-aa5e-6440f8b01032",
     "status": "clean"
   },
   "round": 1,
@@ -59,6 +45,10 @@
     },
     {
       "at": "2026-10-11T16:38:05.756886+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:28:24.247671+00:00",
       "step": "review"
     }
   ],
