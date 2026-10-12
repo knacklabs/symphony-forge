@@ -22,34 +22,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "df2eab870c2726a658ef48ce35cd1aa0c2ac7d340f76905c3668baee65255ac4",
-    "changed": "80eac39e1114d4171403dde02f527fbdb93db08280f43fb3c94a698a4bf6c7ce",
-    "commit": "cf2509c3a08abedf8f529be517535226274f1de5",
+    "branch_diff": "ffc096ed1629c7f0c082ed8d0b134249590964aaf566acc78152760da04243f5",
+    "changed": "7dadb5530cf096ae66281da551b3cfcb9471662394fca686d48f2aa108986cc2",
+    "commit": "ce650a838d492014b6eb5b76fc616f17906f81c0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The changed stub writes README.md as LF bytes, but its upgraded-client path still writes forge.toml with write_text at line 97. On Windows, that produces CRLF; the test Git configuration in tests/conftest.py:305-314 disables system configuration and sets no core.autocrlf conversion. The resulting commit retains CRLF, while test_2 compares it with the LF-only upgraded string at line 247. That Windows case still fails.",
-        "file": "tests/test_merge_refreshes_behind_base.py",
-        "line": 94,
-        "priority": "P1",
-        "title": "Not done: Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line ending"
-      },
-      {
-        "body": "Raise: Test. The changed test replaces each Windows timeout expression with its non-Windows fallback before asserting 120/150 seconds. tests/test_ci_job_budgets.py:52-53 checks only that the effective timeout is below the job cap. Reverting the Windows 270/300-second limits to 120/150 would therefore leave these tests green, although the longer Windows budget is a named Done-when behavior.",
-        "file": "tests/test_ci_hang.py",
-        "line": 6,
-        "priority": "P1",
-        "title": "Not done: Windows per-test timeout budget test"
-      },
-      {
-        "body": "Raise: Gate. The proof list says the npm-cache and macOS Go setup are proven by main's full CI run, but the changed steps belong to a job that is explicitly skipped on pull requests (.github/workflows/forge-next.yml:42). This branch has no pull-request check behind that claimed full-run proof, so the Windows and macOS outcome cannot be verified before merge.",
+        "body": "Raise: Not done. The changed command gives the full-suite matrix 270-second faulthandler and 300-second per-test limits on Windows, but the `windows-installers` job in this workflow also runs pytest on `windows-latest` and still uses 120 and 150 seconds (lines 20\u201326). `tests/test_ci_hang.py` continues to assert those old limits for that job. Thus a Windows test run misses the named limits.",
         "file": ".github/workflows/forge-next.yml",
-        "line": 84,
+        "line": 96,
         "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for"
       }
     ],
-    "id": "a55bcf56-2245-45f7-8434-55cf5f669845",
+    "id": "79637bcc-7b34-45fc-a1b6-b737b2cc8b69",
     "status": "blocked"
   },
   "status": "fixing",
@@ -60,6 +46,10 @@
     },
     {
       "at": "2026-10-12T08:17:31.778887+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T08:29:05.660726+00:00",
       "step": "review"
     }
   ],
