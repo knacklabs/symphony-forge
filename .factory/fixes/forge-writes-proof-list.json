@@ -1,0 +1,14 @@
+{
+  "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
+  "branch": "fix/forge-writes-proof-list",
+  "done_when": "Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test proves, so a proof list never names a test that did not run",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-12T16:41:18.842984+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
+}
