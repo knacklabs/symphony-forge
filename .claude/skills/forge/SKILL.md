@@ -195,7 +195,8 @@ and the per-test budget.
 alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
 `model`, `effort`, `joined_at`, `started_at`, `process`, `output_path` and `progress`.
 Waiting entries have no start time. Test output and progress are null until the test runner sets
-them. The process includes its pid and start identity; a reused pid cannot hold an old place.
+them. The process includes its pid and start identity; a reused pid cannot hold an old place, but
+the run keeps it while its own Forge process runs.
 
 Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that item's entries in
 both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.

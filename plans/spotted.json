@@ -7567,6 +7567,17 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pid_reuse_keeps_run.py\tNot done: test PID reuse through Codex and an upgraded client\tpid-reuse-keeps-run",
+      "kind": "bug",
+      "path": "tests/test_pid_reuse_keeps_run.py",
+      "line": 21,
+      "text": "Not done: test PID reuse through Codex and an upgraded client",
+      "from": "blocking",
+      "item": "pid-reuse-keeps-run",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
