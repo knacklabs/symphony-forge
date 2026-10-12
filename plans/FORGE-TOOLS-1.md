@@ -326,6 +326,8 @@ New moving parts: the Claude Agent SDK, pinned in its own environment (item 6)
 
 ## Notes
 
+- Known issue for the next part touching land (2026-10-12): if the coordinating session exits before handback, its lane entry drops, so a rerun of `forge land` closes the item's committed work instead of handing out a fresh round (land.py ~42-52, machine.py ~431-446). Accepted on WORK as Harm 1-2.
+
 - SETTING and SWITCH run side by side (no shared file); the rest run one after another, READS,
   HOLD, WORK, SDK, SDKREAD, CHECKS, because each changes the skill or shares `story.py`,
   `worker.py` or `native.py` with the next. `forge ask` leaves in READS together with `forge
