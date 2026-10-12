@@ -17,23 +17,30 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "dd544bd92652c096f1b8334b5f43247269c5200b71267dfa83fae52b19bcccd0",
-    "changed": "0696df3f908d08030e022836ba4e65f63aa5277196438b5c220205bbf4581f7e",
-    "commit": "a5858b2040125f01b3106340d9ff8b7d17161338",
+    "branch_diff": "d21be600920555905cce6d820b70a77c6d64635cce8cbca2ae2802b99e048cec",
+    "changed": "ffd53d6ddca673f79462e9eda64cb7caa1fe4f75c2b4d3fea9a7938c338d421e",
+    "commit": "43c86289f3af78d20f3fc73292f6b2342b1b19a9",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. For runners without test IDs, this code combines all failure lines from a check into one key. If one round leaves `\u2715 A` and `\u2715 B`, and the next leaves `\u2715 B` and `\u2715 C`, B's unchanged failure line never reaches a count of two because the combined keys differ. Forge sends the item to another worker round instead of asking the owner. The named test covers only one such failure per round.",
+        "body": "Raise: Not done. This event is recorded on every `forge close`, even if no worker has run since the previous close. After one worker round leaves a finding or test failing, rerunning `forge close` creates another event ID. `stuck_round` at close.py:492-500 treats that ID as a new round and asks the owner before two worker rounds have left the same failure. The `work twice` proof covers two work calls without a close, but not two close calls without work.",
         "file": "src/forge/close.py",
-        "line": 484,
+        "line": 237,
         "priority": "P1",
-        "title": "Not done: a persistent failing test is missed when another failure changes"
+        "title": "Not done: repeated close calls count one worker round twice"
+      },
+      {
+        "body": "Raise: Not done. For failure lines without a `\u2715` or `\u00d7` marker, this combines every matching line into one key. A normal `unittest` run that leaves `FAIL: test_a` and `FAIL: test_b`, followed by one that leaves `FAIL: test_b` and `FAIL: test_c`, produces different keys. Forge misses the unchanged failure of `test_b` and sends the item to another worker round. The named A-and-B then B-and-C proof uses Jest markers, which take the separate-line path.",
+        "file": "src/forge/close.py",
+        "line": 485,
+        "priority": "P1",
+        "title": "Not done: persistent id-less failures are missed when another failure changes"
       }
     ],
-    "id": "86968b26-083e-4a65-b9d1-66b5f02a9660",
+    "id": "97bbe17f-c784-4965-ad07-4904956675fd",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-11T13:05:11.609053+00:00",
@@ -70,16 +77,16 @@
     {
       "at": "2026-10-12T01:59:57.664861+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:13:29.448845+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T01:02:21.802157+00:00",
-    "by": "owner",
-    "choice": "accept",
+    "at": "2026-10-12T02:13:29.458180+00:00",
     "file": "src/forge/close.py",
-    "reason": "Owner rule for Harm 1-2: findings 1-3 are fixed in commit fa1b2eedc; findings 4 (no-commit wording) and 5 (question waits for a lane slot) are Gain 2, lived with, with notes in the proof list",
-    "wait_id": "30d3e463-e524-4201-bf96-bd474571d65d",
-    "worker_round": null
+    "wait_id": "2ced4520-6e61-45a2-9f34-b11e1c0236c9"
   },
   "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
 }
