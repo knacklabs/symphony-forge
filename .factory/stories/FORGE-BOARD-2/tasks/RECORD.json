@@ -15,79 +15,61 @@
     "src/forge/nextstep.py",
     "src/forge/story.py",
     "src/forge/time_records.py",
-    "src/forge/worker.py"
+    "src/forge/worker.py",
+    "tests/test_pull_request_body_limit.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a04fd7d0be440144ad3d6e551efd9b3e571c77fd8112ec3f876da394bde39880",
-    "changed": "6159e2b1f58b1d58d66e549c3f682aaf48cf7511834852a92e985b907c0ab9de",
-    "commit": "3d672059cfd0f0b5408771d3c1460b871db4c574",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is already guarded (every record row is checked to be a dict); findings 2 and 4 are outside the Done-when with Harm 2 or less and are follow-ups: republish the saved review on a merge conflict; give done stories a finished point; keep the PR time record to summaries",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is already guarded (every record row is checked to be a dict); findings 2 and 4 are outside the Done-when with Harm 2 or less and are follow-ups: republish the saved review on a merge conflict; give done stories a finished point; keep the PR time record to summaries",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is already guarded (every record row is checked to be a dict); findings 2 and 4 are outside the Done-when with Harm 2 or less and are follow-ups: republish the saved review on a merge conflict; give done stories a finished point; keep the PR time record to summaries",
-        "finding": 3
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is already guarded (every record row is checked to be a dict); findings 2 and 4 are outside the Done-when with Harm 2 or less and are follow-ups: republish the saved review on a merge conflict; give done stories a finished point; keep the PR time record to summaries",
-        "finding": 4
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is already guarded (every record row is checked to be a dict); findings 2 and 4 are outside the Done-when with Harm 2 or less and are follow-ups: republish the saved review on a merge conflict; give done stories a finished point; keep the PR time record to summaries",
-        "finding": 5
-      }
-    ],
+    "branch_diff": "f0628baea128508d15418372c0899a622b3f4b32ae195e1852b024a161392b8c",
+    "changed": "d24f5685c8f9aceff1bd8ee98db0189336ef3b12082fd01d7a379d34bdcdaa61",
+    "commit": "217c9ac8cb1576fe4d1a1a4d39d2715189b8e043",
+    "dismissals": [],
     "findings": [
       {
-        "body": "chunk 1/2:\n\nRaise: Security. A pull request author can edit the body to include a syntactically valid time record with `state.steps` or `clean_reviews` containing `null`. `from_body` checks that these fields are lists, then calls `row.get` without checking each entry. The resulting `AttributeError` escapes while `forge board` or `forge next` reads that PR, making those commands unavailable until the body is repaired.",
+        "body": "chunk 1/2:\n\nRaise: Security. The validation at this line accepts an event object with `\"event\": null` because it checks the field's type only when the value is non-null. When the board merges that PR record, `item()` calls `.startswith()` on the null value at time_records.py:84 and raises `AttributeError`. A PR author can therefore make `forge board` fail by editing the shared record. This is distinct from the dismissed null-row finding: the row is a dictionary, but its event type is null.",
         "file": "src/forge/time_records.py",
         "line": 409,
         "priority": "P1",
-        "title": "Malformed pull request records can crash board and next"
+        "title": "Null event type in a pull request record crashes the board"
       },
       {
-        "body": "chunk 1/2:\n\nRaise: Functional. When a repeat close encounters a default-branch conflict, this call publishes a fabricated `reviewing` result with empty findings and empty evidence. `_publish` replaces the PR's managed block, so an existing blocked review loses its findings and proof list and instead says a review is running, although close has stopped. This occurs during normal conflict resolution on a PR that was already reviewed.",
+        "body": "chunk 1/2:\n\nRaise: Test. The new GitHub stub wrapper replaces `sys.stdin` with `io.StringIO` after reading a merge body. The merge stub it wraps reads `sys.stdin.buffer` (tests/test_last_task_records_story_outcome.py:43), so each parameterized merge fails with `AttributeError` before the test can verify the submitted body. The supplied suite output records all five cases failing this way; the required command-level proof is red.",
+        "file": "tests/test_pull_request_body_limit.py",
+        "line": 31,
+        "priority": "P1",
+        "title": "Not done: the pull-request body-limit command test passes"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Security. `from_body` accepts any finite nonnegative duration, including `1e308`. A PR author can put that value in a review timing; `merged()` passes it to `item()`, where `timedelta(seconds=seconds)` raises `OverflowError`. Reading that PR then crashes `forge board` or `forge next`. This is a distinct case from the earlier malformed-row finding: the row passes the new type checks.",
+        "file": "src/forge/time_records.py",
+        "line": 419,
+        "priority": "P1",
+        "title": "A finite duration in a PR record can crash board and next"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Functional. On a repeat close that hits a default-branch conflict, this call publishes a fabricated `reviewing` result with no findings or evidence. `_publish` replaces the PR's managed block, so an existing blocked review loses its findings and proof list and appears to be running after close has stopped.",
         "file": "src/forge/close.py",
         "line": 166,
         "priority": "P1",
         "title": "A merge conflict replaces an existing PR's review and proof"
       },
       {
-        "body": "chunk 1/2:\n\nItem 12 remains incomplete here: approved but unstarted stories and GitHub-merged fixes need corrected counts; blocking plan problems are absent from Needs you; the page lacks the pinned folding sections, story keys and cold-read history; and pane times remain unrounded. The story assigns these behaviours to COUNTS, WAITS, NAV and PANE.",
-        "file": "src/forge/board.py",
-        "line": 606,
-        "priority": "P2",
-        "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
-      },
-      {
-        "body": "chunk 2/2:\n\nRaise: Functional. The board passes only the story's start time and part/read intervals to `time_records.story` (board.py:605\u2013608). For a completed story, `story()` does not extend the runway to its completion time (time_records.py:485). In a human-merge repo, an owner may record the story outcome hours after the last part merges; that elapsed time disappears from the story's unknown seconds and total. The added runway test covers only an unfinished story. This completion tail is distinct from the previously settled missing start and ongoing tails.",
+        "body": "chunk 2/2:\n\nRaise: Functional. The board passes only part and read intervals plus the story start to `time_records.story`, then sets `unfinished=False` for a done story. That function extends a runway to now only when unfinished (time_records.py:485); it receives no completion bound. When a human records a story outcome after its last part merges, the intervening elapsed time is absent from the story's unknown seconds and total. The added runway test covers an unfinished story only.",
         "file": "src/forge/board.py",
         "line": 606,
         "priority": "P1",
-        "title": "Completed stories omit time after their last part merges"
+        "title": "Completed stories omit elapsed time after their last part"
       },
       {
-        "body": "chunk 2/2:\n\nItem 12 still needs the approved-but-unstarted count, blocking plan problems in Needs you, pinned folding sections with story keys and cold-read history, and rounded pane times. The board retains the old counts and card page here (board.py:662\u2013683, 1188\u20131198), while the unchanged pane formatter in `src/forge/mod/hooks/summary.ts:4\u20136` still uses abbreviated times. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
+        "body": "chunk 2/2:\n\nItem 12 remains incomplete in this branch: the board retains its old counts and card page, blocking plan problems are absent from Needs you, and the pane still formats abbreviated times. The pinned folding sections, story keys and cold-read history are also absent. The story assigns these behaviors to COUNTS, WAITS, NAV and PANE.",
         "file": "src/forge/board.py",
         "line": 662,
         "priority": "P2",
         "title": "Later: COUNTS, WAITS, NAV and PANE complete item 12"
       }
     ],
-    "id": "cad2e037-edf0-43ec-936a-26b2c9718d55",
-    "status": "clean"
+    "id": "239fb245-4963-4522-ba02-dc1ea5c002a7",
+    "status": "blocked"
   },
   "round": 15,
   "status": "fixing",
@@ -151,6 +133,10 @@
     {
       "at": "2026-10-12T09:37:29.161480+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:19:16.235803+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -162,6 +148,6 @@
     "wait_id": "fe34e60a-daed-4171-926a-47c233d2af41",
     "worker_round": 15
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 2e7db401994df42f51fbc0698cb0b67f5a997813` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/board_visuals.py; GitHub's checks will cover it.\nNo local test names src/forge/nextstep.py; GitHub's checks will cover it.\nNo local test names src/forge/time_records.py; GitHub's checks will cover it.\n            assert re.search(r\"shorten|omit|trim\", re.sub(r\"<!--.*?-->\", \"\", text, flags=re.S), re.I)\n        publish_snapshot(env, item, text)\n        # The retained shared record must remain useful on a machine with no original logs.\n        first_machine = env.repo.path\n        peer = env.tmp / \"body-peer\"\n        env.repo.git(\"clone\", \"-q\", env.repo.git(\"remote\", \"get-url\", \"origin\"), str(peer))\n        env.repo.path = peer\n        shared = row(env.repo, item)\n        assert shared[\"stage\"] == \"ready\"\n        assert shared[\"rounds\"] and shared[\"rounds\"][-1][\"new_findings\"] == 0\n        env.repo.path = first_machine\n        branch = f\"task/{item.replace('/', '-')}\" if \"/\" in item else f\"fix/{item}\"\n        github_merge(env, branch)\n        gh = env.repo.bin / \"gh\"\n        source = gh.read_text(\"utf-8\")\n        gh.write_text(source.replace('\"isDraft\": False', f'\"isDraft\": False, \"body\": {text!r}'), \"utf-8\")\n        reject_oversized_bodies(env)\n        # Unicode exceeds the body limit while remaining below Windows' argv limit.\n        outcome = \"Basket quantities survive. \" + \"\u7bee\" * 23_000\n        extra = (\"--outcome\", outcome) if oversized == \"last-part-outcome\" else ()\n        merged = env.repo.forge(\"merge\", item, *extra)\n>       assert merged.returncode == 0, merged.stdout + merged.stderr\nE       AssertionError: GitHub did not merge the pull request for tidy-readme: AttributeError: '_io.StringIO' object has no attribute 'buffer'.\nE         Next: check the pull request, then forge merge tidy-readme\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-BOARD-2-RECORD/.venv/bin/python', '/privat...Error: '_io.StringIO' object has no attribute 'buffer'.\\nNext: check the pull request, then forge merge tidy-readme\\n\").returncode\n\ntests/test_pull_request_body_limit.py:143: AssertionError\n5 failed, 411 passed in 1072.18s (0:17:52)",
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest b61b4d2cb7ac0c16d7f98b6feb8cf5be8b42a7d4` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/board_visuals.py; GitHub's checks will cover it.\nNo local test names src/forge/nextstep.py; GitHub's checks will cover it.\nNo local test names src/forge/time_records.py; GitHub's checks will cover it.\n            assert re.search(r\"shorten|omit|trim\", re.sub(r\"<!--.*?-->\", \"\", text, flags=re.S), re.I)\n        publish_snapshot(env, item, text)\n        # The retained shared record must remain useful on a machine with no original logs.\n        first_machine = env.repo.path\n        peer = env.tmp / \"body-peer\"\n        env.repo.git(\"clone\", \"-q\", env.repo.git(\"remote\", \"get-url\", \"origin\"), str(peer))\n        env.repo.path = peer\n        shared = row(env.repo, item)\n        assert shared[\"stage\"] == \"ready\"\n        assert shared[\"rounds\"] and shared[\"rounds\"][-1][\"new_findings\"] == 0\n        env.repo.path = first_machine\n        branch = f\"task/{item.replace('/', '-')}\" if \"/\" in item else f\"fix/{item}\"\n        github_merge(env, branch)\n        gh = env.repo.bin / \"gh\"\n        source = gh.read_text(\"utf-8\")\n        gh.write_text(source.replace('\"isDraft\": False', f'\"isDraft\": False, \"body\": {text!r}'), \"utf-8\")\n        reject_oversized_bodies(env)\n        # Unicode exceeds the body limit while remaining below Windows' argv limit.\n        outcome = \"Basket quantities survive. \" + \"\u7bee\" * 23_000\n        extra = (\"--outcome\", outcome) if oversized == \"last-part-outcome\" else ()\n        merged = env.repo.forge(\"merge\", item, *extra)\n>       assert merged.returncode == 0, merged.stdout + merged.stderr\nE       AssertionError: GitHub did not merge the pull request for tidy-readme: AttributeError: '_io.StringIO' object has no attribute 'buffer'.\nE         Next: check the pull request, then forge merge tidy-readme\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-BOARD-2-RECORD/.venv/bin/python', '/privat...Error: '_io.StringIO' object has no attribute 'buffer'.\\nNext: check the pull request, then forge merge tidy-readme\\n\").returncode\n\ntests/test_pull_request_body_limit.py:143: AssertionError\n5 failed, 411 passed in 1209.38s (0:20:09)",
   "worker": "codex"
 }
