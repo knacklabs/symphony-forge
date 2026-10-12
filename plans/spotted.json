@@ -2894,6 +2894,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tSuccessful handback makes forge next say the worker stopped\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 203,
+      "text": "Successful handback makes forge next say the worker stopped",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3528,6 +3539,17 @@
       "text": "Standalone picker runs a full second suite without a test place",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: scores must be integers from 1 to 5\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 11,
+      "text": "Not done: scores must be integers from 1 to 5",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
       "status": "open",
       "closed_by": null
     },
@@ -6007,6 +6029,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
+      "kind": "bug",
+      "path": "tests/test_score_notes.py",
+      "line": 99,
+      "text": "Not done: test the data-loss Harm floor",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/SCORES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_small_test_runs_skip_the_test_line.py\tNot done: the five-file picker boundary has an end-to-end lane test\treviews-skip-agent-line",
       "kind": "bug",
       "path": "tests/test_small_test_runs_skip_the_test_line.py",
@@ -7653,28 +7686,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/score.py\tNot done: scores must be integers from 1 to 5\tFORGE-SCORE-1/SCORES",
-      "kind": "bug",
-      "path": "src/forge/score.py",
-      "line": 11,
-      "text": "Not done: scores must be integers from 1 to 5",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/SCORES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
-      "kind": "bug",
-      "path": "tests/test_score_notes.py",
-      "line": 99,
-      "text": "Not done: test the data-loss Harm floor",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/SCORES",
       "status": "open",
       "closed_by": null
     }

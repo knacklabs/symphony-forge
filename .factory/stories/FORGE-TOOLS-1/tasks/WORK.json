@@ -10,27 +10,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "956d69ebf5ec6a2fa9e0928fb0ce613109fd355e7c6bf50cbf27ab91e7c44f2e",
-    "changed": "2d0586382a87bd46ed45493c5da08133cafabcf95923967f8318193e48b02418",
-    "commit": "668b16e61a032834bd37412bd2cddf41046bd144",
+    "branch_diff": "ed894faacdd97e8d8c41e515ef081d4c931dd75e571412d8dfaca276553c8d61",
+    "changed": "364a52cc7f5082e9a4a438161c9389698282104262ff9cec7d334201f102f726",
+    "commit": "69e9bc432841ba6b448b1745adfd52c0f0664b70",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Native routing is decided only for the initial Claude choice here. When a user-facing `split` round runs through the Claude SDK from a Codex session and Claude fails, the fallback at worker.py:245-300 switches to Codex but calls `codex.run` instead of handing out a `frontend` subagent. It can also refuse for a missing Codex SDK after the status commit, although a native Codex round needs no SDK. The named rule that work on the coordinating session's tool runs as its background subagent is unmet for this fallback.",
-        "file": "src/forge/worker.py",
-        "line": 104,
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. Handback clears `pending` and releases the lock here, but leaves `native_round` in the item record. For a completed task whose status is still `working`, `nextstep._item` (src/forge/nextstep.py:702-709) treats that marker and the absent lock as a stopped worker. `forge next` then tells the coordinator to run `forge work` again instead of proceeding to close. The new test checks `forge next` only while the round is pending.",
+        "file": "src/forge/native.py",
+        "line": 203,
         "priority": "P1",
-        "title": "Not done: split fallback uses the Codex kit inside a Codex session"
-      },
-      {
-        "body": "Raise: Functional. New evidence beyond the earlier ruling about an expired session: every native fix handout returns here, but the next `forge land` starts `rounds` from zero at land.py:35. No round count is saved across hand-back. If close alternates between new review findings and failing checks, so its repeated-failure guard does not stop the item, each rerun prints `Fix round 1 of 3` and the three-round land limit is never reached. The existing land test covers that alternating sequence only within one kit-run invocation; the native test covers one fix round.",
-        "file": "src/forge/land.py",
-        "line": 98,
-        "priority": "P1",
-        "title": "Native land handouts reset the three-round fix limit"
+        "title": "Successful handback makes forge next say the worker stopped"
       }
     ],
-    "id": "f55c3a7f-9782-4cd5-afc9-0cffc13d9fe0",
+    "id": "509a4d1e-e6c0-40f9-b9bd-0f6d183c59e8",
     "status": "blocked"
   },
   "status": "fixing",
@@ -65,6 +58,10 @@
     },
     {
       "at": "2026-10-12T15:58:14.135779+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:56:44.088407+00:00",
       "step": "review"
     }
   ],
