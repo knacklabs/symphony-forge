@@ -88,6 +88,8 @@ def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
         return
     asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round")
     assert stuck.returncode == 1, stuck.stdout + stuck.stderr
+    assert ("The worker can't get past the same problem, so Forge stopped sending it back. "
+            "Ask the human:\n") in stuck.stderr
     assert stuck.stderr.splitlines()[-5:] == asked
     assert env.close(item).stderr.splitlines()[-5:] == asked
     shown = env.repo.forge("next").stdout
