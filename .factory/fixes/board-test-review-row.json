@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T05:35:32.078200+00:00",
+      "because": "Whether main's full run passes is proven by CI on the merge, not by a local proof list",
+      "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown, and main's full test run passes"
+    }
+  ],
   "base": "2572c7aa3e2dcaaf99d039dc68fddac81394d188",
   "branch": "fix/board-test-review-row",
-  "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown, and main's full test run passes",
+  "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the Tests stage is running",
   "flagged": [
     ".factory/fixes/board-test-review-row.json",
     "tests/test_board_tests_after_worker.py"
