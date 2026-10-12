@@ -408,6 +408,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/codex-chat-view.read.md\tGate: unrelated cold-read notes changed outside Scope\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "docs/specs/codex-chat-view.read.md",
+      "line": 5,
+      "text": "Gate: unrelated cold-read notes changed outside Scope",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
       "kind": "bug",
       "path": "forge.toml",
@@ -2058,6 +2069,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: land proceeds to close after a handed-back round with no commit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 47,
+      "text": "Not done: land proceeds to close after a handed-back round with no commit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tStopped land directs the coordinator back to work instead of the owner's choice\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2509,6 +2531,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/native.py\tNot done: record the native build run end\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 236,
+      "text": "Not done: record the native build run end",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2835,6 +2868,17 @@
       "text": "Not done: forge next does not show which file each work setting came from",
       "from": "blocking",
       "item": "personal-worker-choice",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: handback restores an invalid forge.toml edit\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 669,
+      "text": "Not done: handback restores an invalid forge.toml edit",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
       "status": "open",
       "closed_by": null
     },

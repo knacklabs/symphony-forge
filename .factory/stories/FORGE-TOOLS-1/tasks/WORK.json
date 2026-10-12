@@ -1,10 +1,59 @@
 {
   "branch": "task/FORGE-TOOLS-1-WORK",
-  "status": "started",
+  "flagged": [
+    "docs/specs/codex-chat-view.read.md",
+    "src/forge/land.py",
+    "src/forge/native.py",
+    "src/forge/repo.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a72f96778802694cbdf913166fbed3af6609f5c4ade5b82d86981c7794d8574a",
+    "changed": "f6e2ded20f59e352dd40a1e11980bfedeb29937a1705fd12075c0f5b17e5d90f",
+    "commit": "2c5c47fa1206915197287eef8e0efb2d9c38f8a3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. `check_pin` parses the current `forge.toml` at line 668 before the new handback branch reads the pin from the handout's HEAD. If a native subagent leaves an uncommitted malformed edit to `forge.toml` and handback runs from the item's checkout, parsing refuses the command before handback can restore the file. The named restore behavior therefore fails for that edit.",
+        "file": "src/forge/repo.py",
+        "line": 669,
+        "priority": "P1",
+        "title": "Not done: handback restores an invalid forge.toml edit"
+      },
+      {
+        "body": "Raise: Not done. Handback records a timing here, but neither handout nor handback records the promised `run end` event. `machine.leave` only removes the lane entry; kit runs use `repo.record_run` to write their start and end events. Native rounds therefore lack the usual finished-run record, and the new test checks timing without checking that event.",
+        "file": "src/forge/native.py",
+        "line": 236,
+        "priority": "P1",
+        "title": "Not done: record the native build run end"
+      },
+      {
+        "body": "Raise: Not done. On the next `forge land` call after a successful handback with no work commit, the item's HEAD is still the `item is working` status commit. The condition at lines 42\u201345 calls `_handed_out` again, which starts another native build round instead of reaching close. The named after-handback behavior works in the new test only because its subagent commits a file.",
+        "file": "src/forge/land.py",
+        "line": 47,
+        "priority": "P1",
+        "title": "Not done: land proceeds to close after a handed-back round with no commit"
+      },
+      {
+        "body": "Raise: Gate. This change replaces metadata in `docs/specs/codex-chat-view.read.md`, which is outside the allowed paths and is unrelated to the native build-round work. It is not the FORGE-TOOLS-1 story's read notes, which the scope rule excludes from this check.",
+        "file": "docs/specs/codex-chat-view.read.md",
+        "line": 5,
+        "priority": "P1",
+        "title": "Gate: unrelated cold-read notes changed outside Scope"
+      }
+    ],
+    "id": "e7e523b1-3666-4b44-9145-0303b592d76f",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T05:42:50.219272+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T09:23:37.202265+00:00",
+      "step": "review"
     }
   ]
 }
