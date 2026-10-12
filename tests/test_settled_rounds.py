@@ -116,7 +116,7 @@ def test_3_init_and_upgrade_sync_deliver_settled_guidance(unsynced_up, adopted):
     check(where)
 
 
-def test_4_work_notes_and_answers_are_kept_for_review(repo, monkeypatch, sdk_data):
+def test_4_work_notes_and_answers_are_kept_for_review(repo, monkeypatch, sdk_data, claude_session):
     folder, _, _, _, question = _resumable_question(repo, monkeypatch, sdk_data)
     first = repo.forge("work", "BOARD/PAGE", "--note", "Yes, use the existing parser.")
     assert first.returncode == 0, first.stdout + first.stderr
