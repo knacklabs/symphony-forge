@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-12T09:53:44.801851+00:00",
+      "because": "Starting the new release elsewhere changed how every client starts a release and still failed when the user's own shell sits in the worktree; the pull request is already merged, so the leftover folder is only cleanup",
+      "done_when": "When the pin changes mid-run, Forge starts the new release from the main checkout, so forge merge and forge land run from inside an item's worktree can remove it on Windows"
+    }
+  ],
   "base": "2e7db401994df42f51fbc0698cb0b67f5a997813",
   "branch": "fix/pin-switch-leaves-worktree",
-  "done_when": "When the pin changes mid-run, Forge starts the new release from the main checkout, so forge merge and forge land run from inside an item's worktree can remove it on Windows",
+  "done_when": "When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes, keeps the worktree and its branch, and says so",
   "kind": "fix",
   "status": "started",
   "steps": [
