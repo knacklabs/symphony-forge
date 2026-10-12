@@ -160,7 +160,8 @@ def work(args: argparse.Namespace) -> None:
                     "Done-when lines instead of fixing those findings here.")
         elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
             note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
-                    "Follow the owner's choice, not the earlier default narrowing.")
+                    "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
+                    f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
         from forge import close  # close imports story, which imports this module
 
         close.stuck_round(top, item, state, config, findings, failing)

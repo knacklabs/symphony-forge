@@ -38,24 +38,27 @@ STUCK = {"pytest same": "the failing test test_readme.py::test_greeting",
          "work twice": "the failing test test_readme.py::test_greeting",
          "a then b": "the failing test test_readme.py::test_b",
          "jest same": 'the failing check Tests on the close run ("✕ greets the reader")',
-         "finding": 'the review finding "Saving drops the greeting" in app.py'}
+         "finding": 'the review finding "Saving drops the greeting" in app.py',
+         "no change": 'the review finding "Saving drops the greeting" in app.py'}
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
 
 
-def question(stuck):
+def question(stuck, tried="Worker round"):
     return ["Readme greets new readers is stuck. It should deliver: The readme opens with a greeting",
-            f"Two rounds in a row left {stuck}.", "The worker tried: Worker round.",
+            f"Two rounds in a row left {stuck}.", f"The worker tried: {tried}.",
             "Choose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
             NEXT]
 
 
 def _rounds(env, case):
     """Start the fix whose every close fails, then run work and close once (twice for a then b)."""
-    if case == "finding":
+    if case in ("finding", "no change"):
         env.reviews(blocked(finding("P1", "Saving drops the greeting")))
+    if case == "no change":  # a worker that commits nothing, so close reuses its review
+        _install(env.repo.bin, "claude", (ROOT / "tests/stubs/claude").read_text("utf-8"))
     if case == "finding then test":  # the worker fixes the finding, and a test then fails
         env.reviews(blocked(finding("P1", "Saving drops the greeting")), CLEAN)
-    if case != "finding":
+    if case not in ("finding", "no change"):
         script = env.tmp / "suite.py"
         script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
         toml = env.repo.path / "forge.toml"
@@ -74,7 +77,7 @@ def _rounds(env, case):
 
 
 @pytest.mark.parametrize("case", ["pytest same", "work twice", "a then b", "jest same", "jest different", "finding",
-                                  "finding then test"])
+                                  "finding then test", "no change"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
@@ -83,9 +86,10 @@ def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     if case in ("jest different", "finding then test"):
         assert stuck.returncode == 0, stuck.stdout + stuck.stderr
         return
+    asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round")
     assert stuck.returncode == 1, stuck.stdout + stuck.stderr
-    assert stuck.stderr.splitlines()[-5:] == question(STUCK[case])
-    assert env.close(item).stderr.splitlines()[-5:] == question(STUCK[case])
+    assert stuck.stderr.splitlines()[-5:] == asked
+    assert env.close(item).stderr.splitlines()[-5:] == asked
     shown = env.repo.forge("next").stdout
     assert question(STUCK[case])[0] in shown and NEXT in shown
     refused = env.close(item, "--resolve", "accept", "--reason", "Accept it")
@@ -103,6 +107,8 @@ def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land, choice):
     again = env.repo.forge("work", item)
     assert again.returncode == 0, again.stdout + again.stderr
     assert len(_workers(env)) == before + 1
+    # The owner's choice reaches the worker's brief.
+    assert f"The owner chose {choice}: One more try. Follow the owner's choice." in _workers(env)[-1]["brief"]
     assert env.close(item).returncode == 1
     asked = env.repo.forge("work", item)
     assert asked.returncode == 1 and asked.stderr.splitlines()[-1] == NEXT

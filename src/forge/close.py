@@ -115,8 +115,8 @@ def close(args: argparse.Namespace) -> int:
                     for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
                 result["status"] = "clean"
             defaulted = state["stop"].get("by") == "default"
-            if defaulted:  # the owner reverses the repo's default; the next worker round hears it
-                state["stop"].update(by="owner", worker_round=state.get("round"))
+            # the next worker round hears the owner's choice, including one reversing the default
+            state["stop"].update(by="owner", worker_round=state.get("round"))
             state["stop"].update(choice=choice, reason=reason.strip())
             state["status"] = "waiting for checks" if choice == "accept" else "fixing"
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
@@ -167,7 +167,7 @@ def close(args: argparse.Namespace) -> int:
             stop = state.get("stop") or {}
             if stop.get("size") and not stop.get("choice"):
                 repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-            if not stop:
+            if not stop.get("question") or stop.get("choice"):
                 stuck_stop(top, item, state, cfg, f"It changes {lines} lines outside tests, "
                            f"over its limit of {limit}.", size=True)
             raise repo.Refused(
@@ -234,6 +234,7 @@ def close(args: argparse.Namespace) -> int:
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
+    repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
     if not fresh:
         if pending := time_records.pending_merge_wait(top, item):
@@ -283,7 +284,7 @@ def close(args: argparse.Namespace) -> int:
                 failed, tested = testing.result()
                 print(tested, flush=True)
                 if failed:
-                    state.update(tests=tested, tested_head=repo.git("rev-parse", "HEAD", cwd=top))
+                    state["tests"] = tested
                     if outcome == "failed":
                         state["status"] = "fixing"
                         _save(top, item, state, f"Tests of {item} failed")
@@ -295,7 +296,7 @@ def close(args: argparse.Namespace) -> int:
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
         print(tested, flush=True)
         if failed:
-            state.update(tests=tested, tested_head=repo.git("rev-parse", "HEAD", cwd=top))
+            state["tests"] = tested
         else:
             state.pop("tests", None)
         state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
@@ -472,10 +473,7 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
     stop = state.get("stop") or {}
     if "question" in stop and not stop.get("choice"):
         repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
-    # A finding counts only from a review since the last round.
-    reviewed = (state.get("review") or {}).get("commit")
-    keys = ([] if reviewed == (state.get("stuck") or {}).get("review") else
-            [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings])
+    keys = [f'the review finding "{f.get("title", "")}" in {f.get("file", "")}' for f in findings]
     for label, text in failing:
         names = [name for line in text.splitlines() if "FAILED" in line
                  for name in re.findall(r"\S+::\S+", line)]
@@ -487,9 +485,11 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
                  [f'the failing check {label} ("{excerpt}")'] if excerpt else [])
     # Each failure counts the rounds in a row that left it; a cleared one drops out. A round with
     # no close since the last one has no new test or review result, so it counts nothing.
+    # ponytail: close events live on this machine; a round on another machine counts once more.
     stuck = state.get("stuck") or {}
-    result = [state.get("tested_head"), reviewed]
-    if stuck and stuck.get("result") == result:
+    closed = next((e["id"] for e in reversed(time_records.read(top, "events"))
+                   if e.get("item") == item and e.get("event") == "close result"), None)
+    if stuck and stuck.get("close") == closed:
         if "question" in stop:
             state.pop("stop")
         return
@@ -500,8 +500,7 @@ def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]
         state.pop("stop")
     elif same:
         stuck_stop(top, item, state, cfg, "\n".join(f"Two rounds in a row left {key}." for key in same))
-    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "review": reviewed,
-                      "result": result}
+    state["stuck"] = {"keys": counts, "head": repo.git("rev-parse", "HEAD", cwd=top), "close": closed}
 
 
 def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any], what: str,
