@@ -39,6 +39,7 @@ def test_9_synced_guides_explain_tools_and_the_session_handoff(repo):
                              "background subagent", "other tool", "kit", "Codex app server",
                              "Claude Agent SDK", "Autoreview", "default model and effort",
                              "forge handback", "last message and id", "continue the named subagent",
+                             "--round", "forge stop", "unreachable", "Stale rounds record nothing",
                              "nudge", "never edit the brief", "Upgrade Forge", "before adding"):
                 assert contract in tools, contract
     brief = (ROOT / "src/forge/templates/brief.md").read_text(encoding="utf-8")

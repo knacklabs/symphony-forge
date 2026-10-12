@@ -29,7 +29,7 @@ the install line to fix it.
 - **CI runners:** `runner = "ubuntu-latest"` is the default in `forge.toml`. For an organisation
   using self-hosted Linux runners, use `forge init --runner self-hosted`, or set
   `runner = "self-hosted"` in an existing repo's settings in a fix and run `forge sync`.
-  A custom runner label works too. Sync writes that label into both generated jobs in
+  A custom runner label works too. Sync writes that label into every generated job in
   `.github/workflows/forge.yml`; new repos get it at init and earlier adopted repos get it after
   upgrading Forge and syncing. The jobs install uv and select Python themselves; Node tests
   install Node from the repo's version file or engines, defaulting to the client stack's Node 22.
@@ -260,6 +260,11 @@ command close runs instead of `test`, with `{base}` replaced by the merge base w
 branch, so it runs only the tests related to the changed files plus fast checks (for example
 `npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
 `test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
+The `tests` check runs the suite as parallel groups and passes only when every group passes:
+six groups when `test` calls pytest directly (not through make or tox) and the repo lists
+pytest-split, otherwise one.
+New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
+required check keeps its `tests` name, so branch protection doesn't change.
 When the pytest selection would cover more than a third of the repo's Python test files
 (shared test inputs select them all), close skips the local run, says so in one line, and
 relies on the pull request's required checks. `forge test` still runs its tests. New repos

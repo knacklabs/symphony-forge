@@ -406,7 +406,9 @@ def doctor(args: argparse.Namespace) -> int:
         add("fast_test still runs python -m forge.fasttest in the client's environment.",
             'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
-    elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read( top / sync.WORKFLOW_PATH):
+    # Test groups append their split options to the command.
+    elif "tests" in cfg["checks"] and not any(f"run: {json.dumps(cfg['test'])[:-1]}{end}" in sync.read(top / sync.WORKFLOW_PATH)
+                                              for end in ('"', " --splits ")):
         add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted = _codex_trusts(top, codex_config)
@@ -428,6 +430,14 @@ def doctor(args: argparse.Namespace) -> int:
                     add(f"{skill} is required for UI work but isn't installed where the " f"{host} worker reads skills.", INSTALL[skill])
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
+    if local := cfg.get("local"):
+        entries = [(kind, table) if "model" in table else (f"{kind}.{tool}", entry)
+                   for kind, table in local.get("models", {}).items()
+                   for tool, entry in ([("", table)] if "model" in table else table.items())]
+        print(f"- Note: {repo.LOCAL} overrides " + ", ".join(
+            [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
+            + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
+               for name, entry in entries]) + ".")
     if "review" in cfg.get("models", {}):
         print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
@@ -448,7 +458,20 @@ def doctor(args: argparse.Namespace) -> int:
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    print(f"- Codex Fast: {fast}; models without Fast run normally.")
+    events = repo.forge_dir(top) / "events.jsonl"
+    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
+    said = ("" if last is None else " The last Codex turn ran with Fast."
+            if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
+            " Codex reported a different speed from the one Forge requested."
+            if last["tier"] not in (None, "default") else
+            " Codex did not report the last turn's speed." if last["tier"] is None else
+            " The last Codex turn wanted Fast, but Codex reported normal speed."
+            if last.get("fast_wanted") and last["requested_tier"] != "default" else
+            " The last Codex turn ran at normal speed.")
+    if last and last.get("fast_wanted") and last["requested_tier"] == "default":
+        said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
+    print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
     claude = shutil.which("claude")
     version = None
     if claude:

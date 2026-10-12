@@ -222,9 +222,9 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
             FIXTURE / "client" / path).read_text("utf-8").strip()
     assert repo.git("show", f"forge/migrate-v1:docs/context/{DESIGN}") == (
         FIXTURE / "client" / ".gstack/projects/x" / DESIGN).read_text("utf-8").strip()
-    # Only the old Forge's gstack lines go; the client's own stay.
+    # Only the old Forge's gstack lines go; the client's own stay, and sync ignores forge.local.toml.
     assert repo.git("show", "forge/migrate-v1:.gitignore") == (
-        "node_modules/\n.env\n.gstack/slug-cache/")
+        "node_modules/\n.env\n.gstack/slug-cache/\nforge.local.toml")
     # ... and sync adds the roadmap's and the spotted list's merge rules after them.
     assert repo.git("show", "forge/migrate-v1:.gitattributes") == (
         "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"

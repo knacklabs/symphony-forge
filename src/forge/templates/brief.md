@@ -38,6 +38,8 @@ $delegation
   only what is committed.
 - Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
   `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- When you change text the program prints (messages, pull request text, board lines), search the
+  tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
@@ -151,7 +153,9 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests through `forge test` in the
 foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
 `fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
-base with `origin/<default branch>`. It always runs, including uncommitted changes. Then commit
+base with `origin/<default branch>`, on at most two test processes; a picker run of five or fewer
+related test files skips the lane's wait unless the test command or pytest config has a doctest
+option. It always runs, including uncommitted changes. Then commit
 any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
@@ -202,9 +206,10 @@ variable. Do not animate keyboard-driven or very frequent actions.
 
 Close stopped on these. Before you change anything, open each finding's cited line and the code it
 calls. If a finding is wrong, change nothing for it and name the file:line that proves it wrong,
-so the coordinator can dismiss it. If it is right, fix every place the same rule applies. Add a
-test only where the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and
-make it fail without your fix; the review's test audit reports a test that proves nothing.
+so the coordinator can dismiss it. If it is right, fix every place the same rule applies, unless
+the coordinator's note says the part was narrowed and follow-up fixes own these findings: then
+remove what goes beyond the Done-when lines instead of fixing them here. Add a test only where
+the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and make it fail without your fix; the review's test audit reports a test that proves nothing.
 
 ### Open serious findings
 
@@ -236,14 +241,19 @@ conventions apply only to a repo on the default stack.
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
 cover and every detail next to the test or check that proves it, or marked `missing`. Include the
-test's file and case name, or the named check and its result. Keep the whole list current in every
-round, not only the entries you changed. Forge copies it into the pull request and gives it to
+test's file and case name, or the named check and its result. Every commit's `Proof list:` carries
+the previous one forward and adds to it, even in a small repair commit; never list only the latest
+change. Forge copies it into the pull request and gives it to
 the reviewer. The first review checks every entry and reports every missing case it finds in
 that one round.
 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
