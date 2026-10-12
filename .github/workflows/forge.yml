@@ -24,6 +24,7 @@ jobs:
     runs-on: "ubuntu-latest"
     env:
       UV_FROZEN: '1'
+      FORGE_CONTAINERS: '1'
     steps:
       - uses: actions/checkout@v7
         with:

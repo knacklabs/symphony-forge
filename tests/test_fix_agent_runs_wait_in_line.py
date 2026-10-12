@@ -1,14 +1,11 @@
-"""At most two Forge agent runs go at once on one machine, whatever the repo and whatever the run: a
-forge work round, a plan read or a close review. The rest wait in line and say their place."""
+"""Work rounds share the machine's agent places across repos; reads and reviews skip the line."""
 from __future__ import annotations
 
-import os
 import subprocess
-import sys
 import time
 from pathlib import Path
 
-from conftest import Repo, _install, machine_cores
+from conftest import Repo, machine_cores
 from test_close import env  # noqa: F401 (pytest fixture)
 from test_story import DOC, GRILL, worktree
 
@@ -57,14 +54,6 @@ def _other_repo(tmp_path: Path, bin_dir: Path) -> Repo:
     return other
 
 
-def _start(where: Path, tmp_path: Path, *args: str) -> tuple[subprocess.Popen, Path]:
-    out = tmp_path / f"{args[0]}.out"
-    with out.open("w", encoding="utf-8") as sink:
-        run = subprocess.Popen([sys.executable, str(tmp_path / "bin" / "forge"), *args], cwd=where,
-                               stdin=subprocess.DEVNULL, stdout=sink, stderr=subprocess.STDOUT)
-    return run, out
-
-
 def _until(check, what: str) -> None:
     """Wait for real state: a stub agent's marker or a run's output."""
     deadline = time.monotonic() + 60
@@ -73,42 +62,47 @@ def _until(check, what: str) -> None:
         time.sleep(0.05)
 
 
-def test_1_a_third_run_from_another_repo_waits_until_one_of_two_ends_then_runs(env, tmp_path):
+def test_1_a_third_work_round_from_another_repo_waits_while_reads_and_reviews_start(env, tmp_path):
+    from test_lanes_agents import finish, hold_agents, make_work, start
+
     # The old fixed-two contract is now half of the reported four-core machine.
     machine_cores(env.repo, 4)
     bin_dir = env.repo.bin
-    _install(bin_dir, "claude", HOLDING_CLAUDE.format(python=sys.executable))
-    helper = Path(os.environ["AUTOREVIEW"])
-    real = helper.with_name("autoreview-real")
-    helper.rename(real)
-    helper.write_text(HOLDING_AUTOREVIEW.format(bin=str(bin_dir), real=str(real)), encoding="utf-8")
+    hold_agents(env)
     started = lambda name: (bin_dir / f"started-{name}").exists()  # noqa: E731
     running = lambda: len(list(bin_dir.glob("started-*"))) - len(list(bin_dir.glob("go-*")))  # noqa: E731
 
-    # This repo: a fix for forge work, and another with work done, for close. The other repo: a
-    # story doc for forge read.
-    fix = env.repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
-    assert fix.returncode == 0, fix.stderr
-    work_folder = worktree(env.repo, "fix/fix-the-login-typo").name
+    # Previously the reader occupied a place and the review waited. Now two workers hold the
+    # places, a third worker waits across repos, and both model-only operations still start.
+    workers = [make_work(env.repo, name) for name in ("First typo", "Second typo")]
     closing, _ = env.start_fix()
     other = _other_repo(tmp_path, bin_dir)
     read_folder = worktree(other, "story/SHOP").name
-
-    work, _ = _start(env.repo.path, tmp_path, "work", "fix-the-login-typo")
-    _until(lambda: started(work_folder), "the work round's agent to start")
-    read, _ = _start(other.path, tmp_path, "read", "SHOP")
-    _until(lambda: started(read_folder), "the plan read's agent to start")
-    review, out = _start(env.repo.path, tmp_path, "close", closing)
-    _until(lambda: WAITING in out.read_text("utf-8"), "the close review to say its place")
-
-    # Two agents run, from two repos; the review waits, says its place once and starts no agent.
-    assert running() == 2 and not started("review") and review.poll() is None
-
-    (bin_dir / f"go-{work_folder}").touch()
-    assert work.wait(timeout=60) == 0
-    _until(lambda: started("review"), "the close review's agent to start")
-    assert running() == 2
-    for name, run in ((read_folder, read), ("review", review)):
-        (bin_dir / f"go-{name}").touch()
-        assert run.wait(timeout=60) == 0, Path(tmp_path / f"{run.args[2]}.out").read_text("utf-8")
-    assert out.read_text("utf-8").count("in line.") == 1
+    env.commit(other.path, "forge.toml", (other.path / "forge.toml").read_text("utf-8") +
+               'workers = "claude"\n', "Use Claude workers")
+    other.git("push", "-q", "origin", "main")
+    third, third_name = make_work(other, "Third typo")
+    processes = []
+    try:
+        for item, name in workers:
+            process, _ = start(env.repo.path, tmp_path / item, env.repo, "work", item)
+            processes.append(process)
+            _until(lambda: started(name), "the work round's agent to start")
+        waiting, out = start(other.path, tmp_path / "waiting", env.repo, "work", third)
+        processes.append(waiting)
+        _until(lambda: WAITING in out.read_text("utf-8"), "the third worker to say its place")
+        for where, command, item, marker in ((other.path, "read", "SHOP", read_folder),
+                                             (env.repo.path, "close", closing, "review")):
+            process, output = start(where, tmp_path / command, env.repo, command, item)
+            processes.append(process)
+            _until(lambda: started(marker), f"the {command} agent to start")
+            assert "in line." not in output.read_text("utf-8")
+        assert running() == 4 and not started(third_name) and waiting.poll() is None
+        (bin_dir / f"go-{workers[0][1]}").touch()
+        assert processes[0].wait(timeout=60) == 0
+        _until(lambda: started(third_name), "the third worker's agent to start")
+        assert running() == 4
+        assert out.read_text("utf-8").count("in line.") == 1
+    finally:
+        finish(env.repo, processes)
+    assert all(process.returncode == 0 for process in processes)

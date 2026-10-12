@@ -208,14 +208,14 @@ def test_4_session_holds_handed_out_reads(repo, gh, monkeypatch, tmp_path, tool,
         assert foreign.returncode == 1
         assert "This session has no pending read for that target." in foreign.stderr
         assert [row["id"] for row in lanes()] == [entry["id"]]
-        waiting = other.start("read", "WISH")
-        _until(lambda: any(row["item"] == "WISH" and row["place"] > 0
-                           for row in lanes()), "second read waiting for the held place")
-        assert not waiting.done()
-        first.close()
-        result = waiting.result(timeout=120)
+        # Reads wait on the model's service, not this machine, so a second read takes no
+        # place and starts while the first session still holds its read.
+        result = other.start("read", "WISH").result(timeout=120)
         success(result)
         wish_offer = json.loads(result.stdout)
+        assert sorted((row["item"], row["place"]) for row in lanes()) == [("SHOP", 0), ("WISH", 0)]
+        first.close()
+        _until(lambda: [row["item"] for row in lanes()] == ["WISH"], "the closed session's read to leave")
         [entry] = lanes()
         assert entry["item"] == "WISH" and entry["native"] is True
         success(back(other, wish_offer, "WISH"))
