@@ -81,6 +81,11 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
 
 
 def work(args: argparse.Namespace) -> None:
+    if _work(args):  # Claude failed its split design round; the coordinating Codex session builds
+        _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
+
+
+def _work(args: argparse.Namespace) -> bool:
     item = args.item
     note = getattr(args, "note", None)
     if note is not None and not note.strip():
@@ -98,7 +103,8 @@ def work(args: argparse.Namespace) -> None:
         design = repo.user_facing(config, row)
     else:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
-    family = repo.worker(config, "build", design, state.get("tool"))[0]
+    tool = getattr(args, "fallback", None) or state.get("tool")
+    family = repo.worker(config, "build", design, tool)[0]
     on_codex = family == "codex"
     # The coordinating app's own tool runs the round as one of the session's subagents.
     is_native = repo.route(config, family, command="work", item=item) == "native"
@@ -114,7 +120,7 @@ def work(args: argparse.Namespace) -> None:
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,
                                                       native=is_native)
-    _, chosen, why = repo.worker(config, kind.lower(), design, state.get("tool"))
+    _, chosen, why = repo.worker(config, kind.lower(), design, tool)
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
                 f"because {why}")
     if not on_codex or is_native:
@@ -210,6 +216,8 @@ def work(args: argparse.Namespace) -> None:
         state["worker"] = family
         state["round"] = round_number
         admission["round"] = round_number
+        if is_native and getattr(args, "land_rounds", None) is not None:
+            state["land"] = {"rounds": args.land_rounds, "stop": state.get("stop")}  # land's next run
         message = f"{item} is {state['status']}"
         if note is not None:
             message += "\n\nCoordinator note:\n" + ((question + "\n") if question else "") + "Answer: " + note
@@ -220,7 +228,7 @@ def work(args: argparse.Namespace) -> None:
         if is_native:
             native.hand_out(top, item, owner, admission, round_number, role, brief,
                             fresh_brief or brief, thread, fresh, chosen, family)
-            return
+            return False
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE
         outcome = "failed"
@@ -258,6 +266,8 @@ def work(args: argparse.Namespace) -> None:
                     print(message, flush=True)
                     with repo.work_log(top, item).open("a", encoding="utf-8") as out:
                         out.write(message + "\n")
+                    if repo.route(config, "codex", command="work", item=item) == "native":
+                        return True  # handed out as this Codex session's frontend subagent
                     ready(top, config, kind, True, design=True)
                     codex.recover(top, item)
                     if previous and last != "codex":
@@ -288,7 +298,7 @@ def work(args: argparse.Namespace) -> None:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
                     outcome = "completed"
-                    return
+                    return False
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -329,6 +339,7 @@ def work(args: argparse.Namespace) -> None:
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+    return False
 
 
 def is_published(top: Path, item: str) -> bool:

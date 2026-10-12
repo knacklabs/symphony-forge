@@ -234,6 +234,19 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert "Closing tidy-words." in host.forge("land", "tidy-words").stdout
 
         if tool == "codex":
+            # Under both tools and split, a failed Claude design run falls back to this Codex
+            # session's own frontend subagent, with no Codex SDK.
+            assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0
+            page = repo.path.parent / f"{repo.path.name}-BOARD-PAGE"
+            (page / "forge.toml").write_text((page / "forge.toml").read_text("utf-8").replace(
+                'tools = "codex"\nworkers = "claude"', 'tools = "both"\nworkers = "split"'), "utf-8")
+            repo.git("commit", "-q", "-am", "Both tools, split workers", cwd=page)
+            monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+            fell = handout("BOARD/PAGE", "frontend")[0]
+            monkeypatch.delenv("STUB_CLAUDE_EXIT")
+            assert "fell back to Codex" in fell.stdout
+            assert len(calls(claude_log)) == 1 and not (repo.bin / "codex-app-server.jsonl").exists()
+
             # With one tool and no session open, nothing runs.
             monkeypatch.delenv("CODEX_THREAD_ID")
             head = repo.git("rev-parse", "HEAD", cwd=folder)

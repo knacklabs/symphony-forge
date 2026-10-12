@@ -389,6 +389,36 @@ def _blocked_red_blocked_red(env):
     assert _refusal(done) == ["Checks failed on the pull request: tests.", f"Next: forge work {ITEM}"]
 
 
+def _session_rounds_count_across_reruns(env, monkeypatch):
+    # Each round a Claude Code session's subagent runs ends that land; the next land keeps counting.
+    from test_tools_session_hold import Session
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")
+    where = _fix(env, "working", worked=True)
+    env.reviews(blocked(BLOCKER), CLEAN,
+                blocked(finding("P1", "Saving loses the reader name")), CLEAN)
+    env.checks([run("tests", "failure"), run("forge-pr-check")])
+    _red_checks(env)
+    host = Session(env.repo, env.tmp / "host", "claude-session")
+    try:
+        whats = [FINDINGS_ROUND, "the failing checks", FINDINGS_ROUND]
+        for n, what in enumerate(whats, 1):
+            done = host.forge("land", ITEM)
+            assert done.returncode == 0, done.stdout + done.stderr
+            assert _steps(done) == [f"Closing {ITEM}.", f"Fix round {n} of 3: the worker fixes {what}."]
+            env.commit(where, f"round-{n}.txt", "fixed\n", "Worker round")
+            number = re.search(r"--round (\d+)", done.stdout)[1]
+            handed = host.forge("handback", ITEM, "--round", number, "--subagent", "w1", input="Fixed.")
+            assert handed.returncode == 0, handed.stdout + handed.stderr
+        done = host.forge("land", ITEM)
+        assert done.returncode == 1
+        assert _steps(done) == [f"Closing {ITEM}.",
+                                f"Stopped after 3 fix rounds: {ITEM} still has the failing checks."]
+        assert not _workers(env)
+    finally:
+        host.close()
+
+
 def _default_stop_shows_the_question_while_it_waits(env):
     # With the default stop setting, land waits for the owner; advance only its clock.
     _fix(env, "working", worked=True)
@@ -479,7 +509,7 @@ def _codex_question_stops(repo, monkeypatch, sdk_data, gh):
 TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_check_gives_a_fix_round,
        ("cancelled", "cancel"), ("skipped", "skipping"), _blocked_red_blocked_red,
        _findings_after_three_rounds_ask_a_question, _default_stop_shows_the_question_while_it_waits,
-       _dismissed_before_land, _codex_question_stops]
+       _dismissed_before_land, _codex_question_stops, _session_rounds_count_across_reruns]
 
 
 @pytest.mark.parametrize("case", TWO, ids=lambda case: "-".join(case) if isinstance(case, tuple)
@@ -489,6 +519,8 @@ def test_2_fix_rounds_stop_after_three(request, monkeypatch, case):
         request.getfixturevalue("claude_session")
         case(request.getfixturevalue("repo"), monkeypatch, request.getfixturevalue("sdk_data"),
              request.getfixturevalue("gh"))
+    elif case is _session_rounds_count_across_reruns:
+        case(request.getfixturevalue("land"), monkeypatch)
     elif isinstance(case, tuple):
         _red_without_a_failing_check_stops(request.getfixturevalue("land"), *case)
     else:
