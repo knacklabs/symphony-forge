@@ -1,7 +1,7 @@
 {
   "branch": "task/FORGE-SCORE-1-BAR",
   "part_line_limit": 400,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T18:21:59.003408+00:00",
@@ -9,9 +9,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "Reads and reviews score each note on Gain, Work and Harm, and only notes above the bar hold work back: The bar decides is stuck. It should deliver: `review.blocking`, the sign-off gate in `review.run` and `worker._fix_round` follow the bar; light reviews ask for every priority and apply P0-only after scoring; `story.passed` and `undisposed` pass below-bar notes with an automatic disposition; `close._block` lists follow-ups and lived-with findings; the `$accepted` block and `_settled` carry settled and owner-accepted notes forward; the three-round stops and the 30-minute default judged by the bar; the `known` list with outcomes and one count per finding; the area stop with `review.area` and `settled_areas`\nIt changes 475 lines outside tests, over its limit of 400.\nThe worker tried: Let the bar decide what holds work, keep settled notes settled, and stop loops by the bar and by area; Bring in the approved plan from story/FORGE-SCORE-1.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "Coordinator (Harm 1, reversible): one more round to bring the change under 400 lines outside tests by cutting repeated template and code text; if it cannot, split the area stop into its own part.",
     "size": true,
     "tool": "codex",
-    "wait_id": "6fe68530-d4d9-468f-8492-316855745966"
+    "wait_id": "6fe68530-d4d9-468f-8492-316855745966",
+    "worker_round": null
   }
 }
