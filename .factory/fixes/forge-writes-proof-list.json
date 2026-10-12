@@ -13,7 +13,18 @@
     "branch_diff": "33ab107299978536cf7ad90312f5d42272cd0bde7546207b9e6500662d7b9dfb",
     "changed": "669bd8633d1487597f9ac22b515b7766128e2070151d23593ae936c5263bbfa4",
     "commit": "5700b6752208b56e193ceeaf111ecf03bc6864b6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (Harm 1-2, reversible): after the area answer in round 3, a new finding in review.py holds work only at Harm 3 or more (approved scoring rule). Follow-ups: match a named test by its exact path from the repo root, not a path suffix (rare: two test files with the same nested tail); parameter ids with spaces (Gain 2, lived with).",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (Harm 1-2, reversible): after the area answer in round 3, a new finding in review.py holds work only at Harm 3 or more (approved scoring rule). Follow-ups: match a named test by its exact path from the repo root, not a path suffix (rare: two test files with the same nested tail); parameter ids with spaces (Gain 2, lived with).",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. `_ran` accepts a reported node whenever the worker's name ends with `/<reported node>`. In a repo with both `app/tests/test_auth.py::test_login` and `admin/app/tests/test_auth.py::test_login`, a run of only the first test matches a proof entry for the second. Because the second source file exists, Close publishes its unrun test as passed. The command test uses only one file at each path.",
@@ -37,9 +48,9 @@
       }
     ],
     "id": "0cbb61dc-82bc-4f18-8f55-0f6fcf2711d9",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -72,8 +83,12 @@
   ],
   "stop": {
     "at": "2026-10-12T23:29:20.942329+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/review.py",
-    "wait_id": "6936c86e-13bb-4544-8fec-b38ff52e5709"
+    "reason": "Coordinator (Harm 1-2, reversible): after the area answer in round 3, a new finding in review.py holds work only at Harm 3 or more (approved scoring rule). Follow-ups: match a named test by its exact path from the repo root, not a path suffix (rare: two test files with the same nested tail); parameter ids with spaces (Gain 2, lived with).",
+    "wait_id": "6936c86e-13bb-4544-8fec-b38ff52e5709",
+    "worker_round": null
   },
   "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
 }
