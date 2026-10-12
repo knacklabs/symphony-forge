@@ -21,34 +21,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4bcf2df8c0603e318bdf13f4885c3e792dc79e7dff135e5bb1ae7c6a9293e561",
-    "changed": "930c4456e1e25110ae915fb5dce29df5e6b4180c0630427f1644505527e2372e",
-    "commit": "b59577627ef2b5b6bb9fa24333ebe76c6ae720ed",
+    "branch_diff": "134a5ee2713036ddaac1ff7afad77ad9ff5ec18564246885bb8670127f1a8764",
+    "changed": "5bf032d66fee8a335ebc0498442f7da217f96e877de8c860a4050d530a9949a6",
+    "commit": "2a360bbe8924c522523606eb1354cc63a87ec306",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done \u2014 Forge can report that it kept the worktree after Git has deleted its files and worktree registration. This branch treats every failed `git worktree remove` as preservation, but [Git recursively deletes the directory and then removes its worktree metadata even if directory deletion fails](https://raw.githubusercontent.com/git/git/master/builtin/worktree.c). In the stated Windows case, a process holding the root folder open can prevent the final removal after its contents have been deleted. `forge doctor --fix` discovers registered worktrees (`src/forge/doctor.py:60`), so it cannot perform the advertised cleanup once that metadata is gone.",
+        "body": "Raise: Not done \u2014 The failed-removal path exits 0 and says the folder could not be fully removed, but it tells the user to delete the folder instead of running `forge doctor --fix`. The changed guidance in `src/forge/templates/skill.md` and both host skills gives the same deletion instruction. This misses an explicit Done-when detail for both `forge merge` and `forge land`, which calls `merge.merge`.",
         "file": "src/forge/merge.py",
-        "line": 178,
+        "line": 182,
         "priority": "P1",
-        "title": "Not done: When forge merge or forge land can't remove an item's worktree because another program still has it open, the merge finishes,an"
+        "title": "Not done: When forge merge or forge land cannot finish removing an item's worktree after its pull request merged, the merge still finishes,"
       },
       {
-        "body": "Raise: Test \u2014 The named proof substitutes `git worktree lock` for an open directory. Git rejects a locked worktree before deleting anything, so this test passes while the Windows failure above can leave a stripped, unregistered folder. The other named proof, `test_2`, does not force removal to fail; when the folder remains on Windows it checks only the message, not the worktree contents, Git registration, or local branch. Neither proof establishes the Done-when behavior for a worktree held open by another process.",
+        "body": "Raise: Test \u2014 The named command proof asserts that the output says to delete the folder, so it passes with the required `forge doctor --fix` instruction absent. The proof list also describes deletion rather than the Done-when instruction. The merge test therefore does not fail when this required user guidance breaks.",
         "file": "tests/test_merge_command.py",
-        "line": 297,
+        "line": 301,
         "priority": "P1",
-        "title": "Not done: test a worktree held open by another process"
-      },
-      {
-        "body": "Raise: Gate \u2014 This new merge outcome tells the coordinator to run `forge doctor --fix`, but the change does not update `src/forge/templates/skill.md` or the worker brief. The shipped skill's merge guidance (`src/forge/templates/skill.md:60-64`) covers retained work for uncommitted changes and local commits, but not this outcome or its next step. The repository's review rule requires a same-change template update when a command's behavior or flow changes.",
-        "file": "src/forge/merge.py",
-        "line": 181,
-        "priority": "P1",
-        "title": "Update the shipped Forge skill for the new merge cleanup step"
+        "title": "Not done: test the required forge doctor --fix cleanup instruction"
       }
     ],
-    "id": "3f65539c-4880-4d1e-b6d3-b56eb994c336",
+    "id": "ed9e5545-5cc5-4d98-8374-3c710b00cee6",
     "status": "blocked"
   },
   "status": "fixing",
@@ -59,6 +52,10 @@
     },
     {
       "at": "2026-10-12T10:01:19.809994+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:12:14.017895+00:00",
       "step": "review"
     }
   ],
