@@ -17,20 +17,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c794b2c1026bdcc7196c128a28752e7f70be61e85e9ebd208d6a71b9cb5e1080",
-    "changed": "a6cc1bf851275e79d82ca31d7744d65dc599e91dd003c658d3941fcf41e0567b",
-    "commit": "beef104fcbd57d50f3ce96c7743dc86fdc931577",
+    "branch_diff": "d34c0b3e3d2215960ac1284307f326eeb6904c554e88217b3c090f344de889de",
+    "changed": "8e9bd3c1de5a9b627bff6e5d4b1a19a64b2622e5772c5bef29e1e1dc577028e0",
+    "commit": "c231b3dde2cbca64204cc59193973d2dbe5dc4aa",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. The local close runner keeps only the last 30 output lines (`src/forge/review.py:397-404`). In a normal unittest failure with a traceback longer than that, the `FAIL: test_a` header is discarded while the generic `FAILED (failures=1)` summary remains. If the next round instead fails `test_b` with the same summary, this fallback gives both rounds the same key and asks the owner even though no test failed twice. The named unittest proof uses short synthetic failure lines, so it does not cover this local-output case. This is separate from the previously dismissed truncated CI excerpt.",
-        "file": "src/forge/close.py",
-        "line": 486,
+        "body": "Raise: Not done. For a user-facing item with `tools = \"both\"` and split workers, a Codex round can be stopped and the owner can choose to switch to Claude. This line selects Claude, but the existing fallback at worker.py:217-228 runs Codex when Claude is unavailable and the checkout is unchanged. The next round therefore uses the tool the owner chose to leave. The named switch proof tests only Claude-to-Codex switching.",
+        "file": "src/forge/worker.py",
+        "line": 98,
         "priority": "P1",
-        "title": "Not done: truncated unittest output treats different failures as the same test"
+        "title": "Not done: switching a design item to Claude can run Codex again"
+      },
+      {
+        "body": "Raise: Functional. After round A records a test ID, a round whose failed output contains only a summary takes this return path without clearing `stuck.keys`. If a later round reports A again, Forge counts two and asks the owner, although the two identified A failures were not in consecutive rounds. A normal example is a worker temporarily breaking test collection between two runs of the same test. The summary-only proof starts with no earlier identified failure, so it misses this sequence.",
+        "file": "src/forge/close.py",
+        "line": 494,
+        "priority": "P1",
+        "title": "Not done: an unidentified failure does not break the consecutive-round count"
+      },
+      {
+        "body": "Raise: Not done. The `names or marked` selection discards every Jest, Vitest or unittest failure line whenever the same failing check output also contains one `FAILED ...::...` test ID. A combined repository test command can run both suites: if the ID-bearing failure changes while the same ID-less failure persists, Forge never counts the persistent failure twice or asks the owner. The named proofs run these output formats separately.",
+        "file": "src/forge/close.py",
+        "line": 485,
+        "priority": "P1",
+        "title": "Not done: mixed test output drops failures without IDs"
+      },
+      {
+        "body": "Raise: Not done. `review.test_run` retains only the last 30 ordinary output lines at review.py:397-404. A unittest failure with a traceback longer than that loses its `FAIL: test_a` header while retaining the generic `FAILED (failures=1)` summary. This parser finds no marked failure line, and the guard at close.py:493-498 never counts the same failing test across two rounds. The named unittest proof uses short synthetic output.",
+        "file": "src/forge/close.py",
+        "line": 484,
+        "priority": "P1",
+        "title": "Not done: long local test output hides repeated failures"
       }
     ],
-    "id": "ba6510c6-371b-4472-8255-dfd9c9bb0fc7",
+    "id": "e6ff42e8-b54a-4d0d-bfbc-ce627627696a",
     "status": "blocked"
   },
   "status": "fixing",
@@ -77,6 +98,10 @@
     },
     {
       "at": "2026-10-12T02:46:12.414294+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:02:52.790497+00:00",
       "step": "review"
     }
   ],

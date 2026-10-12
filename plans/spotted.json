@@ -1035,6 +1035,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: an unidentified failure does not break the consecutive-round count\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 494,
+      "text": "Not done: an unidentified failure does not break the consecutive-round count",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: changed assertion text hides a repeated failing test\tstuck-worker-asks",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1068,6 +1079,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: long local test output hides repeated failures\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 484,
+      "text": "Not done: long local test output hides repeated failures",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1075,6 +1097,17 @@
       "text": "Not done: merge-enable close must check the final published change",
       "from": "blocking",
       "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: mixed test output drops failures without IDs\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 485,
+      "text": "Not done: mixed test output drops failures without IDs",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
       "status": "open",
       "closed_by": null
     },
@@ -3464,6 +3497,17 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: switching a design item to Claude can run Codex again\tstuck-worker-asks",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 98,
+      "text": "Not done: switching a design item to Claude can run Codex again",
+      "from": "blocking",
+      "item": "stuck-worker-asks",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
