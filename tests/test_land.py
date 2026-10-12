@@ -421,7 +421,7 @@ def _findings_after_three_rounds_ask_a_question(env):
     # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
     env.reviews(blocked(BLOCKER), CLEAN, blocked(BLOCKER),
                 blocked({**finding("P1", "Saving loses the reader name"),
-                         "body": "A returning reader at `src/save.py:9` sees no name. More."}))
+                         "body": "Gain 3, Work 2, Harm 1\nA returning reader at `src/save.py:9` sees no name. More."}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     done = _land(env)

@@ -63,7 +63,7 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
                   env.repo.git("log", "-1", "--format=%s", b))
     assert (env.repo.git("log", "-1", "--format=%s", branch)
             == "Start the fix: Review finding left open by tidy-readme: Round 3 defect (src/a.py:1): "
-               "Evidence for: Round 3 defect")
+               "Gain 3, Work 2, Harm 1 Evidence for: Round 3 defect")
     shown = env.repo.forge("next").stdout
     assert (f"The repo's default answered the review loop stop on The fix {item}: narrow it to its "
             "Done-when lines; follow-up fixes own the open findings:") in shown

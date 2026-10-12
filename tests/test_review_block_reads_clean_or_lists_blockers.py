@@ -23,9 +23,9 @@ def test_1_clean_review_opens_with_one_line_and_folds_the_rest(env):
     assert folded.split("</summary>\n\n", 1)[1] == (
         "- Finding 1 (P1): Greeting is missing (app.py:1): dismissed because app.py:1 the greeting is here\n"
         "- Finding 2 (P2): Simpler: drop the cache (app.py:1): advisory: "
-        "Evidence for: Simpler: drop the cache\n"
+        "Gain 2, Work 1, Harm 1 Evidence for: Simpler: drop the cache\n"
         "- Finding 3 (P3): Simpler (existing): one helper (app.py:1): advisory: "
-        "Evidence for: Simpler (existing): one helper\n\n")
+        "Gain 2, Work 1, Harm 1 Evidence for: Simpler (existing): one helper\n\n")
 
 
 def test_2_blocked_review_lists_open_blocking_findings_first(env):
@@ -36,5 +36,5 @@ def test_2_blocked_review_lists_open_blocking_findings_first(env):
     assert review.startswith("The review found serious problems.\n\n"
                              "- Finding 2 (P1): Greeting is missing (app.py:1): blocks the merge\n")
     assert ("- Finding 1 (P2): Simpler: drop the cache (app.py:1): advisory: "
-            "Evidence for: Simpler: drop the cache") in review.split("<details>", 1)[1]
+            "Gain 2, Work 1, Harm 1 Evidence for: Simpler: drop the cache") in review.split("<details>", 1)[1]
     assert "Review: clean" not in review
