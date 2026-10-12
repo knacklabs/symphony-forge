@@ -2322,6 +2322,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: older blocked reads lose their question in forge next after upgrade\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 222,
+      "text": "Not done: older blocked reads lose their question in forge next after upgrade",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: stopped specs on story branches disappear from forge next\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -2712,6 +2723,17 @@
       "path": "src/forge/review.py",
       "line": 257,
       "text": "Not done: stopped task questions expose implementation text instead of a plain delivery",
+      "from": "blocking",
+      "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: stopped task questions still expose implementation text\tstop-question-plain",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 257,
+      "text": "Not done: stopped task questions still expose implementation text",
       "from": "blocking",
       "item": "stop-question-plain",
       "status": "open",

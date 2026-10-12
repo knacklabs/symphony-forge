@@ -29,27 +29,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fd70543ac281019dd6c05eff16c8696e9a083bc27b76d2556f64466462d4afef",
-    "changed": "c7830858f07e503d6349e6ed1d1ec8454048e2015881c951e63795111cfffaba",
-    "commit": "b1580df065f73c15b10b0623d4044766b341a5dc",
+    "branch_diff": "fa2a01ea1c0cff44a236c20e304dd233608226fe95df8995b62ab09fb34ab4dd",
+    "changed": "50e1e8238addb99e83b7b3c14e7b922f9341bc5b64c7b0bce34ce146c652a149",
+    "commit": "39e1f9ef17474d9728c8c984411b3b3c90fc9f53",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. Task stops copy the plan row's Name and What it delivers directly into the owner's question. The task row in plans/FORGE-DOCTORFIX-1.md:326, for example, describes delivery with command flags, output labels and internal tooling. If that task's review loop stops, the owner receives those implementation details instead of the promised plain-words account of what the item delivers. The named close proof uses a fix, so it does not exercise this task path.",
+        "body": "Raise: Not done. A stopped task can still show implementation details instead of a plain-words account of what it delivers. This line copies the plan row\u2019s delivery through `plain()`, which strips markdown and paths but leaves command flags and internal labels. The REPAIRS row in `plans/FORGE-DOCTORFIX-1.md:326` would still present `--fix`, `- Fixed:` and SDK terminology to the owner. The named task test checks only markdown and path removal.",
         "file": "src/forge/review.py",
         "line": 257,
         "priority": "P1",
-        "title": "Not done: stopped task questions expose implementation text instead of a plain delivery"
+        "title": "Not done: stopped task questions still expose implementation text"
       },
       {
-        "body": "Raise: Functional. This scan reports stopped specs from every worktree, but prints a bare `forge read <slug> --resolve ...` command. `forge next` can run from the main checkout, while `forge read` resolves a spec in the current checkout (`src/forge/story.py:901-905`). For a spec stopped on a story or fix branch and absent from main, following the printed next step refuses with `no_spec` instead of recording the owner's choice. The named read proof runs `forge next` from the spec's own worktree, so it misses this normal path.",
+        "body": "Raise: Not done. In an upgraded repo with three blocked read rounds recorded before the `blocked_rounds` field existed, `forge read` reconstructs the stop from earlier snapshots (`src/forge/story.py:710-718`). This new spec scan checks only whether the field equals `3`, and the story path makes the same check at `src/forge/nextstep.py:562`. `forge next` therefore omits the stopped spec\u2019s question or offers another story read, even though `forge read` requires the owner\u2019s choice. The upgrade proofs create their blocked rounds after upgrading, so they do not cover this state.",
         "file": "src/forge/nextstep.py",
-        "line": 223,
+        "line": 222,
         "priority": "P1",
-        "title": "forge next gives an unusable resolve command for a stopped spec in another worktree"
+        "title": "Not done: older blocked reads lose their question in forge next after upgrade"
       }
     ],
-    "id": "b33b108e-d96b-4cca-ad5f-3eba49c4f1be",
+    "id": "176fd329-6c09-4ef7-8091-6eeaa3a832d8",
     "status": "blocked"
   },
   "round": 1,
@@ -97,6 +97,10 @@
     },
     {
       "at": "2026-10-12T02:38:09.011636+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:55:21.552978+00:00",
       "step": "review"
     }
   ],
