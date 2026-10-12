@@ -2322,6 +2322,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tLand can close an unreturned fix round after its session ends\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 42,
+      "text": "Land can close an unreturned fix round after its session ends",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tLand can close while a native fix round is still running\tFORGE-TOOLS-1/WORK",
       "kind": "bug",
       "path": "src/forge/land.py",

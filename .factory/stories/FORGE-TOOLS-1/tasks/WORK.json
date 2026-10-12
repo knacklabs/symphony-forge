@@ -10,23 +10,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e5277f7fdc00fc75b819fdc1fc30c682c40ae7c79515740c4f16e7ce0477a72c",
-    "changed": "dcaf519cebbee43d00037fddd6f67a87e01e1b1ef458f10cd0a5292abc8c7e8c",
-    "commit": "a0fd755af8cb32f6eca91fc68fca409f753a4871",
+    "branch_diff": "af5cd898a1de190779821a3a3335c95c915817028e69b1fd05fdd9d6a9e21b1e",
+    "changed": "3fc7959f9e5c4f675cb0947a732bae51dcf7db18f73a06a5f2e37f950fc1cbb5",
+    "commit": "c3c946ba649a9f6803703195eb6e96de1b93c203",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. After `forge land` hands out a fix round, `worker.work` records the item as `fixing`. A subsequent `forge land` skips this startup condition, which covers only `started` and `working`, and enters `close.close` while the subagent still holds the round. Close can run tests or review against unfinished work before the busy lock is checked. A rerun during a handed-out fix round should stop at that round.",
+        "body": "Raise: Functional. New evidence beyond the earlier running-round finding: when the coordinating session exits before handback, `machine._queue` drops its lane entry (`src/forge/machine.py:431-446`), so `_pending` becomes false even though the round has no result. The item remains `fixing`, which the startup condition at `src/forge/land.py:48-52` excludes. Rerunning `forge land` therefore enters `close.close` and can check or close unfinished work without a handback.",
         "file": "src/forge/land.py",
-        "line": 45,
+        "line": 42,
         "priority": "P1",
-        "title": "Land can close while a native fix round is still running"
+        "title": "Land can close an unreturned fix round after its session ends"
       }
     ],
-    "id": "b89d6986-4488-496f-9a61-d1e1d4e6ed43",
+    "id": "0792d9fb-c217-4fa0-90d9-5cc65c1b3aa6",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T05:42:50.219272+00:00",
@@ -51,16 +51,15 @@
     {
       "at": "2026-10-12T14:17:10.193954+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-12T14:34:14.555386+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-12T13:35:34.425406+00:00",
-    "by": "owner",
-    "choice": "accept",
-    "file": "tests/test_tools_native_work.py",
-    "reason": "Owner rule for Harm 1-2: the round-4 finding is fixed in commit 63ddb7a4d: separate uncommitted and committed settings-restore cases, the committed one asserting a new reversing commit, and a hand-back after the work is committed",
-    "round": 4,
-    "wait_id": "46f78cc8-8373-4c0c-ad04-4923942ad7b2",
-    "worker_round": null
+    "at": "2026-10-12T14:34:14.570107+00:00",
+    "file": "src/forge/land.py",
+    "wait_id": "d2cd046a-be52-4552-8c49-5aa822970d55"
   }
 }
