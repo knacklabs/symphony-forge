@@ -2978,8 +2978,8 @@
       "text": "Not done: stopped questions can retain paths and Markdown in item names",
       "from": "blocking",
       "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/story.py\tNot done: stopped questions can retain review labels and omit who is affected\tstop-question-plain",
@@ -3022,8 +3022,8 @@
       "text": "Not done: stopped story questions omit Done-when delivery",
       "from": "blocking",
       "item": "stop-question-plain",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/story.py\tNot done: the accept choice describes an action it does not perform\tstop-question-plain",
