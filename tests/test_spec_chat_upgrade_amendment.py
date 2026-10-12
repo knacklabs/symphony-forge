@@ -95,7 +95,7 @@ def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
 
     upgrade, synced = _sync_elsewhere(repo, tmp_path)
     if missing_origin:
-        assert "Left invoices's reader chat on this machine" in synced.stdout
+        assert "The earlier reader conversation for invoices stays on this machine only" in synced.stdout
         for ref in (branch, "fix/chat-upgrade"):
             assert repo.git("ls-tree", "--name-only", ref, "--", "docs/specs/invoices.read.md") == ""
         return

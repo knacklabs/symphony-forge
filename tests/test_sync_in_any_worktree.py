@@ -32,14 +32,22 @@ def test_1_sync_writes_generated_files_while_two_worktrees_hold_one_spec(
     repo.git("worktree", "add", "-qb", "fix/copied-plan", str(copied), "fix/plan-invoices")
     repo.git("worktree", "remove", str(owner))
 
-    skill = copied / ".claude/skills/forge/SKILL.md"
-    skill.unlink(missing_ok=True)
+    guides = (".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md")
+    for rel in guides:
+        (copied / rel).unlink(missing_ok=True)
     synced = repo.forge("sync", cwd=copied)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    assert skill.is_file()
-    assert "Wrote .claude/skills/forge/SKILL.md" in synced.stdout
-
-    assert "Left invoices's reader chat on this machine" in synced.stdout
+    for rel in guides:
+        assert f"Wrote {rel}" in synced.stdout and (copied / rel).is_file()
+    assert synced.stdout.endswith(
+        "Warning: More than one worktree holds docs/specs/invoices.md, so sync can't tell which "
+        "branch owns its earlier reader chat.\n"
+        "The earlier reader conversation for invoices stays on this machine only; run forge read "
+        "invoices on its own branch before removing .git/forge to keep it.\n")
+    again = repo.forge("sync", cwd=copied)
+    assert again.returncode == 0, again.stdout + again.stderr
+    # A second sync finds nothing to write: the first wrote every generated file.
+    assert "Nothing to change" in again.stdout and "Wrote" not in again.stdout
     # The reader's chat is still there for the next read of the spec in its own branch.
     back = tmp_path / "reader checkout again"
     repo.git("worktree", "add", "-q", str(back), "fix/plan-invoices")
