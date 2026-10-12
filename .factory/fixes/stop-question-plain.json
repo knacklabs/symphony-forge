@@ -10,6 +10,7 @@
   },
   "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding as one plain sentence saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
   "flagged": [
+    "src/forge/land.py",
     "src/forge/nextstep.py",
     "src/forge/review.py",
     "src/forge/story.py",
@@ -20,42 +21,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a4d0bff82b85569e7f7ca067e1c433f101e54a308a2d2eaf9b67cc0899ee9e02",
-    "changed": "af8024098a960a466f4af982e33af221cc81245d58b5e353188ffce787558eb1",
-    "commit": "e3bb342f4ced98abb6c57e61505279af06de1ae8",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both findings are fixed in commit 715dee9; close re-reviews the current head",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both findings are fixed in commit 715dee9; close re-reviews the current head",
-        "finding": 2
-      }
-    ],
+    "branch_diff": "552fd8f593098a45c246f451defdc1145eec8334313523c0de3ef0d8f3329cad",
+    "changed": "0826f24392006f116be8a6911b52f6811c4100aa3891e74fe209a869d9242148",
+    "commit": "c23cef2c1f9fe2296b051ad1d793f509642d38a7",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. The owner can receive a review label and a blocker summary that never says who is harmed. A real finding in `.factory/fixes/plain-english-skill.json:42-46` begins `Raise: Not done \u2014` and explains the effect on readers in a later sentence. This regex leaves the em-dash label intact, while the first-sentence cut at line 994 drops that effect. The named close proof uses a dotted label with the impact in its first sentence, so it passes for this input.",
-        "file": "src/forge/story.py",
-        "line": 991,
+        "body": "Raise: Not done. With the default `stop_default = \"narrow\"`, a review-loop stop in `forge land` never prints its ready-to-ask question. Land catches the question-bearing refusal at `src/forge/land.py:55\u201360`; `_wait_for_choice` catches it again at lines 125\u2013131 and prints only a generic waiting message. This new print at line 85 covers a separate three-fix-round stop. The named close test sets `stop_default = \"off\"`, so it passes without exercising the default path.",
+        "file": "src/forge/land.py",
+        "line": 85,
         "priority": "P1",
-        "title": "Not done: stopped questions can retain review labels and omit who is affected"
+        "title": "Not done: forge land omits the question during a review hold with the default setting"
       },
       {
-        "body": "Raise: Gate. The latest commit's proof list names only the close and read tests. It omits the separate `forge land` three-fix-round stop, which records and prints a question through the changed path at `src/forge/land.py:67-80`. This test exercises that path, but it is absent from the proof list copied into the pull request, leaving a Done-when case without a listed proof.",
-        "file": "tests/test_land.py",
-        "line": 387,
+        "body": "Raise: Not done. `plain()` retains up to two sentences from a finding body and appends both to its title, so one blocker can occupy multiple sentences instead of the required one plain sentence saying what goes wrong for whom. The named read and close tests explicitly expect two-sentence blocker lines, so they pass while this Done-when detail remains unmet.",
+        "file": "src/forge/review.py",
+        "line": 223,
         "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: blocking notes and findings are not each one sentence"
       }
     ],
-    "id": "be46bbae-05c2-4e46-995e-d7eb910e9aad",
-    "status": "clean"
+    "id": "a0302af2-114f-4353-b263-c37227908df6",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-11T10:40:39.914201+00:00",
@@ -83,6 +73,10 @@
     },
     {
       "at": "2026-10-11T20:29:18.017242+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T00:37:20.263915+00:00",
       "step": "review"
     }
   ],
