@@ -3994,6 +3994,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 63,
+      "text": "Not done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test still rejects a review running alongside tests\tboard-test-review-row",
       "kind": "bug",
       "path": "tests/test_board_tests_after_worker.py",

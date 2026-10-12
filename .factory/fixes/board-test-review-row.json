@@ -16,27 +16,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "566612e06bc90a9c022f833221de33fc8270ff8ef21f212ffcdc915da91e9482",
-    "changed": "a65ff08c3d89a837fb0447642e07ab1db7f6523fa1a169fb63ec3f7cb3d0d5ab",
-    "commit": "0e681360766e842480fd855f29b813a663f59154",
+    "branch_diff": "210319fbeb55beabd85d827c540f28f1ca80401541e26845f45cc66be9b01c2f",
+    "changed": "c205b5e7a59577cecdec78f93b672659606e785f8545fed54c469fec2ba06048",
+    "commit": "13c073d3b9c969c61b8c494e4a0d1f9cd4fd433b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Not done. When the review is active during close's tests, the new assertion accepts `row[\"worker\"][\"kind\"] == \"review\"`, but the next status assertion still requires the row to say tests are running. `src/forge/board.py:483` sets that status to `Review running` whenever a review worker is present, so the test still fails in the Linux scenario this fix targets.",
+        "body": "Raise: Not done. When the review is active, the test allows the board row to say \u201cReview running,\u201d but its `forge next` assertion still searches only for tests running or \u201creview running.\u201d `src/forge/nextstep.py:53` instead prints \u201cThe fix ... is being reviewed,\u201d and lines 690\u2013693 suppress the tests-running message while a review is active. The assertion at line 63 therefore fails in the scenario this fix targets. The test does not synchronize on review startup, so the reported passes can exercise only the no-review path.",
         "file": "tests/test_board_tests_after_worker.py",
-        "line": 54,
+        "line": 63,
         "priority": "P1",
-        "title": "Not done: board test still rejects a review running alongside tests"
-      },
-      {
-        "body": "Raise: Gate. The Done-when includes passing main's full test run, but the commit's proof list names only the focused board test and `tests/test_rules.py`. Neither is the full `pytest tests` run configured in `forge.toml:6`, so the proof list omits that required detail.",
-        "file": ".factory/fixes/board-test-review-row.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the"
       }
     ],
-    "id": "20b567ef-12d2-4595-bc89-6f85b9e90e1a",
+    "id": "7a0f0518-3a25-492d-a001-085dc1ae9122",
     "status": "blocked"
   },
   "status": "fixing",
@@ -47,6 +40,10 @@
     },
     {
       "at": "2026-10-12T05:34:32.473624+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T05:36:58.906210+00:00",
       "step": "review"
     }
   ],
