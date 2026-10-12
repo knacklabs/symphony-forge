@@ -2,12 +2,45 @@
   "base": "23bb1db61aaf907943e1ca73b05a063722d65bca",
   "branch": "fix/test-audit-duplicates",
   "done_when": "Each removed test's contract is still asserted by a named stronger test, the pyproject dynamic-version guard moves into the release test, and the suite is smaller",
+  "flagged": [
+    "tests/test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py",
+    "tests/test_machine_native_timings.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "58bd323cc400e0c4eace749bbe0d33766623a4dc310591d100cdc0a5230809a3",
+    "changed": "2f740a0cc067a47bed49900beded3d73c165e1438b67abefb60c8bec585efe79",
+    "commit": "919eac09c6bd47e17662cf6c037ecdd97884733b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. Deleting the native timing test leaves its CI summary contract unasserted. The remaining native check in tests/test_mod_sync.py runs the plugin and checks its exit status; tests/test_mod_native.py writes to GITHUB_STEP_SUMMARY but does not check that the two Machine cases appear with passing timings. The summary could lose those rows while the remaining test passes.",
+        "file": "tests/test_machine_native_timings.py",
+        "line": 7,
+        "priority": "P1",
+        "title": "Not done: Each removed test's contract is still asserted by a named stronger test, the pyproject dynamic-version guard moves into the launch"
+      },
+      {
+        "body": "Raise: Gate. The proof list says the removed tests have stronger owners \u201clisted above,\u201d but supplies no such mapping; it names only the release test. That leaves the review-model, native plugin, sync and CI timing deletions without the named proof the list promises. Passing tests/test_rules.py checks repository rules, not those individual contracts.",
+        "file": "tests/test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "cccd167c-a64c-4849-9525-0045d8cba9a5",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T11:05:52.001080+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-12T11:54:29.696940+00:00",
+      "step": "review"
     }
   ],
   "why": "The suite runs exact duplicates: old version-pin tests every release edits, three extra copies of the mod's native plugin checks, and a review-model test two stronger tests repeat"
