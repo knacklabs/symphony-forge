@@ -26,7 +26,23 @@
     "branch_diff": "c78d4d324cb4af34c836e897caf2f825450de66da5646c8a490719b44aec7e3b",
     "changed": "fa18a9fd5b45b4e1444b47f809df99caa7339eb3cef353966eaeb8765c019fa8",
     "commit": "7edd13341c1cacf6cd0541731313912ca9447c04",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "chunk 1/2:\n\nRaise: Not done. For `git commit -F - <<EOF` with a message line `\\$(git commit -n)` before `EOF`, the backslash makes the substitution literal, so the invoked commit has no prohibited option and no second commit runs. Line 229 nevertheless retains that message line because it contains `$(`. The command scanner then parses `git commit -n` from the message and refuses the harmless commit. The named unquoted-heredoc test covers an executable substitution, but not this literal one.",
@@ -51,10 +67,10 @@
       }
     ],
     "id": "cd210d29-cb2f-44ea-8393-b72a764d8b1d",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-11T10:29:43.068718+00:00",
@@ -87,8 +103,12 @@
   ],
   "stop": {
     "at": "2026-10-12T10:02:09.943656+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/deny.py",
-    "wait_id": "f77f4cea-44b5-4349-acc9-07f00886280b"
+    "reason": "Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+    "wait_id": "f77f4cea-44b5-4349-acc9-07f00886280b",
+    "worker_round": 1
   },
   "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit",
   "worker": "codex"
