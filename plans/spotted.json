@@ -298,6 +298,17 @@
       "closed_by": "simplify-ci-workflow"
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d\twindows-green-4",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 80,
+      "text": "Not done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d",
+      "from": "blocking",
+      "item": "windows-green-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: proof list\twindows-test-stubs",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -2208,6 +2219,17 @@
       "text": "Close passes test filenames to Python setup commands",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose skips listed test files outside pytest's collection roots\tclose-always-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 366,
+      "text": "Close skips listed test files outside pytest's collection roots",
+      "from": "blocking",
+      "item": "close-always-tests",
       "status": "open",
       "closed_by": null
     },
@@ -7796,17 +7818,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d\twindows-green-4",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 80,
-      "text": "Not done: The session-rounds test reads Forge's output the same on Windows as on Linux, and every Windows full-suite group finishes within5d",
-      "from": "blocking",
-      "item": "windows-green-4",
       "status": "open",
       "closed_by": null
     }
