@@ -17,7 +17,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, approval, board, close, codex, machine, records, repo, review, spotted, story, upgrade
+from forge import (__version__, approval, board, close, codex, machine, records, repo, review, spotted, story,
+                   time_records, upgrade)
 from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
@@ -608,6 +609,17 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     return status, receipt
 
 
+def default_due(top: Path, state: dict[str, Any]) -> bool:
+    """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
+    stop = state.get("stop") or {}
+    if not stop or stop.get("choice") or repo.config(top)["stop_default"] == "off":
+        return False
+    # Stops from earlier releases have no time of their own; their owner wait event has one.
+    since = time_records.when(stop.get("at") or next(
+        (e.get("at") for e in time_records.read(top, "events") if e.get("id") == stop.get("wait_id")), None))
+    return bool(since) and time_records.when(repo.now()) - since >= timedelta(minutes=30)
+
+
 def _native_round(top: Path, item: str, label: str, kind: str) -> list[str]:
     """A handed-out round waits for its session's result, rather than another launch."""
     pending = codex._json(codex._item_file(top, item, ".json", kind)).get("pending") or {}
@@ -632,6 +644,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
+        if default_due(path or top, state):
+            return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
+                    "records the repo's default choice: narrow.", f"Next: forge close {item}"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
                 "narrow the part, split it, or accept the remaining findings.",
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
@@ -676,11 +691,15 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         # The bulk list missed it (GitHub can time out on it); ask for this branch's link alone.
         view = repo.run("gh", "pr", "view", state["branch"], "--json", "url", "--jq", ".url", cwd=top)
         pr = {"url": view.stdout.strip()} if view.returncode == 0 and view.stdout.strip() else pr
+    stop = state.get("stop") or {}
+    answered = ([f"The repo's default answered the review loop stop on {label}: narrow it to its "
+                 "Done-when lines; follow-up fixes own the open findings: "
+                 f"{', '.join(stop.get('fixes') or []) or 'none'}."] if stop.get("by") == "default" else [])
     if status == "ready" and (url := pr.get("url")):
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
-        return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
-    return [sentence.format(**values), f"Next: {step.format(**values)}"]
+        return answered + [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
+    return answered + [sentence.format(**values), f"Next: {step.format(**values)}"]
 
 
 def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
