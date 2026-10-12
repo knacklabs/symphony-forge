@@ -9,34 +9,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4d8f7fc143b4ee061d646b4c8c9ad23d6f5b8e271644e2d2a03123b438a6802f",
-    "changed": "84665736639e61085b7ac6a6420e46162e50c7ead840a08fe9b554af55268cda",
-    "commit": "5458682e0b06f044c245426604f4a90f5cda1e37",
+    "branch_diff": "830cddfe1803d01839cf556a12e96277fe44ba6a8deb633bd9eba70d90ecc583",
+    "changed": "c965fa91cae35c9503f9b2cdda020136e8f83f5bb87912a8bee352f4f5085845",
+    "commit": "bb058946178000b20a974ab384349914f9e4b199",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. Handback records the worker question locally but never refreshes an existing pull request. The kit path refreshes the PR after a question in `src/forge/worker.py:325`. If a native round asks a question after publication, collaborators reading the PR see stale history until a later command refreshes it.",
-        "file": "src/forge/native.py",
-        "line": 231,
-        "priority": "P1",
-        "title": "Published pull requests miss native worker questions"
-      },
-      {
-        "body": "Raise: Test. The named command proof sets `repo = \"forge-source\"` and exercises only a fresh checkout. The adopted-repo role and guide tests never run client `forge work` through `forge handback`. Native routing, restoration, and landing could break in a new or earlier-adopted client while this proof passes, contrary to the repository's client-coverage rule.",
+        "body": "Raise: Test. The uncommitted invalid forge.toml edit at line 155 is layered on top of a committed change. The test would still pass if the uncommitted restore were removed, because the committed restore checks out the handout version. It also checks the final file and clean status without proving the committed edit was reversed in a new commit. Earlier, the second handback occurs while work is still uncommitted; the test commits only afterward, so it never proves the named handback-after-commit path. These Done-when outcomes need independent command-level assertions.",
         "file": "tests/test_tools_native_work.py",
-        "line": 40,
+        "line": 155,
         "priority": "P1",
-        "title": "Not done: native work in new and earlier-adopted client repos"
-      },
-      {
-        "body": "Raise: Test. This test reads the whole brief but never the short brief, checks `forge next` but not the running board, and supplies only trusted Codex settings and nonempty handbacks. It also commits before the second handback. It would therefore pass if the short brief were missing, the board omitted the round, native Codex skipped its trust check, empty stdin failed to record a failed round, or a second handback with leftover changes omitted its warning. Done-when 3 names each behavior.",
-        "file": "tests/test_tools_native_work.py",
-        "line": 68,
-        "priority": "P1",
-        "title": "Not done: native work's named handout and failure outcomes have proof"
+        "title": "Not done: prove settings restoration and the post-nudge handback"
       }
     ],
-    "id": "3506fa9c-96e5-4006-ad07-66c14f8f359d",
+    "id": "97b85ec0-ff6d-4100-b4be-d1a92150a58b",
     "status": "blocked"
   },
   "status": "fixing",
@@ -51,6 +37,10 @@
     },
     {
       "at": "2026-10-12T13:13:24.996605+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T13:33:26.527582+00:00",
       "step": "review"
     }
   ]

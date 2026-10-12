@@ -6018,6 +6018,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: prove settings restoration and the post-nudge handback\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 155,
+      "text": "Not done: prove settings restoration and the post-nudge handback",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_tools_session_hold.py\tNot done: proof list\tFORGE-TOOLS-1/HOLD",
       "kind": "bug",
       "path": "tests/test_tools_session_hold.py",
