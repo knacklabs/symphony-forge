@@ -2,6 +2,9 @@
 import re
 from pathlib import Path
 
+# The suite job gives Windows runners longer limits (test_ci_job_budgets checks them); others keep these.
+OTHER_OS = (r"\$\{\{ matrix.os == '[^']+' && \d+ \|\| (\d+) \}\}", r"\1")
+
 STORY = "CI-HANG"
 WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 
@@ -9,7 +12,7 @@ WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 def test_1_every_ci_pytest_dumps_stacks_after_two_minutes():
     seen = 0
     for name in ("forge-next.yml", "forge.yml"):
-        text = (WORKFLOWS / name).read_text(encoding="utf-8")
+        text = re.sub(*OTHER_OS, (WORKFLOWS / name).read_text(encoding="utf-8"))
         for command in re.findall(r"pytest tests[^\n\"]*", text):
             seen += 1
             assert "-o faulthandler_timeout=120" in command, f"{name}: {command}"
@@ -20,7 +23,7 @@ def test_1_every_ci_pytest_dumps_stacks_after_two_minutes():
 def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
     seen = 0
     for name in ("forge-next.yml", "forge.yml"):
-        text = (WORKFLOWS / name).read_text(encoding="utf-8")
+        text = re.sub(*OTHER_OS, (WORKFLOWS / name).read_text(encoding="utf-8"))
         for command in re.findall(r"uv run [^\"]*?pytest tests[^\n\"]*", text, re.S):
             seen += 1
             # CI used to add pytest-timeout at run time; the default dev group now supplies it.

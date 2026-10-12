@@ -1,0 +1,70 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T05:35:32.078200+00:00",
+      "because": "Whether main's full run passes is proven by CI on the merge, not by a local proof list",
+      "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown, and main's full test run passes"
+    }
+  ],
+  "base": "2572c7aa3e2dcaaf99d039dc68fddac81394d188",
+  "branch": "fix/board-test-review-row",
+  "done_when": "The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the Tests stage is running",
+  "flagged": [
+    ".factory/fixes/board-test-review-row.json",
+    "tests/test_board_tests_after_worker.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a512344dfc8a1f999676d983efdc5125975f64a82cea3667cef2108ea8f6271a",
+    "changed": "74fd2f71beb3c5a45382f00e371af5d430cf6426380074754ea756234d96076f",
+    "commit": "3859b456c57f26e19f9364a8fa8fbf25022c259c",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: this fix only stops a timing race failing main's full run; forcing an active review in this test is new test coverage (Gain 2, Harm 1), not needed to unblock the release",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Raise: Test. The new assertion permits a review worker but never requires one. The two parameterized cases are client histories, not review states. `accepted()` waits only for the client test to start, while the stub reviewer can finish before `_board()` reads the row. Both cases can therefore pass without exercising the review state that caused the Linux failure; restoring the old no-worker assertion would also pass in those runs. The proof list's two passing cases do not establish active-review coverage.",
+        "file": "tests/test_board_tests_after_worker.py",
+        "line": 54,
+        "priority": "P1",
+        "title": "Not done: board test does not exercise an active review alongside tests"
+      }
+    ],
+    "id": "05a65552-b83d-45d7-9242-e7e01ef8cc54",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T05:31:38.884290+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T05:34:32.473624+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T05:36:58.906210+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T05:39:24.619724+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T05:39:24.629334+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_board_tests_after_worker.py",
+    "reason": "Owner rule for Harm 1-2: this fix only stops a timing race failing main's full run; forcing an active review in this test is new test coverage (Gain 2, Harm 1), not needed to unblock the release",
+    "wait_id": "95985b0e-8802-4923-8950-82ea1e001b25",
+    "worker_round": null
+  },
+  "why": "Main's full test run fails on Linux: a board test expects no worker while close's tests run, but the review now runs alongside the tests and shows on the board"
+}

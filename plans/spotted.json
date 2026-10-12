@@ -89,6 +89,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/board-test-review-row.json\tNot done: proof list\tboard-test-review-row",
+      "kind": "bug",
+      "path": ".factory/fixes/board-test-review-row.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/claude-sonnet-default.json\tRecorded allowance does not match the whole change\tclaude-sonnet-default",
       "kind": "bug",
       "path": ".factory/fixes/claude-sonnet-default.json",
@@ -243,6 +254,17 @@
       "closed_by": "simplify-ci-workflow"
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for\twindows-test-stubs",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 96,
+      "text": "Not done: Test stubs read stdin as UTF-8 and write files with Unix line endings, the tests allow long Windows paths and quote commands for",
+      "from": "blocking",
+      "item": "windows-test-stubs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -252,6 +274,17 @@
       "item": "ubuntu-two",
       "status": "done",
       "closed_by": "simplify-ci-workflow"
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: proof list\twindows-test-stubs",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 84,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-test-stubs",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\t.github/workflows/forge-next.yml\tStandard: forge.toml's test command runs everything CI needs\tFORGE-MOD-1/SHIP",
@@ -3983,6 +4016,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 63,
+      "text": "Not done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test does not exercise an active review alongside tests\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 54,
+      "text": "Not done: board test does not exercise an active review alongside tests",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test still rejects a review running alongside tests\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 54,
+      "text": "Not done: board test still rejects a review running alongside tests",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_chatview_start.py\tNot done: move the remaining Codex-worker tests to claude_session\tFORGE-TOOLS-1/SWITCH",
       "kind": "bug",
       "path": "tests/test_chatview_start.py",
@@ -3990,6 +4056,17 @@
       "text": "Not done: move the remaining Codex-worker tests to claude_session",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_hang.py\tNot done: Windows per-test timeout budget test\twindows-test-stubs",
+      "kind": "bug",
+      "path": "tests/test_ci_hang.py",
+      "line": 6,
+      "text": "Not done: Windows per-test timeout budget test",
+      "from": "blocking",
+      "item": "windows-test-stubs",
       "status": "open",
       "closed_by": null
     },
@@ -4925,6 +5002,17 @@
       "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
       "from": "worker",
       "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_refreshes_behind_base.py\tNot done: Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line ending\twindows-test-stubs",
+      "kind": "bug",
+      "path": "tests/test_merge_refreshes_behind_base.py",
+      "line": 94,
+      "text": "Not done: Main's full test run passes on Windows and macOS as on Linux: test stubs read stdin as UTF-8 and write files with Unix line ending",
+      "from": "blocking",
+      "item": "windows-test-stubs",
       "status": "open",
       "closed_by": null
     },

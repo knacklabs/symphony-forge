@@ -164,7 +164,7 @@ class Forge:
 
     def commit(self, where: Path, rel: str, text: str, message: str = "More work") -> str:
         (where / rel).parent.mkdir(parents=True, exist_ok=True)
-        (where / rel).write_text(text, "utf-8")
+        (where / rel).write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         self.repo.git("add", "-A", cwd=where)
         self.repo.git("commit", "-q", "-m", message, cwd=where)
         return self.repo.git("rev-parse", "HEAD", cwd=where)
