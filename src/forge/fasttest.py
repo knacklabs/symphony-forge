@@ -57,7 +57,7 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def narrow_command(command: str, excluded: list[str], workers: str, plugin: bool) -> str:
+def narrow_command(command: str, excluded: list[str], workers: str, always: list[str]) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -66,12 +66,13 @@ def narrow_command(command: str, excluded: list[str], workers: str, plugin: bool
         value = token.group().strip("\"'")
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
-    options = ["-p", "_forge_pytest_selection"] if plugin else []
+    options = ["-p", "_forge_pytest_selection"] if excluded or always else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
     if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
+    options += always  # forge.toml's always_test, whatever roots the command names
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
     found = False
@@ -310,17 +311,26 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     return selected, everything, False, missed
 
 
-NODES = """NODES, LISTED = {}, {}
+# The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
+# and stop when an entry collects no test.
+SELECTION = """import os, pathlib, pytest
+IGNORE, PICKED, ALWAYS = {}, {}, {}
+def pytest_configure(config):
+    config.option.ignore = (config.option.ignore or []) + IGNORE
 def pytest_collection_modifyitems(config, items):
-    def runs(item, node):
-        return item.nodeid == node or item.nodeid.startswith((node + "::", node + "["))
-    for node in LISTED:
-        if not any(runs(item, node) for item in items):
-            raise pytest.UsageError("forge.toml's always_test names " + node
+    def file(item):  # relative to the repo, as forge.toml names it, whatever pytest's rootdir
+        return pathlib.Path(os.path.relpath(getattr(item, "path", None) or item.fspath)).as_posix()
+    def runs(item, entry):
+        name = file(item) + item.nodeid[len(item.nodeid.split("::")[0]):]
+        return name == entry or name.startswith((entry + "::", entry + "["))
+    for entry in ALWAYS:
+        if not any(runs(item, entry) for item in items):
+            raise pytest.UsageError("forge.toml's always_test names " + entry
                                     + ", which collects no test; fix or remove it in forge.toml.")
+    if PICKED is None or not ALWAYS:
+        return
     def kept(item):
-        file = item.nodeid.split("::")[0]
-        return file not in NODES or any(runs(item, node) for node in NODES[file])
+        return file(item) in PICKED or any(runs(item, entry) for entry in ALWAYS)
     dropped = [item for item in items if not kept(item)]
     if dropped:
         config.hook.pytest_deselected(items=dropped)
@@ -342,11 +352,6 @@ def pytest_tests(base: str, command: str) -> int:
     excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
-    for name in always:
-        if not Path(name.split("::")[0]).is_file():
-            print(f"forge.toml's always_test names {name.split('::')[0]}, which is not a file; "
-                  "fix or remove it in forge.toml.", flush=True)
-            return 1
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge.review import GAP  # imported late: review's imports lead back here
@@ -357,35 +362,25 @@ def pytest_tests(base: str, command: str) -> int:
         if not always:
             return 0
         picked, shared_changed = [], False  # CI runs the rest; forge.toml's always_test runs here.
-    # forge.toml's always_test runs beside the picked tests; a node ID narrows a file the picker
-    # did not choose to that test.
-    files = {name.split("::")[0] for name in always}
-    nodes = {} if shared_changed else {
-        file: [name for name in always if name.startswith(file + "::")] for file in files
-        if file not in picked and file not in always}
-    listed = [name for name in always if "::" in name]
-    selected = sorted(set(picked) | files)
     if not shared_changed:
-        if not selected:
+        if not picked and not always:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        excluded = [path for path in tests if path not in selected]
+        listed = {entry.split("::")[0] for entry in always}
+        excluded = [path for path in tests if path not in picked and path not in listed]
     if shared_changed:
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
-        print("Related tests: " + ", ".join(selected), flush=True)
+        print("Related tests: " + ", ".join(picked + always), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
-        plugin = bool(excluded or listed)
-        if plugin:
+        if excluded or always:
             selection = Path(folder) / "_forge_pytest_selection.py"
-            selection.write_text("import pytest\ndef pytest_configure(config):\n"
-                                 "    config.option.ignore = (config.option.ignore or []) + "
-                                 + json.dumps(excluded) + "\n"
-                                 + NODES.format(json.dumps(nodes), json.dumps(listed)), "utf-8")
+            selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
+                                                  repr(always)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        return subprocess.run(narrow_command(command, excluded, workers, plugin), shell=True,
+        return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
                               env=environment).returncode
