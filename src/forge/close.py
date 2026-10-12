@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task, time_records
+from forge import __version__, checks, codex, githooks, init, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -439,7 +439,7 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
         if number in dismissed:
             continue
         why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
-                       f"({finding['file']}:{finding['line']}): {finding.get('body', '')}".split())
+                       f"({finding['file']}:{finding['line']}): {score.strip(finding.get('body', ''))}".split())
         done = " ".join(f"A review no longer finds: {finding['title']}".split())
         out, here = io.StringIO(), os.getcwd()
         try:  # fix start works in the current checkout: the follow-up stacks on this item
@@ -934,7 +934,7 @@ def _block(result: dict[str, Any], check: str) -> str:
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
-                else "advisory: " + " ".join(finding.get("body", "").split()))
+                else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
         (blocking if note == "blocks the merge" else rest).append(
             f"- Finding {n} ({finding['priority']}): {finding['title']} "
             f"({finding['file']}:{finding['line']}): {note}")
