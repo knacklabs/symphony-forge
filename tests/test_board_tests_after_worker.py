@@ -50,7 +50,8 @@ def test_13_close_tests_after_worker_exit_show_tests_running(
         connection, _ = accepted(server, connections, folder, closing, output)
         data, text, _ = _board(repo, tmp_path)
         row = _row(data, item)
-        assert row["worker"] is None
+        # The build worker has exited; close's review may already run alongside the tests.
+        assert row["worker"] is None or row["worker"]["kind"] == "review", row["worker"]
         assert row["tests"] is not None
         assert next(stage for stage in row["stages"] if stage["name"] == "Tests")["status"] == "running"
         assert re.search(r"tests?.*running|running.*tests?", row["status"], re.I), row["status"]
