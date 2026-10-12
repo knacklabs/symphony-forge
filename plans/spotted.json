@@ -503,8 +503,8 @@
       "text": "Completed stories omit time after their last part merges",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board.py\tDerive task titles from the current published story plan\tboard-data-truth",
@@ -943,8 +943,8 @@
       "text": "A merge conflict replaces an existing PR's review and proof",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tA red local test can leave an existing pull request mergeable\treview-alongside-tests",
@@ -3792,8 +3792,8 @@
       "text": "Malformed pull request records can crash board and next",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tNot done: item time is not split into working, waiting and unknown seconds\tFORGE-BOARD-2/RECORD",
