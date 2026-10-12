@@ -580,6 +580,9 @@ New moving parts: none
 
 ## Notes
 
+- Known issue for WAITS or NAV (2026-10-12): while close's review runs alongside its tests, a row's status reads only "Review running" (board.py ~483); it should show both the review and the tests running.
+- Owner, 2026-10-12: a later board part shows Known issues by file from each item's kept `known` list (FORGE-SCORE-1 BAR), with follow-ups and Harm 2 or more shown and Gain 1 notes folded; forge next mentions known issues in the files an item touches.
+
 - Client issue 702 (2026-10-10, filed on v1.2.9): one 32,000-pixel page, a cramped 340-pixel
   graph with lines through titles, no navigation, Building overcounted by approved stories with no
   part started, a merged fix still "In progress", raw "15.001 seconds", blockers that `forge next`
