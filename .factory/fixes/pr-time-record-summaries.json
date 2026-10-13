@@ -204,9 +204,10 @@
     "status": "blocked"
   },
   "settled_areas": [
-    "_compact() in src/forge/time_records.py"
+    "_compact() in src/forge/time_records.py",
+    "src/forge/time_records.py"
   ],
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
@@ -251,8 +252,12 @@
   ],
   "stop": {
     "at": "2026-10-13T14:16:18.680162+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/time_records.py",
-    "wait_id": "04239b79-db02-48d6-845f-8ff59ca523a1"
+    "reason": "Owner: fix the input check (folded values must be non-negative numbers where the record is read); accept that a story's working/waiting split is approximate inside folded ranges (totals stay exact) and say so in the guide.",
+    "wait_id": "04239b79-db02-48d6-845f-8ff59ca523a1",
+    "worker_round": null
   },
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
