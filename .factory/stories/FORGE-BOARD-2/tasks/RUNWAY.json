@@ -3,6 +3,7 @@
   "flagged": [
     "src/forge/board.html",
     "src/forge/board_visuals.py",
+    "tests/test_board_runway.py",
     "tests/test_board_trends.py"
   ],
   "known": [
@@ -12,7 +13,7 @@
       "gain": 4,
       "harm": 2,
       "line": 192,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,7 +26,7 @@
       "gain": 3,
       "harm": 2,
       "line": 90,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,7 +39,7 @@
       "gain": 3,
       "harm": 2,
       "line": 69,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,57 +58,40 @@
       "security": false,
       "title": "Later: WAITS must supply the populated first-screen lists",
       "work": 4
+    },
+    {
+      "area": "_first_screen_browser() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 374,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: trends browser test",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fc536049a1167c15f336db69d88c94acfe92dfef5db3b37df3ba275cd87b07b5",
-    "changed": "57af5aeb8823928467e88fd78af8da1a3cf7751df06d8dcd3f9c548fb1dcc2ef",
-    "commit": "bddadde01fb9265fa2e6cbd127e44787271be342",
+    "branch_diff": "33a8a934204913384092e7711aeabd3ec0ac8667f29c39bd58cd71c0f5c044c0",
+    "changed": "80a4386cd8e0389bb6de910becaa75cb3e52e35c580a7d18a67993ecace0b9d9",
+    "commit": "9d5e2ba692bd68891789842284b602b09976b21a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. The client screenshot shows the first screen ending at about 851px while Needs you and Blocked or slow contain only placeholder lines. Replacing those placeholders with the promised five Needs you rows and two blocked rows adds well over the remaining 49px. The five-row limit therefore does not keep a normal populated board within the required 900px screen.",
-        "file": "src/forge/board_visuals.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 192,
-        "priority": "P1",
-        "title": "Not done: the first screen fits at 1440 by 900",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. Both 390px Forge screenshots show the Today and end-date labels running together as \u201cToday8 October.\u201d The mobile layout puts both labels on the same track without reserving space between them, obscuring the date on a normal narrow screen.",
-        "file": "src/forge/board.html",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The Chrome check verifies only that the first person row exists; it never checks each person's six visible through/around counts or their alphabetical order. Those assertions inspect raw HTML in tests/test_board_trends.py, so later rows or marks could be hidden or unreadable while both tests pass. The browser proof for Done-when item 6 remains incomplete.",
+        "file": "tests/test_board_runway.py",
         "gain": 3,
         "harm": 2,
-        "line": 90,
-        "priority": "P1",
-        "title": "Mobile time-axis labels overlap",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The added trends assertion parses generated HTML; it never opens the trends section in a browser, and it checks person rows without asserting the required team row. The Playwright check in test_board_runway.py only exercises the first screen. The visible six-week trends and around-Forge list can therefore break in the browser while these tests pass.",
-        "file": "tests/test_board_trends.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 69,
+        "line": 374,
         "priority": "P1",
         "title": "Not done: trends browser test",
         "work": 2
-      },
-      {
-        "body": "Gain 2, Work 4, Harm 1\nThe current team facts leave Needs you and Blocked or slow null, so the new screen displays \u201cNot worked out by this release\u201d for both. The first-screen test accepts those nulls and does not yet exercise its stated seven waits and two blocked rows. This needs the WAITS task's data before the populated-list proof can run.",
-        "file": "tests/test_board_runway.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 277,
-        "priority": "P2",
-        "title": "Later: WAITS must supply the populated first-screen lists",
-        "work": 4
       }
     ],
-    "id": "efe80620-2570-4bc0-8003-dc963f45e939",
+    "id": "96da9e5e-3cc2-4f2d-9186-20560e30d52f",
     "status": "blocked"
   },
   "status": "fixing",
@@ -118,6 +102,10 @@
     },
     {
       "at": "2026-10-13T17:49:53.067291+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:53:20.129263+00:00",
       "step": "review"
     }
   ]
