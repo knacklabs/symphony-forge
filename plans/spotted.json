@@ -4122,8 +4122,8 @@
       "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0631\u0648\u0627s",
       "from": "blocking",
       "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,\tforge-writes-proof-list",
