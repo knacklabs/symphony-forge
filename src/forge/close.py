@@ -248,7 +248,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
-                review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
+                review.proof_list(top, f"origin/{default}"))
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
     if not fresh:
@@ -298,6 +298,7 @@ def close(args: argparse.Namespace) -> int:
                 repo.record_timing(top, item, "review", start, clock, outcome, selected)
                 failed, tested = testing.result()
                 print(tested, flush=True)
+                evidence = (evidence[0], review.proof_list(top, f"origin/{default}", tested))
                 if failed:
                     state["tests"] = tested
                     if outcome == "failed":
@@ -310,6 +311,7 @@ def close(args: argparse.Namespace) -> int:
         command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
         print(tested, flush=True)
+        evidence = (evidence[0], review.proof_list(top, f"origin/{default}", tested))
         if failed:
             state["tests"] = tested
         else:
