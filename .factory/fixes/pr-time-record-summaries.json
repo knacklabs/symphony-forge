@@ -16,33 +16,33 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bac000c841b9677a22e56cf43ad8d143bbf1d31e84a03c677288aa22cee38142",
-    "changed": "ad06b4d6184e22755069f49f2db6f306f94a3a8974b7c60951b2ad15d23f7a52",
-    "commit": "ad81d4e516ea977bed5fcbfe5d4c0922635942f6",
+    "branch_diff": "e8250e56922e5e035422a1b6e007017e74b15b9ccdae8ae8e6a1f8411dc858e7",
+    "changed": "3363a60f351e418a77147b5f20bf3903b0cb2492b28d8309bb71d0ffcbbb52f0",
+    "commit": "954dccc5658505f149ff798fab5057201213de45",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 4\nRaise: Not done\n`_compact` folds records only when their worker `round` is less than the maximum worker round. Forge also supports multiple review rounds from repeated `forge close` calls without another worker turn (`test_item_time_history.py:379`); those review results all retain the same worker round and remain in the record. On a long item, they can grow past the body budget. `_bounded_body` then deletes event rows without folding their time into the summary, so a fresh clone can lose the item's total time.",
+        "body": "Gain 5, Work 3, Harm 4\nRaise: Not done\n`_compact` retains every row from the latest worker round. Forge records progress as often as every ten seconds (`src/forge/repo.py:304\u2013326`), so a single long worker round can put hundreds of progress rows into the pull request record without triggering a fold. Once the body budget is exceeded, `_bounded_body` deletes event and timing rows (`src/forge/close.py:914\u2013923`), which can remove evidence needed for that recent round's time summary. This newly identified current-round path remains after the earlier finding about older rounds was settled.",
         "file": "src/forge/time_records.py",
         "gain": 5,
         "harm": 4,
-        "line": 496,
+        "line": 497,
         "priority": "P1",
-        "title": "Not done: The pull request time record has a fixed size limit",
+        "title": "Not done: Current-round progress leaves the time record unbounded",
         "work": 3
       },
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nThe proof creates 200 distinct worker rounds, then checks that the recent lines have round numbers. It neither exercises multiple review rounds within one worker turn nor checks that each recent line contains a time summary. It therefore passes with the unbounded same-worker record above and would also pass if recent round times disappeared.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nThe proof copies short rounds into 200 earlier reviews, including the repeated-close case, but never grows progress records within the current worker round. It can pass while the current-round record exceeds the body budget and `_bounded_body` removes time evidence. The other named proofs do not cover that long single-round path.",
         "file": "tests/test_pull_request_time_summaries.py",
         "gain": 3,
         "harm": 2,
-        "line": 104,
+        "line": 81,
         "priority": "P1",
         "title": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
         "work": 2
       }
     ],
-    "id": "d96f16ff-604d-42b7-b3b7-c6b0f29aeddd",
+    "id": "43f7ee9f-58fa-489a-82ae-034c81842c7a",
     "status": "blocked"
   },
   "status": "fixing",
@@ -61,6 +61,10 @@
     },
     {
       "at": "2026-10-13T06:36:52.311099+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T07:23:52.564572+00:00",
       "step": "review"
     }
   ],
