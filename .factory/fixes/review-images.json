@@ -11,7 +11,13 @@
     "branch_diff": "268eb093ca3405cca4c5402037f0f2d50485b652951f77ee56d8eb607e6210b6",
     "changed": "20f96dd28b593f9e28d03b3aa13255602589beaf6d93f1e490923e36ad42aec8",
     "commit": "87dca3d30862e0be604ee054790d9fc2428d42d6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "pyproject.toml:10 Owner approved Pillow as a new moving part on 2026-10-13: Autoreview's image review needs it",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 2\nRaise: Moving part. `pyproject.toml` adds Pillow as a runtime dependency, while this fix declares `New moving parts: none`. The standard requires a new dependency to be named in the `New moving parts` line. Pillow serves the Done-when item, but its addition still breaches that approval gate.",
@@ -25,9 +31,9 @@
       }
     ],
     "id": "b0838e52-5b81-4a1b-846c-9d34301db0f2",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T03:12:59.363140+00:00",
