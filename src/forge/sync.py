@@ -121,6 +121,14 @@ hooks = true
 FULL_ACCESS = {"sandbox_mode": "danger-full-access", "approval_policy": "never"}
 ACCESS_COMMENT = ("# Forge runs Codex with full access and no approval prompts; forge sync and forge "
                   "upgrade keep it so.\n")
+# Every comment a Forge release wrote above those lines, this one's too; a team's own comment stays.
+FORGE_COMMENTS = {ACCESS_COMMENT.strip(),
+                  "# Workspace-write by default (decision 0041). Needing broader access means",
+                  "# editing this value deliberately in the client repo — the diff-visible edit",
+                  "# is the ledgered escape hatch, and `forge upgrade` restores this default.",
+                  *(f"# Full host access is the Forge-managed default (decision {n}). Forge's"
+                    for n in ("0049", "0081")),
+                  "# lifecycle, write-scope, admission, and hook controls remain authoritative."}
 ACCESS_LINE = re.compile(rf"[ \t]*({'|'.join(FULL_ACCESS)})[ \t]*=")
 PINS = ("model", "model_reasoning_effort")
 # A role that leaves its model out runs on these before the session's, so they go too.
@@ -314,21 +322,22 @@ def _codex_config(top: Path) -> str:
 
 
 def _access_comment(top: str) -> str:
-    """The settings above .codex/config.toml's first table with Forge's comment, alone, right above
-    the full-access lines; another comment there described an older setting, so it goes."""
+    """The settings above .codex/config.toml's first table with Forge's comment right above the
+    full-access lines. Comment lines a Forge release wrote above them go; the team's own stay."""
     lines = top.splitlines(keepends=True)
     keys = [i for i, line in enumerate(lines) if ACCESS_LINE.match(line)]
     if not keys:
         return top
-    gone = set(keys)
+    gone = set()
     for i in keys:
-        while i > 0 and lines[i - 1].lstrip().startswith("#") and not lines[i - 1].startswith("#:"):
+        while i > 0 and lines[i - 1].lstrip().startswith("#"):
             i -= 1
-            gone.add(i)
-    at = min(gone)
-    kept = [line for i, line in enumerate(lines) if i not in gone]
-    access = [ACCESS_COMMENT] + [lines[i] if lines[i].endswith("\n") else lines[i] + "\n" for i in keys]
-    return "".join(kept[:at] + access + kept[at:])
+            if lines[i].strip() in FORGE_COMMENTS:
+                gone.add(i)
+    kept = [(line, i in keys) for i, line in enumerate(lines) if i not in gone]
+    at = next(n for n, (_, key) in enumerate(kept) if key)
+    return "".join([line for line, _ in kept[:at]] + [ACCESS_COMMENT]
+                   + [line for line, _ in kept[at:]])
 
 
 def merge_attributes(text: str) -> str:

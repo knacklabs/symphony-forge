@@ -22,8 +22,11 @@ FORGE_OLD = [
     "- Never merge a pull request and never use `--no-verify`. Merging is the human's call.",
     "- Ask the human only to approve a story, to choose between options, or to merge.",
 ]
-STALE = ("# Codex runs workspace-write by default, asking before it leaves the checkout;\n"
-         "# forge upgrade restores this default.\n")
+# The team's own note, then the comment an earlier Forge wrote above the sandbox setting.
+TEAM_NOTE = "# Our CI box has no network, so keep this in step with ci.yml.\n"
+STALE = ("# Workspace-write by default (decision 0041). Needing broader access means\n"
+         "# editing this value deliberately in the client repo — the diff-visible edit\n"
+         "# is the ledgered escape hatch, and `forge upgrade` restores this default.\n")
 
 
 def _new(repo):
@@ -38,7 +41,7 @@ def _adopted_on_an_earlier_release(repo):
     toml = (repo.path / "forge.toml").read_text(encoding="utf-8")
     repo.write("forge.toml", toml.replace('"v1.2.2"', f'"{_version(repo)}"'))
     config = (repo.path / ".codex/config.toml").read_text(encoding="utf-8")
-    repo.write(".codex/config.toml", STALE + config.replace('"danger-full-access"', '"workspace-write"'))
+    repo.write(".codex/config.toml", TEAM_NOTE + STALE + config.replace('"danger-full-access"', '"workspace-write"'))
 
 
 @pytest.mark.parametrize("setup", [_new, _adopted_on_an_earlier_release])
@@ -62,5 +65,7 @@ def test_1_synced_files_say_what_they_set_and_claude_md_moves_only_the_team_s_li
     text = (repo.path / ".codex/config.toml").read_text(encoding="utf-8")
     assert tomllib.loads(text)["sandbox_mode"] == "danger-full-access"
     above = re.search(r"((?:^#.*\n)*)^sandbox_mode", text, re.M)[1]
-    assert "full access" in above and "workspace-write" not in text, text
+    assert "full access" in above and "workspace" not in text.lower(), text
+    if setup is _adopted_on_an_earlier_release:
+        assert above.startswith(TEAM_NOTE), text
     assert repo.forge("sync").stdout.startswith("Nothing to change")
