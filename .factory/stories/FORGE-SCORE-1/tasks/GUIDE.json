@@ -12,7 +12,7 @@
       "gain": 4,
       "harm": 1,
       "line": 295,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,7 +25,7 @@
       "gain": 4,
       "harm": 1,
       "line": 1397,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,74 +64,80 @@
       "gain": 3,
       "harm": 1,
       "line": 26,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: functional check",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1423,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: coordinator asks the owner only for the named decisions",
+      "work": 2
+    },
+    {
+      "area": ".codex/config.toml",
+      "file": ".codex/config.toml",
+      "gain": 1,
+      "harm": 1,
+      "line": 9,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Unneeded change outside Scope: .codex/config.toml",
       "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "39f3a078cff69915702c137196f2b3a39d7fed6ac7e6bfd267b6210efaa694c8",
-    "changed": "2267f7c09cc1674786aa92d8b74a8d7fe8a30b45b57888027eadc5aa6f1d0671",
-    "commit": "4a732cb49ebebd002b361383dfe99fdc8e07d760",
+    "branch_diff": "ce73050a3d3f24041b9d068bda6e222dd22792e561ee9dfc651a12ce5bef601e",
+    "changed": "2a0740536836bdb780d694ec15a3eccc0bad4e3d5c47c09ae8783df7cb554545",
+    "commit": "956b52dba0b054c6fb8e68144c3c85037ced0319",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. This filter excludes undismissed findings below the bar when their Harm is below 3. The new test supplies a Gain 2, Work 1, Harm 1 finding and expects it to be absent, although `score.open_findings` still treats it as open. The stop question therefore omits a finding that Accept would dismiss and cannot show its promised \u201clive with\u201d outcome.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 295,
-        "priority": "P1",
-        "title": "Not done: every stop question shows the open notes",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The new owner-only rule conflicts with the guide's instruction to ask the human whenever a read or review loop stops. A repeated at-bar finding with Harm 1 or 2 triggers `close.py`'s review-loop stop and a human question; the guide then has the coordinator wait for a choice or the 30-minute default. This does not settle the note itself and tell the owner afterward.",
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The new coordinator rule says to ask the owner only for Harm 3 or higher, added scope, approval or merge, or undoing an owner decision. The guide still says at line 1440 to ask the owner whenever two rounds leave tests failing or the same finding open. A repeated Harm 1 or 2 finding can reach that worker stop and trigger an owner question, contrary to the promised autonomy rule.",
         "file": "src/forge/templates/skill.md",
         "gain": 4,
         "harm": 1,
-        "line": 1397,
+        "line": 1423,
         "priority": "P1",
-        "title": "Not done: coordinator settles reversible Harm 1 and 2 notes itself",
+        "title": "Not done: coordinator asks the owner only for the named decisions",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The review and read examples each have only one row per bar outcome. Their assertions still pass if ranking ignores the required Harm-descending, Gain-descending and Work-ascending keys within an outcome. Neither command path checks the required bullet fallback when an open row is unscored. The named proof therefore misses specified table behavior.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The fallback examples contain only an unscored finding or note. They would still pass if a stop with both scored and unscored open rows printed a partial table, although the specified rule requires bullets for every row whenever any row lacks scores. A reviewer omitting one score in an otherwise scored round is a normal path.",
         "file": "tests/test_score_table.py",
         "gain": 3,
         "harm": 1,
-        "line": 50,
+        "line": 71,
         "priority": "P1",
         "title": "Not done: tests/test_score_table.py",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Not done. The README says the question shows one ranked table, while the same page acknowledges that earlier-release notes have no scores. For an existing repo stopped on an unscored saved finding, `score.table` returns bullets instead. The delivered explanation gives that supported upgrade case the wrong output.",
-        "file": "README.md",
-        "gain": 2,
-        "harm": 1,
-        "line": 130,
-        "priority": "P1",
-        "title": "Not done: README describes legacy stop questions incorrectly",
         "work": 1
       },
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied commit-message evidence says the worker's last commit has no `Functional check:` paragraph. This user-facing change therefore lacks the required account of exercising its covered behavior.",
-        "file": "tests/test_score_table.py",
-        "gain": 3,
+        "body": "Gain 1, Work 1, Harm 1\nRaise: Gate. This change replaces a comment about Codex host access. It does not affect the ranked table, shipped guide, coordinator rule, or any configuration value. The file is outside this part's Scope, and this comment change is not needed for the work.",
+        "file": ".codex/config.toml",
+        "gain": 1,
         "harm": 1,
-        "line": 26,
+        "line": 9,
         "priority": "P1",
-        "title": "Not done: functional check",
+        "title": "Unneeded change outside Scope: .codex/config.toml",
         "work": 1
       }
     ],
-    "id": "0bcfe0f1-cc54-4a57-a010-6a82fc3de390",
+    "id": "1fbd859d-a98e-4b9b-9dcc-55e919d666e2",
     "status": "blocked"
   },
   "status": "fixing",
@@ -143,7 +149,10 @@
     {
       "at": "2026-10-13T10:16:25.497085+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:49:35.682805+00:00",
+      "step": "review"
     }
-  ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 809d9ec3dc5fe3b231a504753df56478984402c4` exited with status 1 on this machine.\nNo local test names src/forge/score.py; GitHub's checks will cover it.\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 3122565.204368541, orig_timeout = 60\nstdout_seq = [b'Closing tidy-readme.\\n', b'Opened the pull request: https://github.com/acme/shop/pull/7\\nforge.toml names no test c...he whole brief, because Forge has no record of which worker its last round ran on.\\n', b'stub claude: built it\\n', ...]\nstderr_seq = [b'autoreview done\\n', b'autoreview done\\n', b'autoreview done\\n']\nskip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-GUIDE/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2916/popen-gw1/test_2_fix_rounds_stop_after_t0/bin/forge', 'land', 'tidy-readme']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n1 failed, 90 passed in 1081.80s (0:18:01)"
+  ]
 }
