@@ -8,13 +8,13 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "38ee06b07882c5aee51529da8853222739d912c81761c147bc337e11bb714e6d",
-    "changed": "9390e0338d2fc362e514195b90f08bf89ed45153720a7f9054692d92671b6dca",
-    "commit": "698019af3502215e2faf61ff002503cdae3a609c",
+    "branch_diff": "50f5eb4717da1f5c1b64eac585479d18a767590b31b2125e5c7977cb5800d17e",
+    "changed": "3a12d3165b1da7c8e727a2e94211a92bedc7c5d24595ca8900046e5b49405e20",
+    "commit": "e83a66ce498283d5478a35cb83130bee713c2bec",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. If a concurrent merge moves main, `merge.merge` can call `close.close` again (`src/forge/merge.py:113-122`). A blocked review, failed test, or failed check from that call reaches this handler, which re-raises it without the queue's `forge land <item>` next step. That change stops with close's `forge work <item>` instruction, contrary to item 4. The same bypass applies to a failed check from merge's own check gate (`src/forge/merge.py:79`).",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. If another merge moves main, `merge.merge` can call `close.close` again (`src/forge/merge.py:113-122`). A blocked review, failed test, or failed check from that call reaches this handler and retains close's `forge work <item>` next step. A failed check at merge's own check gate (`src/forge/merge.py:79`) does the same. Item 4 requires these changes to stop with `forge land <item>` as the fix-round step.",
         "file": "src/forge/land.py",
         "gain": 3,
         "harm": 2,
@@ -24,7 +24,7 @@
         "work": 2
       },
       {
-        "body": "Gain 2, Work 2, Harm 2\nRaise: Not done. Readiness here uses `board._machine_prs`, whose query returns only the newest 25 open pull requests (`src/forge/board.py:79`). For an older pull request with a matching clean receipt and a failed check, `pr` is absent, so `_checks` returns `unknown`; `_item_readiness` then treats the receipt as ready (`src/forge/nextstep.py:630-649`). That change bypasses the promised hold behind an older change editing the same file. The earlier check-status fix covers pull requests returned by the query, but this named readiness clause remains unmet when a repo has more than 25 open pull requests.",
+        "body": "Gain 2, Work 2, Harm 2\nRaise: Not done. Readiness uses `board._machine_prs`, which queries only the newest 25 open pull requests (`src/forge/board.py:79`). For an older pull request with a matching clean receipt and a failed check, its PR is absent, so `board._checks` returns `unknown` (`src/forge/board.py:138-140`). `_item_readiness` then treats the receipt as ready (`src/forge/nextstep.py:668-687`). The change bypasses the required hold behind an older change editing the same file.",
         "file": "src/forge/land.py",
         "gain": 2,
         "harm": 2,
@@ -34,10 +34,10 @@
         "work": 2
       }
     ],
-    "id": "b315a05d-4e1d-4e5f-8f45-6e7822903e1c",
+    "id": "26e88228-451d-4bd8-b0db-248fe4bfd75c",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T23:45:15.681956+00:00",
@@ -62,15 +62,15 @@
     {
       "at": "2026-10-13T05:01:45.714290+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:29:44.457851+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-13T04:12:06.214231+00:00",
-    "by": "owner",
-    "choice": "narrow",
+    "at": "2026-10-13T05:29:44.472188+00:00",
     "file": "src/forge/land.py",
-    "reason": "Coordinator (Harm 1-2, reversible; first stop in land.py): one round with a structural move: the queue reads each change's check status from the same Forge function the board and next use (no own mapping), and the two tests get ordered timestamps at close entry plus the due-default and worker-stuck stop cases. Further edge findings here become follow-ups.",
-    "wait_id": "1d954984-21fe-40bc-a00a-cdb1d1452dd3",
-    "worker_round": null
+    "wait_id": "d5943e91-7a15-42b8-826a-ab0fa184afdf"
   }
 }
