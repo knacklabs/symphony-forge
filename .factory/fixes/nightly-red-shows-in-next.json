@@ -3,38 +3,59 @@
   "branch": "fix/nightly-red-shows-in-next",
   "done_when": "When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command for them",
   "flagged": [
+    "src/forge/board_facts.py",
     "src/forge/nextstep.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a58cdbe70ea74bc6395706e94c9f4565284a03c2ba581f2817abad5db6afa092",
-    "changed": "bb6ad9cd2f9cc758d8e9e5a709c8988190a7b0ea4caa08187af5dc125dec3bb6",
-    "commit": "5993ff49f5ce2ac0fa10ec79e31c062012539467",
+    "branch_diff": "d34ea7c3ca322a027b84e80f54a8a4e2e534b3ee05b9bce4e7ad6083c2b32630",
+    "changed": "bd52227b18187ad8f0d3189ae48743d4a10e7a797a8506ef90c37d07a95f90a4",
+    "commit": "2fc9d5499ff27da19831a1d1087d1fdafabb2913",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. Once a fix worktree has been started, this branch returns no scheduled-run lines at all, even if the next nightly run still fails. `forge next` then stops naming the failing platforms and tests\u2014the visibility problem this change is meant to solve. The command-level proof explicitly expects the alert to disappear after starting a fix, but does not cover a later failed run.",
-        "file": "src/forge/nextstep.py",
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. The query takes the newest scheduled run across all workflows. If a client repo runs another scheduled workflow after its nightly full suite, that workflow's success makes this return no alert even though the latest nightly full run failed. The code itself notes that it selects any workflow; the Done-when requires the nightly full run.",
+        "file": "src/forge/board_facts.py",
         "gain": 4,
         "harm": 2,
-        "line": 270,
+        "line": 112,
         "priority": "P1",
-        "title": "Not done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command",
+        "title": "Not done: another scheduled workflow can hide the failed nightly full run",
         "work": 2
       },
       {
-        "body": "Gain 2, Work 2, Harm 1\nRaise: Not done. The full suite spans 17 matrix jobs, so a broad regression can produce more than ten failed tests. This slice replaces every test after the tenth with a count, leaving those failures unnamed in `forge next` and putting \u201cand N more\u201d into the generated fix's done condition. The named proof supplies only two failed tests, so it cannot catch this case.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. The `\\S+` capture stops at spaces in pytest parameter IDs, and `clean()` in `src/forge/nextstep.py:264` also replaces valid ID punctuation. A failure of this branch's own test case ending in `[previous release]` would be reported as ending in `[previous`, so `forge next` does not name the failing test accurately. The named proof uses only failure IDs without spaces or affected punctuation.",
+        "file": "src/forge/board_facts.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 127,
+        "priority": "P1",
+        "title": "Not done: failing parametrized tests lose their full IDs",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 1\nRaise: Not done. The alert now lists all twelve failures, but the generated fix's Done-when still names only ten and substitutes `and N more` for the rest. The prior finding's display gap is fixed; its command gap remains. The twelve-failure proof runs only after a fix has already started, so it never checks the generated start command for this case.",
         "file": "src/forge/nextstep.py",
         "gain": 2,
         "harm": 1,
-        "line": 265,
+        "line": 279,
         "priority": "P1",
-        "title": "Not done: a nightly run with more than ten failures does not name every failing test",
+        "title": "Not done: the fix start command omits failures after the tenth",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional. This lookup checks only local worktrees. `src/forge/nextstep.py:221` separately recognizes fixes pushed from another machine without a local worktree, but this new path ignores them and makes their `forge fix start` command the first Next step. In normal shared-repo use, following that command starts a second fix for the same failed run instead of directing the agent to the existing fix, contrary to the shipped skill's instruction for a fix already started.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 271,
+        "priority": "P1",
+        "title": "Not done: a fix started on another machine is offered again",
         "work": 2
       }
     ],
-    "id": "effbda33-bb9c-44ee-81f3-ef63ffabf118",
+    "id": "145491b0-cb24-4b8a-8323-fdb475521287",
     "status": "blocked"
   },
   "status": "fixing",
@@ -45,6 +66,10 @@
     },
     {
       "at": "2026-10-13T03:38:53.089492+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:48:13.836544+00:00",
       "step": "review"
     }
   ],

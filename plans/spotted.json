@@ -958,6 +958,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: another scheduled workflow can hide the failed nightly full run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 112,
+      "text": "Not done: another scheduled workflow can hide the failed nightly full run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: approval counting must honor a stale cold read\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -989,6 +1000,17 @@
       "item": "FORGE-BOARD-2/COUNTS",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: failing parametrized tests lose their full IDs\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 127,
+      "text": "Not done: failing parametrized tests lose their full IDs",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: join the go-live clause into the team sentence\tFORGE-BOARD-2/TRENDS",
@@ -3279,6 +3301,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine is offered again\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 271,
+      "text": "Not done: a fix started on another machine is offered again",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: a nightly run with more than ten failures does not name every failing test\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3451,6 +3484,17 @@
       "text": "Not done: stopped specs on story branches disappear from forge next",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: the fix start command omits failures after the tenth\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 279,
+      "text": "Not done: the fix start command omits failures after the tenth",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
