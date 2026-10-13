@@ -342,6 +342,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Forge's own pull request checks keep npm's download cache between runs\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 42,
+      "text": "Not done: Forge's own pull request checks keep npm's download cache between runs",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.test_durations\tNot done: timing file does not cover today's suite\tmain-run-faster",
       "kind": "bug",
       "path": ".test_durations",

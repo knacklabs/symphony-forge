@@ -10,6 +10,7 @@
   "branch": "fix/ci-npm-and-scan-flakes",
   "done_when": "Forge's own pull request checks keep npm's download cache between runs",
   "flagged": [
+    ".github/workflows/forge.yml",
     "tests/conftest.py",
     "tests/test_close_keeps_full_tests_in_ci.py",
     "tests/test_fix_gate_on_split_checks.py"
@@ -17,43 +18,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "00bc231d9f4777eb35c6a68ca01bad79b1978692e16bc957508ca82b7431c46d",
-    "changed": "f3b30ffc3ba2e1251ffa90ae85f04f1065682934156a700859456205bae06faf",
-    "commit": "8dafbab577ff9bd935671eac1fed65ac2bd5bd77",
+    "branch_diff": "6d89ffe53bbd982d13487a94687fcd6cf3bce78ef97df6613601ef2ca6767dca",
+    "changed": "88ee8f686b317dff5160a32500aa97ab7b9ec0f32c13a15ca605f49c1f49f3fd",
+    "commit": "1daea7594171f5baa3925efde66a2e7be92e8f19",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The changed scan skips vanished directories and catches FileNotFoundError for markers, but no test makes a directory or marker disappear during cleanup. The existing process tests check for leftovers, so they would still pass if this race fix were removed. The named scan behavior has no regression test.",
-        "file": "tests/conftest.py",
-        "gain": 3,
+        "body": "Gain 4, Work 3, Harm 1\nRaise: Not done. The cache added at `.github/workflows/forge.yml:42` runs only for pull requests. GitHub [scopes a pull request cache to that PR's merge ref](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache), so another PR cannot restore it. Forge's main-branch workflow downloads Jest and Vitest at `.github/workflows/forge-next.yml:100-102` but does not save an npm cache. Every new Forge PR therefore starts with cold downloads in its test groups, leaving the reported timeout scenario in place. The named proof at `tests/test_fix_gate_on_split_checks.py:94` checks for the cache path but cannot catch this scope gap.",
+        "file": ".github/workflows/forge.yml",
+        "gain": 4,
         "harm": 1,
-        "line": 217,
+        "line": 42,
         "priority": "P1",
-        "title": "Not done: the disappearing-file scan test",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The Jest and Vitest close tests use the machine's normal npm cache. On a warm machine, they pass even if the command timeout reverts from 240 to 60 seconds. None of the changed tests checks the effective timeout or exercises a cold download, so the timeout part of the fix lacks a test that fails when it breaks.",
-        "file": "tests/test_close_keeps_full_tests_in_ci.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 133,
-        "priority": "P1",
-        "title": "Not done: the cold Node download timeout test",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The proof list names the workflow cache assertion and Node close tests, but gives no named proof for the disappearing-file scan. It also claims \u201cseven more\u201d workflow tests without identifying them. Those entries cannot be checked against named proofs as required.",
-        "file": "tests/test_fix_gate_on_split_checks.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 94,
-        "priority": "P1",
-        "title": "Not done: proof list",
-        "work": 1
+        "title": "Not done: Forge's own pull request checks keep npm's download cache between runs",
+        "work": 3
       }
     ],
-    "id": "fe6fd9b4-3f84-4af9-9c8e-2cda9906aa0c",
+    "id": "9c808b63-562b-43a0-8027-11aaacd63e2f",
     "status": "blocked"
   },
   "status": "fixing",
@@ -64,6 +45,10 @@
     },
     {
       "at": "2026-10-13T04:20:16.710058+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:23:49.370646+00:00",
       "step": "review"
     }
   ],
