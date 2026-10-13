@@ -488,7 +488,7 @@ def _summed(summary: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
             "time_breakdown": {name: _add(summary["time_breakdown"][name], data["time_breakdown"][name])
                                for name in CATEGORIES},
             "rounds": _joined(summary["rounds"], data["rounds"]),
-            "intervals": [*summary["intervals"], *data["intervals"]]}
+            "intervals": [*summary["intervals"], *data["intervals"]], "folded_seconds": summary.get("folded")}
 
 
 def _settled(row: dict[str, Any], number: int, until: datetime) -> bool:
@@ -511,7 +511,14 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
         if summary and len(summary["rounds"]) > 2:  # The newest summarised line stays its own.
             summary["rounds"][:2] = [_fold(*summary["rounds"][:2])]
         elif summary and summary["intervals"]:
-            del summary["intervals"][:max(1, len(summary["intervals"]) // 2)]
+            # Dropped intervals keep their range and per-kind seconds for the story's time.
+            dropped = summary["intervals"][:max(1, len(summary["intervals"]) // 2)]
+            del summary["intervals"][:len(dropped)]
+            folded = summary.get("folded") or {"start": dropped[0]["start"]}
+            for span in dropped:
+                folded[span["kind"]] = round(folded.get(span["kind"], 0)
+                                             + (when(span["end"]) - when(span["start"])).total_seconds(), 3)
+            summary["folded"] = {**folded, "end": dropped[-1]["end"]}
         else:
             times = sorted(at for name in rows for r in rows[name] if (at := when(r.get("at") or r.get("start"))))
             ends = sorted(at for r in rows["events"] if r.get("event") == "review result" and (at := when(r.get("at"))))
@@ -554,7 +561,7 @@ def _summarised(data: dict[str, Any], summary: dict[str, Any] | None, rows: dict
     part["rounds"] = [_short(entry) for entry in part["rounds"]]
     whole = _summed(summary, part) if summary else part
     kept = {name: whole[name] for name in ("time_breakdown", *SUMMED, "rounds", "intervals", "seen", "known")}
-    return ({**kept, "until": until.isoformat(), "round": number},
+    return ({**kept, "until": until.isoformat(), "round": number, "folded": (summary or {}).get("folded")},
             {name: [r for r in rows[name] if not _settled(r, number, until)] for name in rows})
 
 
@@ -624,6 +631,10 @@ def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str
 def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unfinished: bool = True,
           started_at: str | None = None, finished_at: str | None = None) -> dict[str, Any]:
     spans = [span for part in parts for span in part.get("intervals", [])]
+    # A part's folded intervals keep only their range and per-kind seconds.
+    folds = [f for part in parts if isinstance(f := part.get("folded_seconds"), dict)
+             and when(f.get("start")) and when(f.get("end"))]
+    spans += [{"start": f["start"], "end": f["end"], "kind": "unknown"} for f in folds]
     for read in read_rounds:
         end, seconds = when(read.get("read_at")), read.get("seconds")
         if end:
@@ -644,6 +655,14 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
         kind = "working" if "working" in kinds else "waiting" if "waiting" in kinds else "unknown"
         totals[kind] += (b - a).total_seconds()
         intervals.append({"start": a.isoformat(), "end": b.isoformat(), "kind": kind})
+    for f in folds:  # Unknown time inside a folded range was that part's working, then waiting.
+        free = sum(max(0.0, (min(when(i["end"]), when(f["end"])) - max(when(i["start"]), when(f["start"]))).total_seconds())
+                   for i in intervals if i["kind"] == "unknown")
+        for kind in ("working", "waiting"):
+            moved = min(f.get(kind, 0), free)
+            totals[kind] += moved
+            totals["unknown"] -= moved
+            free -= moved
     return {"intervals": intervals, "time_breakdown": totals,
             **{f"{kind}_seconds": seconds if points else None for kind, seconds in totals.items()},
             "total_seconds": sum(totals.values()) if points else None}

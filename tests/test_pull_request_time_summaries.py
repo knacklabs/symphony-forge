@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from test_close import body, env, finding, report  # noqa: F401
+from test_close import STORY_DOC, body, env, finding, report  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
 from test_pull_request_body_limit import publish_snapshot
@@ -49,10 +49,10 @@ def repeat_round(template, number, offset, worker_round):
 
 
 @pytest.mark.parametrize("shape", ["many-worker-rounds", "one-worker-round", "long-current-round",
-                                   "repeated-ci-closes"])
+                                   "repeated-ci-closes", "story-part"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size(
-        env, previous, shape):
+        env, previous, shape, monkeypatch):
     repeated_closes = shape != "many-worker-rounds"
     client(env, previous)
     version = env.repo.forge("--version").stdout.split()[-1]
@@ -62,7 +62,11 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
                'models.build = { model = "opus", effort = "high" }\n')
     env.repo.git("push", "-q", "origin", "main")
     # The CI case starts fresh, so its review round has a known number.
-    item, where = env.start_fix() if shape == "repeated-ci-closes" else env.start_fix(round=EARLIER)
+    if shape == "story-part":  # a story's only part, so the story's time is the part's time
+        item, where = env.start_approved_task("\n".join(
+            line for line in STORY_DOC.splitlines() if not line.startswith("| T2 |")))
+    else:
+        item, where = env.start_fix() if shape == "repeated-ci-closes" else env.start_fix(round=EARLIER)
     install_claude(env.repo)
     env.reviews({"exit": 0, "report": report(finding("P2", "Basket label stays unclear"))})
     worked = env.repo.forge("work", item)
@@ -76,13 +80,13 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
                 for name in ("events", "timings")}
     mine = {name: [r for r in rows if r.get("item") == item] for name, rows in recorded.items()}
     number = max(r["round"] for r in mine["events"] if isinstance(r.get("round"), int))
-    assert number >= EARLIER or shape == "repeated-ci-closes"
+    assert number >= EARLIER or shape in ("repeated-ci-closes", "story-part")
     # The round's merge wait is still open; a later round's work would have ended it.
     template = {name: [r for r in rows if r.get("round") == number and r.get("event") != "owner wait start"]
                 for name, rows in mine.items()}
     # Repeated closes put every review in the one worker round; otherwise each has its own.
-    earlier = [repeat_round(template, n, number - n + 1, number if repeated_closes else n)
-               for n in range(1, number)] if shape in ("many-worker-rounds", "one-worker-round") else []
+    earlier = [repeat_round(template, n, EARLIER - n + 1, number if repeated_closes else n)
+               for n in range(1, EARLIER)] if shape in ("many-worker-rounds", "one-worker-round", "story-part") else []
     if shape == "repeated-ci-closes":
         # Closing again on an unchanged commit reuses the review but waits for CI each time.
         checks = {name: [r for r in rows if r.get("kind") == "ci" or r.get("event") == "CI result"
@@ -122,11 +126,21 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     clone = env.tmp / "peer-clone"
     env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(clone))
     env.repo.path = clone
+    # One fixed clock, so the part and its story measure open waits to the same instant.
+    monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=5)).isoformat())
     shared = row(env.repo, item)
     lines = [r["line"] for r in shared["rounds"]]
     # The board's total time is the sum of its parts.
     parts = sum(shared[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown"))
     assert abs(shared["total_seconds"] - parts) < 1
+    if shape == "story-part":
+        # Folded intervals keep their working and waiting time in the story's total.
+        result = env.repo.forge("board", "--json")
+        story = next(i for i in json.loads(result.stdout)["items"] if i["id"] == "SHOP")
+        for kind in ("working", "waiting"):
+            assert abs(story[f"{kind}_seconds"] - shared[f"{kind}_seconds"]) < 1, (kind, story, shared)
+        assert story["unknown_seconds"] <= shared["unknown_seconds"] + 1
+        return
     if shape == "repeated-ci-closes":
         assert shared["time_breakdown"]["waiting_for_ci"] is not None
         # The CI retries fold into their own review round's line, which keeps its number and times.
