@@ -355,8 +355,14 @@ RESULTS_HEADER = "# forge test results\n"
 RESULTS = """import os, pathlib
 FILE, ROOT = [], []
 def pytest_configure(config):
-    if os.environ.get("FORGE_TEST_RESULTS") and not hasattr(config, "workerinput"):
-        FILE.append(pathlib.Path(os.environ["FORGE_TEST_RESULTS"]))
+    # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
+    # close's results file. xdist workers need neither; the controller records their reports.
+    plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
+                       if name.strip() not in ("", "_forge_test_results"))
+    os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
+    path = os.environ.pop("FORGE_TEST_RESULTS", None)
+    if path and not hasattr(config, "workerinput"):
+        FILE.append(pathlib.Path(path))
         with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
             results.write(""" + repr(RESULTS_HEADER) + """)
     ROOT.append(pathlib.Path(str(config.rootdir)))
