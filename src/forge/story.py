@@ -27,7 +27,6 @@ import itertools
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import tempfile
@@ -841,9 +840,9 @@ def plan_behind(top: Path, key: str, ref: str) -> str:
     if not folder:
         main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
         folder = main.parent / f"{main.name}-story-{key}"
-        add = f"git worktree add {shlex.quote(str(folder))} story/{key} && "
+        add = f"git worktree add {repo.quote(str(folder))} story/{key} && "
     return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
-            f"{add}git -C {shlex.quote(str(folder))} merge {ref}")
+            f"{add}git -C {repo.quote(str(folder))} merge {ref}")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:

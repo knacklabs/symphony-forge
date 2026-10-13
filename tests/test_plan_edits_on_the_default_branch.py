@@ -5,10 +5,15 @@ with the same line, changing nothing. Neither merges anything. Everything runs t
 command. Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 
-from shlex import quote
+import os
+from shlex import quote as posix_quote
 
 from test_readloop_gates import approve, read
 from test_story import DOC, setup, new_story
+
+
+def quote(path):  # the printed command quotes for the user's shell
+    return f'"{path}"' if os.name == "nt" else posix_quote(path)
 
 # The fix's plan edit: a new task FIX that SHOW now waits for.
 FIXED = DOC.replace("| `tests/test_page.py` | SAVE | yes |",
@@ -68,7 +73,7 @@ def test_1_a_plan_edited_on_the_default_branch_is_flagged_and_refused(repo, clau
     repo.git("worktree", "remove", str(shop))
     assert f"{LACKS}git worktree add {quote(str(shop))} story/SHOP && git -C {quote(str(shop))} merge origin/main" in (
         repo.forge("next").stdout.splitlines())
-    spaced = shop.with_name("story folder")
+    spaced = shop.with_name("R&D story folder")
     repo.git("worktree", "add", "-q", str(spaced), "story/SHOP")
     assert f"{LACKS}git -C {quote(str(spaced))} merge origin/main" in repo.forge("next").stdout.splitlines()
 

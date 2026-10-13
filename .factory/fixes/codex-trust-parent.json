@@ -1,0 +1,163 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-13T09:58:23.442243+00:00",
+      "because": "Owner chose a strict fail-closed check over copying Codex's trust rules; Codex never inherits trust from a parent folder",
+      "done_when": "Forge's Codex trust check accepts a project inside a trusted folder whenever Codex itself trusts it, and asks only when Codex would ask"
+    }
+  ],
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/codex-trust-parent",
+  "done_when": "Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise, and its refusal names the one entry to add and says a parent folder's entry does not count",
+  "flagged": [
+    "src/forge/codex.py",
+    "src/forge/doctor.py",
+    "tests/test_codex_trust_parent.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_codex_trust() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 48,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Trust lookup can authorize turns that Codex treats as untrusted",
+      "work": 2
+    },
+    {
+      "area": "_codex_trust() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 46,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask",
+      "work": 2
+    },
+    {
+      "area": "src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 82,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: each commit leaves the build working",
+      "work": 1
+    },
+    {
+      "area": "trust_fix() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 52,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9",
+      "work": 1
+    },
+    {
+      "area": "test_1_trust_follows_codex_rule() in tests/test_codex_trust_parent.py",
+      "file": "tests/test_codex_trust_parent.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 44,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: test that parent-only trust stops a Codex turn",
+      "work": 2
+    },
+    {
+      "area": "_codex_trust() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 51,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix",
+      "work": 1
+    },
+    {
+      "area": "require_trust() in src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 458,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: update the shipped coordinator guidance for exact Codex trust",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5a67901409be66877c96f75f3a7b76cf1ecaea887976c4d0c49f6514f741404d",
+    "changed": "bba08a222046d77f6db3122ab0a32aadc37f268c5dab746c0d63ad4305761a9e",
+    "commit": "860eb056e844014a5f1c8bcc8fd8d66ee9b531a1",
+    "dismissals": [],
+    "findings": [],
+    "id": "5cf99d02-3a5e-4b81-afb7-79e7edc25e66",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "_codex_trust() in src/forge/doctor.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:39.852564+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:29:00.354660+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T09:57:04.063904+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T10:25:29.145764+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T10:39:19.259107+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:02:26.554544+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "_codex_trust() in src/forge/doctor.py",
+    "at": "2026-10-13T10:39:19.259843+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "_codex_trust() in src/forge/doctor.py",
+    "proposed": "make it fail closed; or cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item",
+    "reason": "Coordinator (Harm 2, reversible): one last small round \u2014 every trust refusal says a parent folder's entry does not count, an untrusted entry's advice is to set it to trusted (never only remove it), and the guide's trust paragraph says the same.",
+    "wait_id": "d4b3cea9-7448-4dc6-a265-9f1031895586",
+    "worker_round": null
+  },
+  "why": "Forge says Codex does not trust a project that sits inside a folder Codex already trusts"
+}

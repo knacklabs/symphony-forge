@@ -9360,6 +9360,116 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: update the shipped coordinator guidance for exact Codex trust\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 458,
+      "text": "Not done: update the shipped coordinator guidance for exact Codex trust",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tStandard: each commit leaves the build working\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 82,
+      "text": "Standard: each commit leaves the build working",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 52,
+      "text": "Not done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 46,
+      "text": "Not done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 51,
+      "text": "Not done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tTrust lookup can authorize turns that Codex treats as untrusted\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 48,
+      "text": "Trust lookup can authorize turns that Codex treats as untrusted",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 802,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 212,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 317,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_trust_parent.py\tNot done: test that parent-only trust stops a Codex turn\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "tests/test_codex_trust_parent.py",
+      "line": 44,
+      "text": "Not done: test that parent-only trust stops a Codex turn",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
