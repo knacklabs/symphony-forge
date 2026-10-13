@@ -662,7 +662,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    team = board_facts.team(top, history, items, maps, best, completed, github)
+    team = board_facts.team(top, history, items, maps, best, completed, github, readiness)
     event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
     recent = [{"time": e.get("at"), "item": e.get("item"), "line":
                " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else

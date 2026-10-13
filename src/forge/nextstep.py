@@ -451,6 +451,14 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
     return found
 
 
+def _blocker(top: Path, key: str, ref: str, problem: str, readiness: dict[str, Any] | None) -> None:
+    """A problem forge next reports that blocks the story's plan, for the board's Needs you, with
+    the date of the plan's last change on the ref read."""
+    if readiness is not None:
+        since = repo.run("git", "log", "-1", "--format=%cI", ref, "--", f"plans/{key}.md", cwd=top).stdout.strip()
+        readiness["blocker"] = {"problem": problem, "since": since or None}
+
+
 def _story(top: Path, key: str, path: Path | None, text: str,
            title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]],
            refusals: dict[Path, str], history: dict[str, Any] | None = None,
@@ -475,8 +483,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     try:
         doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:
-        return [f"The story doc of {title} is malformed: {exc}.",
-                f"Next: edit plans/{key}.md, then run forge next"], []
+        lines = [f"The story doc of {title} is malformed: {exc}.", f"Next: edit plans/{key}.md, then run forge next"]
+        _blocker(top, key, ref, lines[0], readiness)
+        return lines, []
     digest = approval.waiting_digest(key, path) if path else None
     if readiness is not None:
         readiness["parts"] = {task["id"]: "Not started" for task in doc["tasks"]}
@@ -507,6 +516,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals,
                            part_statuses if readiness is not None else None)
     if behind:
+        _blocker(top, key, ref, behind, readiness)
         if readiness is not None:
             readiness["stage"] = "planning"
         return lines + [behind], list(states.values())
@@ -742,6 +752,53 @@ def default_due(top: Path, state: dict[str, Any]) -> bool:
     since = time_records.when(stop.get("at") or next(
         (e.get("at") for e in time_records.read(top, "events") if e.get("id") == stop.get("wait_id")), None))
     return bool(since) and time_records.when(repo.now()) - since >= timedelta(minutes=30)
+
+
+def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
+    """The item's waits on a person, oldest first, from this machine's log and its pull request's
+    record together, each marked `open` while no record has ended it."""
+    events = {e.get("id"): e for e in [*time_records.from_body(body).get("events", []),
+                                       *time_records.read(top, "events")] if e.get("item") == item}
+    ended = {e.get("wait_id") for e in events.values() if e.get("event") == "owner wait end"}
+    return sorted(({**e, "open": e.get("id") not in ended} for e in events.values()
+                   if e.get("event") in ("owner wait start", "worker question")), key=lambda e: str(e.get("at")))
+
+
+def person_waits(top: Path, item: str, state: dict[str, Any], path: Path | None, stage: str,
+                 body: str = "") -> list[dict[str, Any]]:
+    """What the item waits on a person for, each {reason, since, detail}: a plan waiting for
+    approval, a stop no one has answered (unless close will record its default), a worker
+    question, a merge conflict close stopped on, or a ready pull request a human merges. The one
+    decision behind the board's Needs you; `bool()` of it is whether the item needs a person."""
+    if stage == "waiting for approval":
+        notes = story.show(top, story.plan_ref(top, item), f"plans/{item}.read.md") or ""
+        return [{"reason": "plan waiting for approval", "since": story._record(notes)[0].get("read_at"),
+                 "detail": None}]
+    recorded, waits = wait_records(top, item, body), []
+    opened = [e for e in recorded if e["open"]]
+
+    def since(reason: str) -> str | None:
+        return next((e.get("at") for e in reversed(opened) if e.get("reason") == reason), None)
+    stop = state.get("stop") or {}
+    if stop and not stop.get("choice") and not default_due(path or top, state):
+        stuck = "question" in stop
+        waits.append({"reason": "stuck worker" if stuck else "review loop choice",
+                      "since": stop.get("at") or since("stuck" if stuck else "review loop"),
+                      "detail": stop.get("question")})
+    # This machine's last round names the open question; a machine that never ran one reads the record.
+    local = codex.record(top, item)
+    asked = [e for e in opened if e.get("event") == "worker question"
+             and ("question_id" not in local or e.get("id") == local["question_id"])]
+    if asked:
+        waits.append({"reason": "worker question", "since": asked[-1].get("at"), "detail": asked[-1].get("question")})
+    if conflict := since("merge conflict"):
+        waits.append({"reason": "merge conflict", "since": conflict, "detail": None})
+    # An older pull request, ready before merge waits were recorded, still waits on its human merge.
+    # This checkout's forge.toml, so the board needs no fetch.
+    if stage == "ready" and (since("merge") or repo.config(top)["merge"] == "human"
+                             and not any(e.get("reason") == "merge" for e in recorded)):
+        waits.append({"reason": "human merge", "since": since("merge"), "detail": None})
+    return waits
 
 
 def _native_round(top: Path, item: str, label: str, kind: str) -> list[str]:

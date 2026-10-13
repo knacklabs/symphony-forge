@@ -128,10 +128,18 @@ def _work(args: argparse.Namespace) -> bool:
     if not on_codex or is_native:
         print(building, flush=True)
     pr = None
+    from forge import close
     if published:
-        from forge import close
         pr = close._pull_request(top, state.get("branch") or repo.current_branch(top))
-    answered = note is not None and codex.record(top, item).get("question_id")
+    elif note is not None and not codex.record(top, item).get("question_id") and repo.run(
+            "git", "rev-parse", "-q", "--verify", f"refs/remotes/origin/{state.get('branch')}", cwd=top).returncode == 0:
+        # A machine that never ran the asking round may answer the question its pull request holds.
+        with contextlib.suppress(repo.Refused, subprocess.CalledProcessError, ValueError):
+            pr = close._pull_request(top, state["branch"])
+    from forge import nextstep
+    shared = [e["id"] for e in nextstep.wait_records(top, item, (pr or {}).get("body") or "")
+              if e["open"] and e.get("event") == "worker question"]
+    answered = note is not None and (codex.record(top, item).get("question_id") or (shared or [None])[-1])
     if answered:
         repo.record_event(top, item, "owner wait end", wait_id=answered)
     pending_merge = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
@@ -333,8 +341,7 @@ def _work(args: argparse.Namespace) -> bool:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
-            if published and (asked or note is not None or pending_merge):
-                from forge import close
+            if (published or pr) and (asked or note is not None or pending_merge):
                 close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
