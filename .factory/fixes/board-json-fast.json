@@ -1,4 +1,5 @@
 {
+  "allow_large": "One performance change across the board's data path: the same JSON, about three times faster",
   "amendments": [
     {
       "at": "2026-10-13T12:08:34.836322+00:00",
