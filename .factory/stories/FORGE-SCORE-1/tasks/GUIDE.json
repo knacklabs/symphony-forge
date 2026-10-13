@@ -38,7 +38,7 @@
       "gain": 3,
       "harm": 1,
       "line": 50,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -77,7 +77,7 @@
       "gain": 4,
       "harm": 1,
       "line": 1423,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -96,51 +96,44 @@
       "security": false,
       "title": "Unneeded change outside Scope: .codex/config.toml",
       "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1421,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+      "work": 2
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ce73050a3d3f24041b9d068bda6e222dd22792e561ee9dfc651a12ce5bef601e",
-    "changed": "2a0740536836bdb780d694ec15a3eccc0bad4e3d5c47c09ae8783df7cb554545",
-    "commit": "956b52dba0b054c6fb8e68144c3c85037ced0319",
+    "branch_diff": "039a28510c168cf162d2a023bcffd9f2dd40b40cf370d4206dd27902e8baeb94",
+    "changed": "4afb97c9e59bbc69b3705f1907bc173b8c0f502cbc4bc187c1eecc72bb0b87c3",
+    "commit": "697e1093269c71ac69a86241eb938be302b1064e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The new coordinator rule says to ask the owner only for Harm 3 or higher, added scope, approval or merge, or undoing an owner decision. The guide still says at line 1440 to ask the owner whenever two rounds leave tests failing or the same finding open. A repeated Harm 1 or 2 finding can reach that worker stop and trigger an owner question, contrary to the promised autonomy rule.",
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The new rule requires the coordinator to settle a stop itself when every open note has Harm 1 or 2, but the normal command outputs still explicitly say \u201cAsk the human\u201d: `close.py:56\u201364`, `story.py:69\u201370`, and `nextstep.py:776\u2013784`. A repeated at-bar Harm 1 finding can trigger a review stop, so the coordinator receives an owner-question instruction for a decision it is supposed to make itself. The changed README also says Forge asks the owner at every stop (`README.md:130`).",
         "file": "src/forge/templates/skill.md",
         "gain": 4,
         "harm": 1,
-        "line": 1423,
+        "line": 1421,
         "priority": "P1",
-        "title": "Not done: coordinator asks the owner only for the named decisions",
+        "title": "Not done: low-Harm stops still direct the coordinator to ask the owner",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The fallback examples contain only an unscored finding or note. They would still pass if a stop with both scored and unscored open rows printed a partial table, although the specified rule requires bullets for every row whenever any row lacks scores. A reviewer omitting one score in an otherwise scored round is a normal path.",
-        "file": "tests/test_score_table.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 71,
-        "priority": "P1",
-        "title": "Not done: tests/test_score_table.py",
-        "work": 1
-      },
-      {
-        "body": "Gain 1, Work 1, Harm 1\nRaise: Gate. This change replaces a comment about Codex host access. It does not affect the ranked table, shipped guide, coordinator rule, or any configuration value. The file is outside this part's Scope, and this comment change is not needed for the work.",
-        "file": ".codex/config.toml",
-        "gain": 1,
-        "harm": 1,
-        "line": 9,
-        "priority": "P1",
-        "title": "Unneeded change outside Scope: .codex/config.toml",
-        "work": 1
       }
     ],
-    "id": "1fbd859d-a98e-4b9b-9dcc-55e919d666e2",
+    "id": "9f9d862e-595f-4783-9147-7013eabe344a",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-13T07:50:44.142939+00:00",
@@ -153,6 +146,17 @@
     {
       "at": "2026-10-13T11:49:35.682805+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T12:37:02.546787+00:00",
+      "step": "review"
     }
-  ]
+  ],
+  "stop": {
+    "area": "src/forge/templates/skill.md",
+    "at": "2026-10-13T12:37:02.547449+00:00",
+    "file": "src/forge/templates/skill.md",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "wait_id": "8759a8b4-6c49-4c73-ad7f-129ae8b2fc24"
+  }
 }
