@@ -3620,6 +3620,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 802,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
