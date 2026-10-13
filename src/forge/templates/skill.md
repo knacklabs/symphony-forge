@@ -231,7 +231,11 @@ worktree path, shared by the repo's worktrees).
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
-the HTML board keeps their history. Each call reads current state without a history cache.
+the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
+matches the JSON: every story and fix sorted needs you, blocked, in progress, planned, no plan
+yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
+fix and plan. It uses the full window, has light and dark themes and stacks to one column below
+720px. Each call reads current state without a history cache.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
 task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
