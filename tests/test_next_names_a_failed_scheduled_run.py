@@ -38,9 +38,9 @@ LOG = "\n".join([
     "FAILED tests/test_e.py::test_mode[basic - legacy] - AssertionError: [1] == [2]",
     "full suite on macos-latest, group 1 of 3\tRun tests\t2030-01-01T03:41:01Z 1 failed, 1 error",
 ])
-WHY = "The scheduled forge-next run fails on main"
+WHY = "The scheduled forge-next (forge-next-1.yml) run fails on main"
 DONE = ("full suite on macos-latest, group 1 of 3; full suite on windows-latest, group 2 of 3 of the "
-        "scheduled forge-next workflow pass again on the next scheduled run on main")
+        "scheduled forge-next (forge-next-1.yml) workflow pass again on the next scheduled run on main")
 COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}"'
 
 
@@ -80,7 +80,7 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     red = repo.forge("next", cwd=client)
     assert red.returncode == 0, red.stderr
     lines = red.stdout.splitlines()
-    start = lines.index("The latest scheduled forge-next run on main failed in: "
+    start = lines.index("The latest scheduled forge-next (forge-next-1.yml) run on main failed in: "
                         "full suite on macos-latest, group 1 of 3; "
                         "full suite on windows-latest, group 2 of 3.")
     assert lines[start + 1:start + 3] == [
@@ -88,7 +88,9 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
         "tests/test_d.py::test_setup, tests/test_e.py::test_mode[basic - legacy].",
         COMMAND]
     assert "codex-smoke" not in red.stdout
-    assert len([call for call in gh.calls()[asked:] if call[:2] == list(RUNS)]) == 1
+    request = [call for call in gh.calls()[asked:] if call[:2] == list(RUNS)]
+    assert len(request) == 1  # one request, for the default branch's scheduled runs only
+    assert {"event=schedule", "branch=main"} <= set(request[0])
     assert not [call for call in gh.calls() if call[:1] == ["workflow"]]
     asked = len(gh.calls())
     repo.forge("next", cwd=client)  # cached for a minute: no new request
@@ -105,7 +107,7 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     gh.respond(*RUNS, stdout=runs((9, 1, "forge-next", "failure")))
     gh.respond("run", "view", "9", "--log-failed", stdout="\n".join(
         f"full suite on windows-latest, group 1 of 3\tRun tests\tx FAILED {test} - boom" for test in many))
-    expected = ["The latest scheduled forge-next run on main failed in: "
+    expected = ["The latest scheduled forge-next (forge-next-1.yml) run on main failed in: "
                 "full suite on windows-latest, group 1 of 3.",
                 f"Failing tests: {', '.join(sorted(many))}."]
     still = repo.forge("next", cwd=client)

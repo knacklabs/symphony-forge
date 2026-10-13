@@ -189,6 +189,10 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     refusals: dict[Path, str] = {}
     alerts = _failed_schedules(top)  # an open fix for a failed run shows its own lines under it
     pinned: list[str] = []
+
+    def claim(state: dict[str, Any]) -> list[str] | None:  # by the workflow file the fix's why names
+        key = next((key for key in alerts if key in str(state.get("why") or "")), None)
+        return alerts.pop(key) if key else None
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
@@ -215,7 +219,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             found = _item(name, f"The fix {name}", state, top, path, prs, refusals)
-            if alert := branch not in merged_prs and alerts.pop(state.get("why"), None):
+            if alert := branch not in merged_prs and claim(state):
                 pinned += alert[:-1] + found
             else:
                 lines += found
@@ -233,7 +237,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
-            if alert := alerts.pop(state.get("why"), None):
+            if alert := claim(state):
                 pinned += alert[:-1] + found
             else:
                 lines += found
@@ -266,22 +270,19 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
 
 
 def _failed_schedules(top: Path) -> dict[str, list[str]]:
-    """By the why of its fix: each workflow whose latest scheduled run on the default branch failed,
-    with its failed jobs and tests and, last, the command that starts its fix."""
+    """By "(<workflow file>)", which its fix's why names: each workflow whose latest scheduled run on
+    the default branch failed, with its failed jobs and tests and, last, the command that starts its fix."""
     def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
-        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=-]", " ", text).split())
+        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=()-]", " ", text).split())
     alerts = {}
-    runs = board_facts.failed_schedules(top)
-    # ponytail: names compared among failed workflows only; one that later fails too renames its twin's fix.
-    names = [clean(run["workflow"]) for run in runs]
-    for run, name in zip(runs, names):
-        if names.count(name) > 1:  # the file tells workflows apart whose names read alike
-            run = {**run, "workflow": f"{run['workflow']} ({run['file']})"}
+    for run in board_facts.failed_schedules(top):
+        key = f"({clean(run['file'])})"
+        run = {**run, "workflow": f"{run['workflow']} {key}"}
         workflow, branch = clean(run["workflow"]), clean(run["branch"])
         why = f"The scheduled {workflow} run fails on {branch}"
         jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
         done = f"{jobs} of the scheduled {workflow} workflow pass again on the next scheduled run on {branch}"
-        alerts[why] = [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
+        alerts[key] = [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
                        f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
                        *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
                        f'Next: forge fix start "{why}" --done "{done}"']
