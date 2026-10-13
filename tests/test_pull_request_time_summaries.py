@@ -48,6 +48,8 @@ def repeat_round(template, number, offset, worker_round):
     return copies
 
 
+# ponytail: hundreds of seeded rounds through real closes; under a full parallel run they need more than the 150 s default.
+@pytest.mark.timeout(600)
 @pytest.mark.parametrize("shape", ["many-worker-rounds", "one-worker-round", "long-current-round",
                                    "repeated-ci-closes", "story-part"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
@@ -180,6 +182,8 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     assert len(shared["clean_reviews"]) <= 2, shared["clean_reviews"]
 
 
+# ponytail: hundreds of seeded rounds through real closes; under a full parallel run they need more than the 150 s default.
+@pytest.mark.timeout(600)
 def test_2_story_counts_two_parts_overlapping_folded_time_once(env, monkeypatch):
     client(env, False)
     version = env.repo.forge("--version").stdout.split()[-1]
