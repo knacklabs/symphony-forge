@@ -11,8 +11,7 @@ STANDARDS = (Path(__file__).parents[1] / "src/forge/standards.md").read_text(enc
 
 def _rules(env) -> str:
     """Every prompt text the reviewer got on the last run: --prompt, then each --prompt-file."""
-    call = env.review_calls()[-1]
-    prompt = "\n\n".join([env.prompt(), *call["prompt_files"].values()])
+    prompt = env.prompt()
     assert "## Standards" in prompt
     return prompt.split("## Standards", 1)[1]
 

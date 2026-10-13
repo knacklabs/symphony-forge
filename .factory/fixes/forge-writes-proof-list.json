@@ -1,0 +1,120 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-13T03:12:35.693609+00:00",
+      "because": "Coordinator narrowed at the round 3 stop: tests close cannot read per-test results for (other languages) are marked not checked instead of being removed",
+      "done_when": "Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test proves, so a proof list never names a test that did not run"
+    }
+  ],
+  "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
+  "branch": "fix/forge-writes-proof-list",
+  "done_when": "Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test proves; a named test close did not run shows as not run, and a name close cannot match to its own run's results is marked not checked",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/fasttest.py",
+    "src/forge/review.py",
+    "src/forge/templates/review.md",
+    "tests/test_close_checks_named_tests.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4d9014565989ed8df5167e2158d8119818d063d53983718d7aa7742c2eef720f",
+    "changed": "39aaa47f1b1a9ebd963dd541ea6145b32a604c4ac2891f665e7c613ee1c3a415",
+    "commit": "9d318c59cd4c04048947d9478fa0e3f2e9b9f701",
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:670 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: when close's picker runs no pytest, named tests show not run",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Close marks a named test `not checked` when its default test picker decides to run no tests. `fasttest.py:397-405` returns before starting pytest when the selection is too large or no related tests are selected. With no results header, this branch reaches `review.py:670-671` and publishes `not checked`, although Close knows it ran no test. The Done-when rule requires `not run`; the new no-tests test covers a documentation-only skip, not these normal picker paths.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 670,
+        "priority": "P1",
+        "title": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0631\u0648\u0627s",
+        "work": 2
+      }
+    ],
+    "id": "adb83391-1d38-481c-a3b9-134ee691a22b",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T16:41:18.842984+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T21:09:32.022268+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:07:07.962339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:23:43.345061+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:52:29.919372+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:10:15.950031+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:29:20.930791+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:41:07.803765+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:54:23.927180+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T00:13:27.057214+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:12:08.461097+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:35:57.273336+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:00:56.954669+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:14:09.570087+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:28:55.836277+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-13T04:00:56.964358+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/fasttest.py",
+    "reason": "Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
+    "wait_id": "0617448b-aa00-4327-afe7-1d4903bd8ad8",
+    "worker_round": null
+  },
+  "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
+}

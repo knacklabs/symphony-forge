@@ -100,10 +100,22 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         env.commit(where, "app.py", "print('upgraded client configuration')\n")
     for number in (1, 2, 3):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        if number == 3:  # a frozen clock: the stuck stop below adds no owner wait
+            monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
         worked = env.repo.forge("work", item)
+        if number == 3 and worked.returncode == 1:
+            # Two rounds left the same finding, so the worker is stuck; the owner keeps the tool for one
+            # more round at once.
+            assert "Two rounds in a row left the review finding" in worked.stderr, worked.stderr
+            chosen = env.close(item, "--resolve", "same", "--reason", "One more round")
+            assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+            worked = env.repo.forge("work", item)
+        monkeypatch.delenv("FORGE_NOW", raising=False)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"
-        env.reviews(blocked(finding("P1", title, "app.py")))
+        # Harm 3 in round 3 keeps the any-file hold by the bar.
+        env.reviews(blocked({**finding("P1", title, "app.py"),
+                             **({"body": "Gain 3, Work 2, Harm 3\nEvidence"} if number == 3 else {})}))
         if number == 1:
             queued_first_close(env, item, where)
         else:
@@ -264,7 +276,8 @@ def test_4_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fix
         assert current["total_seconds"] == pytest.approx(sum(
             value for value in current["time_breakdown"].values() if value is not None), abs=1)
     parent = row(env.repo, "SHOP")
-    assert "time_breakdown" not in parent
+    # RECORD now gives stories a runway derived from their parts without counting overlaps twice.
+    assert parent["time_breakdown"]["working"] == 25
     assert "rounds" not in parent
 
 
@@ -413,7 +426,8 @@ def test_11_merged_item_with_unknown_end_keeps_observed_step_time(env, step, out
     current = row(env.repo, item)
     assert current["total_seconds"] is None
     assert current["time_breakdown"][category] == 5
-    assert "5s" in current["rounds"][0]["line"]
+    # Human durations now use plain rounded units; raw JSON category seconds stay unchanged.
+    assert "5 seconds" in current["rounds"][0]["line"]
     if step == "CI wait":
         # Earlier releases recorded both red tests and wait exhaustion as failed.
         assert "CI unknown" in current["rounds"][0]["line"]

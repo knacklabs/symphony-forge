@@ -5,56 +5,68 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Forge board</title>
 <style>
-  /* Ported from the old board: warm paper, an oxblood accent, a serif for headings, solid cards.
-     Colour never carries meaning alone; every slow flag says so in words. */
+  /* The Runway: near-white paper, ink, hairline rules; one amber accent that means waiting.
+     No cards, shadows or rounded boxes. Colour never carries meaning alone. */
   :root {
-    --paper: #faf8f4; --surface: #fffdfa; --surface-2: #f2eee6; --ink: #1a1714;
-    --muted: #6f675e; --accent: #8c2f39; --shipped: #2f6b4f; --rule: rgba(26, 23, 20, .12);
-    --shadow: 0 1px 2px rgba(26, 23, 20, .06), 0 1px 3px rgba(26, 23, 20, .07);
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light dark;
+    --paper: #fbfaf7; --ink: #1c1b19; --muted: #5d5850; --surface-2: #efede7;
+    --rule: rgba(28, 27, 25, .14); --wait: #8a5300;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --paper: #16140f; --surface: #1e1b15; --surface-2: #26221a; --ink: #f0ece4;
-      --muted: #a49b8d; --accent: #d4707a; --shipped: #5fa37e; --rule: rgba(240, 236, 228, .14);
-      --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+      --paper: #121211; --ink: #ecebe6; --muted: #a8a399; --surface-2: #24231f;
+      --rule: rgba(236, 235, 230, .16); --wait: #e0a64a;
     }
   }
   * { box-sizing: border-box; margin: 0; }
-  body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--sans); overflow-wrap: anywhere; }
-  a { color: var(--accent); }
-  main { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
-  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem;
-           padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }
-  h1 { font: 400 1.5rem/1.1 var(--serif); display: inline-flex; align-items: center; gap: .55rem; }
-  h1::before { content: "\25C6"; width: 28px; height: 28px; border-radius: 8px; display: inline-flex;
-               align-items: center; justify-content: center; font-size: .75rem;
-               color: var(--surface); background: var(--accent); }
-  header p { color: var(--muted); font-size: .85rem; }
-  h2 { font: 600 .72rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase;
-       color: var(--accent); margin: 2rem 0 .7rem; }
-  h3 { font: 400 1.25rem/1.25 var(--serif); }
-  h4 { font: 600 .68rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase;
-       color: var(--muted); margin: 1.1rem 0 .45rem; }
-  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
-          box-shadow: var(--shadow); padding: 1rem 1.1rem; margin-bottom: .8rem; }
-  .note { background: var(--surface-2); }
-  .sentence { font: 1.05rem/1.4 var(--serif); margin-top: .3rem; }
-  .meta, .took, .detail { color: var(--muted); font-size: .88rem; }
-  ul, ol { padding-left: 1.2rem; }
-  li { margin: .35rem 0; }
-  .numbers li::marker { color: var(--accent); }
-  .status { color: var(--shipped); }
-  .slow { color: var(--accent); font-size: .88rem; border-left: 3px solid var(--accent);
-          padding-left: .5rem; margin-top: .2rem; }
-  .timeline { list-style: none; padding-left: 0; border-left: 2px solid var(--rule); }
-  .timeline li { padding-left: .9rem; position: relative; }
-  .timeline li::before { content: ""; position: absolute; left: -6px; top: .5rem; width: 10px;
-                         height: 10px; border-radius: 50%; background: var(--accent); }
-  .timeline time { display: block; color: var(--muted); font-size: .8rem; }
-  .detail { display: block; }
-  .board-picture { display: block; width: 100%; max-width: 340px; margin: .7rem 0 1.2rem;
+  body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans);
+         font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  a { color: var(--ink); text-underline-offset: .15em; }
+  ::selection { background: var(--ink); color: var(--paper); }
+  main { padding: 1.5rem clamp(1rem, 3vw, 3rem) 3rem; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1rem;
+           padding-bottom: .75rem; border-bottom: 1px solid var(--rule); }
+  h1 { font-size: 1.35rem; font-weight: 600; letter-spacing: -.01em; }
+  header p, .totals, .key, .numbers, .note, .empty, .people, .times, .status, .kind { color: var(--muted); }
+  header p { font-size: .85rem; }
+  h2 { font-size: 1.05rem; font-weight: 600; margin: 2.25rem 0 .5rem; }
+  h3 { font-size: .9rem; font-weight: 600; margin: 1.5rem 0 .25rem; }
+  .sentence { font-size: 1.15rem; margin-top: 1rem; max-width: 70ch; }
+  .totals { margin-top: .4rem; font-size: .9rem; }
+  .note { margin-top: 1rem; }
+  .key { font-size: .85rem; margin-bottom: .5rem; white-space: nowrap; overflow-x: auto; }
+  .key:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .shape { display: inline-block; width: .75em; height: .75em; margin: 0 .3em 0 .5em; vertical-align: -.05em;
+           border: 1.5px solid var(--ink); background: var(--surface-2); }
+  .s-done { border-radius: 50%; }
+  .s-running { border-radius: 2px; }
+  .s-waiting { border: 0; background: var(--muted);
+               clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+  .s-start { transform: rotate(45deg) scale(.8); }
+  .s-not { border-style: dashed; }
+  .graph { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: .5rem 0 1rem; }
+  .detail { color: var(--muted); font-size: .85rem; }
+  .row { border-top: 1px solid var(--rule); padding: .2rem 0; }
+  .row:last-child { border-bottom: 1px solid var(--rule); }
+  summary { cursor: pointer; padding: .4rem 0; }
+  summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .row > details > summary, .parts summary {
+    display: grid; grid-template-columns: 1rem minmax(0, 3fr) 3rem 11rem minmax(0, 2fr);
+    gap: .25rem 1rem; align-items: baseline; list-style: none; }
+  .row > details > summary::-webkit-details-marker, .parts summary::-webkit-details-marker { display: none; }
+  .row > details > summary::before, .parts summary::before { content: "+"; color: var(--muted); }
+  .row > details[open] > summary::before, .parts details[open] > summary::before { content: "\2212"; }
+  .title { font-weight: 500; }
+  .kind, .status, .people, .times { font-size: .85rem; }
+  .row[data-group="needs you"] .state { color: var(--wait); }
+  .more { padding: 0 0 .75rem 2rem; display: grid; gap: .25rem; }
+  .parts { list-style: none; padding: 0; }
+  .parts li { border-top: 1px solid var(--rule); padding: .2rem 0; }
+  .done { margin-top: 1.5rem; }
+  .done > summary { font-weight: 600; font-size: .9rem; }
+  .numbers { margin-top: 2.25rem; padding-top: .75rem; border-top: 1px solid var(--rule); font-size: .85rem; }
+  .board-picture { display: block; max-width: 100%; height: auto; margin: .5rem 0;
                    color: var(--ink); font: 15px var(--sans); }
   .board-picture text { fill: currentColor; }
   .board-picture .picture-detail { fill: var(--muted); font-size: 14px; }
@@ -64,8 +76,13 @@
   .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5;
                      vector-effect: non-scaling-stroke; }
   .arrow { fill: var(--muted); }
-  .recorded-time { fill: var(--accent); }
+  .recorded-time { fill: var(--ink); }
   .unknown-time { stroke: var(--muted); stroke-dasharray: 3 3; }
+  @media (max-width: 720px) {
+    .row > details > summary, .parts summary { grid-template-columns: 1rem minmax(0, 1fr); }
+    .row > details > summary > span, .parts summary > span { grid-column: 2; }
+    .more { padding-left: 1.25rem; }
+  }
 </style>
 </head>
 <body>
@@ -74,16 +91,21 @@
     <h1>Forge board</h1>
     <p>Updated $updated</p>
   </header>
-  <p class="meta">$counts</p>
-  <h2>Roadmap</h2>
-  $map
-  <h2>How the factory is doing</h2>
-  <section class="card"><ul class="numbers">$numbers</ul></section>
-  $note
-  <h2>Stories</h2>
-  $stories
-  <h2>Small fixes</h2>
-  $fixes
+  <section id="first-screen" aria-label="Where things stand">
+    $sentence
+    <p class="totals">$totals</p>
+    $note
+  </section>
+  <section id="roadmap" aria-labelledby="roadmap-heading">
+    <h2 id="roadmap-heading">Roadmap</h2>
+    <p class="key" tabindex="0" aria-label="Key to the map">$key</p>
+    <div class="graph">$graph</div>
+  </section>
+  <section id="work" aria-labelledby="work-heading">
+    <h2 id="work-heading">Stories and fixes</h2>
+    $rows
+  </section>
+  <p class="numbers">$numbers</p>
 </main>
 </body>
 </html>

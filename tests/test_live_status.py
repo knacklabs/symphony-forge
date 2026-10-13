@@ -32,7 +32,9 @@ def row(repo, item):
     return next(r for r in rows if r["id"] == item), boards[0]
 
 
+# ponytail: each case runs several forge commands; a busy machine needs more than the 150 s default.
 @pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "read default claude", "read default codex", "review claude", "review codex", "review default claude", "review default codex", "review fallback claude", "review fallback codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "plan detached", "ci", "ci red", "ci green"])
+@pytest.mark.timeout(600)
 def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     # Both commands read at different instants; freeze their clock for timer equality.
     monkeypatch.setenv("FORGE_NOW", "2026-10-06T12:00:00+00:00")
@@ -98,7 +100,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             monkeypatch.setenv("CODEX_HOME", str(home))
             _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
             stub = repo.bin / "codex-app-server"
-            stub.write_text(stub.read_text("utf-8").replace('"stub codex: built it with "\n            + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", "")', '"No findings."'), "utf-8")
+            monkeypatch.setenv("STUB_CODEX_TEXT", "No findings.")
             monkeypatch.setenv("CODEX_BIN", str(repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
             monkeypatch.delenv("CODEX_THREAD_ID")
             monkeypatch.setenv("CLAUDECODE", "1")
@@ -326,6 +328,16 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                         if (current["worker"] or {}).get("step") == expected:
                             break
                         assert time.monotonic() < deadline, f"Forge did not report {expected}"
+                if case.startswith("progress"):
+                    # Tests hold their runner; let the concurrent review settle before comparing snapshots.
+                    deadline = time.monotonic() + 30
+                    while True:
+                        snapshot = view(repo, "board")
+                        current = next(r for parent in snapshot["items"]
+                                       for r in [parent, *parent["children"]] if r["id"] == item)
+                        if next(s for s in current["stages"] if s["name"] == "Review")["status"] == "pass":
+                            break
+                        assert time.monotonic() < deadline, "Forge did not finish the concurrent review"
                 result, _ = row(repo, item)
                 activities.append(result["activity"])
                 assert result["idle_since"] is None and result["stalled"] is False

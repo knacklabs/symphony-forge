@@ -17,22 +17,27 @@ import pytest
 from conftest import patient
 from test_close import PIN
 
-# Forge's subagent roles, which sync writes for both hosts.
+# Forge's subagent roles, including the native cold reader, which sync writes for both hosts.
 ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
-    "worker", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
-    "debugger", "security", "performance")
+    "worker", "fixer", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
+    "debugger", "security", "performance", "reader")
     for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 # .gitattributes carries the roadmap's merge rule; .forge/hooks.sh finds forge for the host hooks.
-LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+# The bundled plain English skill's files, the same in both hosts.
+PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.md",
+                 "references/substitutions.md", "examples/before-after.md", "scripts/ste_check.py")
+LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
-            for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
+            for name in ("SKILL.md", "NOTICE.md")),
+          *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
+            for name in PLAIN_ENGLISH), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
@@ -158,7 +163,8 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
     assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
-                      "features": {"web_search": True, "hooks": True}}
+                      "features": {"web_search": True, "hooks": True},
+                      "agents": {"reader": {"config_file": "agents/reader.toml"}}}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
@@ -343,7 +349,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
-        assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
+        assert (f'add trust_level = "trusted" under [projects.{json.dumps(str(client.resolve()))}] in '
+                f'{codex_home / "config.toml"}') in done.stdout
         assert "Everything else checks out" in done.stdout
     elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import conftest
 import pytest
-from test_setup import ROLE_FILES
+from test_setup import PLAIN_ENGLISH, ROLE_FILES
 
 STORY = "FORGE-SPLIT-1"
 
@@ -25,13 +25,15 @@ SOURCES = {
         "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
         "skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
         "skills/test-audit/SKILL.md": ".codex/skills/test-audit/SKILL.md",
+        **{f"skills/simplified-technical-english/{name}":
+           f"src/forge/templates/skills/simplified-technical-english/{name}" for name in PLAIN_ENGLISH},
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
     ".forge/review-tests.py": "src/forge/templates/review-tests.py",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
+GENERATED = {"plain": {".gitattributes", ".gitignore", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
                        "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
@@ -52,7 +54,7 @@ print(json.dumps(wanted))
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
     # Exercise this checkout's sync, rather than routing to a historical release.
-    repo.write("forge.toml", 'version = "v1.2.9"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.12"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")

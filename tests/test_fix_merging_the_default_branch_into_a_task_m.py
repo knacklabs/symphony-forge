@@ -52,7 +52,8 @@ def test_3_close_carries_dismissal_to_same_file_and_title_in_later_review(env):
     assert dismissed.returncode == 0, dismissed.stderr
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
 
-    env.commit(where, "app.py", "print('saved twice')\nprint('still saved')\n")
+    # The cited line stays unchanged, so the dismissal carries to the later review.
+    env.commit(where, "app.py", "print('saved')\nprint('still saved')\n")
     again = env.close(item)
 
     assert again.returncode == 0, again.stderr

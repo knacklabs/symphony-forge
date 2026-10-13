@@ -1,0 +1,36 @@
+{
+  "base": "23bb1db61aaf907943e1ca73b05a063722d65bca",
+  "branch": "fix/test-audit-duplicates",
+  "done_when": "Each removed test's contract is still asserted by a named stronger test, the pyproject dynamic-version guard moves into the release test, and the suite is smaller",
+  "flagged": [
+    "tests/test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py",
+    "tests/test_machine_native_timings.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6a1dbdc52e2e80f485a34421ad28c2e23474ddfca487558f120bcacf1b69f7ee",
+    "changed": "6337c4d129e72bd304fe5000ddb13dc20833acf7e55992f54cc1feb3c2f92b70",
+    "commit": "6bc10305ac66fe913dc4a739b17d0b775ea12809",
+    "dismissals": [],
+    "findings": [],
+    "id": "157551e2-3590-4105-b73b-aa26f693ac89",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T11:05:52.001080+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T11:54:29.696940+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T12:22:48.106494+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The suite runs exact duplicates: old version-pin tests every release edits, three extra copies of the mod's native plugin checks, and a review-model test two stronger tests repeat"
+}

@@ -10,13 +10,19 @@ STORY = "three-rounds-ask"
 
 @pytest.mark.parametrize("choice", ["narrow", "split", "accept"])
 def test_3_land_records_the_humans_review_loop_choice(land, choice):
+    # With the default on, land waits out the stop; this checks the owner's own choice.
+    toml = land.repo.path / "forge.toml"
+    land.commit(land.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
+    land.repo.git("push", "-q", "origin", "main")
     # Different files avoid the existing same-file stop, so this exercises the
     # three-consecutive-blocked-round hold and its land-to-close handoff.
     where = _fix(land, "working", worked=True, changes={
         "app.py": "print('hello')\n", "other.py": "print('hello')\n",
         "show.py": "print('hello')\n",
     })
-    land.reviews(*(blocked(finding("P1", "Greeting is missing", file=file))
+    # Harm 3 keeps the three-round hold under the bar; new Harm 1 findings would go on to a fourth round.
+    land.reviews(*(blocked({**finding("P1", "Greeting is missing", file=file),
+                            "body": "Gain 3, Work 2, Harm 3\nEvidence"})
                    for file in ("app.py", "other.py", "show.py")))
     stopped = _land(land)
     assert stopped.returncode == 1, stopped.stdout + stopped.stderr

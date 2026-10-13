@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-12T17:57:33.363150+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01DtiB3W8gbskVziPtoeL1yn",
+    "hash": "e2ca2bf56241d68a51ddcfc2758deb6ab3b09a1325ccc515385d914b03f21ea0",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-QUEUE-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-12T16:41:38.897126+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T16:57:39.066093+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-12T17:05:15.061973+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-12T17:09:30.148225+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-12T17:57:33.363328+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Forge merges ready changes for you, several at a time, in a safe order",
+  "touches": 1
+}

@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, repo, story, task, time_records
+from forge import checks, close, codex, githooks, repo, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -32,8 +32,6 @@ REFUSALS = {
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
-    "worktree": ("Forge could not remove the worktree for {item}.",
-                 "unlock it or close programs using it, then forge merge {item}"),
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
@@ -81,18 +79,8 @@ def merge(args: argparse.Namespace) -> int:
         checks.wait(worktree, item, head, config["checks"],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
         completion = ["--body-file", "-"]
-        body = pr.get("body") or ""
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
-        history = time_records.how_it_went(top, item, item_state, body)
-        def refresh_history(block: re.Match[str]) -> str:
-            text, count = time_records.HISTORY_SECTION.subn(lambda _: history + "\n", block[0], count=1)
-            return text if count else text.replace(close.END, "\n" + history + "\n" + close.END, 1)
-        body = re.sub(re.escape(close.BEGIN) + ".*?" + re.escape(close.END),
-                      refresh_history, body, count=1, flags=re.S)
-        if body != (pr.get("body") or ""):
-            body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
-            body_file.write_bytes(body.encode("utf-8"))
-            close._gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
+        body = close._refresh_record(worktree, item, item_state, pr)
         if "/" in item:
             key, tid = item.split("/")
             state = story.json_of(story.show(top, head, repo.state_path(key)))
@@ -105,6 +93,7 @@ def merge(args: argparse.Namespace) -> int:
                         top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
                 outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
                 body += "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
+        body = close._bounded_body(body)
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
@@ -176,12 +165,16 @@ def merge(args: argparse.Namespace) -> int:
             os.chdir(main_checkout)
         for shim in generated:
             shim.unlink()
-        removed = repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout)
-        if removed.returncode:
-            repo.refuse(REFUSALS["worktree"], item=item)
-        if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
-            repo.git("branch", "-D", branch, cwd=main_checkout)
-        print(f"Merged {item} and removed its worktree and local branch.")
+        # The pull request is merged, so a failed removal is only cleanup. Git may already have
+        # dropped the worktree's registration, which forge doctor needs, so the human deletes it.
+        if repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout).returncode:
+            dirty = True
+            print(f"Merged {item}. Forge could not fully remove its worktree at {worktree}; close any "
+                  f"program using that folder, then delete the folder {worktree}.")
+        else:
+            if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
+                repo.git("branch", "-D", branch, cwd=main_checkout)
+            print(f"Merged {item} and removed its worktree and local branch.")
     if dirty or advanced:
         receipt["tidied"] = True
         _save_ready(path, receipt)

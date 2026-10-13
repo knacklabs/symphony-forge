@@ -16,6 +16,8 @@ LIGHT = (False, "Prototype before sign-off", "P1")
 @pytest.mark.parametrize("signed_off,allowance,priority,ready,checks,problem", [
     (*LIGHT, True, GREEN, None),
     (False, "Prototype before sign-off", "P0", False, GREEN, None),
+    # A P1 scored Harm 4 reaches Forge, and blocks even the light review.
+    (False, "Prototype before sign-off", "P1 Harm 4", False, GREEN, None),
     (False, "Another allowance", "P1", False, GREEN, None),
     (True, "Prototype before sign-off", "P1", False, GREEN, None),
     (*LIGHT, False, [run("tests", "failure"), run("forge-pr-check")],
@@ -37,7 +39,10 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     env.repo.git("commit", "-q", "-m", "Set client review policy")
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(allow_large=allowance)
-    env.reviews(blocked(finding(priority, "Prototype review finding")))
+    found = finding(priority.split()[0], "Prototype review finding")
+    if priority.endswith("Harm 4"):
+        found["body"] = "Gain 3, Work 2, Harm 4\nEvidence for: Prototype review finding"
+    env.reviews(blocked(found))
     env.checks(checks)
 
     result = env.close(item)
@@ -46,8 +51,8 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
-    assert options["--max-priority"] == (
-        "P0" if not signed_off and allowance == "Prototype before sign-off" else "P3")
+    # Every review asks for every priority; the light review's P0-only level applies after scoring.
+    assert options["--max-priority"] == "P3"
     if problem:
         assert result.returncode == 1, result.stdout + result.stderr
         assert result.stderr.splitlines()[-2] == problem
@@ -63,6 +68,8 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     assert "--draft" in create
     assert bool(env.gh_calls("pr", "ready")) is ready
     assert ("advisory" in body(create)) is ready
+    if ready:  # the light review's fix-now finding passes, still shown with its scores
+        assert "Gain 3, Work 2, Harm 1" in body(env.gh_calls("pr", "edit")[-1])
     branch = "fix/tidy-readme"
     head = env.repo.git("rev-parse", "HEAD", cwd=env.tmp / "fix-tidy-readme")
     checked = env.repo.forge("hook", "pr-check", "--base",

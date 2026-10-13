@@ -7,8 +7,22 @@ including findings already fixed or dismissed. Do not reopen them with the same 
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
 
-You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
+You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
+
+$start_here
+
+Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
+that the plugin and MCP are installed or that the user is signed in.
+Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is
+installed in the current host. If it is missing, use the organization's plugin catalog and the
+host's installation flow. Do not invent an installation command or marketplace address.
+Then follow the Mainline Deploy skill. Check OAuth sign-in and have the user complete it if needed.
+Wait for successful authentication before deployment. Installation alone does not mean the user is signed in.
+Deploy only the requested app to the requested environment. A build, fix, merge, ship/land request,
+successful test or review, demo preparation, or Forge next step does not by itself authorize deployment.
+Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
 
 $review_loop
 
@@ -34,6 +48,10 @@ $delegation
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
   started still runs in the background. Commit your work before your turn ends: the review reads
   only what is committed.
+- Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
+  `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- When you change text the program prints (messages, pull request text, board lines), search the
+  tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
@@ -147,7 +165,9 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests through `forge test` in the
 foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
 `fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
-base with `origin/<default branch>`. It always runs, including uncommitted changes. Then commit
+base with `origin/<default branch>`, on at most two test processes; a picker run of five or fewer
+related test files skips the lane's wait unless the test command or pytest config has a doctest
+option. It always runs, including uncommitted changes. Then commit
 any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
@@ -198,9 +218,11 @@ variable. Do not animate keyboard-driven or very frequent actions.
 
 Close stopped on these. Before you change anything, open each finding's cited line and the code it
 calls. If a finding is wrong, change nothing for it and name the file:line that proves it wrong,
-so the coordinator can dismiss it. If it is right, fix every place the same rule applies. Add a
-test only where the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and
-make it fail without your fix; the review's test audit reports a test that proves nothing.
+so the coordinator can dismiss it. If it is right, fix every place the same rule applies, unless
+the coordinator's note says the part was narrowed and follow-up fixes own these findings: then
+remove what goes beyond the Done-when lines instead of fixing them here. Add a test only where
+the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and make it fail without your fix; the review's test audit reports a test that proves nothing.
+Forge records findings below the bar as follow-ups or lived with; leave those alone.
 
 ### Open serious findings
 
@@ -213,9 +235,9 @@ $checks
 <!-- end -->
 ## Build simple
 
-A plan's cold read passes with no blocking notes. A note blocks when the plan is wrong,
-contradicts itself, or a builder could not act on it. Notes marked `Advisory:` are recorded and
-need no disposition or another round; only blocking findings need the coordinator to amend
+A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,
+contradicts itself, or a builder could not act on it. Notes below the bar, or unscored and marked
+`Advisory:`, need no disposition or another round; only notes at the bar need the coordinator to amend
 the plan and read again.
 
 Take the first rung that holds: don't build it; reuse what the repo has; the standard library; the
@@ -231,15 +253,23 @@ conventions apply only to a repo on the default stack.
 ## When you finish
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
-cover and every detail next to the test or check that proves it, or marked `missing`. Include the
-test's file and case name, or the named check and its result. Keep the whole list current in every
-round, not only the entries you changed. Forge copies it into the pull request and gives it to
+cover and every detail next to the test or check that proves it, or marked `missing`. Name each
+test by its pytest node ID or file and write no test results: close checks each named test against
+its own run and writes the list with only the tests it ran and their results, and marks every line it cannot match to its run's per-test results `not checked`. Name any other check with
+its result. Every commit's `Proof list:` carries
+the previous one forward and adds to it, even in a small repair commit; never list only the latest
+change. Forge copies it into the pull request and gives it to
 the reviewer. The first review checks every entry and reports every missing case it finds in
-that one round.
+that one round. When a commit message mentions -n or --no-verify, give it from a file or a quoted
+heredoc (`git commit -F - <<'EOF'`); the shell-command guard checks an unquoted one as commands.
 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Write text that people read with the simplified-technical-english skill: a story's What changes
+for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
+human, and board and `forge next` lines. Briefs, guides and code stay as they are.
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
@@ -252,3 +282,5 @@ exception is a bug that stops your item from working: fix it and name it in your
 $standards
 
 <!-- end -->
+
+$handover

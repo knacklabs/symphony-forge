@@ -293,14 +293,14 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     assert rows["polish"]["title"] == "Polish the guide"
     assert rows["polish"]["kind"] == "fix"
     # Live adds failures and severity; the previous number/checks/count contract stays.
-    assert rows["polish"]["pr"] == {"number": 2, "checks": "pass", "failures": []}
+    assert rows["polish"]["pr"] == {"number": 2, "url": "https://github.com/a/b/pull/2", "checks": "pass", "failures": []}
     item = rows["BOARD"]
     assert item["title"] == "Board shows each story in plain English"
     assert item["approval"] is None
     child = item["children"][0]
     assert child["title"] == "The page"
     assert child["stage"] == "working"
-    assert child["pr"] == {"number": 1, "checks": "pass", "failures": []}
+    assert child["pr"] == {"number": 1, "url": "https://github.com/a/b/pull/1", "checks": "pass", "failures": []}
     assert child["findings"] == {"count": 1, "titles": ["Missing empty state"],
                                  "items": [{"title": "Missing empty state", "priority": "P1"}],
                                  "dismissed": 1}
@@ -547,6 +547,10 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     expected = json.loads(json.dumps(first))
     for row in expected["items"]:
         row["total_seconds"] = 59
+        row["unknown_seconds"] = 59
+        row["intervals"] = [{"start": "2026-10-04T10:00:00+00:00",
+                             "end": "2026-10-04T10:00:59+00:00",
+                             "category": "unknown", "kind": "unknown"}]
     assert snapshot(view(repo, "board")) == snapshot(expected)
     # The HTML board uses the same cache; it must not refresh the open checks early.
     html = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.html"))

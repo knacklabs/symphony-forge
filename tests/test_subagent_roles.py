@@ -2,14 +2,20 @@
 from __future__ import annotations
 
 import re
+import shutil
 import tomllib
 from pathlib import Path
 
+import pytest
+
+from conftest import patient
+
 STORY = "a-codex-or-claude-session-opened-directl"
 ROOT = Path(__file__).resolve().parents[1]
-ROLES = {"worker": "build", "coder": "build", "frontend": "build", "tester": "build",
+ROLES = {"worker": "build", "fixer": "lite", "coder": "build", "frontend": "design", "tester": "build",
          "refactorer": "build", "explorer": "lite", "planner": "design", "architect": "design",
-         "debugger": "review", "security": "review", "performance": "review"}
+         "debugger": "review", "security": "review", "performance": "review", "reader": "grill"}
+BUILDING = ("worker", "fixer", "coder", "frontend", "tester", "refactorer")
 MODELS = """
 [models.build]
 model = "claude-opus-5-5"
@@ -29,6 +35,10 @@ effort = "xhigh"
 
 [models.grill.claude]
 model = "opus"
+effort = "high"
+
+[models.grill.codex]
+model = "gpt-6.1-sol"
 effort = "high"
 
 [models.review]
@@ -63,10 +73,18 @@ def _settings(top: Path, name: str) -> tuple[tuple, tuple]:
             (claude.get("model"), claude.get("effort")))
 
 
-def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+def test_1_sync_writes_roles_for_both_hosts_from_forge_toml(repo, adopted):
+    if adopted:
+        patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client",
+                                         repo.path, dirs_exist_ok=True))
+        repo.git("add", "-A")
+        repo.git("commit", "-qm", "Adopt earlier Forge files")
     result = _synced(repo)
 
     assert result.returncode == 0, result.stderr
+    config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    assert config["agents"]["reader"]["config_file"] == "agents/reader.toml"
     for name in ROLES:
         assert f"Wrote .codex/agents/{name}.toml" in result.stdout
         assert f"Wrote .claude/agents/{name}.md" in result.stdout
@@ -88,7 +106,7 @@ def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
                   "and why in your handoff.",
                   "commit your own work with a short plain-English message",
                   "never commit to the default branch, skip the git hooks, push or merge")
-                 if ROLES[name] == "build" else ("Change no files",))
+                 if name in BUILDING else ("Change no files",))
         for rule in rules:
             assert rule in instructions, (name, rule)
     # Every role's (model, effort) on each host, from its kind; None means left out, so the
@@ -97,9 +115,18 @@ def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
     by_kind = {"build": ((None, "medium"), ("claude-opus-5-5", "medium")),
                "lite": (("gpt-6-luna", "ultra"), ("claude-sonnet-5-5", "xhigh")),
                "design": (("gpt-6.1-sol", "xhigh"), ("opus", "high")),
-               "review": (("gpt-6-sol", None), ("claude-opus-5-5", "high"))}
-    for name, kind in ROLES.items():
-        assert _settings(repo.path, name) == by_kind[kind], name
+               "review": (("gpt-6-sol", None), ("claude-opus-5-5", "high")),
+               "grill": (("gpt-6.1-sol", "high"), ("opus", "high"))}
+    # The Codex worker runs forge work's own built-in model when no entry names a Codex one.
+    expected = {**{name: by_kind[kind] for name, kind in ROLES.items()},
+                "worker": (("gpt-6.1-sol", "medium"), by_kind["build"][1])}
+    for name in ROLES:
+        assert _settings(repo.path, name) == expected[name], name
+    # The reader reviews the plan without writing and reports only new blocking defects.
+    for instructions in (_codex(repo.path, "reader")["developer_instructions"],
+                         _claude(repo.path, "reader")[1]):
+        assert "No findings." in instructions
+        assert "settled" in instructions
 
     # A second sync changes nothing.
     before = {path: path.read_bytes() for path in repo.path.glob(".*/agents/*")}
@@ -153,7 +180,7 @@ def test_4_missing_design_leaves_codex_unpinned_and_claude_planning_uses_grill(r
 
     for name in ("planner", "architect"):
         assert _settings(repo.path, name) == ((None, None), ("opus", "high")), name
-    assert _settings(repo.path, "worker") == ((None, "medium"), ("claude-opus-5-5", "medium"))
+    assert _settings(repo.path, "worker") == (("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium"))
 
 
 def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_model(repo):
@@ -169,7 +196,7 @@ def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_mod
         front = text.split("---\n")[1]
         assert not re.search(r"^tools:", front, re.M) and "permissionMode" not in front, name
     assert _claude(repo.path, "worker")[0]["effort"] == "medium\\ntools: Bash"
-    for name in ("planner", "architect"):
+    for name in ("planner", "architect", "reader"):
         assert _settings(repo.path, name)[1] == ("custom-opus", "high"), name
 
 
@@ -186,6 +213,7 @@ def test_6_codex_roles_without_a_model_are_not_pinned_by_old_subagent_defaults(r
 
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
     assert config["agents"] == {"max_depth": 1,
-                                "worker": {"config_file": "agents/worker.toml"}}
-    assert _settings(repo.path, "worker")[0] == (None, "medium")
+                                "worker": {"config_file": "agents/worker.toml"},
+                                "reader": {"config_file": "agents/reader.toml"}}
+    assert _settings(repo.path, "worker")[0] == ("gpt-6.1-sol", "medium")  # forge work's built-in
     assert repo.forge("sync").stdout.startswith("Nothing to change")

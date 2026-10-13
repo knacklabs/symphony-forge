@@ -10,7 +10,7 @@ same format RECORDS reads for `spec confirm`. The frontmatter is the latest roun
     read_at: <when>
     read_hash: <git hash-object of the doc as read>
     round, passed: <n>, and yes when that round has no blocking notes
-    doc_seen, spec_seen, notes_seen: <what its reader saw, kept by git hash-object -w>
+    doc_seen, spec_seen, notes_seen, answers_seen: <what its reader saw, kept by git hash-object -w>
     ---
     ## Round <n>
 
@@ -27,10 +27,10 @@ import itertools
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -38,7 +38,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, repo, task, worker
+from forge import codex, machine, native, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -60,14 +60,13 @@ REFUSALS = {
     "reader_failed": ("The cold read of {doc} failed: {problem}", "forge read {target}"),
     "coordinator": ("Forge can't tell which app is coordinating, so it can't pick the other one "
                     "to read.", "run forge read {target} from Claude Code or Codex"),
-    "wrong_app": ("{reader} is the cold reader of {doc}, so its next round can't start from {reader}.",
-                  "run forge read {target} from {app}"),
     "no_read": ("{doc} has no cold read.", "forge read {target}"),
+    "builders_only": ("{doc} passed its cold read and changed since only below `## For the builders`, "
+                      "so it needs no new round.", "forge next"),
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
-    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. "
-                  "Ask the human to accept, narrow or split before reading again.",
+    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. {question}",
                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
                    'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
@@ -82,11 +81,10 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
-          "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
+RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
+          "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
-ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
 BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
@@ -170,6 +168,9 @@ def read(args: Any) -> int:
     top, doc, notes, is_story = _paths(target)
     # ponytail: CORE's branch rule, so a read never writes on the default branch.
     repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
+    config, here = repo.config(top), repo.coordinator()
+    if here is None:
+        repo.route(config, config["tools"], command="read", item=target)
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
     blocked_rounds = _blocked_reads(top, record, findings)
@@ -193,8 +194,12 @@ def read(args: Any) -> int:
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
         return 0
     if blocked_rounds >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target)
+        repo.refuse(REFUSALS["read_loop"], target=target, question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
+    doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
+    if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
+            and not changed_since_read(record["read_hash"], doc_hash, _text(doc), top)):
+        repo.refuse(REFUSALS["builders_only"], doc=rel)  # an edit that needs no new approval
     if is_story:
         text = _text(doc)
         parsed = _parsed(text, rel)
@@ -204,33 +209,32 @@ def read(args: Any) -> int:
     number = undisposed(findings) if later else ""
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
-    here = repo.coordinator()
     if here is None:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
     installed = {"claude": shutil.which("claude") is not None, "codex": codex.installed()}
+    installed[here] = True  # the coordinating app needs no external driver to read natively
     other = "claude" if here == "codex" else "codex"
-    # The other app reads when it is installed, else a separate conversation of this one. A later
-    # round stays with the recorded reader while its app is installed.
+    # One tool always reads its own plans; both keep the earlier reader while it is installed.
     saved = codex.record(top, target, "Grill")
     recorded = ("codex" if record.get("conversation") else "claude" if record.get("session") else
                 record.get("reader", "").split(" ")[0])
     if not recorded:
         recorded = "codex" if saved.get("conversation") else "claude" if saved.get("claude") else ""
     gone = recorded in NAMES and not installed[recorded]
-    if recorded == here and installed[other] and not gone:
-        repo.refuse(REFUSALS["wrong_app"], doc=rel, reader=NAMES[here], app=NAMES[other],
-                    target=target)
-    reader = recorded if recorded in NAMES and not gone else other if installed[other] else here
-    why = f"its reader, {NAMES[recorded]}, is no longer installed" if gone else ""
+    reader = (config["tools"] if config["tools"] != "both" else
+              recorded if recorded in NAMES and not gone else other if installed[other] else here)
+    why = (f"forge.toml's tools is now {reader}" if recorded in NAMES and reader != recorded
+           and config["tools"] != "both" else
+           f"its reader, {NAMES[recorded]}, is no longer installed" if gone else "")
     left = codex.record(top, target, "Grill") if gone else {}
     left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
-    config = repo.config(top)
-    models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
+    is_native = repo.route(config, reader, command="read", item=target) == "native"
+    models = worker.ready(top, config, "Grill", reader == "codex", native=is_native)
     if gone:
         codex._record(codex._item_file(top, target, ".json", "Grill"),
                       **{"conversation" if recorded == "codex" else "claude": None})
-    first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
-                                        (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
+    first, again, edit, look, cap, head = re.split(r"<!-- forge:(?:round|edit|look|cap|notes) -->\n",
+                                                   (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
 
     def remember_reader(chat: str) -> None:
@@ -244,35 +248,40 @@ def read(args: Any) -> int:
     read_hash = _store(top, text, rel)
     spec = _find_spec(top, target) if is_story else None
     spec_text, blocks = spec[2] if spec else "", _findings(findings)
+    answers = sections(_text(top / "docs/product/BRIEF.md")).get("Answers", "") if is_story else ""
     fill: dict[str, Any] = {
         "path": rel, "doc": text.decode("utf-8"), "target": target, "traps": agents_section(top, "Known traps"),
         "spec": (f"\nConfirmed spec at `{spec[0]}` on `{spec[1]}`:\n\n{spec[2]}\n" if spec else
                  "\nNo linked confirmed spec was found in the local branches.\n") if is_story else ""}
     prompt = fresh_prompt = Template(first).safe_substitute(fill)
     round_number = int(record.get("round") or 1) + 1 if later else 1
+    if is_native:
+        round_number = max(round_number, saved.get("native_round", 0) + 1)
     if later:
         # What the last round's reader saw, to send only what changed since. Old notes have none.
         seen = {name: repo.run("git", "cat-file", "blob", record.get(name) or "-", cwd=top)
                 for name in ("doc_seen", "spec_seen", "notes_seen")}
         diff = _diff(seen["doc_seen"].stdout, text.decode("utf-8"), rel)
         spec_diff = _diff(seen["spec_seen"].stdout, spec_text, spec[0] if spec else "spec")
+        # Answers changed since the last round count as changed text; older notes never saved them.
+        saw_answers = repo.run("git", "cat-file", "blob", record.get("answers_seen") or "-", cwd=top)
+        fill["answers_diff"] = ("(not available: treat the whole `## Answers` section as changed)"
+                                if saw_answers.returncode else
+                                _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
-        saw = _findings(_record(seen["notes_seen"].stdout)[1])
         old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
         touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
                    if old_sections.get(name) != new_sections.get(name)]
         fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
                     touched="(not available)" if diff == "(not available)" else
                     ", ".join(touched) or "the title")
-        if passed(record, findings):  # only an edit since a passing round: read just that edit
-            again = edit
-        blocking = {n: block for n, block in blocks.items()
-                    if not ADVISORY.match(block.split(". ", 1)[1])}
+        # Only story plans cap notes on unchanged text; specs still get a full read.
+        again = edit if passed(record, findings) else again.replace(
+            "${look}", cap if is_story and round_number >= 3 else look)
+        blocking = {n: block for n, block in blocks.items() if DISPOSITION.search(block)}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
-        # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
-        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
-            block for n, block in blocking.items() if saw.get(n, "").split() != block.split()) or "None.")
+        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()) or "None.")
         if any(done.returncode for done in seen.values()):
             prompt = fresh_prompt
     session = saved.get("claude")
@@ -284,12 +293,29 @@ def read(args: Any) -> int:
     context += "\n\nThe doc's Notes and decisions:\n" + sections(text.decode("utf-8")).get("Notes", "None.")
     prompt += context
     fresh_prompt += context
+    result = {"before": before, "read_hash": read_hash, "round": round_number,
+              "doc": rel, "notes": _rel(top, notes), "is_story": is_story,
+              "spec_seen": _store(top, spec_text.encode("utf-8")),
+              "answers_seen": _store(top, answers.encode("utf-8")),
+              "notes_seen": _store(top, old.encode("utf-8")), "head": head,
+              "reader": reader, "left": left,
+              "blocked_rounds": blocked_rounds, "native": is_native,
+              "model": repo.models(config, "grill", reader).get("model", "its own default model"),
+              "reason": f"forge.toml's tools is {reader}" if config["tools"] != "both" else
+                        "the reader is this session's tool"}
+    if is_native:
+        return native.offer(top, target, result, prompt, fresh_prompt, why,
+                            repo.models(config, "grill", reader))
+    ran = {}
     if reader == "claude":
         if later and not why and not session:
             why = "Forge has no record of its Claude session on this machine"
-        with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
+        with codex.hold(top, target, "Grill"), machine.agent_slot(
+                top, "read", target, **repo.models(config, "grill", reader)):
+            clock = time.monotonic()
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why, round_number, remember_reader)
+            read_seconds = time.monotonic() - clock
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
@@ -305,12 +331,35 @@ def read(args: Any) -> int:
                 name = (prefix.rstrip(" -") if name[59] in " -" else
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
+            clock = time.monotonic()
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
                             fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number,
                             on_thread=remember_reader)
+            read_seconds = time.monotonic() - clock
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
+    result["before"] = before  # remembering the kit reader changes only its chat binding
+    result["seconds"] = round(read_seconds, 3)
+    return read_result(top, target, result, said, failed, problem, ran)
+
+
+def read_result(top: Path, target: str, result: dict[str, Any], said: str,
+                failed: bool = False, problem: str = "it wrote nothing.",
+                ran: dict[str, Any] | None = None) -> int:
+    """The same checks and records finish both kit and session reads."""
+    rel, notes, is_story = result["doc"], top / result["notes"], result["is_story"]
+    blobs = [repo.run("git", "cat-file", "blob", result[name], cwd=top)
+             for name in ("read_hash", "spec_seen", "notes_seen")]
+    for blob in blobs:
+        blob.check_returncode()
+    text, spec_text, old = blobs[0].stdout.encode("utf-8"), blobs[1].stdout, blobs[2].stdout
+    record, findings = _record(old)
+    blocks, later = _findings(findings), bool(record.get("read_hash"))
+    before, read_hash, round_number = result["before"], result["read_hash"], result["round"]
+    reader, left, head = result["reader"], result["left"], result["head"]
+    recorded, blocked_rounds = record.get("reader", "").split(" ")[0], result["blocked_rounds"]
+    ran = ran or {}
     said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before or failed or not said:
         # Chat bindings survive failed reads; accepted findings stay unchanged.
@@ -341,20 +390,23 @@ def read(args: Any) -> int:
         # ponytail: unstructured output is one finding, so it still needs a disposition. Findings
         # number on from earlier rounds', whatever numbers the reader used.
         numbers = itertools.count(max(blocks, default=0) + 1)
-        said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
-                           said if FINDING.search(said) else f"1. {said}")
+        said = score.notes(FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
+                                       said if FINDING.search(said) else f"1. {said}"))
         clean = passed({"round": str(round_number)}, f"## Round {round_number}\n\n{said}")
-    model = repo.models(config, "grill", reader).get("model", "its own default model")
+    model = result["model"]
     record = {"reader": f"{reader} ({model})" + (
-                  f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
-                  if reader == here else ""),
-              "read_at": repo.now(), "read_hash": read_hash,
+                  f", a subagent of this {NAMES[reader]} session because {result['reason']}"
+                  if result["native"] else ""),
+              # A session subagent's read has no measured time, so it records none.
+              "read_at": repo.now(), "seconds": str(result.get("seconds", "")), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
               "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
+              "answers_seen": result.get("answers_seen", ""),
               "notes_seen": _store(top, old.encode("utf-8")),
-              "conversation": ran["conversation"] if reader == "codex" else "",
-              "session": codex.record(top, target, "Grill")["claude"]["id"] if reader == "claude" else ""}
+              "conversation": ran["conversation"] if reader == "codex" and not result["native"] else "",
+              "session": codex.record(top, target, "Grill")["claude"]["id"]
+                         if reader == "claude" and not result["native"] else ""}
     kept = findings.rstrip("\n") if later else head.strip()
     _write(notes, _notes(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"))
     if clean and left:
@@ -370,8 +422,9 @@ def read(args: Any) -> int:
         outcome = "found nothing" if said == "No findings." else "had no blocking notes"
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
-    if not clean and blocked_rounds + 1 >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target)
+    if not clean and blocked_rounds + 1 >= 3 and score.read_stops(list(_findings(said).values())):
+        repo.refuse(REFUSALS["read_loop"], target=target,
+                    question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every blocking finding a disposition, amend the doc, then forge read {target}")
@@ -412,7 +465,7 @@ def sections(text: str) -> dict[str, str]:
 
 
 def parse(text: str, top: Path | None = None, ref: str | None = None,
-          history: dict[str, Any] | None = None) -> dict[str, Any]:
+          history: dict[str, Any] | None = None, key: str | None = None) -> dict[str, Any]:
     """A story doc's Done-when items, their details and its task rows, once its shape is sound.
     With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
     first at the commit `ref` when given.
@@ -458,7 +511,9 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
         if not scope:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])}
+                       # the story's own KEY/TASK is TASK, so a self or loop through it is a cycle
+                       "after": [after.split("/", 1)[1] if key and after.startswith(f"{key}/") else after
+                                 for after in re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])]}
     for task in tasks.values():
         unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
@@ -651,11 +706,16 @@ def passed(record: dict[str, str], findings: str) -> bool:
         return True
     parts = FINDING.split(text)
     return (len(parts) > 1 and parts[0].strip() in ("", "No findings.")
-            and all(ADVISORY.match(body) for body in parts[2::2]))
+            and not any(score.note_holds(body) for body in parts[2::2]))
 
 
 def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
     """Earlier releases' snapshots supply the streak until the first new read records it."""
+    count = _streak(top, record, findings)
+    return 2 if count >= 3 and not score.read_stops(list(_latest(record, findings).values())) else count
+
+
+def _streak(top: Path, record: dict[str, str], findings: str) -> int:
     count = 0
     while count < 3 and record.get("round") and not passed(record, findings) and not record.get("loop_choice"):
         if record.get("blocked_rounds"):
@@ -677,7 +737,7 @@ def undisposed(findings: str) -> str:
     """The number of the first finding without a disposition (keep needs a reason), or ""."""
     parts = FINDING.split(findings)
     for number, finding in zip(parts[1::2], parts[2::2]):
-        if ADVISORY.match(finding):
+        if not score.note_holds(finding):
             continue
         found = DISPOSITION.search(finding)
         if not found or (found[1].lower() == "keep" and not found[2]):
@@ -779,9 +839,9 @@ def plan_behind(top: Path, key: str, ref: str) -> str:
     if not folder:
         main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
         folder = main.parent / f"{main.name}-story-{key}"
-        add = f"git worktree add {shlex.quote(str(folder))} story/{key} && "
+        add = f"git worktree add {repo.quote(str(folder))} story/{key} && "
     return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
-            f"{add}git -C {shlex.quote(str(folder))} merge {ref}")
+            f"{add}git -C {repo.quote(str(folder))} merge {ref}")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
@@ -907,7 +967,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                     except ValueError:
                         event = None
                     if isinstance(event, dict):
-                        line = repo.claude_output(top, target, ran["run_id"], event)
+                        line = repo.claude_output(top, target, ran, event)
                         if event.get("type") == "result":
                             final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)
@@ -945,6 +1005,32 @@ def _diff(old: str, new: str, path: str) -> str:
                                           lineterm=""))
 
 
+def read_question(doc: str, notes: str) -> str:
+    """A stopped cold-read loop's question: the doc's title and promise, and the latest round's
+    blocking notes."""
+    flagged = []
+    for number, block in _latest(*_record(notes)).items():
+        title, _, body = block.split(". ", 1)[1].partition("\n")
+        if score.note_holds(block.split(". ", 1)[1]) and not DISPOSITION.search(body):  # cut, deferred or kept
+            flagged.append((number, review.plain(title, "\n".join(line for line in body.splitlines()
+                                                   if not DISPOSITION.match(line))), score.parse(body)))
+    title = re.search(r"^# (.+)$", doc, re.M)
+    found = sections(doc)
+    gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
+    return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
+                           score.who(flagged, "Ask the human to accept, narrow or split before reading "
+                                              "again, in these words:"),
+                         "keep these problems as known and mark the read accepted; approving or "
+                         "confirming the doc is still a separate step.",
+                         "Done when" if "What changes for you" in found else
+                         "Behaviour and Acceptance criteria")
+
+
+def _latest(record: dict[str, str], findings: str) -> dict[int, str]:
+    heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
+    return _findings(findings[heading.end():] if heading else "")
+
+
 def _findings(text: str) -> dict[int, str]:
     parts = FINDING.split(text)
     return {int(n): f"{n}. " + re.split(r"^## ", body, flags=re.M)[0].rstrip()
@@ -960,7 +1046,7 @@ def agents_section(top: Path, heading: str) -> str:
 
 def _parsed(text: str, rel: str) -> dict[str, Any]:
     try:
-        return parse(text, repo.root())  # checks After entries that name another story's task
+        return parse(text, repo.root(), key=Path(rel).stem)  # checks After entries that name another story's task
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 
@@ -988,7 +1074,9 @@ def keep_reader_chat(top: Path, target: str, reader: str, chat: str) -> bool:
 
 
 def _notes(record: dict[str, str], findings: str) -> str:
-    head = "".join(f"{key}: {record.get(key) or ''}".rstrip() + "\n" for key in RECORD)
+    # ponytail: answers_seen came later; leave it out until a read saves it, so older notes keep their record.
+    head = "".join(f"{key}: {record.get(key) or ''}".rstrip() + "\n" for key in RECORD
+                   if key != "answers_seen" or record.get(key))
     return f"---\n{head}---\n{findings}"
 
 

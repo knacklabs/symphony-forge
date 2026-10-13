@@ -28,7 +28,10 @@ REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
-import signal, sys
+import os, signal, sys
+# Work rounds wait while the machine is busy; tests that need a load set their own.
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
@@ -51,6 +54,11 @@ here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(args) + "\\n")
+if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
+    with open(here / "gh-bodies.jsonl", "a", encoding="utf-8") as bodies:
+        path = args[args.index("--body-file") + 1]
+        body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
+        bodies.write(json.dumps(body) + "\\n")
 responses = here / "gh-responses.json"
 for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
     if args[:len(rule["args"])] == rule["args"]:
@@ -167,13 +175,13 @@ class Repo:
             raise
 
     def forge(self, *args: str, input: str = "", cwd: Path | None = None,
-              ) -> subprocess.CompletedProcess[str]:
-        """Run the real forge command; stdin is empty unless given. Windows gets two minutes: its
-        heaviest commands (init, migrate, close) start hundreds of git processes, and starting a
-        process there under a parallel run's load took one past a minute."""
+              timeout: float | None = None) -> subprocess.CompletedProcess[str]:
+        """Run the real forge command; stdin is empty unless given. Windows gets four minutes: its
+        heaviest commands (init, migrate, close) start hundreds of git processes, and on a hosted
+        Windows runner under a parallel run's load one took past two minutes."""
         return subprocess.run([sys.executable, str(self.bin / "forge"), *args],
                               cwd=cwd or self.path, input=input, capture_output=True, text=True,
-                              encoding="utf-8", timeout=120 if os.name == "nt" else 60)
+                              encoding="utf-8", timeout=timeout or (240 if os.name == "nt" else 60))
 
     def write(self, rel: str, text: str) -> Path:
         path = self.path / rel
@@ -209,11 +217,29 @@ def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 
 def _left(tmp_path: Path) -> list[str]:
     """This test's processes still running or stopped: every process a test starts names its temp
-    folder in its command or its environment, which holds the XDG_CONFIG_HOME set above."""
+    folder in its command/environment or records its identity before it can outlive the worker."""
+    recorded = []
+    markers = [Path(folder, name) for folder, _, names in os.walk(tmp_path)  # skips vanished folders
+               for name in names if name.endswith(".owned-process.json")]
+    for marker in markers:
+        from test_lanes_agents import alive
+
+        try:
+            process = json.loads(marker.read_text("utf-8"))
+        except FileNotFoundError:  # its test removed it while this scan ran
+            continue
+        # Windows process creation times use 100-nanosecond ticks since 1601; Python 3.11's clock
+        # there moves in 15.6 ms steps, so allow one step before the recorded time.
+        before = (process["at_ns"] // 100 + 116444736000000000 + 160_000 if os.name == "nt"
+                  else process["at_ns"] // 1000000000)
+        if process["pid"] != os.getpid() and alive(process["pid"], before):
+            recorded.append(f'{process["pid"]} {marker}')
+    if os.name == "nt":
+        return recorded
     listed = subprocess.run(["ps", "axeww", "-o", "pid=,stat=,command="], capture_output=True,
                             text=True, env={"PATH": "/bin:/usr/bin"}).stdout  # ps's own env is clean
     mark = f"{tmp_path}{os.sep}"
-    return [" ".join(line.split()[:1] + line.split()[2:]) for line in listed.splitlines()
+    return recorded + [" ".join(line.split()[:1] + line.split()[2:]) for line in listed.splitlines()
             if mark in line and not line.split()[1].startswith("Z")
             and int(line.split()[0]) != os.getpid()]
 
@@ -227,9 +253,17 @@ def _end_left(path: Path) -> list[str]:
         time.sleep(0.5)
     for line in left:
         try:
-            os.kill(int(line.split()[0]), signal.SIGKILL)  # SIGKILL ends a stopped process too
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", line.split()[0]],
+                               capture_output=True, timeout=10)
+            else:
+                os.kill(int(line.split()[0]), signal.SIGKILL)  # SIGKILL ends a stopped process too
         except ProcessLookupError:
             pass
+    for _ in range(20):
+        if not _left(path):
+            break
+        time.sleep(0.05)
     return left
 
 
@@ -237,8 +271,6 @@ def _end_left(path: Path) -> list[str]:
 def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
     # Autouse, so it runs its check after the test's own fixtures have cleaned up.
     yield
-    if os.name == "nt":  # ponytail: no ps on Windows; add a process-tree walk if leaks show there
-        return
     left = _end_left(tmp_path)
     if left:
         pytest.fail(f"{request.node.name} left processes running: "
@@ -248,13 +280,14 @@ def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
 def pytest_sessionfinish(session: pytest.Session) -> None:
     """At the end of the run, once more over every test's temp folder: a test whose worker crashed
     never reached its own check. Each folder is named after its test."""
-    if os.name == "nt" or hasattr(session.config, "workerinput"):  # the controller checks once
+    if hasattr(session.config, "workerinput"):  # the controller checks once
         return
     base = session.config._tmp_path_factory.getbasetemp()  # type: ignore[attr-defined]
     left = _end_left(base)
     if not left:
         return
-    folder = re.compile(re.escape(f"{base}{os.sep}") + r"(?:popen-gw\d+/)?([^/\s]+)")
+    folder = re.compile(re.escape(f"{base}{os.sep}")
+                        + rf"(?:popen-gw\d+{re.escape(os.sep)})?([^/\\\s]+)")
     report = session.config.pluginmanager.get_plugin("terminalreporter")
     report.line("")
     for line in left:
@@ -264,28 +297,41 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
+# The environment Forge reads at run time, pinned for every test so none inherits it from the
+# shell, a git hook or the agent session running the suite:
+# - Codex coordinates: CODEX_THREAD_ID is set and CLAUDECODE is unset. `forge read` needs a
+#   coordinating app, and from Codex a cold read runs on the stub claude, as most tests expect.
+#   A Codex round would run as the session's own subagent, so a test that builds on Codex through
+#   the kit says so with the `claude_session` fixture; a test that needs no session deletes both.
+# - No Forge run around it: every FORGE_ variable (worker marker, test budget, pinned release,
+#   checkout forwarding, waits) is unset; a test that needs one sets it. FORGE_LIVE_CODEX stays:
+#   it is the real-Codex opt-in, set only by the codex-smoke workflow.
+# - No tool overrides: CODEX_BIN, CLAUDE_BIN and AUTOREVIEW are unset; a stub sets its own.
+# - No outer git: every GIT_ variable is unset (they leak in when tests run inside a git hook);
+#   the `repo` fixture gives git its own config.
+# - Machine lanes: the forge shim reports an idle machine; `machine_cores` sets a core count.
+# Time zones need no pin: Forge writes UTC times and runs `ps` with TZ=UTC itself.
 @pytest.fixture(autouse=True)
-def isolated_git_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.
-        if name.startswith("GIT_"):
+def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in list(os.environ):
+        if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
+                "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 
 @pytest.fixture
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
-    monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
-    monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
+    # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
+    monkeypatch.delenv("FORGE_WORKER", raising=False)
+    monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
     gitconfig = tmp_path / "gitconfig"
     # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
     # a helper removes a temporary clone; detached maintenance can still write its objects.
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
                          "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n"
-                         "[gc]\n\tautoDetach = false\n",
+                         "[gc]\n\tautoDetach = false\n[core]\n\tlongpaths = true\n",
                          encoding="utf-8")
-    # The cold read runs on the family that isn't coordinating, which Forge tells from the variable
-    # each app sets. Tests run as if Codex coordinates, so a read runs on the stub claude.
-    monkeypatch.delenv("CLAUDECODE", raising=False)
-    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(gitconfig))
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     bin_dir = tmp_path / "bin"
@@ -326,7 +372,7 @@ elif args == ["plugin", "list", "--json"]:
 
 @pytest.fixture
 def claude_session(repo: Repo, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Codex workers use their kit while the other tool coordinates the session."""
+    """Claude Code coordinates instead: Codex workers run through the kit, a cold read on Codex."""
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
 
