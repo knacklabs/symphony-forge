@@ -3455,6 +3455,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test expanded waiting rows through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 81,
+      "text": "Not done: Test expanded waiting rows through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.test.ts",
@@ -3473,6 +3484,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: Expanded waiting rows omit their state and next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 64,
+      "text": "Not done: Expanded waiting rows omit their state and next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -3581,6 +3603,17 @@
       "path": "src/forge/mod/hooks/summary.ts",
       "line": 108,
       "text": "Not done: Review stops and worker questions are missing from Needs you",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tReady rows on another machine suggest the wrong merge action\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 133,
+      "text": "Ready rows on another machine suggest the wrong merge action",
       "from": "blocking",
       "item": "pane-grouped-board",
       "status": "open",
@@ -4001,6 +4034,17 @@
       "text": "Published story state can hide locally recorded question touches in the context hook.",
       "from": "worker",
       "item": "skipped-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance covers multiple problems and interface changes\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 158,
+      "text": "Recorded allowance covers multiple problems and interface changes",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -5798,6 +5842,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 60,
+      "text": "Coordinator guidance omits the new Claude recovery step",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tCross-machine rework leaves a published owner wait open\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -5917,6 +5972,17 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: forge work exits with an error and names the reason and the next step whenever it starts no worker\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 651,
+      "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: printed model matches the native Codex role\tFORGE-TOOLS-1/WORK",
@@ -9534,28 +9600,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 60,
-      "text": "Coordinator guidance omits the new Claude recovery step",
-      "from": "blocking",
-      "item": "work-fails-without-worker",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: forge work exits with an error and names the reason and the next step whenever it starts no worker\twork-fails-without-worker",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 651,
-      "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
-      "from": "blocking",
-      "item": "work-fails-without-worker",
       "status": "open",
       "closed_by": null
     }
