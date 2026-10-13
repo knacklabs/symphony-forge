@@ -128,8 +128,9 @@ export function board(data: Data, now: number): View {
       row.state = [DOING[stage?.name ?? String(w.kind ?? a.action)] ?? 'Running', start ? ago(elapsed(start, now)) : ''].filter(Boolean).join(' · ')
       groups.MOVING!.push(row)
     } else if (i.state === 'ready to merge' || i.stage === 'ready') {
-      row.state = CHECKS[String(i.pr?.checks)]
-      row.next = step
+      row.state = ['Ready to merge', CHECKS[String(i.pr?.checks)]].filter(Boolean).join(' · ')
+      // An older Forge may give no step; merging the pull request is right in either merge setting.
+      row.next = step ?? 'merge its pull request, then forge next'
       groups['READY TO MERGE']!.push(row)
     } else waiting.push(row)
   }

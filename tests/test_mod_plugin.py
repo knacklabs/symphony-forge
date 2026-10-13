@@ -225,7 +225,8 @@ assert.equal(first.prompts.length, 1);
 assert.deepEqual(second.prompts, first.prompts);
 assert.match(first.prompts[0], /Question: May I reuse the parser\\?/);
 assert.match(first.prompts[0], /Worker finished/);
-assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith({json.dumps('Next: forge close ' + item)})));
+// The answer step has a placeholder, so the event names forge next, which prints it.
+assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith('Next: forge next')));
 await first.tick(); await second.tick();
 assert.equal(first.prompts.length, 1);
 assert.equal(second.prompts.length, 1);

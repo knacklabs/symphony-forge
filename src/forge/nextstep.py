@@ -791,6 +791,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         return [f"Close stopped {label}: {stop['file']} keeps breaking.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
+    if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
+        return [f"The worker on {label} asked a question. Ask the human:", question,
+                "Next: " + close.REFUSALS["question"][1].format(item=item)]
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":

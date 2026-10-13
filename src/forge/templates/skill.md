@@ -507,7 +507,7 @@ older Forge with no `team` shows no summary line. Groups follow in this order, e
 when it has items: NEEDS YOU (rows whose `needs_person` is true),
 STUCK (no activity past the board's stall threshold, with the longest wait in days),
 MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
-READY TO MERGE (with the checks in words), then a folded count of the work waiting or not
+READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge step), then a folded count of the work waiting or not
 started, opened with a native button. Each item shows its plain title, the story key small
 beside it, one line of state in words and, where there is something to do, its next step
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
@@ -1007,7 +1007,8 @@ whether the worker needs a note or the finding should be dismissed with evidence
 
 If a worker ends with a `Question:` paragraph, answer with
 `forge work <item> --note "<answer>"`. The worker waits for that answer: another work round
-without a note and `forge close <item>` both refuse until the answering round completes. The
+without a note and `forge close <item>` both refuse until the answering round completes, and
+`forge next` shows the question with that answer step. The
 answer returns to the same conversation when it can resume; a fresh brief carries both the
 question and answer. Workers change files outside Scope that the change needs and name them in
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
