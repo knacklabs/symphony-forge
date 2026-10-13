@@ -922,7 +922,8 @@ story's work, using the same overlap rule as `forge task start`.
 answers and fixed or dismissed findings, including the coordinator's recorded work notes.
 Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
 they cannot block or start another round. A new defect needs distinct text and new evidence.
-Human acceptance still expires when the accepted version changes. New repos get this on init;
+A dismissed finding stays dismissed while the lines its `file:line` cites are unchanged; once
+they change, a repeat of it blocks again and needs a fix or a new dismissal. Human acceptance still expires when the accepted version changes. New repos get this on init;
 existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item

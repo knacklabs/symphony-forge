@@ -637,6 +637,31 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
     return {names[key]: reason for key, reason in settled.items()}
 
 
+def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str], head: str) -> bool:
+    """Whether the lines a dismissal's `file:line` cites changed since the review it was given in:
+    the cited line and two lines either side no longer appear together in the file at head."""
+    cited = ("", "")
+    for result in history:
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            # A carried dismissal repeats its reason; a new reason is a new dismissal.
+            if (score.identity(finding["file"], finding["title"]) == key and not dismissal.get("accepted")
+                    and dismissal["because"] != cited[1]):
+                cited = (result["commit"], dismissal["because"])
+    where = re.fullmatch(r"(.+):(\d+)", (cited[1].split() or [""])[0])
+    if not where:
+        return False  # no cited line to compare: the dismissal stands, as before
+    def lines(commit: str) -> list[str] | None:
+        shown = repo.run("git", "show", f"{commit}:{where[1]}", cwd=top)
+        return None if shown.returncode else shown.stdout.splitlines()
+    then, now = lines(cited[0]), lines(head)
+    if then is None or now is None:
+        return then != now
+    number = int(where[2])
+    window = then[max(0, number - 3):number + 2]
+    return not any(now[i:i + len(window)] == window for i in range(len(now) - len(window) + 1))
+
+
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     """The worker's functional check: the `Functional check:` paragraph of its last commit message,
     to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
@@ -877,13 +902,14 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    settled = {score.identity(*key): reason
-               for key, reason in _settled(_history(top, item, base, previous)).items()}
+    history = _history(top, item, base, previous)
+    settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
     findings = [finding for finding in findings if not settled.get(
         score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
     dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because ")}
                   for number, finding in enumerate(findings, 1)
-                  if (reason := settled.get(score.identity(finding["file"], finding["title"]), ""))]
+                  if (reason := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
+                  and not (reason.startswith("dismissed because ") and _cited_changed(top, history, key, head))]
     result = {"findings": findings, "dismissals": dismissals,
               "blocking_level": "P0" if light else "P1"}
     identity = repo.record_event(top, item, "review result", commit=head,
