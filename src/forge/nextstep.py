@@ -7,7 +7,6 @@ in progress and an empty roadmap, it offers discovery until a problem card is fi
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -489,8 +488,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
-    doc_hash = (repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip() if history is None
-                else hashlib.sha1(f"blob {len(text.encode())}\0{text}".encode()).hexdigest())  # git's blob id
+    doc_hash = story.blob_hash(text)
     try:
         doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:

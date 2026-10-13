@@ -287,7 +287,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if not story._record(notes)[0]:
             return "none", assignments
         text = _read(top, where, f"plans/{key}.md", history)
-        digest = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+        digest = story.blob_hash(text)
         try:
             story.gate(key, f"plans/{key}.md", notes, digest, text, top)
             return "passed", assignments
@@ -813,10 +813,12 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                     if text not in parsed:
                         parsed[text] = story.json_of(text)
                     found.append((rel, parsed[text], path))
-    listing = repo.git("for-each-ref", "--format=%(refname) %(tree)",
+    listing = repo.git("for-each-ref", "--format=%(refname) %(tree) %(objectname)",
                        *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES),
                        *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()), cwd=top)
-    refs = dict(line.split() for line in listing.splitlines())
+    refs = {line.split()[0]: line.split()[1] for line in listing.splitlines()}
+    if history is not None:
+        history["tips"] = {line.split()[0]: line.split()[2] for line in listing.splitlines()}
     refs[landed] = repo.git("show", "-s", "--format=%T", landed, cwd=top)
     empty = repo.run("git", "hash-object", "-t", "tree", "--stdin", cwd=top)
     empty.check_returncode()
@@ -850,6 +852,12 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         history["docs"] = {f"{alias}:{rel}": texts[blob] for ref, tree in refs.items()
                            for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
                            for rel, blob in snapshots[tree].items() if not STATE.fullmatch(rel)}
+        # The doc each plan read saw, for "changed since the read": one git process for all of them.
+        seen = list(dict.fromkeys(h for text in history["docs"].values()
+                                  for h in map(story._record(text)[0].get,  # pyright: ignore[reportPrivateUsage]
+                                               ("read_hash", "notes_seen")) if h))
+        for blob, text in _blob_texts(top, seen, follow_notes=True).items():
+            repo.command_fact(("read blob", blob), top, lambda text=text: text)
     return found
 
 

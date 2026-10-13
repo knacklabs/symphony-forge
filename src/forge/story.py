@@ -545,7 +545,9 @@ def _plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str
     remote_doc = history["docs"].get(f"{remote}:{rel}") if history is not None else show(top, remote, rel)
     source = local if local_doc is not None else landed
     if remote_doc is not None:
-        if local_doc is None or repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
+        tips = history["tips"] if history is not None else {}
+        same = tips.get(f"refs/heads/{local}") is not None and tips.get(f"refs/heads/{local}") == tips.get(f"refs/remotes/{remote}")
+        if local_doc is None or (not same and repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode):
             source = remote
     def state_at(ref: str) -> dict[str, Any]:
         if history is None:
@@ -700,8 +702,16 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
     else only one above `## For the builders`, which needs no new approval and so no new round."""
     if doc_hash == read_hash or text is None:
         return doc_hash != read_hash
-    old = repo.run("git", "cat-file", "blob", read_hash or "-", cwd=top)
-    return old.returncode != 0 or above_builders(old.stdout) != above_builders(text)
+    old = read_blob(top, read_hash or "-")
+    return old is None or above_builders(old) != above_builders(text)
+
+
+def read_blob(top: Path, name: str) -> str | None:
+    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    def read() -> str | None:
+        done = repo.run("git", "cat-file", "blob", name, cwd=top)
+        return done.stdout if done.returncode == 0 else None
+    return repo.command_fact(("read blob", name), top, read)
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
@@ -731,8 +741,7 @@ def _streak(top: Path, record: dict[str, str], findings: str) -> int:
         if record.get("blocked_rounds"):
             return min(3, count + int(record["blocked_rounds"]))
         count += 1
-        previous = repo.run("git", "cat-file", "blob", record.get("notes_seen") or "-", cwd=top)
-        record, findings = _record(previous.stdout)
+        record, findings = _record(read_blob(top, record.get("notes_seen") or "-") or "")
     return count
 
 
@@ -856,6 +865,12 @@ def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = 
         add = f"git worktree add {repo.quote(str(folder))} story/{key} && "
     return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
             f"{add}git -C {repo.quote(str(folder))} merge {ref}")
+
+
+def blob_hash(text: str) -> str:
+    """What `git hash-object --stdin` prints for text, without a git process."""
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
