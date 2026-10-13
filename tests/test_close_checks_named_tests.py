@@ -35,7 +35,7 @@ GREETING = ("import pytest\n\n\ndef test_returning():\n    assert True\n\n\n"
             "@pytest.mark.skip(reason=\"later\")\ndef test_later():\n    pass\n")
 
 
-def _close(env, adopted, command, red=False, greeting=GREETING):
+def _close(env, adopted, command, red=False, greeting=GREETING, docs_only=False):
     repo = env.repo
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
@@ -46,12 +46,17 @@ def _close(env, adopted, command, red=False, greeting=GREETING):
             if line.partition("=")[0].strip() not in ("test", "fast_test", "checks")]
     env.commit(repo.path, "forge.toml", f"test = {json.dumps(command)}\nchecks = [\"forge-pr-check\"]\n"
                + "\n".join(kept) + "\n", "Run the tests")
-    repo.git("push", "-q", "origin", "main")
     # The worker maps items to a test that runs, one that does not exist, one close does not run
     # and one in another language, and writes no results.
-    item, where = env.start_fix({".gitignore": "__pycache__/\n", "tests/test_greeting.py": greeting,
-                                 "tests/test_other.py": "def test_other():\n    assert True\n",
-                                 "src/greet.test.ts": "test('greets', () => {});\n"})
+    files = {".gitignore": "__pycache__/\n", "tests/test_greeting.py": greeting,
+             "tests/test_other.py": "def test_other():\n    assert True\n",
+             "src/greet.test.ts": "test('greets', () => {});\n"}
+    if docs_only:  # the tests are already on the default branch; the fix changes only a readme
+        for path, text in files.items():
+            env.commit(repo.path, path, text, "Add the tests")
+        files = {"README.md": "Hello, readers.\n"}
+    repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix(files)
     repo.git("commit", "--allow-empty", "-q", "-m", "List the proof", "-m", PROOF, cwd=where)
     for _ in range(1 if red else 2):  # a second close reuses the passing run on the same files
         closed = env.close(item)
@@ -118,3 +123,12 @@ def test_2_a_runner_without_test_results_shows_named_tests_as_not_checked(env):
     assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning (not checked) "
             "(including empty names)") in published
     assert "test_empty" not in published
+
+
+def test_3_a_change_close_runs_no_tests_for_shows_named_tests_as_not_run(env):
+    python = Path(sys.executable).as_posix()
+    _, published = _close(env, False, f'"{python}" -m pytest -q -p no:cacheprovider tests',
+                          docs_only=True)
+    assert ("- Returning readers are greeted: not run (close ran no tests for this change) "
+            "(including empty names)") in published
+    assert "test_returning" not in published

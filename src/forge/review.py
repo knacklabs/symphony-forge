@@ -390,13 +390,9 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
         # forge.toml's always_test runs on every change, settings and docs included.
-        if not always and not repo.config(top)["always_test"]:
-            changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                               cwd=top).split("\0")
-            if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
-                   for path in changed if path):
-                said = DOCS_ONLY.format(command=command)
-                return 0, said
+        if not always and docs_only(top, base):
+            said = DOCS_ONLY.format(command=command)
+            return 0, said
         from forge import codex  # imports review indirectly
 
         passed = None if always else passed_record(top, command)
@@ -503,6 +499,15 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
 
 
 DOCS = ("docs/", "plans/", ".factory/")
+def docs_only(top: Path, base: str) -> bool:
+    """Close runs no tests for a change to settings, docs or Markdown alone, unless forge.toml
+    names an always_test."""
+    changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                       cwd=top).split("\0")
+    return not repo.config(top)["always_test"] and all(
+        path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md") for path in changed if path)
+
+
 DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
              "did not run `{command}`.")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
@@ -648,6 +653,8 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
                           key=lambda word: {"error": 2, "failed": 1}.get(word, 0))
     ran = [(outcome, node) for node, outcome in worst.items()]
 
+    ran_none = not command or docs_only(top, base)  # close runs no tests for this change
+
     def result(found: re.Match) -> str:  # the worker's words stay; a name gains its result
         name = found[0].rstrip(".:)")
         path, _, test = name.partition("::")
@@ -656,6 +663,8 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         matches = [(outcome, node) for outcome, node in ran if _ran(name, node)]
         if not source or case and not re.search(rf"\b{re.escape(case)}\b", source):
             said = "not run"
+        elif ran_none and fasttest.RESULTS_HEADER not in (report or ""):
+            said = "not run (close ran no tests for this change)"
         elif report is None:
             said = f"{name} (in the branch; close's test run gives its result)"
         elif fasttest.RESULTS_HEADER not in report:  # another runner, or no run
