@@ -3543,6 +3543,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Board rows do not show the actual next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 106,
+      "text": "Not done: Board rows do not show the actual next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Review stops and worker questions are missing from Needs you\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 108,
+      "text": "Not done: Review stops and worker questions are missing from Needs you",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/native.py\tNative read handout stops being valid JSON when the agent line is full\tFORGE-TOOLS-1/READS",
       "kind": "bug",
       "path": "src/forge/native.py",
@@ -6839,6 +6861,17 @@
       "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
       "from": "worker",
       "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: End-to-end proof for grouped pane and first refresh error\tpane-grouped-board",
+      "kind": "bug",
+      "path": "tests/test_fix_pane_grouped_board.py",
+      "line": 25,
+      "text": "Not done: End-to-end proof for grouped pane and first refresh error",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
