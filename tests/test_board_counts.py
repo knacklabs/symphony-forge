@@ -219,7 +219,8 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     part = rows(data)["SHOP/T2"]
     assert part["state"] == "ready to merge"
     assert part["next"] == {"command": None,
-                            "line": "Show a saved basket is ready to merge; Forge Test merges it from their machine."}
+                            "line": "Show a saved basket is ready to merge; Forge Test merges it from their machine.",
+                            "step": None}
     following = env.repo.forge("next")
     assert "SHOP/T2 is ready to merge; Forge Test merges it from their machine." in following.stdout, following.stdout
     assert "forge task start SHOP/T2" not in following.stdout
@@ -313,9 +314,10 @@ def newer_push(env, monkeypatch, previous):
     env.repo.path = machine_a
     part = rows(board(env.repo))["SHOP/T2"]
     assert part["state"] == "ready to merge"
-    assert part["next"] == {"command": None, "line": (
-        "Show a saved basket is ready to merge, but this worktree is behind its pull request.")}
     folder_arg = f'"{folder}"' if os.name == "nt" else shlex.quote(str(folder))
+    assert part["next"] == {"command": None, "line": (
+        "Show a saved basket is ready to merge, but this worktree is behind its pull request."),
+        "step": f"git -C {folder_arg} pull, then forge close SHOP/T2"}
     assert f"Next: git -C {folder_arg} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
 
 
