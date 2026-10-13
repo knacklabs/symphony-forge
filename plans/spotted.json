@@ -5072,6 +5072,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/sync.py\tSync deletes client-owned Codex config comments\tupgrade-files-agree",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 325,
+      "text": "Sync deletes client-owned Codex config comments",
+      "from": "blocking",
+      "item": "upgrade-files-agree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tNot done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task\ttask-start-pin",
       "kind": "bug",
       "path": "src/forge/task.py",

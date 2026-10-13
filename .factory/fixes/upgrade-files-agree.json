@@ -2,12 +2,55 @@
   "base": "4e000433f9853203b81b80b2891dad4471976e5f",
   "branch": "fix/upgrade-files-agree",
   "done_when": "After forge upgrade, every generated file's comments match what it sets, and moving CLAUDE.md into AGENTS.md carries only the team's own lines, never Forge's generated stub or rules this release replaces",
+  "flagged": [
+    "src/forge/sync.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "_access_comment() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 325,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Sync deletes client-owned Codex config comments",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e40d70563f7b85e7f89f703a029107ea393b25edb45eae3db4a381f621a3de38",
+    "changed": "ee789201577f86afdf0e0d770f524b24f84c32acbb2c347005af3a3d581ddb47",
+    "commit": "e258788044df73d336edb2b03523b41fbb3942ea",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 4\nRaise: Data loss. `_access_comment` removes every contiguous comment above `sandbox_mode` or `approval_policy`, regardless of who wrote it. In a client config with a team comment explaining an access setting directly above that setting, `forge sync` or upgrade permanently removes the team's comment. The new test covers only Forge's stale comment, so it does not catch this loss.",
+        "file": "src/forge/sync.py",
+        "gain": 3,
+        "harm": 4,
+        "line": 325,
+        "priority": "P1",
+        "title": "Sync deletes client-owned Codex config comments",
+        "work": 1
+      }
+    ],
+    "id": "6f4d42d4-51d7-4362-aa6c-da44744103da",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T08:31:20.086548+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:26:31.422498+00:00",
+      "step": "review"
     }
   ],
   "why": "An upgraded client repo's generated files contradict themselves: the Codex config comment says workspace-write while the upgrade sets full access, and moving CLAUDE.md into AGENTS.md copies Forge's own do-not-edit stub and a rule the new release reverses"
