@@ -4324,6 +4324,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code\tdismissals-carry-forward",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 661,
+      "text": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
+      "from": "blocking",
+      "item": "dismissals-carry-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: A mixed-language proof line leaves an unmatched test unmarked\tforge-writes-proof-list",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -5290,6 +5301,17 @@
       "item": "pin-switch-leaves-worktree",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: shipped guidance contradicts the new dismissal rule\tdismissals-carry-forward",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 925,
+      "text": "Not done: shipped guidance contradicts the new dismissal rule",
+      "from": "blocking",
+      "item": "dismissals-carry-forward",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",

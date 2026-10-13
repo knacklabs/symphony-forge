@@ -2,13 +2,81 @@
   "base": "4e000433f9853203b81b80b2891dad4471976e5f",
   "branch": "fix/dismissals-carry-forward",
   "done_when": "A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code changes",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/templates/skill.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "_cited_changed() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 661,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 1,
+      "line": 925,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: shipped guidance contradicts the new dismissal rule",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c234a3298dfbeb839c99e8b72233dc3b5ce125651bdf861636b7ca00a7f56bd9",
+    "changed": "1a1de2d449625ab10246b5bf80bb6f674e10d75d2a7a6d11f654b6fb99c1827e",
+    "commit": "9d2c54024a283fb6c690c06dcb472313de7558c9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. The comparison requires the cited line and two neighboring lines on each side to remain together. Editing an adjacent line reopens a finding even when the cited line is unchanged. Also, line 649 treats an identical reason as a carried dismissal: if the cited code changes and the owner dismisses the finding again for the same valid reason, later unchanged commits still compare against the original commit and reopen it. The new test changes only a distant line before checking carry-forward and does not cover either case.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 661,
+        "priority": "P1",
+        "title": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done. Lines 923\u2013924 say a repeat of a dismissed title and file cannot block or start another round. The new text says that same repeat blocks when the cited code changes. This contradiction ships in the template and both host skills, leaving workers with incompatible instructions for the normal changed-code case.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 3,
+        "harm": 1,
+        "line": 925,
+        "priority": "P1",
+        "title": "Not done: shipped guidance contradicts the new dismissal rule",
+        "work": 1
+      }
+    ],
+    "id": "fb519aee-4f6c-4e95-a54e-ebedfc025fb4",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T08:31:52.068554+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:48:25.218942+00:00",
+      "step": "review"
     }
   ],
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest 165bf92f0e0abe463163f4f95d45e1fe9317a58c` exited with status 1 on this machine.\n[gw1] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw1' crashed while running 'tests/test_live_status.py::test_7_live_status_in_both_machine_views[read default codex]'\n__________________________ tests/test_live_status.py ___________________________\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw2' crashed while running 'tests/test_live_status.py::test_7_live_status_in_both_machine_views[codex]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw0' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-narrow-accept-current-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw5] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw5' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-True-split-narrow-current-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw3] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw3' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[False-True-accept-accept-pre-upgrade-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw6] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw6' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-accept-narrow-pre-upgrade-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw4] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw4' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-accept-narrow-current-choice]'\n__________________________ tests/test_live_status.py ___________________________\n[gw10] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw10' crashed while running 'tests/test_live_status.py::test_7_live_status_in_both_machine_views[read codex]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw9] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw9' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-narrow-accept-pre-upgrade-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw8] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw8' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-True-split-narrow-pre-upgrade-choice]'\n10 failed, 61 passed in 1364.09s (0:22:44)",
   "why": "Every new commit throws away the review's dismissals, so an unchanged dismissed finding costs another full review round"
 }
