@@ -991,6 +991,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: join the go-live clause into the team sentence\tFORGE-BOARD-2/TRENDS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 180,
+      "text": "Not done: join the go-live clause into the team sentence",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/TRENDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -1009,6 +1020,17 @@
       "text": "Older merged parts cause unbounded GitHub requests",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_trends.py\tPeople with the same GitHub name are merged into one trend row\tFORGE-BOARD-2/TRENDS",
+      "kind": "bug",
+      "path": "src/forge/board_trends.py",
+      "line": 87,
+      "text": "People with the same GitHub name are merged into one trend row",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/TRENDS",
       "status": "open",
       "closed_by": null
     },
