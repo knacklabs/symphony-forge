@@ -647,7 +647,8 @@ def _run(item: str, top: Path, brief: str, models: list[str],
                 event = None
             if isinstance(event, dict):
                 line = repo.claude_output(top, item, ran, event)
-                if event.get("type") == "result":
+                # A result after no model turn (the prompt used up before the model ran) is no round.
+                if event.get("type") == "result" and event.get("num_turns") != 0:
                     final_result = line.rstrip("\n")
             if line and (not isinstance(event, dict) or event.get("type") == "result"):
                 print(line, end="", flush=True)

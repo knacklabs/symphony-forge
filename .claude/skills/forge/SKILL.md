@@ -984,6 +984,10 @@ and commit the merge, then rerun `forge work <item>`. Work refuses before changi
 record or the index, so both conflicted and resolved but uncommitted merges stay intact.
 New repos get this guidance at init; existing repos get it after upgrading and running sync.
 
+When `forge work` says Claude ended without running a turn, no worker ran: Claude is often
+waiting on a prompt, such as a review of changed hooks. Run `claude` once in the item's
+checkout, answer its prompt, then run `forge work <item>` again.
+
 Every Codex worker, plan reader and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff
 and any question. Forge sets these for each thread, including resumed threads; neither
