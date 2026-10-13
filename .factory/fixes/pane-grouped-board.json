@@ -1,4 +1,5 @@
 {
+  "allow_large": "The pane's groups need two small fields in the board data: a flag for items that wait on a person, and the next-step text",
   "base": "55795ad11d303ff78266d78ba09f5e77f96fa7fe",
   "branch": "fix/pane-grouped-board",
   "done_when": "The pane's Board tab opens with one summary line, then Needs you, Stuck, Moving and Ready to merge groups, each item with its state in plain words and its next step, and it shows a refresh error instead of loading forever",
