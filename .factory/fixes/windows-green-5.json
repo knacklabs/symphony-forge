@@ -1,0 +1,14 @@
+{
+  "base": "165bf92f0e0abe463163f4f95d45e1fe9317a58c",
+  "branch": "fix/windows-green-5",
+  "done_when": "The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug they expose fixed in Forge",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T09:21:39.478581+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Some of v1.2.12's new tests fail on Windows: board counts, the dependency map and the merge queue tests"
+}
