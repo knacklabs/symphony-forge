@@ -149,8 +149,8 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
 A `Not done` finding blocks only when it names a Done-when item the change misses as
 written. A case the Done-when does not name, such as another language, platform, shell,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
-doesn't wait for, even when the case is realistic: score its Gain 1 or 2. A functional, security
-or data-loss defect on the changed code still blocks under its own Raise line.
+doesn't wait for, even when realistic (score it Gain 1 or 2); a functional, security or data-loss defect
+on the changed code still blocks under its own Raise line.
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
