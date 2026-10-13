@@ -105,7 +105,10 @@
     "id": "e61ada95-583c-4449-a02a-fa94d74d203d",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/templates/skill.md"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T09:21:32.237676+00:00",
@@ -127,9 +130,13 @@
   "stop": {
     "area": "src/forge/templates/skill.md",
     "at": "2026-10-13T10:14:32.229263+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/templates/skill.md",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "801e8055-bcc0-403f-a375-96d3453f98cb"
+    "reason": "Coordinator (both Harm 2, reversible): drop --label bug (reporters may lack label rights; the bug template already labels it), and have the agent save the filled body with its own file-writing tool as UTF-8 instead of a shell redirect, so it works in every shell.",
+    "wait_id": "801e8055-bcc0-403f-a375-96d3453f98cb",
+    "worker_round": null
   },
   "why": "When a coding agent hits a Forge bug in a client repo, nothing tells it to report the bug to Forge, so the Forge team learns late and without the details needed to fix it"
 }
