@@ -1,0 +1,14 @@
+{
+  "base": "8ee6ba547e26199c5320001f70af3e6825aa19b0",
+  "branch": "fix/review-images",
+  "done_when": "Close's review of a change that adds PNG screenshots runs to a result in a new repo and in an upgraded repo, because Forge's own environment ships what Autoreview's image review needs",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T03:12:59.363140+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close cannot review a change that adds screenshots, because Autoreview's image review needs Pillow and Forge's environment lacks it"
+}
