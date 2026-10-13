@@ -19,7 +19,7 @@ The exact command and full output, with private names replaced.
 Expected vs what happened.
 
 ## Steps to reproduce
-Upgraded from which version, new or adopted repo, and the `forge.toml` settings without secrets.
+Upgraded from which version, new or adopted repo, and the forge.toml settings without secrets.
 
 ## forge next
 The `forge next` output at the time.

@@ -185,7 +185,7 @@ The template's sections, which the body file keeps exactly:
 - `## Host and operating system`: The host (Claude Code or Codex) and the operating system.
 - `## Command and output`: The exact command and full output, with private names replaced.
 - `## Expected and actual`: Expected vs what happened.
-- `## Steps to reproduce`: Upgraded from which version, new or adopted repo, and the `forge.toml` settings without secrets.
+- `## Steps to reproduce`: Upgraded from which version, new or adopted repo, and the forge.toml settings without secrets.
 - `## forge next`: The `forge next` output at the time.
 - `## Tried and workaround`: What was tried, and any workaround.
 - `## How often`: How often: always, sometimes or once.
