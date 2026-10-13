@@ -168,6 +168,36 @@ Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land`
 New repos get the setting's default at init; existing repos get this guide when the upgraded
 Forge syncs, keeping their settings as written.
 
+## Reporting a Forge bug
+
+When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
+crash, a command that reports success but did nothing, generated files that contradict each
+other), file a bug on Forge's GitHub. No client code, names, paths or secrets: describe what Forge did.
+Read the template text from GitHub and drop its front matter:
+
+```
+gh api repos/knacklabs/symphony-forge/contents/.github/ISSUE_TEMPLATE/forge-bug.md -H "Accept: application/vnd.github.raw"
+```
+
+Fill every section, then save the filled body with your own file-writing tool as UTF-8.
+
+The template's sections, which the body file keeps exactly:
+
+- `## Forge version`: Output of `forge --version` and the pinned version in `forge.toml`.
+- `## Host and operating system`: The host (Claude Code or Codex) and the operating system.
+- `## Command and output`: The exact command and full output, with private names replaced.
+- `## Expected and actual`: Expected vs what happened.
+- `## Steps to reproduce`: Upgraded from which version, new or adopted repo, and the forge.toml settings without secrets.
+- `## forge next`: The `forge next` output at the time.
+- `## Tried and workaround`: What was tried, and any workaround.
+- `## How often`: How often: always, sometimes or once.
+
+File it with no prompt:
+
+```
+gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --body-file <that file>
+```
+
 ## Laptop setup and after cloning
 
 The repeatable laptop installers are published for

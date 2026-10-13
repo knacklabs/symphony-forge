@@ -234,11 +234,10 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # The client's sign-off record, pinned in harness.yaml, is pinned in forge.toml.
     assert '\nsignoff = "docs/decisions/0001-client-signoff.md"\n' in toml
     # AGENTS.md was the old Forge's word for word, so only the Forge block is left; CLAUDE.md
-    # goes, its own line moved into AGENTS.md without its imports of AGENTS.md or the deleted
-    # old Claude adapter.
+    # goes, and none of its lines move: its heading and imports were the old Forge's own.
     agents = repo.git("show", "forge/migrate-v1:AGENTS.md")
     assert agents.startswith("<!-- forge:begin -->") and "The old Forge contract" not in agents
-    assert agents.endswith("<!-- forge:end -->\n\n# Claude Code entrypoint")
+    assert agents.endswith("<!-- forge:end -->")
     assert "@.claude/CLAUDE.md" not in agents and "@AGENTS.md" not in agents
 
     # A converted plan keeps its sections word for word and the old tasks as rows.

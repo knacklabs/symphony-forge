@@ -473,7 +473,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
     doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
     try:
-        doc = story.parse(text, top, history=history)
+        doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:
         return [f"The story doc of {title} is malformed: {exc}.",
                 f"Next: edit plans/{key}.md, then run forge next"], []
@@ -512,13 +512,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         return lines + [behind], list(states.values())
     merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
                and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
-    waits = {task["id"]: waits_for(key, [after for after in task["after"] if after not in merged])
+    waits = {task["id"]: waits_for(f"{key}/{task['id']}", [after for after in task["after"] if after not in merged])
              for task in doc["tasks"] if not states[task["id"]]}
     busy = _started(story.landed_ref(top), top, history)
     overlapping: set[str] = set()
     for task in doc["tasks"]:
         if task["id"] in waits:
-            blockers = waits_for(key, [], task["scope"], busy)
+            blockers = waits_for(f"{key}/{task['id']}", [], task["scope"], busy)
             if blockers:
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
@@ -694,8 +694,10 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
                  history: dict[str, Any] | None = None) -> dict[str, Any]:
     """An item started on another machine (its branch is on the remote, as the board reads it, with
     or without a pull request) and no worktree here: its state at the pull request's head."""
-    if not pr and history is not None:  # the board's own bulk read of the remote branches
-        return history["ref_states"].get(f"refs/remotes/origin/{branch}", {}).get(repo.state_path(item)) or {}
+    if not pr and history is not None:  # the board's own bulk read of the branches; a local-only one counts too
+        refs = history["ref_states"]
+        return (refs.get(f"refs/remotes/origin/{branch}") or refs.get(f"refs/heads/{branch}")
+                or {}).get(repo.state_path(item)) or {}
     ref = review_ref(top, branch, pr)
     return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
 
