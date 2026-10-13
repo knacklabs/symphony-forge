@@ -118,7 +118,7 @@ def next_step(args: Any) -> int:
     top = repo.root()
     notice = upgrade.release_notice(top)
     history = board._machine_history(top) if args.json else None
-    lines = _report(top, history)[0]
+    lines = _report(top, history, schedules=True)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -182,12 +182,15 @@ def handoff_hook(args: Any) -> int:
     return 0
 
 
-def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
+def _report(top: Path, history: dict[str, Any] | None = None,
+            schedules: bool = False) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
-    alerts = _failed_schedules(top)  # an open fix for a failed run shows its own lines under it
+    # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
+    # failed run shows its own lines under it.
+    alerts = _failed_schedules(top) if schedules else {}
     pinned: list[str] = []
 
     def claim(state: dict[str, Any]) -> list[str] | None:  # by the workflow file the fix's why names
