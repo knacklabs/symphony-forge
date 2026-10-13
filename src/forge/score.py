@@ -146,7 +146,7 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
             known.append(by.setdefault(key, {
                 "title": f["title"], "file": f["file"], "line": f["line"], "gain": f.get("gain"),
                 "work": f.get("work"), "harm": f.get("harm"), "outcome": outcome, "reason": reason,
-                "round": round_number, "area": areas.get(key, f["file"])}))
+                "round": round_number, "area": areas.get(key, f["file"]), "security": bool(FLOORS[0][0].search(f["body"]))}))
         elif by[key]["outcome"] == "open" or any(d.get("accepted") and d["finding"] == n for d in result["dismissals"]):
             by[key].update(outcome=outcome, reason=reason)
     for key, entry in by.items():
@@ -166,11 +166,10 @@ def crowded(known: list[dict[str, Any]], result: dict[str, Any], settled: list[s
     return ""
 
 
-def move(result: dict[str, Any], areas: dict[tuple[str, str], str], area: str) -> str:
-    """The structural move a stopped area proposes; fail closed first under the security floor."""
+def move(known: list[dict[str, Any]], area: str) -> str:
+    """The structural move a stopped area proposes; fail closed first after any security finding there."""
     moves = ["cut the code that invites these findings", "replace the cases with one general rule",
              "narrow that Done when item", "make it fail closed"]
-    if any(areas.get(identity(f["file"], f["title"])) == area and FLOORS[0][0].search(f["body"])
-           for f in result.get("findings", [])):
+    if any(e.get("area") == area and e.get("security") for e in known):
         moves.insert(0, moves.pop())
     return "; or ".join(moves)

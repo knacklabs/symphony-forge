@@ -288,9 +288,9 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    rows = [(plain(finding["title"], finding.get("body", "")),
-             (finding["gain"], finding["work"], finding["harm"]) if "harm" in finding else None)
-            for _, finding in blocking(result) if isinstance(finding, dict)]
+    # Every open finding that counts toward the stop: the ones at the bar and any Harm 3 or more.
+    rows = [(plain(finding["title"], finding.get("body", "")), score.of(finding)) for finding in score.open_findings(result)
+            if score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3]
     # Accept dismisses every finding not yet dismissed, advice included.
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
@@ -553,11 +553,10 @@ def _accepted(top: Path, item: str, history: list[dict[str, Any]]) -> str:
             kept = story.DISPOSITION.search(block)
             if kept and kept[1].lower() in ("keep", "defer"):
                 found.append(f"Plan read note {number}: {' '.join(block.split(None, 1)[1].split())}")
-    for (file, title), reason in _settled(history).items():
-        if reason.startswith(("known:", "accepted by the owner:")):
-            scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
-                           if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
-            found.append(f"{title} ({file}): {reason}{scores}")
+    for (file, title), reason in _settled(history).items():  # every settled finding, whatever settled it
+        scores = next((f"; {line[0].strip()}" for result in history for f in result.get("findings", [])
+                       if (f["file"], f["title"]) == (file, title) and (line := score.LINE.search(f["body"]))), "")
+        found.append(f"{title} ({file}): {reason}{scores}")
     return _bullets(found)
 
 

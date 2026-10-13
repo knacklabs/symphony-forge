@@ -159,8 +159,10 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
 
     where = _approve(env, STORY_DOC, no_hooks)
     env.commit(where, "app.py", "print('saved')\n")
-    env.reviews(blocked(_scored("P2", "Label wording", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
+    env.reviews(blocked(_scored("P2", "Label wording", "Gain 2, Work 1, Harm 1\nRaise: Functional"),
+                        _scored("P2", "Button colour", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
     assert env.close("SHOP/T1").returncode == 0
+    assert env.close("SHOP/T1", "--dismiss", "2", "--because", "app.py:1 the colour is set").returncode == 0
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Sign-in is out of scope" in known and "The title could be shorter" in known
 
@@ -174,6 +176,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     assert stopped.returncode == 1 and "Ask the human" in stopped.stderr
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Label wording (app.py): known: below the bar (live with); Gain 2, Work 1, Harm 1" in known
+    assert "Button colour (app.py): dismissed because app.py:1 the colour is set; Gain 2, Work 1, Harm 1" in known
     # An item saved before the known list: the owner's accept rebuilds it from every saved round.
     path = ".factory/stories/SHOP/tasks/T1.json"
     state = json.loads((where / path).read_text("utf-8"))
@@ -237,7 +240,8 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
             _round(env, item, where, number, at_bar(f"Round {number} defect", f"docs/{number}.md"))
         _round(env, item, where, 3, at_bar("Round 3 defect", "docs/3.md", harm=2),
                _scored("P2", "Follow-up: other shells", "Gain 3, Work 4, Harm 3\nRaise: Functional", "docs/4.md"))
-        assert "Ask the human" in _round(env, item, where, 4).stderr
+        stop = _round(env, item, where, 4).stderr
+        assert "Ask the human" in stop and "- other shells" in stop  # the finding that caused the stop
         later(monkeypatch, 31)
         held = env.close(item)
         assert held.returncode == 1 and "Ask the human" in held.stderr
@@ -273,18 +277,18 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
     else:
         env.commit(where, "src/shop.py", SHOP)
         shop = "src/shop.py"
-        _round(env, item, where, 1, at_bar("Save keeps no total", shop, line=2),
+        _round(env, item, where, 1, {**at_bar("Save trusts any user", shop, line=2),
+                                     "body": "Gain 3, Work 2, Harm 4\nRaise: Security"},
                at_bar("The limit is too low", shop, line=6), at_bar("Load ignores the user", shop, line=10),
                at_bar("A starts without a name", shop, line=17))
         # One finding raised twice counts once; module-level code, load(), A.__init__ and
         # B.__init__ are areas of their own.
-        second = _round(env, item, where, 2, at_bar("Save keeps no total", shop, line=2),
+        second = _round(env, item, where, 2, at_bar("Save trusts any user", shop, line=2),
                         at_bar("Save returns early", shop, line=3),
                         at_bar("B starts empty", shop, line=21), at_bar("B keeps a stale y", shop, line=22))
         assert "The review left serious findings open" in second.stderr
-        # A security finding already scored Harm 4 puts fail closed first.
-        third = _round(env, item, where, 3, {**at_bar("Save trusts any user", shop, line=2),
-                                              "body": "Gain 3, Work 2, Harm 4\nRaise: Security"})
+        # An earlier round's security finding there, already scored Harm 4, puts fail closed first.
+        third = _round(env, item, where, 3, at_bar("Save rounds down", shop, line=2))
         assert "still finds serious problems in save() in src/shop.py" in third.stderr
         assert re.search(r"Findings keep coming in save\(\) in src/shop.py; proposed: make it fail closed", third.stderr)
         narrow = env.close(item, "--resolve", "narrow", "--reason", "Cut the rounding")

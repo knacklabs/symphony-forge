@@ -354,7 +354,7 @@ def close(args: argparse.Namespace) -> int:
         files = {finding["file"] for _, finding in serious}
         crowded = score.crowded(state["known"], result, _settled_areas(state), areas) if serious else ""
         if crowded:
-            stopped = {"file": crowded, "area": crowded, "proposed": score.move(result, areas, crowded)}
+            stopped = {"file": crowded, "area": crowded, "proposed": score.move(state["known"], crowded)}
         elif (serious and round_number - choice_round >= 3 and
                 score.loop_stops(result, state["known"], round_number)):
             default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
