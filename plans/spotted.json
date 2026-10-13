@@ -584,6 +584,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/board.html\tMobile time-axis labels overlap\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "src/forge/board.html",
+      "line": 90,
+      "text": "Mobile time-axis labels overlap",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -1174,6 +1185,17 @@
       "text": "Not done: one-line graph key",
       "from": "blocking",
       "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_visuals.py\tNot done: the first screen fits at 1440 by 900\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 192,
+      "text": "Not done: the first screen fits at 1440 by 900",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
       "status": "open",
       "closed_by": null
     },
@@ -6256,6 +6278,17 @@
       "text": "Not done: board test still rejects a review running alongside tests",
       "from": "blocking",
       "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_trends.py\tNot done: trends browser test\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "tests/test_board_trends.py",
+      "line": 69,
+      "text": "Not done: trends browser test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
       "status": "open",
       "closed_by": null
     },
