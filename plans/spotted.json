@@ -1332,6 +1332,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tDisputed keep settled-context carry-forward: same-commit backfill loses durable known findings\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 464,
+      "text": "Disputed keep settled-context carry-forward: same-commit backfill loses durable known findings",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1372,6 +1383,39 @@
       "text": "Full test suite fails on an unchanged review-prompt assertion",
       "from": "blocking",
       "item": "review-alongside-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: 2 and 3 \u2014 accepting a stop loses known history or the owner's reason\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 118,
+      "text": "Not done: 2 and 3 \u2014 accepting a stop loses known history or the owner's reason",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: 2 \u2014 below-bar findings can lose their scores in the pull request\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 977,
+      "text": "Not done: 2 \u2014 below-bar findings can lose their scores in the pull request",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 250,
+      "text": "Not done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
       "status": "open",
       "closed_by": null
     },
@@ -4126,6 +4170,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tDisputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 327,
+      "text": "Disputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tExplicit nonstandard pytest files bypass the test place\treviews-skip-agent-line",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -4144,6 +4199,61 @@
       "text": "Nested pytest config lets doctests bypass the test place",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 2 and 3 \u2014 a case-only repeat is treated as fixed and dropped\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 787,
+      "text": "Not done: 2 and 3 \u2014 a case-only repeat is treated as fixed and dropped",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 3 \u2014 a dismissed below-bar finding leaves Known and accepted\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 557,
+      "text": "Not done: 3 \u2014 a dismissed below-bar finding leaves Known and accepted",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 624,
+      "text": "Not done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 3 \u2014 settled findings disappear from later accepted context\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 618,
+      "text": "Not done: 3 \u2014 settled findings disappear from later accepted context",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 4 \u2014 same-named methods collapse into one area\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 233,
+      "text": "Not done: 4 \u2014 same-named methods collapse into one area",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
       "status": "open",
       "closed_by": null
     },
@@ -4456,6 +4566,72 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tStop question hides an open Harm 3 finding that caused the stop\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 291,
+      "text": "Stop question hides an open Harm 3 finding that caused the stop",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tDisputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 104,
+      "text": "Disputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: 2 and 3 \u2014 coordinator dismissal reasons are lost from known findings\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 150,
+      "text": "Not done: 2 and 3 \u2014 coordinator dismissal reasons are lost from known findings",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: 4 \u2014 a disposed Harm 3 read note triggers the three-round stop\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 104,
+      "text": "Not done: 4 \u2014 a disposed Harm 3 read note triggers the three-round stop",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: 4 \u2014 a scored security finding leaves fail closed last\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 173,
+      "text": "Not done: 4 \u2014 a scored security finding leaves fail closed last",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tNot done: 4 \u2014 earlier security findings do not put fail closed first\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 173,
+      "text": "Not done: 4 \u2014 earlier security findings do not put fail closed first",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/score.py\tNot done: scores must be integers from 1 to 5\tFORGE-SCORE-1/SCORES",
       "kind": "bug",
       "path": "src/forge/score.py",
@@ -4496,6 +4672,17 @@
       "text": "New cold-read notes can be lost when a settled note repeats",
       "from": "blocking",
       "item": "settled-stays-settled",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: 3 \u2014 unchanged settled notes leave later $dispositions blocks\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 288,
+      "text": "Not done: 3 \u2014 unchanged settled notes leave later $dispositions blocks",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
       "status": "open",
       "closed_by": null
     },
@@ -4991,6 +5178,17 @@
       "text": "Not done: one identical written boundary in review and cold read",
       "from": "blocking",
       "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1342,
+      "text": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
       "status": "open",
       "closed_by": null
     },
@@ -7149,6 +7347,17 @@
       "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_bar.py\tNot done: 4's multiline-signature area proof\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "tests/test_score_bar.py",
+      "line": 282,
+      "text": "Not done: 4's multiline-signature area proof",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",

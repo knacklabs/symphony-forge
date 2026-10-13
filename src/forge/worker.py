@@ -16,21 +16,20 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, native, repo, story, task
+from forge import codex, doctor, machine, native, repo, score, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
 # The shipped how-to per concern of the client stack; the brief names it and the worker may read it.
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
-SERIOUS = ("P0", "P1")
 REVIEW_LOOP = (
-    "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
+    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open, "
     "whatever files they were in. The existing same-file stop still applies from the third round. "
     "Wait for a recorded choice only after close has stopped the review loop. "
     "Otherwise, fix the findings inside your Done-when in this round, including new findings "
     "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
-    "Read also stops after three consecutive cold-read rounds with blocking notes; the coordinator "
+    "Read also stops after three blocked cold-read rounds only when a disputed keep at the bar or a note with Harm 3 or more is open; the coordinator "
     "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
@@ -191,6 +190,8 @@ def _work(args: argparse.Namespace) -> bool:
             note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
                     "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
                     f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
+            if stop.get("area"):
+                note += f" Proposed for {stop['area']}: {stop['proposed']}."
         from forge import close  # close imports story, which imports this module
 
         close.stuck_round(top, item, state, config, findings)
@@ -437,15 +438,14 @@ def _changes(top: Path, start: str) -> str:
 
 
 def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
-    """The open serious findings and the failing checks, close's own test run among them, once
+    """The open findings at the bar and the failing checks, close's own test run among them, once
     close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
     review = state.get("review")
     if not review:  # no review yet: no pull request to read checks from
         return [], tests
-    dismissed = {entry.get("finding") for entry in review.get("dismissals") or []}
-    findings = [finding for n, finding in enumerate(review.get("findings") or [], 1)
-                if finding.get("priority") in SERIOUS and n not in dismissed]
+    findings = [finding for finding in score.open_findings(review)
+                if score.holds(finding, review.get("blocking_level"))]
     return findings, tests + _failing(state.get("branch", ""))
 
 

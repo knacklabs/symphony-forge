@@ -132,3 +132,21 @@ def test_3_a_change_close_runs_no_tests_for_shows_named_tests_as_not_run(env):
     assert ("- Returning readers are greeted: not run (close ran no tests for this change) "
             "(including empty names)") in published
     assert "test_returning" not in published
+
+
+# A client test that starts its own pytest with its own import path and root directory.
+NESTED = ("import os, pathlib, subprocess, sys\n\n\ndef test_returning(tmp_path):\n"
+          "    (tmp_path / \"test_inner.py\").write_text(\"def test_inner():\\n    pass\\n\")\n"
+          "    run = subprocess.run([sys.executable, \"-m\", \"pytest\", \"-q\", \"-p\", \"no:cacheprovider\",\n"
+          "                          \"test_inner.py\"], cwd=tmp_path, capture_output=True, text=True,\n"
+          "                         env={**os.environ, \"PYTHONPATH\": str(tmp_path)})\n"
+          "    assert run.returncode == 0, run.stdout + run.stderr\n")
+
+
+@pytest.mark.parametrize("adopted, options", [(False, ""), (True, ""), (False, " -n 2")],
+                         ids=["new-client", "earlier-adoption", "xdist"])
+def test_4_a_test_that_starts_its_own_pytest_passes_under_close(env, adopted, options):
+    run = f'"{Path(sys.executable).as_posix()}" -m pytest -q -p no:cacheprovider'
+    _, published = _close(env, adopted, f"{run} tests/test_greeting.py{options}", greeting=NESTED)
+    assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning "
+            "(passed in close's run) (including empty names)") in published
