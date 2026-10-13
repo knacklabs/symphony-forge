@@ -200,8 +200,8 @@
       "gain": 3,
       "harm": 2,
       "line": 303,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the grouped pane now; the missing summary line on a ready-only or planning-only board, and its test, become one follow-up fix started right after this merges",
       "round": 5,
       "security": false,
       "title": "Not done: Test the Board summary when only ready or waiting items remain",
@@ -217,6 +217,11 @@
       {
         "because": "settled area: src/forge/mod/hooks/summary.ts",
         "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the grouped pane now; the missing summary line on a ready-only or planning-only board, and its test, become one follow-up fix started right after this merges",
+        "finding": 2
       }
     ],
     "findings": [
@@ -242,12 +247,13 @@
       }
     ],
     "id": "ce8ef6cb-6c73-4590-9f45-91db5befb233",
-    "status": "blocked"
+    "status": "clean"
   },
   "settled_areas": [
+    "src/forge/mod/hooks/pane.test.ts",
     "src/forge/mod/hooks/summary.ts"
   ],
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T12:38:35.000433+00:00",
@@ -277,9 +283,13 @@
   "stop": {
     "area": "src/forge/mod/hooks/pane.test.ts",
     "at": "2026-10-13T18:27:14.696575+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/mod/hooks/pane.test.ts",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "72fa6f9f-c153-4686-be23-920e191cdf1c"
+    "reason": "Coordinator's call (Harm 2, reversible): ship the grouped pane now; the missing summary line on a ready-only or planning-only board, and its test, become one follow-up fix started right after this merges",
+    "wait_id": "72fa6f9f-c153-4686-be23-920e191cdf1c",
+    "worker_round": null
   },
   "why": "The pane's Board tab is hard to read: raw timestamps, unknown rounds, zero times, a stage chain that does not mark where an item is, and priority codes"
 }
