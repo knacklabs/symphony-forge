@@ -27,7 +27,7 @@
       "gain": 3,
       "harm": 1,
       "line": 109,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -37,26 +37,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e369792c0548ddc024c0f5754eb5cdda63dad06708dc3035f581d48f0bc17cb3",
-    "changed": "30fab232423851895a8e1709c3e21ac352720546019601977ea708a6b8c624ae",
-    "commit": "b4ac2a09d8d2a842cee034b8a56e3265f20a8ade",
+    "branch_diff": "957eb18f1bab01372ddcb1b81d4d2e10049653c30eaecd446ac7552c2889a715",
+    "changed": "343be04be1f507c6de61f66e6f8fe538fb888e7357e74b0e1ea5cfeca2e64634",
+    "commit": "541a45529a341c40bfd38b52b00430743e0dd01e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is `missing`, so it maps neither Done-when clause to a test. This branch adds command-level checks for the sentence and in-progress list, but the required proof mapping is absent.",
-        "file": "tests/test_board_pace.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 109,
-        "priority": "P1",
-        "title": "Not done: proof list",
-        "work": 1
-      }
-    ],
-    "id": "008d5a01-7a3e-4471-a11b-eea47a8b22da",
-    "status": "blocked"
+    "findings": [],
+    "id": "e95659d2-58ee-498b-96a5-24500c711477",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T17:21:36.588894+00:00",
@@ -68,6 +57,10 @@
     },
     {
       "at": "2026-10-13T18:50:27.632595+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:26:53.649821+00:00",
       "step": "review"
     }
   ],
