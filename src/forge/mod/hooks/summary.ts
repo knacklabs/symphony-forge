@@ -104,15 +104,17 @@ export function board(data: Data, now: number): View {
     const own = i.kind === 'story' ? i.id : key
     for (const child of i.children ?? []) walk(child, own)
     const next = record(i.next), command = typeof next.command === 'string' ? next.command : null
-    const step = command ?? (typeof next.line === 'string' ? next.line : undefined)
-    const ask = asked.get(i.id) ?? (i.state === 'waiting for approval' || i.stage === 'waiting for approval' ? { reason: 'approval' } : command?.includes(' --resolve') ? { reason: 'review loop' } : undefined)
+    // `step` is forge next's Next text even when it is not one runnable command; older Forge lacks it.
+    const step = typeof next.step === 'string' ? next.step : command ?? undefined
+    const approval = i.state === 'waiting for approval' || i.stage === 'waiting for approval'
+    const ask = asked.get(i.id) ?? (approval ? { reason: 'approval' } : i.needs_person === true ? { reason: '' } : undefined)
     const row: Row = { title: i.title, key: own, item: i }
     if (i.state === 'done' || i.stage === 'done') return
     if (ask) {
       const found = i.findings?.count ? `Review found ${plural(i.findings.count, 'problem')}. ` : ''
       const reason = String(ask.reason ?? '')
-      row.state = found + (reason === 'approval' ? 'The plan is ready for your approval.' : ASKS[reason] ?? (reason ? `${reason.charAt(0).toUpperCase()}${reason.slice(1)}.` : '')).trim()
-      row.next = step && (command ? `decide: ${command}` : step)
+      row.state = found + (reason === 'approval' ? 'The plan is ready for your approval.' : ASKS[reason] ?? (reason ? `${reason.charAt(0).toUpperCase()}${reason.slice(1)}.` : found ? 'The builder is stuck.' : 'The builder is waiting for your answer.')).trim()
+      row.next = step && (step.startsWith('forge ') ? `decide: ${step}` : step)
       groups['NEEDS YOU']!.push(row)
     } else if (i.children?.length) return // its parts show the work
     else if (i.stalled === true || blocked.has(i.id)) {
@@ -127,6 +129,7 @@ export function board(data: Data, now: number): View {
       groups.MOVING!.push(row)
     } else if (i.state === 'ready to merge' || i.stage === 'ready') {
       row.state = CHECKS[String(i.pr?.checks)]
+      row.next = step
       groups['READY TO MERGE']!.push(row)
     } else waiting.push(row)
   }

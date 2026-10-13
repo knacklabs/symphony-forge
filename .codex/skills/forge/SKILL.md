@@ -321,7 +321,9 @@ Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number, url and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
-`approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
+`approval`, `needs_person`, and its own `next`. `needs_person` is true while the item waits on
+a person: a plan waiting for approval, a stop nobody has answered, or a worker question.
+A story awaiting approval has `approval.doc`, the
 absolute path to its document in its own worktree; other rows have null approval.
 Task and fix rows add `time_breakdown` and `rounds`; story rows add `outcome` (null until done).
 An empty board has an empty items list. Missing state shows unknown. No run start,
@@ -429,9 +431,10 @@ worker questions retain the ids in Forge's event records. Advisory occurrences d
 change the merge gate. Readiness uses the clean review's id plus the current head
 commit. Runs that start and finish between board refreshes still appear as completions.
 
-Both views' `next` contains `command` and `line`. Command is the first Next line
+Both views' `next` contains `command`, `line` and `step`. Command is the first Next line
 only when it is one runnable Forge command without a placeholder or alternative;
-otherwise it is null. Line carries the plain current state from the text report.
+otherwise it is null. Line carries the plain current state from the text report. Step is
+the first Next line's text even when it is not one runnable command, or null without one.
 Release notices appear in the text output and never replace the machine view's state line.
 Use each board row's next step for that item, never another
 item's step. Machine views do not grant approval or permission to merge.
@@ -501,13 +504,13 @@ The pane's Board tab, on the terminal and the Desktop app's Code tab alike, open
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
 Each part shows only when the board's `team` fact behind it is known and not zero; an
 older Forge with no `team` shows no summary line. Groups follow in this order, each only
-when it has items: NEEDS YOU (approvals, review-loop choices, questions and other stops),
+when it has items: NEEDS YOU (rows whose `needs_person` is true),
 STUCK (no activity past the board's stall threshold, with the longest wait in days),
 MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
 READY TO MERGE (with the checks in words), then a folded count of the work waiting or not
 started, opened with a native button. Each item shows its plain title, the story key small
 beside it, one line of state in words and, where there is something to do, its next step
-after `→`. At most five rows show per group, then `and N more · forge board for all`.
+(`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
 The pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
 relative (`12 min`, `8 days`). Stage chains, round lines and the time breakdown stay on

@@ -1,7 +1,7 @@
 """The pane's Board tab and /forge text read as plain lines a person can act on.
 
-The board JSON contract (tests/fixtures/board.json and the older release's
-board-previous.json) is fed to the shipped summary.ts through Node.
+`forge board --json` and the board JSON contract (tests/fixtures/board.json and the older
+release's board-previous.json) are fed to the shipped summary.ts through Node.
 """
 import copy
 import json
@@ -9,10 +9,13 @@ import json
 import pytest
 
 from conftest import ROOT
+from test_machine_views import github, state, view
 from test_mod_plugin import node_run
+from test_story import setup, worktree
 
 STORY = "pane-grouped-board"
 NOW = "2026-10-13T12:00:00Z"
+RESOLVE = 'forge close ASK/PERIOD --resolve <narrow|split|accept> --reason "<human\'s choice>"'
 FIXTURE = json.loads((ROOT / "tests/fixtures/board.json").read_text("utf-8"))
 PREVIOUS = json.loads((ROOT / "tests/fixtures/board-previous.json").read_text("utf-8"))
 
@@ -40,10 +43,10 @@ def team_board():
               stage="building", state="in progress", findings={"count": 3, "titles": [], "items": [
                   {"title": "Input lost", "priority": "P1"}], "dismissed": 2},
               gates={**ready["gates"], "review": {"status": "blocked", "count": 3}},
-              next={"command": "forge close ASK/PERIOD --resolve stop", "line": "Choose how to go on."})
+              needs_person=True, next={"command": None, "line": "Close stopped the part.", "step": RESOLVE})
     stuck = row(ready, id="AVB/PERIOD", kind="task", title="Actual-versus-Budget answers ask for the period",
                 stage="building", state="in progress", stalled=True, idle_since="2026-10-05T11:02:00+00:00",
-                next={"command": "forge work AVB/PERIOD", "line": "Build it."})
+                next={"command": "forge work AVB/PERIOD", "line": "Build it.", "step": "forge work AVB/PERIOD"})
     moving = row(ready, id="counts", kind="fix", title="Board counts", stage="building", state="in progress",
                  activity={"status": "running", "action": "review"}, stages=stages, round=None,
                  next={"command": None, "line": "Review is running."})
@@ -57,22 +60,20 @@ def team_board():
     team = board["team"]
     team["counts"]["parts"]["in progress"] = 2
     team["counts"]["fixes"]["in progress"] = 1
-    team["needs_you"] = [{"id": "ASK/PERIOD", "kind": "task", "title": ask["title"], "reason": "review loop",
-                          "since": "2026-10-12T12:00:00+00:00", "waited_seconds": 86400}]
     team["go_live"] = {"status": "range", "earliest": "2026-10-18", "latest": "2026-10-20",
                        "remaining_parts": 4, "no_plan": {"count": 0, "titles": []}}
     return board
 
 
-def groups_in_plain_words(tmp_path):
+def groups_in_plain_words(_request, tmp_path):
     shown = lines(tmp_path, team_board())
-    assert shown == """\
+    assert shown == f"""\
 3 in progress · 1 needs you · 1 stuck · go-live Oct 18 – Oct 20
 
 NEEDS YOU
   Ask asks for the comparison period  ASK
     Review found 3 problems. The builder is stuck.
-    → decide: forge close ASK/PERIOD --resolve stop
+    → decide: {RESOLVE}
 
 STUCK (no progress 8 days)
   Actual-versus-Budget answers ask for the period  AVB
@@ -83,15 +84,18 @@ MOVING
   Board counts · Review running · 12 min
 
 READY TO MERGE
-  Codex trust fix · checks green
+  Codex trust fix
+    checks green
+    → merge its pull request, then forge next
   Polish the guide
+    → merge its pull request, then forge next
 
 WAITING OR NOT STARTED (1) · forge board for all"""
     for hidden in ("unknown", "T11:", "P1", "dismissed", " 0 ", "Build → Tests", "round"):
         assert hidden not in shown
 
 
-def zero_counts_unknown_go_live_and_failures_stay_hidden(tmp_path):
+def zero_counts_unknown_go_live_and_failures_stay_hidden(_request, tmp_path):
     board = team_board()
     board["team"]["counts"]["parts"]["in progress"] = 0
     board["team"]["counts"]["fixes"]["in progress"] = 0
@@ -104,7 +108,7 @@ def zero_counts_unknown_go_live_and_failures_stay_hidden(tmp_path):
     assert lines(tmp_path, board) == "Nothing in progress."
 
 
-def an_older_forge_board_draws_rows_and_no_team_line(tmp_path):
+def an_older_forge_board_draws_rows_and_no_team_line(_request, tmp_path):
     assert lines(tmp_path, PREVIOUS["board"]) == """\
 READY TO MERGE
   Polish the guide
@@ -112,7 +116,25 @@ READY TO MERGE
 WAITING OR NOT STARTED (1) · forge board for all"""
 
 
-@pytest.mark.parametrize("case", [groups_in_plain_words, zero_counts_unknown_go_live_and_failures_stay_hidden,
+def a_review_stop_needs_you_with_the_step_forge_next_prints(request, tmp_path):
+    repo, gh = request.getfixturevalue("repo"), request.getfixturevalue("gh")
+    setup(repo, keys=())
+    made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
+    assert made.returncode == 0, made.stderr
+    state(worktree(repo, "fix/polish") / ".factory/fixes/polish.json",
+          stop={"question": "Keep the old wording or rewrite the guide?"})
+    github(gh, [])
+    step = next(line for line in repo.forge("next").stdout.splitlines() if line.startswith("Next: "))
+    board = view(repo, "board")
+    polish = next(row for row in board["items"] if row["id"] == "polish")
+    assert polish["needs_person"] is True
+    assert polish["next"]["command"] is None
+    assert polish["next"]["step"] == step.removeprefix("Next: ")
+    shown = lines(tmp_path, board)
+    assert f"NEEDS YOU\n  Polish the guide\n    The builder is waiting for your answer.\n    → decide: {polish['next']['step']}" in shown
+
+
+@pytest.mark.parametrize("case", [a_review_stop_needs_you_with_the_step_forge_next_prints, groups_in_plain_words, zero_counts_unknown_go_live_and_failures_stay_hidden,
                                   an_older_forge_board_draws_rows_and_no_team_line])
-def test_1_the_board_tab_and_forge_text_read_in_plain_words(tmp_path, case):
-    case(tmp_path)
+def test_1_the_board_tab_and_forge_text_read_in_plain_words(request, tmp_path, case):
+    case(request, tmp_path)
