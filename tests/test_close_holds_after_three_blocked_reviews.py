@@ -15,7 +15,7 @@ RULE = (
     "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back "
     "or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round."
 )
-QUESTION_RULE = ("When a cold read or review loop stops, ask the human the question it printed, "
+QUESTION_RULE = ("When a cold read or review loop stops and you must ask, ask the human the question it printed, "
                  "in its words, one item per question.")
 PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "forge.toml"]
 
@@ -91,7 +91,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         "| 2 | Round 3 defect: saving drops the basket. Returning shoppers lose their saved items. | 3 | 2 | 3 "
         "| fix this round |",
         "Accept, narrow or split?",
-        "- Accept: every finding in this review, the 1 listed and 0 advice notes, is dismissed "
+        "- Accept: every finding in this review, the 1 listed, is dismissed "
         "with your reason and recorded; close then goes on to the checks, and merging is still a "
         "separate step.",
         "- Narrow: drop these cases from its Done when; they become follow-ups.",

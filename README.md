@@ -128,7 +128,8 @@ Forge stops a change after three rounds only in two conditions:
 2. A note with Harm 3 or more is open.
 
 Then Forge asks you a question. The question shows the open notes in one table, in the order of
-their scores. It tells you the result of accept, of narrow, and of split.
+their scores. A note that an earlier release saved has no scores; then the question shows
+the notes as plain lines. It tells you the result of accept, of narrow, and of split.
 
 If you do not answer a code review stop in 30 minutes, Forge can narrow the change. Forge does
 this only when each open note has Harm 1 or 2. A repo can set `stop_default = "off"` in

@@ -13,7 +13,7 @@ from test_hotspot_stop import rounds, saved, seed
 from test_setup import _fresh_client
 
 GUIDANCE = (
-    "Ask the human to narrow the part, split it, or accept the remaining findings. "
+    "To ask, ask the human to narrow the part, split it, or accept the remaining findings. "
     "Run `forge land <item>` in the background after a close stop, or keep the current land running."
 )
 

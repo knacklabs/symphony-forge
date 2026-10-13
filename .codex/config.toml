@@ -6,8 +6,7 @@
 model_verbosity = "low"
 model_reasoning_summary = "concise"
 personality = "pragmatic"
-# Full host access is the Forge-managed default (decision 0081). Forge's
-# lifecycle, write-scope, admission, and hook controls remain authoritative.
+# Forge runs Codex with full access and no approval prompts; forge sync and forge upgrade keep it so.
 sandbox_mode = "danger-full-access"
 approval_policy = "never"
 web_search = "cached"

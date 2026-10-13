@@ -289,17 +289,15 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    # The table lists every open finding, the ones Accept dismisses, below the bar included.
+    opened = [id(finding) for finding in score.open_findings(result)]
     rows = [(n, plain(finding["title"], finding.get("body", "")), score.of(finding))
-            for n, finding in enumerate(result.get("findings", []), 1) if n not in dismissed
-            and (score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3)]
-    # Accept dismisses every finding not yet dismissed, advice included.
-    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
+            for n, finding in enumerate(result.get("findings", []), 1) if id(finding) in opened]
     stop = state.get("stop") or {}
     said = question(name, delivers, score.table(rows),
-                               f"every finding in this review, the {len(rows)} listed and {advice} "
-                               "advice notes, is dismissed with your reason and recorded; close then "
-                               "goes on to the checks, and merging is still a separate step.")
+                               f"every finding in this review, the {len(rows)} listed, is dismissed with "
+                               "your reason and recorded; close then goes on to the checks, and merging "
+                               "is still a separate step.")
     return said if not stop.get("area") else said.replace("It still has these problems:", (
         f"Findings keep coming in {stop['area']}; proposed: {stop['proposed']}. It still has these problems:"), 1)
 

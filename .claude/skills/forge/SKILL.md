@@ -1360,11 +1360,12 @@ Close holds the fourth review after three blocked rounds only when a finding at 
 back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the
 third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
-Ask the human to narrow the part, split it, or accept the remaining findings.
+Settle the stop yourself or ask the owner, by the stop rule below. To ask, ask the human to
+narrow the part, split it, or accept the remaining findings.
 Run `forge land <item>` in the background after a close stop, or keep the current land running.
 With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
 default; it does not send the worker back while the stop is unanswered.
-After their answer, record it with
+Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
@@ -1382,21 +1383,24 @@ wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after 
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 Close also stops at the third finding in one area (a Python function, else the file); its question
-proposes a structural move. The owner's answer settles the area: later findings there hold work
+proposes a structural move. The recorded choice settles the area: later findings there hold work
 only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
 
-When a cold read or review loop stops, ask the human the question it printed, in its words, one
-item per question. It names the item and what it delivers, shows the open notes as one table ranked
+The stop rule: when a cold read or review loop stops and every open note has Harm 1 or 2, settle
+it yourself. Choose accept or narrow, record it with a reason that gives the scores, and tell the
+owner after, in one line. Ask the owner only when a note has Harm 3 or more, the choice adds scope
+beyond the approved Done when, or it undoes a decision the owner made.
+When a cold read or review loop stops and you must ask, ask the human the question it printed, in
+its words, one item per question. It names the item and what it delivers, shows the open notes as one table ranked
 by score (number, the problem and who it hits, Gain, Work, Harm, and what is proposed), and says
 what accept, narrow and split each do; `forge next` prints it again for a stopped item. When a note
 has no scores, as one saved before scores, the question lists the notes as plain lines instead.
 
 Every update to the owner that lists notes or findings uses the same table, in the same order.
 The coordinator settles a reversible note with Harm 1 or 2 itself and tells the owner after, in
-one line. It follows the bar's outcome: a fix round for a note at the bar, or a disposition or a
-dismissal with the scores in its reason for one below it. Ask the owner only for a note with
-Harm 3 or more, new scope beyond the approved Done when, an approval or merge step, or undoing a
-decision the owner made.
+one line. It follows the bar's outcome and never re-scores a note: a fix round for a note at the
+bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
+stop. Approval and merge steps stay the owner's.
 
 When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
 the item; close also stops a story part that grows past its line limit. Either prints a
@@ -1407,8 +1411,9 @@ choices. Ask the owner exactly that question; never switch tools yourself. Recor
 every choice buys one more round before Forge asks again.
 
 Read also stops after three blocked cold-read rounds, for stories and specs alike, only when a
-note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Ask the human to accept, narrow or split; do not read again until their choice is
-recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
+note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Settle
+it or ask the human to accept, narrow or split, by the stop rule; do not read again until the
+choice is recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
 Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
 the current document; later changes need another read. Narrow or split the part as agreed before
 reading again. A clean round or a recorded choice restarts the three-round count.
