@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T03:56:26.219763+00:00",
+      "because": "Listing every test in the new fix's Done-when duplicates next's lines and grows without limit; the fix names the failed run instead",
+      "done_when": "When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command for them"
+    }
+  ],
   "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
   "branch": "fix/nightly-red-shows-in-next",
-  "done_when": "When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command for them",
+  "done_when": "When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge fix start command for that failed run (or the started fix's next step)",
   "flagged": [
     "src/forge/board_facts.py",
     "src/forge/nextstep.py"
