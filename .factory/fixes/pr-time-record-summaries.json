@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T06:16:27.861003+00:00",
+      "because": "A fixed size and every round's own summary forever cannot both hold; the owner's goal is never hitting the limit",
+      "done_when": "The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its whole round history"
+    }
+  ],
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/pr-time-record-summaries",
-  "done_when": "The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its whole round history",
+  "done_when": "The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds into one totals line, so a long item never reaches the body limit and the board still shows its total time",
   "flagged": [
     "src/forge/time_records.py",
     "tests/test_pull_request_time_summaries.py"
