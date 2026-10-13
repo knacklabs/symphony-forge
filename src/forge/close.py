@@ -296,7 +296,6 @@ def close(args: argparse.Namespace) -> int:
                                         for number, finding in enumerate(result["findings"], 1)
                                         if number not in carried and (finding["file"], finding["title"]) in dismissed]
                 areas = _areas(top, result)
-                # On a settled area only a finding at the bar with Harm 3 or more holds the work.
                 result["dismissals"] += [
                     {"finding": number, "because": f"settled area: {where}"}
                     for number, finding in enumerate(result["findings"], 1)
@@ -453,8 +452,7 @@ def _three_blocked_reviews(top: Path, item: str) -> bool:
 
 
 def _settled_areas(state: dict[str, Any]) -> list[str]:
-    stop = state.get("stop") or {}
-    return [*state.get("settled_areas", []), *([stop["file"]] if stop.get("choice") and stop.get("file") else [])]
+    return [*state.get("settled_areas", []), *[(state.get("stop") or {}).get("file")] * bool((state.get("stop") or {}).get("choice"))]
 
 
 def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dict[str, Any]) -> list[Any]:
@@ -985,7 +983,6 @@ def _block(result: dict[str, Any], check: str) -> str:
                 else "blocks the merge" if score.holds(finding, result.get("blocking_level"))
                 else line if outcome in below
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
-        # Every finding that doesn't hold the work shows its scores.
         note += f"; {line}" if line and note != "blocks the merge" and note != line else ""
         (blocking if note == "blocks the merge" else below[outcome] if note.startswith("Gain ")
          else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
@@ -995,8 +992,7 @@ def _block(result: dict[str, Any], check: str) -> str:
     elif result["status"] == "blocked":
         lines = [BEGIN, "The review found serious problems.", "", *blocking]
     else:
-        lines = [BEGIN, f"Review: clean, {len(because)} dismissed, "
-                        f"{len(rest) - len(because) + len(below['follow-up']) + len(below['live with'])} advice."]
+        lines = [BEGIN, f"Review: clean, {len(because)} dismissed, {len(rest) - len(because) + sum(map(len, below.values()))} advice."]
     folded = [*rest, *[line for name, title in (("follow-up", "Follow-ups:"), ("live with", "Lived with:"))
                        if below[name] for line in ("", title, *below[name])]]
     folded = folded[1:] if folded[:1] == [""] else folded

@@ -1025,7 +1025,6 @@ def read_question(doc: str, notes: str) -> str:
 
 
 def _latest(record: dict[str, str], findings: str) -> dict[int, str]:
-    """The latest round's notes."""
     heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
     return _findings(findings[heading.end():] if heading else "")
 

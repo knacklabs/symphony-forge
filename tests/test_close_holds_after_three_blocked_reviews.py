@@ -12,7 +12,7 @@ from test_worker import calls, install_claude
 
 
 RULE = (
-    "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
+    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open, "
     "whatever files they were in. The existing same-file stop still applies from the third round."
 )
 QUESTION_RULE = ("When a cold read or review loop stops, ask the human the question it printed, "

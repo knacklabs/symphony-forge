@@ -17,9 +17,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, score,
-                   spotted, story,
-                   task, time_records, upgrade)
+from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
+                   score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, start_base, waits_for
 
 COMMANDS = [
@@ -735,7 +734,7 @@ def default_due(top: Path, state: dict[str, Any]) -> bool:
     """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
     stop = state.get("stop") or {}
     if (not stop or stop.get("choice") or "question" in stop or repo.config(top)["stop_default"] == "off"
-            or not score.mild(state.get("review") or {})):
+            or any(f.get("harm", 1) > 2 for f in score.open_findings(state.get("review") or {}))):
         return False
     # Stops from earlier releases have no time of their own; their owner wait event has one.
     since = time_records.when(stop.get("at") or next(

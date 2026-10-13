@@ -116,23 +116,16 @@ def open_findings(result: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def loop_stops(result: dict[str, Any], known: list[dict[str, Any]], round_number: int) -> bool:
-    """Close's three-round stop: an open Harm 3+, a finding at the bar an earlier round raised, or
-    an unscored one that holds."""
+    """Close's three-round stop: an open Harm 3+, a repeat at the bar, or an unscored one that holds."""
     earlier = {identity(e["file"], e["title"]) for e in known if e.get("round", 0) < round_number}
     level = result.get("blocking_level")
     return any(holds(f, level) and (not of(f) or identity(f["file"], f["title"]) in earlier)
                or f.get("harm", 0) >= 3 for f in open_findings(result))
 
 
-def mild(result: dict[str, Any]) -> bool:
-    """The 30-minute default narrows only when every open finding has Harm 1 or 2 (or none)."""
-    return all(f.get("harm", 1) <= 2 for f in open_findings(result))
-
-
 def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
              areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
-    """Add a review round to the known findings, never removed: an open entry changes later (fixed
-    in round N when review N doesn't raise it), and the owner's accept marks any entry."""
+    """Add a round to the known findings, never removed; only open or owner-accepted entries change."""
     because = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
     by = {identity(e["file"], e["title"]): e for e in known}
     raised = set()

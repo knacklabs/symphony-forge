@@ -289,7 +289,6 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    # Every open finding that counts toward the stop: the ones at the bar and any Harm 3 or more.
     rows = [(plain(finding["title"], finding.get("body", "")), score.of(finding)) for finding in score.open_findings(result)
             if score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3]
     # Accept dismisses every finding not yet dismissed, advice included.
@@ -606,10 +605,10 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any]) -> list[
     for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..HEAD", "--", path,
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
-        if result.get("commit"):
-            rounds[result["commit"]] = result
+        if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
+            rounds[result["commit"], str(result.get("findings"))] = result
     if previous.get("commit"):
-        rounds[previous["commit"]] = previous
+        rounds[previous["commit"], str(previous.get("findings"))] = previous
     return list(rounds.values())
 
 

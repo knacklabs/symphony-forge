@@ -224,9 +224,8 @@ read and, for an edge case, the realistic scenario. No speculative suggestions: 
 not what might be nicer.
 
 ## Known and accepted
-The owner, the coordinator or Forge already settled these notes. Don't raise one again unless you
-have new evidence of harm; then title the finding `Disputed keep <the note>: <the new harm>`.
-Forge ignores a plain repeat with the same title and file.
+The owner, the coordinator or Forge settled these notes; Forge ignores a repeat with the same title and file.
+Raise one again only with new evidence of harm, titled `Disputed keep <the note>: <the new harm>`.
 $accepted
 
 ## Scores
