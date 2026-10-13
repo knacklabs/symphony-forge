@@ -1,0 +1,14 @@
+{
+  "base": "e4bf532175ba8dd40f400424d228cc4fe3b93984",
+  "branch": "fix/pane-summary-always",
+  "done_when": "The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in planning, and the mounted Board-tab test covers both of those boards",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T19:01:26.423992+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pane's Board tab opens with no summary line when the only active work is ready to merge or still in planning, so a person sees a bare list with no overview"
+}
