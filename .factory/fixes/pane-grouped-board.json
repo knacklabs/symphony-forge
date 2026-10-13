@@ -1,0 +1,14 @@
+{
+  "base": "55795ad11d303ff78266d78ba09f5e77f96fa7fe",
+  "branch": "fix/pane-grouped-board",
+  "done_when": "The pane's Board tab opens with one summary line, then Needs you, Stuck, Moving and Ready to merge groups, each item with its state in plain words and its next step, and it shows a refresh error instead of loading forever",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T12:38:35.000433+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pane's Board tab is hard to read: raw timestamps, unknown rounds, zero times, a stage chain that does not mark where an item is, and priority codes"
+}
