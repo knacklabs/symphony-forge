@@ -3495,8 +3495,8 @@
       "text": "Not done: Test the Board summary when only ready or waiting items remain",
       "from": "blocking",
       "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
