@@ -607,7 +607,7 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
 # A test file a proof list names, with an optional pytest node after it.
 # A parameter id runs to its closing bracket, commas and all.
 TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*|[\w-]+_test)\.py"
-                       r"(?:::(?:[^\s,;\[]+|\[[^\]]*\])+)?")
+                       r"(?:::(?:[^\s,;`\[]+|\[[^\]]*\])+)?")
 
 
 RESULT_WORDS = ("passed", "failed", "error", "skipped", "xfail", "xpass")
@@ -642,7 +642,11 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         report = passed.read_text("utf-8")
     elif report is not None:
         report = results.read_text("utf-8") if results.is_file() else ""
-    ran = re.findall(r"^(\w+) (.+)$", report or "", re.M)
+    worst = {}  # one result per test: the worst of its phases, so a failed teardown is an error
+    for outcome, node in re.findall(r"^(\w+) (.+)$", report or "", re.M):
+        worst[node] = max(worst.get(node, outcome), outcome,
+                          key=lambda word: {"error": 2, "failed": 1}.get(word, 0))
+    ran = [(outcome, node) for node, outcome in worst.items()]
 
     def result(found: re.Match) -> str:  # the worker's words stay; a name gains its result
         name = found[0].rstrip(".:)")
