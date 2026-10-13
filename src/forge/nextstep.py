@@ -215,15 +215,22 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
         opened = _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
     else:
-        merged_prs = ({*(pr["headRefName"] for pr in board_facts.merged_prs(github)),
-                       *board_facts.merged_before_weeks(top)} if trees else set())
+        merged_prs = {pr["headRefName"] for pr in board_facts.merged_prs(github)} if trees else set()
         opened = [pr for pr in github["open"] if isinstance(pr.get("headRefName"), str)]
     prs = {pr["headRefName"]: pr for pr in opened if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
                     for pr in board._machine_prs(top)
                     if isinstance(pr.get("headRefName"), str)})
-    for key, (path, state, text) in sorted(_stories(top, history).items()):
+    stories = _stories(top, history)
+    if history is not None and any(
+            rel in history["expired"] and (match := board.STATE.fullmatch(rel))["task"]
+            and match["key"] in stories and stories[match["key"]][1].get("status") != "done"
+            and (branch := state.get("branch") or f"task/{match['key']}-{match['task']}") not in merged_prs
+            and branch not in prs
+            for rel, state in history["states"].items()):
+        merged_prs.update(board_facts.merged_before_weeks(top))
+    for key, (path, state, text) in sorted(stories.items()):
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
