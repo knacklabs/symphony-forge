@@ -12,6 +12,7 @@ import pytest
 import conftest
 from conftest import REAL_UV
 from test_board_counts import ONE_PART, board, clock, configure, github, read_story
+from test_board_trends import ANA, BEN, pr
 from test_close import blocked, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER
@@ -242,7 +243,9 @@ def test_7_first_screen(env, monkeypatch, previous):
     env.commit(tree, "speed.txt", "fast\n", "Speed up the page")
     env.reviews(blocked(finding("P1", "The page still loads every row")))
     env.repo.forge("close", "speed-0", cwd=tree)
-    github(env, [])
+    # Merged pull requests for the trends: one through Forge two weeks ago, one around it today.
+    github(env, [pr(1, "task/OLD-T1", BEN, now - timedelta(days=14)),
+                 pr(2, "quick-patch", ANA, now - timedelta(hours=1), "Patch the login page")])
     clock(monkeypatch, now + timedelta(minutes=2))
 
     data = board(env.repo)
@@ -293,12 +296,33 @@ def test_7_first_screen(env, monkeypatch, previous):
 
 
 def _first_screen_browser(page):
-    """In real Chrome: at 1440 by 900 the first screen ends above the fold; nothing scrolls
-    sideways at 1440 or 390; "and N more" and a row's detail open in place and close again;
-    Tab reaches every row with a visible focus ring."""
+    """In real Chrome: at 1440 by 900 the first screen, with five Needs you rows and "and 2 more"
+    and two Blocked or slow rows, ends above the fold; the time axis labels never overlap; nothing
+    scrolls sideways at 1440 or 390; "and N more" and a row's detail open in place and close again;
+    Tab reaches every row with a visible focus ring; the trends weeks, team row and around-Forge
+    list show. Until this release works out Needs you and Blocked or slow, the check copies In
+    progress rows into those lists so the fit is measured at their full size."""
     script = """
 import sys
 from playwright.sync_api import sync_playwright
+FILL = '''() => {
+  const lanes = [...document.querySelectorAll('#in-progress > details.lane')];
+  const fill = (id, n, more) => {
+    const box = document.getElementById(id);
+    if (box.querySelector('details.lane')) return;
+    box.querySelector('.empty').remove();
+    const rows = Array.from({length: n}, (_, i) => lanes[i % lanes.length].cloneNode(true));
+    box.querySelector('h2').after(...rows);
+    if (more) {
+      const rest = document.createElement('details');
+      rest.className = 'rest';
+      rest.innerHTML = '<summary>and 2 more</summary>';
+      rows[n - 1].after(rest);
+    }
+  };
+  fill('needs-you', 5, true);
+  fill('blocked', 2, false);
+}'''
 with sync_playwright() as p:
     browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
     try:
@@ -306,6 +330,13 @@ with sync_playwright() as p:
             for scheme in ('light', 'dark'):
                 page = browser.new_page(viewport={'width': width, 'height': height}, color_scheme=scheme)
                 page.goto(sys.argv[1])
+                page.evaluate(FILL)
+                labels = page.evaluate("[...document.querySelectorAll('.axis .track > span')].map(s => {"
+                                       "const r = s.getBoundingClientRect(); return [r.left, r.right, r.top, r.bottom]; })")
+                for n, a in enumerate(labels):
+                    for b in labels[n + 1:]:
+                        apart = a[1] <= b[0] or b[1] <= a[0] or a[3] <= b[2] or b[3] <= a[2]
+                        assert apart, ('Axis labels overlap', width, a, b)
                 assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), width
                 if width == 1440:
                     bottom = page.evaluate("document.getElementById('first-screen').getBoundingClientRect().bottom")
@@ -335,6 +366,15 @@ with sync_playwright() as p:
                         assert focus, 'A focused row shows a ring'
                         reached += 1
                 assert reached == rows, (reached, rows)
+                trends = page.locator('#trends')
+                trends.scroll_into_view_if_needed()
+                weeks = page.locator('#trends table.trends thead th')
+                assert weeks.count() == 7 and all(weeks.nth(n).is_visible() for n in range(7)), 'Six weeks show'
+                assert page.locator('#trends tr.team').is_visible(), 'The team row shows'
+                assert page.locator('#trends tr.person').first.is_visible(), 'A person row shows'
+                around = page.locator('#trends .around li')
+                assert around.count() == 1 and around.first.is_visible(), 'The around-Forge list shows'
+                assert 'Patch the login page' in around.first.inner_text()
                 page.close()
     finally:
         browser.close()
