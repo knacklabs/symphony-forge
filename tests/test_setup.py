@@ -349,7 +349,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
-        assert (f'set trust_level = "trusted" under [projects."{client.resolve()}"] in '
+        assert (f'set trust_level = "trusted" under [projects.{json.dumps(str(client.resolve()))}] in '
                 f'{codex_home / "config.toml"}') in done.stdout
         assert "Everything else checks out" in done.stdout
     elif case == "impeccable in CLAUDE_CONFIG_DIR":

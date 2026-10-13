@@ -167,8 +167,11 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert untrusted.returncode == 1 and UNTRUSTED in untrusted.stdout, untrusted.stdout
     head = repo.git("rev-parse", "HEAD", cwd=worktree)
     refused = repo.forge("work", "SHOP/CART", cwd=worktree)
-    assert refused.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
-                              "Forge starts no Codex turn here.\nNext: forge doctor\n")
+    # The Next line names the exact entry Codex decides on: the main checkout's, set untrusted.
+    assert refused.stderr.startswith(
+        "Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts no Codex "
+        'turn here.\nNext: open Codex here and trust the project, or set trust_level = "trusted" '
+        f'under [projects.{json.dumps(str(client))}] in {codex_home / "config.toml"}; '), refused.stderr
     assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
     trust("trusted")
     in_worktree = repo.forge("doctor", cwd=worktree)

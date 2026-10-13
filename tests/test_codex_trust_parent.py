@@ -1,9 +1,10 @@
 """Forge trusts a project exactly when Codex does, and says which folder's entry to add.
 
 Codex (codex-rs/config/src/loader/mod.rs, decision_for_dir, at rust-v0.159.2) reads only exact
-[projects] entries: the checkout's own, then its main checkout's; the first one with a trust level
-decides. A parent folder's entry counts for neither.
+[projects] keys: the checkout's, then its project root's (project_root_markers, default .git), then
+its main checkout's; the first entry with a trust level decides. Other parent folders don't count.
 """
+import json
 import shutil
 
 import pytest
@@ -17,7 +18,7 @@ ROW = "Codex doesn't trust this project"
 
 def _fix(folder, config):
     return (f'open Codex here and trust the project, or set trust_level = "trusted" under '
-            f'[projects."{folder}"] in {config}')
+            f'[projects.{json.dumps(str(folder))}] in {config}')
 
 
 @pytest.mark.parametrize("history", ["new", "adopted"])
@@ -38,17 +39,26 @@ def test_1_trust_follows_codex_rule(repo, gh, tmp_path, monkeypatch, history):
     monkeypatch.setenv("CODEX_HOME", str(codex))
     config = codex / "config.toml"
 
-    def doctor(entries):
-        config.write_text("".join(f'[projects."{path.as_posix()}"]\ntrust_level = "{level}"\n'
-                                  for path, level in entries), encoding="utf-8")
+    def doctor(entries, top=""):
+        config.write_text(top + "".join(f'[projects.{json.dumps(key)}]\ntrust_level = "{level}"\n'
+                                        for key, level in entries), encoding="utf-8")
         return repo.forge("doctor", cwd=worktree).stdout
 
     # A trusted parent folder: Codex would still ask, so Forge asks and names the main checkout.
-    said = doctor([(tmp_path.resolve(), "trusted")])
+    said = doctor([(str(tmp_path.resolve()), "trusted")])
     assert ROW in said and _fix(main, config) in said, said
-    assert "not a parent folder's" in said and "covers every worktree" in said, said
+    assert "not other parent folders" in said and "covers every worktree" in said, said
     # The main checkout's entry covers the worktree, as it does for Codex.
-    assert ROW not in doctor([(main, "trusted")])
+    assert ROW not in doctor([(str(main), "trusted")])
+    # Codex matches the key exactly: another spelling of the same folder isn't trusted.
+    assert ROW in doctor([(str(main) + "/", "trusted")])
     # The worktree's own untrusted entry is closer, so it wins over the main checkout's.
-    said = doctor([(main, "trusted"), (worktree, "untrusted")])
+    said = doctor([(str(main), "trusted"), (str(worktree), "untrusted")])
     assert ROW in said and _fix(worktree, config) in said, said
+    # A configured project root marker makes that folder's entry count, ahead of the main checkout.
+    (worktree.parent / ".workspace").write_text("", encoding="utf-8")
+    markers = 'project_root_markers = [".workspace"]\n'
+    assert ROW not in doctor([(str(worktree.parent), "trusted"), (str(main), "untrusted")], markers)
+    assert ROW in doctor([(str(worktree.parent), "trusted")])  # without the marker it doesn't count
+    # A config Codex would reject is not trust.
+    assert ROW in doctor([(str(main), "trusted")], 'project_root_markers = ".workspace"\n')
