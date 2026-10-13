@@ -279,11 +279,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     @functools.cache
     def story_read(key: str) -> tuple[str, Item]:
         """A story's plan read and task rows: the same for the story and each of its parts."""
-        where = story.plan_ref(top, key, history)
+        where = landed if key in completed else story.plan_ref(top, key, history)  # finished: the landed plan
         if where == f"story/{key}":
             where = trees.get(where) or where
         notes = _read(top, where, f"plans/{key}.read.md", history)
-        assignments = task.rows(task.sections(story._plan(top, key, history=history)))
+        assignments = task.rows(task.sections(story._plan(top, key, landed if key in completed else None, history)))
         if not story._record(notes)[0]:
             return "none", assignments
         text = _read(top, where, f"plans/{key}.md", history)
@@ -541,7 +541,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             key, tid = match["key"], match["task"]
             plan_where = trees.get(f"story/{key}") or best.get(repo.state_path(key), ({}, where))[1]
             text = (_read(top, plan_where, f"plans/{key}.md", history)
-                    if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+                    if key in completed or story.plan_ref(top, key, history) == landed
+                    else story._plan(top, key, history=history))
             names = task.rows(task.sections(text))
             names = {cell.strip("` "): spec for cell, spec in names.items()}
             title = (names.get(tid) or {}).get("Name") or "A part with no name yet"
@@ -593,7 +594,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                               timings=timings_by_item.get(f"{key}/{tid}", []),
                               ended_at=by_branch.get(branch, {}).get("mergedAt")),
             time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
-    notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md", history)
+    notes_by_story = {key: _read(top, landed if key in completed else story.plan_ref(top, key, history),
+                                 f"plans/{key}.read.md", history)
                       for key, current in items.items() if current["kind"] == "story"}
     past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
                              if (previous := story._record(notes)[0].get("notes_seen")))), follow_notes=True)
@@ -626,7 +628,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             continue
         key = match["key"]
         text = (_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)
-                if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+                if key in completed or story.plan_ref(top, key, history) == landed
+                else story._plan(top, key, history=history))
         specs = task.rows(task.sections(text))
         parts = []
         for tid, spec in specs.items():

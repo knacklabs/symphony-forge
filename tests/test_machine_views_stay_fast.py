@@ -4,6 +4,7 @@ GitHub's pull request lists from the board's copy, kept a minute.
 Git Trace2 counts command starts and the stub gh logs its calls; there is no wall-clock assertion.
 """
 import json
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -19,7 +20,8 @@ def key_of(name):
 
 
 def lists(gh):
-    return [call for call in gh.calls() if call[:2] == ["pr", "list"]]
+    """The open and weekly merged lists the board shares; the one older-merges request has its own cache."""
+    return [call for call in gh.calls() if call[:2] == ["pr", "list"] and not any("merged:*.." in a for a in call)]
 
 
 def finish(repo, monkeypatch, names):
@@ -30,6 +32,15 @@ def finish(repo, monkeypatch, names):
         **{f"plans/{key}.md": DOC for key in map(key_of, names)},
         **{f"plans/{key}.read.md": "---\nround: 1\n---\n\n# Notes\n" for key in map(key_of, names)}})
     repo.git("push", "-q", "origin", *(f"HEAD:refs/heads/fix/{name}" for name in names))
+    main = repo.git("branch", "--show-current").strip()
+    for key in map(key_of, names):  # each finished story keeps a local and a remote branch that differ
+        repo.git("switch", "-qc", f"story/{key}", main)
+        repo.write(f"plans/{key}.md", DOC + "\nA remote edit.\n")
+        repo.git("commit", "-qam", f"Edit story {key}")
+        repo.git("push", "-q", "origin", f"story/{key}")
+        repo.write(f"plans/{key}.md", DOC + "\nA local edit.\n")
+        repo.git("commit", "-qam", f"Edit story {key} here")
+        repo.git("switch", "-q", main)
     repo.git("fetch", "-q", "origin")
 
 
@@ -87,11 +98,28 @@ def test_2_machine_views_cost_a_small_fixed_number_of_git_calls_per_item_in_prog
     monkeypatch.setenv("FORGE_NOW", NOW)
     counts = {}
     names = [f"busy-{n}" for n in range(12)]
-    for size, added in ((4, names[:4]), (8, names[4:8]), (12, names[8:])):
+    asked = {}
+    for step, (size, added) in enumerate(((4, names[:4]), (8, names[4:8]), (12, names[8:]))):
         progress(repo, tmp_path, added)
+        later = datetime.fromisoformat(NOW) + timedelta(seconds=120 * step)  # each view finds the cache stale
+        monkeypatch.setenv("FORGE_NOW", later.isoformat())
+        before = len(lists(gh))
         rows, counts[size] = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+        asked[size] = len(lists(gh)) - before
         titles = {row["title"] for row in rows["items"]}
         assert {f"Open {key_of(name)}" for name in names[:size]} <= titles
     step = (counts[12] - counts[4]) / 8
     assert step <= PER_ITEM, f"each item in progress cost {step} git commands: {counts}"
     assert counts[12] - counts[8] == counts[8] - counts[4], f"cost is not linear in items: {counts}"
+    assert asked[4] == asked[8] == asked[12], f"GitHub calls grew with the items in progress: {asked}"
+
+
+@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+def test_3_next_json_shares_the_boards_github_cache(repo, gh, monkeypatch, tmp_path, history):
+    client(repo, gh, history)
+    monkeypatch.setenv("FORGE_NOW", NOW)
+    traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
+    assert lists(gh), "the board asked GitHub nothing"
+    asked = len(lists(gh))
+    traced(repo, monkeypatch, "next", tmp_path / "trace.jsonl")
+    assert lists(gh)[asked:] == [], "next --json asked GitHub for lists the board had just read"

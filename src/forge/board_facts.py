@@ -84,7 +84,7 @@ def prs(top: Path) -> Item | None:
             # A capped week need not hold all of its rows, so its counts are unknown.
             weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
         return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
-    return _cached(top, "prs-cache", fetch)
+    return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:

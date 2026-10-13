@@ -199,7 +199,9 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     trees = story.worktrees(top)
     # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
     github = board_facts.prs(top) if history is not None else None
-    if github is None:
+    if github is None and history is not None:  # the board's one try failed: unknown, no live call per item
+        merged_prs, opened = set(), []
+    elif github is None:
         merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
         opened = _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
     else:
