@@ -187,7 +187,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
-    started: dict[str, dict[str, Any]] = {}  # open fixes here and on the remote, by name
+    started: dict[str, tuple[dict[str, Any], Path | None]] = {}  # open fixes by name, with their checkout here
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
@@ -214,7 +214,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             else:
-                started[name] = state
+                started[name] = (state, path)
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
@@ -229,7 +229,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 or story.show(top, landed, repo.state_path(name)) is not None):  # merged
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
-            started[name] = state
+            started[name] = (state, None)
             lines += _item(name, f"The fix {name}", state, top, None, prs, refusals)
     for path in sorted(trees.values()):  # a spec read stopped on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
@@ -258,7 +258,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     return _due(top, history) + _failed_schedule(top, started) + _hotspots(top, trees) + lines, states
 
 
-def _failed_schedule(top: Path, started: dict[str, dict[str, Any]]) -> list[str]:
+def _failed_schedule(top: Path, started: dict[str, tuple[dict[str, Any], Path | None]]) -> list[str]:
     """Each workflow whose latest scheduled run on the default branch failed: its failed jobs and
     tests, and the started fix's next step, or the command that starts one."""
     def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
@@ -270,10 +270,12 @@ def _failed_schedule(top: Path, started: dict[str, dict[str, Any]]) -> list[str]
                   f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
                   *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else [])]
         why = f"The scheduled {workflow} run fails on {branch}"
-        name = next((name for name, state in sorted(started.items()) if state.get("why") == why), None)
+        name = next((name for name, (state, _) in sorted(started.items()) if state.get("why") == why), None)
         if name:
-            step = STATUS.get(started[name].get("status", "started"), ("", "forge close {item}"))[1]
-            lines += [f"The fix {name} is started for it.", f"Next: {step.format(item=name)}"]
+            state, path = started[name]
+            step = STATUS.get(state.get("status", "started"), ("", "forge close {item}"))[1]
+            lines += [f"The fix {name} is started for it.",
+                      f"Next: {step.format(item=name)}" if path or state.get("status") == "ready" else _elsewhere(top, name, f"The fix {name}")]
             continue
         jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
         done = f"{jobs} of the scheduled {workflow} workflow pass again on the next scheduled run on {branch}"
@@ -754,8 +756,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if statuses is not None:
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
-        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
-        return [f"{label} was started by {starter} and runs on their machine."]
+        return [_elsewhere(top, item, label)]
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         if "question" in stop:
@@ -831,6 +832,11 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if step == "forge work {item}" and not built and state.get("tool"):
         built = f"  # {state['tool'].title()} builds it"
     return answered + [sentence.format(**values), f"Next: {step.format(**values)}{built}"]
+
+
+def _elsewhere(top: Path, item: str, label: str) -> str:
+    starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+    return f"{label} was started by {starter} and runs on their machine."
 
 
 def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:

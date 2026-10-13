@@ -113,7 +113,10 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     elsewhere = repo.forge("next", cwd=client)
     assert elsewhere.returncode == 0, elsewhere.stderr
     lines = elsewhere.stdout.splitlines()
-    assert lines[lines.index(expected[0]):][:4] == expected
+    shown = lines[lines.index(expected[0]):][:4]
+    assert shown[:3] == expected[:3]
+    assert shown[3].startswith(f"The fix {fix} was started by ")
+    assert shown[3].endswith(" and runs on their machine.")
     assert "forge fix start" not in elsewhere.stdout
 
     monkeypatch.setenv("FORGE_NOW", "2030-01-03T10:00:00+00:00")
