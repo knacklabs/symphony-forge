@@ -19,7 +19,8 @@ PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::
          "- New readers by name: tests/test_greeting.py::test_case[new]\n"
          "- Readers coming back by name: tests/test_greeting.py::test_case[back]\n"
          "- The page greets readers: src/greet.test.ts\n"
-         "- The page greets readers again: __tests__/greeting.js")
+         "- The page greets readers again: __tests__/greeting.js\n"
+         "- Every greeting: tests/test_greeting.py")
 GREETING = ("import pytest\n\n\ndef test_returning():\n    assert True\n\n\n"
             "@pytest.mark.parametrize(\"who\", [\"new\", \"back\"])\ndef test_case(who):\n"
             "    assert who == \"new\"\n\n\n"
@@ -56,13 +57,16 @@ def _close(env, adopted, command, red=False):
 
 
 @pytest.mark.parametrize("adopted, red, options", [(False, False, ""), (True, False, ""),
-                                                    (False, True, ""), (False, False, " -ra")],
-                         ids=["new-client", "earlier-adoption", "failed-test", "own-report-options"])
+                                                    (False, True, ""), (False, False, " -ra"),
+                                                    (False, False, " && {run} tests/test_other.py")],
+                         ids=["new-client", "earlier-adoption", "failed-test", "own-report-options",
+                              "two-pytest-runs"])
 def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red, options):
-    python = Path(sys.executable).as_posix()
-    # The client's own report options, such as -ra, cannot hide close's per-test results.
-    command = f'"{python}" -m pytest -q -p no:cacheprovider tests/test_greeting.py{options}'
-    prompt, published = _close(env, adopted, command if red else command + ' -k "not back"', red)
+    run = f'"{Path(sys.executable).as_posix()}" -m pytest -q -p no:cacheprovider'
+    # The client's own report options, such as -ra, cannot hide close's per-test results, and a
+    # second pytest in the command keeps the first one's results.
+    command = f'{run} tests/test_greeting.py' + ("" if red else ' -k "not back"')
+    prompt, published = _close(env, adopted, command + options.format(run=run), red)
     # Close keeps the worker's words and adds each named test's result next to it.
     assert ("- Returning readers are greeted: tests/test_greeting.py::test_returning "
             "(passed in close's run) (including empty names)") in published
@@ -70,8 +74,13 @@ def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red, 
     assert ("- Staff can sign in: tests/test_greeting.py::test_role[staff,active] "
             "(passed in close's run)") in published
     assert "- Empty names are refused: not run" in published
-    assert "- Old readers stay greeted: not run" in published
-    assert "test_empty" not in published and "test_other" not in published
+    assert ("- Old readers stay greeted: tests/test_other.py::test_other (passed in close's run)"
+            if "test_other" in options else "- Old readers stay greeted: not run") in published
+    assert "test_empty" not in published
+    # A name that matches several cases counts the cases that ran.
+    assert ("- Every greeting: tests/test_greeting.py (3 passed, 1 failed, 1 skipped in close's run)"
+            if red else "- Every greeting: tests/test_greeting.py (3 passed, 1 skipped in close's run)"
+            ) in published
     # A named case matches only itself; a case that failed shows as failed.
     assert "- New readers by name: tests/test_greeting.py::test_case[new] (passed in close's run)" in published
     assert ("- Readers coming back by name: tests/test_greeting.py::test_case[back] (failed in close's run)"

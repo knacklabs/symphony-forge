@@ -7,6 +7,7 @@ line carries the reviewer's Gain, Work and Harm scores (see score.py).
 """
 from __future__ import annotations
 
+import collections
 import contextlib
 import hashlib
 import json
@@ -383,7 +384,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     start, clock = repo.now(), time.monotonic()
     outcome = "skipped"
     results = results_path(top)
-    results.unlink(missing_ok=True)  # a run that skips or uses another runner leaves no results
+    # Close empties the results once, before the command; each pytest in it only appends.
+    results.unlink(missing_ok=True)
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
@@ -608,6 +610,9 @@ TEST_NAME = re.compile(r"(?<![\w/.-])(?:[\w.-]+/)*(?:test_[\w-]*|[\w-]+_test)\.p
                        r"(?:::(?:[^\s,;\[]+|\[[^\]]*\])+)?")
 
 
+RESULT_WORDS = ("passed", "failed", "error", "skipped", "xfail", "xpass")
+
+
 def results_path(top: Path) -> Path:
     """Where Forge's pytest hook writes this branch's last test run's per-test results."""
     branch = repo.current_branch(top)
@@ -644,17 +649,20 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         path, _, test = name.partition("::")
         case = re.sub(r"\[.*", "", test.rsplit("::", 1)[-1])
         source = (top / path).read_text("utf-8", "replace") if (top / path).is_file() else ""
-        outcomes = {outcome for outcome, node in ran if _ran(name, node)}
+        matches = [(outcome, node) for outcome, node in ran if _ran(name, node)]
         if not source or case and not re.search(rf"\b{re.escape(case)}\b", source):
             said = "not run"
         elif report is None:
             said = f"{name} (in the branch; close's test run gives its result)"
-        elif not report.startswith(fasttest.RESULTS_HEADER):  # another runner, or no run
+        elif fasttest.RESULTS_HEADER not in report:  # another runner, or no run
             said = f"{name} (not checked)"
-        elif outcomes:
-            word = ("failed" if outcomes & {"failed", "error"} else
-                    "passed" if "passed" in outcomes else sorted(outcomes)[0])
-            said = f"{name} ({word} in close's run)"
+        elif len(matches) == 1 and re.sub(r"\[.*", "", matches[0][1]).rsplit("::", 1)[-1] == \
+                re.sub(r"\[.*", "", name).rsplit("::", 1)[-1]:  # the named test itself
+            said = f"{name} ({matches[0][0]} in close's run)"
+        elif matches:  # a file, class or parametrized test: count the cases that ran
+            counts = collections.Counter(outcome for outcome, _ in matches)
+            said = f"{name} ({', '.join(f'{counts[word]} {word}' for word in RESULT_WORDS if counts[word])}" \
+                   " in close's run)"
         else:
             said = "not run"  # a list never names a test close did not run
         return said + found[0][len(name):]

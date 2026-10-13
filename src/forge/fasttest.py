@@ -357,7 +357,8 @@ FILE, ROOT = [], []
 def pytest_configure(config):
     if os.environ.get("FORGE_TEST_RESULTS") and not hasattr(config, "workerinput"):
         FILE.append(pathlib.Path(os.environ["FORGE_TEST_RESULTS"]))
-        FILE[0].write_text(""" + repr(RESULTS_HEADER) + """, "utf-8")
+        with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
+            results.write(""" + repr(RESULTS_HEADER) + """)
     ROOT.append(pathlib.Path(str(config.rootdir)))
 def pytest_runtest_logreport(report):
     if not FILE or report.when != "call" and report.passed:
