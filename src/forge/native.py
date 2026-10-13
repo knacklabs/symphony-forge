@@ -240,9 +240,8 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
                       run_id=pending["run_id"], outcome=outcome)
     if asked:
         print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
-        if worker.is_published(top, item):  # the pull request's record shows the open question
-            from forge import close
-            close._refresh_record(top, item, state)
+        from forge import close
+        close.share_wait(top, item, state)
     repo.record_timing(top, item, "worker round", pending["at"],
                        time.monotonic() - (time.time() - pending["started"]), outcome, pending["model"])
     if left:

@@ -545,11 +545,30 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
-    from forge.worker import is_published  # worker imports this module
-    if is_published(top, item):  # every machine's board sees the question
-        _push(top, repo.current_branch(top))
-        _refresh_record(top, item, state)
+    share_wait(top, item, state, push=True)
     repo.refuse(REFUSALS["stuck"], item=item, question=question)
+
+
+def branch_pr(top: Path, state: dict[str, Any]) -> dict[str, Any] | None:
+    """The item's open pull request, found on GitHub by its branch; None without one, without
+    GitHub or when the branch was never pushed."""
+    branch = state.get("branch") or repo.current_branch(top)
+    if repo.run("git", "rev-parse", "-q", "--verify", f"refs/remotes/origin/{branch}", cwd=top).returncode:
+        return None
+    with contextlib.suppress(repo.Refused, subprocess.CalledProcessError, ValueError):
+        pr = _pull_request(top, branch)
+        return pr if pr and pr.get("state") == "OPEN" else None
+    return None
+
+
+def share_wait(top: Path, item: str, state: dict[str, Any], push: bool = False) -> None:
+    """Forge just recorded a wait on a person: when the branch has a pull request, publish the
+    record (pushing first when the wait lives in the committed state), so every machine's board
+    sees the wait."""
+    if pr := branch_pr(top, state):
+        if push:
+            _push(top, state.get("branch") or repo.current_branch(top))
+        _refresh_record(top, item, state, pr)
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:

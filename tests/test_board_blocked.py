@@ -3,6 +3,7 @@
 Real Forge commands and git build every item; only GitHub, the reviewer and the reader are stubs.
 Board output is all the test reads.
 """
+import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -80,7 +81,18 @@ def test_3_blocked_or_slow_names_each_reason_and_how_long(env, monkeypatch, prev
                          {"loop.py": "y\n"})
     review_rounds(env, "other", other, 1, "a")
 
+    # A fix started 30 hours ago whose tests are running has no idle time, so it is never slow.
+    at(monkeypatch, now - timedelta(hours=30))
+    env.start("busy", "fix/busy", ".factory/fixes/busy.json", {**FIX, "why": "Busy"}, {"busy.py": "x\n"})
+    with (env.repo.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as log:
+        log.write(json.dumps({"id": "busy-tests", "event": "run start", "kind": "test", "item": "busy",
+                              "at": (now - timedelta(hours=30)).isoformat()}) + "\n")
+
     at(monkeypatch, now)
+    shown = board(env.repo)
+    busy = next(row for row in shown["items"] if row["id"] == "busy")
+    assert busy["state"] == "in progress" and busy["idle_since"] is None
+    assert "busy" not in {row["id"] for row in shown["team"]["blocked"]}
     rows = blocked_rows(env.repo)
     assert rows[("SHOP/T1", "stalled")]["seconds"] == pytest.approx(25 * 3600, abs=60)
     assert rows[("loop", "looping")]["seconds"] == 30 * 3600

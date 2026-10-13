@@ -171,7 +171,7 @@ def needs_you(top: Path, history: Item, rows: list[Item], best: dict[str, Any], 
     from forge import nextstep  # nextstep imports this module
 
     # ponytail: each waiting item reads this machine's event log once; share one read if boards get slow.
-    bodies = {pr.get("headRefName"): pr.get("body") or "" for pr in (github or {}).get("open", [])}
+    opened = {pr.get("headRefName"): pr for pr in (github or {}).get("open", [])}
     found = []
     for row in rows:
         waits = []
@@ -183,8 +183,10 @@ def needs_you(top: Path, history: Item, rows: list[Item], best: dict[str, Any], 
         elif row.get("state") in ("in progress", "ready to merge"):
             state = best.get(repo.state_path(row["id"]), ({}, None))[0]
             branch = _branch(row, state)
+            # The state at the pull request's head when this checkout is behind it, as the row reads it.
+            state = nextstep.at_ref(top, row["id"], {**state, "branch": branch}, opened.get(branch))
             waits = nextstep.person_waits(top, row["id"], state, history.get("worktrees", {}).get(branch),
-                                          row["stage"], bodies.get(branch, ""))
+                                          row["stage"], (opened.get(branch) or {}).get("body") or "")
         found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
     for entry in found:
         entry["waited_seconds"] = entry.pop("seconds")
