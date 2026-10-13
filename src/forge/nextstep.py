@@ -271,7 +271,12 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
     def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
         return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=-]", " ", text).split())
     alerts = {}
-    for run in board_facts.failed_schedules(top):
+    runs = board_facts.failed_schedules(top)
+    # ponytail: names compared among failed workflows only; one that later fails too renames its twin's fix.
+    names = [clean(run["workflow"]) for run in runs]
+    for run, name in zip(runs, names):
+        if names.count(name) > 1:  # the file tells workflows apart whose names read alike
+            run = {**run, "workflow": f"{run['workflow']} ({run['file']})"}
         workflow, branch = clean(run["workflow"]), clean(run["branch"])
         why = f"The scheduled {workflow} run fails on {branch}"
         jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"

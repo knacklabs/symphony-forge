@@ -2,8 +2,8 @@
 
 Rule: for each workflow whose latest scheduled run on the default branch failed, next names its
 failed jobs (which carry the platform) and every failing test as pytest printed it, and prints the
-fix start command, or that started fix's own lines, here or on another machine. GitHub is asked
-per workflow at most once a minute, and an unreadable GitHub prints nothing. Only gh is faked.
+fix start command, or that started fix's own lines, here or on another machine. Recent runs come
+in one request at most once a minute, and an unreadable GitHub prints nothing. Only gh is faked.
 """
 STORY = "nightly-red-shows-in-next"
 
@@ -18,9 +18,15 @@ from conftest import ROOT
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git
 from test_setup import _fresh_client, _version
 
-WORKFLOWS = ("workflow", "list")
-NIGHTLY = ("run", "list", "--workflow", "1", "--branch", "main", "--event", "schedule")
-SMOKE = ("run", "list", "--workflow", "2", "--branch", "main", "--event", "schedule")
+RUNS = ("api", "repos/{owner}/{repo}/actions/runs")
+
+
+def runs(*rows):
+    """GitHub's scheduled runs, newest first: (run id, workflow id, name, conclusion)."""
+    return json.dumps({"total_count": len(rows), "workflow_runs": [
+        {"id": run, "workflow_id": workflow, "name": name, "conclusion": conclusion,
+         "path": f".github/workflows/{name.lower().replace(' & ', '-').replace(' ', '-')}-{workflow}.yml"}
+        for run, workflow, name, conclusion in rows]})
 LOG = "\n".join([
     "full suite on windows-latest, group 2 of 3\tRun tests\t2030-01-01T03:40:00Z "
     "FAILED tests/test_a.py::test_one - AssertionError",
@@ -59,16 +65,15 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     assert made.returncode == 0, made.stdout + made.stderr
     monkeypatch.setenv("FORGE_NOW", "2030-01-01T10:00:00+00:00")
 
-    gh.respond(*WORKFLOWS, exit=1, stderr="network unavailable")
+    gh.respond(*RUNS, exit=1, stderr="network unavailable")
     offline = repo.forge("next", cwd=client)
     assert offline.returncode == 0, offline.stderr
     assert "The latest scheduled" not in offline.stdout
 
-    # Each workflow's own latest scheduled run counts: a frequent one's success hides no failure.
-    gh.respond(*WORKFLOWS, stdout=json.dumps([{"id": 1, "name": "forge-next", "newField": 1},
-                                              {"id": 2, "name": "codex-smoke"}]))
-    gh.respond(*SMOKE, stdout=json.dumps([{"databaseId": 11, "conclusion": "success"}]))
-    gh.respond(*NIGHTLY, stdout=json.dumps([{"databaseId": 7, "conclusion": "failure"}]))
+    # Each workflow's own newest scheduled run counts: another's newer success hides no failure.
+    gh.respond(*RUNS, stdout=runs((11, 2, "codex-smoke", "success"), (7, 1, "forge-next", "failure"),
+                                  (5, 1, "forge-next", "success")))
+    asked = len(gh.calls())
     gh.respond("run", "view", "7", "--log-failed", stdout=LOG)
     red = repo.forge("next", cwd=client)
     assert red.returncode == 0, red.stderr
@@ -81,9 +86,11 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
         "tests/test_d.py::test_setup.",
         COMMAND]
     assert "codex-smoke" not in red.stdout
+    assert len([call for call in gh.calls()[asked:] if call[:2] == list(RUNS)]) == 1
+    assert not [call for call in gh.calls() if call[:1] == ["workflow"]]
     asked = len(gh.calls())
     repo.forge("next", cwd=client)  # cached for a minute: no new request
-    assert [call for call in gh.calls()[asked:] if call[:1] in (["workflow"], ["run"])] == []
+    assert [call for call in gh.calls()[asked:] if call[:2] == list(RUNS) or call[:1] == ["run"]] == []
 
     started = repo.forge(*shlex.split(COMMAND.removeprefix("Next: forge ")), cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
@@ -93,7 +100,7 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     # A later run still fails, now with twelve tests: next names them all, then the fix's own lines.
     monkeypatch.setenv("FORGE_NOW", "2030-01-02T10:00:00+00:00")
     many = [f"tests/test_c.py::test_{n}" for n in range(12)]
-    gh.respond(*NIGHTLY, stdout=json.dumps([{"databaseId": 9, "conclusion": "failure"}]))
+    gh.respond(*RUNS, stdout=runs((9, 1, "forge-next", "failure")))
     gh.respond("run", "view", "9", "--log-failed", stdout="\n".join(
         f"full suite on windows-latest, group 1 of 3\tRun tests\tx FAILED {test} - boom" for test in many))
     expected = ["The latest scheduled forge-next run on main failed in: "
@@ -126,19 +133,15 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     assert "forge fix start" not in elsewhere.stdout
 
     monkeypatch.setenv("FORGE_NOW", "2030-01-03T10:00:00+00:00")
-    gh.respond(*NIGHTLY, stdout=json.dumps([{"databaseId": 8, "conclusion": "success"}]))
+    gh.respond(*RUNS, stdout=runs((8, 1, "forge-next", "success")))
     assert "The latest scheduled" not in repo.forge("next", cwd=client).stdout
 
-    # Two workflows share a display name: each gets its own alert, told apart by its file.
+    # Two workflows whose names read alike in a command: each gets its own alert, told apart by file.
     monkeypatch.setenv("FORGE_NOW", "2030-01-04T10:00:00+00:00")
-    gh.respond(*WORKFLOWS, stdout=json.dumps([
-        {"id": 3, "name": "nightly", "path": ".github/workflows/nightly-a.yml"},
-        {"id": 4, "name": "nightly", "path": ".github/workflows/nightly-b.yml"}]))
-    for run, workflow in ((21, "3"), (22, "4")):
-        gh.respond("run", "list", "--workflow", workflow, stdout=json.dumps(
-            [{"databaseId": run, "conclusion": "failure"}]))
-        gh.respond("run", "view", str(run), "--log-failed", stdout=f"{workflow} job\tRun\tx")
+    gh.respond(*RUNS, stdout=runs((21, 3, "Build & Test", "failure"), (22, 4, "Build Test", "failure")))
+    for run in (21, 22):
+        gh.respond("run", "view", str(run), "--log-failed", stdout=f"job {run}\tRun\tx")
     twins = repo.forge("next", cwd=client).stdout.splitlines()
-    assert "The latest scheduled nightly (nightly-a.yml) run on main failed in: 3 job." in twins
-    assert "The latest scheduled nightly (nightly-b.yml) run on main failed in: 4 job." in twins
-    assert len([line for line in twins if line.startswith("Next: forge fix start")]) == 2
+    assert "The latest scheduled Build & Test (build-test-3.yml) run on main failed in: job 21." in twins
+    assert "The latest scheduled Build Test (build-test-4.yml) run on main failed in: job 22." in twins
+    assert len({line for line in twins if line.startswith("Next: forge fix start")}) == 2
