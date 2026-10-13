@@ -10,12 +10,102 @@
   "base": "29bded0c7a63846d66b89477cf4158c024c6d711",
   "branch": "fix/board-json-fast",
   "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about three times faster (board about 11 seconds and next about 8 seconds with a warm GitHub cache) with the same JSON",
+  "flagged": [
+    "src/forge/nextstep.py",
+    "tests/test_machine_views_stay_fast.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 214,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (",
+      "work": 3
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 201,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allowance mismatch: forge next --json can use stale pull request state",
+      "work": 2
+    },
+    {
+      "area": "test_1_machine_views_cost_no_git_calls_per_finished_item() in tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 31,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof that machine-view calls stay bounded as stories grow",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6d74b968f2f063ef3dcecf0603ff4d7023904a9bbffe998550e88e95b23dbf7f",
+    "changed": "88553ece4fbbb3ad90c895e89bb4139692cecf7d53d1682c28733eb1c2b80483",
+    "commit": "8b367bb9d07ea16d79b0ee69cd465eb09da603c0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 2\nRaise: Not done. The new machine-view path still calls `_stories(top, history)` at this line. `_stories` runs `story.show` for every landed story (`nextstep.py:439-441`) and again for every unfinished remote story (`nextstep.py:448-456`); `story.show` starts a `git show` process. The number of git calls therefore grows with the story count, including when finished stories are skipped after `_stories` returns. The branch has not met the stated bounded-call requirement for `forge next --json`.",
+        "file": "src/forge/nextstep.py",
+        "gain": 5,
+        "harm": 2,
+        "line": 214,
+        "priority": "P1",
+        "title": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. The recorded allowance promises the same JSON, but this line replaces `forge next --json`'s fresh PR lists with the board's list cached for 60 seconds (`board_facts.py:32-43`). If a teammate merges a PR after a board read, a subsequent `forge next --json` within that minute can still treat it as open and offer the old next step. Forge's own PR writes invalidate the cache (`repo.py:141-143`); an external merge does not. This changes the command's observable answer in a normal team workflow.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 201,
+        "priority": "P1",
+        "title": "Allowance mismatch: forge next --json can use stale pull request state",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The named call-count proof adds only finished fixes here. It passes while `forge next --json` starts one or more `git show` processes per story through `_stories` (`nextstep.py:439-456`). None of the named proof cases grows the story count and checks the git-call bound, so the test does not detect a concrete violation of the Done-when behavior.",
+        "file": "tests/test_machine_views_stay_fast.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 31,
+        "priority": "P1",
+        "title": "Not done: proof that machine-view calls stay bounded as stories grow",
+        "work": 2
+      }
+    ],
+    "id": "370185be-b88b-4ae3-affc-843d22c4c2f9",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T08:16:46.065962+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T13:14:18.022225+00:00",
+      "step": "review"
     }
   ],
   "why": "The Forge pane stays on Loading in Forge's own repo, because forge board --json and forge next --json each take about 40 seconds and the pane gives up after 20"

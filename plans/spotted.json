@@ -3609,6 +3609,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tAllowance mismatch: forge next --json can use stale pull request state\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 201,
+      "text": "Allowance mismatch: forge next --json can use stale pull request state",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tApproved stories with no started part still show building; COUNTS owns that correction.",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3759,6 +3770,17 @@
       "text": "Not done: a nightly run with more than ten failures does not name every failing test",
       "from": "blocking",
       "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 214,
+      "text": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (",
+      "from": "blocking",
+      "item": "board-json-fast",
       "status": "open",
       "closed_by": null
     },
@@ -7268,6 +7290,17 @@
       "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
       "from": "worker",
       "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: proof that machine-view calls stay bounded as stories grow\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 31,
+      "text": "Not done: proof that machine-view calls stay bounded as stories grow",
+      "from": "blocking",
+      "item": "board-json-fast",
       "status": "open",
       "closed_by": null
     },
