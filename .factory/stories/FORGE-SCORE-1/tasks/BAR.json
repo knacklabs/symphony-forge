@@ -197,8 +197,8 @@
       "gain": 3,
       "harm": 1,
       "line": 104,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
       "round": 7,
       "security": false,
       "title": "Disputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop",
@@ -224,7 +224,13 @@
     "branch_diff": "957d32ca7bf05f0159d629ac708df3382b14b10c11d3da811fb9c1cff1301f2d",
     "changed": "d5a99b55ef3df4a5a8bc82895548c696232a36afe956161cbbb94116a7b2840b",
     "commit": "ec095a2e792698d0d92b005e7e4a8a3c2c16076b",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 1\nRaise: Not done \u2014 This is distinct from the earlier below-bar fix: an at-bar note with Harm 3 still makes `held` true after it receives a `Disposition: keep` line. After three blocked read rounds, `_blocked_reads` therefore keeps the stop active and `forge read` refuses a fourth round, although the note has been disposed and is no longer open.",
@@ -238,12 +244,13 @@
       }
     ],
     "id": "a29e7b5b-e3df-4d83-aac7-f4d95034d43b",
-    "status": "blocked"
+    "status": "clean"
   },
   "settled_areas": [
-    "src/forge/review.py"
+    "src/forge/review.py",
+    "src/forge/score.py"
   ],
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T18:21:59.003408+00:00",
@@ -284,7 +291,11 @@
   ],
   "stop": {
     "at": "2026-10-13T05:53:58.032693+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/score.py",
-    "wait_id": "d40651a9-deaf-4de2-925e-e8a0f4e66494"
+    "reason": "Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
+    "wait_id": "d40651a9-deaf-4de2-925e-e8a0f4e66494",
+    "worker_round": null
   }
 }
