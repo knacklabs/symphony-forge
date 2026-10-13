@@ -66,8 +66,7 @@ REFUSALS = {
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
-    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. "
-                  "Ask the human to accept, narrow or split before reading again, in these words:\n{question}",
+    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. {question}",
                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
                    'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
@@ -1019,6 +1018,8 @@ def read_question(doc: str, notes: str) -> str:
     found = sections(doc)
     gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
     return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
+                           score.who(flagged, "Ask the human to accept, narrow or split before reading "
+                                              "again, in these words:"),
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else

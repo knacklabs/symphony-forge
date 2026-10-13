@@ -529,7 +529,8 @@ def test_15_review_loop_stop_needs_a_decision_on_the_board_and_next(client, tmp_
     next_step = client.forge("next")
     assert next_step.returncode == 0, next_step.stderr
     assert "Close stopped" in next_step.stdout
-    assert "Ask the human to narrow the part, split it, or accept the remaining findings." in next_step.stdout
+    # No scored findings saved, so the owner decides.
+    assert "Ask the human to narrow the part, split it, or accept the remaining findings, in these words:" in next_step.stdout
     data, text, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["stage"] == "hotspot"

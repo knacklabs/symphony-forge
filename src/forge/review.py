@@ -260,10 +260,10 @@ def plain(title: str, body: str = "") -> str:
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
 
 
-def question(name: str, delivers: str, flagged: list[str], accept: str,
+def question(name: str, delivers: str, flagged: list[str], who: str, accept: str,
                   parts: str = "Done when") -> str:
-    """The question a stopped read or review loop asks the human, ready to ask as written."""
-    return "\n".join([f"{name}: {delivers}" if delivers else name,
+    """Who decides a stopped read or review loop, then its question, ready to ask as written."""
+    return "\n".join([who, f"{name}: {delivers}" if delivers else name,
                       *(["It still has these problems:", *flagged] if flagged else []),
                       "Accept, narrow or split?",
                       f"- Accept: {accept}",
@@ -294,7 +294,9 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
     rows = [(n, plain(finding["title"], finding.get("body", "")), score.of(finding))
             for n, finding in enumerate(result.get("findings", []), 1) if id(finding) in opened]
     stop = state.get("stop") or {}
-    said = question(name, delivers, score.table(rows),
+    said = question(name, delivers, score.table(rows), score.who(rows, (
+                        "Ask the human to narrow the part, split it, or accept the remaining findings, "
+                        "in these words:")),
                                f"every finding in this review, the {len(rows)} listed, is dismissed with "
                                "your reason and recorded; close then goes on to the checks, and merging "
                                "is still a separate step.")

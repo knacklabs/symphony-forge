@@ -35,8 +35,8 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
         assert "shows the open notes as one table ranked by score" in guide
         assert ("The coordinator settles a reversible note with Harm 1 or 2 itself and tells the owner "
                 "after, in one line.") in guide
-        assert ("when a cold read or review loop stops and every open note has Harm 1 or 2, settle it "
-                "yourself.") in guide
+        assert ("The stop rule: the printed stop says who decides. When every open note has Harm 1 or 2, "
+                "it says \"Every open note has Harm 1 or 2: settle it yourself") in guide
         assert "never a dismissal for being unnecessary, rare or low value" not in guide
         assert "whatever files they were in" not in guide
 
@@ -66,6 +66,9 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     stop = _round(env, item, where, 4).stderr
     assert _table(stop) == rows, stop
     assert "Accept, narrow or split?" in stop.split(rows[-1], 1)[1]
+    # A Harm 3 note is open, so the owner decides.
+    assert ("Ask the human to narrow the part, split it, or accept the remaining findings, in these words:"
+            in stop and "settle it yourself" not in stop)
     assert "\n".join(rows) in repo.forge("next").stdout
 
     # A stop with a finding saved before scores and a scored one: every open finding is a plain

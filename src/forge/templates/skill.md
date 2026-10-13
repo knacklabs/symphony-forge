@@ -1418,10 +1418,12 @@ Close also stops at the third finding in one area (a Python function, else the f
 proposes a structural move. The recorded choice settles the area: later findings there hold work
 only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
 
-The stop rule: when a cold read or review loop stops and every open note has Harm 1 or 2, settle
-it yourself. Choose accept or narrow, record it with a reason that gives the scores, and tell the
-owner after, in one line. Ask the owner only when a note has Harm 3 or more, the choice adds scope
-beyond the approved Done when, or it undoes a decision the owner made.
+The stop rule: the printed stop says who decides. When every open note has Harm 1 or 2, it says
+"Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) and tell the
+owner after." Then choose accept or narrow, record it with a reason that gives the scores, and
+tell the owner after, in one line; ask the owner instead only when the choice adds scope beyond
+the approved Done when or undoes a decision the owner made. Otherwise, with a note at Harm 3 or
+more or one without scores, it says "Ask the human", and the owner decides.
 When a cold read or review loop stops and you must ask, ask the human the question it printed, in
 its words, one item per question. It names the item and what it delivers, shows the open notes as one table ranked
 by score (number, the problem and who it hits, Gain, Work, Harm, and what is proposed), and says
