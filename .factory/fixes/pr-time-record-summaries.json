@@ -243,8 +243,8 @@
       "gain": 3,
       "harm": 2,
       "line": 56,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2): the only open note was a missing proof list, caused by the coordinator's one-line guide repair commit; the next commit carries the proof list forward",
       "round": 14,
       "security": false,
       "title": "Not done: proof list",
@@ -256,7 +256,13 @@
     "branch_diff": "a87e74695f945ca0f145c8a50f1d3116f300a6a402fa28a57ad3ae9548dabf7f",
     "changed": "0e1a3a18e03047a4b470efd91cca254bacbe1651c52c0f7afed2dc2e3ec2e78b",
     "commit": "6b694838fda8edc20fc04ef022efc709970fd8ca",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2): the only open note was a missing proof list, caused by the coordinator's one-line guide repair commit; the next commit carries the proof list forward",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 2\nRaise: Gate\nThe supplied proof list is `missing`. The branch adds command-level tests for the size limit, recent and folded rounds, and board totals, but none is mapped to the Done-when item. Forge therefore has no named proof for the required behavior.",
@@ -270,13 +276,14 @@
       }
     ],
     "id": "a81f3484-7526-4ea4-b3c5-02634cbb734c",
-    "status": "blocked"
+    "status": "clean"
   },
   "settled_areas": [
     "_compact() in src/forge/time_records.py",
-    "src/forge/time_records.py"
+    "src/forge/time_records.py",
+    "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py"
   ],
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
@@ -342,9 +349,13 @@
   "stop": {
     "area": "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
     "at": "2026-10-13T18:23:06.994873+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "61b65998-51fa-452e-9a5f-7a243bfb5cdb"
+    "reason": "Coordinator's call (Harm 2): the only open note was a missing proof list, caused by the coordinator's one-line guide repair commit; the next commit carries the proof list forward",
+    "wait_id": "61b65998-51fa-452e-9a5f-7a243bfb5cdb",
+    "worker_round": null
   },
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
