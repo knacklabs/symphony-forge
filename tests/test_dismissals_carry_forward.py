@@ -23,8 +23,8 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
     dismissed = env.close(item, "--dismiss", "1", "--because", reason)
     assert dismissed.returncode == 0, dismissed.stdout + dismissed.stderr
 
-    # A new commit that leaves the cited lines alone: the same finding stays dismissed.
-    env.commit(where, "app.py", "first = 0\n" + APP.replace("line20 = 20", "line20 = 21"))
+    # A new commit that moves the cited line and edits its neighbours: still dismissed.
+    env.commit(where, "app.py", "first = 0\n" + APP.replace("line2 = 2", "line2 = 0").replace("line4 = 4", "line4 = 0"))
     env.reviews(blocked(coupon))
     ready = env.close(item)
     assert ready.returncode == 0, ready.stdout + ready.stderr
@@ -32,9 +32,19 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
     assert f"Saving skips the coupon (app.py:3): dismissed because {reason}" in body(
         env.gh_calls("pr", "edit")[-1])
 
-    # A commit that changes the cited lines: the finding blocks again.
-    env.commit(where, "app.py", "first = 0\n" + APP.replace("line3 = 3", "line3 = 0"))
+    # A commit that changes the cited line: the finding blocks again.
+    changed = APP.replace("line3 = 3", "line3 = 0")
+    env.commit(where, "app.py", changed)
     env.reviews(blocked(coupon))
     again = env.close(item)
     assert again.returncode == 1, again.stdout + again.stderr
     assert "Saving skips the coupon" in again.stderr
+
+    # Dismissed again with the same reason: it holds on later commits that leave the new line alone.
+    redismissed = env.close(item, "--dismiss", "1", "--because", reason)
+    assert redismissed.returncode == 0, redismissed.stdout + redismissed.stderr
+    env.commit(where, "app.py", changed + "line21 = 21\n")
+    env.reviews(blocked(coupon))
+    held = env.close(item)
+    assert held.returncode == 0, held.stdout + held.stderr
+    assert "Ready:" in held.stdout

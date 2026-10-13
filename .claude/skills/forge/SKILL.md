@@ -920,10 +920,11 @@ story's work, using the same overlap rule as `forge task start`.
 
 **Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
 answers and fixed or dismissed findings, including the coordinator's recorded work notes.
-Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
-they cannot block or start another round. A new defect needs distinct text and new evidence.
-A dismissed finding stays dismissed while the lines its `file:line` cites are unchanged; once
-they change, a repeat of it blocks again and needs a fix or a new dismissal. Human acceptance still expires when the accepted version changes. New repos get this on init;
+Forge ignores repeats of disposed cold-read text or a fixed review title and file; they cannot
+block or start another round. A dismissed finding stays dismissed while the line its `file:line`
+cites is unchanged, even when it moves; once that line changes, a repeat of it blocks again and
+needs a fix or a new dismissal. A new defect needs distinct text and new evidence.
+Human acceptance still expires when the accepted version changes. New repos get this on init;
 existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
