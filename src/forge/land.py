@@ -270,6 +270,7 @@ def _queue(top: Path) -> int:
     default = repo.default_branch(top)
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
     changes, needs = [], {}
+    prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
         if not found:
@@ -297,12 +298,9 @@ def _queue(top: Path) -> int:
             files = {path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                                f"origin/{default}...HEAD", cwd=tree).split("\0")
                      if path and path != spotted.PATH and not path.startswith(".factory/")}
-            try:  # a check that failed after the ready receipt makes the change not ready
-                seen = checks._seen(tree, item, repo.git("rev-parse", "HEAD", cwd=tree))[0]
-            except repo.Refused:
-                seen = []
-            red = "fail" if any(result == checks.RED for _, result in seen) else "unknown"
-            ready = nextstep._item_readiness(item, state, tree, red)[0] == "ready"
+            pr = prs.get(branch)  # the board's readiness: its checks and pull request, as they are
+            ready = nextstep._item_readiness(item, state, tree, board._checks(
+                pr, repo.config(tree)["checks"])[0], pr=pr)[0] == "ready"
             changes.append((age, item, files, ready))
     changes.sort()
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}

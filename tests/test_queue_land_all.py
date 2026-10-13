@@ -11,12 +11,12 @@ import subprocess
 import sys
 import time
 import zlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-from conftest import GH_STUB, ROOT, _install
+from conftest import GH_STUB, ROOT, _install, machine_cores
 from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_setup import _fresh_client
@@ -74,6 +74,20 @@ if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:  # a branch's own
     own = here / ("checks-" + branch.replace("/", "-") + ".txt")
     if own.exists():
         answer(own.read_text())
+if args[:2] == ["api", "graphql"]:  # the board's one read of open pull requests and their checks
+    nodes = []
+    for path in sorted(here.glob("pr-*.json")):
+        found = pr(json.loads(path.read_text("utf-8"))["headRefName"])
+        if found["state"] != "OPEN":
+            continue
+        own = here / ("checks-" + found["headRefName"].replace("/", "-") + ".txt")
+        rows = ([json.loads(line) for line in own.read_text().splitlines()] if own.exists() else
+                [{"name": name, "status": "completed", "conclusion": "success"} for name in ("tests", "forge-pr-check")])
+        contexts = [{"__typename": "CheckRun", "name": row["name"], "status": row["status"].upper(),
+                     "conclusion": (row["conclusion"] or "").upper() or None} for row in rows]
+        nodes.append({**found, "commits": {"nodes": [{"commit": {"oid": found["headRefOid"], "statusCheckRollup": {
+            "contexts": {"pageInfo": {"hasNextPage": False}, "nodes": contexts}}}}]}})
+    answer(json.dumps({"data": {"repository": {"pullRequests": {"nodes": nodes}}}}))
 if args[:2] == ["pr", "create"]:
     branch = args[args.index("--head") + 1]
     number = zlib.crc32(branch.encode()) % 9000 + 100
@@ -122,6 +136,9 @@ _said = " ".join(args) + " ".join(Path(path).read_text("utf-8")
 for _own in Path(os.environ["AUTOREVIEW_STUB"]).parent.glob("reviews-fix-*.json"):
     if "Why: Change " + _own.stem[len("reviews-fix-"):] + "\\n" in _said:
         os.environ["AUTOREVIEW_STUB"] = str(_own)
+        with open(_own.with_name("review-starts.jsonl"), "a") as _log:  # when this fix's close got here
+            import time
+            _log.write(json.dumps({"fix": _own.stem[len("reviews-fix-"):], "at": time.time()}) + "\\n")
 '''
 SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 
@@ -198,16 +215,14 @@ def _places(env) -> int:
 
 
 def _in_close(env, *slugs: str) -> dict[str, tuple[float, float]]:
-    """When each fix's own land process entered close (its first pull request lookup after the
-    run's own) and when GitHub merged it, from the times the stub gh recorded."""
+    """When each fix was in close: from its review's start, which only its own close reaches, to
+    GitHub's merge of it, from the times the stub Autoreview and stub gh recorded."""
+    started = {row["fix"]: row["at"] for row in map(json.loads, (env.tmp / "review-starts.jsonl")
+                                                    .read_text("utf-8").splitlines())}
     timed = [json.loads(line) for line in (env.repo.bin / "gh-timed.jsonl").read_text("utf-8").splitlines()]
-    spans = {}
-    for slug in slugs:
-        looks = [call["at"] for call in timed if call["args"][:3] == ["pr", "list", "--head"]
-                 and call["args"][3] == f"fix/{slug}"]
-        merged = next(call["at"] for call in timed if call["args"][:3] == ["pr", "merge", _number(f"fix/{slug}")])
-        spans[slug] = looks[1], merged  # the first lookup is the run's own selection
-    return spans
+    return {slug: (started[slug], next(call["at"] for call in timed
+                                       if call["args"][:3] == ["pr", "merge", _number(f"fix/{slug}")]))
+            for slug in slugs}
 
 
 def _red(env, slug: str, status: str = "completed", conclusion: str | None = "failure") -> None:
@@ -233,6 +248,7 @@ def _first(env, *prefix: str, contains: str = "") -> int:
 
 def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypatch):
     env = client
+    machine_cores(env.repo, 4)  # two agent places for three changes
     for args in ((), ("cherry", "--all")):
         neither = env.repo.forge("land", *args)
         assert neither.returncode == 1
@@ -280,14 +296,13 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
     assert [line for line in lines if line.startswith("Starting ")] == [
         "Starting cherry.", "Starting banana.", "Starting apple."], out + err + refused
     places = _places(env)
+    assert places == 2
     spans = _in_close(env, "cherry", "banana", "apple")
-    entered = sorted(spans, key=lambda slug: spans[slug][0])
-    oldest = ["cherry", "banana", "apple"][:min(places, 3)]
-    assert set(entered[:len(oldest)]) == set(oldest), spans
-    at_once = max(sum(start <= spans[slug][0] < end for start, end in spans.values()) for slug in spans)
-    assert at_once <= places, spans
-    if places >= 2:
-        assert at_once >= 2, spans
+    # The two oldest start together, so both are in close before either merges; the newest enters
+    # only once one of them has merged and freed its place.
+    first_merge = min(spans["cherry"][1], spans["banana"][1])
+    assert max(spans["cherry"][0], spans["banana"][0]) < first_merge < spans["apple"][0], spans
+    assert sorted(spans, key=lambda slug: spans[slug][0])[-1] == "apple", spans
     assert "Left out gone: its pull request already merged." in lines, out + err + refused
     assert "Left out draft: its builder is not done yet." in lines, out + err + refused
     assert "Left out busy: another command works on it." in lines, out + err + refused
@@ -354,6 +369,15 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     held = _fix(env, monkeypatch, "loop", 3, {"loop.py": "x = 1\n"}, status="hotspot",
                 stop={"file": "loop.py", "round": 4, "at": datetime.now(timezone.utc).isoformat()},
                 review={"findings": [finding("P1", "Saving loses the name", "loop.py")], "dismissals": []})
+    # A stuck worker's stop, and a review loop stop nobody answered for 31 minutes.
+    _fix(env, monkeypatch, "worn", 4, {"worn.py": "x = 1\n"}, status="hotspot",
+         stop={"question": "Worn keeps failing the same test. Switch, same, narrow or split?", "tool": "claude"})
+    late = _fix(env, monkeypatch, "late", 5, {"late.py": "x = 1\n"}, status="hotspot",
+                stop={"file": "late.py", "round": 4,
+                      "at": (datetime.now(timezone.utc) - timedelta(minutes=31)).isoformat()},
+                review={"findings": [{"title": "Saving drops the date", "priority": "P1", "file": "late.py",
+                                      "line": 1, "body": "Gain 3, Work 2, Harm 1\nThe date is lost."}],
+                        "dismissals": []})
     record = held / ".factory" / "fixes" / "loop.json"
     before = record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)
     done = _all(env)
@@ -361,13 +385,20 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     lines = done.stdout.splitlines()
     assert "clean merged." in lines, done.stdout
     assert "Starting loop." not in lines
-    assert "Merged (1): clean · Ready to merge (0): none · Needs you (2): stuck, loop" in lines, done.stdout
-    summary = lines.index("Merged (1): clean · Ready to merge (0): none · Needs you (2): stuck, loop")
+    # Close's own 30-minute default answered the overdue stop, so that change closed and merged.
+    assert lines[0].startswith("Nobody answered the review loop stop in 30 minutes, so Forge recorded "
+                               "the repo's default choice: narrow"), done.stdout
+    assert "late merged." in lines and not late.exists(), done.stdout
+    summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
+    assert re.fullmatch(r"Merged \(2\): (clean, late|late, clean) · Ready to merge \(0\): none · "
+                        r"Needs you \(3\): stuck, loop, worn", lines[summary]), done.stdout
     tail = "\n".join(lines[summary + 1:])
     assert tail.startswith("- stuck: The review left serious findings open: finding 1 "
                            "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Review round ")
     assert "Saving loses the name" in tail and "Accept, narrow or split?" in tail
-    assert tail.endswith('  Next: forge close loop --resolve <narrow|split|accept> --reason "<human\'s choice>"')
+    assert '  Next: forge close loop --resolve <narrow|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
+    assert tail.endswith("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"
+                         '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
     assert not (env.repo.bin / "claude-calls.jsonl").exists()
     assert not env.gh_calls("pr", "merge", _number("fix/stuck"))
     assert (record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)) == before
