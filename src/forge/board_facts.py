@@ -102,30 +102,38 @@ def details(top: Path) -> list[Item]:
         limit="25")) or []
 
 
-def failed_schedule(top: Path) -> Item:
-    """The latest scheduled run on the default branch when it failed: its workflow, failed jobs and
-    failing pytest tests; {} when it passed, ran never, or GitHub can't be read. Kept a minute."""
-    # ponytail: the newest scheduled run of any workflow; a repo with several scheduled workflows sees only the newest.
+def failed_schedules(top: Path) -> list[Item]:
+    """Each workflow whose latest scheduled run on the default branch failed: its name, failed jobs
+    and failing pytest tests as printed; [] when none failed or GitHub can't be read. Kept a minute."""
+    # ponytail: the newest 100 scheduled runs; a workflow scheduled that rarely among busier ones goes unseen.
     branch = repo.default_branch(top)
 
-    def fetch(now: datetime) -> Item | None:
-        done = repo.run("gh", "run", "list", "--branch", branch, "--event", "schedule", "--limit", "1",
+    def fetch(now: datetime) -> list[Item] | None:
+        done = repo.run("gh", "run", "list", "--branch", branch, "--event", "schedule", "--limit", "100",
                         "--json", "databaseId,conclusion,workflowName", cwd=top)
         try:
             runs = json.loads(done.stdout) if done.returncode == 0 else None
         except ValueError:
             return None
-        if not isinstance(runs, list) or runs and not isinstance(runs[0], dict):
+        if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
-        if not runs or runs[0].get("conclusion") != "failure":
-            return {}
-        log = repo.run("gh", "run", "view", str(runs[0].get("databaseId")), "--log-failed", cwd=top)
-        if log.returncode != 0:
-            return None
-        return {"workflow": str(runs[0].get("workflowName") or "workflow"), "branch": branch,
-                "jobs": sorted({line.split("\t", 1)[0] for line in log.stdout.splitlines() if "\t" in line}),
-                "tests": sorted(set(re.findall(r"FAILED (\S+::\S+)", log.stdout)))}
-    return _cached(top, "schedule-cache", fetch) or {}
+        latest: dict[str, Item] = {}
+        for run in runs:  # newest first
+            latest.setdefault(str(run.get("workflowName") or "workflow"), run)
+        failed = []
+        for workflow, run in sorted(latest.items()):
+            if run.get("conclusion") != "failure":
+                continue
+            log = repo.run("gh", "run", "view", str(run.get("databaseId")), "--log-failed", cwd=top)
+            if log.returncode != 0:
+                return None
+            lines = log.stdout.splitlines()
+            failed.append({"workflow": workflow, "branch": branch,
+                           "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
+                           "tests": sorted({found[1] for line in lines
+                                            if (found := re.search(r"FAILED (.+?::.+?)(?: - |$)", line))})})
+        return failed
+    return _cached(top, "schedule-cache", fetch) or []
 
 
 def merged_prs(github: Item | None) -> list[Item]:

@@ -187,6 +187,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
+    started: dict[str, dict[str, Any]] = {}  # open fixes here and on the remote, by name
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
@@ -212,6 +213,8 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 continue
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
+            else:
+                started[name] = state
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
@@ -226,6 +229,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 or story.show(top, landed, repo.state_path(name)) is not None):  # merged
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
+            started[name] = state
             lines += _item(name, f"The fix {name}", state, top, None, prs, refusals)
     for path in sorted(trees.values()):  # a spec read stopped on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
@@ -251,34 +255,30 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     if history is None and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return _due(top, history) + _failed_schedule(top, trees) + _hotspots(top, trees) + lines, states
+    return _due(top, history) + _failed_schedule(top, started) + _hotspots(top, trees) + lines, states
 
 
-def _failed_schedule(top: Path, trees: dict[str, Path]) -> list[str]:
-    """The latest scheduled run of the default branch, when it failed: its failed jobs and tests,
-    and the started fix's next step, or the command that starts one."""
-    run = board_facts.failed_schedule(top)
-    if not run:
-        return []
+def _failed_schedule(top: Path, started: dict[str, dict[str, Any]]) -> list[str]:
+    """Each workflow whose latest scheduled run on the default branch failed: its failed jobs and
+    tests, and the started fix's next step, or the command that starts one."""
     def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
-        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=\[\]-]", " ", text).split())
-    workflow, branch = clean(run["workflow"]), clean(run["branch"])
-    tests = [clean(test) for test in run["tests"]]
-    lines = [f"The latest scheduled {workflow} run on {branch} failed in: "
-             f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
-             *([f"Failing tests: {', '.join(tests)}."] if tests else [])]
-    why = f"The scheduled {workflow} run fails on {branch}"
-    for b, path in sorted(trees.items()):
-        name = b.partition("/")[2]
-        state = (repo.read_state(name, path) or {}) if re.fullmatch(
-            r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", b) else {}
-        if state.get("why") == why:
-            step = STATUS.get(state.get("status", "started"), ("", "forge close {item}"))[1]
-            return lines + [f"The fix {name} is started for it.", f"Next: {step.format(item=name)}"]
-    done = f"The scheduled {workflow} run passes on {branch}" + (
-        ", with these tests passing: " + ", ".join(tests[:10]) if tests else "") + (
-        f"; and {len(tests) - 10} more" if len(tests) > 10 else "")
-    return lines + [f'Next: forge fix start "{why}" --done "{done}"']
+        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=-]", " ", text).split())
+    lines = []
+    for run in board_facts.failed_schedules(top):
+        workflow, branch = clean(run["workflow"]), clean(run["branch"])
+        lines += [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
+                  f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
+                  *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else [])]
+        why = f"The scheduled {workflow} run fails on {branch}"
+        name = next((name for name, state in sorted(started.items()) if state.get("why") == why), None)
+        if name:
+            step = STATUS.get(started[name].get("status", "started"), ("", "forge close {item}"))[1]
+            lines += [f"The fix {name} is started for it.", f"Next: {step.format(item=name)}"]
+            continue
+        jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
+        done = f"{jobs} of the scheduled {workflow} workflow pass again on the next scheduled run on {branch}"
+        lines.append(f'Next: forge fix start "{why}" --done "{done}"')
+    return lines
 
 
 def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
