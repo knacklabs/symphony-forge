@@ -38,7 +38,7 @@ def share(env, prs, name, number):
         cache.unlink()
 
 
-@pytest.mark.parametrize("case", ["waits", "blocking-problems"])
+@pytest.mark.parametrize("case", ["waits", "blocking-problems", "stuck-worker"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeypatch, previous, case):
     client(env, previous)
@@ -51,6 +51,9 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
+    if case == "stuck-worker":
+        stuck_worker(env)
+        return
     seed(env, "src/a.py")
     now = datetime.now(timezone.utc).replace(microsecond=0)
     prs = {}
@@ -110,33 +113,68 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         assert [entry["waited_seconds"] for entry in team["needs_you"]] == [300, 240, 180, 120, 60], where
         assert "5 need you" in team["sentence"]
 
-    # Each clears: the approval, a recorded choice, the merge, the answer given on machine B and a
-    # clean close of the resolved conflict, which then waits on a human merge only.
+    # Each clears: the approval, a choice recorded on machine B, the merge, the answer given on
+    # machine B and a clean close of the resolved conflict, which then waits on a human merge only.
     env.repo.path = machine_a
     plan = {"plan": ONE_PART, "isAgent": False, "filePath": "/plans/plan.md"}
     payload = conftest._payload("PostToolUse", env.repo.path, "ExitPlanMode", {"plan": ONE_PART}, plan)
     approved = env.repo.forge("hook", "approval", input=json.dumps(payload))
     assert approved.returncode == 0, approved.stdout + approved.stderr
     env.repo.git("push", "-q", "origin", "story/WAIT")
-    chosen = env.repo.forge("close", "loop", "--resolve", "narrow", "--reason", "Keep it small")
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-    share(env, prs, "loop", 1)
     prs["human"].update(state="MERGED", mergedAt=(now + timedelta(minutes=5)).isoformat())
     env.repo.git("merge", "--no-edit", "-X", "ours", "origin/main", cwd=clash)
     assert env.close("clash").returncode == 0
     share(env, prs, "clash", 4)
     env.repo.path = machine_b
+    env.repo.git("worktree", "add", "-q", "-b", "fix/loop", str(env.tmp / "needs-loop-b"), "origin/fix/loop")
+    chosen = env.repo.forge("close", "loop", "--resolve", "narrow", "--reason", "Keep it small")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    share(env, prs, "loop", 1)
+    # B answers the question, and its worker asks a second one.
     resumed = env.tmp / "needs-asks-b"
     env.repo.git("worktree", "add", "-q", "-b", "fix/asks", str(resumed), "origin/fix/asks")
+    stub.write_text(plain.replace('print("stub claude: built it")',
+                                  'print("\\n\\nQuestion: Should the parser keep comments?")'), "utf-8")
     answered = env.repo.forge("work", "asks", "--note", "Yes, reuse it", cwd=resumed)
     assert answered.returncode == 0, answered.stdout + answered.stderr
+    stub.write_text(plain, "utf-8")
     share(env, prs, "asks", 3)
     clock(monkeypatch, now + timedelta(minutes=7))
     for where in (machine_a, machine_b):
         env.repo.path = where
         env.repo.git("fetch", "-q", "origin")
-        # Machine A's own log of the open question does not bring it back.
+        # Machine A's stale stop and its own log of the first question do not bring them back.
+        assert needs(env.repo) == [("asks", "worker question"), ("clash", "human merge")], where
+    # Machine A answers the second question; only the merge is left on both machines.
+    env.repo.path = machine_a
+    again = env.repo.forge("work", "asks", "--note", "Keep them")
+    assert again.returncode == 0, again.stdout + again.stderr
+    share(env, prs, "asks", 3)
+    for where in (machine_a, machine_b):
+        env.repo.path = where
         assert needs(env.repo) == [("clash", "human merge")], where
+
+
+def stuck_worker(env):
+    """A worker stuck on the same finding asks the owner, and every machine sees the question."""
+    prs = {}
+    install_claude(env.repo)
+    env.reviews(blocked(finding("P1", "Saving drops the greeting", "stuck.py")))
+    _, where = env.start("stuck", "fix/stuck", ".factory/fixes/stuck.json", {**FIX, "why": "Stuck"},
+                         {"stuck.py": "x\n"})
+    assert env.close("stuck").returncode == 1
+    share(env, prs, "stuck", 5)
+    assert env.repo.forge("work", "stuck").returncode == 0
+    env.commit(where, "stuck.py", "y\n")
+    assert env.close("stuck").returncode == 1
+    share(env, prs, "stuck", 5)
+    stopped = env.repo.forge("work", "stuck")
+    assert stopped.returncode == 1 and "is stuck" in stopped.stderr, stopped.stdout + stopped.stderr
+    share(env, prs, "stuck", 5)
+    machine_b = env.tmp / "stuck-machine-b"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(machine_b))
+    env.repo.path = machine_b
+    assert ("stuck", "stuck worker") in needs(env.repo)
 
 
 def blocking_problems(env):

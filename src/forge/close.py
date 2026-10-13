@@ -545,6 +545,10 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
+    from forge.worker import is_published  # worker imports this module
+    if is_published(top, item):  # every machine's board sees the question
+        _push(top, repo.current_branch(top))
+        _refresh_record(top, item, state)
     repo.refuse(REFUSALS["stuck"], item=item, question=question)
 
 

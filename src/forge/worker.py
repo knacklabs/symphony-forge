@@ -142,7 +142,7 @@ def _work(args: argparse.Namespace) -> bool:
     from forge import nextstep
     shared = [e["id"] for e in nextstep.wait_records(top, item, (pr or {}).get("body") or "")
               if e["open"] and e.get("event") == "worker question"]
-    answered = note is not None and (codex.record(top, item).get("question_id") or (shared or [None])[-1])
+    answered = note is not None and ((shared or [None])[-1] or codex.record(top, item).get("question_id"))
     if answered:
         repo.record_event(top, item, "owner wait end", wait_id=answered)
     pending_merge = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")

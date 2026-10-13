@@ -780,15 +780,15 @@ def person_waits(top: Path, item: str, state: dict[str, Any], path: Path | None,
     def since(reason: str) -> str | None:
         return next((e.get("at") for e in reversed(opened) if e.get("reason") == reason), None)
     stop = state.get("stop") or {}
-    if stop and not stop.get("choice") and not default_due(path or top, state):
+    ended = {e.get("id") for e in recorded if not e["open"]}
+    # A choice recorded on another machine ends the stop's wait in the pull request's record.
+    if stop and not stop.get("choice") and stop.get("wait_id") not in ended and not default_due(path or top, state):
         stuck = "question" in stop
         waits.append({"reason": "stuck worker" if stuck else "review loop choice",
                       "since": stop.get("at") or since("stuck" if stuck else "review loop"),
                       "detail": stop.get("question")})
-    # This machine's last round names the open question; a machine that never ran one reads the record.
-    local = codex.record(top, item)
-    asked = [e for e in opened if e.get("event") == "worker question"
-             and ("question_id" not in local or e.get("id") == local["question_id"])]
+    # The newest open question wins over an older one this machine still remembers.
+    asked = [e for e in opened if e.get("event") == "worker question"]
     if asked:
         waits.append({"reason": "worker question", "since": asked[-1].get("at"), "detail": asked[-1].get("question")})
     if conflict := since("merge conflict"):
