@@ -47,7 +47,7 @@
     "id": "59d7a4e9-fe39-455b-afe4-69f62b592bb9",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T23:45:15.681956+00:00",
@@ -68,7 +68,11 @@
   ],
   "stop": {
     "at": "2026-10-13T04:12:06.214231+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/land.py",
-    "wait_id": "1d954984-21fe-40bc-a00a-cdb1d1452dd3"
+    "reason": "Coordinator (Harm 1-2, reversible; first stop in land.py): one round with a structural move: the queue reads each change's check status from the same Forge function the board and next use (no own mapping), and the two tests get ordered timestamps at close entry plus the due-default and worker-stuck stop cases. Further edge findings here become follow-ups.",
+    "wait_id": "1d954984-21fe-40bc-a00a-cdb1d1452dd3",
+    "worker_round": null
   }
 }
