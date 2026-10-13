@@ -3752,6 +3752,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tDisputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 327,
+      "text": "Disputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tExplicit nonstandard pytest files bypass the test place\treviews-skip-agent-line",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -4010,6 +4021,17 @@
       "path": "src/forge/review.py",
       "line": 291,
       "text": "Stop question hides an open Harm 3 finding that caused the stop",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\tDisputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 104,
+      "text": "Disputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
       "status": "open",
