@@ -16,46 +16,36 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "806216b84563652d516c2ee272724ef012f0f85659430d241add0675f703810a",
-    "changed": "c47c9cb5e5a25273ca067a8a600695f9fb67c3f73e8dfd8f7ba7bd7ed2dc24c5",
-    "commit": "7f71f2a25b581f6e5394143ef1abc5d60861c8ba",
+    "branch_diff": "bac000c841b9677a22e56cf43ad8d143bbf1d31e84a03c677288aa22cee38142",
+    "changed": "ad06b4d6184e22755069f49f2db6f306f94a3a8974b7c60951b2ad15d23f7a52",
+    "commit": "ad81d4e516ea977bed5fcbfe5d4c0922635942f6",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 4\nRaise: Not done\nOnce more than 16 earlier rounds have been summarised, `_fold` replaces the oldest two round records with one aggregate `Rounds 1\u2013N` record. Their individual time summaries are no longer in the pull request, so a fresh clone cannot recover how long any one of those rounds took. The 200-round case exercises this loss; it treats the aggregate range as if it retained each round.",
+        "body": "Gain 5, Work 3, Harm 4\nRaise: Not done\n`_compact` folds records only when their worker `round` is less than the maximum worker round. Forge also supports multiple review rounds from repeated `forge close` calls without another worker turn (`test_item_time_history.py:379`); those review results all retain the same worker round and remain in the record. On a long item, they can grow past the body budget. `_bounded_body` then deletes event rows without folding their time into the summary, so a fresh clone can lose the item's total time.",
         "file": "src/forge/time_records.py",
         "gain": 5,
         "harm": 4,
-        "line": 514,
+        "line": 496,
         "priority": "P1",
-        "title": "Not done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its",
+        "title": "Not done: The pull request time record has a fixed size limit",
         "work": 3
       },
       {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Scale\nThe saved `state.review` added at `time_records.py:373` has neither `round` nor `at`, so `_settled` never removes it from this `clean_reviews` list. Repeated clean reviews after changes or failed checks therefore retain full prior review results, including findings, indefinitely. When the body fills, `_bounded_body` removes current event and timing rows before these snapshots (`close.py:920`), losing the current time record the fix promises to keep.",
-        "file": "src/forge/time_records.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 420,
-        "priority": "P1",
-        "title": "Clean review snapshots still grow without bound",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nThe test expands a `Rounds 1\u2013N` aggregate into a list of round numbers, then checks only the aggregate reviewing total. It passes while the implementation discards the individual time summaries for older rounds. The named proof therefore cannot fail when the Done-when requirement to keep per-round time history breaks.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nThe proof creates 200 distinct worker rounds, then checks that the recent lines have round numbers. It neither exercises multiple review rounds within one worker turn nor checks that each recent line contains a time summary. It therefore passes with the unbounded same-worker record above and would also pass if recent round times disappeared.",
         "file": "tests/test_pull_request_time_summaries.py",
         "gain": 3,
-        "harm": 3,
-        "line": 98,
+        "harm": 2,
+        "line": 104,
         "priority": "P1",
-        "title": "Not done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size",
+        "title": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
         "work": 2
       }
     ],
-    "id": "3d2c2566-08ab-40f5-9419-17ee6becd56d",
+    "id": "d96f16ff-604d-42b7-b3b7-c6b0f29aeddd",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
@@ -68,8 +58,16 @@
     {
       "at": "2026-10-13T06:16:04.354282+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:36:52.311099+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 132851a813de2bbf684fb3ffa02596b7af9fc000` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/time_records.py; GitHub's checks will cover it.\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 3108548.035192583, orig_timeout = 60\nstdout_seq = [b'Updated the pull request\\'s review block.\\n`/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summar...'))\\'` exited with status 0 on this machine.\\npassed\\n', b\"Updated the pull request's review block.\\nReview: clean.\\n\"]\nstderr_seq = [b'autoreview done\\n'], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2784/popen-gw3/test_1_long_item_keeps_every_r0/bin/forge', 'close', 'tidy-readme']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n1 failed, 57 passed in 512.55s (0:08:32)",
+  "stop": {
+    "at": "2026-10-13T06:36:52.321720+00:00",
+    "file": "src/forge/time_records.py",
+    "wait_id": "9167f73e-f3aa-4032-a4f4-9b29bfbc25a4"
+  },
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }

@@ -5028,6 +5028,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request time record has a fixed size limit\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 496,
+      "text": "Not done: The pull request time record has a fixed size limit",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: item time is not split into working, waiting and unknown seconds\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -6859,6 +6870,17 @@
       "path": "tests/test_pull_request_time_summaries.py",
       "line": 98,
       "text": "Not done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 104,
+      "text": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
       "from": "blocking",
       "item": "pr-time-record-summaries",
       "status": "open",
