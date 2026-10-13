@@ -13,82 +13,32 @@
     "src/forge/close.py",
     "src/forge/fasttest.py",
     "src/forge/review.py",
+    "src/forge/templates/review.md",
     "tests/test_close_checks_named_tests.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1191dc201d85839c9a3b664dcc0f7a0c54d80feea0b6fe60b100b3149cf13a81",
-    "changed": "d6a987492fed558e3c71314afc0071bcd66b589d8d428a171585f5c91379b8a3",
-    "commit": "5ebd247d75ae6b6b820c25d35b15c6a9674b85d2",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
-        "finding": 3
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
-        "finding": 4
-      }
-    ],
+    "branch_diff": "ead46bf95e5c4b86808df9da8be7352d59654eb753405b059934ab45bba50d0c",
+    "changed": "007b8d6eb8e0efade4051dabb489b4e8e2191e3389dd7f118d5add59a4bd0e38",
+    "commit": "dea4ddde38af22189c56ee0fadabdddd4a77c2c0",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Not done. `proof_list` preserves the worker's heading verbatim. The changed command test supplies `Proof list (run on this commit with -n 2: 3 passed):` and expects it to remain. Close therefore publishes a worker-written result claim regardless of its own run, although Close is meant to write the results and the worker is meant to supply only the item-to-test mapping.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 686,
-        "priority": "P1",
-        "title": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. New evidence beyond the dismissed nested-path finding: the hook writes each node ID relative to that pytest process's working directory. In a monorepo command that runs pytest from `apps/a` and then `apps/b`, both packages' `tests/test_login.py::test_auth` produce the same recorded ID. `proof_list` deduplicates that ID and suffix-matches it to either package's proof entry. A passing test in one package can thus credit an unrun test in the other, or conceal that the other's test was skipped. The two-run test uses one working directory and misses this case.",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 372,
-        "priority": "P1",
-        "title": "Close merges results from identically named tests in sibling packages",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. For a normal item listing two proofs, such as `tests/test_greeting.py::test_returning, src/greet.test.ts`, the presence of the Python name sends the whole line through `TEST_NAME.sub`. Only the Python name gains a result; the JavaScript name remains bare, with no `not checked` marker. The new test covers JavaScript names only on separate lines, so it passes while this named unmatched test is published without a status.",
-        "file": "src/forge/review.py",
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. The shipped review prompt assures reviewers that every named test exists in the branch, but Close publishes unmatched names without checking that their files exist. The new command test names `__tests__/greeting.js` without creating that file and asserts that Close publishes it as `not checked` (`tests/test_close_checks_named_tests.py:21-23, 51-53, 114`). The worker brief and shipped skill also say the list contains only tests Close ran, contradicting the recorded allowance for `not run` and `not checked` entries. This is distinct from the accepted finding about a worker-authored heading: these are false claims in Forge's own guidance.",
+        "file": "src/forge/templates/review.md",
         "gain": 3,
         "harm": 2,
-        "line": 685,
+        "line": 76,
         "priority": "P1",
-        "title": "Not done: A mixed-language proof line leaves an unmatched test unmarked",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. A collected test method can be inherited from a shared test class. Pytest then reports, for example, `tests/test_mobile.py::TestMobile::test_login`, while `test_login` is absent from `tests/test_mobile.py` itself. This source-text check returns `not run` before using the exact matching result already found on the preceding line. The command tests define every method in its test file and do not cover inherited tests.",
-        "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 664,
-        "priority": "P1",
-        "title": "Close labels inherited pytest methods not run despite matching run results",
+        "title": "Not done: Review guidance falsely says every named test exists in the branch",
         "work": 1
       }
     ],
-    "id": "9938fefa-d577-4553-9957-00553eda65bb",
-    "status": "clean"
+    "id": "327dda0f-9d87-49a2-b434-bb933bcebe8d",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -140,6 +90,10 @@
     },
     {
       "at": "2026-10-13T04:00:56.954669+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:14:09.570087+00:00",
       "step": "review"
     }
   ],
