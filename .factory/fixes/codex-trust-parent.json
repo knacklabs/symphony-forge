@@ -1,0 +1,14 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/codex-trust-parent",
+  "done_when": "Forge's Codex trust check accepts a project inside a trusted folder whenever Codex itself trusts it, and asks only when Codex would ask",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:39.852564+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge says Codex does not trust a project that sits inside a folder Codex already trusts"
+}
