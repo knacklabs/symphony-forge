@@ -20,8 +20,8 @@ def key_of(name):
 
 
 def lists(gh):
-    """The open and weekly merged lists the board shares; the one older-merges request has its own cache."""
-    return [call for call in gh.calls() if call[:2] == ["pr", "list"] and not any("merged:*.." in a for a in call)]
+    """All pull request lists, including the search for older merged parts."""
+    return [call for call in gh.calls() if call[:2] == ["pr", "list"]]
 
 
 def finish(repo, monkeypatch, names):
