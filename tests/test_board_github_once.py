@@ -18,7 +18,7 @@ def lists(env):
 
 
 def github_read_once(env, monkeypatch, previous):
-    """Two boards in a minute make one open list and one search per week."""
+    """Two boards in a minute make one open list and one search per week, the weeks at once."""
     client(env, previous)
     now = datetime(2026, 10, 14, 15, tzinfo=timezone.utc)  # a Wednesday
     monkeypatch.setenv("FORGE_NOW", now.isoformat())
@@ -35,7 +35,8 @@ def github_read_once(env, monkeypatch, previous):
     assert [call[call.index("--state") + 1] for call in calls] == ["open"] + ["merged"] * 7
     monday = datetime(2026, 10, 12, tzinfo=timezone.utc)
     weeks = [monday - timedelta(weeks=n) for n in range(6, -1, -1)]
-    assert [call[call.index("--search") + 1] for call in calls[1:]] == [
+    # The weeks are asked at once, so they arrive in any order.
+    assert sorted(call[call.index("--search") + 1] for call in calls[1:]) == [
         f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}" for start in weeks]
 
     # A minute later GitHub is asked again; a failed answer still prints the board and is not kept.
