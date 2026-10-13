@@ -87,7 +87,7 @@
       "gain": 3,
       "harm": 2,
       "line": 51,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -100,7 +100,7 @@
       "gain": 3,
       "harm": 2,
       "line": 458,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -110,39 +110,18 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aa8719719d20826e40b80b227e06e5f8af97f1182e77cafb0036693c0373d8d8",
-    "changed": "09e5463221b0e2b8195a3e541920c2d13781b7e4fff09ef1348891d72a3c9aeb",
-    "commit": "f3fdca1ce3933f2ca7a66d0a71db5a4fff0a3985",
+    "branch_diff": "5a67901409be66877c96f75f3a7b76cf1ecaea887976c4d0c49f6514f741404d",
+    "changed": "bba08a222046d77f6db3122ab0a32aadc37f268c5dab746c0d63ad4305761a9e",
+    "commit": "860eb056e844014a5f1c8bcc8fd8d66ee9b531a1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. At line 51, an untrusted entry produces a refusal that never says a parent folder's trusted entry does not count, although the Done-when requires that warning in the refusal. It also suggests removing the entry: when the worktree's untrusted entry is the only exact entry, removal leaves Forge refusing the project. The exact-message assertion in tests/test_codex_setup.py:181-182 preserves this incomplete advice.",
-        "file": "src/forge/doctor.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 51,
-        "priority": "P1",
-        "title": "Not done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate. The repository review rule requires a change to a coordinator or worker step to update src/forge/templates/skill.md or the worker brief. This changed trust guard now refuses a Codex turn when only a parent folder is trusted, but the shipped guidance at src/forge/templates/skill.md:985-987 still says only to trust the project and consult doctor; neither shipped instruction states the new exact-entry requirement or that parent trust does not count.",
-        "file": "src/forge/codex.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 458,
-        "priority": "P1",
-        "title": "Not done: update the shipped coordinator guidance for exact Codex trust",
-        "work": 1
-      }
-    ],
-    "id": "0e48f53e-1f41-402c-a877-3070929c119b",
-    "status": "blocked"
+    "findings": [],
+    "id": "5cf99d02-3a5e-4b81-afb7-79e7edc25e66",
+    "status": "clean"
   },
   "settled_areas": [
     "_codex_trust() in src/forge/doctor.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T08:31:39.852564+00:00",
@@ -162,6 +141,10 @@
     },
     {
       "at": "2026-10-13T10:39:19.259107+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:02:26.554544+00:00",
       "step": "review"
     }
   ],
