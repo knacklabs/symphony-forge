@@ -197,9 +197,18 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         key = next((key for key in alerts if key in str(state.get("why") or "")), None)
         return alerts.pop(key) if key else None
     trees = story.worktrees(top)
-    merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
-    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
-           if isinstance(pr.get("url"), str)}
+    # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
+    github = board_facts.prs(top) if history is not None else None
+    if github is None and history is not None:  # the board's one try failed: unknown, no live call per item
+        merged_prs, opened = set(), []
+    elif github is None:
+        merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
+        opened = _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
+    else:
+        merged_prs = ({*(pr["headRefName"] for pr in board_facts.merged_prs(github)),
+                       *board_facts.merged_before_weeks(top)} if trees else set())
+        opened = [pr for pr in github["open"] if isinstance(pr.get("headRefName"), str)]
+    prs = {pr["headRefName"]: pr for pr in opened if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
                     for pr in board._machine_prs(top)
@@ -236,7 +245,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if (branch in trees or branch in merged_prs or kind not in ("fix", "forge")
                 or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
                 or history is not None and repo.state_path(name) in history["expired"]
-                or story.show(top, landed, repo.state_path(name)) is not None):  # merged
+                or (repo.state_path(name) in history["states"] if history is not None  # merged
+                    else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
@@ -429,8 +439,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         states = {key: state for key, state in history["stories"].items()
                   if repo.state_path(key) not in history["expired"]}
     for key, state in states.items():
-        found[key] = (None, state,
-                      story.show(top, ref, f"plans/{key}.md") or "")
+        found[key] = (None, state, (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None
+                                    else story.show(top, ref, f"plans/{key}.md") or ""))
     for key, path in story.stories_here(top).items():
         if history is not None and repo.state_path(key) in history["expired"]:
             continue
@@ -445,7 +455,11 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         if found.get(key, (None, {}, ""))[1].get("status") == "done":
             continue
         ref = story.plan_ref(top, key, history)
-        state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        if history is None:
+            state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        else:  # the board's one read of every ref
+            full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+            state = history["ref_states"].get(full, {}).get(repo.state_path(key), {})
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
     return found
@@ -466,12 +480,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ref = story.plan_ref(top, key, history)
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
-    notes = story.show(top, ref, f"plans/{key}.read.md") or ""
-    required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+    if history is None:
+        notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
+    else:  # the board's one read of every ref
+        notes = history["docs"].get(f"{ref}:plans/{key}.read.md", "")
+        full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+        saved = json.dumps(history["ref_states"].get(full, {}).get(repo.state_path(key), {}))
+    required = story.rounds(notes, saved)
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
-    doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+    doc_hash = repo.blob_hash(text)
     try:
         doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:
@@ -492,7 +511,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top)) if ref != story.landed_ref(top) else ""
+    behind = story.plan_behind(top, key, story.landed_ref(top), history) if ref != story.landed_ref(top) else ""
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -549,7 +568,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         builds = {}
         for name in ready:
             # A task takes forge.toml from the branch forge task start branches it from.
-            settings = story.show(top, start_base(landed, key, rows[name]), "forge.toml")
+            base = start_base(landed, key, rows[name], history, top)
+            settings = (story.show(top, base, "forge.toml") if history is None
+                        else history["docs"].get(f"{base}:forge.toml"))
             try:
                 cfg = (repo._config_text(settings, top) if settings  # pyright: ignore[reportPrivateUsage]
                        else _report_config(top, refusals))
@@ -662,7 +683,8 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     if not isinstance(receipt, dict):
         receipt = {}
     status, branch = state.get("status"), state.get("branch")
-    ref = review_ref(top, branch, pr) if branch else ""
+    # A finished item is never ready, so its review ref would go unread.
+    ref = review_ref(top, branch, pr) if branch and status not in ("merged", "done", "hotspot") else ""
     record = time_records.from_body((pr or {}).get("body") or "")
     evidence = {}
     if ref and receipt.get("review") == "clean" and receipt.get("commit") == ref:
@@ -708,7 +730,13 @@ def _commit(top: Path, ref: str) -> str:
 
 def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
     """The commit an item's review history and readiness are read at: the pull request's head
-    (GitHub's head, else origin's branch), unless the local branch contains it."""
+    (GitHub's head, else origin's branch), unless the local branch contains it. Read once per
+    command, like the commit log: a fetch, merge, switch or checkout forgets it."""
+    return repo.command_fact(("commits", "review ref", branch, (pr or {}).get("headRefOid")), top,
+                             lambda: _review_ref(top, branch, pr))
+
+
+def _review_ref(top: Path, branch: str, pr: dict[str, Any] | None) -> str:
     local = _commit(top, f"refs/heads/{branch}")
     head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
     if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it
