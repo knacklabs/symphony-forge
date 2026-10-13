@@ -18,6 +18,10 @@ HOLDING_CLAUDE = """#!{python}
 import os, pathlib, sys, time
 here = pathlib.Path(__file__).resolve().parent
 sys.stdin.read()
+if "--output-format" in sys.argv:  # like claude: stream-json ends with a result event of its answer
+    import atexit, io, json
+    sys.stdout, real = io.StringIO(), sys.stdout
+    atexit.register(lambda: real.write(json.dumps({{"type": "result", "result": sys.stdout.getvalue().strip()}}) + "\\n"))
 name = pathlib.Path.cwd().name
 (here / f"started-{{name}}").touch()
 while not (here / f"go-{{name}}").exists():
