@@ -3389,6 +3389,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a later workflow-name collision loses the started fix's next step\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 278,
+      "text": "Not done: a later workflow-name collision loses the started fix's next step",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: a nightly run with more than ten failures does not name every failing test\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -6410,6 +6421,17 @@
       "text": "Number all three new tests to satisfy the full-suite gate",
       "from": "blocking",
       "item": "skipped-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_names_a_failed_scheduled_run.py\tNot done: prove the scheduled default-branch query\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "tests/test_next_names_a_failed_scheduled_run.py",
+      "line": 76,
+      "text": "Not done: prove the scheduled default-branch query",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
