@@ -23,16 +23,27 @@ def lists(gh):
 
 
 def finish(repo, monkeypatch, names):
-    """Finished fixes and stories land; each name also gets an unfinished story on the remote."""
+    """Finished fixes and stories land on the default branch, with their plan read notes."""
     landed(repo, monkeypatch, RECENT, {
         **{f".factory/fixes/{name}.json": finished_fix(name) for name in names},
         **{f".factory/stories/{key}/story.json": finished_story(key, RECENT) for key in map(key_of, names)},
         **{f"plans/{key}.md": DOC for key in map(key_of, names)},
         **{f"plans/{key}.read.md": "---\nround: 1\n---\n\n# Notes\n" for key in map(key_of, names)}})
     repo.git("push", "-q", "origin", *(f"HEAD:refs/heads/fix/{name}" for name in names))
+    repo.git("fetch", "-q", "origin")
+
+
+def progress(repo, tmp_path, names):
+    """Each name gets a fix being worked on in its own worktree, and an open story whose local branch
+    holds a plan edit its remote copy lacks, so the two branches have diverged."""
     main = repo.git("branch", "--show-current").strip()
-    for key in map(key_of, names):
-        repo.git("switch", "-qc", f"story/OPEN-{key}", main)  # the local branch stays, beside its remote copy
+    for name in names:
+        key = key_of(name)
+        repo.git("worktree", "add", "-qb", f"fix/{name}", str(tmp_path / f"wt-{name}"), main)
+        (tmp_path / f"wt-{name}" / ".factory/fixes").mkdir(parents=True, exist_ok=True)
+        (tmp_path / f"wt-{name}" / f".factory/fixes/{name}.json").write_text(
+            json.dumps({**finished_fix(name), "status": "working"}), encoding="utf-8")
+        repo.git("switch", "-qc", f"story/OPEN-{key}", main)
         repo.write(f".factory/stories/OPEN-{key}/story.json", json.dumps({"status": "approved", "title": f"Open {key}"}))
         repo.write(f"plans/OPEN-{key}.md", DOC)
         digest = repo.git("hash-object", f"plans/OPEN-{key}.md")
@@ -40,6 +51,8 @@ def finish(repo, monkeypatch, names):
         repo.git("add", "-A")
         repo.git("commit", "-qm", f"Open story {key}")
         repo.git("push", "-q", "origin", f"story/OPEN-{key}")
+        repo.write(f"plans/OPEN-{key}.md", DOC + "\nA local edit.\n")
+        repo.git("commit", "-qam", f"Edit story {key}")
         repo.git("switch", "-q", main)
     repo.git("fetch", "-q", "origin")
 
@@ -57,8 +70,28 @@ def test_1_machine_views_cost_no_git_calls_per_finished_item(repo, gh, monkeypat
     shown = {row["id"] for row in second["items"]} - {row["id"] for row in first["items"]}
     assert {f"done-{n}" for n in range(1, 13)} <= shown
     rows = {row["id"]: row for row in second["items"]}
-    for n in range(1, 13):  # the added stories show with their own titles, finished and open
-        assert rows[f"OPEN-{key_of(f'done-{n}')}"]["title"] == f"Open {key_of(f'done-{n}')}"
+    for n in range(1, 13):  # the added finished stories show with their own titles
         assert rows[key_of(f"done-{n}")]["title"] == f"Finished story {key_of(f'done-{n}')}"
-    assert more_count == count, f"12 more fixes and stories added {more_count - count} git commands"
+    assert more_count == count, f"12 more finished fixes and stories added {more_count - count} git commands"
     assert lists(gh)[asked:] == [], "a second view within the minute asked GitHub again"
+
+
+PER_ITEM = 26  # git commands one more fix and diverged story in progress may cost; measured 17 (board), 24 to 26 (next)
+
+
+@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("command", ["board", "next"])
+def test_2_machine_views_cost_a_small_fixed_number_of_git_calls_per_item_in_progress(
+        repo, gh, monkeypatch, tmp_path, history, command):
+    client(repo, gh, history)
+    monkeypatch.setenv("FORGE_NOW", NOW)
+    counts = {}
+    names = [f"busy-{n}" for n in range(12)]
+    for size, added in ((4, names[:4]), (8, names[4:8]), (12, names[8:])):
+        progress(repo, tmp_path, added)
+        rows, counts[size] = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+        titles = {row["title"] for row in rows["items"]}
+        assert {f"Open {key_of(name)}" for name in names[:size]} <= titles
+    step = (counts[12] - counts[4]) / 8
+    assert step <= PER_ITEM, f"each item in progress cost {step} git commands: {counts}"
+    assert counts[12] - counts[8] == counts[8] - counts[4], f"cost is not linear in items: {counts}"
