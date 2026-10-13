@@ -1,0 +1,14 @@
+{
+  "base": "e4bf532175ba8dd40f400424d228cc4fe3b93984",
+  "branch": "fix/next-no-extra-search",
+  "done_when": "forge next --json searches for older merged parts only when an unfinished story has parts merged before the weekly searches, as the board already does, and the speed test counts that search",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T19:01:31.451945+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge next --json makes an extra GitHub search for older merged parts even when no story has unfinished older parts, which brings back the slow first refresh in the pane"
+}
