@@ -44,7 +44,7 @@ Risks: none
 ## Notes
 """
 
-# A stub reader: it records each call, prints claude-says.md (or "No findings."), and writes the
+# A stub reader: it records each call, answers with claude-says.md (or "No findings."), and writes the
 # file named in claude-touch, to stand for a reader that changes a file.
 READER = """#!{python}
 import io, json, os, pathlib, sys
@@ -72,7 +72,10 @@ touch = here / "claude-touch"
 if touch.exists():
     pathlib.Path(touch.read_text("utf-8")).write_text("changed by the reader\\n", encoding="utf-8")
 said = here / "claude-says.md"
-sys.stdout.write(said.read_text("utf-8") if said.exists() else "No findings.\\n")
+text = said.read_text("utf-8") if said.exists() else "No findings.\\n"
+if "--output-format" in args:  # like claude: stream-json ends with a result event holding the answer
+    text = json.dumps({{"type": "result", "result": text.rstrip("\\n")}}) + "\\n"
+sys.stdout.write(text)
 """
 
 

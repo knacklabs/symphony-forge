@@ -55,6 +55,9 @@ REFUSALS = {
     "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
               "forge work {item}"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
+    "no_turn": ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
+                "prompt such as a hooks review. Its log is {log}.",
+                "run claude once in {top} and answer its prompt, then forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
@@ -625,7 +628,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
                "--output-format", "stream-json", "--verbose",
                "--add-dir", str(CONVENTIONS), *(session or [])]
-    lines, final_result = [], None
+    final_result = None
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],
                          effort=models[models.index("--effort") + 1]) as ran, \
@@ -644,17 +647,18 @@ def _run(item: str, top: Path, brief: str, models: list[str],
                 event = None
             if isinstance(event, dict):
                 line = repo.claude_output(top, item, ran, event)
-                if event.get("type") == "result":
+                # A result after no model turn (the prompt used up before the model ran) is no round.
+                if event.get("type") == "result" and event.get("num_turns") != 0:
                     final_result = line.rstrip("\n")
-            if line:
-                if not isinstance(event, dict) or event.get("type") == "result":
-                    print(line, end="", flush=True)
-                lines.append(line)
+            if line and (not isinstance(event, dict) or event.get("type") == "result"):
+                print(line, end="", flush=True)
         worker.wait()
-        ran["outcome"] = "completed" if worker.returncode == 0 else "failed"
+        ran["outcome"] = "completed" if worker.returncode == 0 and final_result is not None else "failed"
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
-    return final_result if final_result is not None else "".join(lines)
+    if final_result is None:  # every Claude turn ends with a result event
+        refuse(REFUSALS["no_turn"], log=log, top=top, item=item)
+    return final_result
 
 
 COMMANDS = [{
