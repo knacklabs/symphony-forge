@@ -51,7 +51,9 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         for offset, path in enumerate(paths, 1):
             number = cycle * 3 + offset
             env.commit(where, "app.py", f"print('round {number}')\n")
-            env.reviews(blocked(finding("P1", f"New defect {number}", path)))
+            # Harm 3 holds by the bar, also on the area the first choice settled.
+            env.reviews(blocked({**finding("P1", f"New defect {number}", path),
+                                 "body": "Gain 3, Work 2, Harm 3\nEvidence"}))
             result = env.close(item)
             assert result.returncode == 1, result.stdout + result.stderr
             assert len(env.review_calls()) == number

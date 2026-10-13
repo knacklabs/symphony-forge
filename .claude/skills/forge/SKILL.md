@@ -801,9 +801,9 @@ fix's folder:
 
 ## Planning a story
 
-A cold read passes when none of its notes is blocking: the plan is wrong, contradicts itself,
+A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
-`Advisory:`. Advisory notes are recorded and need no disposition or another round; unmarked
+`Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
 findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
@@ -1334,7 +1334,7 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-Close holds the fourth review after three consecutive rounds blocked by serious findings,
+Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open,
 whatever files they were in. The existing same-file stop still applies from the third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
@@ -1356,6 +1356,10 @@ The owner can reverse it later with the same `forge close <item> --resolve` comm
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
+Close also stops at the third finding in one area (a Python function, else the file); its question
+proposes a structural move. The owner's answer settles the area: later findings there hold work
+only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
+
 When a cold read or review loop stops, ask the human the question it printed, in its words, one
 item per question. It names the item and what it delivers, says each open note or finding in plain
 words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
@@ -1368,7 +1372,7 @@ choices. Ask the owner exactly that question; never switch tools yourself. Recor
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
+Read also stops after three blocked cold-read rounds only when a disputed keep at the bar or a note with Harm 3 or more is open, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
 recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
 Accept keeps the findings and records the owner's reason, allowing approval or confirmation of

@@ -510,7 +510,7 @@ def test_18_close(env, kind):
     [create] = env.gh_calls("pr", "create")
     assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
     assert "- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
-    assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
+    assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): Gain 2, Work 1, Harm 1" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
         "rev-parse", "HEAD", cwd=where)
@@ -554,7 +554,10 @@ def test_18_close(env, kind):
     assert third.returncode == 1
     rounds = env.review_calls()
     assert len(rounds) == 2 and rounds[1]["head"] != rounds[0]["head"]
-    assert "dismissed" not in body(env.gh_calls("pr", "edit")[-1])
+    # Only the repeated advice is settled: it was known below the bar from the earlier round.
+    assert [line for line in body(env.gh_calls("pr", "edit")[-1]).splitlines() if "dismissed" in line] == [
+        "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): dismissed because known: "
+        "below the bar (live with); Gain 2, Work 1, Harm 1"]
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
 
     # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,

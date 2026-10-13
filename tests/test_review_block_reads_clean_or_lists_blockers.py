@@ -21,11 +21,11 @@ def test_1_clean_review_opens_with_one_line_and_folds_the_rest(env):
     folded = folded.split("</details>", 1)[0]
     # Each finding names its --dismiss number in text, never as an ordered list GitHub renumbers.
     assert folded.split("</summary>\n\n", 1)[1] == (
-        "- Finding 1 (P1): Greeting is missing (app.py:1): dismissed because app.py:1 the greeting is here\n"
-        "- Finding 2 (P2): Simpler: drop the cache (app.py:1): advisory: "
-        "Evidence for: Simpler: drop the cache\n"
-        "- Finding 3 (P3): Simpler (existing): one helper (app.py:1): advisory: "
-        "Evidence for: Simpler (existing): one helper\n\n")
+        "- Finding 1 (P1): Greeting is missing (app.py:1): dismissed because app.py:1 the greeting is here; "
+        "Gain 3, Work 2, Harm 1\n"
+        "\nLived with:\n"
+        "- Finding 2 (P2): Simpler: drop the cache (app.py:1): Gain 2, Work 1, Harm 1\n"
+        "- Finding 3 (P3): Simpler (existing): one helper (app.py:1): Gain 2, Work 1, Harm 1\n\n")
 
 
 def test_2_blocked_review_lists_open_blocking_findings_first(env):
@@ -35,6 +35,6 @@ def test_2_blocked_review_lists_open_blocking_findings_first(env):
     review = body(env.gh_calls("pr", "create")[-1]).split(BEGIN, 1)[1]
     assert review.startswith("The review found serious problems.\n\n"
                              "- Finding 2 (P1): Greeting is missing (app.py:1): blocks the merge\n")
-    assert ("- Finding 1 (P2): Simpler: drop the cache (app.py:1): advisory: "
-            "Evidence for: Simpler: drop the cache") in review.split("<details>", 1)[1]
+    assert ("Lived with:\n- Finding 1 (P2): Simpler: drop the cache (app.py:1): "
+            "Gain 2, Work 1, Harm 1") in review.split("<details>", 1)[1]
     assert "Review: clean" not in review
