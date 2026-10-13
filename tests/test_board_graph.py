@@ -12,6 +12,7 @@ from test_board_dependency_timelines import _configured, _land_fixture
 from test_story import claude_plan, hook, new_story, worktree
 
 STORY = "FORGE-BOARD-2"
+SORT = "Sort the list by when each item was first added to it and who added it"
 
 
 def _doc(title, rows):
@@ -58,7 +59,7 @@ def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, hi
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T10:00:00+00:00")
     alpha, doc = _story(repo, "ALPHA", "Shoppers keep a list", [
         ("T0", "Store the list", "none"), ("T1", "Draw the list", "none"),
-        ("T2", "Sort the list", "T1"), ("T3", "Print the list", "none")])
+        ("T2", SORT, "T1"), ("T3", "Print the list", "none")])
     assert hook(repo, claude_plan(claude_payload, doc, cwd=alpha)).returncode == 0
     _story(repo, "BETA", "Shoppers share a list", [("T1", "Send the list", "ALPHA/T2")])
     # A wait cycle across two stories: neither can start before the other.
@@ -127,15 +128,15 @@ def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, hi
     page = out.read_text("utf-8")
     svg = ET.fromstring(re.search(r'<svg\b[^>]*aria-label="Roadmap dependencies".*?</svg>', page, re.S)[0])
     titles = [t.text for t in svg.iter("{http://www.w3.org/2000/svg}title")]
-    assert _x(_node(svg, "Draw the list")) == _x(_node(svg, "Print the list")) < _x(_node(svg, "Sort the list"))
-    assert _x(_node(svg, "Sort the list")) < _x(_node(svg, "Send the list"))
-    assert "Send the list waits for Sort the list" in titles
+    assert _x(_node(svg, "Draw the list")) == _x(_node(svg, "Print the list")) < _x(_node(svg, SORT))
+    assert _x(_node(svg, SORT)) < _x(_node(svg, "Send the list"))
+    assert f"Send the list waits for {SORT}" in titles
     assert "running" in _painted(_node(svg, "Print the list"))
     assert "Store the list" not in " ".join(titles) and "1 done" in _painted(svg)
     assert len([t for t in titles if t.startswith("No plan yet:")]) == 3
     greets, case = _node(svg, "Readme greets new readers"), _node(svg, "Sort ignores case")
     assert _x(greets) == _x(case) == _x(_node(svg, "Draw the list"))
-    assert "running" in _painted(greets) and "started on Sort the list" in _painted(case)
+    assert "running" in _painted(greets) and f"started on {SORT}" in _painted(case), "The whole part name shows"
     assert not any("Sort ignores case" in t and "waits for" in t for t in titles)
     assert "Land the stored list" not in " ".join(titles)
     assert _x(_node(svg, "Map the route")) == _x(_node(svg, "Book the slot"))

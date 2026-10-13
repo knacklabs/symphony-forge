@@ -680,7 +680,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
                                   if "/" in str(on)), None)}  # stacked on a story part, not on a fix
-             for row in items.values() if row["kind"] == "fix" and row["state"] != "done"]
+             for row in items.values() if row["kind"] == "fix" and row["stage"] not in ("merged", "done")]
     if fixes:
         maps.insert(0, {"id": "fixes", "kind": "fixes", "title": "Fixes", "parts": fixes, "planned": True})
     board_graph.place(maps)

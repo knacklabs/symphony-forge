@@ -101,7 +101,7 @@ def dependencies(maps: list[dict]) -> str:
             extra += [p["note"]] if p.get("note") else []
             name, more = _lines(p["title"], chars), _lines(" · ".join([status.lower(), *extra]), chars + 4, 2)
             if m.get("kind") == "fixes":  # alone in their row, fixes take one line each
-                name, more = _lines(p["title"] + " · " + more[0], 120, 1), []
+                name, more = _lines(" · ".join([p["title"], status.lower(), *extra]), 120, 2), []
             label = f'{p["title"]}: {status}' + (f' ({"; ".join(extra)})' if extra else "")
             said.append(label)
             nodes[p["id"]] = (x, top, m["id"])
