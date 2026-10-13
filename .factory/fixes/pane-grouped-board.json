@@ -5,6 +5,7 @@
   "done_when": "The pane's Board tab opens with one summary line, then Needs you, Stuck, Moving and Ready to merge groups, each item with its state in plain words and its next step, and it shows a refresh error instead of loading forever",
   "flagged": [
     "src/forge/mod/hooks/summary.ts",
+    "src/forge/nextstep.py",
     "tests/test_fix_pane_grouped_board.py"
   ],
   "kind": "fix",
@@ -15,7 +16,7 @@
       "gain": 5,
       "harm": 3,
       "line": 108,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,7 +29,7 @@
       "gain": 4,
       "harm": 3,
       "line": 106,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,56 +42,118 @@
       "gain": 3,
       "harm": 2,
       "line": 25,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: End-to-end proof for grouped pane and first refresh error",
       "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 131,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Ready-to-merge rows can omit their state and next step",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 117,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Needs you gives worker questions a command that refuses the answerless call",
+      "work": 2
+    },
+    {
+      "area": "a_review_stop_needs_you_with_the_step_forge_next_prints() in tests/test_fix_pane_grouped_board.py",
+      "file": "tests/test_fix_pane_grouped_board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 119,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Test the worker-question and ready-row paths through the Board tab",
+      "work": 2
+    },
+    {
+      "area": "machine_next() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 158,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Recorded allowance does not match the interface and timeout changes",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e5e6fb2b25a07bdd238ce155e74dd27b5ee29036e446b4c39b66ca2f16c90f8f",
-    "changed": "21a21e718e28e248fa06f151162a3c7106c8a7041dd0de4d0672a54232660953",
-    "commit": "d2e2bce85b16de76500e2a16a702584cafe9ba45",
+    "branch_diff": "2b81beae440dc96bc98b01c3c5d7a089a0d41144711447e0947104c6fd91bc09",
+    "changed": "bc527e870b36f8a72ca01740a424f2161cac44fa26cab0738a965b2146a7f17e",
+    "commit": "bc40690e0f2f6e4a690dc3ec077fe69f660470b0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done. `board()` recognizes a Needs you item only when `team.needs_you` contains its ID, its stage says waiting for approval, or its next command contains `--resolve`. The current board producer sets `team.needs_you` to null (`src/forge/board_facts.py:224`). A normal unanswered review stop or worker question has a non-runnable resolve command (`src/forge/nextstep.py:773-784`), so it falls into Waiting or, after a day, Stuck. The pane therefore hides a decision the owner needs to make.",
-        "file": "src/forge/mod/hooks/summary.ts",
-        "gain": 5,
-        "harm": 3,
-        "line": 108,
-        "priority": "P1",
-        "title": "Not done: Review stops and worker questions are missing from Needs you",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. For approval and stopped-review rows, a non-runnable `Next:` instruction becomes `next.command = null`; `next.line` is instead the first status sentence (`src/forge/nextstep.py:127-157`). This code presents that sentence after `\u2192`, repeating the state rather than telling the owner how to act. Ready-to-merge rows never set `row.next` at all (lines 128-130), even when the board supplies a merge instruction. The supplied approval test masks the problem by inventing an actionable `next.line`.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. The Board tab does not meet the requirement that each item show its state in plain words and its next step. This branch's board fixture has a ready row with `pr.checks: \"unknown\"`; the lookup here gives it no state. An existing client viewed from another machine also has a ready row with `next.step: null` (`tests/test_board_counts.py:219-224`), so the pane shows only its title even though `next.line` names who merges it. The older-board proof likewise expects a bare ready-row title (`tests/test_fix_pane_grouped_board.py:114-117`).",
         "file": "src/forge/mod/hooks/summary.ts",
         "gain": 4,
         "harm": 3,
-        "line": 106,
+        "line": 131,
         "priority": "P1",
-        "title": "Not done: Board rows do not show the actual next step",
+        "title": "Not done: Ready-to-merge rows can omit their state and next step",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The four-group and summary assertions import `summary.ts` directly here, so they pass even if the Board tab renders the groups or summary incorrectly. The mounted pane test checks only Moving and a refresh failure after a good snapshot (`src/forge/mod/hooks/pane.test.ts:48-71`); the first-timeout test checks only `/forge` text (`src/forge/mod/hooks/core.test.ts:175-195`). No test in the repository's pytest command mounts the pane for a complete grouped board or a failed first refresh, leaving both named Board-tab behaviors without entry-point proof.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. A completed worker round can leave a question in `codex.record` (`src/forge/worker.py:329-334`). The new flag puts that item under Needs you, but the row's `next.step` comes from `_item`, which does not inspect that question and can say `forge close <item>` or `forge work <item>` (`src/forge/nextstep.py:783-870`). This line displays that step as `decide: forge ...`; calling close or work without an answer is refused (`src/forge/close.py:141-143`, `src/forge/worker.py:113-114`). The required action is `forge work <item> --note \"<answer>\"`.",
+        "file": "src/forge/mod/hooks/summary.ts",
+        "gain": 4,
+        "harm": 3,
+        "line": 117,
+        "priority": "P1",
+        "title": "Needs you gives worker questions a command that refuses the answerless call",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The new command-level case creates an unanswered review stop, while the mounted pane case supplies a fabricated resolve step and a ready row with passing checks. Neither checks a real worker question or a ready row with unknown checks or no `next.step`. Those tests pass with both defects above present. The existing worker-question test (`tests/test_machine_views.py:115-129`) checks an occurrence, not the Board tab's state or next step.",
         "file": "tests/test_fix_pane_grouped_board.py",
         "gain": 3,
         "harm": 2,
-        "line": 25,
+        "line": 119,
         "priority": "P1",
-        "title": "Not done: End-to-end proof for grouped pane and first refresh error",
+        "title": "Not done: Test the worker-question and ready-row paths through the Board tab",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Gate. The recorded allowance describes two small fields in board data. The diff also adds `step` to the public `forge next --json` result here, adds `needs_person` to `forge board --json` (`src/forge/board.py:505`), and changes the refresh timeout from 20 to 60 seconds (`src/forge/mod/hooks/register.ts:10`). It therefore changes machine interfaces and refresh behavior beyond the allowance's stated reason.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 158,
+        "priority": "P1",
+        "title": "Recorded allowance does not match the interface and timeout changes",
         "work": 2
       }
     ],
-    "id": "829b4092-c569-4cd2-aff4-d28fd8607e65",
+    "id": "8fc1c518-2999-4476-874c-44deb612afa3",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-13T12:38:35.000433+00:00",
@@ -99,7 +162,18 @@
     {
       "at": "2026-10-13T14:05:20.119611+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T15:32:21.639903+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "area": "src/forge/mod/hooks/summary.ts",
+    "at": "2026-10-13T15:32:21.640007+00:00",
+    "file": "src/forge/mod/hooks/summary.ts",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "wait_id": "0cba9049-a5ac-45fb-9519-7ac3e15bae2e"
+  },
   "why": "The pane's Board tab is hard to read: raw timestamps, unknown rounds, zero times, a stage chain that does not mark where an item is, and priority codes"
 }
