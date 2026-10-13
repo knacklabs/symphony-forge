@@ -2,8 +2,11 @@
   "branch": "task/FORGE-BOARD-2-WAITS",
   "flagged": [
     "src/forge/board_facts.py",
+    "src/forge/close.py",
     "src/forge/nextstep.py",
-    "src/forge/worker.py"
+    "src/forge/worker.py",
+    "tests/test_board_blocked.py",
+    "tests/test_board_needs_you.py"
   ],
   "known": [
     {
@@ -12,7 +15,7 @@
       "gain": 3,
       "harm": 1,
       "line": 181,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,7 +28,7 @@
       "gain": 3,
       "harm": 1,
       "line": 790,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,53 +41,138 @@
       "gain": 3,
       "harm": 1,
       "line": 347,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: publish stuck-worker choice waits",
       "work": 2
+    },
+    {
+      "area": "stuck_stop() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 549,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: publish waits from a teammate's worktree",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 143,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "An answered question still prevents work on the asking machine",
+      "work": 2
+    },
+    {
+      "area": "test_3_blocked_or_slow_names_each_reason_and_how_long() in tests/test_board_blocked.py",
+      "file": "tests/test_board_blocked.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 50,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
+    },
+    {
+      "area": "test_2_needs_you_lists_every_wait_oldest_first_on_every_machine() in tests/test_board_needs_you.py",
+      "file": "tests/test_board_needs_you.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 155,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_board_needs_you.py",
+      "work": 1
+    },
+    {
+      "area": "test_3_blocked_or_slow_names_each_reason_and_how_long() in tests/test_board_blocked.py",
+      "file": "tests/test_board_blocked.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 90,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_board_blocked.py",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9c859d70de87c0c77a2229bf32aeb4f42429eba904a2b2ca5c165f0cbf91d697",
-    "changed": "ad9900d71245eabf9c2d6c5e6b14eadcf72e98fa721b715bfa75042b3363c9c8",
-    "commit": "76e2149e692ed46b3a89a9b30924f5dd04c47221",
+    "branch_diff": "7cb0445f7a61ec85de9ae4a25cd7cd3ca47223bf4ff0eabd4785c098ce46f146",
+    "changed": "d54dbe80d5bb64d2cfe162385792320fd653e774165da55731bfba4b7a7008d3",
+    "commit": "284afb729736026bf5912ae9ff89b3c9827c9dbb",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. Needs you can keep asking for a review-loop choice after another machine records and publishes it. `needs_you` passes the `best` state to `person_waits`; a local worktree wins a tie against the fetched branch when their step counts match. `--resolve` saves the choice without adding a step, so the stale local `stop` remains unchosen. `person_waits` then reports it even though the pull-request record contains the wait's end.",
-        "file": "src/forge/board_facts.py",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. `is_published` checks only this machine's receipt and event log (`worker.py:359`), so a teammate with a worktree and an existing PR fails this check. Their unanswered worker question is not refreshed to the PR because `worker.py:137` looks up the PR only when answering a question. A stuck-worker choice also refuses here without pushing or refreshing. The same check leaves a size-limit choice on a first close local, although only pre-PR worker questions may remain local. The new tests create these waits on the machine that published the PR, so they miss the handoff.",
+        "file": "src/forge/close.py",
         "gain": 3,
         "harm": 1,
-        "line": 181,
+        "line": 549,
         "priority": "P1",
-        "title": "Disputed keep 6: a choice made on another machine remains in Needs you",
+        "title": "Not done: publish waits from a teammate's worktree",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. After machine B answers question Q1 and its worker asks Q2, machine A can still hold Q1's `question_id`. The filter here excludes the open Q2 from A's Needs you, despite Q2 being in the pull-request record. On A, `forge work --note` also prefers that stale local ID in `worker.py:145`, ending Q1 again and leaving Q2 open. This breaks the promised same-machine view and answer flow during a normal handoff.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 790,
-        "priority": "P1",
-        "title": "A newer shared worker question is hidden and cannot be cleared from a machine with an older question",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. The new guide promises that stuck-worker choices appear on every machine through the pull-request record, but the refresh here runs only after a worker round. `worker.py:210` can call `close.stuck_round`, whose `stuck_stop` records an owner wait and refuses before this refresh. The size-limit path in `close.py:193` likewise refuses before its publish. A teammate therefore cannot see either open choice wait or how long it has waited.",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. After machine B answers machine A's question and publishes its end, A's local `codex.record` still contains that question. The refusal at `worker.py:116` runs before the new shared-record lookup here, so `forge work <item>` without a note continues to refuse an already answered question. This is a normal handoff that the answer-on-another-machine flow must support.",
         "file": "src/forge/worker.py",
         "gain": 3,
         "harm": 1,
-        "line": 347,
+        "line": 143,
         "priority": "P1",
-        "title": "Not done: publish stuck-worker choice waits",
+        "title": "An answered question still prevents work on the asking machine",
         "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list names only four `waits` and `stuck-worker` parameterizations. It omits both `blocking-problems` parameterizations in `test_board_needs_you.py` and both new `test_board_blocked.py` parameterizations. The list therefore does not enumerate the required proof for the blocked-plan and Blocked or slow clauses.",
+        "file": "tests/test_board_blocked.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 50,
+        "priority": "P1",
+        "title": "Not done: proof list",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The named test never reaches the required state where both machines' Needs you lists are empty: its last assertion explicitly leaves `clash` waiting for a human merge. It also creates the human-merge wait through a new close, so it never proves that an older ready open PR without a wait record appears with `since: null`. Both named cases could break while this test passes.",
+        "file": "tests/test_board_needs_you.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 155,
+        "priority": "P1",
+        "title": "Not done: test_board_needs_you.py",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The Done-when test explicitly calls for an unfinished item with no visible activity to be absent. This assertion checks a merged old fix and a recently active fix, but creates and checks no unfinished item with `idle_since` null. It would pass if the board incorrectly marked such an item stalled.",
+        "file": "tests/test_board_blocked.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 90,
+        "priority": "P1",
+        "title": "Not done: test_board_blocked.py",
+        "work": 1
       }
     ],
-    "id": "dfd1b56e-51ac-47c0-adc4-c94f6b157610",
+    "id": "f3d1fc93-2f2e-4150-ad5f-87694484e022",
     "status": "blocked"
   },
   "status": "fixing",
@@ -95,6 +183,10 @@
     },
     {
       "at": "2026-10-13T17:57:32.812202+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:00:16.026907+00:00",
       "step": "review"
     }
   ]
