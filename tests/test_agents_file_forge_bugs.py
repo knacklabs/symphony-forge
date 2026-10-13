@@ -64,4 +64,5 @@ def test_2_template_and_guide_ask_for_every_required_prompt(repo, gh, tmp_path):
         if name != "template":
             assert ('contents/.github/issue_template/forge-bug.md -h "accept: '
                     'application/vnd.github.raw"') in flat
-            assert "--label bug --body-file <filled file>" in flat
+            assert "--title \"<short plain title>\" --body-file <that file>" in flat
+            assert "--label" not in flat and "> forge-bug.md" not in flat
