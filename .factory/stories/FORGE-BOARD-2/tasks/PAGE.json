@@ -27,7 +27,7 @@
     "id": "28995f82-2855-47f3-991c-52f66f081920",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T23:45:10.134451+00:00",
@@ -48,7 +48,11 @@
   ],
   "stop": {
     "at": "2026-10-13T05:58:28.271594+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/board_visuals.py",
-    "wait_id": "b00041c3-c922-4f7f-afde-caca893fef3c"
+    "reason": "Coordinator (Harm 2, reversible): the map keeps its natural size in this part, as the PAGE row says (moved unchanged); stretching it makes labels about 5 times larger. Filling the full-width slot belongs to the GRAPH part, which redraws the map.",
+    "wait_id": "b00041c3-c922-4f7f-afde-caca893fef3c",
+    "worker_round": null
   }
 }
