@@ -40,7 +40,8 @@
   .shape { display: inline-block; width: .75em; height: .75em; margin: 0 .3em 0 .5em; vertical-align: -.05em;
            border: 1.5px solid var(--ink); background: var(--surface-2); }
   .s-done { border-radius: 50%; }
-  .s-running { border-radius: 2px; }
+  .s-running { background: var(--ink); }
+  .s-plan { width: 1.4em; }
   .s-waiting { border: 0; background: var(--muted);
                clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
   .s-start { transform: rotate(45deg) scale(.8); }
@@ -67,14 +68,21 @@
   .done > summary { font-weight: 600; font-size: .9rem; }
   .numbers { margin-top: 2.25rem; padding-top: .75rem; border-top: 1px solid var(--rule); font-size: .85rem; }
   .board-picture { display: block; max-width: 100%; height: auto; margin: .5rem 0;
-                   color: var(--ink); font: 15px var(--sans); }
+                   color: var(--ink); font: 15px/1.5 var(--sans); }
   .board-picture text { fill: currentColor; }
   .board-picture .picture-detail { fill: var(--muted); font-size: 14px; }
-  .dependency-node circle, .dependency-node rect, .dependency-node polygon,
-  .dependency-node ellipse, .dependency-node path { fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5;
-                             vector-effect: non-scaling-stroke; }
-  .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5;
-                     vector-effect: non-scaling-stroke; }
+  /* The graph keeps its own size: wide enough to fill a laptop window, scrolling in its box when narrow. */
+  .graph-scroll { overflow-x: auto; }
+  .graph-scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .graph-picture { max-width: none; margin: 1rem 0 0; }
+  .graph-picture .row-title { font-weight: 600; }
+  .row-rule { stroke: var(--rule); }
+  .dependency-node rect, .dependency-node polygon, .dependency-node path, .no-plan rect, .finished rect, .graph-picture .done {
+    fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5; }
+  .graph-picture .ink { fill: currentColor; }
+  .no-plan rect { stroke: var(--muted); stroke-dasharray: 4 3; }
+  .finished rect { fill: none; stroke: var(--rule); }
+  .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5; }
   .arrow { fill: var(--muted); }
   .recorded-time { fill: var(--ink); }
   .unknown-time { stroke: var(--muted); stroke-dasharray: 3 3; }

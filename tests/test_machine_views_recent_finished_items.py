@@ -203,14 +203,15 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
         key: value for key, value in expected.items() if key not in changing}
     first_maps = {entry["id"]: entry for entry in first["dependency_maps"]}
     expected_maps = {**first_maps, "LIVE": {
-        **first_maps["LIVE"], "parts": first_maps["LIVE"]["parts"] + [
+        **first_maps["LIVE"], "done": first_maps["LIVE"]["done"] + 12, "parts": first_maps["LIVE"]["parts"] + [
             {"id": f"LIVE/PAST-{n}", "title": f"Archived task {n}", "status": "Merged",
-             "waits_for": [f"PAST-{n}/SAVE"]} for n in range(12)]}}
+             "waits_for": [f"PAST-{n}/SAVE"], "column": None} for n in range(12)]}}
     expected_maps.update({f"PAST-{n}": {
-        "id": f"PAST-{n}", "title": f"Finished story PAST-{n}", "stage": "done", "parts": [
-            {"id": f"PAST-{n}/SAVE", "title": "Save baskets", "status": "Merged", "waits_for": []},
+        "id": f"PAST-{n}", "title": f"Finished story PAST-{n}", "stage": "done", "planned": True, "done": 2,
+        "parts": [
+            {"id": f"PAST-{n}/SAVE", "title": "Save baskets", "status": "Merged", "waits_for": [], "column": None},
             {"id": f"PAST-{n}/SHOW", "title": "Show the saved time", "status": "Merged",
-             "waits_for": [f"PAST-{n}/SAVE"]}]} for n in range(12)})
+             "waits_for": [f"PAST-{n}/SAVE"], "column": None}]} for n in range(12)})
     assert {entry["id"]: entry for entry in second["dependency_maps"]} == expected_maps
     assert len(second["dependency_maps"]) == len(first["dependency_maps"]) + 12
     before, after = first["team"]["counts"], second["team"]["counts"]

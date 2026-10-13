@@ -179,12 +179,12 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert not re.search(r"\b[0-9a-f]{7,}\b", page), "SVG coordinates must not look like hashes"
     drawing = _svg(page, "Roadmap dependencies")
     titles = _titles(drawing)
-    node_titles = {"Save a basket: Merged", "Show when it was saved: Running",
+    # The merged part folds into the story's "1 done"; the four unfinished states each draw.
+    node_titles = {"Show when it was saved: Running",
                    "Share a basket: Waiting", "Print a basket: Can start now",
                    "Prepare packaging: Not started"}
     assert node_titles <= titles
-    assert {"Show when it was saved waits for Save a basket",
-            "Share a basket waits for Show when it was saved",
+    assert {"Share a basket waits for Show when it was saved",
             "Share a basket waits for Prepare packaging",
             "Change the basket page waits for Show when it was saved"} <= titles
     shapes = []
@@ -193,7 +193,7 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
             shape = next(n for n in group if n.tag.rsplit("}", 1)[-1] in
                          ("rect", "circle", "ellipse", "polygon", "path"))
             shapes.append((shape.tag, shape.get("rx"), shape.get("stroke-dasharray")))
-    assert len(set(shapes)) == 5, "Each state needs its own shape, beyond its colour and label"
+    assert len(set(shapes)) == 4, "Each state needs its own shape, beyond its colour and label"
 
     for row in (children["SHOP/SHOW"], rows["readme-greets"]):
         stages = {s["name"]: s for s in row["stages"]}
@@ -244,7 +244,7 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     narrow = re.search(r"@media \(max-width: 720px\)\s*\{(.*)\}", css, re.S).group(1)
     assert "grid-template-columns: 1rem minmax(0, 1fr)" in narrow
     assert "fill: currentColor" in css and "fill: var(--muted)" in css
-    assert drawing.attrib["viewBox"].split()[:3] == ["0", "0", "260"]
+    assert drawing.attrib["viewBox"].split()[2] == drawing.attrib["width"], "Drawn at its own size"
     assert "<script" not in page.lower()
     assert not re.search(r"<(?:img|link|script)\b|<svg[^>]*\bsrc=|<image\b|<use\b", page, re.I)
 
@@ -340,12 +340,10 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert table_page.returncode == 0, table_page.stderr
     edited_drawing = _svg(out.read_text("utf-8"), "Roadmap dependencies")
     edited_titles = _titles(edited_drawing)
-    assert {"Export a basket: Not started", "Save a basket: Merged",
-            "Show when it was saved: Running", "Share a basket waits for Save a basket"} <= edited_titles
+    assert {"Export a basket: Not started", "Show when it was saved: Running"} <= edited_titles
     assert "Share a basket waits for Show when it was saved" not in edited_titles
     assert all("Unknown part" not in title for title in edited_titles)
-    assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
-               "Save a basket: Merged" for n in edited_drawing.iter()) == 1
+    assert "Save a basket: Merged" not in edited_titles, "Merged parts fold into the story's done count"
 
     # An edited approved plan requires another read before an idle part starts.
     changed = doc.replace("Shoppers can save a basket and come back to it later.",

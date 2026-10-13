@@ -11,7 +11,7 @@ ORDER = ("needs you", "blocked", "in progress", "planned", "no plan yet", "done"
 # One line: the map's shapes, then the three words. Shapes are CSS, hidden from screen readers.
 KEY = (" ".join(f'<span class="shape s-{name}" aria-hidden="true"></span>{word}' for name, word in (
     ("done", "done"), ("running", "running"), ("waiting", "waiting"), ("start", "can start"),
-    ("not", "not started"))) + " · part: a piece of a plan · fix: a small change · plan: a story's design")
+    ("not", "not started"), ("plan", "no plan yet"))) + " · part: a piece of a plan · fix: a small change · plan: a story's design")
 
 
 def _svg(label: str, description: str, height: int, drawing: str) -> str:
