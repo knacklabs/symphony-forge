@@ -2179,6 +2179,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: update the shipped coordinator guidance for exact Codex trust\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 458,
+      "text": "Not done: update the shipped coordinator guidance for exact Codex trust",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tOld-release runs leave skipped chats only in local records\tsync-not-blocked",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -2582,6 +2593,17 @@
       "text": "Not done: the UI skills check covers both hosts",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 51,
+      "text": "Not done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix",
+      "from": "blocking",
+      "item": "codex-trust-parent",
       "status": "open",
       "closed_by": null
     },
