@@ -1,0 +1,14 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/dismissals-carry-forward",
+  "done_when": "A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code changes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:52.068554+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Every new commit throws away the review's dismissals, so an unchanged dismissed finding costs another full review round"
+}
