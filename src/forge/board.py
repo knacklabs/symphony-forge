@@ -508,10 +508,9 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
-                **({k: v for k, v in time_records.merged(
-                    time_records.item(top, item, state, events=recorded, timings=timings,
-                                      ended_at=merged_dates.get(branch)),
-                    time_records.from_body((pr or {}).get("body") or "")).items()
+                **({k: v for k, v in time_records.combined(
+                    top, item, state, (pr or {}).get("body") or "", events=recorded, timings=timings,
+                    ended_at=merged_dates.get(branch)).items()
                     if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")} if kind != "story" else {}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
@@ -576,10 +575,9 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
     for rel, state, key, tid, branch in older:
         if rel in merged or branch in merged_prs or key in completed:
             state = {**state, "status": "merged"}
-        older_parts.setdefault(key, []).append(time_records.merged(
-            time_records.item(top, f"{key}/{tid}", state, events=recorded, timings=timings,
-                              ended_at=by_branch.get(branch, {}).get("mergedAt")),
-            time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
+        older_parts.setdefault(key, []).append(time_records.combined(
+            top, f"{key}/{tid}", state, by_branch.get(branch, {}).get("body") or "", events=recorded,
+            timings=timings, ended_at=by_branch.get(branch, {}).get("mergedAt")))
     notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
                       for key, current in items.items() if current["kind"] == "story"}
     past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()

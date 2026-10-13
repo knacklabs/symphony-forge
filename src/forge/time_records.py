@@ -355,7 +355,7 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
                preserve_ready: bool = False) -> str:
     records = {name: [row for row in read(top, name) if row.get("item") == key]
                for name in ("events", "timings")}
-    data = merged(item(top, key, state, **records), from_body(published))
+    data = combined(top, key, state, published, **records)
     data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
                                   for r in [*data.get("clean_reviews", []),
                                             *[e for e in data["events"] if e.get("event") == "review result"
@@ -412,13 +412,15 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     if data.get("truncated"):
         current = "Older time detail was shortened to fit GitHub; missing time is unknown.\n\n" + current
     saved = {name: checkpoint(found) for name, found in records.items()}
+    clean = [r for r in data["clean_reviews"] if not summary or not _settled(r, summary["round"], when(summary["until"]))]
+    # Close's saved review snapshot has no round or time: keep only the newest one.
+    clean = [r for r in clean if r.get("at")] + [r for r in clean if not r.get("at")][-1:]
     # Keep progress dates and rounds, but not tool-command prose or recomputable snapshots.
     shared = {name: data.get(name) for name in ("ready", "clean_reviews", "rebuilt", "legacy_text", "truncated")}
     shared.update(events=[{k: e[k] for k in ("id", "item", "event", "at", "round") if k in e}
                           if e.get("event") == "progress" else e for e in rows["events"]],
                   timings=rows["timings"], summary=summary,
-                  clean_reviews=[r for r in data["clean_reviews"]
-                                 if not summary or not _settled(r, summary["round"], when(summary["until"]))],
+                  clean_reviews=clean,
                   state={"steps": [{"step": "start", "at": s.get("at")}
                                    for s in data["state"].get("steps", []) if s.get("step") == "start"]})
     return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->" + \
@@ -516,6 +518,19 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
     kept = {name: whole[name] for name in ("time_breakdown", *SUMMED, "rounds", "intervals", "seen", "known")}
     return ({**kept, "until": until.isoformat(), "round": number},
             {name: [r for r in rows[name] if not _settled(r, number, until)] for name in rows})
+
+
+def combined(top: Path, key: str, state: dict[str, Any], published: str, *,
+             events: list[dict[str, Any]] | None = None, timings: list[dict[str, Any]] | None = None,
+             ended_at: str | None = None) -> dict[str, Any]:
+    """The item's time from local logs and its pull request, derived once; a published summary
+    replaces its rounds' local rows, so long items stay quick to read."""
+    record = from_body(published)
+    if not record:
+        return merged(item(top, key, state, events=events, timings=timings, ended_at=ended_at), {})
+    rows = {name: [r for r in (read(top, name) if given is None else given) if r.get("item") == key]
+            for name, given in (("events", events), ("timings", timings))}
+    return merged({**rows, "state": state, "ended_at": ended_at}, record)
 
 
 def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:

@@ -1,4 +1,5 @@
-"""A long item's pull request keeps every round's times inside a fixed size.
+"""A long item's pull request time record has a fixed size: recent rounds keep their own
+time summary, older rounds fold into one totals line, and the board still shows its total time.
 
 Audit: a real work and close round records one round; the test repeats that round's own
 records as 200 earlier rounds with many findings, since 200 real rounds would take too
@@ -48,7 +49,7 @@ def repeat_round(template, number, offset):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-def test_1_long_item_keeps_every_round_time_within_a_fixed_body_size(env, previous):
+def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size(env, previous):
     client(env, previous)
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
@@ -71,7 +72,9 @@ def test_1_long_item_keeps_every_round_time_within_a_fixed_body_size(env, previo
     mine = {name: [r for r in rows if r.get("item") == item] for name, rows in recorded.items()}
     number = max(r["round"] for r in mine["events"] if isinstance(r.get("round"), int))
     assert number >= EARLIER
-    template = {name: [r for r in rows if r.get("round") == number] for name, rows in mine.items()}
+    # The round's merge wait is still open; a later round's work would have ended it.
+    template = {name: [r for r in rows if r.get("round") == number and r.get("event") != "owner wait start"]
+                for name, rows in mine.items()}
     earlier = [repeat_round(template, n, number - n + 1) for n in range(1, number)]
     for name in ("events", "timings"):
         rows = [r for copies in earlier for r in copies.get(name, [])] + recorded[name]
@@ -79,6 +82,7 @@ def test_1_long_item_keeps_every_round_time_within_a_fixed_body_size(env, previo
 
     env.commit(where, "app.py", "print('basket label is clear')\n")
     worked = env.repo.forge("work", item)
+    env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
     assert worked.returncode == 0, worked.stdout + worked.stderr
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
@@ -92,13 +96,17 @@ def test_1_long_item_keeps_every_round_time_within_a_fixed_body_size(env, previo
     env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(clone))
     env.repo.path = clone
     shared = row(env.repo, item)
-    covered = []
-    for line in (r["line"] for r in shared["rounds"]):
-        first, last = re.match(r"Rounds? (\d+)(?:–(\d+))?:", line).groups()
-        covered += range(int(first), int(last or first) + 1)
-        assert "review" in line, line
-    # Every earlier round is accounted for, then the current round's review.
-    assert covered[:number] == list(range(1, number + 1)) and len(covered) == number + 1, covered
+    lines = [r["line"] for r in shared["rounds"]]
+    # Older rounds fold into one totals line; the recent ones keep their own line each.
+    folded, recent = lines[0], lines[1:]
+    last = int(re.match(r"Rounds 1–(\d+): .*reviewing .*findings: \d+ new, \d+ repeated$", folded)[1])
+    assert len(recent) < 20, lines
+    assert [int(re.match(r"Round (\d+):", line)[1]) for line in recent[:-1]] == list(range(last + 1, number + 1))
+    assert "Basket label stays unclear" in recent[-1]
     assert shared["rounds"][-1]["repeat_findings"] == 1
-    assert shared["time_breakdown"]["reviewing"] is not None
+    # The board's total time is the sum of its parts and spans all 200 earlier rounds.
+    parts = sum(shared[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown"))
+    assert abs(shared["total_seconds"] - parts) < 1
     assert shared["total_seconds"] > (number - 1) * 3600
+    # Clean reviews do not pile up across rounds.
+    assert len(shared["clean_reviews"]) <= 2, shared["clean_reviews"]
