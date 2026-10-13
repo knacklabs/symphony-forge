@@ -13,7 +13,7 @@ from test_hotspot_stop import rounds, saved, seed
 from test_setup import _fresh_client
 
 GUIDANCE = (
-    "Ask the human to narrow the part, split it, or accept the remaining findings. "
+    "To ask, ask the human to narrow the part, split it, or accept the remaining findings. "
     "Run `forge land <item>` in the background after a close stop, or keep the current land running."
 )
 
@@ -27,12 +27,12 @@ def stopped(env, kind="fix"):
     result = rounds(env, item, where, ["src/a.py"] * 3)
     lines = result.stderr.splitlines()
     if kind == "task":
-        assert lines[-8] == ("Save a basket (part of Shoppers can save a basket): "
+        assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
                              "Shoppers can save their basket with one click")
-    assert [lines[-9], lines[-1]] == [
+    assert [lines[-11], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
-        "round flagged too, so Forge stops sending the worker back. Ask the human "
-        "to narrow the part, split it, or accept the remaining findings, in these words:",
+        "round flagged too, so Forge stops sending the worker back. Every open note has Harm 1 or 2: "
+        "settle it yourself (accept or narrow with a reason) and tell the owner after.",
         f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
     ]
     return item, where
@@ -59,11 +59,11 @@ def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, 
     for command in ("close", "land", "close", "land"):
         result = env.repo.forge(command, item)
         assert result.returncode == 1, result.stdout + result.stderr
-        assert "narrow the part, split it, or accept the remaining findings" in result.stderr
+        assert "settle it yourself (accept or narrow with a reason)" in result.stderr
         assert len(env.review_calls()) == before
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == head
     result = env.repo.forge("next")
-    assert "narrow the part, split it, or accept the remaining findings" in result.stdout
+    assert "settle it yourself (accept or narrow with a reason)" in result.stdout
     assert "--resolve" in result.stdout
 
 
