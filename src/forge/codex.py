@@ -85,7 +85,7 @@ REFUSALS = {
                    "commit or undo those changes, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
-                  "no Codex turn here.", "forge doctor"),
+                  "no Codex turn here.", "{fix}"),
     # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
     "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
              "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
@@ -455,8 +455,9 @@ def require_trust(top: Path) -> None:
     doesn't trust, Codex lists and runs no project hook, Forge's own included."""
     from forge import doctor  # doctor imports codex
     config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
-        repo.refuse(REFUSALS["untrusted"])
+    trusted, fix = doctor._codex_trust(top, config)  # pyright: ignore[reportPrivateUsage]
+    if not trusted:
+        repo.refuse(REFUSALS["untrusted"], fix=fix)
 
 
 def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
