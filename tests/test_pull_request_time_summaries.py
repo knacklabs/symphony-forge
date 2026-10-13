@@ -167,3 +167,65 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     assert shared["total_seconds"] > (number - 1) * 3600
     # Clean reviews do not pile up across rounds.
     assert len(shared["clean_reviews"]) <= 2, shared["clean_reviews"]
+
+
+def test_2_story_counts_two_parts_overlapping_folded_time_once(env, monkeypatch):
+    client(env, False)
+    version = env.repo.forge("--version").stdout.split()[-1]
+    env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
+               'workers = "claude"\ntest = "echo passed"\n'
+               'checks = ["tests", "forge-pr-check"]\n'
+               'models.build = { model = "opus", effort = "high" }\n')
+    env.repo.git("push", "-q", "origin", "main")
+    # Both parts can run at once, so their long histories overlap in time.
+    first, _ = env.start_approved_task(STORY_DOC.replace("| T1 | yes |", "| — | yes |"))
+    started = env.repo.forge("task", "start", "SHOP/T2")
+    assert started.returncode == 0, started.stdout + started.stderr
+    install_claude(env.repo)
+    env.reviews({"exit": 0, "report": report(finding("P2", "Basket label stays unclear"))})
+    logs = env.repo.path / ".git/forge"
+    prs = []
+    for number, item in enumerate((first, "SHOP/T2"), 7):
+        env.open_pr("")
+        for _ in range(2):  # the second close publishes the record after the old rounds were added
+            worked = env.repo.forge("work", item)
+            assert worked.returncode == 0, worked.stdout + worked.stderr
+            closed = env.close(item)
+            assert closed.returncode == 0, closed.stdout + closed.stderr
+            env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
+            if _:
+                break
+            recorded = {name: [json.loads(line) for line in (logs / f"{name}.jsonl").read_text("utf-8").splitlines()]
+                        for name in ("events", "timings")}
+            mine = {name: [r for r in rows if r.get("item") == item] for name, rows in recorded.items()}
+            current = max(r["round"] for r in mine["events"] if isinstance(r.get("round"), int))
+            template = {name: [r for r in rows if r.get("round") == current and r.get("event") != "owner wait start"]
+                        for name, rows in mine.items()}
+            # Back to back, so the folded time has little idle time for both parts to share.
+            times = [datetime.fromisoformat(r.get("at") or r["start"]) for rows in template.values() for r in rows]
+            span = (max(times) - min(times)).total_seconds() / 3600
+            earlier = [repeat_round(template, n, (EARLIER - n) * span, current) for n in range(1, EARLIER)]
+            for name in ("events", "timings"):
+                rows = [r for copies in earlier for r in copies.get(name, [])] + recorded[name]
+                (logs / f"{name}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
+        branch = f"task/{item.replace('/', '-')}"
+        prs.append({"number": number, "state": "OPEN", "isDraft": False, "title": item,
+                    "body": body(env.gh_calls("pr", "edit")[-1]), "headRefName": branch,
+                    "headRefOid": env.repo.git("ls-remote", "origin", f"refs/heads/{branch}").split()[0],
+                    "url": f"https://github.com/acme/shop/pull/{number}"})
+    env.gh.respond("pr", "list", stdout=json.dumps(prs))
+    clone = env.tmp / "peer-clone"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(clone))
+    env.repo.path = clone
+    monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=5)).isoformat())
+    result = env.repo.forge("board", "--json")
+    assert result.returncode == 0, result.stderr
+    story = next(i for i in json.loads(result.stdout)["items"] if i["id"] == "SHOP")
+    parts = {child["id"]: child for child in story["children"]}
+    assert all(parts[item].get("folded_seconds") for item in (first, "SHOP/T2")), parts
+    # The parts overlap, so the story's time is their union, counted once.
+    assert abs(story["total_seconds"] - max(p["total_seconds"] for p in parts.values())) < 1, story
+    assert story["unknown_seconds"] >= 0
+    assert abs(sum(story[f"{k}_seconds"] for k in ("working", "waiting", "unknown")) - story["total_seconds"]) < 1
+    for kind in ("working", "waiting"):
+        assert story[f"{kind}_seconds"] <= sum(p[f"{kind}_seconds"] for p in parts.values()) + 5, (kind, story)
