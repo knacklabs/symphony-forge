@@ -507,8 +507,9 @@ older Forge with no `team` shows no summary line. Groups follow in this order, e
 when it has items: NEEDS YOU (rows whose `needs_person` is true),
 STUCK (no activity past the board's stall threshold, with the longest wait in days),
 MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
-READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge step), then a folded count of the work waiting or not
-started, opened with a native button. Each item shows its plain title, the story key small
+READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge
+step; an item merged from another machine shows `forge next`'s line naming who merges it), then a
+folded count of the work waiting or not started, opened with a native button to the same rows. Each item shows its plain title, the story key small
 beside it, one line of state in words and, where there is something to do, its next step
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
 The pane never shows zero counts, unknown times, raw timestamps, priority codes or

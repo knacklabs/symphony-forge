@@ -129,10 +129,15 @@ export function board(data: Data, now: number): View {
       groups.MOVING!.push(row)
     } else if (i.state === 'ready to merge' || i.stage === 'ready') {
       row.state = ['Ready to merge', CHECKS[String(i.pr?.checks)]].filter(Boolean).join(' · ')
-      // An older Forge may give no step; merging the pull request is right in either merge setting.
-      row.next = step ?? 'merge its pull request, then forge next'
+      // With no step (another machine's item, or an older Forge), forge next's own line says who merges.
+      row.next = step ?? (typeof next.line === 'string' ? next.line : 'see forge next')
       groups['READY TO MERGE']!.push(row)
-    } else waiting.push(row)
+    } else {
+      const word = record(i.activity).status === 'queued' ? 'waiting in line' : typeof i.state === 'string' ? i.state : i.stage
+      row.state = word ? `${word.charAt(0).toUpperCase()}${word.slice(1)}` : undefined
+      row.next = step
+      waiting.push(row)
+    }
   }
   for (const i of data.board?.items ?? []) walk(i)
   const count = (kind: string) => Number(record(counts[kind])['in progress'] ?? 0)

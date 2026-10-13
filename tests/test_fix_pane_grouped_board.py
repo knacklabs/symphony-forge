@@ -38,8 +38,9 @@ console.log(JSON.stringify(text(data, Date.parse({json.dumps(NOW)}))));
 """)
 
 
-def board_tab(tmp_path, repo=None, canned=None):
-    """The mounted Board tab's lines, from real forge commands in `repo` or `canned` views."""
+def board_tab(tmp_path, repo=None, canned=None, press=None):
+    """The mounted Board tab's lines, from real forge commands in `repo` or `canned` views, after
+    pressing the button keyed `press`."""
     register = (ROOT / "src/forge/mod/hooks/register.ts").as_uri()
     root = str(repo.path) if repo else "/repo"
     forge = [sys.executable, str(repo.bin / "forge")] if repo else None
@@ -65,8 +66,11 @@ const api = {{
 }};
 mod.register(on);
 await fire('session.start', {{cwd: {json.dumps(root)}, surface: 'terminal', isInteractive: true}}, api);
-const tree = await fire('ui.render', {{component: 'Pane', requestId: 'forge', surface: 'terminal',
+const draw = () => fire('ui.render', {{component: 'Pane', requestId: 'forge', surface: 'terminal',
   props: {{title: 'Forge', isFocused: true, bodyColumns: 80, placement: 'inline', scroll: {{offset: 0, bodyRows: 40}}, view: {{}}}}}}, api);
+let tree = await draw();
+const find = (n, key) => typeof n === 'string' ? undefined : n.props.key === key ? n : n.children.map(c => find(c, key)).find(Boolean);
+if ({json.dumps(press)}) {{ find(tree, {json.dumps(press)}).props.onPress(); tree = await draw(); }}
 const inline = n => typeof n === 'string' ? n : n.type === 'Button' ? n.props.label : n.children.map(inline).join('');
 const lines = n => typeof n === 'string' || n.type !== 'Box' ? [inline(n)] : n.children.flatMap(lines);
 console.log(JSON.stringify(lines(tree).join('\\n')));
@@ -153,7 +157,7 @@ def an_older_forge_board_draws_rows_and_no_team_line(_request, tmp_path):
 READY TO MERGE
   Polish the guide
     Ready to merge
-    → merge its pull request, then forge next
+    → Polish the guide is ready and waiting for someone to merge it.
 
 WAITING OR NOT STARTED (1) · forge board for all"""
 
@@ -190,15 +194,29 @@ def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
     assert f"NEEDS YOU\nReadme greets new readers\nThe builder is waiting for your answer.\n→ decide: {step.removeprefix('Next: ')}" in shown, shown
 
 
+def opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step(_request, tmp_path):
+    board = copy.deepcopy(PREVIOUS["board"])
+    board["items"][0]["next"] = {"command": None, "step": None,
+                                 "line": "Polish the guide is ready to merge; Forge Test merges it from their machine."}
+    board["items"][1]["next"]["step"] = "forge read WAIT"
+    shown = board_tab(tmp_path, canned={"board": board, "next": FIXTURE["next"]}, press="waiting")
+    assert ("READY TO MERGE\nPolish the guide\nReady to merge\n"
+            "→ Polish the guide is ready to merge; Forge Test merges it from their machine.") in shown, shown
+    assert ("Hide waiting or not started (1)\nBoard shows each story in plain English  WAIT\n"
+            "Planning\n→ forge read WAIT") in shown, shown
+    assert "merge its pull request" not in shown
+
+
 def a_ready_row_with_unknown_checks_still_says_ready_and_its_step(_request, tmp_path):
     board = copy.deepcopy(PREVIOUS["board"])
-    board["items"][0]["next"] = {"command": None, "line": "Polish the guide is ready."}
+    board["items"][0]["next"] = {"command": None}
     shown = board_tab(tmp_path, canned={"board": board, "next": FIXTURE["next"]})
-    assert "READY TO MERGE\nPolish the guide\nReady to merge\n→ merge its pull request, then forge next" in shown, shown
+    assert "READY TO MERGE\nPolish the guide\nReady to merge\n→ see forge next" in shown, shown
 
 
 @pytest.mark.parametrize("case", [a_worker_question_needs_you_with_its_answer_step,
                                   a_ready_row_with_unknown_checks_still_says_ready_and_its_step,
+                                  opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step,
                                   a_review_stop_needs_you_with_the_step_forge_next_prints, groups_in_plain_words, zero_counts_unknown_go_live_and_failures_stay_hidden,
                                   an_older_forge_board_draws_rows_and_no_team_line])
 def test_1_the_board_tab_and_forge_text_read_in_plain_words(request, tmp_path, case):
