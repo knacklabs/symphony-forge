@@ -149,11 +149,12 @@ export function board(data: Data, now: number): View {
     groups['NEEDS YOU']!.length ? `${groups['NEEDS YOU']!.length} needs you` : '',
     groups.STUCK!.length ? `${groups.STUCK!.length} stuck` : '',
     golive,
-  ].filter(Boolean).join(' · ') || [
+  ].filter(Boolean).join(' · ') || (waiting.length || groups['READY TO MERGE']!.length ? [
     // Nothing moving, asking or stuck: count what waits instead of showing no overview.
+    // With no rows the board says Nothing in progress. on its own.
     count('parts', 'ready to merge') + count('fixes', 'ready to merge') ? `${count('parts', 'ready to merge') + count('fixes', 'ready to merge')} ready to merge` : '',
     count('stories', 'planning') ? `${count('stories', 'planning')} in planning` : '',
-  ].filter(Boolean).join(' · ') || null : null
+  ].filter(Boolean).join(' · ') : '') || null : null
   const idle = Math.max(0, ...groups.STUCK!.flatMap(r => r.item.idle_since ? [elapsed(String(r.item.idle_since), now)] : []))
   return {
     summary,
