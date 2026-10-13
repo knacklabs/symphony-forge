@@ -10,11 +10,16 @@
       "at": "2026-10-13T14:20:58.539089+00:00",
       "because": "The JSON now states its GitHub cache contract instead of promising identical output to a fresh read",
       "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about three times faster (board about 11 seconds and next about 8 seconds with a warm GitHub cache) with the same JSON"
+    },
+    {
+      "at": "2026-10-13T16:10:02.027354+00:00",
+      "because": "Items in progress need their own branch facts; the cost that grew without limit was finished work, which is now free",
+      "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are, so on Forge's own repo they run about three times faster; next --json reads GitHub through the board's 60-second cache, like the board"
     }
   ],
   "base": "29bded0c7a63846d66b89477cf4158c024c6d711",
   "branch": "fix/board-json-fast",
-  "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are, so on Forge's own repo they run about three times faster; next --json reads GitHub through the board's 60-second cache, like the board",
+  "done_when": "forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small number per item still in progress, so on Forge's own repo they run about three times faster; next --json reads GitHub through the board's 60-second cache, like the board",
   "flagged": [
     "src/forge/board.py",
     "src/forge/nextstep.py",
