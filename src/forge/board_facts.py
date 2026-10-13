@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -71,17 +72,19 @@ def prs(top: Path) -> Item | None:
     def fetch(now: datetime) -> Item | None:
         opened = _listing(top, "open")
         if opened is None:
+            return None  # GitHub is unreachable: one call, not eight
+        starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
+        with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
+            lists = list(pool.map(lambda start: _listing(
+                top, "merged", "--search", f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"), starts))
+        if None in lists:
             return None
         weeks = []
-        for start in [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]:
-            found = _listing(top, "merged", "--search",
-                             f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
-            if found is None:
-                return None
+        for start, found in zip(starts, lists):
             # A capped week need not hold all of its rows, so its counts are unknown.
             weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
         return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
-    return _cached(top, "prs-cache", fetch)
+    return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:
