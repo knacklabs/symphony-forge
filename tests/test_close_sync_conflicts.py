@@ -13,18 +13,20 @@ from test_setup import _fresh_client
 STORY = "when-forge-close-merges-the-default-bran"
 
 
-@pytest.mark.parametrize("kind", ["new", "adopted", "source", "source CRLF", "code conflict"])
+@pytest.mark.parametrize("kind", ["new", "adopted", "source", "source CRLF", "code conflict",
+                                  "new code conflict", "adopted code conflict",
+                                  "source code conflict"])
 def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_path):
     repo = env.repo
     config = (repo.path / "forge.toml").read_text()
-    if kind == "new":
+    if kind.startswith("new"):
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stderr
         repo = env.repo = conftest.Repo(client, repo.bin)
         repo.write("forge.toml", config)
         env.checks(GREEN)
     remote = Path(repo.git("remote", "get-url", "origin"))
-    if kind == "adopted":
+    if kind.startswith("adopted"):
         shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
         repo.write("forge.toml", repo.git("show", "HEAD:forge.toml") + '\nrepo = "client"\n')
@@ -92,17 +94,28 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
     env.commit(repo.path, skill, original.replace("# Forge", "# Default Forge", 1))
     env.commit(repo.path, "AGENTS.md", "Default branch house rules.\n\n" +
                guide.replace("Working here with Forge", "Default guide", 1))
-    if kind == "code conflict":
+    if kind.endswith("code conflict"):
         env.commit(repo.path, "app.py", "print('default')\n")
+    if kind == "source code conflict":
+        # Forge runs from this checkout, so its own conflicted code must never be parsed.
+        code = "src/forge/nextstep.py"
+        for folder, line in ((where, "# worker\n"), (repo.path, "# default\n")):
+            (folder / code).write_bytes((folder / code).read_bytes() + line.encode())
+            repo.git("commit", "-q", "-am", "Change Forge's code", cwd=folder)
     moved = repo.git("rev-parse", "HEAD")
     # Publish to a non-default ref through the real hooks; the remote then lands it on main.
     repo.git("push", "-q", "origin", "HEAD:refs/heads/default-update")
     repo.git("update-ref", "refs/heads/main", moved, cwd=remote)
     before = repo.git("rev-parse", "HEAD", cwd=where)
-    closed = env.close(item)
-    if kind == "code conflict":
+    # The source case runs close from the fix's own checkout, as a worker does.
+    closed = (repo.forge("close", item, cwd=where) if kind == "source code conflict"
+              else env.close(item))
+    if kind.endswith("code conflict"):
         assert closed.returncode == 1
         assert "conflicts in" in closed.stderr and "app.py" in closed.stderr
+        assert "syntax" not in closed.stderr and "forge close" in closed.stderr
+        if kind == "source code conflict":
+            assert "src/forge/nextstep.py" in closed.stderr
         assert repo.git("rev-parse", "HEAD", cwd=where) == before
         assert repo.git("status", "--porcelain", cwd=where) == ""
         assert not env.review_calls()

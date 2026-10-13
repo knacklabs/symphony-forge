@@ -138,6 +138,10 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     assert json.loads((shop / ".factory/stories/SHOP/story.json").read_text("utf-8"))["status"] == "read"
     assert not (repo.bin / "codex-app-server.jsonl").exists()
     assert calls(repo.bin / "claude-calls.jsonl") == []
+    # Forge cannot see a session subagent's token use, so a native read records none.
+    events = [json.loads(line) for line in
+              (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]
+    assert not any("input_tokens" in row for row in events if row.get("item") == "SHOP")
 
     # Both tools still use this session for its already-recorded same-tool reader.
     config.write_text(config.read_text("utf-8").replace(f'tools = "{tool}"', 'tools = "both"'),

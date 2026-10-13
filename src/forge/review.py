@@ -2,7 +2,8 @@
 
 Autoreview is a third-party black box. Forge reads only the fields it uses (each finding's
 priority, title, body and code_location, in findings and scope_rejected_findings, then
-review_status and overall_correctness) and ignores everything else it writes.
+review_status and overall_correctness) and ignores everything else it writes. The body's first
+line carries the reviewer's Gain, Work and Harm scores (see score.py).
 """
 from __future__ import annotations
 
@@ -22,7 +23,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import machine, repo, spotted
+from forge import machine, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -33,6 +34,8 @@ HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autorevie
 PRIORITIES = ("P0", "P1", "P2", "P3")
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
+SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
+TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
@@ -82,7 +85,15 @@ elif "--tools" in argv:
     i = argv.index("--tools") + 1
     argv[i] = ",".join(filter(None, ["Read", "Grep", "Glob", argv[i]]))
     argv.append("--restricted")
-sys.exit(subprocess.call([{real!r}, *argv], cwd={tree!r}))
+# The engine's chat and token use go to a side file, as the helper keeps no copy.
+with open({spent!r}, "ab") as spent, subprocess.Popen(
+        [{real!r}, *argv], cwd={tree!r}, stdout=subprocess.PIPE) as engine:
+    for line in engine.stdout:
+        sys.stdout.buffer.write(line)
+        sys.stdout.buffer.flush()
+        if any(kind in line for kind in (b"thread.started", b"turn.completed", b"session_id")):
+            spent.write(line)
+sys.exit(engine.returncode)
 '''
 
 
@@ -222,7 +233,7 @@ def plain(title: str, body: str = "") -> str:
             return f"{first.rstrip('.!?:')}: " + (rest[0] if rest[0][1:2].isupper() else
                                                  rest[0][:1].lower() + rest[0][1:])
         return " ".join([first, *rest][:keep])  # a second sentence often says who is affected
-    title, body = sentences(title, 1), sentences(body, 2)
+    title, body = sentences(title, 1), sentences(score.strip(body), 2)
     if not body:
         return title
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
@@ -232,7 +243,7 @@ def question(name: str, delivers: str, flagged: list[str], accept: str,
                   parts: str = "Done when") -> str:
     """The question a stopped read or review loop asks the human, ready to ask as written."""
     return "\n".join([f"{name}: {delivers}" if delivers else name,
-                      *(["It still has these problems:", *(f"- {line}" for line in flagged)] if flagged else []),
+                      *(["It still has these problems:", *flagged] if flagged else []),
                       "Accept, narrow or split?",
                       f"- Accept: {accept}",
                       f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
@@ -257,13 +268,14 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    flagged = [plain(finding["title"], finding.get("body", ""))
-               for _, finding in blocking(result) if isinstance(finding, dict)]
+    rows = [(plain(finding["title"], finding.get("body", "")),
+             (finding["gain"], finding["work"], finding["harm"]) if "harm" in finding else None)
+            for _, finding in blocking(result) if isinstance(finding, dict)]
     # Accept dismisses every finding not yet dismissed, advice included.
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
-    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(flagged)
-    return question(name, delivers, flagged,
-                               f"every finding in this review, the {len(flagged)} listed and {advice} "
+    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
+    return question(name, delivers, score.table(rows),
+                               f"every finding in this review, the {len(rows)} listed and {advice} "
                                "advice notes, is dismissed with your reason and recorded; close then "
                                "goes on to the checks, and merging is still a separate step.")
 
@@ -373,7 +385,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
-        if not always:
+        # forge.toml's always_test runs on every change, settings and docs included.
+        if not always and not repo.config(top)["always_test"]:
             changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                                cwd=top).split("\0")
             if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
@@ -570,7 +583,9 @@ def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> st
     for _, message, files in repo.commit_log(top, base, head):
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^" + re.escape(label) + r".*", message, re.M | re.S)
+        # Any words between the label and its colon on that line still name the paragraph.
+        found = re.search(r"^" + re.escape(label.removesuffix(":")) + r"\b[^\n]*?:.*",
+                          message, re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 
@@ -671,16 +686,14 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # then create the file afresh ("x" refuses anything still there).
         repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
-            page.write(string.Template(rules).substitute(standards=(
+            page.write(prompt + "\n\n" + string.Template(rules).substitute(standards=(
                 Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
         engine = cfg["tools"]
         if engine == "both":
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
-        # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
-        # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
-                "--max-priority", "P0" if light else "P3", "--prompt", prompt,
+                "--max-priority", "P0" if light else "P3",
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
         launcher = _launcher(tmp / "bin", tree, engine)
@@ -692,7 +705,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
                                                 strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
-                    ran.update(selected)
+                    ran.update(selected, **_spent(tmp / SPENT))
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
@@ -827,14 +840,46 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     return findings, ""  # type: ignore[return-value]
 
 
+def _spent(path: Path) -> dict[str, Any]:
+    """The review engine's token use summed over its runs (a chunked review has one per pass,
+    a retry one more) and its first chat, read once: Codex's `exec --json` events or Claude's
+    results."""
+    runs: list[dict[str, Any]] = []
+    with contextlib.suppress(OSError):
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            usage = event.get("usage")
+            if event.get("type") == "thread.started":
+                runs.append({"chat": event.get("thread_id")})
+            elif event.get("type") == "turn.completed" and isinstance(usage, dict) and runs:
+                # Codex reports the thread's running total, so its last turn holds the run's use.
+                runs[-1].update({key: usage.get(key) for key in TOKENS})
+            elif event.get("type") == "result" and isinstance(usage, dict):
+                runs.append({"chat": event.get("session_id"), **repo.claude_tokens(usage)})
+        path.unlink()
+    if not runs:
+        return {}
+    return {"chat": runs[0]["chat"], **{key: sum(counts) if (counts := [
+        run[key] for run in runs if isinstance(run.get(key), int)]) else None for key in TOKENS}}
+
+
 def _finding(raw: Any) -> dict[str, Any] | None:
     """The fields Forge uses from one finding, or None when they can't be read."""
     where = raw.get("code_location") if isinstance(raw, dict) else None
     if not isinstance(where, dict) or raw.get("priority") not in PRIORITIES:
         return None
-    return {"priority": raw["priority"], "title": str(raw.get("title", "")),
-            "body": str(raw.get("body", "")), "file": str(where.get("file_path", "")),
-            "line": where.get("line", 0)}
+    title = str(raw.get("title", ""))
+    scores, body = score.normalise(title, str(raw.get("body", "")))
+    if not scores:  # a new finding must carry its score line
+        return None
+    return {"priority": raw["priority"], "title": title, "body": body,
+            "gain": scores[0], "work": scores[1], "harm": scores[2],
+            "file": str(where.get("file_path", "")), "line": where.get("line", 0)}
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
@@ -848,7 +893,8 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     script = folder / f"{engine}_in_tree.py"
     from forge.codex import QUIET
     quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
-    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet), encoding="utf-8")
+    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet,
+                                      spent=str(folder.parent / SPENT)), encoding="utf-8")
     if os.name == "nt":
         launcher = folder / f"{engine}.cmd"
         launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")

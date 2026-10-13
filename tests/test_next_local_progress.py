@@ -16,8 +16,40 @@ from test_machine_views import github, pull
 from test_setup import _fresh_client, _version
 from test_story import setup, worktree
 from test_task import DOC, story
+from test_close import body, env  # noqa: F401
 
 STORY = "skipped-next"
+
+
+@pytest.mark.parametrize("merge", ["human", "agent"])
+def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, merge):
+    # Real close publishes readiness, then another checkout has only the remote branch.
+    config = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + f'merge = "{merge}"\n')
+    env.repo.git("push", "-q", "origin", "main")
+    item, folder = env.start_fix()
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    pr = pull(7, f"fix/{item}")
+    pr["body"] = body(env.gh_calls("pr", "edit")[-1])
+    pr["headRefOid"] = env.repo.git("rev-parse", f"fix/{item}")
+    pr["commits"]["nodes"][0]["commit"]["oid"] = pr["headRefOid"]
+    github(env.gh, [pr])
+    env.repo.git("worktree", "remove", str(folder))
+    env.repo.git("branch", "-D", f"fix/{item}")
+    env.repo.git("fetch", "-q", "origin")
+
+    advice = env.repo.forge("board", "--json")
+    assert advice.returncode == 0, advice.stderr
+    next_step = _row(json.loads(advice.stdout), item)["next"]
+    next_line = next_step["line"]
+    if merge == "human":
+        assert f"is ready to merge: {pr['url']}" in next_line
+        assert next_step["command"] is None
+        assert "merges it from their machine" not in next_line
+    else:
+        assert "merges it from their machine" in next_line and next_step["command"] is None
+        assert "is ready to merge:" not in next_line
 
 
 def _client(repo, gh, tmp_path, adopted):
@@ -127,7 +159,7 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
             row = _row(data, "page")
             assert row["stage"] == "ready" and row["status"] == "Ready to merge"
             assert row["pr"]["checks"] == checks and not row["pr"]["failures"]
-            assert data["kind_stage_counts"]["fixes"]["ready to merge"] == 1
+            assert data["team"]["counts"]["fixes"]["ready to merge"] == 1
             assert any(phrase in row["next"]["line"] for phrase in (
                 "is ready to merge", "ready and waiting for someone to merge"))
         assert "Ready to merge: 1" in text
@@ -173,7 +205,10 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
         assert row["stage"] == "checks failed" and row["status"] == "Checks failed"
         assert row["pr"]["checks"] == "fail" and row["pr"]["failures"]
         assert any(event["kind"] == "checks_failed" for event in row["occurrences"])
-        assert row["next"]["command"] == "forge work page"
+        # With no checkout here, the work runs on the machine of whoever started it.
+        assert row["next"]["command"] == ("forge work page" if local == "behind" else None)
+        if local == "remote-only":
+            assert row["next"]["line"].endswith("was started by Forge Test and runs on their machine.")
     assert "Checks failed" in text
     if local == "behind":
         plain = repo.forge("next")

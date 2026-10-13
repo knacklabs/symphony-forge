@@ -31,6 +31,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -38,7 +39,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, native, repo, review, task, worker
+from forge import codex, machine, native, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -82,7 +83,7 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
+RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
           "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
@@ -318,8 +319,10 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         with codex.hold(top, target, "Grill"), machine.agent_slot(
                 top, "read", target, **repo.models(config, "grill", reader)):
+            clock = time.monotonic()
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why, round_number, remember_reader)
+            read_seconds = time.monotonic() - clock
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
@@ -335,13 +338,16 @@ def read(args: Any) -> int:
                 name = (prefix.rstrip(" -") if name[59] in " -" else
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
+            clock = time.monotonic()
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
                             fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number,
                             on_thread=remember_reader)
+            read_seconds = time.monotonic() - clock
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
     result["before"] = before  # remembering the kit reader changes only its chat binding
+    result["seconds"] = round(read_seconds, 3)
     return read_result(top, target, result, said, failed, problem, ran)
 
 
@@ -391,14 +397,15 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         # ponytail: unstructured output is one finding, so it still needs a disposition. Findings
         # number on from earlier rounds', whatever numbers the reader used.
         numbers = itertools.count(max(blocks, default=0) + 1)
-        said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
-                           said if FINDING.search(said) else f"1. {said}")
+        said = score.notes(FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
+                                       said if FINDING.search(said) else f"1. {said}"))
         clean = passed({"round": str(round_number)}, f"## Round {round_number}\n\n{said}")
     model = result["model"]
     record = {"reader": f"{reader} ({model})" + (
                   f", a subagent of this {NAMES[reader]} session because {result['reason']}"
                   if result["native"] else ""),
-              "read_at": repo.now(), "read_hash": read_hash,
+              # A session subagent's read has no measured time, so it records none.
+              "read_at": repo.now(), "seconds": str(result.get("seconds", "")), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
               "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
@@ -960,7 +967,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                     except ValueError:
                         event = None
                     if isinstance(event, dict):
-                        line = repo.claude_output(top, target, ran["run_id"], event)
+                        line = repo.claude_output(top, target, ran, event)
                         if event.get("type") == "result":
                             final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)
@@ -1007,12 +1014,12 @@ def read_question(doc: str, notes: str) -> str:
     for block in _findings(findings[heading.end():] if heading else "").values():
         title, _, body = block.split(". ", 1)[1].partition("\n")
         if not ADVISORY.match(title) and not DISPOSITION.search(body):  # cut, deferred or kept
-            flagged.append(review.plain(title, "\n".join(line for line in body.splitlines()
-                                                  if not DISPOSITION.match(line))))
+            flagged.append((review.plain(title, "\n".join(line for line in body.splitlines()
+                                                   if not DISPOSITION.match(line))), score.parse(body)))
     title = re.search(r"^# (.+)$", doc, re.M)
     found = sections(doc)
     gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
-    return review.question(review.plain(title[1]) if title else "", gives, flagged,
+    return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else

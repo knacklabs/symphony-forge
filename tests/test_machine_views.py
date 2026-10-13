@@ -547,6 +547,10 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     expected = json.loads(json.dumps(first))
     for row in expected["items"]:
         row["total_seconds"] = 59
+        row["unknown_seconds"] = 59
+        row["intervals"] = [{"start": "2026-10-04T10:00:00+00:00",
+                             "end": "2026-10-04T10:00:59+00:00",
+                             "category": "unknown", "kind": "unknown"}]
     assert snapshot(view(repo, "board")) == snapshot(expected)
     # The HTML board uses the same cache; it must not refresh the open checks early.
     html = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.html"))

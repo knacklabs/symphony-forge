@@ -19,7 +19,7 @@ from test_close import PIN
 
 # Forge's subagent roles, including the native cold reader, which sync writes for both hosts.
 ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
-    "worker", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
+    "worker", "fixer", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
     "debugger", "security", "performance", "reader")
     for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
