@@ -137,7 +137,8 @@ Your scores decide, whatever the priority: Harm 4 or 5, Gain 5, or Gain 3 or 4 w
 blocks the merge; any other finding is a follow-up fix or lived with, and the merge goes on.
 Every finding under a Raise line is P0 or P1. P2 and P3 are only the advice
 forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
-`Simpler (existing):`), which need no Raise line. Report nothing else.
+`Simpler (existing):`), which need no Raise line
+and, scored Gain 1 or 2, never block the merge or start another round. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
