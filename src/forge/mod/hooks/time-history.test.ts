@@ -15,7 +15,7 @@ const board = {
 }
 
 for (const surface of ['terminal', 'desktop'] as const) {
-  test(`time history reaches the ${surface} pane and /forge without adding live time twice`, async ($, on) => {
+  test(`the ${surface} pane and /forge leave time history to the board page`, async ($, on) => {
     const clock = mock.clock(on)
     mock.store(on)
     mock.env(on, {})
@@ -37,13 +37,11 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await clock.advance(15000)
     const drawn = JSON.stringify(await ui.drawn())
     const command = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 100 } })
+    // The breakdown and round lines live on the board page; the pane names the current stage only.
     for (const visible of [drawn, command.text ?? '']) {
-      expect(visible).toContain(round)
-      expect(visible).toContain('Building 10s')
-      expect(visible).toContain('Own tests unknown')
-      expect(visible).toContain('Waiting in line 5s')
-      expect(visible).toContain('total 30s')
-      expect(visible).not.toContain('total 45s')
+      expect(visible).toContain('Keep the basket')
+      expect(visible).toContain('Review running · under a minute')
+      for (const hidden of [round, 'Building 10s', 'unknown', 'total']) expect(visible).not.toContain(hidden)
     }
   })
 }

@@ -376,7 +376,8 @@ def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
     assert row["pr"]["checks"] == "pass"
     assert row["stage"] == "waiting for checks"
     assert rows["BOARD"]["children"][0]["stage"] == "waiting for checks"
-    assert row["next"] == {"command": "forge close polish", "line": "Polish the guide is waiting for its checks."}
+    assert row["next"] == {"command": "forge close polish", "line": "Polish the guide is waiting for its checks.",
+                          "step": "forge close polish"}
     page = repo.path / ".git/forge/ready-board.html"
     result = repo.forge("board", "--out", str(page))
     assert result.returncode == 0, result.stderr
@@ -754,5 +755,5 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     row = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")
     assert row["stage"] == "done"
     assert row["children"][0]["stage"] == "merged"
-    assert row["next"] == {"command": None, "line": "Shoppers can save a basket is finished."}
+    assert row["next"] == {"command": None, "line": "Shoppers can save a basket is finished.", "step": None}
     assert "record the outcome" not in view(repo, "next")["next"]["line"]

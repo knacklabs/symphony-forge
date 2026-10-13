@@ -1,7 +1,8 @@
 import type { Elements, On, RenderInput, RenderNode, Timer } from 'claude-code'
 import type { Data, Item, Next } from './forge.ts'
 import { TOO_OLD } from './forge.ts'
-import { activeRows, itemLines, itemTime, laneCounts, record, rows, stageText, stages, summary, total } from './summary.ts'
+import type { Row } from './summary.ts'
+import { activeRows, board, itemTime, laneCounts, pending, record, stageText, stages, summary, total } from './summary.ts'
 
 type Tab = (e: RenderInput<'Pane'>, t: Elements['terminal'] | Elements['desktop'], now: number) => RenderNode
 const tabs = new Map<string, Tab>()
@@ -16,19 +17,8 @@ export function addItemAction(kind: string, render: (item: Item, e: RenderInput<
   actions.set(kind, [...(actions.get(kind) ?? []), render])
 }
 
-const escape = (text: string) => text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]!)
-const tableCell = (text: string) => text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/[\r\n]/g, ' ').replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;')
-
-function timeline(item: Item, now: number): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 44">${stages(item).map((s, n) => {
-    const color = s.status === 'fail' ? '#b91c1c' : s.status === 'pass' ? '#166534' : s.status === 'running' ? '#1d4ed8' : '#374151'
-    const label = stageText(s, now)
-    return `<g><title>${escape(label)}</title><rect x="${n * 120}" y="0" width="116" height="40" rx="4" fill="${color}"/><text x="${n * 120 + 6}" y="24" fill="#ffffff" font-size="11">${escape(label)}</text></g>`
-  }).join('')}</svg>`
-}
-
 export function registerPane(on: On, data: Data) {
-  let selected = 'Board', working = false, cwd = '', repaint: Timer | undefined
+  let selected = 'Board', showWaiting = false, working = false, cwd = '', repaint: Timer | undefined
   on('session.start', { isInteractive: true }, async ($, e, next) => {
     cwd = e.cwd
     await $.ui.open({ id: 'forge', title: 'Forge' })
@@ -51,22 +41,34 @@ export function registerPane(on: On, data: Data) {
     if (tab) children.push(tab(e, t, now))
     else if (data.error === TOO_OLD) children.push(t.Text({ children: TOO_OLD }))
     else {
-      if (!data.board) children.push(t.Text({ dimColor: true, children: 'Loading Forge…' }))
-      if (data.board && !data.board.items.length) children.push(t.Text({ children: 'Nothing in progress.' }))
-      for (const item of rows(data.board?.items ?? [])) {
-        const [state, detail] = itemLines(item, now)
-        if (e.surface === 'desktop') {
-          const desktop = $.ui.resolve(e)
-          children.push(desktop.Markdown({ text: `| Item and status |\n| --- |\n| ${tableCell(state)} |\n| ${tableCell(detail)} |` }))
-          children.push(desktop.Svg({ source: timeline(item, now), alt: stages(item).map(s => stageText(s, now)).join(' → '), isInteractive: true }))
-        } else {
-          children.push(t.Text({ bold: true, wrap: 'wrap', children: state }))
-          children.push(t.Text({ wrap: 'wrap', children: detail }))
+      if (!data.board) children.push(t.Text({ dimColor: true, children: pending(data) }))
+      else {
+        const view = board(data, now)
+        // One item: title and story key, then its state and step, or both on one line with no step.
+        const draw = (row: Row): RenderNode[] => {
+          const title = [row.title, ...(row.key ? [t.Text({ dimColor: true, children: `  ${row.key}` })] : [])]
+          const lines: RenderNode[] = row.next ? [
+            t.Text({ wrap: 'wrap', children: title }),
+            ...(row.state ? [t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: row.state }) })] : []),
+            t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: `→ ${row.next}` }) }),
+          ] : [t.Text({ wrap: 'wrap', children: [...title, ...(row.state ? [` · ${row.state}`] : [])] })]
+          return [...lines, ...(actions.get(row.item.kind ?? '') ?? []).map(render => render(row.item, e))]
         }
-        for (const render of actions.get(item.kind ?? '') ?? []) children.push(render(item, e))
+        if (view.summary) children.push(t.Text({ bold: true, wrap: 'wrap', children: view.summary }))
+        if (!view.groups.length && !view.waiting.length) children.push(t.Text({ children: 'Nothing in progress.' }))
+        for (const group of view.groups) {
+          const lines: RenderNode[] = [t.Text({ bold: true, children: group.name })]
+          for (const row of group.rows) lines.push(...draw(row))
+          if (group.more) lines.push(t.Text({ dimColor: true, children: `and ${group.more} more · forge board for all` }))
+          children.push(t.Box({ flexDirection: 'column', children: [lines[0]!, t.Box({ flexDirection: 'column', paddingLeft: 2, children: lines.slice(1) })] }))
+        }
+        if (view.waiting.length) {
+          children.push(t.Button({ key: 'waiting', label: `${showWaiting ? 'Hide' : 'Show'} waiting or not started (${view.waiting.length})`, onPress: () => { showWaiting = !showWaiting; $.ui.invalidate('ui.render') } }))
+          if (showWaiting) children.push(t.Box({ flexDirection: 'column', paddingLeft: 2, children: view.waiting.flatMap(draw) }))
+        }
       }
     }
-    if (data.error && data.error !== TOO_OLD) children.push(t.Text({ dimColor: true, children: `Couldn't refresh: ${data.error}` }))
+    if (data.board && data.error && data.error !== TOO_OLD) children.push(t.Text({ dimColor: true, children: `Couldn't refresh: ${data.error}` }))
     return t.Box({ flexDirection: 'column', gap: 1, children })
   })
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -83,8 +85,8 @@ export function registerPane(on: On, data: Data) {
       const stage = first && stages(first).find(s => s.status === 'running')
       const counts = data.lanes ? `${n.agentsRunning + n.testsRunning} running, ${n.agentsWaiting}+${n.testsWaiting} waiting · Tests ${n.testsRunning}/${n.testSize} · ` : ''
       const step = record(first?.worker).step
-      lines = [`${counts}${command ? `1: ${command}` : data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}`]
-      compact = { title: first?.title ?? '', counts, timing: first ? `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · ` : '', tail: `${data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}` }
+      lines = [`${counts}${command ? `1: ${command}` : data.next?.next.line ?? pending(data)}${typeof step === 'string' ? ` · ${step}` : ''}`]
+      compact = { title: first?.title ?? '', counts, timing: first ? `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · ` : '', tail: `${data.next?.next.line ?? pending(data)}${typeof step === 'string' ? ` · ${step}` : ''}` }
     }
     if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) {
       lines[0] += ' · /forge for the board'
@@ -144,7 +146,7 @@ export function registerPane(on: On, data: Data) {
       ] }))
     } else if (counts) {
       const step = record(activeRows(data).find(i => typeof record(i.worker).step === 'string')?.worker).step
-      const tail = `${data.next?.next.line ?? 'Loading Forge…'}${step ? ` · ${step}` : ''}${(e.viewport?.columns ?? e.props.bodyColumns) < 144 ? ' · /forge for the board' : ''}`
+      const tail = `${data.next?.next.line ?? pending(data)}${step ? ` · ${step}` : ''}${(e.viewport?.columns ?? e.props.bodyColumns) < 144 ? ' · /forge for the board' : ''}`
       children.push(t.Box({ flexDirection: 'row', width: e.props.bodyColumns, children: [
         t.Box({ width: counts.length, flexShrink: 0, children: t.Text({ children: counts }) }),
         t.Box({ width: titleWidth, minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: testTitle }) }),
