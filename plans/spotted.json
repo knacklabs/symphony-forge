@@ -5248,6 +5248,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Forge bug reports do not use the bug template\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 184,
+      "text": "Not done: Forge bug reports do not use the bug template",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: Shipped stop guidance forbids the required retry\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -5849,6 +5860,17 @@
       "text": "Not done: scope-only blocker admission test",
       "from": "blocking",
       "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: proof that the bug template retains required prompts\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 50,
+      "text": "Not done: proof that the bug template retains required prompts",
+      "from": "blocking",
+      "item": "report-forge-bugs",
       "status": "open",
       "closed_by": null
     },
