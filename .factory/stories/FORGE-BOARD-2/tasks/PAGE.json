@@ -8,13 +8,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6109f2b7eabfb3f4237a4296d22f053938de971ec07591f2cbf9cbd209e69e19",
-    "changed": "67b0491847f7fc6a83f157e34a92a672875ece2538197fedc08b46f1327e56ce",
-    "commit": "18a5f494d02047379c399d550cab731834ca4e2a",
+    "branch_diff": "51b25d9ed7a9c28ab7dca261d7ecd07413d6d2e80dbab2ebac4c3e9e70b2c470",
+    "changed": "6adf44cebe5a520e68ffb5ebf78cb2b28f90d4162770706644fd4ab62579edce",
+    "commit": "b447bcd6e7e59f42a9cd04c7d43d5efe26283cfb",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. The new `width=\"260\"` fixes the SVG at 260 CSS pixels, while `.board-picture` sets only a maximum width. The 1440-pixel client screenshots show the dependency map confined to a narrow strip at the left of its full-width slot. This leaves the client-sized roadmap cramped instead of using the available laptop width.",
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. The SVG has `width=\"260\"`, while `.board-picture` sets only `max-width: 100%`. The supplied 1440-pixel client screenshots show the dependency map confined to a narrow strip inside its full-width slot. This leaves the roadmap cramped instead of using the available laptop width.",
         "file": "src/forge/board_visuals.py",
         "gain": 3,
         "harm": 2,
@@ -22,22 +22,12 @@
         "priority": "P1",
         "title": "Roadmap map is fixed at 260 pixels on laptop",
         "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Gate. This `-rows` screenshot is byte-for-byte identical to `page-client-390-light.png`. Both show only the summary at the top; neither shows the client-sized mobile rows, the Done fold, or an opened row. The proof list claims this screenshot hides the map to show the list, so the named mobile rows browser proof is hollow.",
-        "file": "docs/board-screens/page/page-client-390-light-rows.png",
-        "gain": 2,
-        "harm": 1,
-        "line": 1,
-        "priority": "P1",
-        "title": "Not done: client mobile rows browser proof",
-        "work": 1
       }
     ],
-    "id": "36ed6675-4bd0-4dbb-aa86-8b630a66762c",
+    "id": "28995f82-2855-47f3-991c-52f66f081920",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T23:45:10.134451+00:00",
@@ -50,6 +40,15 @@
     {
       "at": "2026-10-13T05:51:33.247551+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:58:28.261250+00:00",
+      "step": "review"
     }
-  ]
+  ],
+  "stop": {
+    "at": "2026-10-13T05:58:28.271594+00:00",
+    "file": "src/forge/board_visuals.py",
+    "wait_id": "b00041c3-c922-4f7f-afde-caca893fef3c"
+  }
 }
