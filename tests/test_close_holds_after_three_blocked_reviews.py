@@ -12,8 +12,8 @@ from test_worker import calls, install_claude
 
 
 RULE = (
-    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open, "
-    "whatever files they were in. The existing same-file stop still applies from the third round."
+    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back "
+    "or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round."
 )
 QUESTION_RULE = ("When a cold read or review loop stops, ask the human the question it printed, "
                  "in its words, one item per question.")
@@ -87,7 +87,9 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     question = [
         "Readme greets new readers: The readme opens with a greeting",
         moved + "It still has these problems:",
-        "- Round 3 defect: saving drops the basket. Returning shoppers lose their saved items.",
+        "| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
+        "| 2 | Round 3 defect: saving drops the basket. Returning shoppers lose their saved items. | 3 | 2 | 3 "
+        "| fix this round |",
         "Accept, narrow or split?",
         "- Accept: every finding in this review, the 1 listed and 0 advice notes, is dismissed "
         "with your reason and recorded; close then goes on to the checks, and merging is still a "
@@ -95,7 +97,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         "- Narrow: drop these cases from its Done when; they become follow-ups.",
         "- Split: move these cases into a new story or fix of their own; this one goes on without them.",
     ]
-    assert result.stderr.splitlines()[-9:] == [
+    assert result.stderr.splitlines()[-11:] == [
         f"Review round {round_number} of {item} still finds serious problems in {paths[-1]}, "
         "which an earlier round flagged too, so Forge stops sending the worker back. "
         "Ask the human to narrow the part, split it, or accept the remaining findings, "

@@ -27,9 +27,9 @@ def stopped(env, kind="fix"):
     result = rounds(env, item, where, ["src/a.py"] * 3)
     lines = result.stderr.splitlines()
     if kind == "task":
-        assert lines[-8] == ("Save a basket (part of Shoppers can save a basket): "
+        assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
                              "Shoppers can save their basket with one click")
-    assert [lines[-9], lines[-1]] == [
+    assert [lines[-11], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
         "to narrow the part, split it, or accept the remaining findings, in these words:",

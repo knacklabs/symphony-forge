@@ -339,7 +339,7 @@ def _three_blocked_reviews_hold_the_fourth(env):
     assert _steps(done) == [step for n in rounds for step in (f"Closing {ITEM}.", n)] + [
         f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     lines = done.stderr.splitlines()
-    assert [lines[-9], lines[-1]] == [
+    assert [lines[-11], lines[-1]] == [
         f"Review round 4 of {ITEM} still finds serious problems in docs/3.md, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
         "to narrow the part, split it, or accept the remaining findings, in these words:",
@@ -442,10 +442,11 @@ time.sleep = advance
     waiting = lines.index("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
                           "the repo's default applies.")
     # The third distinct finding in app.py stops by area, with a structural move proposed.
-    shown = lines[waiting - 7:waiting - 4]
+    shown = lines[waiting - 9:waiting - 4]
     assert shown[0] == "Readme greets new readers: The readme opens with a greeting"
     assert shown[1].startswith("Findings keep coming in app.py; proposed: cut the code")
-    assert shown[2] == "- Saving drops the greeting: evidence for: Saving drops the greeting"
+    assert shown[2:] == ["| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
+                         "| 1 | Saving drops the greeting: evidence for: Saving drops the greeting | 3 | 2 | 1 | fix this round |"]
     assert sum("It still has these problems:" in line for line in lines) == 1
 
 
@@ -462,14 +463,15 @@ def _findings_after_three_rounds_ask_a_question(env):
     assert f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}." in done.stdout
     # The stop's own refusal: the question, every choice, then the close --resolve step.
     lines = done.stderr.splitlines()
-    question = lines[-8:-1]
+    question = lines[-10:-1]
     assert question == [
         "Readme greets new readers: The readme opens with a greeting",
         "It still has these problems:",
-        "- Saving loses the reader name: a returning reader sees no name. More.",
+        "| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
+        "| 1 | Saving loses the reader name: a returning reader sees no name. More. | 3 | 2 | 1 | fix this round |",
         "Accept, narrow or split?",
-        question[4], question[5], question[6]]
-    assert [line.split(":")[0] for line in question[4:]] == ["- Accept", "- Narrow", "- Split"]
+        question[6], question[7], question[8]]
+    assert [line.split(":")[0] for line in question[6:]] == ["- Accept", "- Narrow", "- Split"]
     assert lines[-1] == f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"'
     # The stop is recorded, so forge next repeats the question and close records the choice.
     said = env.repo.forge("next").stdout

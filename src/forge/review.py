@@ -289,10 +289,11 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    rows = [(plain(finding["title"], finding.get("body", "")), score.of(finding)) for finding in score.open_findings(result)
-            if score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3]
-    # Accept dismisses every finding not yet dismissed, advice included.
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    rows = [(n, plain(finding["title"], finding.get("body", "")), score.of(finding))
+            for n, finding in enumerate(result.get("findings", []), 1) if n not in dismissed
+            and (score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3)]
+    # Accept dismisses every finding not yet dismissed, advice included.
     advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
     stop = state.get("stop") or {}
     said = question(name, delivers, score.table(rows),

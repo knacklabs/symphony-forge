@@ -241,7 +241,7 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         _round(env, item, where, 3, at_bar("Round 3 defect", "docs/3.md", harm=2),
                _scored("P2", "Follow-up: other shells", "Gain 3, Work 4, Harm 3\nRaise: Functional", "docs/4.md"))
         stop = _round(env, item, where, 4).stderr
-        assert "Ask the human" in stop and "- other shells" in stop  # the finding that caused the stop
+        assert "Ask the human" in stop and "| 2 | other shells" in stop  # the finding that caused the stop
         later(monkeypatch, 31)
         held = env.close(item)
         assert held.returncode == 1 and "Ask the human" in held.stderr

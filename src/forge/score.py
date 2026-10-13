@@ -72,10 +72,19 @@ def bar(scores: Scores | None) -> str | None:
     return "live with"
 
 
-def table(rows: list[tuple[str, Scores | None]]) -> list[str]:
-    """The open notes as a stop question lists them: each row is (problem, scores)."""
-    # ponytail: today's bullets; the ranked table replaces them when every row has scores.
-    return [f"- {problem}" for problem, _ in rows]
+WORDS = {"block": "fix now", "fix now": "fix this round", "follow-up": "follow-up fix", "live with": "live with"}
+
+
+def table(rows: list[tuple[int, str, Scores | None]]) -> list[str]:
+    """The open notes as a stop question lists them, each row (number, problem, scores): one table
+    ranked by the bar, then Harm and Gain high first, then Work low first; bullets when any is unscored."""
+    if not rows or any(scores is None for *_, scores in rows):
+        return [f"- {problem}" for _, problem, _ in rows]
+    order = list(WORDS)
+    ranked = sorted(rows, key=lambda row: (order.index(bar(row[2])), -row[2][2], -row[2][0], row[2][1]))
+    return ["| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
+            *(f"| {number} | {problem.replace('|', '/')} | {gain} | {work} | {harm} | {WORDS[bar((gain, work, harm))]} |"
+              for number, problem, (gain, work, harm) in ranked)]
 
 
 def of(finding: dict[str, Any]) -> Scores | None:
