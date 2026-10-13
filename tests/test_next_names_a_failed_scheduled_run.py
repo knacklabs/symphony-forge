@@ -34,6 +34,8 @@ LOG = "\n".join([
     "FAILED tests/test_b.py::test_two[previous release] - assert 1 == 2",
     "full suite on macos-latest, group 1 of 3\tRun tests\t2030-01-01T03:41:01Z "
     "ERROR tests/test_d.py::test_setup - fixture failed",
+    "full suite on macos-latest, group 1 of 3\tRun tests\t2030-01-01T03:41:01Z "
+    "FAILED tests/test_e.py::test_mode[basic - legacy] - AssertionError: [1] == [2]",
     "full suite on macos-latest, group 1 of 3\tRun tests\t2030-01-01T03:41:01Z 1 failed, 1 error",
 ])
 WHY = "The scheduled forge-next run fails on main"
@@ -83,7 +85,7 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
                         "full suite on windows-latest, group 2 of 3.")
     assert lines[start + 1:start + 3] == [
         "Failing tests: tests/test_a.py::test_one, tests/test_b.py::test_two[previous release], "
-        "tests/test_d.py::test_setup.",
+        "tests/test_d.py::test_setup, tests/test_e.py::test_mode[basic - legacy].",
         COMMAND]
     assert "codex-smoke" not in red.stdout
     assert len([call for call in gh.calls()[asked:] if call[:2] == list(RUNS)]) == 1

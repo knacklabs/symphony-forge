@@ -135,7 +135,7 @@ def failed_schedules(top: Path) -> list[Item]:
                            "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
                            "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
                            "tests": sorted({found[1] for line in lines if (found := re.search(
-                               r"(?:FAILED|ERROR) (.+?::.+?)(?: - |$)", line))})})
+                               r"(?:FAILED|ERROR) (\S+?::[^\s\[]+(?:\[.*?\])?)(?= - |$)", line))})})
         return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
     return _cached(top, "schedule-cache", fetch) or []
 
