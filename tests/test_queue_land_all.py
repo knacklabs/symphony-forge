@@ -325,6 +325,7 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
 @pytest.mark.parametrize("older", ["merges", "stops"])
 def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, older):
     env = client
+    machine_cores(env.repo, 4)  # two agent places, as on CI: fewer places than changes
     answer = CLEAN if older == "merges" else blocked(finding("P1", "Saving drops line one", "shared.py"))
     _fix(env, monkeypatch, "aa", 1, {"shared.py": _edit(1, "first")}, answer=answer,
          message="Worker round\n\nSpotted: bug shared.py:4 line four repeats itself")

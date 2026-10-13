@@ -309,17 +309,20 @@ def _queue(top: Path) -> int:
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     while len(finished) < len(changes):
         for index, (_, item, files, ready) in enumerate(changes):
-            # Strictly oldest first: the next change starts once every started one has entered close.
-            if (item in running or item in finished or len(running) >= machine.half_cores()
-                    or any(child.poll() is None and f"Closing {other}." not in lines
-                           for other, (child, _, lines) in running.items())):
+            if item in running or item in finished:
                 continue
+            # The hold first, so a held change says whom it waits for whatever the places are doing.
             older = next(((other, min(files & theirs)) for _, other, theirs, _ in changes[:index]
                           if other not in finished and files & theirs), None)
             if older and not ready:
                 if item not in waiting:
                     say(f"{item} waits for {older[0]}: both change {older[1]}.")
                     waiting.add(item)
+                continue
+            # Strictly oldest first: the next change starts once every started one has entered close.
+            if len(running) >= machine.half_cores() or any(
+                    child.poll() is None and f"Closing {other}." not in lines
+                    for other, (child, _, lines) in running.items()):
                 continue
             say(f"Starting {item}.")
             running[item] = _child(top, item)
@@ -382,8 +385,11 @@ def _child(top: Path, item: str) -> tuple[subprocess.Popen, threading.Thread, li
 
 COMMANDS = [{
     "words": "land", "run": "land", "changes_state": True,
-    "help": "Build, close, fix and merge a task or fix, or every change in close",
-    "args": [(('item',), {"nargs": "?"}), (("--all",), {"action": "store_true"})], "position": 165,
+    "help": "Build, close, fix and merge a task or fix",
+    "args": [(('item',), {"nargs": "?", "help": "the task or fix to land"}),
+             (("--all",), {"action": "store_true",
+                           "help": "close and merge every change in close, oldest first"})],
+    "position": 165,
     "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs fix rounds and merges a "
                "task or fix where the repo allows agent merges; `--all` closes and merges every change "
                "in close, oldest first, several at a time; run it in the background |",
