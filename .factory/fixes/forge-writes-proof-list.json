@@ -21,7 +21,28 @@
     "branch_diff": "1191dc201d85839c9a3b664dcc0f7a0c54d80feea0b6fe60b100b3149cf13a81",
     "changed": "d6a987492fed558e3c71314afc0071bcd66b589d8d428a171585f5c91379b8a3",
     "commit": "5ebd247d75ae6b6b820c25d35b15c6a9674b85d2",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
+        "finding": 3
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
+        "finding": 4
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 1, Harm 2\nRaise: Not done. `proof_list` preserves the worker's heading verbatim. The changed command test supplies `Proof list (run on this commit with -n 2: 3 passed):` and expects it to remain. Close therefore publishes a worker-written result claim regardless of its own run, although Close is meant to write the results and the worker is meant to supply only the item-to-test mapping.",
@@ -65,9 +86,9 @@
       }
     ],
     "id": "9938fefa-d577-4553-9957-00553eda65bb",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -124,8 +145,12 @@
   ],
   "stop": {
     "at": "2026-10-13T04:00:56.964358+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/fasttest.py",
-    "wait_id": "0617448b-aa00-4327-afe7-1d4903bd8ad8"
+    "reason": "Coordinator (all Harm 2, reversible; round 12, and round 9 was announced as the last): accept and merge; one follow-up fix right after covers all four: close writes its own 'Proof list:' heading, a mixed-language line marks each unmatched name, inherited pytest methods match their run result, and results are recorded relative to the repo root so sibling packages stay apart.",
+    "wait_id": "0617448b-aa00-4327-afe7-1d4903bd8ad8",
+    "worker_round": null
   },
   "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
 }
