@@ -8,10 +8,10 @@ from string import Template
 from textwrap import wrap
 
 ORDER = ("needs you", "blocked", "in progress", "planned", "no plan yet", "done")
-KEY = ("In the graph a circle is a finished part, a square a running one, a hexagon a waiting one, "
-       "a diamond one that can start now and a dashed square one not started. A part is one piece "
-       "of a story's plan. A fix is a small change on its own. A plan is a story's written design, "
-       "read and approved before its parts start.")
+# One line: the map's shapes, then the three words. Shapes are CSS, hidden from screen readers.
+KEY = (" ".join(f'<span class="shape s-{name}" aria-hidden="true"></span>{word}' for name, word in (
+    ("done", "done"), ("running", "running"), ("waiting", "waiting"), ("start", "can start"),
+    ("not", "not started"))) + " · part: a piece of a plan · fix: a small change · plan: a story's design")
 
 
 def _svg(label: str, description: str, height: int, drawing: str) -> str:
@@ -136,6 +136,6 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
         note="" if github else ('<p class="note">GitHub couldn\'t be reached, so the list of finished '
                                 "work isn't available. This page shows the saved dates only.</p>"),
         graph=board_graph.dependencies(view["dependency_maps"]),
-        key=escape(KEY),
+        key=KEY,
         rows="".join(shown) or '<p class="empty">No story or fix yet. Start one with forge story new or forge fix start.</p>',
         numbers=escape(numbers))

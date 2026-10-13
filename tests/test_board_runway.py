@@ -87,16 +87,27 @@ def test_8_below_the_fold(repo, gh, tmp_path, claude_payload, monkeypatch, histo
     for row in data["items"]:
         group, state, times = by_title[row["title"]]
         assert state == row["state"].capitalize(), (row["title"], state, row["state"])
-        seconds = [row[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown")]
-        assert times == ("No time recorded yet" if seconds == [None] * 3 else
-                         "Working {} · waiting {} · unknown {}".format(*map(_plain, seconds)))
-    assert any(child["title"] == "Save a basket" for child in from_json)
+        assert times == _times(row)
+    # A part row shows its own JSON state and time split too.
+    part = next(child for child in from_json if child["title"] == "Save a basket")
+    shown = re.search(r'<span class="title">Save a basket</span><span class="kind">Part</span>'
+                      r'<span class="state">(.*?)</span>.*?<p class="times">(.*?)</p>', page, re.S)
+    assert shown[1] == part["state"].capitalize()
+    assert shown[2] == _times(part)
 
     # One key line names the graph's shapes and the words part, fix and plan.
-    key = re.search(r'<p class="key">(.*?)</p>', page, re.S)[1]
-    assert all(word in key for word in ("circle", "square", "diamond", "A part", "A fix", "A plan"))
+    key = re.sub(r"<[^>]+>", "", re.search(r'<p class="key"[^>]*>(.*?)</p>', page, re.S)[1])
+    assert all(word in key for word in ("done", "running", "waiting", "can start", "not started",
+                                        "part:", "fix:", "plan:")), key
+    assert re.search(r"\.key \{[^}]*white-space: nowrap", page), "The key stays on one line"
     text = seen(out)
     assert "How the factory is doing:" in text
+
+
+def _times(row):
+    seconds = [row[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown")]
+    return ("No time recorded yet" if seconds == [None] * 3 else
+            "Working {} · waiting {} · unknown {}".format(*map(_plain, seconds)))
 
 
 def _plain(seconds):

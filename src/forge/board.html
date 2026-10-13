@@ -34,7 +34,16 @@
   .sentence { font-size: 1.15rem; margin-top: 1rem; max-width: 70ch; }
   .totals { margin-top: .4rem; font-size: .9rem; }
   .note { margin-top: 1rem; }
-  .key { font-size: .85rem; max-width: 110ch; margin-bottom: .5rem; }
+  .key { font-size: .85rem; margin-bottom: .5rem; white-space: nowrap; overflow-x: auto; }
+  .key:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .shape { display: inline-block; width: .75em; height: .75em; margin: 0 .3em 0 .5em; vertical-align: -.05em;
+           border: 1.5px solid var(--ink); background: var(--surface-2); }
+  .s-done { border-radius: 50%; }
+  .s-running { border-radius: 2px; }
+  .s-waiting { border: 0; background: var(--muted);
+               clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+  .s-start { transform: rotate(45deg) scale(.8); }
+  .s-not { border-style: dashed; }
   .graph { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: .5rem 0 1rem; }
   .detail { color: var(--muted); font-size: .85rem; }
   .row { border-top: 1px solid var(--rule); padding: .2rem 0; }
@@ -88,7 +97,7 @@
   </section>
   <section id="roadmap" aria-labelledby="roadmap-heading">
     <h2 id="roadmap-heading">Roadmap</h2>
-    <p class="key">$key</p>
+    <p class="key" tabindex="0" aria-label="Key to the map">$key</p>
     <div class="graph">$graph</div>
   </section>
   <section id="work" aria-labelledby="work-heading">
