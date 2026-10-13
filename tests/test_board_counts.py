@@ -4,8 +4,10 @@ Real Forge commands and git build every item; only GitHub, the reviewer and the 
 stubs. Board and next output is all the tests read.
 """
 import json
+import os
 import re
 import shlex
+import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -314,7 +316,8 @@ def newer_push(env, monkeypatch, previous):
     assert part["state"] == "ready to merge"
     assert part["next"] == {"command": None, "line": (
         "Show a saved basket is ready to merge, but this worktree is behind its pull request.")}
-    assert f"Next: git -C {shlex.quote(str(folder))} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
+    folder_arg = subprocess.list2cmdline([str(folder)]) if os.name == "nt" else shlex.quote(str(folder))
+    assert f"Next: git -C {folder_arg} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
 
 
 def approved_not_started(env, previous):

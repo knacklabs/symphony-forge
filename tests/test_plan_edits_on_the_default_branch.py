@@ -5,10 +5,16 @@ with the same line, changing nothing. Neither merges anything. Everything runs t
 command. Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 
-from shlex import quote
+import os
+import subprocess
+from shlex import quote as posix_quote
 
 from test_readloop_gates import approve, read
 from test_story import DOC, setup, new_story
+
+
+def quote(path):  # the printed command quotes for the user's shell
+    return subprocess.list2cmdline([path]) if os.name == "nt" else posix_quote(path)
 
 # The fix's plan edit: a new task FIX that SHOW now waits for.
 FIXED = DOC.replace("| `tests/test_page.py` | SAVE | yes |",
