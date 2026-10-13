@@ -305,7 +305,7 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
             time.sleep(0.2)
         # Two runs started at the same moment: one works, the other refuses.
         runs = [subprocess.Popen([*forge, "land", "--all"], cwd=where, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE, text=True) for where in (cherry, env.repo.path)]
+                                 stderr=subprocess.PIPE, encoding="utf-8") for where in (cherry, env.repo.path)]
         (out, err), (other, refused) = (run.communicate(timeout=600) for run in runs)
     finally:
         waiting.kill()

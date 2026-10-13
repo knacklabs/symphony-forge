@@ -6,7 +6,6 @@ import argparse
 import hashlib
 import json
 import re
-import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -230,7 +229,7 @@ def start(args: argparse.Namespace) -> None:
                 if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
                     raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
                 raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
-                                   f"git -C {shlex.quote(str(folder))} status; fix the reported problem "
+                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
                                    f"and finish the merge, then {retry}")
             elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
                 git("merge", "--abort", cwd=folder)

@@ -3686,6 +3686,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 802,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -4089,6 +4100,17 @@
       "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
       "from": "blocking",
       "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 212,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
       "status": "open",
       "closed_by": null
     },
@@ -5325,6 +5347,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug filing fails for reporters without Forge triage access\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 197,
+      "text": "Forge bug filing fails for reporters without Forge triage access",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug template command fails in Windows PowerShell\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 179,
+      "text": "Forge bug template command fails in Windows PowerShell",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops\tFORGE-SCORE-1/BAR",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -5332,6 +5376,17 @@
       "text": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Forge bug reports do not use the bug template\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 184,
+      "text": "Not done: Forge bug reports do not use the bug template",
+      "from": "blocking",
+      "item": "report-forge-bugs",
       "status": "open",
       "closed_by": null
     },
@@ -5937,6 +5992,39 @@
       "text": "Not done: scope-only blocker admission test",
       "from": "blocking",
       "item": "unblockers-first",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: proof that the bug template retains required prompts\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 50,
+      "text": "Not done: proof that the bug template retains required prompts",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: test_1_clients_are_told_to_file_forge_bugs does not prove template use\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 42,
+      "text": "Not done: test_1_clients_are_told_to_file_forge_bugs does not prove template use",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 317,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
       "status": "open",
       "closed_by": null
     },
@@ -9281,61 +9369,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tForge bug filing fails for reporters without Forge triage access\treport-forge-bugs",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 197,
-      "text": "Forge bug filing fails for reporters without Forge triage access",
-      "from": "blocking",
-      "item": "report-forge-bugs",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tForge bug template command fails in Windows PowerShell\treport-forge-bugs",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 179,
-      "text": "Forge bug template command fails in Windows PowerShell",
-      "from": "blocking",
-      "item": "report-forge-bugs",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Forge bug reports do not use the bug template\treport-forge-bugs",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 184,
-      "text": "Not done: Forge bug reports do not use the bug template",
-      "from": "blocking",
-      "item": "report-forge-bugs",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: proof that the bug template retains required prompts\treport-forge-bugs",
-      "kind": "bug",
-      "path": "tests/test_agents_file_forge_bugs.py",
-      "line": 50,
-      "text": "Not done: proof that the bug template retains required prompts",
-      "from": "blocking",
-      "item": "report-forge-bugs",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: test_1_clients_are_told_to_file_forge_bugs does not prove template use\treport-forge-bugs",
-      "kind": "bug",
-      "path": "tests/test_agents_file_forge_bugs.py",
-      "line": 42,
-      "text": "Not done: test_1_clients_are_told_to_file_forge_bugs does not prove template use",
-      "from": "blocking",
-      "item": "report-forge-bugs",
       "status": "open",
       "closed_by": null
     }
