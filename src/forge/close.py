@@ -54,8 +54,7 @@ REFUSALS = {
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
-                "earlier round flagged too, so Forge stops sending the worker back. Ask the human "
-                "to narrow the part, split it, or accept the remaining findings, in these words:\n{question}",
+                "earlier round flagged too, so Forge stops sending the worker back. {question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
@@ -281,20 +280,6 @@ def close(args: argparse.Namespace) -> int:
                     result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
                                         light=light, tested="Tests are running alongside this review; close waits for "
                                         f"both results before continuing. Command: `{command}`.")
-                dismissed = {}
-                for dismissal in previous.get("dismissals", []):
-                    if dismissal.get("accepted"):
-                        continue  # Acceptance covers this review, not later code or scope.
-                    number = dismissal["finding"]
-                    if not 1 <= number <= len(previous["findings"]):
-                        continue
-                    finding = previous["findings"][number - 1]
-                    dismissed[(finding["file"], finding["title"])] = dismissal
-                carried = {d["finding"] for d in result.get("dismissals", [])}
-                result["dismissals"] = result.get("dismissals", []) + [dict(dismissed[(finding["file"], finding["title"])],
-                                             finding=number)
-                                        for number, finding in enumerate(result["findings"], 1)
-                                        if number not in carried and (finding["file"], finding["title"]) in dismissed]
                 areas = _areas(top, result)
                 result["dismissals"] += [
                     {"finding": number, "because": f"settled area: {where}"}

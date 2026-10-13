@@ -778,8 +778,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if default_due(path or top, state):
             return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
                     "records the repo's default choice: narrow.", f"Next: forge close {item}"]
-        return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
-                "narrow the part, split it, or accept the remaining findings.",
+        return [f"Close stopped {label}: {stop['file']} keeps breaking.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:

@@ -9503,6 +9503,94 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code\tdismissals-carry-forward",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 661,
+      "text": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
+      "from": "blocking",
+      "item": "dismissals-carry-forward",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: shipped guidance contradicts the new dismissal rule\tdismissals-carry-forward",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 925,
+      "text": "Not done: shipped guidance contradicts the new dismissal rule",
+      "from": "blocking",
+      "item": "dismissals-carry-forward",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: every stop question shows the open notes\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 295,
+      "text": "Not done: every stop question shows the open notes",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator asks the owner only for the named decisions\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1423,
+      "text": "Not done: coordinator asks the owner only for the named decisions",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator settles reversible Harm 1 and 2 notes itself\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1397,
+      "text": "Not done: coordinator settles reversible Harm 1 and 2 notes itself",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: low-Harm stops still direct the coordinator to ask the owner\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1421,
+      "text": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_table.py\tNot done: functional check\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_score_table.py",
+      "line": 26,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_table.py\tNot done: tests/test_score_table.py\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_score_table.py",
+      "line": 50,
+      "text": "Not done: tests/test_score_table.py",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
