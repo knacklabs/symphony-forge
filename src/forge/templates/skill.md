@@ -1437,7 +1437,10 @@ stop. Approval and merge steps stay the owner's.
 When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
 the item; close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
-choices. Ask the owner exactly that question; never switch tools yourself. Record the answer with
+choices. Settle it by the stop rule above: when every open note has Harm 1 or 2, choose yourself,
+give the scores in the reason and tell the owner after, in one line. Ask the owner exactly that
+question only when a note has Harm 3 or more, the choice adds scope, or it undoes a decision the
+owner made. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.

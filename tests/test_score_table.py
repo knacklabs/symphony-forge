@@ -68,15 +68,19 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     assert "Accept, narrow or split?" in stop.split(rows[-1], 1)[1]
     assert "\n".join(rows) in repo.forge("next").stdout
 
-    # A review saved before scores: its stop question lists the open findings as plain lines.
+    # A stop with a finding saved before scores and a scored one: every open finding is a plain
+    # line, never a partial table.
     old = {"commit": "0" * 40, "status": "blocked", "dismissals": [], "blocking_level": "P1",
            "findings": [{"priority": "P1", "title": "Saved serious finding", "body": "Evidence",
-                         "file": "app.py", "line": 1}]}
+                         "file": "app.py", "line": 1},
+                        {"priority": "P1", "title": "Scored finding", "body": "Gain 4, Work 1, Harm 2\nEvidence",
+                         "file": "app.py", "line": 2, "gain": 4, "work": 1, "harm": 2}]}
     env.start("old-stop", "fix/old-stop", ".factory/fixes/old-stop.json",
               {"kind": "fix", "why": "Old stop", "done_when": "It stops", "review": old,
                "stop": {"file": "app.py", "at": datetime.now(timezone.utc).isoformat()}}, {"app.py": "x = 1\n"})
     said = repo.forge("next").stdout
-    assert "It still has these problems:\n- Saved serious finding: evidence\nAccept" in said, said
+    assert ("It still has these problems:\n- Saved serious finding: evidence\n"
+            "- Scored finding: evidence\nAccept") in said, said
 
     # A read loop stops: its blocking notes in the same ranked table, numbered as the read notes number them.
     def read_three(key: str, last: str):
@@ -108,7 +112,8 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     assert _table(stop) == rows, stop
     assert "\n".join(rows) in repo.forge("next", cwd=shop).stdout
 
-    # A read note without scores: the read stop lists its notes as plain lines.
-    _, stop = read_three("BAKE", "")
-    assert "It still has these problems:\n- Gap 3: builders guess the limit.\nAccept" in stop, stop
+    # A read note without scores beside a scored one: the read stop lists every note as a plain line.
+    _, stop = read_three("BAKE", note(2, "Totals drift", "Gain 5, Work 1, Harm 4"))
+    assert ("It still has these problems:\n- Gap 3: builders guess the limit.\n"
+            "- Totals drift: shoppers notice.\nAccept") in stop, stop
     assert not _table(stop)
