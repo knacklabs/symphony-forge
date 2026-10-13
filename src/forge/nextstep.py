@@ -7,6 +7,7 @@ in progress and an empty roadmap, it offers discovery until a problem card is fi
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -437,8 +438,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         states = {key: state for key, state in history["stories"].items()
                   if repo.state_path(key) not in history["expired"]}
     for key, state in states.items():
-        found[key] = (None, state,
-                      story.show(top, ref, f"plans/{key}.md") or "")
+        found[key] = (None, state, (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None
+                                    else story.show(top, ref, f"plans/{key}.md") or ""))
     for key, path in story.stories_here(top).items():
         if history is not None and repo.state_path(key) in history["expired"]:
             continue
@@ -453,7 +454,11 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         if found.get(key, (None, {}, ""))[1].get("status") == "done":
             continue
         ref = story.plan_ref(top, key, history)
-        state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        if history is None:
+            state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        else:  # the board's one read of every ref
+            full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+            state = history["ref_states"].get(full, {}).get(repo.state_path(key), {})
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
     return found
@@ -474,12 +479,18 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ref = story.plan_ref(top, key, history)
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
-    notes = story.show(top, ref, f"plans/{key}.read.md") or ""
-    required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+    if history is None:
+        notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
+    else:  # the board's one read of every ref
+        notes = history["docs"].get(f"{ref}:plans/{key}.read.md", "")
+        full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+        saved = json.dumps(history["ref_states"].get(full, {}).get(repo.state_path(key), {}))
+    required = story.rounds(notes, saved)
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
-    doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+    doc_hash = (repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip() if history is None
+                else hashlib.sha1(f"blob {len(text.encode())}\0{text}".encode()).hexdigest())  # git's blob id
     try:
         doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:
@@ -500,7 +511,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top)) if ref != story.landed_ref(top) else ""
+    behind = story.plan_behind(top, key, story.landed_ref(top), history) if ref != story.landed_ref(top) else ""
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -557,7 +568,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         builds = {}
         for name in ready:
             # A task takes forge.toml from the branch forge task start branches it from.
-            settings = story.show(top, start_base(landed, key, rows[name]), "forge.toml")
+            base = start_base(landed, key, rows[name], history, top)
+            settings = (story.show(top, base, "forge.toml") if history is None
+                        else history["docs"].get(f"{base}:forge.toml"))
             try:
                 cfg = (repo._config_text(settings, top) if settings  # pyright: ignore[reportPrivateUsage]
                        else _report_config(top, refusals))

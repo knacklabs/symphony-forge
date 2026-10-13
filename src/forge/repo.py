@@ -149,6 +149,9 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         for kind in ("default branch", "landed ref"):
             _command_cache.pop((kind, _common_path(cwd)), None)
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and (args[1] in ("switch", "checkout", "worktree", "branch"))):
+        _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
         for key in list(_command_cache):

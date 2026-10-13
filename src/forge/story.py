@@ -790,14 +790,16 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
 
 def worktrees(top: Path) -> dict[str, Path]:
     """Every checked-out branch and its worktree folder."""
-    found: dict[str, Path] = {}
-    path = top
-    for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines():
-        if line.startswith("worktree "):
-            path = Path(line[len("worktree "):])
-        elif line.startswith("branch refs/heads/"):
-            found[line[len("branch refs/heads/"):]] = path
-    return found
+    def read() -> dict[str, Path]:
+        found: dict[str, Path] = {}
+        path = top
+        for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines():
+            if line.startswith("worktree "):
+                path = Path(line[len("worktree "):])
+            elif line.startswith("branch refs/heads/"):
+                found[line[len("branch refs/heads/"):]] = path
+        return found
+    return dict(repo.command_fact("worktrees", top, read))
 
 
 def stories_here(top: Path) -> dict[str, Path]:
@@ -833,12 +835,14 @@ def landed_ref(top: Path) -> str:
     return repo.command_fact("landed ref", top, read)
 
 
-def plan_behind(top: Path, key: str, ref: str) -> str:
+def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = None) -> str:
     """One line with the command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs
     from the story branch's content history, as when a fix edits the plan; else ""."""
     branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
-    theirs = show(top, ref, doc)
-    if theirs is None or show(top, branch, doc) in (None, theirs):
+    def read(one: str) -> str | None:
+        return history["docs"].get(f"{one}:{doc}") if history is not None else show(top, one, doc)
+    theirs = read(ref)
+    if theirs is None or read(branch) in (None, theirs):
         return ""
     blob = repo.git("rev-parse", f"{ref}:{doc}", cwd=top)
     history = repo.git("rev-list", "--objects", branch, "--", doc, cwd=top)

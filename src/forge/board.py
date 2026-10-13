@@ -282,11 +282,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         where = story.plan_ref(top, key, history)
         if where == f"story/{key}":
             where = trees.get(where) or where
-        notes = _read(top, where, f"plans/{key}.read.md")
+        notes = _read(top, where, f"plans/{key}.read.md", history)
         assignments = task.rows(task.sections(story._plan(top, key, history=history)))
         if not story._record(notes)[0]:
             return "none", assignments
-        text = _read(top, where, f"plans/{key}.md")
+        text = _read(top, where, f"plans/{key}.md", history)
         digest = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
         try:
             story.gate(key, f"plans/{key}.md", notes, digest, text, top)
@@ -593,7 +593,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                               timings=timings_by_item.get(f"{key}/{tid}", []),
                               ended_at=by_branch.get(branch, {}).get("mergedAt")),
             time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
-    notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
+    notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md", history)
                       for key, current in items.items() if current["kind"] == "story"}
     past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
                              if (previous := story._record(notes)[0].get("notes_seen")))), follow_notes=True)
@@ -825,7 +825,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     # Git requires LF pairs; text-mode stdin adds CR on Windows and Git silently lists nothing.
     done = subprocess.run([shutil.which("git") or "git", "diff-tree", "--stdin", "-r", "--raw",
                            "-z", "--no-abbrev", "--no-renames", "--", ".factory/stories",
-                           ".factory/fixes", "plans"], cwd=top,
+                           ".factory/fixes", "plans", "forge.toml"], cwd=top,
                           input="".join(f"{empty.stdout.strip()} {tree}\n" for tree in snapshots).encode("utf-8"),
                           capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
     fields = iter(done.stdout.decode("utf-8", errors="replace").split("\0"))
@@ -833,7 +833,8 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         for line in field.splitlines():
             if line.startswith(":"):
                 rel = next(fields)
-                if STATE.fullmatch(rel) or re.fullmatch(r"plans/[A-Z0-9][A-Z0-9-]*\.md", rel):
+                if (STATE.fullmatch(rel) or rel == "forge.toml"
+                        or re.fullmatch(r"plans/[A-Z0-9][A-Z0-9-]*(\.read)?\.md", rel)):
                     snapshots[tree][rel] = line.split()[3]
             elif line:
                 tree = line.split()[1]
@@ -848,7 +849,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                                        if STATE.fullmatch(rel)} for ref, tree in refs.items()}
         history["docs"] = {f"{alias}:{rel}": texts[blob] for ref, tree in refs.items()
                            for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
-                           for rel, blob in snapshots[tree].items() if rel.startswith("plans/")}
+                           for rel, blob in snapshots[tree].items() if not STATE.fullmatch(rel)}
     return found
 
 
