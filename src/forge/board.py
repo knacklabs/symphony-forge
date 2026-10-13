@@ -597,8 +597,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     notes_by_story = {key: _read(top, landed if key in completed else story.plan_ref(top, key, history),
                                  f"plans/{key}.read.md", history)
                       for key, current in items.items() if current["kind"] == "story"}
-    past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
-                             if (previous := story._record(notes)[0].get("notes_seen")))), follow_notes=True)
+    past_notes = history["past notes"]  # read with every plan read, in the same one git process
     for key, notes in notes_by_story.items():
         current = items[key]
         read_rounds, seen = [], set()
@@ -859,7 +858,8 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         seen = list(dict.fromkeys(h for text in history["docs"].values()
                                   for h in map(story._record(text)[0].get,  # pyright: ignore[reportPrivateUsage]
                                                ("read_hash", "notes_seen")) if h))
-        for blob, text in _blob_texts(top, seen, follow_notes=True).items():
+        history["past notes"] = _blob_texts(top, seen, follow_notes=True)
+        for blob, text in history["past notes"].items():
             repo.command_fact(("read blob", blob), top, lambda text=text: text)
     return found
 
