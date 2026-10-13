@@ -2,12 +2,53 @@
   "base": "e4bf532175ba8dd40f400424d228cc4fe3b93984",
   "branch": "fix/pane-summary-always",
   "done_when": "The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in planning, and the mounted Board-tab test covers both of those boards",
+  "flagged": [],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 352,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test Board summaries in new and upgraded client repos",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9dc231dba2a144ac575a4f86cb34c3d8eeda18e6cc76319ad0c2ec8497c8cb35",
+    "changed": "57c16936be7acb0096abfdbb5870ff0ae9aded2ac4ed714f8baa4ad7248ec8b1",
+    "commit": "741028931bdd10f82e626051afd9202a9f8e5002",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 3, Harm 2\nRaise: Test. The new mounted test mocks every `forge board` response with hand-built data. Its ready-only fixture contains two fixes but reports one ready part and one ready fix. It therefore does not verify that real board counts produce the summary in a new client repo or one adopted on an earlier release and upgraded. The existing installation test opens an empty repo and checks an old-version warning (`tests/test_mod_install.py:108,118`); it does not check the updated summary after upgrade. The repository's review rule requires coverage of both delivery paths.",
+        "file": "src/forge/mod/hooks/pane.test.ts",
+        "gain": 3,
+        "harm": 2,
+        "line": 352,
+        "priority": "P1",
+        "title": "Not done: test Board summaries in new and upgraded client repos",
+        "work": 3
+      }
+    ],
+    "id": "82cf638e-fc27-4a65-8b08-e4fd01f2e6b7",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T19:01:26.423992+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T19:57:53.202129+00:00",
+      "step": "review"
     }
   ],
   "why": "The pane's Board tab opens with no summary line when the only active work is ready to merge or still in planning, so a person sees a bare list with no overview"
