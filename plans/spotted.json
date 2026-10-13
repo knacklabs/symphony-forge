@@ -3906,6 +3906,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: next --json makes an unnecessary GitHub search with no work in progress\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 209,
+      "text": "Not done: next --json makes an unnecessary GitHub search with no work in progress",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: older blocked reads lose their question in forge next after upgrade\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -7464,6 +7475,17 @@
       "path": "tests/test_machine_views_stay_fast.py",
       "line": 27,
       "text": "Not done: test zero git calls for finished stories with retained branches",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: the shared-cache test misses next's extra GitHub search\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 24,
+      "text": "Not done: the shared-cache test misses next's extra GitHub search",
       "from": "blocking",
       "item": "board-json-fast",
       "status": "open",
