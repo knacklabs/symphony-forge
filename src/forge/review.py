@@ -638,8 +638,8 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
 
 
 def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str], head: str) -> bool:
-    """Whether the line a dismissal's `file:line` cites is gone from the file at head, compared with
-    the commit of its newest own (not carried) dismissal; a moved line counts as unchanged."""
+    """Whether git's diff from the commit of the newest own (not carried) dismissal to head touches
+    the line its `file:line` cites; a line only shifted by edits elsewhere counts as unchanged."""
     cited = None
     for result in history:
         for dismissal in result.get("dismissals", []):
@@ -650,15 +650,25 @@ def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str
                 cited = (result["commit"], where[1], int(where[2]))
     if not cited:
         return False  # no cited line to compare: the dismissal stands, as before
-    def lines(commit: str) -> list[str] | None:
-        shown = repo.run("git", "show", f"{commit}:{cited[1]}", cwd=top)
-        return None if shown.returncode else shown.stdout.splitlines()
-    then, now = lines(cited[0]), lines(head)
-    if then is None or now is None or not 1 <= cited[2] <= len(then):
-        return then != now
-    # ponytail: the line's text anywhere in the file; a line repeated elsewhere (a blank, a brace)
-    # still counts as present.
-    return then[cited[2] - 1] not in now
+    commit, path, number = cited
+    diff = repo.run("git", "diff", "-U0", "-M", commit, head, cwd=top)
+    if diff.returncode:
+        return True  # the dismissal's commit is gone: nothing proves the line unchanged
+    old, header = "", False
+    for line in diff.stdout.splitlines():
+        if line.startswith("diff --git "):
+            old, header = "", True
+        elif header and line.startswith("--- "):
+            old = line[6:] if line.startswith("--- a/") else ""
+        elif header and line == "+++ /dev/null" and old == path:
+            return True  # the cited file was deleted
+        elif header and line.startswith("@@"):
+            header = False
+        if not header and old == path and (hunk := re.match(r"@@ -(\d+)(?:,(\d+))? ", line)):
+            first, count = int(hunk[1]), int(hunk[2] or 1)
+            if first <= number < first + count:
+                return True
+    return False
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:

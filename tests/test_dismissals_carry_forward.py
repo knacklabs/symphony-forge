@@ -32,8 +32,8 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
     assert f"Saving skips the coupon (app.py:3): dismissed because {reason}" in body(
         env.gh_calls("pr", "edit")[-1])
 
-    # A commit that changes the cited line: the finding blocks again.
-    changed = APP.replace("line3 = 3", "line3 = 0")
+    # A commit that changes the cited line, with its old text still elsewhere: it blocks again.
+    changed = APP.replace("line3 = 3", "line3 = 0") + "line3 = 3\n"
     env.commit(where, "app.py", changed)
     env.reviews(blocked(coupon))
     again = env.close(item)
