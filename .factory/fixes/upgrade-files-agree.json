@@ -1,0 +1,14 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/upgrade-files-agree",
+  "done_when": "After forge upgrade, every generated file's comments match what it sets, and moving CLAUDE.md into AGENTS.md carries only the team's own lines, never Forge's generated stub or rules this release replaces",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:20.086548+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "An upgraded client repo's generated files contradict themselves: the Codex config comment says workspace-write while the upgrade sets full access, and moving CLAUDE.md into AGENTS.md copies Forge's own do-not-edit stub and a rule the new release reverses"
+}
