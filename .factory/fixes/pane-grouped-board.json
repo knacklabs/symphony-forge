@@ -161,7 +161,7 @@
       "gain": 3,
       "harm": 3,
       "line": 129,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -174,65 +174,80 @@
       "gain": 3,
       "harm": 2,
       "line": 306,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
       "title": "Not done: Test Moving rows' next steps through the Board tab",
       "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 147,
+      "outcome": "lived with",
+      "reason": "settled area: src/forge/mod/hooks/summary.ts",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Board tab omits its summary when only ready or waiting items remain",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 303,
+      "outcome": "open",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Test the Board summary when only ready or waiting items remain",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b40d03bba0b9e9c371185d36153057f6ffa47c69d3612c06d370c7234af223f2",
-    "changed": "8f1ebbef65ffdb9e363eeb2e169f914f2ef7785ef72386c35b61f783a7392c62",
-    "commit": "98f4f68a0fbe8e65afea6745315469959785b2e6",
+    "branch_diff": "1cf07bb4a9effc755ed20ddbb7c267b829590ab20ae012daa591860a539a634f",
+    "changed": "d2cab74c19143cfcfbb380720d5ead5c383f44673e86c24adfe22fd5c76af097",
+    "commit": "5c202356e941c5018dbb8700afa0ec210d681790",
     "dismissals": [
       {
-        "because": "src/forge/nextstep.py:158 The owner explicitly allowed this scope as one large fix on 2026-10-13: the pane's groups need needs_person and next.step in the board and next JSON, and a 60-second refresh wait; the allowance text lists all three",
-        "finding": 3,
-        "from_base": false
+        "because": "settled area: src/forge/mod/hooks/summary.ts",
+        "finding": 1
       }
     ],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. The Moving branch sets the row's state but never copies `next.step` into `row.next`. Normal working and reviewing items have steps such as \u201cwait for the review, then forge close <item>\u201d (`src/forge/nextstep.py:52-53`), yet the Board tab shows only their stage and elapsed time. This leaves the Done-when requirement that each item show its next step unmet.",
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. The summary uses only in-progress, Needs you, Stuck and go-live values, then becomes null when they are all absent. A normal board with one ready-to-merge fix and no other active work has a known `team` but opens directly at READY TO MERGE, without the Done-when summary line. The changed `tests/fixtures/board.json` contains this ready-only count pattern; a planning-only board has the same gap.",
         "file": "src/forge/mod/hooks/summary.ts",
         "gain": 3,
-        "harm": 3,
-        "line": 129,
+        "harm": 2,
+        "line": 147,
         "priority": "P1",
-        "title": "Not done: Moving Board rows omit their next step",
+        "title": "Not done: Board tab omits its summary when only ready or waiting items remain",
         "work": 1
       },
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. The mounted Board-tab fixture gives its Moving row no `next.step`, and the assertion checks only its running state. The command-level Moving fixture likewise omits `next.step` (`tests/test_fix_pane_grouped_board.py:96`). These tests pass while the Board tab drops a real working or reviewing item's next step.",
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. The mounted Board-tab summary test supplies an in-progress count, a Needs you row and a Stuck row, so it passes while the tab opens without a summary for a ready-only or planning-only board. Those are normal board states, and the current fixture already includes the ready-only counts; the named proof does not detect the gap above.",
         "file": "src/forge/mod/hooks/pane.test.ts",
         "gain": 3,
         "harm": 2,
-        "line": 306,
+        "line": 303,
         "priority": "P1",
-        "title": "Not done: Test Moving rows' next steps through the Board tab",
+        "title": "Not done: Test the Board summary when only ready or waiting items remain",
         "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Gate. The recorded allowance calls this a grouped-pane fix, but this line adds `step` to public `forge next --json`, `src/forge/board.py:505` adds `needs_person` to public `forge board --json`, and `src/forge/mod/hooks/register.ts:10` changes refresh timing. The diff therefore includes machine-interface and refresh-contract changes, which fail the allowance rule requiring one kind of problem without an interface change.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 158,
-        "priority": "P1",
-        "title": "Recorded allowance covers multiple problems and interface changes",
-        "work": 2
       }
     ],
-    "id": "6ccd5f98-c166-4a2e-97bf-18ed218a513e",
+    "id": "ce8ef6cb-6c73-4590-9f45-91db5befb233",
     "status": "blocked"
   },
   "settled_areas": [
     "src/forge/mod/hooks/summary.ts"
   ],
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-13T12:38:35.000433+00:00",
@@ -253,18 +268,18 @@
     {
       "at": "2026-10-13T17:32:32.085054+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:27:14.696444+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "area": "src/forge/mod/hooks/summary.ts",
-    "at": "2026-10-13T15:32:21.640007+00:00",
-    "by": "owner",
-    "choice": "narrow",
-    "file": "src/forge/mod/hooks/summary.ts",
+    "area": "src/forge/mod/hooks/pane.test.ts",
+    "at": "2026-10-13T18:27:14.696575+00:00",
+    "file": "src/forge/mod/hooks/pane.test.ts",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "reason": "Owner chose one more round: ready rows always show 'ready to merge' and the merge step; a worker question shows how to answer it; both tested through the Board tab.",
-    "wait_id": "0cba9049-a5ac-45fb-9519-7ac3e15bae2e",
-    "worker_round": null
+    "wait_id": "72fa6f9f-c153-4686-be23-920e191cdf1c"
   },
   "why": "The pane's Board tab is hard to read: raw timestamps, unknown rounds, zero times, a stage chain that does not mark where an item is, and priority codes"
 }

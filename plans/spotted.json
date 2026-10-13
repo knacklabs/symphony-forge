@@ -815,6 +815,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: forge board --json and forge next --json still make calls per story\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 290,
+      "text": "Not done: forge board --json and forge next --json still make calls per story",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: identify jobs cancelled at their time limit\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -3477,6 +3488,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test the Board summary when only ready or waiting items remain\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 303,
+      "text": "Not done: Test the Board summary when only ready or waiting items remain",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.test.ts",
@@ -3708,6 +3730,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tAllowance mismatch: forge next --json can use stale pull request state\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 201,
+      "text": "Allowance mismatch: forge next --json can use stale pull request state",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tApproved stories with no started part still show building; COUNTS owns that correction.",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3862,6 +3895,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 214,
+      "text": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next does not repeat every stopped question\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3970,6 +4014,17 @@
       "item": "board-visuals",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: next --json makes an unnecessary GitHub search with no work in progress\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 209,
+      "text": "Not done: next --json makes an unnecessary GitHub search with no work in progress",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: older blocked reads lose their question in forge next after upgrade\tstop-question-plain",
@@ -5046,6 +5101,28 @@
       "text": "Not done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are,\u2060\u2060\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 550,
+      "text": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are,\u2060\u2060",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 549,
+      "text": "Not done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few",
+      "from": "blocking",
+      "item": "board-json-fast",
       "status": "open",
       "closed_by": null
     },
@@ -7503,6 +7580,72 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: proof that machine-view calls stay bounded as stories grow\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 31,
+      "text": "Not done: proof that machine-view calls stay bounded as stories grow",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test bounded calls for active fixes and diverged story branches\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 46,
+      "text": "Not done: test bounded calls for active fixes and diverged story branches",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test bounded calls for read stories and local branches\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 36,
+      "text": "Not done: test bounded calls for read stories and local branches",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test shared GitHub caching and calls per active item\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 76,
+      "text": "Not done: test shared GitHub caching and calls per active item",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test zero git calls for finished stories with retained branches\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 27,
+      "text": "Not done: test zero git calls for finished stories with retained branches",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: the shared-cache test misses next's extra GitHub search\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 24,
+      "text": "Not done: the shared-cache test misses next's extra GitHub search",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_merge_command.py\tNot done: test a worktree held open by another process\tpin-switch-leaves-worktree",
       "kind": "bug",
       "path": "tests/test_merge_command.py",
@@ -9624,138 +9767,6 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: forge board --json and forge next --json still make calls per story\tboard-json-fast",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 290,
-      "text": "Not done: forge board --json and forge next --json still make calls per story",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tAllowance mismatch: forge next --json can use stale pull request state\tboard-json-fast",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 201,
-      "text": "Allowance mismatch: forge next --json can use stale pull request state",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (\tboard-json-fast",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 214,
-      "text": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: next --json makes an unnecessary GitHub search with no work in progress\tboard-json-fast",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 209,
-      "text": "Not done: next --json makes an unnecessary GitHub search with no work in progress",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are,\u2060\u2060\tboard-json-fast",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 550,
-      "text": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are,\u2060\u2060",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few\tboard-json-fast",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 549,
-      "text": "Not done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: proof that machine-view calls stay bounded as stories grow\tboard-json-fast",
-      "kind": "bug",
-      "path": "tests/test_machine_views_stay_fast.py",
-      "line": 31,
-      "text": "Not done: proof that machine-view calls stay bounded as stories grow",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test bounded calls for active fixes and diverged story branches\tboard-json-fast",
-      "kind": "bug",
-      "path": "tests/test_machine_views_stay_fast.py",
-      "line": 46,
-      "text": "Not done: test bounded calls for active fixes and diverged story branches",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test bounded calls for read stories and local branches\tboard-json-fast",
-      "kind": "bug",
-      "path": "tests/test_machine_views_stay_fast.py",
-      "line": 36,
-      "text": "Not done: test bounded calls for read stories and local branches",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test shared GitHub caching and calls per active item\tboard-json-fast",
-      "kind": "bug",
-      "path": "tests/test_machine_views_stay_fast.py",
-      "line": 76,
-      "text": "Not done: test shared GitHub caching and calls per active item",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test zero git calls for finished stories with retained branches\tboard-json-fast",
-      "kind": "bug",
-      "path": "tests/test_machine_views_stay_fast.py",
-      "line": 27,
-      "text": "Not done: test zero git calls for finished stories with retained branches",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: the shared-cache test misses next's extra GitHub search\tboard-json-fast",
-      "kind": "bug",
-      "path": "tests/test_machine_views_stay_fast.py",
-      "line": 24,
-      "text": "Not done: the shared-cache test misses next's extra GitHub search",
-      "from": "blocking",
-      "item": "board-json-fast",
-      "status": "done",
-      "closed_by": "dismissed"
     }
   ]
 }
