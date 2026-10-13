@@ -126,6 +126,7 @@ export function board(data: Data, now: number): View {
       const stage = stages(i).find(s => s.status === 'running'), w = record(i.worker), a = record(i.activity)
       const start = stage?.started_at ?? (typeof w.started_at === 'string' ? w.started_at : null)
       row.state = [DOING[stage?.name ?? String(w.kind ?? a.action)] ?? 'Running', start ? ago(elapsed(start, now)) : ''].filter(Boolean).join(' · ')
+      row.next = step
       groups.MOVING!.push(row)
     } else if (i.state === 'ready to merge' || i.stage === 'ready') {
       row.state = ['Ready to merge', CHECKS[String(i.pr?.checks)]].filter(Boolean).join(' · ')

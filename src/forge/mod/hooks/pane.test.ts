@@ -303,7 +303,7 @@ const grouped = {
   items: [
     { ...plain, id: 'ASK', kind: 'story', title: 'Ask story', children: [{ ...plain, id: 'ASK/PERIOD', kind: 'task', title: 'Ask asks for the period', needs_person: true, findings: { count: 3, titles: [] }, next: { command: null, line: 'Close stopped.', step: 'forge close ASK/PERIOD --resolve <narrow|split>' } }] },
     { ...plain, id: 'late', kind: 'fix', title: 'Budget answers', stalled: true, idle_since: '1969-12-24T00:00:00Z', next: { command: 'forge work late', line: 'Build it.', step: 'forge work late' } },
-    { ...plain, id: 'counts', kind: 'fix', title: 'Board counts', activity: { status: 'running', action: 'review' }, stages: [{ name: 'Review', status: 'running', started_at: '1969-12-31T23:48:00Z' }] },
+    { ...plain, id: 'counts', kind: 'fix', title: 'Board counts', activity: { status: 'running', action: 'review' }, stages: [{ name: 'Review', status: 'running', started_at: '1969-12-31T23:48:00Z' }], next: { command: null, line: 'Review is running.', step: 'wait for the review, then forge close counts' } },
     { ...plain, id: 'trust', kind: 'fix', title: 'Codex trust fix', stage: 'ready', state: 'ready to merge', pr: { number: 9, checks: 'pass' }, next: { command: null, line: 'Ready.', step: 'merge its pull request, then forge next' } },
     { ...plain, id: 'later', kind: 'fix', title: 'Later fix', state: 'to do' },
   ],
@@ -331,7 +331,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const drawn = JSON.stringify(await ui.drawn())
     const order = ['3 in progress · 1 needs you · 1 stuck · go-live about Jan 20', 'NEEDS YOU', 'Ask asks for the period', 'Review found 3 problems. The builder is stuck.',
       '→ decide: forge close ASK/PERIOD --resolve <narrow|split>', 'STUCK (no progress 8 days)', 'Budget answers', 'Building · last activity Dec 24', '→ forge work late',
-      'MOVING', 'Board counts', ' · Review running · 12 min', 'READY TO MERGE', 'Codex trust fix', 'checks green', '→ merge its pull request, then forge next',
+      'MOVING', 'Board counts', 'Review running · 12 min', '→ wait for the review, then forge close counts', 'READY TO MERGE', 'Codex trust fix', 'checks green', '→ merge its pull request, then forge next',
       'Show waiting or not started (1)']
     const at = order.map(text => drawn.indexOf(text))
     expect(at.every(n => n >= 0)).toBe(true)

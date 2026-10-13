@@ -92,7 +92,8 @@ def team_board():
                 next={"command": "forge work AVB/PERIOD", "line": "Build it.", "step": "forge work AVB/PERIOD"})
     moving = row(ready, id="counts", kind="fix", title="Board counts", stage="building", state="in progress",
                  activity={"status": "running", "action": "review"}, stages=stages, round=None,
-                 next={"command": None, "line": "Review is running."})
+                 next={"command": None, "line": "Review is running.",
+                       "step": "wait for the review, then forge close counts"})
     green = row(ready, id="trust", title="Codex trust fix", pr={"number": 9, "checks": "pass", "failures": []})
     done = row(ready, id="old", title="An old finished fix", stage="done", state="done")
     board["items"] = [
@@ -124,7 +125,9 @@ STUCK (no progress 8 days)
     → forge work AVB/PERIOD
 
 MOVING
-  Board counts · Review running · 12 min
+  Board counts
+    Review running · 12 min
+    → wait for the review, then forge close counts
 
 READY TO MERGE
   Codex trust fix
