@@ -160,13 +160,11 @@ def test_42_story_done(env, claude_payload, monkeypatch):
     for fact in (OUTCOME, "2026-09-22T10:00:00+00:00", "2026-09-23T10:00:00+00:00"):
         assert fact in recorded, fact
 
-    # The board tells the story in order: the approval, each merged part, then the outcome.
+    # The board shows the finished story, who approved it, its outcome and each merged part.
+    # ponytail: the dated approval and merge lines return with the story history (NAV).
     text = seen["board"]
-    assert "Shoppers can share a cart Finished on 23 September 2026." in text, text
-    timeline = ["21 September 2026 Forge Test approved the plan.",
-                "22 September 2026 Shoppers can share a cart: Save a cart Shoppers can save their cart",
-                "23 September 2026 Shoppers can share a cart: Send a cart Friends open a sent cart with one click",
-                f"23 September 2026 The story was finished. {OUTCOME}"]
-    assert all(entry in text for entry in timeline), text
-    assert [text.index(entry) for entry in timeline] == sorted(text.index(entry)
-                                                               for entry in timeline)
+    for line in ("Shoppers can share a cart Story Done Finished on 23 September 2026",
+                 "Approved by Forge Test.", f"The story was finished. {OUTCOME}",
+                 "Save a cart Part Done Finished on 22 September 2026",
+                 "Send a cart Part Done Finished on 23 September 2026"):
+        assert line in text, (line, text)

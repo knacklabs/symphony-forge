@@ -381,8 +381,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
                                    **EXTRA}], **EXTRA}]))
         page = env.tmp / "board.html"
         assert repo.forge("board", "--out", str(page)).returncode == 0
-        assert ("Readme greets new readers : Finished on 24 September 2026. The readme opens with a "
-                "greeting.") in page_text(page)
+        assert "Readme greets new readers Fix Done Finished on 24 September 2026" in page_text(page)
     else:
         # The host's hook payloads, with fields Forge doesn't use at every level.
         setup(repo, keys=("WISH",))  # SHOP is the close fixture's story, already on main
@@ -523,8 +522,8 @@ def test_8_plain_english(env):
     page = env.tmp / "board.html"
     assert repo.forge("board", "--out", str(page)).returncode == 0
     text = page_text(page)
-    for line in ("Save a basket", "Shoppers can share a cart", "Readme greets new readers : "
-                 "Finished on 25 September 2026. The readme opens with a greeting"):
+    for line in ("Save a basket", "Shoppers can share a cart",
+                 "Readme greets new readers Fix Done Finished on 25 September 2026"):
         assert line in text, text
     assert not _not_plain(text), (_not_plain(text), text)
     # Inline SVG geometry also preserves the page's no-hash contract.
