@@ -13,7 +13,7 @@ import conftest
 from conftest import REAL_UV
 from test_board_counts import ONE_PART, board, clock, configure, github, read_story
 from test_board_trends import ANA, BEN, NO_NAME, pr
-from test_close import blocked, env, finding  # noqa: F401
+from test_close import approve_story, blocked, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER
 from test_board import DOC, seen
@@ -207,6 +207,14 @@ def _plain_text(html):
     return " ".join(re.sub(r"<[^>]+>", " ", html).split())
 
 
+def _lane(section, title):
+    """The one first-screen row whose name is this title, with its detail."""
+    rows = [chunk.split("</details>", 1)[0] for chunk in section.split('<details class="lane">')[1:]
+            if f">{escape(title)}</span>" in chunk.split("</summary>", 1)[0]]
+    assert len(rows) == 1, title
+    return rows[0]
+
+
 def _list(section, name):
     """(rows shown, the "and N more" count, rows folded behind it) for one first-screen list."""
     block = re.search(rf'<div class="lanes" id="{name}">(.*?)<!-- end {name} -->', section, re.S)[1]
@@ -223,6 +231,15 @@ def test_7_first_screen(env, monkeypatch, previous):
     configure(env, "human")
     now = datetime.now(timezone.utc).replace(microsecond=0)
     clock(monkeypatch, now)
+    # A building story whose part has a blocked review round.
+    env.reviews(blocked(finding("P1", "The page still loads every row")))
+    approve_story(env.repo, ONE_PART)
+    env.repo.git("merge", "-q", "--no-edit", "story/SHOP")
+    env.repo.git("push", "-q", "origin", "main")
+    started = env.repo.forge("task", "start", "SHOP/T1")
+    assert started.returncode == 0, started.stdout + started.stderr
+    env.commit(worktree(env.repo, "task/SHOP-T1"), "app.py", "print('saved')\n", "Save a basket")
+    env.close("SHOP/T1")
     # Seven plans waiting for their approval: seven waits on a person.
     for n in range(7):
         read_story(env.repo, f"WAIT-{n + 1}", ONE_PART)
@@ -241,7 +258,6 @@ def test_7_first_screen(env, monkeypatch, previous):
         assert started.returncode == 0, started.stderr
     tree = worktree(env.repo, "fix/speed-0")
     env.commit(tree, "speed.txt", "fast\n", "Speed up the page")
-    env.reviews(blocked(finding("P1", "The page still loads every row")))
     env.repo.forge("close", "speed-0", cwd=tree)
     # Merged pull requests for the trends: one through Forge two weeks ago, one around it today.
     github(env, [pr(1, "task/OLD-T1", BEN, now - timedelta(days=14)),
@@ -272,7 +288,7 @@ def test_7_first_screen(env, monkeypatch, previous):
     stuck = {row["id"] for row in team["blocked"] or []}
     building = [row["title"] for row in data["items"] if row["id"] not in needs | stuck
                 and row["state"] in ("building", "in progress", "ready to merge")]
-    assert len(building) == (6 if team["blocked"] is not None else 8)
+    assert len(building) == (7 if team["blocked"] is not None else 9)
     for name, rows in (("in-progress", building),
                        ("needs-you", [row["title"] for row in team["needs_you"] or []]),
                        ("blocked", [row["title"] for row in team["blocked"] or []])):
@@ -290,25 +306,36 @@ def test_7_first_screen(env, monkeypatch, previous):
     assert "Not enough history to estimate go-live" in text
     row = next(r for r in data["items"] if r["id"] == "speed-0")
     assert row["rounds"], "The blocked close recorded a round"
-    detail = re.search(r'<details class="lane">.*?' + re.escape(escape(row["title"])) + r".*?</details>", section, re.S)[0]
+    detail = _lane(section, row["title"])
     for line in row["rounds"]:
         assert escape(line["line"]) in detail
     assert "Started by" in detail
-    assert len(team["trends"]["people"]) == 3
-    _first_screen_browser(out, team["trends"]["people"])
+    # A building story's detail lists its parts' round lines.
+    story = next(r for r in data["items"] if r["id"] == "SHOP")
+    assert story["state"] == "building"
+    lines = [f"{part['title']}: {r['line']}" for part in story["children"] for r in part.get("rounds") or []]
+    assert lines, "The part's blocked close recorded a round"
+    detail = _lane(section, story["title"])
+    for line in lines:
+        assert escape(line) in detail
+    assert len(team["trends"]["people"]) == 3 and team["around_forge"]
+    _first_screen_browser(out, {"trends": team["trends"], "around": team["around_forge"],
+                                "story": story["title"], "round": lines[0]})
 
 
-def _first_screen_browser(page, people):
+def _first_screen_browser(page, expected):
     """In real Chrome: at 1440 by 900 the first screen, with five Needs you rows and "and 2 more"
     and two Blocked or slow rows, ends above the fold; the time axis labels never overlap; nothing
     scrolls sideways at 1440 or 390; "and N more" and a row's detail open in place and close again;
-    Tab reaches every row with a visible focus ring; the trends weeks and team row show, every
-    person's row shows in alphabetical order with each week's through and around counts readable,
-    and the around-Forge list shows. Until this release works out Needs you and Blocked or slow, the check copies In
+    Tab reaches every row with a visible focus ring; a building story opens to its parts' round
+    lines; and every trends and around-Forge value the board JSON holds (week starts, the team's
+    and each person's through and around counts in alphabetical order, each pull request's title,
+    author, merge day and link) reads the same in the visible page. Until this release works out Needs you and Blocked or slow, the check copies In
     progress rows into those lists so the fit is measured at their full size."""
     script = """
 import json
 import sys
+from datetime import datetime
 from playwright.sync_api import sync_playwright
 FILL = '''() => {
   const lanes = [...document.querySelectorAll('#in-progress > details.lane')];
@@ -371,30 +398,43 @@ with sync_playwright() as p:
                         assert focus, 'A focused row shows a ring'
                         reached += 1
                 assert reached == rows, (reached, rows)
-                trends = page.locator('#trends')
-                trends.scroll_into_view_if_needed()
-                weeks = page.locator('#trends table.trends thead th')
-                assert weeks.count() == 7 and all(weeks.nth(n).is_visible() for n in range(7)), 'Six weeks show'
-                assert page.locator('#trends tr.team').is_visible(), 'The team row shows'
-                rows = page.locator('#trends tr.person')
                 expected = json.loads(sys.argv[2])
-                assert rows.count() == len(expected), 'One row per person'
-                names = [rows.nth(n).locator('th').inner_text().strip() for n in range(rows.count())]
-                assert names == sorted(names, key=str.casefold) == [p['name'] for p in expected], names
-                for n, person in enumerate(expected):
-                    assert rows.nth(n).is_visible(), person['name']
-                    cells = rows.nth(n).locator('td')
-                    shown = [' '.join(cells.nth(k).inner_text().split()) for k in range(cells.count())]
-                    assert all(cells.nth(k).is_visible() for k in range(cells.count()))
-                    assert shown == [f"{w['through']} through, {w['around']} around" for w in person['weeks']], shown
-                around = page.locator('#trends .around li')
-                assert around.count() == 1 and around.first.is_visible(), 'The around-Forge list shows'
-                assert 'Patch the login page' in around.first.inner_text()
+                day = lambda at: (lambda d: f"{d.day} {d:%B}")(datetime.fromisoformat(at))
+                # A building story opens to its parts' round lines.
+                folds = page.locator('#in-progress details.rest')
+                if folds.count() and not folds.first.evaluate('d => d.open'):
+                    folds.first.locator('> summary').click()
+                story = page.locator('#in-progress details.lane').filter(
+                    has=page.locator('.name', has_text=expected['story']))
+                story.locator('> summary').click()
+                assert story.locator('.round', has_text=expected['round']).is_visible(), 'Story rounds show'
+                # Every trends and around-Forge value the JSON holds, read from the visible page.
+                page.locator('#trends').scroll_into_view_if_needed()
+                trends, around = expected['trends'], expected['around']
+                head = [' '.join(t.split()) for t in page.locator('#trends table.trends thead th').all_inner_texts()]
+                assert head == ['Week of'] + [day(w + 'T00:00:00+00:00') for w in trends['weeks']], head
+                rows = page.locator('#trends tbody tr')
+                want = [('Team', trends['team'])] + [(p['name'], p['weeks']) for p in trends['people']]
+                assert rows.count() == len(want), 'One row for the team and each person'
+                names = [p['name'] for p in trends['people']]
+                assert names == sorted(names, key=str.casefold), names
+                for n, (name, weeks) in enumerate(want):
+                    row = rows.nth(n)
+                    assert row.is_visible(), name
+                    cells = [' '.join(t.split()) for t in row.locator('th, td').all_inner_texts()]
+                    assert cells == [name] + [f"{w['through']} through, {w['around']} around" for w in weeks], cells
+                items = page.locator('#trends .around li')
+                assert items.count() == len(around), 'Every around-Forge pull request shows'
+                for n, pr in enumerate(around):
+                    item = items.nth(n)
+                    assert item.is_visible(), pr['title']
+                    assert ' '.join(item.inner_text().split()) == f"{pr['title']} {pr['author']} {day(pr['merged_at'])}"
+                    assert item.locator('a').get_attribute('href') == pr['url']
                 page.close()
     finally:
         browser.close()
 """
     shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
-                            "playwright==1.55.0", "python", "-c", script, page.resolve().as_uri(), json.dumps(people)],
+                            "playwright==1.55.0", "python", "-c", script, page.resolve().as_uri(), json.dumps(expected)],
                            capture_output=True, text=True, encoding="utf-8", timeout=180)
     assert shown.returncode == 0, shown.stdout + shown.stderr

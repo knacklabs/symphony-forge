@@ -127,7 +127,11 @@ def first_screen(view: dict, now: datetime, group) -> str:
         return f'<span class="{kind}" style="left:{x(a):.2f}%;width:{max(x(b) - x(a), .25):.2f}%"></span>'
 
     def lane(title: str, words: str, track: str, row: dict | None) -> str:
-        more = (times(row) + "".join(f'<p class="round">{escape(r["line"])}</p>' for r in row.get("rounds") or [])
+        # A story's review rounds sit on its parts, so its detail lists each part's rounds.
+        rounds = [line for owner in ([row, *row.get("children", [])] if row else [])
+                  for line in ((owner is not row and f"{owner['title']}: " or "") + r["line"]
+                               for r in owner.get("rounds") or [])]
+        more = (times(row) + "".join(f'<p class="round">{escape(line)}</p>' for line in rounds)
                 + people(row)) if row else f'<p class="times">{escape(words)}</p>'
         return (f'<details class="lane"><summary><span class="name" title="{escape(title, quote=True)}">'
                 f'{escape(title)}</span><span class="what">{escape(words)}</span>'
