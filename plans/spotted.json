@@ -1196,8 +1196,8 @@
       "text": "Not done: finished planned stories remain in roadmap order",
       "from": "blocking",
       "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board_graph.py\tNot done: functional check\tFORGE-BOARD-2/GRAPH",
