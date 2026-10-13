@@ -1,4 +1,5 @@
 {
+  "allow_large": "Version bump touches every recorded version and generated file",
   "base": "d76d2adcfaa4efb3ef33849f8ca041b3cd90c869",
   "branch": "fix/release-1212",
   "done_when": "Forge's version is 1.2.12 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
