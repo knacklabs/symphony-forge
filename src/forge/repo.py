@@ -408,11 +408,12 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
-        "merge": str, "checks": list, "interfaces": list, "models": dict}
+        "merge": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
-            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "models": {}}
+            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "always_test": [],
+            "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off")}
@@ -669,6 +670,10 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "version" and not VERSION.fullmatch(value):
             return "version must be a Forge release, such as v1.2.1"
+        flag = next((entry for entry in value if entry.startswith("-")), None) if key == "always_test" else None
+        if flag:
+            return (f"always_test lists {flag}, which is not a test path or node ID; "
+                    "list only tests, such as tests/test_rules.py")
         if key == "runner" and not value.strip():
             return "runner must name a GitHub Actions runner label"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):

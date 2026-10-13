@@ -88,7 +88,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
             given = host.forge("work", item, *note, cwd=cwd)
             assert given.returncode == 0, given.stdout + given.stderr
             out = given.stdout
-            checkout = re.search(rf"background {role} subagent of this session, working in (.+)\.\n",
+            checkout = re.search(rf"background {role} subagent of this session, working in (.+)\.\r?\n",
                                  out)[1]
             whole = Path(re.search(r"(?i)start a new \w+ subagent with: Read (.+\.fresh\.md) and follow it",
                                    out)[1])

@@ -1,0 +1,30 @@
+{
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, the tests that pin them, and all sync output close requires when the version changes, including generated skill copies sync writes",
+  "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
+  "branch": "fix/release-1211",
+  "done_when": "Forge's version is 1.2.11 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "319205a8f9fdb2a56ef890b4b119ed86b05a1e166a26d4f56765e01832834b90",
+    "changed": "70031c4e5db5e2f3c1291fee5d061635c7f5aeb54a4ddfced42a635aa8d44158",
+    "commit": "df70717a62792c1b8a67232f8622ce1774884767",
+    "dismissals": [],
+    "findings": [],
+    "id": "2ad4a338-c995-478e-9da5-887950dbb817",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T16:44:38.490426+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T18:19:04.675755+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.11 for the Windows fixes, the process-id fix, the kept-worktree merge, the commit-hook fix, sync fixes and the faster main run merged since v1.2.10"
+}

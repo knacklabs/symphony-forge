@@ -208,12 +208,18 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
                "Prepare packaging: Not started" for n in drawing.iter()) == 1
     assert all("(other story)" not in title for title in titles)
-    expected_counts = {"needs a spec": 1, "planning": 1, "waiting for approval": 1,
-                       "building": 2, "ready to merge": 0,
-                       "done": 3 if history == "adopted-v1.2.2" else 2}
-    assert data["stage_counts"] == expected_counts
-    # The old header mixed stories and fixes. Each labelled group now matches its JSON counts.
-    for kind, counts in data["kind_stage_counts"].items():
+    done = 3 if history == "adopted-v1.2.2" else 2
+    expected_counts = {
+        "stories": {"done": 0, "building": 1, "approved, not started": 0, "waiting for approval": 1,
+                    "planning": 1, "no plan yet": 1},
+        "parts": {"done": 1, "ready to merge": 0, "in progress": 1, "to do": 3},
+        "fixes": {"done": done, "ready to merge": 0, "in progress": 1, "to do": 0},
+        "finished_last_7_days": {"parts": 0, "fixes": done}}
+    assert data["team"]["counts"] == expected_counts
+    # Stories, parts and fixes are labelled apart, each matching its JSON counts.
+    for kind, counts in data["team"]["counts"].items():
+        if kind == "finished_last_7_days":
+            continue
         assert kind.capitalize() in text
         assert all(f"{name.capitalize()}: {count}" in text for name, count in counts.items())
     numbers = re.search(r'<ul class="numbers">(.*?)</ul>', page, re.S).group(1)
@@ -253,13 +259,13 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         events.write(json.dumps({"event": "run end", "id": "readme-greets:ci:end",
                                  "run_id": "readme-greets:ci", "item": "readme-greets",
                                  "kind": "ci", "at": "2026-10-09T10:00:00Z"}) + "\n")
-    ready_counts = {**expected_counts, "building": 1, "ready to merge": 1}
+    ready_counts = {**expected_counts, "fixes": {**expected_counts["fixes"], "in progress": 0, "ready to merge": 1}}
     ready_page = repo.forge("board", "--out", str(out))
     assert ready_page.returncode == 0, ready_page.stderr
     assert "Ready to merge: 1" in seen(out)
     ready_json = repo.forge("board", "--json")
     assert ready_json.returncode == 0, ready_json.stderr
-    assert json.loads(ready_json.stdout)["stage_counts"] == ready_counts
+    assert json.loads(ready_json.stdout)["team"]["counts"] == ready_counts
 
     # A story counts once as ready only when every remaining part is ready.
     plan_tree = worktree(repo, "story/PLAN")
@@ -274,7 +280,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     for tid in ("SAVE", "SHOW"):
         started = repo.forge("task", "start", f"PLAN/{tid}")
         assert started.returncode == 0, started.stderr
-    part_counts = {**ready_counts, "planning": 0, "building": 2}
+    part_counts = {**ready_counts, "stories": {**ready_counts["stories"], "planning": 0, "building": 2},
+                   "parts": {"done": 1, "ready to merge": 1, "in progress": 2, "to do": 3}}
     for tid in ("SAVE", "SHOW"):
         (receipts / "PLAN").mkdir(exist_ok=True)
         (receipts / "PLAN" / f"{tid}.json").write_text(json.dumps({
@@ -282,8 +289,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         plan_json = repo.forge("board", "--json")
         assert plan_json.returncode == 0, plan_json.stderr
         if tid == "SHOW":
-            part_counts = {**part_counts, "building": 1, "ready to merge": 2}
-        assert json.loads(plan_json.stdout)["stage_counts"] == part_counts
+            part_counts = {**part_counts, "parts": {"done": 1, "ready to merge": 2, "in progress": 1, "to do": 3}}
+        assert json.loads(plan_json.stdout)["team"]["counts"] == part_counts
     plan_next = repo.forge("next")
     assert plan_next.returncode == 0, plan_next.stderr
     assert all(f"PLAN/{tid} is ready and waiting for someone to merge it." in plan_next.stdout
@@ -291,8 +298,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert "Next: merge its pull request, then forge next" in plan_next.stdout
     plan_page = repo.forge("board", "--out", str(out))
     assert plan_page.returncode == 0, plan_page.stderr
-    # One ready story and one ready fix remain separate in the labelled header.
-    assert seen(out).count("Ready to merge: 1") == 2 and "Building: 1" in seen(out)
+    # Ready parts and the ready fix remain separate in the labelled header.
+    assert "Ready to merge: 2" in seen(out) and "Ready to merge: 1" in seen(out) and "Building: 2" in seen(out)
 
     # Task/fix checkouts retain an equally recent inherited story record, but
     # the owning story's live task table is what next and board must both read.
