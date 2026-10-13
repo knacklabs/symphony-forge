@@ -5,6 +5,7 @@
     "src/forge/review.py",
     "src/forge/score.py",
     "src/forge/story.py",
+    "src/forge/templates/skill.md",
     "tests/test_score_bar.py"
   ],
   "known": [
@@ -216,41 +217,71 @@
       "security": false,
       "title": "Not done: whitespace-folded finding identity proof",
       "work": 1
+    },
+    {
+      "area": "_known() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 464,
+      "outcome": "open",
+      "reason": "",
+      "round": 9,
+      "security": false,
+      "title": "Disputed keep settled-context carry-forward: same-commit backfill loses durable known findings",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 1,
+      "line": 1342,
+      "outcome": "open",
+      "reason": "",
+      "round": 9,
+      "security": false,
+      "title": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
+      "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "957d32ca7bf05f0159d629ac708df3382b14b10c11d3da811fb9c1cff1301f2d",
-    "changed": "d5a99b55ef3df4a5a8bc82895548c696232a36afe956161cbbb94116a7b2840b",
-    "commit": "ec095a2e792698d0d92b005e7e4a8a3c2c16076b",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "69973c9c3063fda4bde8575023654b8fcaf622df6ebe48ca7b903dd049f88c34",
+    "changed": "e7b597c0f0616c6f4795e175a7eca5cad25c7f5e93076c2dbeca4d30faa9e617",
+    "commit": "05a2ef13ae493cd9a7222ac92d0cffc74c8f1704",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done \u2014 This is distinct from the earlier below-bar fix: an at-bar note with Harm 3 still makes `held` true after it receives a `Disposition: keep` line. After three blocked read rounds, `_blocked_reads` therefore keeps the stop active and `forge read` refuses a fourth round, although the note has been disposed and is no longer open.",
-        "file": "src/forge/score.py",
+        "body": "Gain 3, Work 2, Harm 4 (floor: data loss)\nRaise: Data loss \u2014 When an item saved before `known` is reviewed twice at the same task commit, `_known` backfills from `review._history`, which keys results by commit and retains only the later result. An earlier below-bar or owner-accepted finding omitted from that later review never enters `known`. After a squash merge, the item's promised record of that finding is lost. This is a further harm beyond the earlier settled finding about what appears in review prompts.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 4,
+        "line": 464,
+        "priority": "P1",
+        "title": "Disputed keep settled-context carry-forward: same-commit backfill loses durable known findings",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done \u2014 The new area-stop paragraph sits below guidance in this same shipped skill that says close holds the fourth review after any three blocked rounds and that a read stops after any three blocked reads. The worker brief repeats those unconditional rules in `worker.REVIEW_LOOP`. Item 4 now permits another round for new low-Harm findings, so coordinators and workers receive instructions that contradict the behavior this change delivers.",
+        "file": "src/forge/templates/skill.md",
         "gain": 3,
         "harm": 1,
-        "line": 104,
+        "line": 1342,
         "priority": "P1",
-        "title": "Disputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop",
+        "title": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
         "work": 1
       }
     ],
-    "id": "a29e7b5b-e3df-4d83-aac7-f4d95034d43b",
-    "status": "clean"
+    "id": "0d80c89d-cdec-4d09-9d68-02e68704f3cc",
+    "status": "blocked"
   },
   "settled_areas": [
     "src/forge/review.py",
     "src/forge/score.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T18:21:59.003408+00:00",
@@ -287,6 +318,10 @@
     {
       "at": "2026-10-13T05:53:58.005211+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:19:44.528991+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -297,5 +332,6 @@
     "reason": "Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
     "wait_id": "d40651a9-deaf-4de2-925e-e8a0f4e66494",
     "worker_round": null
-  }
+  },
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest 132851a813de2bbf684fb3ffa02596b7af9fc000` exited with status 1 on this machine.\nNo local test names src/forge/score.py; GitHub's checks will cover it.\nE                      ^^^^^\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\nE             res = hook_impl.function(*args)\nE                   ^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py\", line 1232, in pytest_cmdline_parse\nE             self.parse(args)\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py\", line 1586, in parse\nE             self.pluginmanager.consider_env()\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py\", line 874, in consider_env\nE             self._import_plugin_specs(os.environ.get(\"PYTEST_PLUGINS\"))\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py\", line 885, in _import_plugin_specs\nE             self.import_plugin(import_spec)\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py\", line 920, in import_plugin\nE             raise ImportError(\nE           File \"/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py\", line 913, in import_plugin\nE             mod = importlib.import_module(importspec)\nE                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"/Users/ravikiranvemula/.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/importlib/__init__.py\", line 126, in import_module\nE             return _bootstrap._gcd_import(name[level:], package, level)\nE                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\nE           File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\nE           File \"<frozen importlib._bootstrap>\", line 1140, in _find_and_load_unlocked\nE         ImportError: Error importing plugin \"_forge_test_results\": No module named '_forge_test_results'\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-SCORE-1-BAR/.venv/bin/python', '/private/v...d_load_unlocked\\nImportError: Error importing plugin \"_forge_test_results\": No module named \\'_forge_test_results\\'\\n').returncode\n\ntests/test_fast_test_selects_explicit_module_references.py:70: AssertionError\n2 failed, 279 passed in 1046.80s (0:17:26)"
 }

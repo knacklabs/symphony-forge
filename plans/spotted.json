@@ -540,6 +540,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tpyproject.toml\tStandard: Fewest moving parts\treview-images",
+      "kind": "bug",
+      "path": "pyproject.toml",
+      "line": 10,
+      "text": "Standard: Fewest moving parts",
+      "from": "blocking",
+      "item": "review-images",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -969,6 +980,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tChecking every workflow serially slows forge next in larger repos\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 125,
+      "text": "Checking every workflow serially slows forge next in larger repos",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 134,
+      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: a frequent scheduled workflow hides a failed daily run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 112,
+      "text": "Not done: a frequent scheduled workflow hides a failed daily run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: another scheduled workflow can hide the failed nightly full run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 112,
+      "text": "Not done: another scheduled workflow can hide the failed nightly full run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: approval counting must honor a stale cold read\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -1002,6 +1057,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: failing parametrized tests lose their full IDs\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 127,
+      "text": "Not done: failing parametrized tests lose their full IDs",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: join the go-live clause into the team sentence\tFORGE-BOARD-2/TRENDS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -1020,6 +1086,17 @@
       "text": "Not done: older merged parts lose their shared runway",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: parameter IDs containing spaced hyphens are truncated\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 138,
+      "text": "Not done: parameter IDs containing spaced hyphens are truncated",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
@@ -1244,6 +1321,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tDisputed keep settled-context carry-forward: same-commit backfill loses durable known findings\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 464,
+      "text": "Disputed keep settled-context carry-forward: same-commit backfill loses durable known findings",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tEarlier-release choices can trigger another stop before three new rounds\tsecond-stop-choice",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1361,6 +1449,17 @@
       "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line",
       "from": "blocking",
       "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u05d2ves\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 251,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u05d2ves",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     },
@@ -2432,6 +2531,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tClose loses results from the first pytest run in a compound test command\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 360,
+      "text": "Close loses results from the first pytest run in a compound test command",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tClose merges results from identically named tests in sibling packages\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 372,
+      "text": "Close merges results from identically named tests in sibling packages",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -3235,6 +3356,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tA started fix can be given the wrong next command\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 276,
+      "text": "A started fix can be given the wrong next command",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tApproved stories with no started part still show building; COUNTS owns that correction.",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3308,6 +3440,72 @@
       "text": "Not done: Git command counts still grow with old finished stories linked to specs",
       "from": "blocking",
       "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 270,
+      "text": "Not done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 279,
+      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine gets a command that cannot run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 275,
+      "text": "Not done: a fix started on another machine gets a command that cannot run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine is offered again\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 271,
+      "text": "Not done: a fix started on another machine is offered again",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a later workflow-name collision loses the started fix's next step\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 278,
+      "text": "Not done: a later workflow-name collision loses the started fix's next step",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a nightly run with more than ten failures does not name every failing test\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 265,
+      "text": "Not done: a nightly run with more than ten failures does not name every failing test",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
@@ -3473,6 +3671,17 @@
       "text": "Not done: stopped specs on story branches disappear from forge next",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: the fix start command omits failures after the tenth\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 279,
+      "text": "Not done: the fix start command omits failures after the tenth",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
@@ -3719,6 +3928,94 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tClose copies Jest __tests__ filenames without checking them\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 624,
+      "text": "Close copies Jest __tests__ filenames without checking them",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose counts a failed teardown as a second test case\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 663,
+      "text": "Close counts a failed teardown as a second test case",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose credits a different nested test file as passed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 618,
+      "text": "Close credits a different nested test file as passed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose labels inherited pytest methods not run despite matching run results\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 664,
+      "text": "Close labels inherited pytest methods not run despite matching run results",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose leaves JavaScript test names unchecked in client proof lists\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 624,
+      "text": "Close leaves JavaScript test names unchecked in client proof lists",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose loses results for pytest parameter IDs containing spaces\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 631,
+      "text": "Close loses results for pytest parameter IDs containing spaces",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose marks a partly run test file as passed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 656,
+      "text": "Close marks a partly run test file as passed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tClose mislabels tests that ran under common pytest reporting options\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 414,
+      "text": "Close mislabels tests that ran under common pytest reporting options",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tCompound test commands can bypass the test place\treviews-skip-agent-line",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3829,6 +4126,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: A deliberately skipped close run marks named tests not checked\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 661,
+      "text": "Not done: A deliberately skipped close run marks named tests not checked",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: A mixed-language proof line leaves an unmatched test unmarked\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 685,
+      "text": "Not done: A mixed-language proof line leaves an unmatched test unmarked",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: A partially run parameterized test is reported as passed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 663,
+      "text": "Not done: A partially run parameterized test is reported as passed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close cannot match Markdown-wrapped pytest node IDs\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 610,
+      "text": "Not done: Close cannot match Markdown-wrapped pytest node IDs",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it\ttest-gap-warning",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3838,6 +4179,61 @@
       "item": "test-gap-warning",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from tests it ran, with their results, and names no test that did not run\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 608,
+      "text": "Not done: Close writes the proof list from tests it ran, with their results, and names no test that did not run",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 600,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 686,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0631\u0648\u0627s\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 670,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0631\u0648\u0627s",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 634,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do\trecord-review-usage",
@@ -3860,6 +4256,17 @@
       "item": "admit-by-load",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Proof lists retain names of tests Close did not run\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 677,
+      "text": "Not done: Proof lists retain names of tests Close did not run",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names\tstop-question-plain",
@@ -3935,6 +4342,17 @@
       "text": "Not done: keep timing-only legacy review ordinals and finding counts unknown",
       "from": "blocking",
       "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: proof list drops Done-when details written after a test name\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 648,
+      "text": "Not done: proof list drops Done-when details written after a test name",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     },
@@ -4610,6 +5028,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: Review guidance falsely says every named test exists in the branch\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 76,
+      "text": "Not done: Review guidance falsely says every named test exists in the branch",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
       "kind": "bug",
       "path": "src/forge/templates/review.md",
@@ -4617,6 +5046,17 @@
       "text": "Not done: one identical written boundary in review and cold read",
       "from": "blocking",
       "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1342,
+      "text": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
       "status": "open",
       "closed_by": null
     },
@@ -5420,6 +5860,39 @@
       "text": "Not done: the guide proof does not check the always_test instructions",
       "from": "blocking",
       "item": "close-always-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: a failed named test is published as failed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "tests/test_close_checks_named_tests.py",
+      "line": 52,
+      "text": "Not done: a failed named test is published as failed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: test_1_a_named_test_that_did_not_run_shows_as_not_run\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "tests/test_close_checks_named_tests.py",
+      "line": 44,
+      "text": "Not done: test_1_a_named_test_that_did_not_run_shows_as_not_run",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: test_1_close_writes_the_proof_list_from_the_tests_it_ran\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "tests/test_close_checks_named_tests.py",
+      "line": 37,
+      "text": "Not done: test_1_close_writes_the_proof_list_from_the_tests_it_ran",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     },
@@ -6480,6 +6953,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_next_names_a_failed_scheduled_run.py\tNot done: prove the scheduled default-branch query\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "tests/test_next_names_a_failed_scheduled_run.py",
+      "line": 76,
+      "text": "Not done: prove the scheduled default-branch query",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_onechat_registry.py\tWindows CI's fresh init exited 1 with no output; its local owner passes but the failure's cause remains unresolved.",
       "kind": "bug",
       "path": "tests/test_onechat_registry.py",
@@ -7180,6 +7664,39 @@
       "text": "Update the history-invariance test for the expanded JSON payload",
       "from": "review",
       "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name JavaScript and Go test failures in scheduled runs",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 137,
+      "text": "Follow-up: name JavaScript and Go test failures in scheduled runs",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name Jest and Vitest failures in scheduled runs",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 134,
+      "text": "Follow-up: name Jest and Vitest failures in scheduled runs",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: retain failed daily workflows beyond the recent-run page",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 116,
+      "text": "Follow-up: retain failed daily workflows beyond the recent-run page",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
@@ -8379,501 +8896,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tpyproject.toml\tStandard: Fewest moving parts\treview-images",
-      "kind": "bug",
-      "path": "pyproject.toml",
-      "line": 10,
-      "text": "Standard: Fewest moving parts",
-      "from": "blocking",
-      "item": "review-images",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tChecking every workflow serially slows forge next in larger repos\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 125,
-      "text": "Checking every workflow serially slows forge next in larger repos",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 134,
-      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tNot done: a frequent scheduled workflow hides a failed daily run\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 112,
-      "text": "Not done: a frequent scheduled workflow hides a failed daily run",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tNot done: another scheduled workflow can hide the failed nightly full run\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 112,
-      "text": "Not done: another scheduled workflow can hide the failed nightly full run",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tNot done: failing parametrized tests lose their full IDs\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 127,
-      "text": "Not done: failing parametrized tests lose their full IDs",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tNot done: parameter IDs containing spaced hyphens are truncated\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 138,
-      "text": "Not done: parameter IDs containing spaced hyphens are truncated",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tA started fix can be given the wrong next command\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 276,
-      "text": "A started fix can be given the wrong next command",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 270,
-      "text": "Not done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 279,
-      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine gets a command that cannot run\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 275,
-      "text": "Not done: a fix started on another machine gets a command that cannot run",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine is offered again\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 271,
-      "text": "Not done: a fix started on another machine is offered again",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: a later workflow-name collision loses the started fix's next step\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 278,
-      "text": "Not done: a later workflow-name collision loses the started fix's next step",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: a nightly run with more than ten failures does not name every failing test\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 265,
-      "text": "Not done: a nightly run with more than ten failures does not name every failing test",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: the fix start command omits failures after the tenth\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 279,
-      "text": "Not done: the fix start command omits failures after the tenth",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_next_names_a_failed_scheduled_run.py\tNot done: prove the scheduled default-branch query\tnightly-red-shows-in-next",
-      "kind": "bug",
-      "path": "tests/test_next_names_a_failed_scheduled_run.py",
-      "line": 76,
-      "text": "Not done: prove the scheduled default-branch query",
-      "from": "blocking",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name JavaScript and Go test failures in scheduled runs",
-      "kind": "edge",
-      "path": "src/forge/board_facts.py",
-      "line": 137,
-      "text": "Follow-up: name JavaScript and Go test failures in scheduled runs",
-      "from": "review",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name Jest and Vitest failures in scheduled runs",
-      "kind": "edge",
-      "path": "src/forge/board_facts.py",
-      "line": 134,
-      "text": "Follow-up: name Jest and Vitest failures in scheduled runs",
-      "from": "review",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: retain failed daily workflows beyond the recent-run page",
-      "kind": "edge",
-      "path": "src/forge/board_facts.py",
-      "line": 116,
-      "text": "Follow-up: retain failed daily workflows beyond the recent-run page",
-      "from": "review",
-      "item": "nightly-red-shows-in-next",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u05d2ves\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 251,
-      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u05d2ves",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose loses results from the first pytest run in a compound test command\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 360,
-      "text": "Close loses results from the first pytest run in a compound test command",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tClose merges results from identically named tests in sibling packages\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 372,
-      "text": "Close merges results from identically named tests in sibling packages",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose copies Jest __tests__ filenames without checking them\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 624,
-      "text": "Close copies Jest __tests__ filenames without checking them",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose counts a failed teardown as a second test case\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 663,
-      "text": "Close counts a failed teardown as a second test case",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose credits a different nested test file as passed\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 618,
-      "text": "Close credits a different nested test file as passed",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose labels inherited pytest methods not run despite matching run results\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 664,
-      "text": "Close labels inherited pytest methods not run despite matching run results",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose leaves JavaScript test names unchecked in client proof lists\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 624,
-      "text": "Close leaves JavaScript test names unchecked in client proof lists",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose loses results for pytest parameter IDs containing spaces\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 631,
-      "text": "Close loses results for pytest parameter IDs containing spaces",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose marks a partly run test file as passed\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 656,
-      "text": "Close marks a partly run test file as passed",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tClose mislabels tests that ran under common pytest reporting options\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 414,
-      "text": "Close mislabels tests that ran under common pytest reporting options",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: A deliberately skipped close run marks named tests not checked\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 661,
-      "text": "Not done: A deliberately skipped close run marks named tests not checked",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: A mixed-language proof line leaves an unmatched test unmarked\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 685,
-      "text": "Not done: A mixed-language proof line leaves an unmatched test unmarked",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: A partially run parameterized test is reported as passed\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 663,
-      "text": "Not done: A partially run parameterized test is reported as passed",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close cannot match Markdown-wrapped pytest node IDs\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 610,
-      "text": "Not done: Close cannot match Markdown-wrapped pytest node IDs",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from tests it ran, with their results, and names no test that did not run\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 608,
-      "text": "Not done: Close writes the proof list from tests it ran, with their results, and names no test that did not run",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 600,
-      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 686,
-      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0631\u0648\u0627s\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 670,
-      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0631\u0648\u0627s",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 634,
-      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u5177es,",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: Proof lists retain names of tests Close did not run\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 677,
-      "text": "Not done: Proof lists retain names of tests Close did not run",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: proof list drops Done-when details written after a test name\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 648,
-      "text": "Not done: proof list drops Done-when details written after a test name",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/review.md\tNot done: Review guidance falsely says every named test exists in the branch\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "src/forge/templates/review.md",
-      "line": 76,
-      "text": "Not done: Review guidance falsely says every named test exists in the branch",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: a failed named test is published as failed\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "tests/test_close_checks_named_tests.py",
-      "line": 52,
-      "text": "Not done: a failed named test is published as failed",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: test_1_a_named_test_that_did_not_run_shows_as_not_run\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "tests/test_close_checks_named_tests.py",
-      "line": 44,
-      "text": "Not done: test_1_a_named_test_that_did_not_run_shows_as_not_run",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_checks_named_tests.py\tNot done: test_1_close_writes_the_proof_list_from_the_tests_it_ran\tforge-writes-proof-list",
-      "kind": "bug",
-      "path": "tests/test_close_checks_named_tests.py",
-      "line": 37,
-      "text": "Not done: test_1_close_writes_the_proof_list_from_the_tests_it_ran",
-      "from": "blocking",
-      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     }
