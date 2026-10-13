@@ -2,12 +2,40 @@
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/pr-time-record-summaries",
   "done_when": "The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its whole round history",
+  "flagged": [
+    "src/forge/time_records.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a3a2d91d46fb2795ba0fe77b76b29be3984eaa585ffcf512b374b87f10092774",
+    "changed": "eeb9c4744be631b5e271d059251df6a10b88cc9c80613ada7bab0722da679834",
+    "commit": "4ae0ae9c9a55642cac5f7201bd31b42ed1e87072",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 4, Harm 4\nRaise: Not done\nThe published summary retains every prior interval, full round lines and finding lists, and every distinct finding in `seen`. Its size therefore keeps growing with the item's history. The 20-round proof checks only that one body stays below 40 KB; it does not establish a bound for longer items or rounds with more findings. Once the retained summary alone exceeds GitHub's limit, `_bounded_body` can remove current rows but has no way to shrink that summary, so publication can fail and the promised complete history is not kept.",
+        "file": "src/forge/time_records.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 478,
+        "priority": "P1",
+        "title": "Not done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its",
+        "work": 4
+      }
+    ],
+    "id": "b4a99b9d-cb2a-4f46-a0bf-af2a1fdbc863",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T05:33:45.675392+00:00",
+      "step": "review"
     }
   ],
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
