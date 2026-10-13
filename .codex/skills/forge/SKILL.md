@@ -336,9 +336,10 @@ their totals, because their intervals may overlap.
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
 categories rather than adding overlapping stage timers. The pane and `/forge` show these same
 details. The pull request's **How it went** section carries intervals, review rounds (including
-clean reviews), and waits with their ends. Earlier worker rounds are kept as one time summary each
-and only the current round keeps every event, so a long item stays inside GitHub's body limit with
-its whole round history. Close and merge retain observations from other
+clean reviews), and waits with their ends. Earlier worker rounds keep only their round line, cut to 300 characters,
+the 16 newest separately and older ones folded into one "Rounds 1–N" line of totals and finding
+counts; only the current round keeps every event. So a long item's record has a
+fixed size inside GitHub's body limit and still accounts for every round. Close and merge retain observations from other
 checkouts and recompute repeated findings and overlapping time. The board reads this shared
 record alongside local observations; `source` says which it had. A GitHub merge ends the last
 wait at its merge time and names its merger. Story time counts each instant once: working when
