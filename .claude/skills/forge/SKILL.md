@@ -26,6 +26,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Ask about this code" | Hand the question to the session's `explorer` subagent role |
 | "Close it" or "Is it ready?" | `forge close <item>` |
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
+| "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
 | "Let the agent merge" | The owner runs `forge merge enable` in their own terminal; never you |
 | "What should we build?" or "Find the real problem" | Discovery, below |
@@ -1251,6 +1252,19 @@ two and four seconds. If GitHub still does not answer, rerun the command. Not-fo
 permission refusals stop immediately; writes are never replayed by these read retries.
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
+
+Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
+status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
+its builder, one already merged and one another command works on. It starts them oldest first,
+several at a time up to this machine's agent places, and merges each one when it passes. A change
+not yet ready that changes a file an older change in the run also changes waits until that one
+merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
+works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
+the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
+alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
+you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
+its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+answers. Close's stop rule decides each stopped change, its 30-minute default included.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
