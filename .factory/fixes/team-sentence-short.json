@@ -3,6 +3,7 @@
   "branch": "fix/team-sentence-short",
   "done_when": "The team sentence counts stories with no plan instead of naming them, and forge board --json fills the team's in-progress list from the same row states the page uses",
   "flagged": [
+    "tests/test_board_pace.py",
     "tests/test_board_runway.py"
   ],
   "kind": "fix",
@@ -13,33 +14,46 @@
       "gain": 3,
       "harm": 1,
       "line": 96,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
       "work": 1
+    },
+    {
+      "area": "test_13_team_sentence_counts_unplanned_stories_instead_of_naming_them() in tests/test_board_pace.py",
+      "file": "tests/test_board_pace.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 109,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "db33e5d21f6d0d7f6af6eff593a90a89595de66ba4dc0a449f042cb487069ed7",
-    "changed": "c856296e7a49cefdff0fe9347f4d96541d86b42cd60990e0253cfeaee4a0a02d",
-    "commit": "2c1d00effed6aa7511b84eb8934f52c75cef9951",
+    "branch_diff": "e369792c0548ddc024c0f5754eb5cdda63dad06708dc3035f581d48f0bc17cb3",
+    "changed": "30fab232423851895a8e1709c3e21ac352720546019601977ea708a6b8c624ae",
+    "commit": "b4ac2a09d8d2a842cee034b8a56e3265f20a8ade",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The in-progress proof compares only titles. It would still pass if `team.in_progress` contained the correct rows but reported their `stage` values instead of the page's `state` values. The fixture also has no ready-to-merge top-level row, so the test does not verify that named page state is included. The Done-when item requires the list to come from the same row states the page uses.",
-        "file": "tests/test_board_runway.py",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is `missing`, so it maps neither Done-when clause to a test. This branch adds command-level checks for the sentence and in-progress list, but the required proof mapping is absent.",
+        "file": "tests/test_board_pace.py",
         "gain": 3,
         "harm": 1,
-        "line": 96,
+        "line": 109,
         "priority": "P1",
-        "title": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
+        "title": "Not done: proof list",
         "work": 1
       }
     ],
-    "id": "3d6de7b1-bd21-4415-adef-e70055575a80",
+    "id": "008d5a01-7a3e-4471-a11b-eea47a8b22da",
     "status": "blocked"
   },
   "status": "fixing",
@@ -50,6 +64,10 @@
     },
     {
       "at": "2026-10-13T17:59:33.344834+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:50:27.632595+00:00",
       "step": "review"
     }
   ],
