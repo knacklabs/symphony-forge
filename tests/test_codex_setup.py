@@ -178,8 +178,8 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     untrusted = repo.forge("doctor", cwd=client)
     assert untrusted.returncode == 1 and UNTRUSTED in untrusted.stdout, untrusted.stdout
     blocked = repo.forge("work", "SHOP/CART", cwd=worktree)
-    assert blocked.stderr == (refused + f'remove [projects.{json.dumps(str(client))}] from '
-                              f'{codex_home / "config.toml"} or set its trust_level = "trusted"\n'), blocked.stderr
+    assert blocked.stderr == (refused + f'set trust_level = "trusted" under [projects.{json.dumps(str(client))}] '
+                              f'in {codex_home / "config.toml"}; a parent folder\'s entry does not count\n'), blocked.stderr
     assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
     trust("trusted")
     in_worktree = repo.forge("doctor", cwd=worktree)

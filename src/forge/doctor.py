@@ -48,7 +48,8 @@ def _codex_trust(top: Path, config: Path) -> tuple[bool, str]:
     try: levels = {key: project.get("trust_level") for key, project in tomllib.loads(sync.read(config)).get("projects", {}).items() if key in keys}
     except (tomllib.TOMLDecodeError, AttributeError): levels = {}
     blocking = next((key for key, level in sorted(levels.items()) if level != "trusted"), None)
-    if blocking: return False, f'remove [projects.{json.dumps(blocking)}] from {config} or set its trust_level = "trusted"'
+    if blocking: return False, (f'set trust_level = "trusted" under [projects.{json.dumps(blocking)}] in {config}; '
+                                "a parent folder's entry does not count")
     return bool(levels), ("open Codex here and trust the project, or add trust_level = \"trusted\" under "
                           f"[projects.{json.dumps(os.path.realpath(common.parent))}] in {config}, the main checkout, which "
                           "covers every worktree Forge makes; a parent folder's entry does not count")
