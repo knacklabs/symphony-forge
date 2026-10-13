@@ -1,0 +1,14 @@
+{
+  "base": "165bf92f0e0abe463163f4f95d45e1fe9317a58c",
+  "branch": "fix/report-forge-bugs",
+  "done_when": "Every Forge repo's AGENTS.md tells agents to file a Forge bug with the bug template, and the template asks for everything needed to reproduce and fix it without any client code, names or secrets",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T09:21:32.237676+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a coding agent hits a Forge bug in a client repo, nothing tells it to report the bug to Forge, so the Forge team learns late and without the details needed to fix it"
+}
