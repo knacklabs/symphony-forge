@@ -1,0 +1,14 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/work-fails-without-worker",
+  "done_when": "forge work exits with an error and names the reason and the next step whenever it starts no worker",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:27.041645+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge work exits 0 when it starts no worker, so the coordinator thinks a build ran"
+}
