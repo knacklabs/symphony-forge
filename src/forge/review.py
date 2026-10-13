@@ -260,10 +260,10 @@ def plain(title: str, body: str = "") -> str:
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
 
 
-def question(name: str, delivers: str, flagged: list[str], accept: str,
+def question(name: str, delivers: str, flagged: list[str], who: str, accept: str,
                   parts: str = "Done when") -> str:
-    """The question a stopped read or review loop asks the human, ready to ask as written."""
-    return "\n".join([f"{name}: {delivers}" if delivers else name,
+    """Who decides a stopped read or review loop, then its question, ready to ask as written."""
+    return "\n".join([who, f"{name}: {delivers}" if delivers else name,
                       *(["It still has these problems:", *flagged] if flagged else []),
                       "Accept, narrow or split?",
                       f"- Accept: {accept}",
@@ -289,16 +289,17 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    rows = [(plain(finding["title"], finding.get("body", "")), score.of(finding)) for finding in score.open_findings(result)
-            if score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3]
-    # Accept dismisses every finding not yet dismissed, advice included.
-    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
-    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
+    # The table lists every open finding, the ones Accept dismisses, below the bar included.
+    opened = [id(finding) for finding in score.open_findings(result)]
+    rows = [(n, plain(finding["title"], finding.get("body", "")), score.of(finding))
+            for n, finding in enumerate(result.get("findings", []), 1) if id(finding) in opened]
     stop = state.get("stop") or {}
-    said = question(name, delivers, score.table(rows),
-                               f"every finding in this review, the {len(rows)} listed and {advice} "
-                               "advice notes, is dismissed with your reason and recorded; close then "
-                               "goes on to the checks, and merging is still a separate step.")
+    said = question(name, delivers, score.table(rows), score.who(rows, (
+                        "Ask the human to narrow the part, split it, or accept the remaining findings, "
+                        "in these words:")),
+                               f"every finding in this review, the {len(rows)} listed, is dismissed with "
+                               "your reason and recorded; close then goes on to the checks, and merging "
+                               "is still a separate step.")
     return said if not stop.get("area") else said.replace("It still has these problems:", (
         f"Findings keep coming in {stop['area']}; proposed: {stop['proposed']}. It still has these problems:"), 1)
 

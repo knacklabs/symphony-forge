@@ -173,7 +173,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
     stopped = env.close("SHOP/T1")
-    assert stopped.returncode == 1 and "Ask the human" in stopped.stderr
+    assert stopped.returncode == 1 and "settle it yourself" in stopped.stderr
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Label wording (app.py): known: below the bar (live with); Gain 2, Work 1, Harm 1" in known
     assert "Button colour (app.py): dismissed because app.py:1 the colour is set; Gain 2, Work 1, Harm 1" in known
@@ -241,7 +241,7 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         _round(env, item, where, 3, at_bar("Round 3 defect", "docs/3.md", harm=2),
                _scored("P2", "Follow-up: other shells", "Gain 3, Work 4, Harm 3\nRaise: Functional", "docs/4.md"))
         stop = _round(env, item, where, 4).stderr
-        assert "Ask the human" in stop and "- other shells" in stop  # the finding that caused the stop
+        assert "Ask the human" in stop and "| 2 | other shells" in stop  # the finding that caused the stop
         later(monkeypatch, 31)
         held = env.close(item)
         assert held.returncode == 1 and "Ask the human" in held.stderr
@@ -254,7 +254,8 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
             state = json.loads((where / path).read_text("utf-8"))
             state.pop("known")
             env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
-        assert "Ask the human" in _round(env, item, where, 4).stderr
+        assert ("Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) "
+                "and tell the owner after.") in _round(env, item, where, 4).stderr
         assert len(env.review_calls()) == 3
         later(monkeypatch, 31)
         narrowed = env.close(item)
