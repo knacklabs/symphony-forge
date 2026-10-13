@@ -391,7 +391,7 @@ def warm_checks_cache(env, monkeypatch):
     observations = {"json": current["stage"] == "ready" and
                     current["gates"]["review"]["status"] == "clean" and len(current["rounds"]) == 2,
                     "checks": current["pr"]["checks"] == "unknown",
-                    "html": "Readme greets new readers : Ready to merge." in visible,
+                    "html": "Readme greets new readers Fix Ready to merge" in visible,
                     "next": any(item in line and "is ready" in line for line in next_step.stdout.splitlines())}
     assert all(observations.values()), (observations, current["stage"], next_step.stdout, visible)
 

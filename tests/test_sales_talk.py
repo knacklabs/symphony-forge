@@ -17,7 +17,7 @@ def test_3_sync_teaches_demo_rounds_and_platform_handoff(repo):
         skill = (repo.path / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
         prototype = skill.split("\n## Prototype\n")[1].split("\n## ")[0]
         for instruction in ("one conversation", "one prototype fix", "demo round",
-                            "next version is live", "reviewer found", "deploy platform",
+                            "next version is ready to demo", "reviewer found", "deploy platform",
                             "sign-off decision"):
             assert instruction in prototype
 

@@ -8,6 +8,18 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 Start with `forge next`. It says where things stand and gives the exact next command.
 
+Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
+that the plugin and MCP are installed or that the user is signed in.
+Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is
+installed in the current host. If it is missing, use the organization's plugin catalog and the
+host's installation flow. Do not invent an installation command or marketplace address.
+Then follow the Mainline Deploy skill. Check OAuth sign-in and have the user complete it if needed.
+Wait for successful authentication before deployment. Installation alone does not mean the user is signed in.
+Deploy only the requested app to the requested environment. A build, fix, merge, ship/land request,
+successful test or review, demo preparation, or Forge next step does not by itself authorize deployment.
+Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
+
 | The human says | Run |
 |---|---|
 | "What now?" | `forge next` |
@@ -232,7 +244,11 @@ worktree path, shared by the repo's worktrees).
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
-the HTML board keeps their history. Each call reads current state without a history cache.
+the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
+matches the JSON: every story and fix sorted needs you, blocked, in progress, planned, no plan
+yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
+fix and plan. It uses the full window, has light and dark themes and stacks to one column below
+720px. Each call reads current state without a history cache.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
 task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
@@ -273,11 +289,11 @@ Live readers, workers and reviews take precedence
 over a saved status, including in `forge next`. Approval history uses one display name per
 Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
-`started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
+`started_at`, or null), `pr` (number, url and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
 `approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
 absolute path to its document in its own worktree; other rows have null approval.
-Task and fix rows add `time_breakdown` and `rounds`.
+Task and fix rows add `time_breakdown` and `rounds`; story rows add `outcome` (null until done).
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
@@ -614,11 +630,14 @@ output to the agent.
 
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
-the demo: "the next version is live" or "the reviewer found a missing error message". Do not
+the demo: "the next version is ready to demo" or "the reviewer found a missing error message".
+Say a version is live only after the requested deployment is verified. Do not
 use Forge's words (fix, worktree, branch, pull request) in progress updates to the salesperson.
-When `forge next` says to connect the repo to our deploy platform, tell the salesperson to use
-their own login, pick a subdomain and record its address under `## Demo` in
-`docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off decision.
+When `forge next` says to connect the repo to our deploy platform, explain what is needed;
+that reminder does not authorize deployment. When the user explicitly requests deployment, use
+Mainline Deploy as above. After the requested deployment is verified, record its address under
+`## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
+decision.
 
 **The demo.** Every demo follows five steps, in order:
 
