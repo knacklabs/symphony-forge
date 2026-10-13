@@ -12,7 +12,7 @@ import pytest
 import conftest
 from conftest import REAL_UV
 from test_board_counts import ONE_PART, board, clock, configure, github, read_story
-from test_board_trends import ANA, BEN, pr
+from test_board_trends import ANA, BEN, NO_NAME, pr
 from test_close import blocked, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER
@@ -245,7 +245,9 @@ def test_7_first_screen(env, monkeypatch, previous):
     env.repo.forge("close", "speed-0", cwd=tree)
     # Merged pull requests for the trends: one through Forge two weeks ago, one around it today.
     github(env, [pr(1, "task/OLD-T1", BEN, now - timedelta(days=14)),
-                 pr(2, "quick-patch", ANA, now - timedelta(hours=1), "Patch the login page")])
+                 pr(2, "quick-patch", ANA, now - timedelta(hours=1), "Patch the login page"),
+                 pr(3, "fix/old-readme", ANA, now - timedelta(days=21)),
+                 pr(4, "tidy-config", NO_NAME, now - timedelta(days=28))])
     clock(monkeypatch, now + timedelta(minutes=2))
 
     data = board(env.repo)
@@ -292,17 +294,20 @@ def test_7_first_screen(env, monkeypatch, previous):
     for line in row["rounds"]:
         assert escape(line["line"]) in detail
     assert "Started by" in detail
-    _first_screen_browser(out)
+    assert len(team["trends"]["people"]) == 3
+    _first_screen_browser(out, team["trends"]["people"])
 
 
-def _first_screen_browser(page):
+def _first_screen_browser(page, people):
     """In real Chrome: at 1440 by 900 the first screen, with five Needs you rows and "and 2 more"
     and two Blocked or slow rows, ends above the fold; the time axis labels never overlap; nothing
     scrolls sideways at 1440 or 390; "and N more" and a row's detail open in place and close again;
-    Tab reaches every row with a visible focus ring; the trends weeks, team row and around-Forge
-    list show. Until this release works out Needs you and Blocked or slow, the check copies In
+    Tab reaches every row with a visible focus ring; the trends weeks and team row show, every
+    person's row shows in alphabetical order with each week's through and around counts readable,
+    and the around-Forge list shows. Until this release works out Needs you and Blocked or slow, the check copies In
     progress rows into those lists so the fit is measured at their full size."""
     script = """
+import json
 import sys
 from playwright.sync_api import sync_playwright
 FILL = '''() => {
@@ -371,7 +376,17 @@ with sync_playwright() as p:
                 weeks = page.locator('#trends table.trends thead th')
                 assert weeks.count() == 7 and all(weeks.nth(n).is_visible() for n in range(7)), 'Six weeks show'
                 assert page.locator('#trends tr.team').is_visible(), 'The team row shows'
-                assert page.locator('#trends tr.person').first.is_visible(), 'A person row shows'
+                rows = page.locator('#trends tr.person')
+                expected = json.loads(sys.argv[2])
+                assert rows.count() == len(expected), 'One row per person'
+                names = [rows.nth(n).locator('th').inner_text().strip() for n in range(rows.count())]
+                assert names == sorted(names, key=str.casefold) == [p['name'] for p in expected], names
+                for n, person in enumerate(expected):
+                    assert rows.nth(n).is_visible(), person['name']
+                    cells = rows.nth(n).locator('td')
+                    shown = [' '.join(cells.nth(k).inner_text().split()) for k in range(cells.count())]
+                    assert all(cells.nth(k).is_visible() for k in range(cells.count()))
+                    assert shown == [f"{w['through']} through, {w['around']} around" for w in person['weeks']], shown
                 around = page.locator('#trends .around li')
                 assert around.count() == 1 and around.first.is_visible(), 'The around-Forge list shows'
                 assert 'Patch the login page' in around.first.inner_text()
@@ -380,6 +395,6 @@ with sync_playwright() as p:
         browser.close()
 """
     shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
-                            "playwright==1.55.0", "python", "-c", script, page.resolve().as_uri()],
+                            "playwright==1.55.0", "python", "-c", script, page.resolve().as_uri(), json.dumps(people)],
                            capture_output=True, text=True, encoding="utf-8", timeout=180)
     assert shown.returncode == 0, shown.stdout + shown.stderr
