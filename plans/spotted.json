@@ -2410,6 +2410,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 52,
+      "text": "Not done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask\tcodex-trust-parent",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -3774,6 +3785,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next never lists an item as waiting for itself; a part waits only for other items\tnext-no-self-wait",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 522,
+      "text": "Not done: forge next never lists an item as waiting for itself; a part waits only for other items",
+      "from": "blocking",
+      "item": "next-no-self-wait",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready fixes without a worktree\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -5105,6 +5127,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/sync.py\tSync deletes client-owned Codex config comments\tupgrade-files-agree",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 325,
+      "text": "Sync deletes client-owned Codex config comments",
+      "from": "blocking",
+      "item": "upgrade-files-agree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tNot done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task\ttask-start-pin",
       "kind": "bug",
       "path": "src/forge/task.py",
@@ -6414,6 +6447,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_trust_parent.py\tNot done: test that parent-only trust stops a Codex turn\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "tests/test_codex_trust_parent.py",
+      "line": 44,
+      "text": "Not done: test that parent-only trust stops a Codex turn",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_turn_speed_receipts.py\tNot done: proof list\tfast-mode-visible",
       "kind": "bug",
       "path": "tests/test_codex_turn_speed_receipts.py",
@@ -7213,6 +7257,17 @@
       "text": "Not done: prove the scheduled default-branch query",
       "from": "blocking",
       "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_never_waits_for_itself.py\tNot done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing\tnext-no-self-wait",
+      "kind": "bug",
+      "path": "tests/test_next_never_waits_for_itself.py",
+      "line": 25,
+      "text": "Not done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing",
+      "from": "blocking",
+      "item": "next-no-self-wait",
       "status": "open",
       "closed_by": null
     },
@@ -9204,39 +9259,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next never lists an item as waiting for itself; a part waits only for other items\tnext-no-self-wait",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 522,
-      "text": "Not done: forge next never lists an item as waiting for itself; a part waits only for other items",
-      "from": "blocking",
-      "item": "next-no-self-wait",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/sync.py\tSync deletes client-owned Codex config comments\tupgrade-files-agree",
-      "kind": "bug",
-      "path": "src/forge/sync.py",
-      "line": 325,
-      "text": "Sync deletes client-owned Codex config comments",
-      "from": "blocking",
-      "item": "upgrade-files-agree",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_next_never_waits_for_itself.py\tNot done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing\tnext-no-self-wait",
-      "kind": "bug",
-      "path": "tests/test_next_never_waits_for_itself.py",
-      "line": 25,
-      "text": "Not done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing",
-      "from": "blocking",
-      "item": "next-no-self-wait",
       "status": "open",
       "closed_by": null
     }
