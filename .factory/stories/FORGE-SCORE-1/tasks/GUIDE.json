@@ -103,40 +103,58 @@
       "gain": 4,
       "harm": 1,
       "line": 1421,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
       "title": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1442,
+      "outcome": "lived with",
+      "reason": "settled area: src/forge/templates/skill.md",
+      "round": 4,
+      "security": false,
+      "title": "Not done: low-Harm worker stops still direct the coordinator to ask the owner",
       "work": 2
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "039a28510c168cf162d2a023bcffd9f2dd40b40cf370d4206dd27902e8baeb94",
-    "changed": "4afb97c9e59bbc69b3705f1907bc173b8c0f502cbc4bc187c1eecc72bb0b87c3",
-    "commit": "697e1093269c71ac69a86241eb938be302b1064e",
-    "dismissals": [],
+    "branch_diff": "855853a924ae619e977fd345f1f07643ca517b47ff894fefb7e52da066369cdb",
+    "changed": "60496422175e5584bf04924e1d56a1e917afe4bc2835505e55cb999c52ba2165",
+    "commit": "c9d611e4d2032eb870dc90e9ee9c2f16e42023a1",
+    "dismissals": [
+      {
+        "because": "settled area: src/forge/templates/skill.md",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The new rule requires the coordinator to settle a stop itself when every open note has Harm 1 or 2, but the normal command outputs still explicitly say \u201cAsk the human\u201d: `close.py:56\u201364`, `story.py:69\u201370`, and `nextstep.py:776\u2013784`. A repeated at-bar Harm 1 finding can trigger a review stop, so the coordinator receives an owner-question instruction for a decision it is supposed to make itself. The changed README also says Forge asks the owner at every stop (`README.md:130`).",
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The guide says the coordinator settles a stop when every open note has Harm 1 or 2, but a normal worker stop still instructs it to ask the human. After two rounds leave the same scored, at-bar Harm 1 or 2 finding open, `worker.py:199` calls `close.stuck_round`; `close.py:551\u2013575` creates a stop and prints the unchanged `REFUSALS[\"stuck\"]` instruction, \u201cAsk the human.\u201d `nextstep.py:775\u2013777` repeats that instruction. The coordinator is never told to make and record its own decision on this path.",
         "file": "src/forge/templates/skill.md",
         "gain": 4,
         "harm": 1,
-        "line": 1421,
+        "line": 1442,
         "priority": "P1",
-        "title": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+        "title": "Not done: low-Harm worker stops still direct the coordinator to ask the owner",
         "work": 2
       }
     ],
-    "id": "9f9d862e-595f-4783-9147-7013eabe344a",
-    "status": "blocked"
+    "id": "56a3620d-5382-45f9-a395-0e48bcc109ab",
+    "status": "clean"
   },
   "settled_areas": [
     "src/forge/templates/skill.md"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T07:50:44.142939+00:00",
@@ -152,6 +170,10 @@
     },
     {
       "at": "2026-10-13T12:37:02.546787+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T14:51:18.498031+00:00",
       "step": "review"
     }
   ],
