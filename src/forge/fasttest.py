@@ -348,6 +348,33 @@ def pytest_sessionfinish(session):
 """
 
 
+# Forge's pytest results hook, loaded into every close run: each test's node ID, relative to the
+# repo, and outcome (passed, failed, skipped, xfail, xpass, or error for a failed setup or
+# teardown). xdist forwards each test's report to the controller, which alone writes the file.
+RESULTS_HEADER = "# forge test results\n"
+RESULTS = """import os, pathlib
+FILE, ROOT = [], []
+def pytest_configure(config):
+    if os.environ.get("FORGE_TEST_RESULTS") and not hasattr(config, "workerinput"):
+        FILE.append(pathlib.Path(os.environ["FORGE_TEST_RESULTS"]))
+        with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
+            results.write(""" + repr(RESULTS_HEADER) + """)
+    ROOT.append(pathlib.Path(str(config.rootdir)))
+def pytest_runtest_logreport(report):
+    if not FILE or report.when != "call" and report.passed:
+        return
+    if report.when == "call":
+        outcome = (("xfail" if report.skipped else "xpass") if hasattr(report, "wasxfail")
+                   else report.outcome)
+    else:
+        outcome = "skipped" if report.skipped else "error"
+    file, _, rest = report.nodeid.partition("::")
+    nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+    with FILE[0].open("a", encoding="utf-8") as results:
+        results.write(outcome + " " + nodeid + "\\n")
+"""
+
+
 def pytest_tests(base: str, command: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
