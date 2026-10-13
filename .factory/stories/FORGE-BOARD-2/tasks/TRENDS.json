@@ -6,23 +6,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "282a23a6ae649d323d0c0952952ccb3d863cc0eead16a28921573e61341e4893",
-    "changed": "5becfb5ae7b0d37121aa02df3cdf66c1e0dc1793f137cc2aef5b52c480cb5ced",
-    "commit": "0c0319e1f8b66414895db9c58f4bad585c088360",
+    "branch_diff": "f8ebf77223b3ffb9bec52e4c1bf72f25c5d2e7482e3fdd54b185f58c0e0a1abc",
+    "changed": "0d8a9908258b0bca019736c435a1a87b423e697b41472cd85312329a3481ab94",
+    "commit": "7705c6b8a9cc0c2b1cfc4befd239a813cc51190e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done \u2014 `team.sentence` is set to the go-live clause alone. The required team summary is absent, so consumers cannot show the summary sentence with its go-live clause. The pace test checks only the clause and does not catch this gap.",
-        "file": "src/forge/board_facts.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 180,
-        "priority": "P1",
-        "title": "Not done: join the go-live clause into the team sentence",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 4, Harm 2\nThe branch supplies the JSON trends, but the page does not yet draw the six weekly marks, per-person rows, or adjacent around-Forge list. The story's Tasks table assigns that page and its browser proof to RUNWAY.",
+        "body": "Gain 4, Work 4, Harm 2\nThe branch produces trends and the around-Forge list as JSON, but the page does not yet draw the six weekly marks, per-person rows, or adjacent pull request list. The story's Tasks table assigns that page and its browser proof to RUNWAY.",
         "file": "src/forge/board_trends.py",
         "gain": 4,
         "harm": 2,
@@ -32,10 +22,10 @@
         "work": 4
       }
     ],
-    "id": "6a98100b-ecfc-45a9-ad09-b258ae2e8497",
-    "status": "blocked"
+    "id": "92ab82bb-f0f0-4eb7-a794-8fd01c83ff33",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T23:45:05.261255+00:00",
@@ -47,6 +37,10 @@
     },
     {
       "at": "2026-10-13T00:11:00.273227+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:07:10.577232+00:00",
       "step": "review"
     }
   ]
