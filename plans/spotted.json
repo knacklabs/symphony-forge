@@ -7371,6 +7371,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_score_upgrade.py\tNot done: prove saved unscored notes hold work after upgrade\tFORGE-SCORE-1/README",
+      "kind": "bug",
+      "path": "tests/test_score_upgrade.py",
+      "line": 26,
+      "text": "Not done: prove saved unscored notes hold work after upgrade",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/README",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_small_test_runs_skip_the_test_line.py\tNot done: the five-file picker boundary has an end-to-end lane test\treviews-skip-agent-line",
       "kind": "bug",
       "path": "tests/test_small_test_runs_skip_the_test_line.py",
