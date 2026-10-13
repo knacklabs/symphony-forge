@@ -119,6 +119,17 @@ hooks = true
 """
 # Forge gives Codex full access; forge.toml's models and the host choose the model, so an old pin goes.
 FULL_ACCESS = {"sandbox_mode": "danger-full-access", "approval_policy": "never"}
+ACCESS_COMMENT = ("# Forge runs Codex with full access and no approval prompts; forge sync and forge "
+                  "upgrade keep it so.\n")
+# Every comment a Forge release wrote above those lines, this one's too; a team's own comment stays.
+FORGE_COMMENTS = {ACCESS_COMMENT.strip(),
+                  "# Workspace-write by default (decision 0041). Needing broader access means",
+                  "# editing this value deliberately in the client repo — the diff-visible edit",
+                  "# is the ledgered escape hatch, and `forge upgrade` restores this default.",
+                  *(f"# Full host access is the Forge-managed default (decision {n}). Forge's"
+                    for n in ("0049", "0081")),
+                  "# lifecycle, write-scope, admission, and hook controls remain authoritative."}
+ACCESS_LINE = re.compile(rf"[ \t]*({'|'.join(FULL_ACCESS)})[ \t]*=")
 PINS = ("model", "model_reasoning_effort")
 # A role that leaves its model out runs on these before the session's, so they go too.
 AGENT_PINS = ("default_subagent_model", "default_subagent_reasoning_effort")
@@ -172,6 +183,23 @@ def _block(top: Path, rel: str, template: str) -> str:
     return text[:start] + block + text[end:]
 
 
+# Lines earlier releases wrote in AGENTS.md or CLAUDE.md that this release's AGENTS.md no longer has,
+# so a copy of them in CLAUDE.md is Forge's, not the team's.
+EARLIER = {
+    "@AGENTS.md", "@.claude/CLAUDE.md", "# Claude Code entrypoint",
+    "- Ask the human only to approve a story, to choose between options, or to merge.",
+    "- Never merge a pull request and never use `--no-verify`. Merging is the human's call.",
+    '"Done when" sections exactly, so a summary or a rewrite records nothing. There is no other',
+    '`forge next` names, unchanged, as the plan. The approval matches its "What changes for you" and',
+    '`forge story done <KEY> "<outcome>"`.',
+    "2. It gets one cold read (`forge read <KEY>`) and one approval from the human.",
+    "2. It gets rounds of cold read (`forge read <KEY>`) until one finds nothing, then one approval",
+    '5. The human merges. After the story\'s last merge, `forge story done <KEY> "<outcome>"`.',
+    "approval step.", "from the human.",
+    "Then, once close says Ready, the agent runs `forge merge <item>`. After the story's last merge,",
+}
+
+
 def _agents(top: Path) -> str:
     """AGENTS.md with Forge's block, then CLAUDE.md's lines it doesn't have yet, so CLAUDE.md can go.
 
@@ -182,7 +210,7 @@ def _agents(top: Path) -> str:
     claude = read(top / "CLAUDE.md")
     start, end = _span(claude, "CLAUDE.md")
     rest = claude if start == -1 else claude[:start] + claude[end:]
-    have = {line.strip() for line in text.splitlines()} | {"@AGENTS.md"}
+    have = {line.strip() for line in text.splitlines()} | EARLIER
     moved = "\n".join(line.rstrip() for line in rest.splitlines()
                       if not line.strip() or line.strip() not in have)
     moved = re.sub(r"\n{3,}", "\n\n", moved).strip("\n")
@@ -241,13 +269,13 @@ def _codex_config(top: Path) -> str:
                     problem="the reader role uses another config; rename it, then sync again")
     # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
     exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
-    if exact(data):
+    first = TABLE.search(text)
+    top, rest = (text[:first.start()], text[first.start():]) if first else (text, "")
+    if exact(data) and _access_comment(top) == top:
         return text
     # ponytail: stdlib has no TOML writer, so edit lines as text, then require the result to parse
     # to exactly the wanted settings. Anything else (features as dotted keys or an inline table, a
     # setting's line inside a multi-line value) refuses instead of guessing.
-    first = TABLE.search(text)
-    top, rest = (text[:first.start()], text[first.start():]) if first else (text, "")
     for key in PINS:
         top = re.sub(rf"^[ \t]*{key}[ \t]*=.*\n?", "", top, count=1, flags=re.M)
     missing = ""
@@ -259,7 +287,7 @@ def _codex_config(top: Path) -> str:
             missing += f'{key} = "{value}"\n'
     if missing:
         top = (f"{top.rstrip()}\n" if top.strip() else "") + missing + ("\n" if rest else "")
-    text = top + rest
+    text = _access_comment(top) + rest
     header = AGENTS.search(text)
     if header:
         after = TABLE.search(text, header.end())
@@ -291,6 +319,25 @@ def _codex_config(top: Path) -> str:
         repo.refuse(REFUSALS["cant_merge"], path=rel,
                     problem="Forge can't safely set Codex's full access and hooks in it")
     return merged
+
+
+def _access_comment(top: str) -> str:
+    """The settings above .codex/config.toml's first table with Forge's comment right above the
+    full-access lines. Comment lines a Forge release wrote above them go; the team's own stay."""
+    lines = top.splitlines(keepends=True)
+    keys = [i for i, line in enumerate(lines) if ACCESS_LINE.match(line)]
+    if not keys:
+        return top
+    gone = set()
+    for i in keys:
+        while i > 0 and lines[i - 1].lstrip().startswith("#"):
+            i -= 1
+            if lines[i].strip() in FORGE_COMMENTS:
+                gone.add(i)
+    kept = [(line, i in keys) for i, line in enumerate(lines) if i not in gone]
+    at = next(n for n, (_, key) in enumerate(kept) if key)
+    return "".join([line for line, _ in kept[:at]] + [ACCESS_COMMENT]
+                   + [line for line, _ in kept[at:]])
 
 
 def merge_attributes(text: str) -> str:
