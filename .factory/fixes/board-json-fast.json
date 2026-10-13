@@ -1,0 +1,14 @@
+{
+  "base": "29bded0c7a63846d66b89477cf4158c024c6d711",
+  "branch": "fix/board-json-fast",
+  "done_when": "forge board --json and forge next --json each finish within 10 seconds on a repo the size of Forge's own, and the pane shows the board on its first refresh",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:16:46.065962+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The Forge pane stays on Loading in Forge's own repo, because forge board --json and forge next --json each take about 40 seconds and the pane gives up after 20"
+}
