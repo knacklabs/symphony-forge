@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T07:56:17.313946+00:00",
+      "because": "The user clarified that organization availability does not mean installed and deployment requires user OAuth sign-in.",
+      "done_when": "New and existing client repos tell Codex and Claude to use the installed Mainline Deploy plugin and MCP only for deployment the user explicitly requests. Builds, merges and demos never imply permission to deploy. Coordinator guides and worker briefs carry the rule. Command-level tests cover new setup and upgrade from an earlier adoption."
+    }
+  ],
   "base": "9b58580428d99ce652fedca0378744ac9782ab1f",
   "branch": "fix/mainline-explicit-deploy",
-  "done_when": "New and existing client repos tell Codex and Claude to use the installed Mainline Deploy plugin and MCP only for deployment the user explicitly requests. Builds, merges and demos never imply permission to deploy. Coordinator guides and worker briefs carry the rule. Command-level tests cover new setup and upgrade from an earlier adoption.",
+  "done_when": "New and existing client repos tell Codex and Claude to use Mainline Deploy only for deployment the user explicitly requests. Agents check installation through the organization's plugin catalog and require successful user OAuth sign-in before deployment. Builds, merges and demos never imply permission to install, sign in or deploy. Coordinator guides and worker briefs carry the rule. Command-level tests cover new setup and upgrade from an earlier adoption.",
   "kind": "fix",
   "round": 2,
   "status": "working",
