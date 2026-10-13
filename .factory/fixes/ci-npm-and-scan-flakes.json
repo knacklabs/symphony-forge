@@ -18,26 +18,15 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6d89ffe53bbd982d13487a94687fcd6cf3bce78ef97df6613601ef2ca6767dca",
-    "changed": "88ee8f686b317dff5160a32500aa97ab7b9ec0f32c13a15ca605f49c1f49f3fd",
-    "commit": "1daea7594171f5baa3925efde66a2e7be92e8f19",
+    "branch_diff": "d2a41082a69cb353e417e014232de873b713a45b812859855d027b63ffcc3446",
+    "changed": "59af64412c1233212010434d2572af6022b1b2cce88bdc0af51c92a9880e84a0",
+    "commit": "21d8ebd4cfd313e1cabe3875704058d7f76d95e2",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 1\nRaise: Not done. The cache added at `.github/workflows/forge.yml:42` runs only for pull requests. GitHub [scopes a pull request cache to that PR's merge ref](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache), so another PR cannot restore it. Forge's main-branch workflow downloads Jest and Vitest at `.github/workflows/forge-next.yml:100-102` but does not save an npm cache. Every new Forge PR therefore starts with cold downloads in its test groups, leaving the reported timeout scenario in place. The named proof at `tests/test_fix_gate_on_split_checks.py:94` checks for the cache path but cannot catch this scope gap.",
-        "file": ".github/workflows/forge.yml",
-        "gain": 4,
-        "harm": 1,
-        "line": 42,
-        "priority": "P1",
-        "title": "Not done: Forge's own pull request checks keep npm's download cache between runs",
-        "work": 3
-      }
-    ],
-    "id": "9c808b63-562b-43a0-8027-11aaacd63e2f",
-    "status": "blocked"
+    "findings": [],
+    "id": "24e03443-41ea-4c29-a546-d4a6fc15f2c6",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T04:09:21.479871+00:00",
@@ -49,6 +38,10 @@
     },
     {
       "at": "2026-10-13T04:23:49.370646+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:27:36.489159+00:00",
       "step": "review"
     }
   ],
