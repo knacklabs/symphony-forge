@@ -1,10 +1,70 @@
 {
   "branch": "task/FORGE-BOARD-2-PAGE",
-  "status": "started",
+  "flagged": [
+    "docs/board-screens/page/page-forge-1440-light.png",
+    "src/forge/board_visuals.py",
+    "tests/test_board_runway.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f9339546f4b20bb116496d094fac3796e0e0e0fa5086ad3627acdcc6ad0b3ebd",
+    "changed": "a1cb214b7d9b0f092a56262b714889ae4465fb1fe98f0850453ae074b96f89a2",
+    "commit": "886740e05d9fd5cfc076a0652e934a63c725bfcb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. The key is a long paragraph that wraps across several lines at 1440px and on mobile, as the supplied screenshots show. Done-when 8 requires a one-line key.",
+        "file": "src/forge/board_visuals.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 11,
+        "priority": "P1",
+        "title": "Not done: one-line graph key",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied commit evidence says the worker's last commit has no `Functional check:` paragraph. This required check must record what the board flow exercised and what it showed.",
+        "file": "src/forge/board_visuals.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 73,
+        "priority": "P1",
+        "title": "Not done: functional check",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Gate. The browser proof covers only this repository's board. The binding browser-proof requirement also calls for a client-sized fixture with at least 40 stories, 120 parts, 10 open fixes, 50 finished fixes and six weeks of merges at the specified window sizes. No browser result or screenshot for that case appears in the supplied proof.",
+        "file": "docs/board-screens/page/page-forge-1440-light.png",
+        "gain": 3,
+        "harm": 2,
+        "line": 1,
+        "priority": "P1",
+        "title": "Not done: proof list",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The test compares JSON state and time splits only for top-level items. It checks that a child title exists but never compares a part's displayed state or working, waiting and unknown times with JSON. A broken part row would therefore pass the named proof for this Done-when detail.",
+        "file": "tests/test_board_runway.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 87,
+        "priority": "P1",
+        "title": "Not done: below-the-fold row test",
+        "work": 2
+      }
+    ],
+    "id": "ba3cca03-2647-4ed9-b2a2-dfe1225e9712",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T23:45:10.134451+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T05:28:59.519468+00:00",
+      "step": "review"
     }
   ]
 }
