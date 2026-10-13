@@ -2729,6 +2729,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: use Forge's check status for the overlap bypass\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 304,
+      "text": "Not done: use Forge's check status for the overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tStopped land directs the coordinator back to work instead of the owner's choice\tstop-question-plain",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -6425,11 +6436,33 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the closes start oldest first\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 285,
+      "text": "Not done: test_1 proves the closes start oldest first",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the selection and start-order details\tFORGE-QUEUE-1/QUEUE",
       "kind": "bug",
       "path": "tests/test_queue_land_all.py",
       "line": 270,
       "text": "Not done: test_1 proves the selection and start-order details",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_4 proves the later default and worker-stuck stops\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 354,
+      "text": "Not done: test_4 proves the later default and worker-stuck stops",
       "from": "blocking",
       "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",

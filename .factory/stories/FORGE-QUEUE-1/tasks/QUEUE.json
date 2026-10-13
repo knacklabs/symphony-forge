@@ -8,46 +8,46 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6a4579e2690303a08defe1e97dc3ae838c315791d352abbc9331cf37b5364ee0",
-    "changed": "a2e39be190dfd691e13bae41bd96a7f611a935c4310b13718eeb30302ac70763",
-    "commit": "648d5508a938b92b9de48da02afcc2f9c999a2c3",
+    "branch_diff": "4887c789bf6b0012108897cc499668d7052fd5b2c91853e30ae3a25d275e5cce",
+    "changed": "2288db74ec9f5c2fa3c77250f81ab2e7c129c73be62da6ff4cab7e1620da77a7",
+    "commit": "43c2940415cd4bcecf7a2eb91cc89941a0530f2a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. The initial lock creation is atomic, but after an ended run leaves a lock, two new runs can both read that stale owner and unlink the lock before either creates its replacement. The comment acknowledges this race. Both runs can then close and merge the same items, breaking the one-run-per-repo guarantee.",
-        "file": "src/forge/land.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 269,
-        "priority": "P1",
-        "title": "Not done: stale lock takeover permits two land runs",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Every `hotspot` is sent straight to Needs you without `close.check_stop` (`src/forge/close.py:464-484`). An unanswered review-loop stop older than 30 minutes therefore never gets the configured default on a later `forge land --all`. A worker-stuck `hotspot` with `stop.question` also gets a review-loop question and `narrow|split|accept` step instead of close's actual `switch|same|narrow|split` refusal. The run gives the wrong next action in both named stop paths.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Line 304 passes only `fail` or `unknown` to `_item_readiness`. A clean item from an earlier release with green checks and no ready receipt cannot reach that function's older-release readiness path, which requires `checks == \"pass\"` (`src/forge/nextstep.py:634-639`); it can be held behind an overlapping item despite being ready. A required check that reports skipped is also treated as `unknown` here, although Forge counts a skipped required check as failed (`src/forge/checks.py:124-132`). Such an item incorrectly bypasses the hold.",
         "file": "src/forge/land.py",
         "gain": 3,
         "harm": 2,
-        "line": 295,
+        "line": 304,
         "priority": "P1",
-        "title": "Not done: stopped changes retain close's decision and default rules",
+        "title": "Not done: use Forge's check status for the overlap bypass",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The GitHub stub logs arguments without the required call times (`tests/test_queue_land_all.py:33-35`), and the test checks parent `Starting` lines rather than when each child actually enters close. It also checks only a live CI wait: it never reruns after killing that close to prove the item is selectable again, and never checks that an already merged pull request is named as left out. Those item-1 behaviors could break while this test passes.",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The assertion turns the timed entries into sets, so reversing the first two closes still passes. `_in_close` also takes each child's second pull-request lookup as its close entry time, but that lookup occurs in `land._merged` before the child prints `Closing` and enters close (`src/forge/land.py:57-79`). The named oldest-first close-start behavior remains unproved by the timed log.",
         "file": "tests/test_queue_land_all.py",
         "gain": 3,
         "harm": 1,
-        "line": 270,
+        "line": 285,
         "priority": "P1",
-        "title": "Not done: test_1 proves the selection and start-order details",
+        "title": "Not done: test_1 proves the closes start oldest first",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The only pre-existing stop in test_4 is a fresh review-loop stop. It never runs `forge land --all` after the 30-minute default becomes due or with a worker-stuck stop containing `stop.question`. The test would pass if the queue ceased applying the default on a later run or gave a worker-stuck change the review-loop question and wrong resolve step. Both are named stop behaviors in item 4.",
+        "file": "tests/test_queue_land_all.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 354,
+        "priority": "P1",
+        "title": "Not done: test_4 proves the later default and worker-stuck stops",
         "work": 2
       }
     ],
-    "id": "e83aeeb5-c58a-4df7-8b28-e2b772d710f4",
+    "id": "59d7a4e9-fe39-455b-afe4-69f62b592bb9",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T23:45:15.681956+00:00",
@@ -60,6 +60,15 @@
     {
       "at": "2026-10-13T03:54:22.642389+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:12:06.203850+00:00",
+      "step": "review"
     }
-  ]
+  ],
+  "stop": {
+    "at": "2026-10-13T04:12:06.214231+00:00",
+    "file": "src/forge/land.py",
+    "wait_id": "1d954984-21fe-40bc-a00a-cdb1d1452dd3"
+  }
 }
