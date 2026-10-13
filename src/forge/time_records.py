@@ -506,13 +506,23 @@ def _settled(row: dict[str, Any], number: int, until: datetime) -> bool:
     return at is not None and at < until
 
 
+def _capped(value: Any) -> Any:
+    """Free text in a published row has a fixed maximum length."""
+    if isinstance(value, dict):
+        return {key: _capped(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_capped(item) for item in value]
+    return value[:299] + "…" if isinstance(value, str) and len(value) > 300 else value
+
+
 def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]]]:
     """Keep the published record under a fixed size: while it is over, fold the oldest detail
     of any kind (summarised rounds, then their intervals, then raw rows) into the totals."""
     summary = json.loads(json.dumps(data["summary"])) if data.get("summary") else None
     # Progress is live-only: the board reads it locally, and a long round records it every ten
     # seconds. Stage events stay.
-    rows = {"events": [e for e in data["events"] if e.get("event") != "progress"], "timings": data["timings"]}
+    rows = {"events": [_capped(e) for e in data["events"] if e.get("event") != "progress"],
+            "timings": [_capped(t) for t in data["timings"]]}
     while len(json.dumps([summary, rows])) > RECORD_BUDGET:
         if summary and len(summary["rounds"]) > 2:  # The newest summarised line stays its own.
             summary["rounds"][:2] = [_fold(*summary["rounds"][:2])]
@@ -528,15 +538,16 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
         else:
             times = sorted(at for name in rows for r in rows[name] if (at := when(r.get("at") or r.get("start"))))
             ends = sorted(at for r in rows["events"] if r.get("event") == "review result" and (at := when(r.get("at"))))
-            # Fold the oldest whole review round, with the CI wait after its review, up to where
-            # the next round's work, tests or review start. One round alone folds its oldest
-            # quarter of rows into that round's own line.
+            # Fold the whole review rounds before the newest, each with the CI wait after its
+            # review, up to where the newest round's work, tests or review start; when none is
+            # left to cut, the newest round folds whole into its own line.
             starts = sorted(at for name in rows for r in rows[name] if r.get("kind") != "ci" and (
                 r.get("event") in ("run start", "lane joined", "work phase")
                 or r.get("step") in ("worker round", "test run", "review")) and (at := when(r.get("at") or r.get("start"))))
             cuts = [next((at for at in starts if at > end), None) for end in ends]
-            until = next((at for at in reversed(cuts) if at), None) or next(
-                (at for at in times[max(1, len(times) // 4):] if at > times[0]), None)
+            until = next((at for at in reversed(cuts) if at), None)
+            if until is None and times:  # One round is still too big, such as a huge review or many CI retries.
+                until = times[-1] + timedelta(microseconds=1)
             if until is None:
                 break
             number = max([summary["round"]] if summary else [], default=0)

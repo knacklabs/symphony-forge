@@ -240,3 +240,35 @@ def test_2_story_counts_two_parts_overlapping_folded_time_once(env, monkeypatch)
     assert abs(sum(story[f"{k}_seconds"] for k in ("working", "waiting", "unknown")) - story["total_seconds"]) < 1
     for kind in ("working", "waiting"):
         assert story[f"{kind}_seconds"] <= sum(p[f"{kind}_seconds"] for p in parts.values()) + 5, (kind, story)
+
+
+def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget(env, monkeypatch):
+    client(env, False)
+    version = env.repo.forge("--version").stdout.split()[-1]
+    env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
+               'workers = "claude"\ntest = "echo passed"\n'
+               'checks = ["tests", "forge-pr-check"]\n'
+               'models.build = { model = "opus", effort = "high" }\n')
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_fix()
+    install_claude(env.repo)
+    env.reviews({"exit": 0, "report": report(*[
+        finding("P2", f"Basket note {n}: " + "the quantity label could be clearer " * 6, f"basket/{n}.py")
+        for n in range(200)])})
+    worked = env.repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    published = body(env.gh_calls("pr", "edit")[-1])
+    assert len(published.encode("utf-8")) <= 65_536
+    record = re.search(r"<!-- forge:time-record .*? -->", published, re.S)[0]
+    assert len(record.encode("utf-8")) < 24_000  # the record's own fixed budget, with room for escaping
+
+    publish_snapshot(env, item, published)
+    clone = env.tmp / "peer-clone"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(clone))
+    env.repo.path = clone
+    shared = row(env.repo, item)
+    assert shared["rounds"][-1]["line"].startswith("Round 1: "), shared["rounds"]
+    assert re.search(r"review \w+ \(\d+ seconds?\)", shared["rounds"][-1]["line"])
+    assert shared["rounds"][-1]["new_findings"] == 200
