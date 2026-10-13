@@ -48,5 +48,5 @@ def github_read_once(env, monkeypatch, previous):
         assert data["team"]["counts"]["fixes"]["in progress"] == 1
         # What only GitHub knows is unknown: the pull request, who merged it and the trends.
         assert row(data, item)["pr"]["number"] is None and row(data, item)["merged_by"] is None
-        assert all(data["team"][key] is None for key in ("pace", "go_live", "trends", "around_forge"))
+        assert data["team"]["trends"] is None and data["team"]["around_forge"] is None
     assert len(lists(env)) - before == 8 + 2

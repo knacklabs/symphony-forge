@@ -249,6 +249,15 @@ fix row has one `state`, and `team.counts` counts each kind apart, finished ones
 carry `merged_at`, and `approved_by` is a name or null. The page prints the same totals.
 GitHub's pull request lists are read at most once a minute: the open ones and one search per
 week for the last six full weeks and this one.
+`team.pace` counts parts and fixes merged on the default branch per full week (Monday to Monday
+UTC) for six weeks. `team.go_live` gives a date range for the parts of approved stories still to
+merge, from the last three and six weeks' pace: `range`, `about` when the two agree, `not enough
+history` when the oldest merged part is under three weeks old or the last three weeks merged none,
+or `done`; it names the stories with no plan yet as the unknown, and `team.sentence` says the
+same. `team.trends` counts merged pull requests per week for the team and each person
+(alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
+branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
+Both are null without GitHub, and a week capped at 1,000 results is null.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
