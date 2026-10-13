@@ -1024,6 +1024,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tDisputed keep 6: a choice made on another machine remains in Needs you\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 181,
+      "text": "Disputed keep 6: a choice made on another machine remains in Needs you",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -3587,6 +3598,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tA newer shared worker question is hidden and cannot be cleared from a machine with an older question\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 790,
+      "text": "A newer shared worker question is hidden and cannot be cleared from a machine with an older question",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -5893,6 +5915,17 @@
       "text": "Not done: printed model matches the native Codex role",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: publish stuck-worker choice waits\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 347,
+      "text": "Not done: publish stuck-worker choice waits",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
       "status": "open",
       "closed_by": null
     },
