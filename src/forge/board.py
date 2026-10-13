@@ -512,7 +512,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                     time_records.item(top, item, state, events=recorded, timings=timings,
                                       ended_at=merged_dates.get(branch)),
                     time_records.from_body((pr or {}).get("body") or "")).items()
-                    if k not in ("events", "timings", "state", "ended_at")} if kind != "story" else {}),
+                    if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")} if kind != "story" else {}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 

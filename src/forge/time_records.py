@@ -74,7 +74,7 @@ def pending_merge_wait(top: Path, key: str, published: str = "", *, reason: str 
 def item(top: Path, key: str, state: dict[str, Any], *,
          events: list[dict[str, Any]] | None = None,
          timings: list[dict[str, Any]] | None = None,
-         ended_at: str | None = None) -> dict[str, Any]:
+         ended_at: str | None = None, summary: dict[str, Any] | None = None) -> dict[str, Any]:
     events = [e for e in (read(top, "events") if events is None else events) if e.get("item") == key]
     timings = [t for t in (read(top, "timings") if timings is None else timings) if t.get("item") == key]
     lane_rounds = {e["lane_id"]: e["round"] for e in events if e.get("event") == "work phase"
@@ -255,9 +255,10 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                     else:
                         owner_open.add(index)
     totals = {k: round(v, 3) if v is not None else None for k, v in totals.items()}
-    rounds, seen = [], set()
+    # A published summary carries the finding history of the rounds it replaced.
+    rounds, seen = [], {tuple(pair) for pair in (summary or {}).get("seen", [])}
     first_review = next((r for r in attempts if r["result"] or r["review_timings"]), {})
-    known_history = first_review.get("number") == 1
+    known_history = summary["known"] if summary else first_review.get("number") == 1
     for index, current in enumerate(attempts):
         number, worker_round, result = current["number"], current["worker_round"], current["result"]
         findings = result.get("findings") if isinstance(result.get("findings"), list) else None
@@ -315,7 +316,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                                            for span in intervals if span["kind"] == kind), 3)
                if intervals or (start and end) else None for kind in ("working", "waiting", "unknown")}
     return {"time_breakdown": totals, **grouped, "rounds": rounds, "intervals": intervals,
-            "events": events, "timings": timings, "state": state, "ended_at": ended_at,
+            "seen": sorted(seen, key=str), "known": known_history, "events": events, "timings": timings, "state": state, "ended_at": ended_at,
             "total_seconds": round((end - start).total_seconds(), 3) if start and end and end >= start else None}
 
 
@@ -376,11 +377,14 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     if data.get("truncated"):
         current = "Older time detail was shortened to fit GitHub; missing time is unknown.\n\n" + current
     saved = {name: checkpoint(rows) for name, rows in records.items()}
+    summary, rows = _compact(data)
     # Keep progress dates and rounds, but not tool-command prose or recomputable snapshots.
     shared = {name: data.get(name) for name in ("ready", "clean_reviews", "rebuilt", "legacy_text", "truncated")}
     shared.update(events=[{k: e[k] for k in ("id", "item", "event", "at", "round") if k in e}
-                          if e.get("event") == "progress" else e for e in data["events"]],
-                  timings=data["timings"],
+                          if e.get("event") == "progress" else e for e in rows["events"]],
+                  timings=rows["timings"], summary=summary,
+                  clean_reviews=[r for r in data["clean_reviews"]
+                                 if not summary or not _settled(r, summary["round"], when(summary["until"]))],
                   state={"steps": [{"step": "start", "at": s.get("at")}
                                    for s in data["state"].get("steps", []) if s.get("step") == "start"]})
     return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->" + \
@@ -416,6 +420,66 @@ def from_body(body: str) -> dict[str, Any]:
         return {}
 
 
+SUMMED = ("working_seconds", "waiting_seconds", "unknown_seconds", "total_seconds")
+
+
+def _add(a: float | None, b: float | None) -> float | None:
+    return None if a is None and b is None else round((a or 0) + (b or 0), 3)
+
+
+def _summed(summary: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
+    """The summarised earlier rounds followed by what the remaining rows show."""
+    return {**data, **{name: _add(summary[name], data[name]) for name in SUMMED},
+            "time_breakdown": {name: _add(summary["time_breakdown"][name], data["time_breakdown"][name])
+                               for name in CATEGORIES},
+            "rounds": [*summary["rounds"], *data["rounds"]],
+            "intervals": [*summary["intervals"], *data["intervals"]]}
+
+
+def _settled(row: dict[str, Any], number: int, until: datetime) -> bool:
+    """A row a summary replaces: an earlier worker round's, or an unnumbered one before it."""
+    mark = row.get("round")
+    if isinstance(mark, int) and not isinstance(mark, bool):
+        return mark < number
+    at = when(row.get("at") or row.get("start"))
+    return at is not None and at < until
+
+
+def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]]]:
+    """Publish earlier worker rounds as one summary each instead of every event, so a long
+    item's record stays well inside GitHub's body limit; the current round keeps its rows."""
+    summary = data.get("summary")
+    rows = {name: data[name] for name in ("events", "timings")}
+    numbers = [r["round"] for name in rows for r in rows[name]
+               if isinstance(r.get("round"), int) and not isinstance(r["round"], bool)]
+    until = min((at for name in rows for r in rows[name] if numbers and r.get("round") == max(numbers)
+                 and (at := when(r.get("at") or r.get("start")))), default=None)
+    if until is None:
+        return summary, rows
+    number = max(numbers)
+    past = {name: [{**r, "item": ""} for r in rows[name] if _settled(r, number, until)] for name in rows}
+    if not any(past.values()):
+        return summary, rows
+    start = summary["until"] if summary else next(
+        (s.get("at") for s in data["state"].get("steps", []) if s.get("step") == "start"), None)
+    part = item(Path("."), "", {"status": "merged", "steps": [{"step": "start", "at": start}] if start else []},
+                ended_at=until.isoformat(), summary=summary, **past)
+    intervals: list[dict[str, Any]] = []
+    # ponytail: sub-second slivers join the interval before them, so a summarised round's
+    # breakdown by interval may shift by under a second per sliver; its totals stay exact.
+    for span in part["intervals"]:
+        if intervals and intervals[-1]["end"] == span["start"] and (intervals[-1]["category"] == span["category"] or (
+                when(span["end"]) - when(span["start"])).total_seconds() < 1):
+            intervals[-1]["end"] = span["end"]
+        else:
+            intervals.append({**span})
+    part["intervals"] = intervals
+    whole = _summed(summary, part) if summary else part
+    kept = {name: whole[name] for name in ("time_breakdown", *SUMMED, "rounds", "intervals", "seen", "known")}
+    return ({**kept, "until": until.isoformat(), "round": number},
+            {name: [r for r in rows[name] if not _settled(r, number, until)] for name in rows})
+
+
 def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     """Union observations, then derive once so overlapping snapshots never add time."""
     if not published:
@@ -427,6 +491,10 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
             identity = row.get("id") if name == "events" else None
             unique.setdefault(identity or json.dumps(row, sort_keys=True), {**row})
         rows[name] = sorted(unique.values(), key=lambda row: row.get("at") or row.get("start") or "")
+    summary = published.get("summary")
+    until = when((summary or {}).get("until"))
+    if summary:  # The summary stands for every row it replaced, on any machine.
+        rows = {name: [r for r in found if not _settled(r, summary["round"], until)] for name, found in rows.items()}
     reviews = [r for r in rows["events"] if r.get("event") == "review result"]
     if reviews and reviews[0].get("review_round") == 1:
         for number, result in enumerate(reviews, 1):
@@ -437,8 +505,13 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
               if step.get("step") == "start" and when(step.get("at"))]
     if starts:
         state = {**state, "steps": [min(starts, key=lambda step: step["at"])]}
+    if summary:
+        state = {**state, "steps": [{"step": "start", "at": summary["until"]}]}
     data = item(Path("."), "", state, events=[{**r, "item": ""} for r in rows["events"]],
-                timings=[{**r, "item": ""} for r in rows["timings"]], ended_at=local.get("ended_at"))
+                timings=[{**r, "item": ""} for r in rows["timings"]], ended_at=local.get("ended_at"),
+                summary=summary)
+    if summary:
+        data = {**_summed(summary, data), "summary": summary}
     data.update(rows, source="pull request and local" if local.get("events") or local.get("timings")
                 else "pull request", rebuilt=bool(local.get("rebuilt") or published.get("rebuilt")))
     data["ready"] = published.get("ready")
