@@ -184,7 +184,7 @@
       "gain": 3,
       "harm": 2,
       "line": 327,
-      "outcome": "open",
+      "outcome": "fixed in round 8",
       "reason": "",
       "round": 7,
       "security": false,
@@ -221,23 +221,13 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "565625a44a4059e92dcac87b048e53e0c6ae253110c9b479f7c327e6fd4e6770",
-    "changed": "9a01d859718a6bd14a28318f51521b8d2d69ed68842b4ec6098da22ca767aea2",
-    "commit": "8b37576981d3668e0110ebc7e6bff0fb952781a8",
+    "branch_diff": "957d32ca7bf05f0159d629ac708df3382b14b10c11d3da811fb9c1cff1301f2d",
+    "changed": "d5a99b55ef3df4a5a8bc82895548c696232a36afe956161cbbb94116a7b2840b",
+    "commit": "ec095a2e792698d0d92b005e7e4a8a3c2c16076b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 New evidence beyond the earlier settled finding: when an upstream change causes another review of the same task HEAD, `review._history` keys results by commit and replaces the older result (review.py:583\u2013594). The new `$accepted` block is built only from that history, not the item's `known` list. After two such rereviews, a below-bar or owner-accepted finding from the first review is absent from the third prompt, so it can be raised again despite item 3's carry-forward rule.",
-        "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 327,
-        "priority": "P1",
-        "title": "Disputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done \u2014 New evidence beyond the earlier below-bar fix: `held` remains true for a scored note at the bar even after it has a `Disposition: keep` line. This condition therefore treats a disposed Harm 3 note as open. With three blocked read rounds and a coordinator-disposed at-bar Harm 3 note, the next `forge read` still refuses at the loop stop, although item 4 limits that stop to open Harm 3 notes or an at-bar `Disputed keep`.",
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done \u2014 This is distinct from the earlier below-bar fix: an at-bar note with Harm 3 still makes `held` true after it receives a `Disposition: keep` line. After three blocked read rounds, `_blocked_reads` therefore keeps the stop active and `forge read` refuses a fourth round, although the note has been disposed and is no longer open.",
         "file": "src/forge/score.py",
         "gain": 3,
         "harm": 1,
@@ -245,25 +235,15 @@
         "priority": "P1",
         "title": "Disputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop",
         "work": 1
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 1\nRaise: Test \u2014 Item 2 explicitly folds both case and spacing when identifying a finding across rounds. This command test changes only letter case. An implementation that used `casefold()` without collapsing whitespace would pass it and the other named proofs, while counting `Saving drops the basket` and `Saving  drops the basket` as two findings and potentially stopping the wrong area.",
-        "file": "tests/test_score_bar.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 263,
-        "priority": "P1",
-        "title": "Not done: whitespace-folded finding identity proof",
-        "work": 1
       }
     ],
-    "id": "00acf164-82d9-46ab-8677-8cf82471f732",
+    "id": "a29e7b5b-e3df-4d83-aac7-f4d95034d43b",
     "status": "blocked"
   },
   "settled_areas": [
     "src/forge/review.py"
   ],
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T18:21:59.003408+00:00",
@@ -296,15 +276,15 @@
     {
       "at": "2026-10-13T05:05:34.201632+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:53:58.005211+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-13T00:09:40.952213+00:00",
-    "by": "owner",
-    "choice": "narrow",
-    "file": "src/forge/review.py",
-    "reason": "Owner chose one more round: the builder fixes all three findings in this part (stop question lists every finding that caused the stop; fail closed first for security findings from any round; dismissed below-bar findings stay in Known and accepted).",
-    "wait_id": "76e47f29-557e-455b-92c9-3d9acf2bff49",
-    "worker_round": null
+    "at": "2026-10-13T05:53:58.032693+00:00",
+    "file": "src/forge/score.py",
+    "wait_id": "d40651a9-deaf-4de2-925e-e8a0f4e66494"
   }
 }
