@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -99,6 +100,32 @@ def details(top: Path) -> list[Item]:
     return _cached(top, "prs-details-cache", lambda now: _listing(
         top, "merged", fields="headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup",
         limit="25")) or []
+
+
+def failed_schedule(top: Path) -> Item:
+    """The latest scheduled run on the default branch when it failed: its workflow, failed jobs and
+    failing pytest tests; {} when it passed, ran never, or GitHub can't be read. Kept a minute."""
+    # ponytail: the newest scheduled run of any workflow; a repo with several scheduled workflows sees only the newest.
+    branch = repo.default_branch(top)
+
+    def fetch(now: datetime) -> Item | None:
+        done = repo.run("gh", "run", "list", "--branch", branch, "--event", "schedule", "--limit", "1",
+                        "--json", "databaseId,conclusion,workflowName", cwd=top)
+        try:
+            runs = json.loads(done.stdout) if done.returncode == 0 else None
+        except ValueError:
+            return None
+        if not isinstance(runs, list) or runs and not isinstance(runs[0], dict):
+            return None
+        if not runs or runs[0].get("conclusion") != "failure":
+            return {}
+        log = repo.run("gh", "run", "view", str(runs[0].get("databaseId")), "--log-failed", cwd=top)
+        if log.returncode != 0:
+            return None
+        return {"workflow": str(runs[0].get("workflowName") or "workflow"), "branch": branch,
+                "jobs": sorted({line.split("\t", 1)[0] for line in log.stdout.splitlines() if "\t" in line}),
+                "tests": sorted(set(re.findall(r"FAILED (\S+::\S+)", log.stdout)))}
+    return _cached(top, "schedule-cache", fetch) or {}
 
 
 def merged_prs(github: Item | None) -> list[Item]:

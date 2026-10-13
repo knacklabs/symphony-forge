@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, close, codex, machine, records, repo, review, spotted, story,
+from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
                    task, time_records, upgrade)
 from forge.task import _started, developer, github_login, start_base, waits_for
 
@@ -251,7 +251,29 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     if history is None and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return _due(top, history) + _hotspots(top, trees) + lines, states
+    return _due(top, history) + _failed_schedule(top, trees) + _hotspots(top, trees) + lines, states
+
+
+def _failed_schedule(top: Path, trees: dict[str, Path]) -> list[str]:
+    """The latest scheduled run of the default branch, when it failed and no fix for it is open."""
+    run = board_facts.failed_schedule(top)
+    if not run:
+        return []
+    def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
+        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=\[\]-]", " ", text).split())
+    workflow, branch = clean(run["workflow"]), clean(run["branch"])
+    tests = [clean(test) for test in run["tests"][:10]] + (
+        [f"and {len(run['tests']) - 10} more"] if len(run["tests"]) > 10 else [])
+    why = f"The scheduled {workflow} run fails on {branch}"
+    if why in {(repo.read_state(b.partition("/")[2], path) or {}).get("why") for b, path in trees.items()
+               if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", b)}:
+        return []
+    done = f"The scheduled {workflow} run passes on {branch}" + (
+        ", with these tests passing: " + ", ".join(tests) if tests else "")
+    return [f"The latest scheduled {workflow} run on {branch} failed in: "
+            f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
+            *([f"Failing tests: {', '.join(tests)}."] if tests else []),
+            f'Next: forge fix start "{why}" --done "{done}"']
 
 
 def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
