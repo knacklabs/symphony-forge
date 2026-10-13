@@ -2663,6 +2663,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: failed checks on older pull requests prevent the ready overlap bypass\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 304,
+      "text": "Not done: failed checks on older pull requests prevent the ready overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: failing required skipped checks route to forge land\tFORGE-QUEUE-1/QUEUE",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2703,6 +2714,17 @@
       "text": "Not done: land proceeds to close after a handed-back round with no commit",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: merge-time close failures route to fix rounds\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 143,
+      "text": "Not done: merge-time close failures route to fix rounds",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",
       "closed_by": null
     },
