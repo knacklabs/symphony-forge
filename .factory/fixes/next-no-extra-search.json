@@ -9,13 +9,29 @@
     "start": "9f1294a7bc0f9619e4fca15ab1d5b86a91eda791"
   },
   "done_when": "forge next --json searches for older merged parts only when an unfinished story has parts merged before the weekly searches, as the board already does, and the speed test counts that search",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e0cea3f077813f7ec02088b6d0c94b6fa45ab91b993245b45bdfa61818982317",
+    "changed": "32e1fad4e0c0ddcc2379195c8fc6581fbc863fd683cb322ae6d981e39f4bd8d3",
+    "commit": "8c2aacc92057b0cabb8ed93cc3137f673abff68e",
+    "dismissals": [],
+    "findings": [],
+    "id": "ee593aca-d59a-4827-b721-227068e13a88",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T19:01:31.451945+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T19:43:23.891937+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
