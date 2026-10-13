@@ -1,0 +1,14 @@
+{
+  "base": "d76d2adcfaa4efb3ef33849f8ca041b3cd90c869",
+  "branch": "fix/release-1212",
+  "done_when": "Forge's version is 1.2.12 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:05:07.954683+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.12 for the scoring bar, close-written proof lists, always-run tests, the merge queue, red scheduled runs in forge next, sync in any worktree and screenshot reviews merged since v1.2.11"
+}
