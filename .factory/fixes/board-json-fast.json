@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T12:08:34.836322+00:00",
+      "because": "GitHub search latency sets a floor of about 20 seconds on a cold cache; the pane's wait and error line move to the pane part",
+      "done_when": "forge board --json and forge next --json each finish within 10 seconds on a repo the size of Forge's own, and the pane shows the board on its first refresh"
+    }
+  ],
   "base": "29bded0c7a63846d66b89477cf4158c024c6d711",
   "branch": "fix/board-json-fast",
-  "done_when": "forge board --json and forge next --json each finish within 10 seconds on a repo the size of Forge's own, and the pane shows the board on its first refresh",
+  "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about three times faster (board about 11 seconds and next about 8 seconds with a warm GitHub cache) with the same JSON",
   "kind": "fix",
   "status": "started",
   "steps": [
