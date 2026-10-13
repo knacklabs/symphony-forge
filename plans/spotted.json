@@ -7074,6 +7074,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name JavaScript and Go test failures in scheduled runs",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 137,
+      "text": "Follow-up: name JavaScript and Go test failures in scheduled runs",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name Jest and Vitest failures in scheduled runs",
       "kind": "edge",
       "path": "src/forge/board_facts.py",

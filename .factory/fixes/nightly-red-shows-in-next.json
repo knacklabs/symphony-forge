@@ -16,53 +16,33 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f49b23d3fc8653eaf5a68bad92c25bcecb42ea382b97eac41aede483795ef8c5",
-    "changed": "38a51d2818ac21268c0f623a75c1f0d67716f0d753bcb72458cce420316b93c2",
-    "commit": "ae69aeec2ef47c7e170d7ddc229ad4b94aeaa2e8",
+    "branch_diff": "d2631c78c9711f3dc048361e292e36adaee7eddc873b8a02c8999c6a07ef3da2",
+    "changed": "f94bc84d048803607a5ed45bac4cf8ed1e62b4898f106ee8be98941ed300f1e1",
+    "commit": "3be1061aa1ece5fe98cba0e98a2298cd959517d1",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. The test parser accepts only `FAILED` summary lines. Pytest also reports a test whose fixture fails during setup or teardown as `ERROR tests/...::test_name`; that test is omitted from `forge next` even though its scheduled job failed. The named command-level proof supplies only `FAILED` lines, so it passes in this case. [Pytest's output documentation](https://docs.pytest.org/en/stable/example/simple.html) shows this summary format.",
+        "body": "Gain 3, Work 3, Harm 2\nRaise: Not done. `gh workflow list` defaults to 50 results, so a failed scheduled workflow outside that first page is never checked or shown. Also, `src/forge/nextstep.py:282` keys alerts by a cleaned workflow name: two workflows with the same display name, or names that clean to the same text, collapse into one alert and one fix command. The named proof has only two differently named workflows. [GitHub CLI documents the 50-workflow default](https://cli.github.com/manual/gh_workflow_list).",
         "file": "src/forge/board_facts.py",
         "gain": 3,
         "harm": 2,
-        "line": 134,
+        "line": 120,
         "priority": "P1",
         "title": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 3, Harm 2\nRaise: Not done. This fetch caps the combined list at 100 runs before selecting each workflow's latest run. If another workflow runs every five minutes, its 100 runs displace a failed daily run after about eight hours; `forge next` then stops reporting that daily workflow even though its latest run failed. The proof uses only three runs. [GitHub permits five-minute schedules](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax).",
-        "file": "src/forge/board_facts.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 112,
-        "priority": "P1",
-        "title": "Not done: a frequent scheduled workflow hides a failed daily run",
         "work": 3
       },
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional. This selects a command from the fix's stored status. After `forge close`, the stored status can be `waiting for checks`, while `_item_readiness` in `src/forge/nextstep.py:669-680` derives `ready` when checks pass or `checks failed` when they fail. The scheduled-run alert says `forge close` in both cases instead of the merge or repair step that the existing fix report gives. Because the alert precedes that report, `forge next --json` also selects its wrong command. The proof checks only a fix still in `started` status.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 276,
-        "priority": "P1",
-        "title": "A started fix can be given the wrong next command",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 3, Harm 2\nThe parser requires a pytest-style `FAILED path::test` line. A client repo using the shipped JavaScript stack can have a scheduled Jest or Vitest job with named failing tests but no such line, so `forge next` lists the job without its tests. The shipped guidance names Jest and Vitest in `src/forge/templates/skill.md:722`, and [Vitest documents a different test reporter format](https://main.vitest.dev/guide/reporters.html). This is an additional language case.",
+        "body": "Gain 2, Work 3, Harm 2\nThe parser at this line recognizes only pytest-style `FAILED` or `ERROR` lines containing `::`. Scheduled Jest, Vitest and Go test jobs can fail with named tests in their logs but no matching line, so `forge next` shows the job without those tests. The shipped guidance supports these runners in `src/forge/templates/skill.md:730` and `:1153`. This is an additional language case.",
         "file": "src/forge/board_facts.py",
         "gain": 2,
         "harm": 2,
-        "line": 134,
+        "line": 137,
         "priority": "P2",
-        "title": "Follow-up: name Jest and Vitest failures in scheduled runs",
+        "title": "Follow-up: name JavaScript and Go test failures in scheduled runs",
         "work": 3
       }
     ],
-    "id": "ec92e60a-3431-4e30-8d08-0b153d6d32a2",
+    "id": "7ffede01-36a3-46cf-8a00-f4aa0fbb0141",
     "status": "blocked"
   },
   "status": "fixing",
@@ -85,6 +65,10 @@
     },
     {
       "at": "2026-10-13T04:02:37.977965+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:08:20.373420+00:00",
       "step": "review"
     }
   ],
