@@ -12,6 +12,12 @@ nothing more.
 
 $start_here
 
+Use the organization's installed Mainline Deploy plugin and MCP only when the user explicitly
+requests deployment. Follow its installed skill and deploy only the requested app to the requested
+environment. A build, fix, merge, ship/land request, successful test or review, demo preparation,
+or Forge next step does not by itself authorize deployment. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine approval.
+
 $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;

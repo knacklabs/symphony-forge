@@ -8,6 +8,12 @@ description: Run Forge, which takes a story from approval to a merged pull reque
 
 Start with `forge next`. It says where things stand and gives the exact next command.
 
+Use the organization's installed Mainline Deploy plugin and MCP only when the user explicitly
+requests deployment. Follow its installed skill and deploy only the requested app to the requested
+environment. A build, fix, merge, ship/land request, successful test or review, demo preparation,
+or Forge next step does not by itself authorize deployment. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine approval.
+
 | The human says | Run |
 |---|---|
 | "What now?" | `forge next` |
@@ -611,11 +617,14 @@ output to the agent.
 
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
-the demo: "the next version is live" or "the reviewer found a missing error message". Do not
+the demo: "the next version is ready to demo" or "the reviewer found a missing error message".
+Say a version is live only after the requested deployment is verified. Do not
 use Forge's words (fix, worktree, branch, pull request) in progress updates to the salesperson.
-When `forge next` says to connect the repo to our deploy platform, tell the salesperson to use
-their own login, pick a subdomain and record its address under `## Demo` in
-`docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off decision.
+When `forge next` says to connect the repo to our deploy platform, explain what is needed;
+that reminder does not authorize deployment. When the user explicitly requests deployment, use
+Mainline Deploy as above. After the requested deployment is verified, record its address under
+`## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
+decision.
 
 **The demo.** Every demo follows five steps, in order:
 

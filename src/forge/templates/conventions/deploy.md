@@ -1,7 +1,14 @@
 # Deploying the prototype
 
+Use the organization's installed Mainline Deploy plugin and MCP only when the user explicitly
+requests deployment. Follow its installed skill and deploy only the requested app to the requested
+environment. A build, fix, merge, ship/land request, successful test or review, demo preparation,
+or Forge next step does not by itself authorize deployment. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine approval.
+
 Our platform builds the repository's root Dockerfile and provides Postgres through `DATABASE_URL`.
-Connect the client GitHub repository and choose its subdomain.
+For a requested deployment, follow the installed Mainline Deploy skill to connect the client
+GitHub repository and choose its subdomain.
 The platform routes traffic to container port 3000 and checks `GET /health` for HTTP 200. Keep
 one instance running while migrations are made.
 

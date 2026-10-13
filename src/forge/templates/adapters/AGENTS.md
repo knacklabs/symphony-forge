@@ -37,6 +37,12 @@ each item:
 
 ### Rules
 
+Use the organization's installed Mainline Deploy plugin and MCP only when the user explicitly
+requests deployment. Follow its installed skill and deploy only the requested app to the requested
+environment. A build, fix, merge, ship/land request, successful test or review, demo preparation,
+or Forge next step does not by itself authorize deployment. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine approval.
+
 - Never commit to the default branch. Work happens on a story, task or fix branch, and the
   git hooks refuse anything else.
 - Never run `gh pr merge` or use `--no-verify`. The agent merges only through
