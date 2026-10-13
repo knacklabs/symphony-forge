@@ -415,10 +415,10 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     clean = [r for r in data["clean_reviews"] if not summary or not _settled(r, summary["round"], when(summary["until"]))]
     # Close's saved review snapshot has no round or time: keep only the newest one.
     clean = [r for r in clean if r.get("at")] + [r for r in clean if not r.get("at")][-1:]
-    # Keep progress dates and rounds, but not tool-command prose or recomputable snapshots.
+    # Progress is live-only: the board reads it locally, and a long round records it every ten
+    # seconds, so publishing it would let one round outgrow the body. Stage events stay.
     shared = {name: data.get(name) for name in ("ready", "clean_reviews", "rebuilt", "legacy_text", "truncated")}
-    shared.update(events=[{k: e[k] for k in ("id", "item", "event", "at", "round") if k in e}
-                          if e.get("event") == "progress" else e for e in rows["events"]],
+    shared.update(events=[e for e in rows["events"] if e.get("event") != "progress"],
                   timings=rows["timings"], summary=summary,
                   clean_reviews=clean,
                   state={"steps": [{"step": "start", "at": s.get("at")}

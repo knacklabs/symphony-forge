@@ -48,10 +48,11 @@ def repeat_round(template, number, offset, worker_round):
     return copies
 
 
-@pytest.mark.parametrize("repeated_closes", [False, True], ids=["many-worker-rounds", "one-worker-round"])
+@pytest.mark.parametrize("shape", ["many-worker-rounds", "one-worker-round", "long-current-round"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size(
-        env, previous, repeated_closes):
+        env, previous, shape):
+    repeated_closes = shape != "many-worker-rounds"
     client(env, previous)
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
@@ -79,7 +80,16 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
                 for name, rows in mine.items()}
     # Repeated closes put every review in the one worker round; otherwise each has its own.
     earlier = [repeat_round(template, n, number - n + 1, number if repeated_closes else n)
-               for n in range(1, number)]
+               for n in range(1, number)] if shape != "long-current-round" else []
+    if shape == "long-current-round":
+        # As many live progress records as a run of over two hours leaves, one per ten seconds.
+        run = next(r for r in template["events"] if r.get("event") == "run start")
+        began = datetime.fromisoformat(run["at"])
+        earlier = [{"events": [{"id": f"progress-{n}", "item": item, "event": "progress", "kind": "progress",
+                                "run_id": run["id"], "round": number, "done": n, "total": 900,
+                                "at": (began + timedelta(seconds=n / 100)).isoformat(),
+                                "recorded_at": (began + timedelta(seconds=n / 100)).isoformat()}]}
+                   for n in range(900)]
     for name in ("events", "timings"):
         rows = [r for copies in earlier for r in copies.get(name, [])] + recorded[name]
         (logs / f"{name}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
@@ -102,6 +112,10 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     env.repo.path = clone
     shared = row(env.repo, item)
     lines = [r["line"] for r in shared["rounds"]]
+    if shape == "long-current-round":
+        assert len(lines) == 2 and all(re.search(r"review \w+ \(\d+ (?:second|minute)", line) for line in lines), lines
+        assert re.search(r"building \w+ \(\d+ (?:second|minute)", lines[0]), lines
+        return
     # Older rounds fold into one totals line; the recent ones keep their own line each.
     folded, recent = lines[0], lines[1:]
     last = int(re.match(r"Rounds 1–(\d+): .*reviewing .*findings: \d+ new, \d+ repeated$", folded)[1])
