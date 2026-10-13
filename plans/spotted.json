@@ -342,6 +342,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Forge's own pull request checks keep npm's download cache between runs\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 42,
+      "text": "Not done: Forge's own pull request checks keep npm's download cache between runs",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.test_durations\tNot done: timing file does not cover today's suite\tmain-run-faster",
       "kind": "bug",
       "path": ".test_durations",
@@ -4012,8 +4023,8 @@
       "text": "Not done: 2 and 3 \u2014 coordinator dismissal reasons are lost from known findings",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/score.py\tNot done: 4 \u2014 a disposed Harm 3 read note triggers the three-round stop\tFORGE-SCORE-1/BAR",
@@ -5138,6 +5149,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/conftest.py\tNot done: the disappearing-file scan test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 217,
+      "text": "Not done: the disappearing-file scan test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/conftest.py\tThe live Codex smoke test loses its opt-in in a nested pytest run\tpin-test-defaults",
       "kind": "bug",
       "path": "tests/conftest.py",
@@ -5409,6 +5431,17 @@
       "text": "Not done: init and upgrade plus sync local-selection test",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: the cold Node download timeout test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 133,
+      "text": "Not done: the cold Node download timeout test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
       "status": "open",
       "closed_by": null
     },
@@ -5838,6 +5871,17 @@
       "text": "Not done: keep mixed worker tests on their intended routes",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 94,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
       "status": "open",
       "closed_by": null
     },
@@ -6630,8 +6674,8 @@
       "text": "Not done: 4's multiline-signature area proof",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_score_notes.py\tNot done: test the data-loss Harm floor\tFORGE-SCORE-1/SCORES",
@@ -8313,50 +8357,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge.yml\tNot done: Forge's own pull request checks keep npm's download cache between runs\tci-npm-and-scan-flakes",
-      "kind": "bug",
-      "path": ".github/workflows/forge.yml",
-      "line": 42,
-      "text": "Not done: Forge's own pull request checks keep npm's download cache between runs",
-      "from": "blocking",
-      "item": "ci-npm-and-scan-flakes",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/conftest.py\tNot done: the disappearing-file scan test\tci-npm-and-scan-flakes",
-      "kind": "bug",
-      "path": "tests/conftest.py",
-      "line": 217,
-      "text": "Not done: the disappearing-file scan test",
-      "from": "blocking",
-      "item": "ci-npm-and-scan-flakes",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: the cold Node download timeout test\tci-npm-and-scan-flakes",
-      "kind": "bug",
-      "path": "tests/test_close_keeps_full_tests_in_ci.py",
-      "line": 133,
-      "text": "Not done: the cold Node download timeout test",
-      "from": "blocking",
-      "item": "ci-npm-and-scan-flakes",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tci-npm-and-scan-flakes",
-      "kind": "bug",
-      "path": "tests/test_fix_gate_on_split_checks.py",
-      "line": 94,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "ci-npm-and-scan-flakes",
       "status": "open",
       "closed_by": null
     }
