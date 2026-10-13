@@ -9635,6 +9635,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 60,
+      "text": "Coordinator guidance omits the new Claude recovery step",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: forge work exits with an error and names the reason and the next step whenever it starts no worker\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 651,
+      "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
