@@ -187,7 +187,8 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
-    started: dict[str, tuple[dict[str, Any], Path | None]] = {}  # open fixes by name, with their checkout here
+    alerts = _failed_schedules(top)  # an open fix for a failed run shows its own lines under it
+    pinned: list[str] = []
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
@@ -213,9 +214,11 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 continue
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
+            found = _item(name, f"The fix {name}", state, top, path, prs, refusals)
+            if alert := branch not in merged_prs and alerts.pop(state.get("why"), None):
+                pinned += alert[:-1] + found
             else:
-                started[name] = (state, path)
-            lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
+                lines += found
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     pushed = repo.git("for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/fix/",
@@ -229,8 +232,11 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 or story.show(top, landed, repo.state_path(name)) is not None):  # merged
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
-            started[name] = (state, None)
-            lines += _item(name, f"The fix {name}", state, top, None, prs, refusals)
+            found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
+            if alert := alerts.pop(state.get("why"), None):
+                pinned += alert[:-1] + found
+            else:
+                lines += found
     for path in sorted(trees.values()):  # a spec read stopped on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
             text = notes.read_text(encoding="utf-8")
@@ -238,7 +244,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             if spec.is_file() and story._blocked_reads(  # pyright: ignore[reportPrivateUsage]
                     path, *story._record(text)) >= 3:  # pyright: ignore[reportPrivateUsage]
                 lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
-    lines = _refresh(top, trees) + (lines or _idle(top))
+    lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
         if repo.is_prototype(top, cfg):
@@ -255,32 +261,26 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     if history is None and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return _due(top, history) + _failed_schedule(top, started) + _hotspots(top, trees) + lines, states
+    return (_due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
+            + _hotspots(top, trees) + lines), states
 
 
-def _failed_schedule(top: Path, started: dict[str, tuple[dict[str, Any], Path | None]]) -> list[str]:
-    """Each workflow whose latest scheduled run on the default branch failed: its failed jobs and
-    tests, and the started fix's next step, or the command that starts one."""
+def _failed_schedules(top: Path) -> dict[str, list[str]]:
+    """By the why of its fix: each workflow whose latest scheduled run on the default branch failed,
+    with its failed jobs and tests and, last, the command that starts its fix."""
     def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
         return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=-]", " ", text).split())
-    lines = []
+    alerts = {}
     for run in board_facts.failed_schedules(top):
         workflow, branch = clean(run["workflow"]), clean(run["branch"])
-        lines += [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
-                  f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
-                  *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else [])]
         why = f"The scheduled {workflow} run fails on {branch}"
-        name = next((name for name, (state, _) in sorted(started.items()) if state.get("why") == why), None)
-        if name:
-            state, path = started[name]
-            step = STATUS.get(state.get("status", "started"), ("", "forge close {item}"))[1]
-            lines += [f"The fix {name} is started for it.",
-                      f"Next: {step.format(item=name)}" if path or state.get("status") == "ready" else _elsewhere(top, name, f"The fix {name}")]
-            continue
         jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
         done = f"{jobs} of the scheduled {workflow} workflow pass again on the next scheduled run on {branch}"
-        lines.append(f'Next: forge fix start "{why}" --done "{done}"')
-    return lines
+        alerts[why] = [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
+                       f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
+                       *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
+                       f'Next: forge fix start "{why}" --done "{done}"']
+    return alerts
 
 
 def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
@@ -756,7 +756,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if statuses is not None:
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
-        return [_elsewhere(top, item, label)]
+        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+        return [f"{label} was started by {starter} and runs on their machine."]
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         if "question" in stop:
@@ -832,11 +833,6 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if step == "forge work {item}" and not built and state.get("tool"):
         built = f"  # {state['tool'].title()} builds it"
     return answered + [sentence.format(**values), f"Next: {step.format(**values)}{built}"]
-
-
-def _elsewhere(top: Path, item: str, label: str) -> str:
-    starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
-    return f"{label} was started by {starter} and runs on their machine."
 
 
 def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:

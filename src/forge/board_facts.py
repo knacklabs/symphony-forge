@@ -105,34 +105,38 @@ def details(top: Path) -> list[Item]:
 def failed_schedules(top: Path) -> list[Item]:
     """Each workflow whose latest scheduled run on the default branch failed: its name, failed jobs
     and failing pytest tests as printed; [] when none failed or GitHub can't be read. Kept a minute."""
-    # ponytail: the newest 100 scheduled runs; a workflow scheduled that rarely among busier ones goes unseen.
     branch = repo.default_branch(top)
 
-    def fetch(now: datetime) -> list[Item] | None:
-        done = repo.run("gh", "run", "list", "--branch", branch, "--event", "schedule", "--limit", "100",
-                        "--json", "databaseId,conclusion,workflowName", cwd=top)
+    def ask(*args: str) -> list[Item] | None:
+        done = repo.run("gh", *args, cwd=top)
         try:
-            runs = json.loads(done.stdout) if done.returncode == 0 else None
+            rows = json.loads(done.stdout) if done.returncode == 0 else None
         except ValueError:
             return None
-        if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
+        return rows if isinstance(rows, list) and all(isinstance(row, dict) for row in rows) else None
+
+    def fetch(now: datetime) -> list[Item] | None:
+        # ponytail: one request per active workflow (gh's first 50); a repo with more shows the rest as unknown.
+        workflows = ask("workflow", "list", "--json", "id,name")
+        if workflows is None:
             return None
-        latest: dict[str, Item] = {}
-        for run in runs:  # newest first
-            latest.setdefault(str(run.get("workflowName") or "workflow"), run)
         failed = []
-        for workflow, run in sorted(latest.items()):
-            if run.get("conclusion") != "failure":
+        for workflow in workflows:
+            runs = ask("run", "list", "--workflow", str(workflow.get("id")), "--branch", branch,
+                       "--event", "schedule", "--limit", "1", "--json", "databaseId,conclusion")
+            if runs is None:
+                return None
+            if not runs or runs[0].get("conclusion") != "failure":
                 continue
-            log = repo.run("gh", "run", "view", str(run.get("databaseId")), "--log-failed", cwd=top)
+            log = repo.run("gh", "run", "view", str(runs[0].get("databaseId")), "--log-failed", cwd=top)
             if log.returncode != 0:
                 return None
             lines = log.stdout.splitlines()
-            failed.append({"workflow": workflow, "branch": branch,
+            failed.append({"workflow": str(workflow.get("name") or "workflow"), "branch": branch,
                            "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
-                           "tests": sorted({found[1] for line in lines
-                                            if (found := re.search(r"FAILED (.+?::.+?)(?: - |$)", line))})})
-        return failed
+                           "tests": sorted({found[1] for line in lines if (found := re.search(
+                               r"(?:FAILED|ERROR) (.+?::.+?)(?: - |$)", line))})})
+        return sorted(failed, key=lambda run: run["workflow"])
     return _cached(top, "schedule-cache", fetch) or []
 
 
