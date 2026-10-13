@@ -141,7 +141,7 @@ export function board(data: Data, now: number): View {
     }
   }
   for (const i of data.board?.items ?? []) walk(i)
-  const count = (kind: string) => Number(record(counts[kind])['in progress'] ?? 0)
+  const count = (kind: string, state = 'in progress') => Number(record(counts[kind])[state] ?? 0)
   const live = record(team.go_live), when = (v: unknown) => typeof v === 'string' && Number.isFinite(Date.parse(v)) ? day(v) : null
   const golive = live.status === 'range' && when(live.earliest) && when(live.latest) ? `go-live ${when(live.earliest)} – ${when(live.latest)}` : live.status === 'about' && when(live.earliest) ? `go-live about ${when(live.earliest)}` : ''
   const summary = data.board && 'team' in data.board ? [
@@ -149,6 +149,10 @@ export function board(data: Data, now: number): View {
     groups['NEEDS YOU']!.length ? `${groups['NEEDS YOU']!.length} needs you` : '',
     groups.STUCK!.length ? `${groups.STUCK!.length} stuck` : '',
     golive,
+  ].filter(Boolean).join(' · ') || [
+    // Nothing moving, asking or stuck: count what waits instead of showing no overview.
+    count('parts', 'ready to merge') + count('fixes', 'ready to merge') ? `${count('parts', 'ready to merge') + count('fixes', 'ready to merge')} ready to merge` : '',
+    count('stories', 'planning') ? `${count('stories', 'planning')} in planning` : '',
   ].filter(Boolean).join(' · ') || null : null
   const idle = Math.max(0, ...groups.STUCK!.flatMap(r => r.item.idle_since ? [elapsed(String(r.item.idle_since), now)] : []))
   return {
