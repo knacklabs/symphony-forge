@@ -14,8 +14,8 @@
       "gain": 4,
       "harm": 2,
       "line": 661,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator (Harm 2, reversible): moving a cited line within its file reopens the finding \u2014 the safe direction, it only blocks again; tracking moved lines is a follow-up.",
       "round": 1,
       "security": false,
       "title": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
@@ -40,7 +40,13 @@
     "branch_diff": "6abefd79539f40bd766c4f50695391ebac2beb066bda36927f7a8af1a1e13672",
     "changed": "367e70b10f05b67df0a6f64a1a619b8d4d85d31156dff14f992cbc654e63f19a",
     "commit": "bf337f58d4d2896c1a6ae0c5a6520dd7f01fd8da",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (Harm 2, reversible): moving a cited line within its file reopens the finding \u2014 the safe direction, it only blocks again; tracking moved lines is a follow-up.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Moving an unchanged cited line to another position in the same file produces a deletion hunk at its old position. Lines 667\u2013670 treat that hunk as a code change and reopen the finding, although the cited line is unchanged. The new test shifts the line by inserting above it but does not test moving the line itself. The reverse failure also occurs for a supported dismissal citing a line in a file deleted on the branch: close.py:587\u2013596 validates that citation against the base, but readding the file with changed code yields an addition with no old path, so this check keeps the finding dismissed.",
@@ -54,9 +60,12 @@
       }
     ],
     "id": "e8731c57-921f-4da4-bd47-aa89daf7b1e4",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/review.py"
+  ],
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T08:31:52.068554+00:00",
@@ -77,8 +86,12 @@
   ],
   "stop": {
     "at": "2026-10-13T11:39:24.898477+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/review.py",
-    "wait_id": "c05006bb-4ed4-4234-a643-317850aedda6"
+    "reason": "Coordinator (Harm 2, reversible): moving a cited line within its file reopens the finding \u2014 the safe direction, it only blocks again; tracking moved lines is a follow-up.",
+    "wait_id": "c05006bb-4ed4-4234-a643-317850aedda6",
+    "worker_round": null
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 730342640ab91846f24dbb01811c26e9cd91063e` exited with status 1 on this machine.\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1291 in executetask\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 341 in run\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 411 in _perform_spawn\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 389 in integrate_as_primary_thread\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1273 in serve\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1806 in serve\n  File \"<string>\", line 8 in <module>\n  File \"<string>\", line 1 in <module>\n..[gw5] node down: Not properly terminated\nF..........                                                              [100%]\n=================================== FAILURES ===================================\n__________________________ tests/test_live_status.py ___________________________\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw2' crashed while running 'tests/test_live_status.py::test_7_live_status_in_both_machine_views[read default codex]'\n__________________________ tests/test_live_status.py ___________________________\n[gw3] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw3' crashed while running 'tests/test_live_status.py::test_7_live_status_in_both_machine_views[codex]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw0' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-narrow-accept-pre-upgrade-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw4] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw4' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-narrow-accept-current-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw1] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw1' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-accept-narrow-current-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw5] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-dismissals-carry-forward/.venv/bin/python\nworker 'gw5' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-accept-narrow-pre-upgrade-choice]'\n6 failed, 64 passed in 1036.32s (0:17:16)",
   "why": "Every new commit throws away the review's dismissals, so an unchanged dismissed finding costs another full review round"
