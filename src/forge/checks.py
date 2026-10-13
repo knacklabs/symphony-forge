@@ -30,7 +30,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
          progress: bool = False) -> None:
     """Wait for green checks on sha; land renews its deadline on observed check progress."""
     start, clock = repo.now(), time.monotonic()
-    with repo.record_run(top, item, "ci") as result:
+    from forge import codex  # codex imports what imports checks
+    # The waiting process: forge land --all leaves out a change only while that process runs.
+    with repo.record_run(top, item, "ci", process=codex.identity(os.getpid())) as result:
         result.update(outcome="unknown", state="unknown")
         try:
             _wait(top, item, sha, names, branch, progress, result)
