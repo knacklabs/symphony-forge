@@ -14,36 +14,95 @@
     "tests/test_pull_request_time_summaries.py"
   ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 478,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its",
+      "work": 4
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 420,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Clean review snapshots still grow without bound",
+      "work": 2
+    },
+    {
+      "area": "test_1_long_item_keeps_every_round_time_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 98,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size",
+      "work": 2
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 496,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: The pull request time record has a fixed size limit",
+      "work": 3
+    },
+    {
+      "area": "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 104,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
+      "work": 2
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 497,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: Current-round progress leaves the time record unbounded",
+      "work": 3
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e8250e56922e5e035422a1b6e007017e74b15b9ccdae8ae8e6a1f8411dc858e7",
-    "changed": "3363a60f351e418a77147b5f20bf3903b0cb2492b28d8309bb71d0ffcbbb52f0",
-    "commit": "954dccc5658505f149ff798fab5057201213de45",
+    "branch_diff": "9110d2b82fb7c6f471478d8aebeb9634ce16d3110e61cba7b1bbdb4f83a0f517",
+    "changed": "6a7742572ddb01baddf8304322eb2e8098658a13be34c6c49f6901442e913d57",
+    "commit": "b6503a8c8699b9e2d9a9be3873411f733f04634e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 4\nRaise: Not done\n`_compact` retains every row from the latest worker round. Forge records progress as often as every ten seconds (`src/forge/repo.py:304\u2013326`), so a single long worker round can put hundreds of progress rows into the pull request record without triggering a fold. Once the body budget is exceeded, `_bounded_body` deletes event and timing rows (`src/forge/close.py:914\u2013923`), which can remove evidence needed for that recent round's time summary. This newly identified current-round path remains after the earlier finding about older rounds was settled.",
-        "file": "src/forge/time_records.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 497,
-        "priority": "P1",
-        "title": "Not done: Current-round progress leaves the time record unbounded",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nThe proof copies short rounds into 200 earlier reviews, including the repeated-close case, but never grows progress records within the current worker round. It can pass while the current-round record exceeds the body budget and `_bounded_body` removes time evidence. The other named proofs do not cover that long single-round path.",
-        "file": "tests/test_pull_request_time_summaries.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 81,
-        "priority": "P1",
-        "title": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
-        "work": 2
-      }
-    ],
-    "id": "43f7ee9f-58fa-489a-82ae-034c81842c7a",
-    "status": "blocked"
+    "findings": [],
+    "id": "a6d28eaa-b733-4427-a66f-980b57aa239d",
+    "status": "clean"
   },
   "status": "fixing",
   "steps": [
@@ -66,6 +125,10 @@
     {
       "at": "2026-10-13T07:23:52.564572+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T08:10:21.686929+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -77,5 +140,6 @@
     "wait_id": "9167f73e-f3aa-4032-a4f4-9b29bfbc25a4",
     "worker_round": null
   },
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest be3d4b5cb73ade0891888a1d30fb1b2af082f4ee` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/time_records.py; GitHub's checks will cover it.\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 427 in <module>\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1291 in executetask\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 341 in run\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 411 in _perform_spawn\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 389 in integrate_as_primary_thread\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1273 in serve\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1806 in serve\n  File \"<string>\", line 8 in <module>\n  File \"<string>\", line 1 in <module>\n[gw3] node down: Not properly terminated\nF....                                                                    [100%]\n=================================== FAILURES ===================================\n__________________________ tests/test_live_status.py ___________________________\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python\nworker 'gw0' crashed while running 'tests/test_live_status.py::test_7_live_status_in_both_machine_views[codex]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python\nworker 'gw2' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-True-split-narrow-pre-upgrade-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw4] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python\nworker 'gw4' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-narrow-accept-current-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw1] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python\nworker 'gw1' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-narrow-accept-pre-upgrade-choice]'\n______________ tests/test_review_loop_records_each_stop_choice.py ______________\n[gw3] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python\nworker 'gw3' crashed while running 'tests/test_review_loop_records_each_stop_choice.py::test_1_each_new_stop_waits_for_and_records_its_own_choice[True-False-accept-narrow-pre-upgrade-choice]'\n5 failed, 57 passed in 817.08s (0:13:37)",
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
