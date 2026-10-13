@@ -126,8 +126,8 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     older(env, prs, "legacy")
 
     clock(monkeypatch, now + timedelta(minutes=5))
-    order = [("WAIT", "plan waiting for approval"), ("loop", "review loop choice"), ("human", "human merge"),
-             ("asks", "worker question"), ("clash", "merge conflict"), ("legacy", "human merge")]
+    order = [("WAIT", "approval"), ("loop", "review loop"), ("human", "merge"),
+             ("asks", "worker question"), ("clash", "conflict"), ("legacy", "merge")]
     machine_a = env.repo.path
     machine_b = env.tmp / "needs-machine-b"
     env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(machine_b))
@@ -174,8 +174,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     for where in (machine_a, machine_b):
         env.repo.path = where
         # Machine A's stale stop and its own log of the first question do not bring them back.
-        assert needs(env.repo) == [("asks", "worker question"), ("clash", "human merge"),
-                                   ("legacy", "human merge")], where
+        assert needs(env.repo) == [("asks", "worker question"), ("clash", "merge"), ("legacy", "merge")], where
     # B answers the second question, and both merges happen: nothing needs a person anywhere.
     env.repo.path = machine_b
     again = env.repo.forge("work", "asks", "--note", "Keep them", cwd=resumed)
@@ -212,7 +211,7 @@ def size_choice(env):
     assert stopped.returncode == 1 and "over its limit" in stopped.stdout + stopped.stderr, stopped.stderr
     share(env, prs, item, 6, "task/SHOP-T1")
     env.repo.path = machine_a
-    assert (item, "stuck worker") in needs(env.repo)
+    assert (item, "review loop") in needs(env.repo)
 
 
 def blocking_problems(env):

@@ -158,13 +158,10 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
             "step": line.removeprefix("Next: ") if line else None}
 
 
-def needs_person(top: Path, item: str, state: dict[str, Any], path: Path | None, stage: str) -> bool:
-    """The item waits on a person: a plan waiting for approval, a stop no one has answered
-    (unless close will record its default), or a worker question, as forge next and close decide."""
-    stop = state.get("stop") or {}
-    return (stage == "waiting for approval"
-            or bool(stop) and not stop.get("choice") and not default_due(path or top, state)
-            or bool(codex.record(top, item).get("question")))
+def needs_person(top: Path, item: str, state: dict[str, Any], path: Path | None, stage: str,
+                 body: str = "") -> bool:
+    """The item waits on a person, as the board's Needs you decides it (`person_waits`)."""
+    return bool(person_waits(top, item, state, path, stage, body))
 
 
 def context_hook(args: Any) -> int:
@@ -810,7 +807,7 @@ def person_waits(top: Path, item: str, state: dict[str, Any], path: Path | None,
     decision behind the board's Needs you; `bool()` of it is whether the item needs a person."""
     if stage == "waiting for approval":
         notes = story.show(top, story.plan_ref(top, item), f"plans/{item}.read.md") or ""
-        return [{"reason": "plan waiting for approval", "since": story._record(notes)[0].get("read_at"),
+        return [{"reason": "approval", "since": story._record(notes)[0].get("read_at"),
                  "detail": None}]
     recorded, waits = wait_records(top, item, body), []
     opened = [e for e in recorded if e["open"]]
@@ -821,21 +818,20 @@ def person_waits(top: Path, item: str, state: dict[str, Any], path: Path | None,
     ended = {e.get("id") for e in recorded if not e["open"]}
     # A choice recorded on another machine ends the stop's wait in the pull request's record.
     if stop and not stop.get("choice") and stop.get("wait_id") not in ended and not default_due(path or top, state):
-        stuck = "question" in stop
-        waits.append({"reason": "stuck worker" if stuck else "review loop choice",
-                      "since": stop.get("at") or since("stuck" if stuck else "review loop"),
+        waits.append({"reason": "review loop",  # a review loop or stuck worker's choice
+                      "since": stop.get("at") or since("stuck" if "question" in stop else "review loop"),
                       "detail": stop.get("question")})
     # The newest open question wins over an older one this machine still remembers.
     asked = [e for e in opened if e.get("event") == "worker question"]
     if asked:
         waits.append({"reason": "worker question", "since": asked[-1].get("at"), "detail": asked[-1].get("question")})
     if conflict := since("merge conflict"):
-        waits.append({"reason": "merge conflict", "since": conflict, "detail": None})
+        waits.append({"reason": "conflict", "since": conflict, "detail": None})
     # An older pull request, ready before merge waits were recorded, still waits on its human merge.
     # This checkout's forge.toml, so the board needs no fetch.
     if stage == "ready" and (since("merge") or repo.config(top)["merge"] == "human"
                              and not any(e.get("reason") == "merge" for e in recorded)):
-        waits.append({"reason": "human merge", "since": since("merge"), "detail": None})
+        waits.append({"reason": "merge", "since": since("merge"), "detail": None})
     return waits
 
 
