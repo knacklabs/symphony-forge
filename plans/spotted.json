@@ -8172,6 +8172,248 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tChecking every workflow serially slows forge next in larger repos\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 125,
+      "text": "Checking every workflow serially slows forge next in larger repos",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 134,
+      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: a frequent scheduled workflow hides a failed daily run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 112,
+      "text": "Not done: a frequent scheduled workflow hides a failed daily run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: another scheduled workflow can hide the failed nightly full run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 112,
+      "text": "Not done: another scheduled workflow can hide the failed nightly full run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: failing parametrized tests lose their full IDs\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 127,
+      "text": "Not done: failing parametrized tests lose their full IDs",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: parameter IDs containing spaced hyphens are truncated\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 138,
+      "text": "Not done: parameter IDs containing spaced hyphens are truncated",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tA started fix can be given the wrong next command\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 276,
+      "text": "A started fix can be given the wrong next command",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 270,
+      "text": "Not done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 279,
+      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine gets a command that cannot run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 275,
+      "text": "Not done: a fix started on another machine gets a command that cannot run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine is offered again\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 271,
+      "text": "Not done: a fix started on another machine is offered again",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a later workflow-name collision loses the started fix's next step\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 278,
+      "text": "Not done: a later workflow-name collision loses the started fix's next step",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a nightly run with more than ten failures does not name every failing test\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 265,
+      "text": "Not done: a nightly run with more than ten failures does not name every failing test",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: the fix start command omits failures after the tenth\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 279,
+      "text": "Not done: the fix start command omits failures after the tenth",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_names_a_failed_scheduled_run.py\tNot done: prove the scheduled default-branch query\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "tests/test_next_names_a_failed_scheduled_run.py",
+      "line": 76,
+      "text": "Not done: prove the scheduled default-branch query",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name JavaScript and Go test failures in scheduled runs",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 137,
+      "text": "Follow-up: name JavaScript and Go test failures in scheduled runs",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name Jest and Vitest failures in scheduled runs",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 134,
+      "text": "Follow-up: name Jest and Vitest failures in scheduled runs",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: retain failed daily workflows beyond the recent-run page",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 116,
+      "text": "Follow-up: retain failed daily workflows beyond the recent-run page",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Forge's own pull request checks keep npm's download cache between runs\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 42,
+      "text": "Not done: Forge's own pull request checks keep npm's download cache between runs",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tNot done: the disappearing-file scan test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 217,
+      "text": "Not done: the disappearing-file scan test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: the cold Node download timeout test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 133,
+      "text": "Not done: the cold Node download timeout test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 94,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

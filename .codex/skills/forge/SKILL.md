@@ -1312,6 +1312,9 @@ A worker or review notes problems outside its change as spotted items, which For
 `plans/spotted.json` and nobody edits by hand. A spotted item never widens the change in hand,
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
+When `forge next` says the latest scheduled run of the default branch failed, it names the
+failed jobs and tests; start its fix command the same way, or follow the step it gives for the
+fix already started.
 
 Close holds the fourth review after three consecutive rounds blocked by serious findings,
 whatever files they were in. The existing same-file stop still applies from the third round.
