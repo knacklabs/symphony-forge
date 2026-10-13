@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T09:58:23.442243+00:00",
+      "because": "Owner chose a strict fail-closed check over copying Codex's trust rules; Codex never inherits trust from a parent folder",
+      "done_when": "Forge's Codex trust check accepts a project inside a trusted folder whenever Codex itself trusts it, and asks only when Codex would ask"
+    }
+  ],
   "base": "4e000433f9853203b81b80b2891dad4471976e5f",
   "branch": "fix/codex-trust-parent",
-  "done_when": "Forge's Codex trust check accepts a project inside a trusted folder whenever Codex itself trusts it, and asks only when Codex would ask",
+  "done_when": "Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise, and its refusal names the one entry to add and says a parent folder's entry does not count",
   "flagged": [
     "src/forge/codex.py",
     "src/forge/doctor.py"
