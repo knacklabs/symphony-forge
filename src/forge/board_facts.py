@@ -176,6 +176,6 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
             counts["finished_last_7_days"]["fixes"] += recent(row)
         else:
             counts["fixes"]["done"] += 1  # a fix left out of the rows finished more than seven days ago
-    later, _clause = board_trends.facts(top, history, list(items.values()), github)
-    return {"sentence": None, "counts": counts, "needs_you": None, "in_progress": None, "blocked": None,
+    later, clause = board_trends.facts(top, history, counts, list(items.values()), github)
+    return {"sentence": clause, "counts": counts, "needs_you": None, "in_progress": None, "blocked": None,
             **later}
