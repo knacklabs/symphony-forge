@@ -4995,6 +4995,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/conftest.py\tNot done: the disappearing-file scan test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 217,
+      "text": "Not done: the disappearing-file scan test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/conftest.py\tThe live Codex smoke test loses its opt-in in a nested pytest run\tpin-test-defaults",
       "kind": "bug",
       "path": "tests/conftest.py",
@@ -5266,6 +5277,17 @@
       "text": "Not done: init and upgrade plus sync local-selection test",
       "from": "blocking",
       "item": "tests-once-per-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: the cold Node download timeout test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 133,
+      "text": "Not done: the cold Node download timeout test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
       "status": "open",
       "closed_by": null
     },
@@ -5695,6 +5717,17 @@
       "text": "Not done: keep mixed worker tests on their intended routes",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/SWITCH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 94,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
       "status": "open",
       "closed_by": null
     },
