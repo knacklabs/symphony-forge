@@ -11,7 +11,13 @@
     "branch_diff": "9f227233cbb7a20a9c0172ad4c83e2a007025a80ce2d03b2cd34231253b51baf",
     "changed": "1f80022ace8cedd7a6541d6778b75a5bb13d408cc22786b297d0283c0840f74b",
     "commit": "b92c6eeae7e40eac51bf0669963ceccdad19f10e",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/land.py:256 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: land --all moves to the main checkout before the pin check",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Moving to the main checkout here happens after `cli._run` calls `repo.check_pin` (`src/forge/cli.py:137-138`). When an existing repo has upgraded its main branch but a selected fix worktree still pins the earlier release, invoking `forge land --all` from that worktree is forwarded to the earlier Forge release (`src/forge/repo.py:713-743`), which does not recognize `--all`. The command never reaches this line. The adopted-repo test merges the upgrade into main before creating its fixes (`tests/test_queue_land_all.py:151-172`), so it does not cover the promised in-flight upgrade case.",
@@ -25,9 +31,9 @@
       }
     ],
     "id": "dcdb58a1-177f-4bbe-8852-a22a0f6494b5",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T23:45:15.681956+00:00",

@@ -2824,8 +2824,8 @@
       "text": "Not done: land --all starts from an in-flight older-release worktree",
       "from": "blocking",
       "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/land.py\tNot done: land proceeds to close after a handed-back round with no commit\tFORGE-TOOLS-1/WORK",
