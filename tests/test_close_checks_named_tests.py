@@ -22,7 +22,8 @@ PROOF = ("Proof list:\n- Returning readers are greeted: tests/test_greeting.py::
          "- The page greets readers again: __tests__/greeting.js\n"
          "- Every greeting: tests/test_greeting.py\n"
          "- Code spans name tests: `tests/test_greeting.py::test_returning`\n"
-         "- Cleanup runs: tests/test_greeting.py::test_cleanup")
+         "- Cleanup runs: tests/test_greeting.py::test_cleanup\n"
+         "- Readers by name: tests/test_greeting.py::test_case")
 # A test whose call passes and whose teardown fails.
 TEARDOWN = ("\n\n@pytest.fixture\ndef broken():\n    yield\n    raise RuntimeError(\"teardown\")\n\n\n"
             "def test_cleanup(broken):\n    pass\n")
@@ -93,6 +94,10 @@ def test_1_close_writes_the_proof_list_from_the_tests_it_ran(env, adopted, red, 
             if teardown else
             "- Every greeting: tests/test_greeting.py (3 passed, 1 failed, 1 skipped in close's run)"
             if red else "- Every greeting: tests/test_greeting.py (3 passed, 1 skipped in close's run)"
+            ) in published
+    # A test name without its parameter id counts the cases that ran.
+    assert ("- Readers by name: tests/test_greeting.py::test_case (1 passed, 1 failed in close's run)"
+            if red else "- Readers by name: tests/test_greeting.py::test_case (1 passed in close's run)"
             ) in published
     # A named case matches only itself; a case that failed shows as failed.
     assert "- New readers by name: tests/test_greeting.py::test_case[new] (passed in close's run)" in published

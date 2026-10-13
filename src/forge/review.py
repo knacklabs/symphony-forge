@@ -660,8 +660,8 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
             said = f"{name} (in the branch; close's test run gives its result)"
         elif fasttest.RESULTS_HEADER not in report:  # another runner, or no run
             said = f"{name} (not checked)"
-        elif len(matches) == 1 and re.sub(r"\[.*", "", matches[0][1]).rsplit("::", 1)[-1] == \
-                re.sub(r"\[.*", "", name).rsplit("::", 1)[-1]:  # the named test itself
+        elif len(matches) == 1 and matches[0][1].rsplit("::", 1)[-1] == name.rsplit("::", 1)[-1]:
+            # the named test itself; a name without its parameter id counts its cases
             said = f"{name} ({matches[0][0]} in close's run)"
         elif matches:  # a file, class or parametrized test: count the cases that ran
             counts = collections.Counter(outcome for outcome, _ in matches)
