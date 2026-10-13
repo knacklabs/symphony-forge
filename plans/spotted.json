@@ -5633,6 +5633,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Large clean reviews bypass the fixed time-record limit\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 427,
+      "text": "Not done: Large clean reviews bypass the fixed time-record limit",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its\tpr-time-record-summaries",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -7651,6 +7662,17 @@
       "path": "tests/test_pull_request_time_summaries.py",
       "line": 104,
       "text": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 255,
+      "text": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
       "from": "blocking",
       "item": "pr-time-record-summaries",
       "status": "open",

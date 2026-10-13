@@ -177,7 +177,7 @@
       "gain": 4,
       "harm": 4,
       "line": 540,
-      "outcome": "open",
+      "outcome": "fixed in round 11",
       "reason": "",
       "round": 10,
       "security": false,
@@ -190,43 +190,69 @@
       "gain": 3,
       "harm": 2,
       "line": 43,
-      "outcome": "open",
+      "outcome": "fixed in round 11",
       "reason": "",
       "round": 10,
       "security": false,
       "title": "Not done: prove a large latest review stays within the fixed record size",
       "work": 2
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 427,
+      "outcome": "open",
+      "reason": "",
+      "round": 11,
+      "security": false,
+      "title": "Not done: Large clean reviews bypass the fixed time-record limit",
+      "work": 2
+    },
+    {
+      "area": "test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 255,
+      "outcome": "open",
+      "reason": "",
+      "round": 11,
+      "security": false,
+      "title": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8d2cf4312dec1d13b9bb947d11e4b4b43d5f0d5b512c1e73a7370722e7bd6053",
-    "changed": "c54ff76a2f6195e1fe63af9fcd272f3fbd3367c4406ee563a242602e4674af99",
-    "commit": "5d68b9fe06f0e150226bcdc86313b17b1f817f52",
+    "branch_diff": "ece7b56bcda81c4a99f28933c3f88cf5e63b4ac2ac749e094812624e269ae8c3",
+    "changed": "af5708a596ac24f38658dfffd80f3749379c4a519b929d1d2f311acd6eebfaa8",
+    "commit": "f2bce714d1e4a5470732931ed4f2b4ee0f80ff16",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Not done\nA blocked `forge close` publishes its review result before waiting for CI, so that result can be the last timestamp in the record. If it contains enough findings to exceed `RECORD_BUDGET`, `_compact` eventually has no later timestamp to use as a cut and breaks while the record is still oversized. At GitHub's body limit, `_bounded_body` can delete that result, losing the latest review evidence for a fresh clone. The fixed size requirement is therefore unmet for a large latest review.",
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Not done\nThe budget check at `time_records.py:526` measures only the summary, events and timings, but this line also publishes the latest full clean review snapshot. A clean review with many short finding titles and detailed bodies can leave the measured rows below 20 KB while making the published record exceed GitHub's limit. `_bounded_body` then deletes events and timings before clean reviews (`close.py:938\u2013947`). On a fresh clone, that can erase the recent round's time summary. This is distinct from the earlier large-review finding: the excess is in the unmeasured clean snapshot.",
         "file": "src/forge/time_records.py",
         "gain": 4,
         "harm": 4,
-        "line": 540,
+        "line": 427,
         "priority": "P1",
-        "title": "Not done: A large latest review escapes the fixed time record limit",
+        "title": "Not done: Large clean reviews bypass the fixed time-record limit",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nThe named command-level proof creates many rounds, but gives each review only eleven short findings. It can pass while a single large final review result defeats `_compact` and is later removed by `_bounded_body`. It does not prove the fixed size requirement for that concrete path.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test\nThis proof gives all 200 findings long titles, making the measured event rows exceed the compaction budget. It does not exercise a clean review with short titles and long finding bodies, where the full saved review can exceed the body limit while the measured rows do not. The test can pass while the recent time record is removed by `_bounded_body`.",
         "file": "tests/test_pull_request_time_summaries.py",
         "gain": 3,
         "harm": 2,
-        "line": 43,
+        "line": 255,
         "priority": "P1",
-        "title": "Not done: prove a large latest review stays within the fixed record size",
+        "title": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
         "work": 2
       }
     ],
-    "id": "898988cc-93c7-4908-9c01-ee208503bc19",
+    "id": "b0a2cb4c-b94e-43dc-a585-c6d1f99fce28",
     "status": "blocked"
   },
   "settled_areas": [
@@ -277,6 +303,10 @@
     },
     {
       "at": "2026-10-13T15:27:38.877644+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T16:09:21.325541+00:00",
       "step": "review"
     }
   ],
