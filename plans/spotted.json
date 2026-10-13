@@ -397,6 +397,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/commands.md\tNot done: guide's land row and paragraph\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "docs/commands.md",
+      "line": 27,
+      "text": "Not done: guide's land row and paragraph",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tGuide gives conflicting requirements for Claude-only use\tclaude-sonnet-default",
       "kind": "bug",
       "path": "docs/guide.md",
@@ -2795,6 +2806,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: a killed close does not keep its change busy\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 291,
+      "text": "Not done: a killed close does not keep its change busy",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: failed checks on older pull requests prevent the ready overlap bypass\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 304,
+      "text": "Not done: failed checks on older pull requests prevent the ready overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: failing required skipped checks route to forge land\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 98,
+      "text": "Not done: failing required skipped checks route to forge land",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2817,6 +2861,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: land --all starts from an in-flight older-release worktree\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 256,
+      "text": "Not done: land --all starts from an in-flight older-release worktree",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: land proceeds to close after a handed-back round with no commit\tFORGE-TOOLS-1/WORK",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2824,6 +2879,72 @@
       "text": "Not done: land proceeds to close after a handed-back round with no commit",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: merge-time close failures route to fix rounds\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 143,
+      "text": "Not done: merge-time close failures route to fix rounds",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: only one land run works in a repo at a time\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 264,
+      "text": "Not done: only one land run works in a repo at a time",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: readiness checks are not failing before the overlap bypass\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 300,
+      "text": "Not done: readiness checks are not failing before the overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: stale lock takeover permits two land runs\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 269,
+      "text": "Not done: stale lock takeover permits two land runs",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: stopped changes retain close's decision and default rules\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 295,
+      "text": "Not done: stopped changes retain close's decision and default rules",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: use Forge's check status for the overlap bypass\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 304,
+      "text": "Not done: use Forge's check status for the overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",
       "closed_by": null
     },
@@ -4098,6 +4219,17 @@
       "path": "src/forge/review.py",
       "line": 557,
       "text": "Not done: 3 \u2014 a dismissed below-bar finding leaves Known and accepted",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context\tFORGE-SCORE-1/BAR",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 624,
+      "text": "Not done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
       "status": "open",
@@ -7041,6 +7173,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves concurrent closes\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 194,
+      "text": "Not done: test_1 proves concurrent closes",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the closes start oldest first\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 285,
+      "text": "Not done: test_1 proves the closes start oldest first",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the selection and start-order details\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 270,
+      "text": "Not done: test_1 proves the selection and start-order details",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_4 proves the later default and worker-stuck stops\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 354,
+      "text": "Not done: test_4 proves the later default and worker-stuck stops",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_quick_test_suggestions.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
       "kind": "bug",
       "path": "tests/test_quick_test_suggestions.py",
@@ -8896,171 +9072,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/commands.md\tNot done: guide's land row and paragraph\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "docs/commands.md",
-      "line": 27,
-      "text": "Not done: guide's land row and paragraph",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: a killed close does not keep its change busy\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 291,
-      "text": "Not done: a killed close does not keep its change busy",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: failed checks on older pull requests prevent the ready overlap bypass\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 304,
-      "text": "Not done: failed checks on older pull requests prevent the ready overlap bypass",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: failing required skipped checks route to forge land\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 98,
-      "text": "Not done: failing required skipped checks route to forge land",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: land --all starts from an in-flight older-release worktree\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 256,
-      "text": "Not done: land --all starts from an in-flight older-release worktree",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: merge-time close failures route to fix rounds\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 143,
-      "text": "Not done: merge-time close failures route to fix rounds",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: only one land run works in a repo at a time\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 264,
-      "text": "Not done: only one land run works in a repo at a time",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: readiness checks are not failing before the overlap bypass\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 300,
-      "text": "Not done: readiness checks are not failing before the overlap bypass",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: stale lock takeover permits two land runs\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 269,
-      "text": "Not done: stale lock takeover permits two land runs",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: stopped changes retain close's decision and default rules\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 295,
-      "text": "Not done: stopped changes retain close's decision and default rules",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/land.py\tNot done: use Forge's check status for the overlap bypass\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 304,
-      "text": "Not done: use Forge's check status for the overlap bypass",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves concurrent closes\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "tests/test_queue_land_all.py",
-      "line": 194,
-      "text": "Not done: test_1 proves concurrent closes",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the closes start oldest first\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "tests/test_queue_land_all.py",
-      "line": 285,
-      "text": "Not done: test_1 proves the closes start oldest first",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the selection and start-order details\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "tests/test_queue_land_all.py",
-      "line": 270,
-      "text": "Not done: test_1 proves the selection and start-order details",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_4 proves the later default and worker-stuck stops\tFORGE-QUEUE-1/QUEUE",
-      "kind": "bug",
-      "path": "tests/test_queue_land_all.py",
-      "line": 354,
-      "text": "Not done: test_4 proves the later default and worker-stuck stops",
-      "from": "blocking",
-      "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",
       "closed_by": null
     }
