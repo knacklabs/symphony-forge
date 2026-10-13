@@ -128,3 +128,17 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     monkeypatch.setenv("FORGE_NOW", "2030-01-03T10:00:00+00:00")
     gh.respond(*NIGHTLY, stdout=json.dumps([{"databaseId": 8, "conclusion": "success"}]))
     assert "The latest scheduled" not in repo.forge("next", cwd=client).stdout
+
+    # Two workflows share a display name: each gets its own alert, told apart by its file.
+    monkeypatch.setenv("FORGE_NOW", "2030-01-04T10:00:00+00:00")
+    gh.respond(*WORKFLOWS, stdout=json.dumps([
+        {"id": 3, "name": "nightly", "path": ".github/workflows/nightly-a.yml"},
+        {"id": 4, "name": "nightly", "path": ".github/workflows/nightly-b.yml"}]))
+    for run, workflow in ((21, "3"), (22, "4")):
+        gh.respond("run", "list", "--workflow", workflow, stdout=json.dumps(
+            [{"databaseId": run, "conclusion": "failure"}]))
+        gh.respond("run", "view", str(run), "--log-failed", stdout=f"{workflow} job\tRun\tx")
+    twins = repo.forge("next", cwd=client).stdout.splitlines()
+    assert "The latest scheduled nightly (nightly-a.yml) run on main failed in: 3 job." in twins
+    assert "The latest scheduled nightly (nightly-b.yml) run on main failed in: 4 job." in twins
+    assert len([line for line in twins if line.startswith("Next: forge fix start")]) == 2

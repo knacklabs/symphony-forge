@@ -116,12 +116,13 @@ def failed_schedules(top: Path) -> list[Item]:
         return rows if isinstance(rows, list) and all(isinstance(row, dict) for row in rows) else None
 
     def fetch(now: datetime) -> list[Item] | None:
-        # ponytail: one request per active workflow (gh's first 50); a repo with more shows the rest as unknown.
-        workflows = ask("workflow", "list", "--json", "id,name")
+        # ponytail: one request per active workflow, up to 500.
+        workflows = ask("workflow", "list", "--limit", "500", "--json", "id,name,path")
         if workflows is None:
             return None
         failed = []
-        for workflow in workflows:
+        names = [str(workflow.get("name") or "workflow") for workflow in workflows]
+        for workflow, name in zip(workflows, names):
             runs = ask("run", "list", "--workflow", str(workflow.get("id")), "--branch", branch,
                        "--event", "schedule", "--limit", "1", "--json", "databaseId,conclusion")
             if runs is None:
@@ -132,7 +133,9 @@ def failed_schedules(top: Path) -> list[Item]:
             if log.returncode != 0:
                 return None
             lines = log.stdout.splitlines()
-            failed.append({"workflow": str(workflow.get("name") or "workflow"), "branch": branch,
+            if names.count(name) > 1:  # the file tells same-named workflows apart
+                name += f" ({str(workflow.get('path') or workflow.get('id')).rsplit('/', 1)[-1]})"
+            failed.append({"workflow": name, "branch": branch,
                            "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
                            "tests": sorted({found[1] for line in lines if (found := re.search(
                                r"(?:FAILED|ERROR) (.+?::.+?)(?: - |$)", line))})})
