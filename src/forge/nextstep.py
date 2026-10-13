@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, close, codex, machine, records, repo, review, spotted, story,
+from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
                    task, time_records, upgrade)
 from forge.task import _started, developer, github_login, start_base, waits_for
 
@@ -118,7 +118,7 @@ def next_step(args: Any) -> int:
     top = repo.root()
     notice = upgrade.release_notice(top)
     history = board._machine_history(top) if args.json else None
-    lines = _report(top, history)[0]
+    lines = _report(top, history, schedules=True)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -182,11 +182,20 @@ def handoff_hook(args: Any) -> int:
     return 0
 
 
-def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
+def _report(top: Path, history: dict[str, Any] | None = None,
+            schedules: bool = False) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
+    # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
+    # failed run shows its own lines under it.
+    alerts = _failed_schedules(top) if schedules else {}
+    pinned: list[str] = []
+
+    def claim(state: dict[str, Any]) -> list[str] | None:  # by the workflow file the fix's why names
+        key = next((key for key in alerts if key in str(state.get("why") or "")), None)
+        return alerts.pop(key) if key else None
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
@@ -212,7 +221,11 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 continue
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
-            lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
+            found = _item(name, f"The fix {name}", state, top, path, prs, refusals)
+            if alert := branch not in merged_prs and claim(state):
+                pinned += alert[:-1] + found
+            else:
+                lines += found
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     pushed = repo.git("for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/fix/",
@@ -226,7 +239,11 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
                 or story.show(top, landed, repo.state_path(name)) is not None):  # merged
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
-            lines += _item(name, f"The fix {name}", state, top, None, prs, refusals)
+            found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
+            if alert := claim(state):
+                pinned += alert[:-1] + found
+            else:
+                lines += found
     for path in sorted(trees.values()):  # a spec read stopped on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
             text = notes.read_text(encoding="utf-8")
@@ -234,7 +251,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             if spec.is_file() and story._blocked_reads(  # pyright: ignore[reportPrivateUsage]
                     path, *story._record(text)) >= 3:  # pyright: ignore[reportPrivateUsage]
                 lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
-    lines = _refresh(top, trees) + (lines or _idle(top))
+    lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
         if repo.is_prototype(top, cfg):
@@ -251,7 +268,28 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     if history is None and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return _due(top, history) + _hotspots(top, trees) + lines, states
+    return (_due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
+            + _hotspots(top, trees) + lines), states
+
+
+def _failed_schedules(top: Path) -> dict[str, list[str]]:
+    """By "(<workflow file>)", which its fix's why names: each workflow whose latest scheduled run on
+    the default branch failed, with its failed jobs and tests and, last, the command that starts its fix."""
+    def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
+        return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=()-]", " ", text).split())
+    alerts = {}
+    for run in board_facts.failed_schedules(top):
+        key = f"({clean(run['file'])})"
+        run = {**run, "workflow": f"{run['workflow']} {key}"}
+        workflow, branch = clean(run["workflow"]), clean(run["branch"])
+        why = f"The scheduled {workflow} run fails on {branch}"
+        jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
+        done = f"{jobs} of the scheduled {workflow} workflow pass again on the next scheduled run on {branch}"
+        alerts[key] = [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
+                       f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
+                       *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
+                       f'Next: forge fix start "{why}" --done "{done}"']
+    return alerts
 
 
 def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:

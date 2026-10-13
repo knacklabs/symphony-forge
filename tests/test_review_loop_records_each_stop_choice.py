@@ -62,22 +62,26 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
             result = env.close(item)
         assert "Ask the human to narrow the part" in result.stderr
         assert len(env.review_calls()) == (cycle + 1) * 3
-        assert row(env.repo, item)["status"] == "Needs your decision"
-        next_step = env.repo.forge("next")
-        assert next_step.returncode == 0, next_step.stderr
-        assert f"forge close {item} --resolve <narrow|split|accept>" in next_step.stdout
-        for command in ("close", "land"):
-            waiting = env.repo.forge(command, item)
-            assert waiting.returncode == 1, waiting.stdout + waiting.stderr
-            assert "Ask the human to narrow the part" in waiting.stderr
-            assert len(env.review_calls()) == (cycle + 1) * 3
+        # The first stop's wait is test_close_holds_after_three_blocked_reviews' job; this
+        # test checks that the second stop waits again despite the first choice.
+        if cycle:
+            assert row(env.repo, item)["status"] == "Needs your decision"
+            next_step = env.repo.forge("next")
+            assert next_step.returncode == 0, next_step.stderr
+            assert f"forge close {item} --resolve <narrow|split|accept>" in next_step.stdout
+            for command in ("close", "land"):
+                waiting = env.repo.forge(command, item)
+                assert waiting.returncode == 1, waiting.stdout + waiting.stderr
+                assert "Ask the human to narrow the part" in waiting.stderr
+                assert len(env.review_calls()) == (cycle + 1) * 3
         reason = f"The owner chose {choice} for stop {cycle + 1}"
         chosen = env.close(item, "--resolve", choice, "--reason", reason)
         assert chosen.returncode == 0, chosen.stdout + chosen.stderr
         assert "Recorded the human's choice" in chosen.stdout
-        assert row(env.repo, item)["status"] != "Needs your decision"
-        duplicate = env.close(item, "--resolve", choice, "--reason", reason)
-        assert duplicate.returncode == 1
-        assert "Record the human's choice only on a stopped review loop" in duplicate.stderr
+        if cycle:
+            assert row(env.repo, item)["status"] != "Needs your decision"
+            duplicate = env.close(item, "--resolve", choice, "--reason", reason)
+            assert duplicate.returncode == 1
+            assert "Record the human's choice only on a stopped review loop" in duplicate.stderr
         if legacy and not cycle:
             _install(env.repo.bin, "forge", current)
