@@ -958,6 +958,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 134,
+      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: a frequent scheduled workflow hides a failed daily run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 112,
+      "text": "Not done: a frequent scheduled workflow hides a failed daily run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: another scheduled workflow can hide the failed nightly full run\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -3209,6 +3231,17 @@
       "text": "A repo setting change does not reach an already stopped item",
       "from": "blocking",
       "item": "stop-default-answer",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tA started fix can be given the wrong next command\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 276,
+      "text": "A started fix can be given the wrong next command",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
@@ -7037,6 +7070,17 @@
       "text": "Update the history-invariance test for the expanded JSON payload",
       "from": "review",
       "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_facts.py\tFollow-up: name Jest and Vitest failures in scheduled runs",
+      "kind": "edge",
+      "path": "src/forge/board_facts.py",
+      "line": 134,
+      "text": "Follow-up: name Jest and Vitest failures in scheduled runs",
+      "from": "review",
+      "item": "nightly-red-shows-in-next",
       "status": "open",
       "closed_by": null
     },
