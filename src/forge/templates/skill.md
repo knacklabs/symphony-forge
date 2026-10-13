@@ -173,10 +173,11 @@ Forge syncs, keeping their settings as written.
 When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
 crash, a command that reports success but did nothing, generated files that contradict each
 other), file a bug on Forge's GitHub. No client code, names, paths or secrets: describe what Forge did.
-Fetch the template text, drop its front matter, fill every section and save it as the body file:
+Fetch the template text into a file, drop its front matter and fill every section; that file is
+the body file:
 
 ```
-gh api repos/knacklabs/symphony-forge/contents/.github/ISSUE_TEMPLATE/forge-bug.md --jq .content | base64 --decode
+gh api repos/knacklabs/symphony-forge/contents/.github/ISSUE_TEMPLATE/forge-bug.md -H "Accept: application/vnd.github.raw" > forge-bug.md
 ```
 
 The template's sections, which the body file keeps exactly:

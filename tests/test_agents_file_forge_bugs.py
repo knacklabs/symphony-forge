@@ -39,13 +39,14 @@ def test_1_clients_are_told_to_file_forge_bugs(repo, gh, tmp_path, setup):
         assert synced.returncode == 0, synced.stdout + synced.stderr
     agents = " ".join((client / "AGENTS.md").read_text("utf-8").split())
     assert "file a bug on Forge's GitHub" in agents
-    assert "Forge bug" in agents
+    assert "with the Forge bug template's sections, fill every one" in agents
     assert "leave out the repo's code, names, paths and secrets" in agents
 
 
 PROMPTS = ("forge version", "pinned version", "host", "operating system",
            "exact command and full output", "expected vs what happened",
-           "steps to reproduce", "forge.toml settings without secrets",
+           "steps to reproduce", "upgraded from which version", "new or adopted repo",
+           "workaround", "forge.toml settings without secrets",
            "forge next", "what was tried", "how often",
            "no client code, names, paths or secrets")
 
@@ -61,5 +62,6 @@ def test_2_template_and_guide_ask_for_every_required_prompt(repo, gh, tmp_path):
         for prompt in PROMPTS:
             assert prompt in flat, (name, prompt)
         if name != "template":
-            assert "contents/.github/ISSUE_TEMPLATE/forge-bug.md --jq .content | base64 --decode" in flat.replace("issue_template", "ISSUE_TEMPLATE")
+            assert ('contents/.github/issue_template/forge-bug.md -h "accept: '
+                    'application/vnd.github.raw"') in flat
             assert "--label bug --body-file <filled file>" in flat
