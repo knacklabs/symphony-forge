@@ -20,6 +20,7 @@ SIX_PARTS = PLAN.replace(
     "| T5 | Name a basket | A shopper can name a basket | 2 | `name.py` | `tests/test_name.py` | — | no |\n"
     "| T6 | Copy a basket | A shopper can copy a basket | 2 | `copy.py` | `tests/test_copy.py` | — | no |")
 NO_PLAN = "Shoppers can buy gift cards"
+IDLE = "0 stories building, 0 parts and fixes in progress, 0 ready to merge; "
 
 
 def merged(env, monkeypatch, at, rel, state):
@@ -78,7 +79,7 @@ def test_4_pace_and_go_live_from_the_last_three_and_six_weeks(env, monkeypatch, 
     # A fresh repo with nothing planned has no history to go on.
     team = go_live(env)
     assert team["go_live"]["status"] == "not enough history" and team["go_live"]["remaining_parts"] == 0
-    assert team["sentence"].startswith("Not enough history to estimate go-live")
+    assert team["sentence"].startswith(IDLE + "not enough history to estimate go-live")
     assert [week["week_start"] for week in team["pace"]["weeks"]] == [w.date().isoformat() for w in weeks]
 
     # Two weeks of merges are not enough either.
@@ -94,7 +95,7 @@ def test_4_pace_and_go_live_from_the_last_three_and_six_weeks(env, monkeypatch, 
     assert team["pace"] == {"weeks": [{"week_start": w.date().isoformat(), "parts": parts, "fixes": fixes}
                                       for w, parts, fixes in zip(weeks, [4, 2, 2, 1, 1, 0], [0, 0, 1, 0, 0, 0])],
                             "parts_per_week_3": 0.67, "parts_per_week_6": 1.67}
-    assert team["go_live"]["status"] == "done" and team["sentence"].startswith("Planned work is done")
+    assert team["go_live"]["status"] == "done" and team["sentence"].startswith(IDLE + "planned work is done")
 
     # Six parts left: 6 / (2/3) weeks and 6 / (10/6) weeks from today.
     approve_story(env.repo, SIX_PARTS)
@@ -102,4 +103,4 @@ def test_4_pace_and_go_live_from_the_last_three_and_six_weeks(env, monkeypatch, 
     assert team["go_live"] == {"status": "range", "earliest": (today + timedelta(days=26)).isoformat(),
                                "latest": (today + timedelta(days=63)).isoformat(), "remaining_parts": 6,
                                "no_plan": team["go_live"]["no_plan"]}
-    assert team["sentence"].startswith("Planned work can go live between")
+    assert team["sentence"].startswith(IDLE + "planned work can go live between")
