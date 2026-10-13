@@ -39,6 +39,11 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
+      - uses: actions/cache@v4
+        if: steps.parent-tests.outputs.reuse != 'true'
+        with:
+          path: ~/.npm
+          key: npm-jest-30.2.0-vitest-3.2.4
       - run: "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration || { status=$?; [ \"$status\" -eq 5 ] && uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --collect-only; }"
         if: steps.parent-tests.outputs.reuse != 'true'
 

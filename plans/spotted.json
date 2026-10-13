@@ -8282,6 +8282,50 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge.yml\tNot done: Forge's own pull request checks keep npm's download cache between runs\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": ".github/workflows/forge.yml",
+      "line": 42,
+      "text": "Not done: Forge's own pull request checks keep npm's download cache between runs",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tNot done: the disappearing-file scan test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 217,
+      "text": "Not done: the disappearing-file scan test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_keeps_full_tests_in_ci.py\tNot done: the cold Node download timeout test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 133,
+      "text": "Not done: the cold Node download timeout test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tNot done: proof list\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 94,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

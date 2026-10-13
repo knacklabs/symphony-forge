@@ -170,13 +170,13 @@ class Repo:
             raise
 
     def forge(self, *args: str, input: str = "", cwd: Path | None = None,
-              ) -> subprocess.CompletedProcess[str]:
+              timeout: float | None = None) -> subprocess.CompletedProcess[str]:
         """Run the real forge command; stdin is empty unless given. Windows gets four minutes: its
         heaviest commands (init, migrate, close) start hundreds of git processes, and on a hosted
         Windows runner under a parallel run's load one took past two minutes."""
         return subprocess.run([sys.executable, str(self.bin / "forge"), *args],
                               cwd=cwd or self.path, input=input, capture_output=True, text=True,
-                              encoding="utf-8", timeout=240 if os.name == "nt" else 60)
+                              encoding="utf-8", timeout=timeout or (240 if os.name == "nt" else 60))
 
     def write(self, rel: str, text: str) -> Path:
         path = self.path / rel
@@ -214,10 +214,15 @@ def _left(tmp_path: Path) -> list[str]:
     """This test's processes still running or stopped: every process a test starts names its temp
     folder in its command/environment or records its identity before it can outlive the worker."""
     recorded = []
-    for marker in tmp_path.rglob("*.owned-process.json"):
+    markers = [Path(folder, name) for folder, _, names in os.walk(tmp_path)  # skips vanished folders
+               for name in names if name.endswith(".owned-process.json")]
+    for marker in markers:
         from test_lanes_agents import alive
 
-        process = json.loads(marker.read_text("utf-8"))
+        try:
+            process = json.loads(marker.read_text("utf-8"))
+        except FileNotFoundError:  # its test removed it while this scan ran
+            continue
         # Windows process creation times use 100-nanosecond ticks since 1601; Python 3.11's clock
         # there moves in 15.6 ms steps, so allow one step before the recorded time.
         before = (process["at_ns"] // 100 + 116444736000000000 + 160_000 if os.name == "nt"
