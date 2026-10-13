@@ -1,0 +1,14 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/old-hooks-are-forge",
+  "done_when": "During forge upgrade, hooks written by any earlier Forge release are recognized as Forge's, so the worker starts without a manual hooks approval",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:45.775969+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "During an upgrade from an early release, that release's Forge hooks still on the default branch count as not Forge's, so Codex holds the worker until someone approves them in its hooks screen"
+}
