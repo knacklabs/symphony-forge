@@ -1,0 +1,29 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/installer-test-timeout",
+  "done_when": "The installer test gives PowerShell a start budget that fits a cold Windows runner, so it fails only when the installer's explanation is wrong",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e51b30c4e2f7af01a2b102357ce00ffc55f97c1aa356da3c33b6f53c6662b77d",
+    "changed": "07f3346dea3f03d2dc6c2c08dabbc5e3fd3cb1f91e8d29c83b124ed710ddcc18",
+    "commit": "2ddffcc16f696ed0c310971697c80d426fe1c19f",
+    "dismissals": [],
+    "findings": [],
+    "id": "fb22ec38-f322-4d1f-a9e2-9668a1febfd6",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:38.122163+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T03:19:42.620786+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The Windows installer test for Docker's start explanation timed out waiting on PowerShell in a pull request run"
+}
