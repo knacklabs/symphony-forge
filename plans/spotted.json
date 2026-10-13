@@ -9360,6 +9360,39 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 802,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 212,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 317,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

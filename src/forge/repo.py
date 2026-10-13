@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -204,6 +205,12 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
             return subprocess.CompletedProcess(done.args, 1, "",
                                                REFUSALS["no_github"][0] + "\n")
         time.sleep(pause)
+
+
+def quote(argument: object) -> str:
+    """One path or argument quoted for the user's shell, so a printed command runs as shown."""
+    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None,
