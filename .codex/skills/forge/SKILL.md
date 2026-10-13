@@ -168,6 +168,22 @@ Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land`
 New repos get the setting's default at init; existing repos get this guide when the upgraded
 Forge syncs, keeping their settings as written.
 
+## Reporting a Forge bug
+
+When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
+crash, a command that reports success but did nothing, generated files that contradict each
+other), file a bug on Forge's GitHub. Leave out the repo's code, names, paths and secrets;
+describe what Forge did. Write a body file with these sections: `## Forge version`
+(`forge --version` and the version pinned in `forge.toml`), `## Host and OS` (Claude Code or
+Codex), `## Command and output` (exact command, full output, private names replaced),
+`## Expected and actual`, `## Steps to reproduce` (upgraded from which version, new or adopted
+repo, relevant `forge.toml` settings without secrets), `## forge next` (its output at the time),
+`## Tried and workaround`, `## How often` (always, sometimes or once). Then run, with no prompt:
+
+```
+gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --label bug --body-file <file>
+```
+
 ## Laptop setup and after cloning
 
 The repeatable laptop installers are published for
