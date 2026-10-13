@@ -194,7 +194,10 @@
     "id": "a0f0168b-c935-4f72-8ccb-28de100f3b28",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/review.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T18:21:59.003408+00:00",
@@ -219,7 +222,11 @@
   ],
   "stop": {
     "at": "2026-10-13T00:09:40.952213+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/review.py",
-    "wait_id": "76e47f29-557e-455b-92c9-3d9acf2bff49"
+    "reason": "Owner chose one more round: the builder fixes all three findings in this part (stop question lists every finding that caused the stop; fail closed first for security findings from any round; dismissed below-bar findings stay in Known and accepted).",
+    "wait_id": "76e47f29-557e-455b-92c9-3d9acf2bff49",
+    "worker_round": null
   }
 }
