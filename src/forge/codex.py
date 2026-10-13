@@ -64,10 +64,16 @@ QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
          "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
 # leaves out included: the driver trusts a hook only when its whole definition is one of these.
+# Earlier releases' commands count too: an upgrade's worker runs while the default branch, whose
+# hooks Codex reads for every worktree, still holds them.
+EARLIER_COMMANDS = ("sh -c 'forge hook {hook} || exit 2' || exit 2",  # v1.0.0 to v1.2.1
+                    "sh -c '. \"$(git rev-parse --show-toplevel)/.forge/hooks.sh\" && "
+                    "forge hook {hook} || exit 2' || exit 2")  # v1.2.2 to v1.2.8
 FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
-                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "handlerType": "command", "command": command, "async": False,
                 "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
-               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
+               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()
+               for command in (sync.command(hook), *(old.format(hook=hook) for old in EARLIER_COMMANDS))]
 
 REFUSALS = {
     # Sync turns these three into warnings after it writes its files: see preserve_chats.
