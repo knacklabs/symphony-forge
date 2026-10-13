@@ -87,7 +87,6 @@ RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_s
           "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
-ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
 BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
@@ -273,7 +272,6 @@ def read(args: Any) -> int:
                                 _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
-        saw = _findings(_record(seen["notes_seen"].stdout)[1])
         old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
         touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
                    if old_sections.get(name) != new_sections.get(name)]
@@ -283,12 +281,9 @@ def read(args: Any) -> int:
         # Only story plans cap notes on unchanged text; specs still get a full read.
         again = edit if passed(record, findings) else again.replace(
             "${look}", cap if is_story and round_number >= 3 else look)
-        blocking = {n: block for n, block in blocks.items()
-                    if not ADVISORY.match(block.split(". ", 1)[1])}
+        blocking = {n: block for n, block in blocks.items() if DISPOSITION.search(block)}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
-        # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
-        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
-            block for n, block in blocking.items() if saw.get(n, "").split() != block.split()) or "None.")
+        prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()) or "None.")
         if any(done.returncode for done in seen.values()):
             prompt = fresh_prompt
     session = saved.get("claude")
@@ -429,7 +424,7 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         outcome = "found nothing" if said == "No findings." else "had no blocking notes"
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
-    if not clean and blocked_rounds + 1 >= 3:
+    if not clean and blocked_rounds + 1 >= 3 and score.read_stops(list(_findings(said).values())):
         repo.refuse(REFUSALS["read_loop"], target=target,
                     question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
@@ -711,11 +706,16 @@ def passed(record: dict[str, str], findings: str) -> bool:
         return True
     parts = FINDING.split(text)
     return (len(parts) > 1 and parts[0].strip() in ("", "No findings.")
-            and all(ADVISORY.match(body) for body in parts[2::2]))
+            and not any(score.note_holds(body) for body in parts[2::2]))
 
 
 def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
     """Earlier releases' snapshots supply the streak until the first new read records it."""
+    count = _streak(top, record, findings)
+    return 2 if count >= 3 and not score.read_stops(list(_latest(record, findings).values())) else count
+
+
+def _streak(top: Path, record: dict[str, str], findings: str) -> int:
     count = 0
     while count < 3 and record.get("round") and not passed(record, findings) and not record.get("loop_choice"):
         if record.get("blocked_rounds"):
@@ -737,7 +737,7 @@ def undisposed(findings: str) -> str:
     """The number of the first finding without a disposition (keep needs a reason), or ""."""
     parts = FINDING.split(findings)
     for number, finding in zip(parts[1::2], parts[2::2]):
-        if ADVISORY.match(finding):
+        if not score.note_holds(finding):
             continue
         found = DISPOSITION.search(finding)
         if not found or (found[1].lower() == "keep" and not found[2]):
@@ -1008,12 +1008,10 @@ def _diff(old: str, new: str, path: str) -> str:
 def read_question(doc: str, notes: str) -> str:
     """A stopped cold-read loop's question: the doc's title and promise, and the latest round's
     blocking notes."""
-    record, findings = _record(notes)
-    heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
     flagged = []
-    for block in _findings(findings[heading.end():] if heading else "").values():
+    for block in _latest(*_record(notes)).values():
         title, _, body = block.split(". ", 1)[1].partition("\n")
-        if not ADVISORY.match(title) and not DISPOSITION.search(body):  # cut, deferred or kept
+        if score.note_holds(block.split(". ", 1)[1]) and not DISPOSITION.search(body):  # cut, deferred or kept
             flagged.append((review.plain(title, "\n".join(line for line in body.splitlines()
                                                    if not DISPOSITION.match(line))), score.parse(body)))
     title = re.search(r"^# (.+)$", doc, re.M)
@@ -1024,6 +1022,11 @@ def read_question(doc: str, notes: str) -> str:
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else
                          "Behaviour and Acceptance criteria")
+
+
+def _latest(record: dict[str, str], findings: str) -> dict[int, str]:
+    heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
+    return _findings(findings[heading.end():] if heading else "")
 
 
 def _findings(text: str) -> dict[int, str]:

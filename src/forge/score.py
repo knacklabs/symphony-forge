@@ -7,12 +7,15 @@ is judged by priority and a saved read note by its label, as before scores.
 from __future__ import annotations
 
 import re
+from typing import Any
 
 # Each score is one integer 1 to 5; "Harm 1.5" or "Harm 12" is no score line.
 LINE = re.compile(r"^([ \t]*)Gain ([1-5]), Work ([1-5]), Harm ([1-5])(?:[ \t].*)?$", re.M)
 FLOORS = ((re.compile(r"^[ \t]*Raise:[ \t]*Security\b", re.I | re.M), "security"),
           (re.compile(r"^[ \t]*Raise:[ \t]*Data loss\b", re.I | re.M), "data loss"),
           (re.compile(r"\bmigrations?\b", re.I), "migration"))
+ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
+HOLD = ("block", "fix now")
 Scores = tuple[int, int, int]
 
 
@@ -43,10 +46,16 @@ def strip(body: str) -> str:
 
 
 def notes(said: str) -> str:
-    """A reader's numbered notes with the Harm floor applied to each scored one."""
+    """A reader's numbered notes, Harm floor applied and below-bar ones given their disposition."""
     def one(block: str) -> str:
         title, _, body = block.partition("\n")
-        return f"{title}\n{normalise(title, body)[1]}" if body else block
+        if not body:
+            return block
+        scores, body = normalise(title, body)
+        if (outcome := bar(scores)) not in (None, *HOLD):
+            kept = body.rstrip("\n")
+            body = f"{kept}\n   Disposition: keep - below the bar ({outcome})" + body[len(kept):]
+        return f"{title}\n{body}"
     return "".join(one(block) for block in re.split(r"(?=^\d+\.[ \t])", said, flags=re.M))
 
 
@@ -67,3 +76,93 @@ def table(rows: list[tuple[str, Scores | None]]) -> list[str]:
     """The open notes as a stop question lists them: each row is (problem, scores)."""
     # ponytail: today's bullets; the ranked table replaces them when every row has scores.
     return [f"- {problem}" for problem, _ in rows]
+
+
+def of(finding: dict[str, Any]) -> Scores | None:
+    return (finding["gain"], finding["work"], finding["harm"]) if "harm" in finding else None
+
+
+def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
+    """A finding holds work by the bar (only `block` at the P0-only level), or unscored by priority."""
+    outcome = bar(of(finding))
+    if outcome is None:
+        return finding.get("priority") in (("P0",) if level == "P0" else ("P0", "P1"))
+    return outcome == "block" if level == "P0" else outcome in HOLD
+
+
+def note_holds(note: str) -> bool:
+    """A read note (text after its number) holds by the bar, or unscored unless `Advisory:`."""
+    outcome = bar(parse(note))
+    return outcome in HOLD if outcome else not ADVISORY.match(note)
+
+
+def read_stops(notes: list[str]) -> bool:
+    """A third blocked read stops on an unscored or disputed-keep note at the bar, or any Harm 3+."""
+    for note in (re.sub(r"^\d+\.[ \t]+", "", note) for note in notes):
+        scores, held = parse(note), note_holds(note)  # a note below the bar is settled by its disposition
+        if held and (not scores or "disputed keep" in note.partition("\n")[0].casefold()) \
+                or scores and scores[2] >= 3 and (held or "Disposition:" not in note):
+            return True
+    return False
+
+
+def identity(file: Any, title: Any) -> tuple[str, str]:
+    return " ".join(str(file).split()).casefold(), " ".join(str(title).split()).casefold()
+
+
+def open_findings(result: dict[str, Any]) -> list[dict[str, Any]]:
+    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
+    return [f for n, f in enumerate(result.get("findings", []), 1) if n not in dismissed]
+
+
+def loop_stops(result: dict[str, Any], known: list[dict[str, Any]], round_number: int) -> bool:
+    """Close's three-round stop: an open Harm 3+, a repeat at the bar, or an unscored one that holds."""
+    earlier = {identity(e["file"], e["title"]) for e in known if e.get("round", 0) < round_number}
+    level = result.get("blocking_level")
+    return any(holds(f, level) and (not of(f) or identity(f["file"], f["title"]) in earlier)
+               or f.get("harm", 0) >= 3 for f in open_findings(result))
+
+
+def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
+             areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
+    """Add a round to the known findings, never removed; only open or owner-accepted entries change."""
+    because = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
+    by = {identity(e["file"], e["title"]): e for e in known}
+    raised = set()
+    for n, f in enumerate(result.get("findings", []), 1):
+        raised.add(key := identity(f["file"], f["title"]))
+        reason = because.get(n, "")
+        outcome = ("lived with" if reason.startswith("settled area") else "accepted" if n in because
+                   else "open" if holds(f, result.get("blocking_level"))
+                   else "follow-up" if bar(of(f)) == "follow-up" else "lived with")
+        if key not in by:
+            known.append(by.setdefault(key, {
+                "title": f["title"], "file": f["file"], "line": f["line"], "gain": f.get("gain"),
+                "work": f.get("work"), "harm": f.get("harm"), "outcome": outcome, "reason": reason,
+                "round": round_number, "area": areas.get(key, f["file"]), "security": bool(FLOORS[0][0].search(f["body"]))}))
+        elif by[key]["outcome"] == "open" or any(d.get("accepted") and d["finding"] == n for d in result["dismissals"]):
+            by[key].update(outcome=outcome, reason=reason)
+    for key, entry in by.items():
+        if entry["outcome"] == "open" and key not in raised:
+            entry["outcome"] = f"fixed in round {round_number}"
+    return known
+
+
+def crowded(known: list[dict[str, Any]], result: dict[str, Any], settled: list[str],
+            areas: dict[tuple[str, str], str]) -> str:
+    """The unsettled area holding work this round with three distinct findings that held work."""
+    for f in open_findings(result):
+        area = areas.get(identity(f["file"], f["title"]), f["file"])
+        if holds(f, result.get("blocking_level")) and area not in settled and sum(
+                e.get("area") == area and e["outcome"] not in ("follow-up", "lived with") for e in known) >= 3:
+            return area
+    return ""
+
+
+def move(known: list[dict[str, Any]], area: str) -> str:
+    """The structural move a stopped area proposes; fail closed first after any security finding there."""
+    moves = ["cut the code that invites these findings", "replace the cases with one general rule",
+             "narrow that Done when item", "make it fail closed"]
+    if any(e.get("area") == area and e.get("security") for e in known):
+        moves.insert(0, moves.pop())
+    return "; or ".join(moves)

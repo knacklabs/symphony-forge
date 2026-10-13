@@ -137,10 +137,12 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 ## What blocks the merge
-Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only the advice
+Your scores decide, whatever the priority: Harm 4 or 5, Gain 5, or Gain 3 or 4 with Work 1 or 2
+blocks the merge; any other finding is a follow-up fix or lived with, and the merge goes on.
+Every finding under a Raise line is P0 or P1. P2 and P3 are only the advice
 forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
 `Simpler (existing):`), which need no Raise line
-and never block the merge or start another round. Report nothing else.
+and, scored Gain 1 or 2, never block the merge or start another round. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
@@ -151,7 +153,7 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
 A `Not done` finding blocks only when it names a Done-when item the change misses as
 written. A case the Done-when does not name, such as another language, platform, shell,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
-doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
+doesn't wait for, even when realistic (score it Gain 1 or 2); a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
 
 Missing tests this branch owns and the functional check stay P1.
@@ -221,6 +223,11 @@ Write each finding as one line naming the defect and its impact, then brief evid
 read and, for an edge case, the realistic scenario. No speculative suggestions: report what breaks,
 not what might be nicer.
 
+## Known and accepted
+The owner, the coordinator or Forge settled these notes; Forge ignores a repeat with the same title and file.
+Raise one again only with new evidence of harm, titled `Disputed keep <the note>: <the new harm>`.
+$accepted
+
 ## Scores
 Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
 judgement, not measurement. Write them as one line, exactly `Gain <g>, Work <w>, Harm <h>`,
@@ -263,7 +270,7 @@ $rulings
 Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
 weigh, and name that evidence in the finding's body and a distinct title. Settled findings stay
 settled: Forge ignores a finding with the same title and file as a fixed or dismissed finding,
-even if its line or evidence changes. Human acceptance covers only the accepted version.
+even if its line or evidence changes, and so does a finding the human accepted.
 
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.

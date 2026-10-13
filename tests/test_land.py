@@ -329,8 +329,10 @@ def _three_blocked_reviews_hold_the_fourth(env):
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
-    # A new finding each round: the same one twice would stop the worker sooner.
-    env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2, 3)))
+    # A new Harm 3 finding each round, each in a file of its own: the same one twice would stop
+    # the worker sooner, and three in one file would stop by area.
+    env.reviews(*(blocked({**finding("P1", f"Saving drops the greeting, case {n}", f"docs/{n}.md"),
+                           "body": "Gain 3, Work 2, Harm 3\nEvidence"}) for n in (1, 2, 3)))
     done = _land(env)
     assert done.returncode == 1
     rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
@@ -338,7 +340,7 @@ def _three_blocked_reviews_hold_the_fourth(env):
         f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     lines = done.stderr.splitlines()
     assert [lines[-9], lines[-1]] == [
-        f"Review round 4 of {ITEM} still finds serious problems in app.py, which an earlier "
+        f"Review round 4 of {ITEM} still finds serious problems in docs/3.md, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
         "to narrow the part, split it, or accept the remaining findings, in these words:",
         f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"']
@@ -439,11 +441,12 @@ time.sleep = advance
     lines = done.stdout.splitlines()
     waiting = lines.index("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
                           "the repo's default applies.")
-    assert lines[waiting - 7:waiting - 4] == [
-        "Readme greets new readers: The readme opens with a greeting",
-        "It still has these problems:",
-        "- Saving drops the greeting: evidence for: Saving drops the greeting"]
-    assert lines.count("It still has these problems:") == 1
+    # The third distinct finding in app.py stops by area, with a structural move proposed.
+    shown = lines[waiting - 7:waiting - 4]
+    assert shown[0] == "Readme greets new readers: The readme opens with a greeting"
+    assert shown[1].startswith("Findings keep coming in app.py; proposed: cut the code")
+    assert shown[2] == "- Saving drops the greeting: evidence for: Saving drops the greeting"
+    assert sum("It still has these problems:" in line for line in lines) == 1
 
 
 def _findings_after_three_rounds_ask_a_question(env):

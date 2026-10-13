@@ -1,0 +1,349 @@
+{
+  "branch": "task/FORGE-SCORE-1-BAR",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/review.py",
+    "src/forge/score.py",
+    "src/forge/story.py",
+    "src/forge/templates/skill.md",
+    "tests/test_score_bar.py"
+  ],
+  "known": [
+    {
+      "area": "_block() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 977,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "title": "Not done: 2 \u2014 below-bar findings can lose their scores in the pull request",
+      "work": 2
+    },
+    {
+      "area": "_settled() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 618,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "title": "Not done: 3 \u2014 settled findings disappear from later accepted context",
+      "work": 2
+    },
+    {
+      "area": "area() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 233,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "title": "Not done: 4 \u2014 same-named methods collapse into one area",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 250,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "title": "Not done: 4 \u2014 earlier scored rounds are missed by the pre-fourth stop",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 118,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "title": "Not done: 2 and 3 \u2014 accepting a stop loses known history or the owner's reason",
+      "work": 2
+    },
+    {
+      "area": "read_stops() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 104,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "title": "Not done: 4 \u2014 a disposed Harm 3 read note triggers the three-round stop",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 787,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "title": "Not done: 2 and 3 \u2014 a case-only repeat is treated as fixed and dropped",
+      "work": 2
+    },
+    {
+      "area": "move() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 173,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "title": "Not done: 4 \u2014 a scored security finding leaves fail closed last",
+      "work": 1
+    },
+    {
+      "area": "read() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 288,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "title": "Not done: 3 \u2014 unchanged settled notes leave later $dispositions blocks",
+      "work": 2
+    },
+    {
+      "area": "stop_question() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 291,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "title": "Stop question hides an open Harm 3 finding that caused the stop",
+      "work": 2
+    },
+    {
+      "area": "move() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 173,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "title": "Not done: 4 \u2014 earlier security findings do not put fail closed first",
+      "work": 2
+    },
+    {
+      "area": "_accepted() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 557,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "title": "Not done: 3 \u2014 a dismissed below-bar finding leaves Known and accepted",
+      "work": 2
+    },
+    {
+      "area": "remember() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 150,
+      "outcome": "accepted",
+      "reason": "src/forge/score.py:150 Owner accepted on 2026-10-13: keeping coordinator dismissal reasons in known entries is a follow-up fix right after the merge",
+      "round": 6,
+      "security": false,
+      "title": "Not done: 2 and 3 \u2014 coordinator dismissal reasons are lost from known findings",
+      "work": 2
+    },
+    {
+      "area": "test_4_loops_stop_only_by_the_bar_and_by_area() in tests/test_score_bar.py",
+      "file": "tests/test_score_bar.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 282,
+      "outcome": "accepted",
+      "reason": "tests/test_score_bar.py:282 Owner accepted on 2026-10-13: the multiline-signature area proof is a follow-up fix right after the merge",
+      "round": 6,
+      "security": false,
+      "title": "Not done: 4's multiline-signature area proof",
+      "work": 1
+    },
+    {
+      "area": "instructions() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 327,
+      "outcome": "fixed in round 8",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Disputed keep settled-context carry-forward: same-commit rereviews lose earlier accepted findings",
+      "work": 2
+    },
+    {
+      "area": "read_stops() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 104,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
+      "round": 7,
+      "security": false,
+      "title": "Disputed keep disposed Harm 3 read stop: an at-bar disposition still holds the loop",
+      "work": 1
+    },
+    {
+      "area": "test_4_loops_stop_only_by_the_bar_and_by_area() in tests/test_score_bar.py",
+      "file": "tests/test_score_bar.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 263,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Not done: whitespace-folded finding identity proof",
+      "work": 1
+    },
+    {
+      "area": "_known() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 464,
+      "outcome": "fixed in round 10",
+      "reason": "",
+      "round": 9,
+      "security": false,
+      "title": "Disputed keep settled-context carry-forward: same-commit backfill loses durable known findings",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 1,
+      "line": 1342,
+      "outcome": "fixed in round 10",
+      "reason": "",
+      "round": 9,
+      "security": false,
+      "title": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
+      "work": 1
+    },
+    {
+      "area": "_settled() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 624,
+      "outcome": "accepted",
+      "reason": "src/forge/review.py:624 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: light-review findings settled as lived with stay in Known and accepted",
+      "round": 10,
+      "security": false,
+      "title": "Not done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6a9c02d18baf4a407a21a0b9f9ff91b2910bfd7163369ec111c2a9ec68b6fda0",
+    "changed": "83c861fc6d071a514e894a44bd51d697c3f659ca2206cf3683dd3872bd656481",
+    "commit": "999a4f4a43bfe84d49f742445b98009fd17c01f9",
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:624 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: light-review findings settled as lived with stay in Known and accepted",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 A scored `fix now` finding passes a P0-only light review and is recorded in `known` as `lived with`, but `_settled` recognizes earlier below-bar findings only when `score.bar` returns `follow-up` or `live with`. The later review's `$accepted` block is built from `_settled`, so it omits this finding. If the same item is reviewed again after sign-off, a repeat with the same file and title is neither presented as accepted nor automatically ignored, and can hold work under the full review gate.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 624,
+        "priority": "P1",
+        "title": "Not done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context",
+        "work": 2
+      }
+    ],
+    "id": "47ea36b7-7464-4f80-824a-2c68fef8ab8b",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "src/forge/review.py",
+    "src/forge/score.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T18:21:59.003408+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T21:50:39.482910+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:39:22.394452+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:20:54.793601+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T00:09:40.934689+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:59:33.481178+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:27:51.635632+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:05:34.201632+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:53:58.005211+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:19:44.528991+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T07:12:50.577915+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-13T05:53:58.032693+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/score.py",
+    "reason": "Accepted under the approved bar (Gain 3, Work 1, Harm 1; same finding already accepted with a follow-up filed): a disposed at-bar read note no longer holds the read loop.",
+    "wait_id": "d40651a9-deaf-4de2-925e-e8a0f4e66494",
+    "worker_round": null
+  }
+}

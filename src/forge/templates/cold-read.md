@@ -22,11 +22,11 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-A note blocks only when the plan is wrong, contradicts itself, or a builder could not act on it.
-Start each blocking finding with `Blocking:` after its number. Wording, style and optional
-improvements do not block: if you record one, start it with `Advisory:` after its number.
-Advisory notes are recorded but need no disposition or another round. A read passes when none
-of its notes is blocking. Unmarked findings are treated as blocking.
+Your scores (see Scores below) decide: a note with Harm 4 or 5, Gain 5, or Gain 3 or 4 and Work 1
+or 2 is at the bar and holds the plan; any other is a follow-up or lived with, and Forge writes its
+disposition. A read passes when no note is at the bar. Score a note at the bar only when
+the plan is wrong, contradicts itself, or a builder could not act on it. Still start each note with
+`Blocking:` or `Advisory:`; Forge reads that label only for a note without scores.
 
 ## What counts
 Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
@@ -167,11 +167,12 @@ whole doc again yourself. Its diff since your last round:
 
 $diff
 
-All earlier rounds' blocking findings and their answers, each with its disposition:
+All earlier rounds' settled notes, each with its scores and its disposition:
 
 $dispositions
 
-Previous advisory notes are recorded only; do not reassess or close them.
+These are known and accepted. A settled note comes back only with new evidence of harm, as
+`Disputed keep <n>: <the new harm>`, where `<n>` is its number.
 
 For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
 

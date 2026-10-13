@@ -26,6 +26,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Ask about this code" | Hand the question to the session's `explorer` subagent role |
 | "Close it" or "Is it ready?" | `forge close <item>` |
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
+| "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
 | "Let the agent merge" | The owner runs `forge merge enable` in their own terminal; never you |
 | "What should we build?" or "Find the real problem" | Discovery, below |
@@ -801,9 +802,9 @@ fix's folder:
 
 ## Planning a story
 
-A cold read passes when none of its notes is blocking: the plan is wrong, contradicts itself,
+A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
-`Advisory:`. Advisory notes are recorded and need no disposition or another round; unmarked
+`Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
 findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
@@ -1256,6 +1257,19 @@ permission refusals stop immediately; writes are never replayed by these read re
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
+Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
+status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
+its builder, one already merged and one another command works on. It starts them oldest first,
+several at a time up to this machine's agent places, and merges each one when it passes. A change
+not yet ready that changes a file an older change in the run also changes waits until that one
+merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
+works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
+the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
+alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
+you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
+its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+answers. Close's stop rule decides each stopped change, its 30-minute default included.
+
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
@@ -1321,7 +1335,7 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-Close holds the fourth review after three consecutive rounds blocked by serious findings,
+Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open,
 whatever files they were in. The existing same-file stop still applies from the third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
@@ -1343,6 +1357,10 @@ The owner can reverse it later with the same `forge close <item> --resolve` comm
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
+Close also stops at the third finding in one area (a Python function, else the file); its question
+proposes a structural move. The owner's answer settles the area: later findings there hold work
+only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
+
 When a cold read or review loop stops, ask the human the question it printed, in its words, one
 item per question. It names the item and what it delivers, says each open note or finding in plain
 words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
@@ -1355,7 +1373,7 @@ choices. Ask the owner exactly that question; never switch tools yourself. Recor
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-Read also stops after three consecutive cold-read rounds with blocking notes, for stories and
+Read also stops after three blocked cold-read rounds only when a disputed keep at the bar or a note with Harm 3 or more is open, for stories and
 specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
 recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
 Accept keeps the findings and records the owner's reason, allowing approval or confirmation of

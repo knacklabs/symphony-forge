@@ -84,7 +84,8 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     assert "- Gate: a P1 this page names elsewhere" in boundary[0]
 
     # Review: only Raise lines block; advice is limited to the named forms; one-line findings.
-    assert ("Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only "
+    # The bar now decides what blocks; the Raise lines still set the priority.
+    assert ("Every finding under a Raise line is P0 or P1. P2 and P3 are only "
             "the advice forms this page names") in review
     for rule in ("Write each finding as one line naming the defect and its impact, then brief "
                  "evidence", "No speculative suggestions",

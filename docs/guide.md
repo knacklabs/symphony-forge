@@ -123,13 +123,18 @@ In a client repo, finish the prototype review and customer sign-off above before
    stories in every Forge repo this machine has used, including its worktrees. Forge remembers
    those repos automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
-   `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
+   `forge work <KEY>/<TASK>`. Tasks with separate Scopes run at
    the same time, but one machine runs agents on half its available cores (at least one; work rounds, plan reads and
    close reviews, across all its repos): the rest wait in line, first come, first served, and print
    their place when they start waiting and each time it changes; a run that dies frees its place
    once its agent ends.
-6. Merge each ready pull request as described below. `forge merge` records the story done in its
-   last task's merge, using `--outcome "<outcome>"` or the story's title.
+6. Run `forge land --all` in the background in place of closing and merging by hand. It takes
+   every task and fix in close, starts them oldest first, several at a time up to the machine's
+   agent places, and merges each one when it passes, where the repo allows agent merges. A change
+   not yet ready that changes a file an older change in the run also changes waits for it. Only
+   one run works in a repo at a time. A change that needs a worker or you stops alone; the run
+   ends with `Merged (n): ... · Ready to merge (n): ... · Needs you (n): ...` and each stopped
+   change's reason and next step. The last task's merge records the story done, using its title.
 
 Only the human approves a story and chooses between options. The agent does the rest, including
 merging when the repo allows agent merges.
