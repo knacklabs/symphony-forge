@@ -452,6 +452,12 @@ def from_body(body: str) -> dict[str, Any]:
     # record instead of a crash.
     try:
         data = json.loads(match[1], parse_float=_sane, parse_int=lambda text: int(_sane(text)), parse_constant=_sane)
+        # A folded entry without valid times and seconds counts as unknown time.
+        if isinstance(summary := data.get("summary"), dict) and (folded := summary.get("folded")) is not None and not (
+                isinstance(folded, dict) and when(folded.get("start")) and when(folded.get("end"))
+                and all(type(folded.get(kind, 0)) in (int, float) and folded.get(kind, 0) >= 0
+                        for kind in ("working", "waiting", "unknown"))):
+            summary["folded"] = None
         merged({}, data)
         (data.get("ready") or {}).get("commit")
         "".join([data.get("legacy_text") or ""])

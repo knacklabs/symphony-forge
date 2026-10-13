@@ -142,6 +142,17 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
         assert 0 <= story["working_seconds"] - shared["working_seconds"] < 5, (story, shared)
         assert story["unknown_seconds"] <= shared["unknown_seconds"] + 1
         assert abs(story["total_seconds"] - shared["total_seconds"]) < 1, (story, shared)
+        # Anyone can edit the body: a folded entry with a word or a negative number never breaks the board.
+        record = re.search(r"<!-- forge:time-record (\{.*?\}) -->", published, re.S)
+        for minutes, value in ((10, "about an hour"), (15, -5)):
+            # A later clock, so the board fetches the edited pull request rather than its saved copy.
+            monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=minutes)).isoformat())
+            data = json.loads(record[1])
+            data["summary"]["folded"]["working"] = value
+            publish_snapshot(env, item, published.replace(record[1], json.dumps(data)))
+            edited = env.repo.forge("board", "--json")
+            assert edited.returncode == 0, edited.stderr
+            assert any(i["id"] == "SHOP" for i in json.loads(edited.stdout)["items"])
         return
     if shape == "repeated-ci-closes":
         assert shared["time_breakdown"]["waiting_for_ci"] is not None

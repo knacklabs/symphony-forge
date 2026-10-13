@@ -392,7 +392,8 @@ checkouts and recompute repeated findings and overlapping time. The board reads 
 record alongside local observations; `source` says which it had. A GitHub merge ends the last
 wait at its merge time and names its merger. Story time counts each instant once: working when
 any part or recorded plan read is working, waiting when none is working and any is waiting,
-otherwise unknown. Human times use rounded plain units; JSON keeps raw seconds. Rebuilt history
+otherwise unknown. Inside a part's folded time range, the story's split between working and
+waiting is approximate; the totals stay exact. Human times use rounded plain units; JSON keeps raw seconds. Rebuilt history
 keeps its label and missing evidence remains unknown. New repos get this at init; existing
 repos, including earlier adoptions, get it on upgrade and sync.
 Worker questions and their answers refresh an existing pull request's record; a question before
