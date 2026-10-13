@@ -6,17 +6,144 @@
     "src/forge/board_visuals.py",
     "tests/test_board_runway.py"
   ],
+  "known": [
+    {
+      "area": "src/forge/board_visuals.py",
+      "file": "src/forge/board_visuals.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 11,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: one-line graph key",
+      "work": 1
+    },
+    {
+      "area": "page() in src/forge/board_visuals.py",
+      "file": "src/forge/board_visuals.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 73,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: functional check",
+      "work": 1
+    },
+    {
+      "area": "docs/board-screens/page/page-forge-1440-light.png",
+      "file": "docs/board-screens/page/page-forge-1440-light.png",
+      "gain": 3,
+      "harm": 2,
+      "line": 1,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 2
+    },
+    {
+      "area": "test_8_below_the_fold() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 87,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: below-the-fold row test",
+      "work": 2
+    },
+    {
+      "area": "_svg() in src/forge/board_visuals.py",
+      "file": "src/forge/board_visuals.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 19,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Roadmap map is fixed at 260 pixels on laptop",
+      "work": 1
+    },
+    {
+      "area": "docs/board-screens/page/page-client-390-light-rows.png",
+      "file": "docs/board-screens/page/page-client-390-light-rows.png",
+      "gain": 2,
+      "harm": 1,
+      "line": 1,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: client mobile rows browser proof",
+      "work": 1
+    },
+    {
+      "area": "_times() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 109,
+      "outcome": "open",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Standard: Add a Playwright browser test for the board page",
+      "work": 2
+    },
+    {
+      "area": "test_8_below_the_fold() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 78,
+      "outcome": "open",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Not done: test needs-you and blocked row ordering",
+      "work": 2
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1ae63ee099e10d4946ed3e647209ec21630e071fbecf1ccdb10e463c1bfb09b3",
-    "changed": "d44aae273aa0015cb9b4d857fe001b05a496ba7313d3063bcd3d60581f2abe8d",
-    "commit": "ef9429ace859922e9849d42fda8ea0d5b717f0af",
+    "branch_diff": "75ffaba80d98e908e867cb60b462a5faa5ebeec1a6fc39f66628472543adaab8",
+    "changed": "ecadc987a8f91a249b349b11bb1d8b15234663201c7b8cd6a8be8a8bed5925f2",
+    "commit": "b1af0421c2b540957ffdddd1a1b2f41ca1536e26",
     "dismissals": [],
-    "findings": [],
-    "id": "a3ee104c-8e60-4da3-acb1-f35bb0d86bb1",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Gate. The standard requires: \u201cEach user-facing Done-when item gets one Playwright browser test when it changes runtime behaviour.\u201d The new item 8 test runs `forge board` and inspects HTML and CSS strings, but never opens the page in a browser. The screenshots provide visual proof, but no automated browser check would catch a broken narrow layout or inaccessible fold in a later change.",
+        "file": "tests/test_board_runway.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 109,
+        "priority": "P1",
+        "title": "Standard: Add a Playwright browser test for the board page",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The named below-the-fold proof checks the order of rendered `data-group` values, but never checks that an item from JSON's Needs you or Blocked lists appears in its corresponding group. Its explicit row assertions cover only in progress, planned, no plan yet and done. Misclassifying every needs-you or blocked item as planned could still pass this test, leaving two required positions in item 8 unproved.",
+        "file": "tests/test_board_runway.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 78,
+        "priority": "P1",
+        "title": "Not done: test needs-you and blocked row ordering",
+        "work": 2
+      }
+    ],
+    "id": "359861a8-51e3-491b-9a57-0e3782bc37ce",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T23:45:10.134451+00:00",
@@ -36,6 +163,10 @@
     },
     {
       "at": "2026-10-13T06:01:49.078768+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T07:49:35.204726+00:00",
       "step": "review"
     }
   ],
