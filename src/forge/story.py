@@ -529,7 +529,16 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
 
 
 def plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
-    """The published story unless the local story already includes it."""
+    """The published story unless the local story already includes it; once per story for a snapshot."""
+    if history is None:
+        return _plan_ref(top, key)
+    found = history.setdefault("plan refs", {})
+    if key not in found:
+        found[key] = _plan_ref(top, key, history)
+    return found[key]
+
+
+def _plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
     local, remote = f"story/{key}", f"origin/story/{key}"
     landed = landed_ref(top)
     rel = f"plans/{key}.md"

@@ -197,9 +197,16 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         key = next((key for key in alerts if key in str(state.get("why") or "")), None)
         return alerts.pop(key) if key else None
     trees = story.worktrees(top)
-    merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
-    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
-           if isinstance(pr.get("url"), str)}
+    # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
+    github = board_facts.prs(top) if history is not None else None
+    if github is None:
+        merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
+        opened = _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
+    else:
+        merged_prs = ({*(pr["headRefName"] for pr in board_facts.merged_prs(github)),
+                       *board_facts.merged_before_weeks(top)} if trees else set())
+        opened = [pr for pr in github["open"] if isinstance(pr.get("headRefName"), str)]
+    prs = {pr["headRefName"]: pr for pr in opened if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
                     for pr in board._machine_prs(top)
@@ -236,7 +243,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if (branch in trees or branch in merged_prs or kind not in ("fix", "forge")
                 or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
                 or history is not None and repo.state_path(name) in history["expired"]
-                or story.show(top, landed, repo.state_path(name)) is not None):  # merged
+                or (repo.state_path(name) in history["states"] if history is not None  # merged
+                    else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
@@ -662,7 +670,8 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     if not isinstance(receipt, dict):
         receipt = {}
     status, branch = state.get("status"), state.get("branch")
-    ref = review_ref(top, branch, pr) if branch else ""
+    # A finished item is never ready, so its review ref would go unread.
+    ref = review_ref(top, branch, pr) if branch and status not in ("merged", "done", "hotspot") else ""
     record = time_records.from_body((pr or {}).get("body") or "")
     evidence = {}
     if ref and receipt.get("review") == "clean" and receipt.get("commit") == ref:
@@ -708,7 +717,13 @@ def _commit(top: Path, ref: str) -> str:
 
 def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
     """The commit an item's review history and readiness are read at: the pull request's head
-    (GitHub's head, else origin's branch), unless the local branch contains it."""
+    (GitHub's head, else origin's branch), unless the local branch contains it. Read once per
+    command, like the commit log: a fetch, merge, switch or checkout forgets it."""
+    return repo.command_fact(("commits", "review ref", branch, (pr or {}).get("headRefOid")), top,
+                             lambda: _review_ref(top, branch, pr))
+
+
+def _review_ref(top: Path, branch: str, pr: dict[str, Any] | None) -> str:
     local = _commit(top, f"refs/heads/{branch}")
     head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
     if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it

@@ -137,6 +137,9 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
+    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
+        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+        (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
         key = ("landed ref", _common_path(cwd))
         if key in _command_cache and not _command_cache[key].startswith("origin/"):
