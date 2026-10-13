@@ -388,7 +388,7 @@ detail of any kind (round lines, intervals, then raw events such as repeated CI 
 one "Rounds 1–N" line of totals and finding counts, oldest first; the newest round keeps its own numbered line,
 and its folded retries add to it. Free text in each entry is cut to 300 characters, and a round
 too big on its own, such as a huge review, folds whole into its line. Live progress stays local. So a
-long item stays inside GitHub's body limit, and its total time still equals the sum of its parts. Close and merge retain observations from other
+long item stays inside GitHub's body limit, and folding never changes its total time. Close and merge retain observations from other
 checkouts and recompute repeated findings and overlapping time. The board reads this shared
 record alongside local observations; `source` says which it had. A GitHub merge ends the last
 wait at its merge time and names its merger. Story time counts each instant once: working when
