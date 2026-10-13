@@ -1,11 +1,81 @@
 {
   "branch": "task/FORGE-QUEUE-1-QUEUE",
+  "flagged": [
+    "docs/commands.md",
+    "src/forge/land.py",
+    "tests/test_queue_land_all.py"
+  ],
   "part_line_limit": 400,
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2261dc9667992c28782bb19a3985734be567d83839555d061a2cc81c549200e6",
+    "changed": "bd1452f98a2427b2285dbdb9bad163c5ba78b34aca96274130f11a3ceffc4607",
+    "commit": "b73ab668e478c91027ffac0e3349e60b063ba9cc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. The lock is read and then overwritten without atomic acquisition. Two runs starting together can both pass the check and close or merge the same changes concurrently. The comment at line 263 acknowledges this race; the test starts its second run only after the first has printed output.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 264,
+        "priority": "P1",
+        "title": "Not done: only one land run works in a repo at a time",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. This predicate treats every open run without a `process` field as busy forever. Review and test runs are recorded without that field (`src/forge/review.py:418,704`), and `board.active_runs` retains a start with no end (`src/forge/board.py:207`). If a close is killed during either phase, its machine entry ends but `forge land --all` permanently leaves the change out.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 291,
+        "priority": "P1",
+        "title": "Not done: a killed close does not keep its change busy",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. `_item_readiness` receives its default `checks=\"unknown\"` here. Its `checks == \"fail\"` branch (`src/forge/nextstep.py:646`) is therefore unreachable, so a change with a matching ready receipt and a subsequently failed check is treated as ready. It bypasses the promised hold behind an older change editing the same file and starts closing concurrently.",
+        "file": "src/forge/land.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 300,
+        "priority": "P1",
+        "title": "Not done: readiness checks are not failing before the overlap bypass",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The command list adds `forge land --all`, but the delivered guide still directs coordinators to run `forge work`, `forge close`, and then merge each ready pull request (`docs/guide.md:125-132`). It has no land paragraph. The guide therefore continues to prescribe the manual flow this part is meant to replace.",
+        "file": "docs/commands.md",
+        "gain": 3,
+        "harm": 1,
+        "line": 27,
+        "priority": "P1",
+        "title": "Not done: guide's land row and paragraph",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The concurrency assertion counts parent `Starting` lines until child completion, not intervals when children are actually in close. It passes if the children start together but their closes run serially. The CI fixture also records no process identity (`tests/test_queue_land_all.py:232-233`), so it cannot distinguish a live wait from a dead one. These named parts of item 1 remain unproved.",
+        "file": "tests/test_queue_land_all.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 194,
+        "priority": "P1",
+        "title": "Not done: test_1 proves concurrent closes",
+        "work": 2
+      }
+    ],
+    "id": "c154ce0e-dffb-4db4-a9fc-b7f7c6ec0ede",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T23:45:15.681956+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T03:01:19.898761+00:00",
+      "step": "review"
     }
   ]
 }

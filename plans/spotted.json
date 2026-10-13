@@ -386,6 +386,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/commands.md\tNot done: guide's land row and paragraph\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "docs/commands.md",
+      "line": 27,
+      "text": "Not done: guide's land row and paragraph",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tGuide gives conflicting requirements for Claude-only use\tclaude-sonnet-default",
       "kind": "bug",
       "path": "docs/guide.md",
@@ -2608,6 +2619,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: a killed close does not keep its change busy\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 291,
+      "text": "Not done: a killed close does not keep its change busy",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
       "kind": "bug",
       "path": "src/forge/land.py",
@@ -2637,6 +2659,28 @@
       "text": "Not done: land proceeds to close after a handed-back round with no commit",
       "from": "blocking",
       "item": "FORGE-TOOLS-1/WORK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: only one land run works in a repo at a time\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 264,
+      "text": "Not done: only one land run works in a repo at a time",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: readiness checks are not failing before the overlap bypass\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 300,
+      "text": "Not done: readiness checks are not failing before the overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",
       "closed_by": null
     },
@@ -6322,6 +6366,17 @@
       "text": "Not done: New and previously adopted clients run the proposed picker through close",
       "from": "blocking",
       "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves concurrent closes\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 194,
+      "text": "Not done: test_1 proves concurrent closes",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",
       "closed_by": null
     },
