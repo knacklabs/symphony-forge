@@ -506,11 +506,10 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
     part = item(Path("."), "", {"status": "merged", "steps": [{"step": "start", "at": start}] if start else []},
                 ended_at=until.isoformat(), summary=summary, **past)
     intervals: list[dict[str, Any]] = []
-    # ponytail: sub-second slivers join the interval before them, so a summarised round's
-    # breakdown by interval may shift by under a second per sliver; its totals stay exact.
+    # Adjacent intervals of one category join; a short step keeps its own boundaries, since
+    # waits and stages are told apart by where they start and end.
     for span in part["intervals"]:
-        if intervals and intervals[-1]["end"] == span["start"] and (intervals[-1]["category"] == span["category"] or (
-                when(span["end"]) - when(span["start"])).total_seconds() < 1):
+        if intervals and intervals[-1]["end"] == span["start"] and intervals[-1]["category"] == span["category"]:
             intervals[-1]["end"] = span["end"]
         else:
             intervals.append({**span})
