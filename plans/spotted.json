@@ -7646,6 +7646,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: proof list\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 56,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove a large latest review stays within the fixed record size\tpr-time-record-summaries",
       "kind": "bug",
       "path": "tests/test_pull_request_time_summaries.py",
