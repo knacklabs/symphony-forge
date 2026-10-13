@@ -38,46 +38,19 @@ def _forge_hooks(text: str) -> list[tuple[str, str]]:
         return [(event, hook["command"]) for event, groups in hooks.items() for group in groups
                 for hook in group.get("hooks", []) if sync.FORGE_COMMAND.search(hook.get("command", ""))]
     except (ValueError, AttributeError, TypeError, KeyError): return []
-def _codex_keys(folder: Path) -> list[str]:
-    """normalized_project_trust_keys in codex-rs/config/src/loader/mod.rs (rust-v0.159.2): the
-    canonical spelling, then the original; Windows lowercases them, nothing else is normalized."""
-    keys = [os.path.realpath(folder), str(folder)]
-    return list(dict.fromkeys(key.lower() if os.name == "nt" else key for key in keys))
-def _codex_root(top: Path, markers: list[str]) -> Path:
-    """discover_project_root in codex-rs/config/src/loader/mod.rs: the nearest folder holding a
-    marker (a .git folder counts only with a HEAD); none, or no markers, leaves the checkout."""
-    for folder in (top, *top.parents):
-        for marker in markers:
-            path = folder / marker
-            if path.exists() and not (marker == ".git" and path.is_dir() and not (path / "HEAD").exists()):
-                return folder
-    return top
 def _codex_trust(top: Path, config: Path) -> tuple[bool, str]:
-    """ProjectTrustContext.decision_for_dir in codex-rs/config/src/loader/mod.rs (rust-v0.159.2): for
-    the checkout holding .codex, Codex tries its keys, then its project root's (project_root_markers,
-    default .git), then its main checkout's; the first entry with a trust level decides, matched by
-    exact key (lowercased on Windows). A config Codex would reject counts as untrusted. Returns
-    whether Codex trusts the project and the [projects] key to set."""
+    """Trusted only on an exact trusted [projects] entry for the checkout or its main checkout (each
+    as given or as its real path); a missing, untrusted or unreadable entry fails closed, and a
+    parent folder's entry never counts. Returns the verdict and the main checkout's key to add."""
     common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
-    try:
-        data = tomllib.loads(sync.read(config))
-        markers, projects = data.get("project_root_markers", [".git"]), data.get("projects", {})
-        if not (isinstance(markers, list) and all(isinstance(m, str) for m in markers)
-                and isinstance(projects, dict) and all(isinstance(v, dict) for v in projects.values())):
-            raise TypeError
-        levels = {key: project["trust_level"] for key, project in sorted(projects.items()) if "trust_level" in project}
-        if any(level not in ("trusted", "untrusted") for level in levels.values()): raise TypeError
-    except (tomllib.TOMLDecodeError, TypeError):
-        return False, _codex_keys(common.parent)[0]
-    if os.name == "nt":  # an exact key first, then the first key that lowercases to it
-        levels = {**{key.lower(): level for key, level in reversed(list(levels.items()))}, **levels}
-    folders = (top, _codex_root(top, markers), common.parent)
-    key = next((key for folder in folders for key in _codex_keys(folder) if key in levels), _codex_keys(common.parent)[0])
-    return levels.get(key) == "trusted", key
+    keys = {str(folder) for folder in (top, common.parent)} | {os.path.realpath(f) for f in (top, common.parent)}
+    try: levels = [project.get("trust_level") for key, project in tomllib.loads(sync.read(config)).get("projects", {}).items() if key in keys]
+    except (tomllib.TOMLDecodeError, AttributeError): levels = []
+    return bool(levels) and all(level == "trusted" for level in levels), os.path.realpath(common.parent)
 def trust_fix(key: str, config: Path) -> str:
-    return ("open Codex here and trust the project, or set trust_level = \"trusted\" under "
-            f'[projects.{json.dumps(key)}] in {config}; Codex reads only the exact entry for this checkout, its project '
-            "root or its main checkout, not other parent folders, and the main checkout's entry covers every worktree Forge makes")
+    return ("open Codex here and trust the project, or add trust_level = \"trusted\" under "
+            f"[projects.{json.dumps(key)}] in {config}, the main checkout, which covers every worktree Forge makes; "
+            "a parent folder's entry does not count")
 def _last(done: subprocess.CompletedProcess[str] | Exception) -> str:
     if not isinstance(done, (subprocess.CompletedProcess, subprocess.CalledProcessError)): return str(done).partition("\nNext: ")[0]
     return ((done.stderr or "").strip() or (done.stdout or "").strip() or f"exit code {done.returncode}").splitlines()[-1]
