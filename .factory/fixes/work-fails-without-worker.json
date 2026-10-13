@@ -13,7 +13,7 @@
       "gain": 3,
       "harm": 3,
       "line": 651,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -26,7 +26,7 @@
       "gain": 3,
       "harm": 1,
       "line": 60,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -36,36 +36,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "721108305c30595f855bf325223e7008c019689df67486d0af083cb0b82c5ce7",
-    "changed": "e79dc56dccf8f405d68cac43cd35c0d6501343e902c55181d5eedbb91a423686",
-    "commit": "b52289428d8483b9aec1e90d21c19be249c6943b",
+    "branch_diff": "513c5ee75664894216330526371cd1969ed21cd9bdf1a95ea64331f3e1c2e0e7",
+    "changed": "85afbe69b7dc783b776fa79dd90cb835b5a760d21d5e60257a22fc7cc28e335d",
+    "commit": "b727233f14e74b7483081fbcdb29a15be5d10069",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Lines 650\u2013659 treat any Claude `result` event with exit code 0 as a completed worker round. Claude can emit a successful result with `num_turns: 0`, an empty result, and no assistant message when a prompt is consumed before the model runs; [Claude Code maintainers reproduced that stream](https://github.com/anthropics/claude-code/issues/80223). In that case `final_result` becomes an empty string, so `forge work` still exits 0. The new command test covers a missing result event, but not this zero-turn result.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 651,
-        "priority": "P1",
-        "title": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The new refusal tells the coordinator to run Claude interactively to answer a prompt before retrying `forge work`. The repository review rule requires a change to a coordinator's command or step in the flow to update `src/forge/templates/skill.md` or the worker brief in the same change. Neither template is changed, so this recovery step is absent from the shipped guidance.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 60,
-        "priority": "P1",
-        "title": "Coordinator guidance omits the new Claude recovery step",
-        "work": 1
-      }
-    ],
-    "id": "d4fec30f-e704-4f55-9bdd-a841b739ecb2",
-    "status": "blocked"
+    "findings": [],
+    "id": "4f89855a-b233-4658-9c94-ebc6eb3e9e7f",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T08:31:27.041645+00:00",
@@ -73,6 +52,10 @@
     },
     {
       "at": "2026-10-13T15:35:38.176844+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T16:22:42.727554+00:00",
       "step": "review"
     }
   ],
