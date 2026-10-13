@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T04:20:36.790462+00:00",
+      "because": "The cache is the provable fix for the npm timeouts; the longer test timeout and the vanished-file skip are small test-support changes with no rule of their own",
+      "done_when": "The Node client tests keep npm's download cache between CI runs and give a cold download enough time, and the leftover-process scan skips files that disappear while it runs"
+    }
+  ],
   "base": "8911ac1f23f12a3818b451c7d855fd8d5eeb2efe",
   "branch": "fix/ci-npm-and-scan-flakes",
-  "done_when": "The Node client tests keep npm's download cache between CI runs and give a cold download enough time, and the leftover-process scan skips files that disappear while it runs",
+  "done_when": "Forge's own pull request checks keep npm's download cache between runs",
   "flagged": [
     "tests/conftest.py",
     "tests/test_close_keeps_full_tests_in_ci.py",
