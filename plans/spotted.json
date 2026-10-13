@@ -3301,6 +3301,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine gets a command that cannot run\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 275,
+      "text": "Not done: a fix started on another machine gets a command that cannot run",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: a fix started on another machine is offered again\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
