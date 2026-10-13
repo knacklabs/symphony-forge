@@ -137,9 +137,11 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
         # Folded intervals keep their working and waiting time in the story's total.
         result = env.repo.forge("board", "--json")
         story = next(i for i in json.loads(result.stdout)["items"] if i["id"] == "SHOP")
-        for kind in ("working", "waiting"):
-            assert abs(story[f"{kind}_seconds"] - shared[f"{kind}_seconds"]) < 1, (kind, story, shared)
+        assert abs(story["waiting_seconds"] - shared["waiting_seconds"]) < 1, (story, shared)
+        # The story also counts its plan reads as working, a few seconds here.
+        assert 0 <= story["working_seconds"] - shared["working_seconds"] < 5, (story, shared)
         assert story["unknown_seconds"] <= shared["unknown_seconds"] + 1
+        assert abs(story["total_seconds"] - shared["total_seconds"]) < 1, (story, shared)
         return
     if shape == "repeated-ci-closes":
         assert shared["time_breakdown"]["waiting_for_ci"] is not None

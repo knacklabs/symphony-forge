@@ -628,6 +628,29 @@ def refresh_record(top: Path, key: str, state: dict[str, Any], body: str) -> str
     return re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", replace, body, count=1, flags=re.S)
 
 
+def _claim(intervals: list[dict[str, Any]], fold: dict[str, Any]) -> list[dict[str, Any]]:
+    """Give a folded part's working and waiting seconds to still-unknown instants in its range,
+    so each instant is counted once even where parts' folded ranges overlap."""
+    need = {kind: fold.get(kind, 0) for kind in ("working", "waiting")}
+    low, high = when(fold["start"]), when(fold["end"])
+    out = []
+    for interval in intervals:
+        a, b = when(interval["start"]), when(interval["end"])
+        x, y = max(a, low), min(b, high)
+        if interval["kind"] != "unknown" or x >= y:
+            out.append(interval)
+            continue
+        pieces, at = [(a, x, "unknown")], x
+        for kind in need:
+            take = min(need[kind], (y - at).total_seconds())
+            if take > 0:
+                pieces.append((at, at + timedelta(seconds=take), kind))
+                at, need[kind] = at + timedelta(seconds=take), need[kind] - take
+        pieces += [(at, y, "unknown"), (y, b, "unknown")]
+        out += [{"start": p.isoformat(), "end": q.isoformat(), "kind": kind} for p, q, kind in pieces if q > p]
+    return out
+
+
 def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unfinished: bool = True,
           started_at: str | None = None, finished_at: str | None = None) -> dict[str, Any]:
     spans = [span for part in parts for span in part.get("intervals", [])]
@@ -655,14 +678,10 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
         kind = "working" if "working" in kinds else "waiting" if "waiting" in kinds else "unknown"
         totals[kind] += (b - a).total_seconds()
         intervals.append({"start": a.isoformat(), "end": b.isoformat(), "kind": kind})
-    for f in folds:  # Unknown time inside a folded range was that part's working, then waiting.
-        free = sum(max(0.0, (min(when(i["end"]), when(f["end"])) - max(when(i["start"]), when(f["start"]))).total_seconds())
-                   for i in intervals if i["kind"] == "unknown")
-        for kind in ("working", "waiting"):
-            moved = min(f.get(kind, 0), free)
-            totals[kind] += moved
-            totals["unknown"] -= moved
-            free -= moved
+    for fold in folds:  # Unknown instants in a part's folded range take its working, then waiting.
+        intervals = _claim(intervals, fold)
+    totals = {kind: sum((when(i["end"]) - when(i["start"])).total_seconds() for i in intervals if i["kind"] == kind)
+              for kind in totals}
     return {"intervals": intervals, "time_breakdown": totals,
             **{f"{kind}_seconds": seconds if points else None for kind, seconds in totals.items()},
             "total_seconds": sum(totals.values()) if points else None}
