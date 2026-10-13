@@ -34,7 +34,9 @@
   plan, and times read as "15 seconds", never "15.001 seconds".
 - Every teammate sees the same facts after fetching, because each item's time story travels in
   its pull request.
-- The Claude Code pane opens with the same summary lines.
+- The Claude Code pane's Board tab opens with one summary line, then groups for what needs you,
+  what is stuck, what is moving and what is ready to merge. Each item shows its state in plain
+  words and its next step.
 - Upgrading fills in the history: as its last step the upgrade rebuilds where time went for open
   work and for work finished in the last six weeks, from what git and GitHub recorded, marks it
   "rebuilt from history" and leaves anything it can't tell as unknown. Older work shows at once
@@ -61,7 +63,7 @@ correctly in a minute; the target is 4 of 4 by 2026-11-15.
 6. **Below the first screen, the team and each person show merged pull requests per week for the last six full weeks, split into through Forge and around Forge, with people in alphabetical order and no ranking, beside a list of the pull requests merged around Forge in the last 7 days with title, author and merge day.**
 7. **In a 1440 by 900 window the first screen, without scrolling, shows a one-sentence summary, the labelled totals, at most five rows each of Needs you, In progress and Blocked or slow with "and N more" opening the rest, and Pace with go-live.**
 8. **Below the first screen come a one-line key for the graph's shapes and the words part, fix and plan, and every story and fix sorted needs-you, blocked, in progress, planned, no plan yet, then done (folded away), on a page that uses the full laptop width, reads in light and dark mode, and stacks to one column in a narrow window.**
-9. **The Claude Code pane opens with the same summary sentence, totals, Needs you, In progress, Blocked or slow and go-live lines as the board's first screen.**
+9. **The Claude Code pane's Board tab opens with one summary line, then Needs you, Stuck, Moving and Ready to merge groups, each item with its state in plain words and its next step.**
 10. **As the last step of an upgrade, Forge rebuilds the time story of every open item and every item merged in the last six weeks that has none, from its commits, review results, checks and merge time, marks it as rebuilt from history and leaves what it can't tell unknown, while older items show who started, approved and merged them and their review results from git and GitHub, and the agent then opens the board and reports what is still missing.**
 11. **Below the first screen, a dependency graph of every roadmap story shows each planned story's parts in columns by when they can start, so parts that can run in parallel share a column, with arrows for waits within and across stories, running parts marked, finished parts folded into "N done", and each story with no plan as its own box, with open fixes in one row at the top marked running or waiting.**
 12. **A bar pinned to the top jumps to Overview, Roadmap, Stories and Fixes and every section folds, each story shows its key small beside its title and its history lists its plan's cold-read rounds, a story counts as building only once a part has started, Needs you also lists the blocking problems `forge next` reports, and every time reads in rounded plain units.**
