@@ -455,9 +455,9 @@ def require_trust(top: Path) -> None:
     doesn't trust, Codex lists and runs no project hook, Forge's own included."""
     from forge import doctor  # doctor imports codex
     config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    trusted, folder = doctor._codex_trust(top, config)  # pyright: ignore[reportPrivateUsage]
+    trusted, fix = doctor._codex_trust(top, config)  # pyright: ignore[reportPrivateUsage]
     if not trusted:
-        repo.refuse(REFUSALS["untrusted"], fix=doctor.trust_fix(folder, config))
+        repo.refuse(REFUSALS["untrusted"], fix=fix)
 
 
 def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:

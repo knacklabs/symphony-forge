@@ -47,4 +47,6 @@ def test_1_trust_follows_codex_rule(repo, gh, tmp_path, monkeypatch, history):
     # The main checkout's exact entry covers the worktree.
     assert ROW not in doctor([(str(main), "trusted")])
     # The worktree's own untrusted entry refuses, even with a trusted main checkout.
-    assert ROW in doctor([(str(main), "trusted"), (str(worktree), "untrusted")])
+    said = doctor([(str(main), "trusted"), (str(worktree), "untrusted")])
+    assert ROW in said and (f'remove [projects.{json.dumps(str(worktree))}] from {config} or set its '
+                            'trust_level = "trusted"') in said, said
