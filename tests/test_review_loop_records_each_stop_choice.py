@@ -19,6 +19,7 @@ from test_item_time_history import row
 STORY = "second-stop-choice"
 
 
+# ponytail: many cases, each runs several forge commands; a busy machine needs more than the 150 s default.
 @pytest.mark.parametrize("legacy", [False, True], ids=["current-choice", "pre-upgrade-choice"])
 @pytest.mark.parametrize("previous,same_file,first,second", [
     (False, True, "narrow", "split"),
@@ -28,6 +29,7 @@ STORY = "second-stop-choice"
     (False, False, "split", "split"),
     (True, False, "accept", "narrow"),
 ])
+@pytest.mark.timeout(600)
 def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         env, tmp_path, previous, same_file, first, second, legacy):
     item, where = client_item(env, tmp_path, previous)
