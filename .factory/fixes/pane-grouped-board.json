@@ -153,7 +153,10 @@
     "id": "8fc1c518-2999-4476-874c-44deb612afa3",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/mod/hooks/summary.ts"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T12:38:35.000433+00:00",
@@ -171,9 +174,13 @@
   "stop": {
     "area": "src/forge/mod/hooks/summary.ts",
     "at": "2026-10-13T15:32:21.640007+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/mod/hooks/summary.ts",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "0cba9049-a5ac-45fb-9519-7ac3e15bae2e"
+    "reason": "Owner chose one more round: ready rows always show 'ready to merge' and the merge step; a worker question shows how to answer it; both tested through the Board tab.",
+    "wait_id": "0cba9049-a5ac-45fb-9519-7ac3e15bae2e",
+    "worker_round": null
   },
   "why": "The pane's Board tab is hard to read: raw timestamps, unknown rounds, zero times, a stage chain that does not mark where an item is, and priority codes"
 }
