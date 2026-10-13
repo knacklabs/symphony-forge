@@ -92,7 +92,7 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
         diagnostics = [finding("P2", f"Basket diagnostic {n}: " + "Recorded quantity detail. " * 80)
                        for n in range(80)]
         for diagnostic in diagnostics:
-            diagnostic["body"] = "Recorded basket diagnostic detail. " * 80
+            diagnostic["body"] = "Gain 2, Work 1, Harm 1\n" + "Recorded basket diagnostic detail. " * 80
     env.reviews(blocked(blocker, *diagnostics))
     reject_oversized_bodies(env)
     first = env.close(item)

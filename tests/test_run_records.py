@@ -61,6 +61,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         _cached_test_result_is_recorded_as_skipped(env)
         return
     if family == 'adopted':
+        request.getfixturevalue("claude_session")  # its Codex worker runs through the kit
         _previously_adopted_client_records_runs_after_upgrade(
             request.getfixturevalue('unsynced_up'), monkeypatch,
             request.getfixturevalue('sdk_data'))
@@ -272,6 +273,7 @@ def _control_requests_do_not_start_agent_runs(env, monkeypatch, request):
     from test_chatview_start import _ready
     from test_codex_worker import _sent
     repo = env.repo
+    request.getfixturevalue("claude_session")  # its Codex worker runs through the kit
     where, calls = _ready(repo, monkeypatch, request.getfixturevalue('sdk_data'))
     config = where / 'forge.toml'
     env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'

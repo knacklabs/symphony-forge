@@ -15,6 +15,8 @@ from test_setup import _fresh_client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
 STORY = "FIX-TESTS-ONCE-PER-ROUND"
+# A cold CI runner downloads jest or vitest inside close, which can take minutes.
+NPM_CLOSE = 240
 
 
 def _command(env, command):
@@ -62,6 +64,7 @@ def test_1_close_selects_pytest_tests_and_red_ci_returns_the_item(env, tmp_path)
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-and-sync"])
 @pytest.mark.parametrize("runner", ["jest", "vitest"])
+@pytest.mark.timeout(NPM_CLOSE + 120)
 def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_ci(
         unsynced_up, tmp_path, monkeypatch, previous, runner):
     up, repo = unsynced_up, unsynced_up.repo
@@ -127,7 +130,7 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     item, where = up.env.start_fix({selected: (client / selected).read_text("utf-8") + "// Changed\n"})
     up.env.checks(GREEN)
 
-    closed = up.env.close(item)
+    closed = up.env.repo.forge("close", item, timeout=NPM_CLOSE)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert receipt.read_text("utf-8") == "ran", closed.stdout + closed.stderr
@@ -136,6 +139,7 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
 
 
 @pytest.mark.parametrize("runner", ["go", "custom", "compound-npm", "pipe-npm"])
+@pytest.mark.timeout(NPM_CLOSE + 120)
 def test_3_close_keeps_the_full_command_for_other_runners(env, tmp_path, monkeypatch, runner):
     # The recorded narrow replaces selective Go and generic filename forwarding with
     # unchanged full commands, including helper-only test edits and custom launchers.
@@ -183,7 +187,7 @@ def test_3_close_keeps_the_full_command_for_other_runners(env, tmp_path, monkeyp
     _command(env, command)
     item, _ = env.start_fix({changed: (env.repo.path / changed).read_text("utf-8") + "\n"})
 
-    closed = env.close(item)
+    closed = env.repo.forge("close", item, timeout=NPM_CLOSE)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert sorted(path.name for path in receipts.iterdir()) == expected
@@ -191,6 +195,7 @@ def test_3_close_keeps_the_full_command_for_other_runners(env, tmp_path, monkeyp
 
 @pytest.mark.parametrize("runner", ["vitest", "jest"])
 @pytest.mark.parametrize("change", ["touched-test", "dependency"])
+@pytest.mark.timeout(NPM_CLOSE + 120)
 def test_4_close_uses_native_node_changed_files_including_jest_tests_directories(
         env, tmp_path, monkeypatch, runner, change):
     # Native discovery owns __tests__ and import graphs. The source and test names
@@ -219,7 +224,7 @@ def test_4_close_uses_native_node_changed_files_including_jest_tests_directories
     changed = selected if change == "touched-test" else "shared.js"
     item, _ = env.start_fix({changed: (env.repo.path / changed).read_text("utf-8") + "// Changed\n"})
 
-    closed = env.close(item)
+    closed = env.repo.forge("close", item, timeout=NPM_CLOSE)
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert receipt.read_text("utf-8") == "ran", closed.stdout + closed.stderr

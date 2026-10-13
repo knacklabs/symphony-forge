@@ -65,7 +65,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         # The advice note counts toward what Accept dismisses.
         env.reviews(blocked(finding("P3", "Advice only"),
                             {**finding("P1", f"Not done: Round {number} defect", path),
-                             "body": "Raise: Not done \u2014 Saving at `app.py:3` drops the basket "
+                             "body": "Gain 3, Work 2, Harm 1\nRaise: Not done \u2014 Saving at `app.py:3` drops the basket "
                                      "(a3f9c2e1b). Returning shoppers lose their saved items. "
                                      "More detail."}))
         result = env.close(item)

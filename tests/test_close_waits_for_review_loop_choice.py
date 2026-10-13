@@ -141,10 +141,10 @@ def test_5_later_review_instructions_expire_acceptance_but_keep_evidence_dismiss
     assert reviewed.returncode == 0, reviewed.stderr
     assert len(env.review_calls()) == before + 1
     prompt = env.prompt()
-    assert "Unfixed defect (src/a.py:1): Evidence for: Unfixed defect" in prompt
+    assert "Unfixed defect (src/a.py:1): Gain 3, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
     assert reason not in prompt  # Neither previous findings nor historical rulings bind acceptance.
     assert "Human accepted the remaining finding" not in prompt
-    assert f"Proven safe (src/a.py:1): Evidence for: Proven safe; dismissed because {evidence}" in prompt
+    assert f"Proven safe (src/a.py:1): Gain 3, Work 2, Harm 1\nEvidence for: Proven safe; dismissed because {evidence}" in prompt
     assert f"Proven safe (src/a.py): dismissed because {evidence}" in prompt
 
 

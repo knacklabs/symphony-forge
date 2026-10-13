@@ -1,8 +1,18 @@
 ---
 reader: codex (gpt-6-sol)
 read_at: 2026-09-28T10:16:25+00:00
+seconds:
 read_hash: 163a9bc7d80444b619c5c559c8edef0f6a26053e
-amended_hash: 67ba99faf85c49993fc15eeb0d279dda2331d0ec
+round:
+passed:
+doc_seen:
+spec_seen:
+notes_seen:
+conversation: 01a0e782-7a17-7373-af6b-d09578c4bd64
+session:
+blocked_rounds:
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
