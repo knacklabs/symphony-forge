@@ -1189,6 +1189,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_visuals.py\tNot done: in-place story details omit round lines\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 130,
+      "text": "Not done: in-place story details omit round lines",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_visuals.py\tNot done: one-line graph key\tFORGE-BOARD-2/PAGE",
       "kind": "bug",
       "path": "src/forge/board_visuals.py",
@@ -3488,6 +3499,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test Moving rows' next steps through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 306,
+      "text": "Not done: Test Moving rows' next steps through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test expanded waiting rows through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 81,
+      "text": "Not done: Test expanded waiting rows through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test the Board summary when only ready or waiting items remain\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 303,
+      "text": "Not done: Test the Board summary when only ready or waiting items remain",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.test.ts",
@@ -3506,6 +3550,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: Expanded waiting rows omit their state and next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 64,
+      "text": "Not done: Expanded waiting rows omit their state and next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -3565,6 +3620,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNeeds you gives worker questions a command that refuses the answerless call\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 117,
+      "text": "Needs you gives worker questions a command that refuses the answerless call",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
@@ -3572,6 +3638,61 @@
       "text": "Not done: /forge returns the summary of detail 2",
       "from": "blocking",
       "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Board rows do not show the actual next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 106,
+      "text": "Not done: Board rows do not show the actual next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Moving Board rows omit their next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 129,
+      "text": "Not done: Moving Board rows omit their next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Ready-to-merge rows can omit their state and next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 131,
+      "text": "Not done: Ready-to-merge rows can omit their state and next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Review stops and worker questions are missing from Needs you\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 108,
+      "text": "Not done: Review stops and worker questions are missing from Needs you",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tReady rows on another machine suggest the wrong merge action\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 133,
+      "text": "Ready rows on another machine suggest the wrong merge action",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -4023,6 +4144,28 @@
       "text": "Published story state can hide locally recorded question touches in the context hook.",
       "from": "worker",
       "item": "skipped-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance covers multiple problems and interface changes\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 158,
+      "text": "Recorded allowance covers multiple problems and interface changes",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance does not match the interface and timeout changes\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 158,
+      "text": "Recorded allowance does not match the interface and timeout changes",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -6260,6 +6403,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_runway.py\tNot done: browser proof for team trends and around-list details\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 378,
+      "text": "Not done: browser proof for team trends and around-list details",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_runway.py\tNot done: test needs-you and blocked row ordering\tFORGE-BOARD-2/PAGE",
       "kind": "bug",
       "path": "tests/test_board_runway.py",
@@ -7037,6 +7191,28 @@
       "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
       "from": "worker",
       "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: End-to-end proof for grouped pane and first refresh error\tpane-grouped-board",
+      "kind": "bug",
+      "path": "tests/test_fix_pane_grouped_board.py",
+      "line": 25,
+      "text": "Not done: End-to-end proof for grouped pane and first refresh error",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: Test the worker-question and ready-row paths through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "tests/test_fix_pane_grouped_board.py",
+      "line": 119,
+      "text": "Not done: Test the worker-question and ready-row paths through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -9655,160 +9831,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test Moving rows' next steps through the Board tab\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.test.ts",
-      "line": 306,
-      "text": "Not done: Test Moving rows' next steps through the Board tab",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test expanded waiting rows through the Board tab\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.test.ts",
-      "line": 81,
-      "text": "Not done: Test expanded waiting rows through the Board tab",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test the Board summary when only ready or waiting items remain\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.test.ts",
-      "line": 303,
-      "text": "Not done: Test the Board summary when only ready or waiting items remain",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: Expanded waiting rows omit their state and next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.ts",
-      "line": 64,
-      "text": "Not done: Expanded waiting rows omit their state and next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNeeds you gives worker questions a command that refuses the answerless call\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 117,
-      "text": "Needs you gives worker questions a command that refuses the answerless call",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Board rows do not show the actual next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 106,
-      "text": "Not done: Board rows do not show the actual next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Moving Board rows omit their next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 129,
-      "text": "Not done: Moving Board rows omit their next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Ready-to-merge rows can omit their state and next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 131,
-      "text": "Not done: Ready-to-merge rows can omit their state and next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Review stops and worker questions are missing from Needs you\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 108,
-      "text": "Not done: Review stops and worker questions are missing from Needs you",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tReady rows on another machine suggest the wrong merge action\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 133,
-      "text": "Ready rows on another machine suggest the wrong merge action",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance covers multiple problems and interface changes\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 158,
-      "text": "Recorded allowance covers multiple problems and interface changes",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance does not match the interface and timeout changes\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 158,
-      "text": "Recorded allowance does not match the interface and timeout changes",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: End-to-end proof for grouped pane and first refresh error\tpane-grouped-board",
-      "kind": "bug",
-      "path": "tests/test_fix_pane_grouped_board.py",
-      "line": 25,
-      "text": "Not done: End-to-end proof for grouped pane and first refresh error",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: Test the worker-question and ready-row paths through the Board tab\tpane-grouped-board",
-      "kind": "bug",
-      "path": "tests/test_fix_pane_grouped_board.py",
-      "line": 119,
-      "text": "Not done: Test the worker-question and ready-row paths through the Board tab",
-      "from": "blocking",
-      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     }
