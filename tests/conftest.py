@@ -287,18 +287,34 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
+# The environment Forge reads at run time, pinned for every test so none inherits it from the
+# shell, a git hook or the agent session running the suite:
+# - Codex coordinates: CODEX_THREAD_ID is set and CLAUDECODE is unset. `forge read` needs a
+#   coordinating app, and from Codex a cold read runs on the stub claude, as most tests expect.
+#   A Codex round would run as the session's own subagent, so a test that builds on Codex through
+#   the kit says so with the `claude_session` fixture; a test that needs no session deletes both.
+# - No Forge run around it: every FORGE_ variable (worker marker, test budget, pinned release,
+#   checkout forwarding, waits) is unset; a test that needs one sets it. FORGE_LIVE_CODEX stays:
+#   it is the real-Codex opt-in, set only by the codex-smoke workflow.
+# - No tool overrides: CODEX_BIN, CLAUDE_BIN and AUTOREVIEW are unset; a stub sets its own.
+# - No outer git: every GIT_ variable is unset (they leak in when tests run inside a git hook);
+#   the `repo` fixture gives git its own config.
+# - Machine lanes: the forge shim reports an idle machine; `machine_cores` sets a core count.
+# Time zones need no pin: Forge writes UTC times and runs `ps` with TZ=UTC itself.
 @pytest.fixture(autouse=True)
-def isolated_git_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.
-        if name.startswith("GIT_"):
+def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in list(os.environ):
+        if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
+                "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 
 @pytest.fixture
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
-    monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
-    monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
-    monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)  # a worker's test budget, likewise
+    # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
+    monkeypatch.delenv("FORGE_WORKER", raising=False)
+    monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
     gitconfig = tmp_path / "gitconfig"
     # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
     # a helper removes a temporary clone; detached maintenance can still write its objects.
@@ -306,10 +322,6 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
                          "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n"
                          "[gc]\n\tautoDetach = false\n[core]\n\tlongpaths = true\n",
                          encoding="utf-8")
-    # The cold read runs on the family that isn't coordinating, which Forge tells from the variable
-    # each app sets. Tests run as if Codex coordinates, so a read runs on the stub claude.
-    monkeypatch.delenv("CLAUDECODE", raising=False)
-    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(gitconfig))
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     bin_dir = tmp_path / "bin"
@@ -350,7 +362,7 @@ elif args == ["plugin", "list", "--json"]:
 
 @pytest.fixture
 def claude_session(repo: Repo, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Codex workers use their kit while the other tool coordinates the session."""
+    """Claude Code coordinates instead: Codex workers run through the kit, a cold read on Codex."""
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
 

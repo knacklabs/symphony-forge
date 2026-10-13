@@ -632,7 +632,11 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
             base = Path(folder) / "default"
             repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
             try:
-                generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+                # Forge's own code is never generated, and sync would parse its conflicted copy
+                # when Forge runs from this checkout.
+                ours = Path(__file__).resolve().parent
+                generated = set() if any((top / path).resolve().is_relative_to(ours) for path in files) \
+                    else {Path(path).as_posix() for path in sync.files(base, cfg)}
                 if folder := githooks.husky_folder(base):
                     # Sync adds Forge's line, but the rest of these hooks belongs to the user.
                     generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
@@ -959,7 +963,12 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
         why, summary = doc.get("Why", ""), row.get("what it delivers", "")
     else:
         why, summary = state.get("why", ""), state.get("done_when", "")
-        title = re.split(r"[,;:.!?]", why, maxsplit=1)[0][:70]
+        # The first sentence: it ends at . ! or ? (and any closing quote or bracket) before a
+        # space or the end, never in v1.2.10. The closing quote or bracket stays.
+        first = re.split(r"[.!?]([\"')\]]?)(?=\s|$)", why, maxsplit=1)
+        title = " ".join("".join(first[:2]).split())
+        if len(title) > 70:  # a title the owner reads at a glance; no space: a hard cut
+            title = title[:title.rfind(" ", 0, 71) if " " in title[:71] else 70].rstrip(",;:.!?")
     return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
 
 

@@ -46,9 +46,9 @@ def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, mer
     if merge == "human":
         assert f"is ready to merge: {pr['url']}" in next_line
         assert next_step["command"] is None
-        assert "merges it from its worktree" not in next_line
+        assert "merges it from their machine" not in next_line
     else:
-        assert "merges it from its worktree" in next_line
+        assert "merges it from their machine" in next_line and next_step["command"] is None
         assert "is ready to merge:" not in next_line
 
 
@@ -159,7 +159,7 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
             row = _row(data, "page")
             assert row["stage"] == "ready" and row["status"] == "Ready to merge"
             assert row["pr"]["checks"] == checks and not row["pr"]["failures"]
-            assert data["kind_stage_counts"]["fixes"]["ready to merge"] == 1
+            assert data["team"]["counts"]["fixes"]["ready to merge"] == 1
             assert any(phrase in row["next"]["line"] for phrase in (
                 "is ready to merge", "ready and waiting for someone to merge"))
         assert "Ready to merge: 1" in text
@@ -205,7 +205,10 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
         assert row["stage"] == "checks failed" and row["status"] == "Checks failed"
         assert row["pr"]["checks"] == "fail" and row["pr"]["failures"]
         assert any(event["kind"] == "checks_failed" for event in row["occurrences"])
-        assert row["next"]["command"] == "forge work page"
+        # With no checkout here, the work runs on the machine of whoever started it.
+        assert row["next"]["command"] == ("forge work page" if local == "behind" else None)
+        if local == "remote-only":
+            assert row["next"]["line"].endswith("was started by Forge Test and runs on their machine.")
     assert "Checks failed" in text
     if local == "behind":
         plain = repo.forge("next")

@@ -60,6 +60,9 @@ def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeyp
     config.write_text(original.replace('workers = "codex"', 'workers = "split"\ntools = "claude"'), encoding="utf-8")
     repo.git("commit", "-qam", "Choose Claude", cwd=folder)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    # From Claude Code this round is the session's own subagent; from Codex it runs Claude's kit.
+    monkeypatch.delenv("CLAUDECODE")
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     failed = repo.forge("work", "BOARD/PAGE")
     assert failed.returncode == 1, failed.stdout + failed.stderr
     assert "exit code 3" in failed.stderr
