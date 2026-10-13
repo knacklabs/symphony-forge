@@ -4,7 +4,9 @@ Real Forge commands and git build every item; only GitHub, the reviewer and the 
 stubs. Board and next output is all the tests read.
 """
 import json
+import os
 import re
+import shlex
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -70,7 +72,7 @@ def github(env, prs):
             query = args[args.index("--search") + 1].removeprefix("merged:")
             low, _, high = query.partition("..")
             output = json.dumps([pr for pr in json.loads(output) if (day := (pr.get("mergedAt") or "")[:10])
-                                 and (day < query[1:] if query.startswith("<") else low <= day <= high)])
+                                 and low <= day <= high])
         sys.stdout.write(output)'''), "utf-8")
     env.gh.respond("pr", "list", stdout=json.dumps(prs))
 
@@ -313,7 +315,8 @@ def newer_push(env, monkeypatch, previous):
     assert part["state"] == "ready to merge"
     assert part["next"] == {"command": None, "line": (
         "Show a saved basket is ready to merge, but this worktree is behind its pull request.")}
-    assert f"Next: git -C {folder} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
+    folder_arg = f'"{folder}"' if os.name == "nt" else shlex.quote(str(folder))
+    assert f"Next: git -C {folder_arg} pull, then forge close SHOP/T2" in env.repo.forge("next").stdout
 
 
 def approved_not_started(env, previous):
@@ -424,7 +427,7 @@ def older_part(env, monkeypatch, previous):
     for log in ("events.jsonl", "timings.jsonl"):  # only the pull request remembers the part's time
         (env.repo.path / ".git/forge" / log).unlink(missing_ok=True)
     asked = lambda: [call for call in env.gh_calls("pr", "list")  # noqa: E731
-                     if any(arg.startswith("merged:<") for arg in call)]
+                     if any(arg.startswith("merged:*..") for arg in call)]
     shop = rows(board(env.repo))["SHOP"]
     assert shop["state"] == "building" and "SHOP/T1" not in [c["id"] for c in shop["children"]]
     board(env.repo)

@@ -627,7 +627,7 @@ def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, requi
 def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> list[str]:
     """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step,
     run in `where` for a spec, which forge read finds only in its own checkout."""
-    cd = f"cd {shlex.quote(str(where))} && " if where else ""
+    cd = f"cd {repo.quote(str(where))} && " if where else ""
     return [line.format(target=target, question=story.read_question(doc, notes)) for line in
             (story.REFUSALS["read_loop"][0], "Next: " + cd + story.REFUSALS["read_loop"][1])]
 
@@ -793,13 +793,13 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                     f"Next: forge close {item}"]
         if repo.merge_setting(top) == "agent":  # forge merge needs this machine's receipt
             return [f"{label} is ready to merge, but this worktree is behind its pull request.",
-                    f"Next: git -C {shlex.quote(str(path))} pull, then forge close {item}"]
+                    f"Next: git -C {repo.quote(str(path))} pull, then forge close {item}"]
     if status == "merged" and path:
         if repo.merge_setting(top) == "agent" and receipt.get("review") == "clean":
             return [f"{label} is merged; Forge needs to finish tidying up.",
                     f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
-                f"Next: git worktree remove {shlex.quote(str(path))}"]
+                f"Next: git worktree remove {repo.quote(str(path))}"]
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
