@@ -95,7 +95,9 @@ def land(args: argparse.Namespace) -> int:
                     continue
                 what = ("the review's serious findings" if error.entry is close.REFUSALS["blocked"]
                         else "the failing tests" if error.entry is close.REFUSALS["tests_failed"]
-                        else "the failing checks" if red and worker._failing(branch) else "")
+                        # In a queue run, close's own check gate decides (a skipped required check
+                        # fails there too); one change's fix rounds still use the worker's reading.
+                        else "the failing checks" if red and (queued or worker._failing(branch)) else "")
                 if not what:
                     raise
                 if queued:  # forge land <item> runs this change's fix rounds
@@ -307,7 +309,10 @@ def _queue(top: Path) -> int:
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     while len(finished) < len(changes):
         for index, (_, item, files, ready) in enumerate(changes):
-            if item in running or item in finished or len(running) >= machine.half_cores():
+            # Strictly oldest first: the next change starts once every started one has entered close.
+            if (item in running or item in finished or len(running) >= machine.half_cores()
+                    or any(child.poll() is None and f"Closing {other}." not in lines
+                           for other, (child, _, lines) in running.items())):
                 continue
             older = next(((other, min(files & theirs)) for _, other, theirs, _ in changes[:index]
                           if other not in finished and files & theirs), None)

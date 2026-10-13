@@ -295,6 +295,10 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
     lines = out.splitlines()
     assert [line for line in lines if line.startswith("Starting ")] == [
         "Starting cherry.", "Starting banana.", "Starting apple."], out + err + refused
+    # Each change enters close, by its own Closing line, before the next one starts.
+    entries = [lines.index(f"{slug}: Closing {slug}.") for slug in ("cherry", "banana", "apple")]
+    starts = [lines.index(f"Starting {slug}.") for slug in ("cherry", "banana", "apple")]
+    assert starts[0] < entries[0] < starts[1] < entries[1] < starts[2] < entries[2], out
     places = _places(env)
     assert places == 2
     spans = _in_close(env, "cherry", "banana", "apple")
@@ -378,6 +382,9 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
                 review={"findings": [{"title": "Saving drops the date", "priority": "P1", "file": "late.py",
                                       "line": 1, "body": "Gain 3, Work 2, Harm 1\nThe date is lost."}],
                         "dismissals": []})
+    # A required check GitHub skipped fails close's check gate: forge land is its repair step.
+    _fix(env, monkeypatch, "skip", 6, {"skip.py": "x = 1\n"})
+    _red(env, "skip", conclusion="skipped")
     record = held / ".factory" / "fixes" / "loop.json"
     before = record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)
     done = _all(env)
@@ -391,14 +398,15 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     assert "late merged." in lines and not late.exists(), done.stdout
     summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
     assert re.fullmatch(r"Merged \(2\): (clean, late|late, clean) · Ready to merge \(0\): none · "
-                        r"Needs you \(3\): stuck, loop, worn", lines[summary]), done.stdout
+                        r"Needs you \(4\): stuck, loop, worn, skip", lines[summary]), done.stdout
     tail = "\n".join(lines[summary + 1:])
     assert tail.startswith("- stuck: The review left serious findings open: finding 1 "
                            "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Review round ")
     assert "Saving loses the name" in tail and "Accept, narrow or split?" in tail
     assert '  Next: forge close loop --resolve <narrow|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
     assert tail.endswith("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"
-                         '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"')
+                         '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"\n'
+                         "- skip: Checks failed on the pull request: tests.\n  Next: forge land skip"), done.stdout
     assert not (env.repo.bin / "claude-calls.jsonl").exists()
     assert not env.gh_calls("pr", "merge", _number("fix/stuck"))
     assert (record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)) == before
