@@ -172,16 +172,28 @@ Forge syncs, keeping their settings as written.
 
 When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
 crash, a command that reports success but did nothing, generated files that contradict each
-other), file a bug on Forge's GitHub. Leave out the repo's code, names, paths and secrets;
-describe what Forge did. Write a body file with these sections: `## Forge version`
-(`forge --version` and the version pinned in `forge.toml`), `## Host and OS` (Claude Code or
-Codex), `## Command and output` (exact command, full output, private names replaced),
-`## Expected and actual`, `## Steps to reproduce` (upgraded from which version, new or adopted
-repo, relevant `forge.toml` settings without secrets), `## forge next` (its output at the time),
-`## Tried and workaround`, `## How often` (always, sometimes or once). Then run, with no prompt:
+other), file a bug on Forge's GitHub. No client code, names, paths or secrets: describe what Forge did.
+Fetch the template text, drop its front matter, fill every section and save it as the body file:
 
 ```
-gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --label bug --body-file <file>
+gh api repos/knacklabs/symphony-forge/contents/.github/ISSUE_TEMPLATE/forge-bug.md --jq .content | base64 --decode
+```
+
+The template's sections, which the body file keeps exactly:
+
+- `## Forge version`: Output of `forge --version` and the pinned version in `forge.toml`.
+- `## Host and operating system`: The host (Claude Code or Codex) and the operating system.
+- `## Command and output`: The exact command and full output, with private names replaced.
+- `## Expected and actual`: Expected vs what happened.
+- `## Steps to reproduce`: Upgraded from which version, new or adopted repo, and the `forge.toml` settings without secrets.
+- `## forge next`: The `forge next` output at the time.
+- `## Tried and workaround`: What was tried, and any workaround.
+- `## How often`: How often: always, sometimes or once.
+
+File it with no prompt:
+
+```
+gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --label bug --body-file <filled file>
 ```
 
 ## Laptop setup and after cloning

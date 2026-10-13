@@ -1,5 +1,4 @@
 """Every Forge repo tells agents to file a Forge bug with the bug template."""
-import re
 import shutil
 import subprocess
 import sys
@@ -44,14 +43,23 @@ def test_1_clients_are_told_to_file_forge_bugs(repo, gh, tmp_path, setup):
     assert "leave out the repo's code, names, paths and secrets" in agents
 
 
-def test_2_guide_names_every_bug_template_section(repo, gh, tmp_path):
+PROMPTS = ("forge version", "pinned version", "host", "operating system",
+           "exact command and full output", "expected vs what happened",
+           "steps to reproduce", "forge.toml settings without secrets",
+           "forge next", "what was tried", "how often",
+           "no client code, names, paths or secrets")
+
+
+def test_2_template_and_guide_ask_for_every_required_prompt(repo, gh, tmp_path):
     client, made = _fresh_client(repo, gh, tmp_path)
     assert made.returncode == 0, made.stdout + made.stderr
-    sections = re.findall(r"^## (.+)$", TEMPLATE.read_text("utf-8"), re.M)
-    assert len(sections) >= 8
+    texts = {"template": TEMPLATE.read_text("utf-8")}
     for host in (".claude", ".codex"):
-        guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        assert "gh issue create --repo knacklabs/symphony-forge --title" in guide
-        assert "--label bug --body-file" in guide
-        for section in sections:
-            assert section in guide, (host, section)
+        texts[host + " guide"] = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
+    for name, text in texts.items():
+        flat = " ".join(text.lower().split())
+        for prompt in PROMPTS:
+            assert prompt in flat, (name, prompt)
+        if name != "template":
+            assert "contents/.github/ISSUE_TEMPLATE/forge-bug.md --jq .content | base64 --decode" in flat.replace("issue_template", "ISSUE_TEMPLATE")
+            assert "--label bug --body-file <filled file>" in flat
