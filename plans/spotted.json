@@ -5237,6 +5237,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug filing fails for reporters without Forge triage access\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 197,
+      "text": "Forge bug filing fails for reporters without Forge triage access",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tForge bug template command fails in Windows PowerShell\treport-forge-bugs",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
