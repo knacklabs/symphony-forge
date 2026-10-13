@@ -32,7 +32,7 @@ def test_3_merged_assignment_older_than_seven_days_is_never_unstarted(
     out = tmp_path / "board.html"
     result = repo.forge("board", "--out", out.as_posix())
     assert result.returncode == 0, result.stderr
-    assert "In progress: 1 of 3 parts finished." in seen(out)
+    assert "Story Building In progress: 1 of 3 parts finished" in seen(out)
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])

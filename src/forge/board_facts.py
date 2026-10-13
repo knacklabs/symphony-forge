@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -101,6 +102,44 @@ def details(top: Path) -> list[Item]:
         limit="25")) or []
 
 
+def failed_schedules(top: Path) -> list[Item]:
+    """Each workflow whose latest scheduled run on the default branch failed: its name and file,
+    failed jobs and failing pytest tests as printed; [] when none failed or GitHub can't be read.
+    One request for the runs and one log per failed workflow, kept a minute."""
+    branch = repo.default_branch(top)
+
+    def fetch(now: datetime) -> list[Item] | None:
+        # ponytail: the newest 100 scheduled runs; a frequent schedule can crowd out a daily one.
+        # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
+        done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                        "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
+                        "--raw-field", "per_page=100", cwd=top)
+        try:
+            runs = json.loads(done.stdout).get("workflow_runs") if done.returncode == 0 else None
+        except (ValueError, AttributeError):
+            return None
+        if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
+            return None
+        latest: dict[Any, Item] = {}
+        for run in runs:  # newest first
+            latest.setdefault(run.get("workflow_id"), run)
+        failed = []
+        for run in latest.values():
+            if run.get("conclusion") != "failure":
+                continue
+            log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
+            if log.returncode != 0:
+                return None
+            lines = log.stdout.splitlines()
+            failed.append({"workflow": str(run.get("name") or "workflow"), "branch": branch,
+                           "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
+                           "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
+                           "tests": sorted({found[1] for line in lines if (found := re.search(
+                               r"(?:FAILED|ERROR) (\S+?::[^\s\[]+(?:\[.*?\])?)(?= - |$)", line))})})
+        return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
+    return _cached(top, "schedule-cache", fetch) or []
+
+
 def merged_prs(github: Item | None) -> list[Item]:
     return [pr for week in (github or {}).get("weeks", []) for pr in week["prs"]
             if pr.get("state", "MERGED") == "MERGED" and isinstance(pr.get("headRefName"), str)]
@@ -176,6 +215,10 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
             counts["finished_last_7_days"]["fixes"] += recent(row)
         else:
             counts["fixes"]["done"] += 1  # a fix left out of the rows finished more than seven days ago
-    later, _clause = board_trends.facts(top, history, list(items.values()), github)
-    return {"sentence": None, "counts": counts, "needs_you": None, "in_progress": None, "blocked": None,
+    later, clause = board_trends.facts(top, history, counts, list(items.values()), github)
+    work = [counts[kind][state] for state in ("in progress", "ready to merge") for kind in ("parts", "fixes")]
+    building = counts["stories"]["building"]
+    sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "
+                f"in progress, {sum(work[2:])} ready to merge; {clause[0].lower()}{clause[1:]}")
+    return {"sentence": sentence, "counts": counts, "needs_you": None, "in_progress": None, "blocked": None,
             **later}

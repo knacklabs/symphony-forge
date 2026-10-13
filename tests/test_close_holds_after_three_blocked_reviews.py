@@ -12,7 +12,7 @@ from test_worker import calls, install_claude
 
 
 RULE = (
-    "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
+    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open, "
     "whatever files they were in. The existing same-file stop still applies from the third round."
 )
 QUESTION_RULE = ("When a cold read or review loop stops, ask the human the question it printed, "
@@ -62,10 +62,10 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
-        # The advice note counts toward what Accept dismisses.
+        # The advice note repeats each round; from round 2 it is known below the bar, so already settled.
         env.reviews(blocked(finding("P3", "Advice only"),
                             {**finding("P1", f"Not done: Round {number} defect", path),
-                             "body": "Gain 3, Work 2, Harm 1\nRaise: Not done \u2014 Saving at `app.py:3` drops the basket "
+                             "body": "Gain 3, Work 2, Harm 3\nRaise: Not done \u2014 Saving at `app.py:3` drops the basket "
                                      "(a3f9c2e1b). Returning shoppers lose their saved items. "
                                      "More detail."}))
         result = env.close(item)
@@ -80,12 +80,16 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env.reviews(CLEAN)
         result = env.close(item)
     # The stop is a ready-to-ask question: the item, each open finding in plain words, each choice.
+    # Three findings in one file stop by area, with a structural move proposed.
+    moved = (f"Findings keep coming in {PATHS[0]}; proposed: cut the code that invites these findings; "
+             "or replace the cases with one general rule; or narrow that Done when item; or make it "
+             "fail closed. " if same_file else "")
     question = [
         "Readme greets new readers: The readme opens with a greeting",
-        "It still has these problems:",
+        moved + "It still has these problems:",
         "- Round 3 defect: saving drops the basket. Returning shoppers lose their saved items.",
         "Accept, narrow or split?",
-        "- Accept: every finding in this review, the 1 listed and 1 advice notes, is dismissed "
+        "- Accept: every finding in this review, the 1 listed and 0 advice notes, is dismissed "
         "with your reason and recorded; close then goes on to the checks, and merging is still a "
         "separate step.",
         "- Narrow: drop these cases from its Done when; they become follow-ups.",
@@ -149,8 +153,10 @@ def test_3_only_consecutive_serious_blocked_reviews_hold_the_next_reviewer(env, 
     for number in range(1, 6):
         env.commit(where, "app.py", f"print('round {number}')\n")
         clean = number == 5 or number == 2 and interruption == "clean"
+        # Harm 3 holds the loop by the bar; files of their own keep each finding in its own area.
         env.reviews(CLEAN if clean else blocked(
-            finding("P1", f"Round {number} defect", "app.py")))
+            {**finding("P1", f"Round {number} defect", f"docs/{number}.md"),
+             "body": "Gain 3, Work 2, Harm 3\nEvidence"}))
         result = env.close(item)
         assert result.returncode == (0 if clean else 1), result.stdout + result.stderr
         assert len(env.review_calls()) == number

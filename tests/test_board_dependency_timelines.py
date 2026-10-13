@@ -52,6 +52,25 @@ def _client(repo, gh, tmp_path, history):
         _land_fixture(repo)
 
 
+def _configured(repo, gh, tmp_path, history, keys):
+    """A new or adopted client with the grill models, a stub reader and these roadmap keys."""
+    _client(repo, gh, tmp_path, history)
+    configured = repo.forge("fix", "start", "Configure the client", "--done", "The client is configured",
+                            "--slug", "configure-client")
+    assert configured.returncode == 0, configured.stderr
+    main = repo.path
+    repo.path = worktree(repo, "fix/configure-client")
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{GRILL}')
+    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Configure the client")
+    _install(repo.bin, "claude", READER.format(python=sys.executable))
+    repo.path = main
+    repo.git("merge", "-q", "--ff-only", "fix/configure-client")
+    _land_fixture(repo)
+
+
 def _svg(page, label):
     drawings = [ET.fromstring(raw) for raw in re.findall(r"<svg\b.*?</svg>", page, re.S)]
     matches = [drawing for drawing in drawings if drawing.attrib.get("aria-label") == label]
@@ -69,22 +88,7 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         repo, gh, tmp_path, claude_payload, monkeypatch, history):
     # Coverage owns the renderer boundary. Machine-view tests own production of these
     # records; plain-text run fixtures give deterministic visible durations here.
-    _client(repo, gh, tmp_path, history)
-    configured = repo.forge("fix", "start", "Configure the client", "--done", "The client is configured",
-                            "--slug", "configure-client")
-    assert configured.returncode == 0, configured.stderr
-    main = repo.path
-    repo.path = worktree(repo, "fix/configure-client")
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{GRILL}')
-    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}, {"key": "PACK"},
-                                                        {"key": "PLAN"}, {"key": "IDEA"}]}))
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Configure the client")
-    _install(repo.bin, "claude", READER.format(python=sys.executable))
-    repo.path = main
-    repo.git("merge", "-q", "--ff-only", "fix/configure-client")
-    _land_fixture(repo)
+    _configured(repo, gh, tmp_path, history, ("SHOP", "PACK", "PLAN", "IDEA"))
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T10:00:00+00:00")
     packing = DOC.replace("Shoppers can save a basket", "Baskets can be packed").replace(
         "Save a basket |", "Prepare packaging |")
@@ -202,8 +206,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         assert all(label in painted for label in ("Build", "Tests", "Review", "Checks", "Merge",
                                                  "2 minutes", "30 seconds", "1 minute", "unknown", "current"))
     text = seen(out)
-    assert all(section in text for section in ("Parts", "Small fixes", "How the factory is doing"))
-    assert "In progress: 1 of 5 parts finished." in text
+    assert all(section in text for section in ("Roadmap", "Stories and fixes", "How the factory is doing"))
+    assert "Shoppers can save a basket Story Building In progress: 1 of 5 parts finished" in text
     assert len(re.findall(r"<svg\b", page)) == 3, "One roadmap map and two active-item timelines"
     assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
                "Prepare packaging: Not started" for n in drawing.iter()) == 1
@@ -222,8 +226,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
             continue
         assert kind.capitalize() in text
         assert all(f"{name.capitalize()}: {count}" in text for name, count in counts.items())
-    numbers = re.search(r'<ul class="numbers">(.*?)</ul>', page, re.S).group(1)
-    assert len(re.findall(r"<li>", numbers)) == 3, "The three factory measures stay"
+    numbers = re.search(r'<p class="numbers">(.*?)</p>', page, re.S).group(1)
+    assert numbers.count("(target: ") == 3, "The three factory measures stay, in one quiet line"
     # These are the shipped, script-free theme and responsive-page contracts.
     assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in page
     css = re.search(r"<style>(.*?)</style>", page, re.S).group(1)
@@ -232,7 +236,11 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         colors = re.findall(rf"--{token}:\s*(#[0-9a-f]+)", css)
         assert len(set(colors)) == 2, f"{token} has light and dark values"
     picture_css = re.search(r"\.board-picture\s*\{([^}]+)\}", css).group(1)
-    assert "width: 100%" in picture_css and "color: var(--ink)" in picture_css
+    assert "max-width: 100%" in picture_css and "color: var(--ink)" in picture_css
+    # The page uses the full window: no fixed width caps it, and below 720px it is one column.
+    assert not re.search(r"[{;]\s*max-width:\s*\d+(?:px|rem|em)", css)
+    narrow = re.search(r"@media \(max-width: 720px\)\s*\{(.*)\}", css, re.S).group(1)
+    assert "grid-template-columns: 1rem minmax(0, 1fr)" in narrow
     assert "fill: currentColor" in css and "fill: var(--muted)" in css
     assert drawing.attrib["viewBox"].split()[:3] == ["0", "0", "260"]
     assert "<script" not in page.lower()

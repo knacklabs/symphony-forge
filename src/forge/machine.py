@@ -118,7 +118,7 @@ def _unblocks(top: Path, item: str) -> bool:
             dependent = f"{key}/{tid.strip('` ')}"
             if repo.state_path(dependent) in paths:
                 continue
-            waits = task.waits_for(key, task.cell_list(part.get("After", "")),
+            waits = task.waits_for(dependent, task.cell_list(part.get("After", "")),
                                    task.cell_list(part.get("Scope", "")) if dependent not in busy else [], busy)
             if item in waits:
                 return True

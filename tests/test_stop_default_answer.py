@@ -122,6 +122,9 @@ time.sleep = advance
     landed = _land(land, item)
     assert landed.returncode == 0, landed.stdout + landed.stderr
     assert f"{item} is ready; a human merges" in landed.stdout
+    if entry == "running":  # new Harm 1 findings in three files never stop: the fourth review runs
+        assert "Nobody answered the review loop stop" not in landed.stdout
+        return
     assert "Nobody answered the review loop stop in 30 minutes" in landed.stdout
     brief = _workers(land)[-1]["brief"]
     assert "the repo's default choice: narrow this part to its Done-when lines" in brief

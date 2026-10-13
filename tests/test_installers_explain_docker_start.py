@@ -91,7 +91,8 @@ def test_5_installers_check_docker_engine_and_explain_starting_desktop(
             command.append("--check")
     for kind in ("chromium", "firefox", "webkit"):
         (cache / f"{kind}-1").mkdir(parents=True)
-    result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=30)
+    # A cold Windows runner can take over a minute to start PowerShell; the budget only catches hangs.
+    result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=120)
     assert result.returncode == 0, result.stdout + result.stderr
     if running:
         assert "Start Docker Desktop" not in result.stdout
