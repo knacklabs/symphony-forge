@@ -1,0 +1,276 @@
+{
+  "allow_large": "One performance change across the board's data path; next --json shares the board's 60-second GitHub cache",
+  "amendments": [
+    {
+      "at": "2026-10-13T12:08:34.836322+00:00",
+      "because": "GitHub search latency sets a floor of about 20 seconds on a cold cache; the pane's wait and error line move to the pane part",
+      "done_when": "forge board --json and forge next --json each finish within 10 seconds on a repo the size of Forge's own, and the pane shows the board on its first refresh"
+    },
+    {
+      "at": "2026-10-13T14:20:58.539089+00:00",
+      "because": "The JSON now states its GitHub cache contract instead of promising identical output to a fresh read",
+      "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about three times faster (board about 11 seconds and next about 8 seconds with a warm GitHub cache) with the same JSON"
+    },
+    {
+      "at": "2026-10-13T16:10:02.027354+00:00",
+      "because": "Items in progress need their own branch facts; the cost that grew without limit was finished work, which is now free",
+      "done_when": "forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are, so on Forge's own repo they run about three times faster; next --json reads GitHub through the board's 60-second cache, like the board"
+    }
+  ],
+  "base": "29bded0c7a63846d66b89477cf4158c024c6d711",
+  "branch": "fix/board-json-fast",
+  "done_when": "forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small number per item still in progress, so on Forge's own repo they run about three times faster; next --json reads GitHub through the board's 60-second cache, like the board",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/nextstep.py",
+    "src/forge/story.py",
+    "tests/test_machine_views_stay_fast.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 214,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls, so on Forge's own repo they run about 3x (",
+      "work": 3
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 201,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allowance mismatch: forge next --json can use stale pull request state",
+      "work": 2
+    },
+    {
+      "area": "test_1_machine_views_cost_no_git_calls_per_finished_item() in tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 31,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof that machine-view calls stay bounded as stories grow",
+      "work": 2
+    },
+    {
+      "area": "machine_board.story_read() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 290,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: forge board --json and forge next --json still make calls per story",
+      "work": 3
+    },
+    {
+      "area": "finish() in tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 36,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test bounded calls for read stories and local branches",
+      "work": 2
+    },
+    {
+      "area": "_plan_ref() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 550,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: forge board --json and forge next --json make a bounded number of git and GitHub calls however many stories and fixes there are,\u2060\u2060",
+      "work": 3
+    },
+    {
+      "area": "tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 46,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: test bounded calls for active fixes and diverged story branches",
+      "work": 2
+    },
+    {
+      "area": "_plan_ref() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 549,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few",
+      "work": 2
+    },
+    {
+      "area": "finish() in tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 27,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: test zero git calls for finished stories with retained branches",
+      "work": 2
+    },
+    {
+      "area": "test_1_machine_views_cost_no_git_calls_per_finished_item() in tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 76,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: test shared GitHub caching and calls per active item",
+      "work": 2
+    },
+    {
+      "area": "_report() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 209,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the 3x faster board and next JSON now; next --json's extra cold-cache merged search at nextstep.py:209 and the test filter that misses it become one follow-up fix",
+      "round": 6,
+      "security": false,
+      "title": "Not done: next --json makes an unnecessary GitHub search with no work in progress",
+      "work": 1
+    },
+    {
+      "area": "lists() in tests/test_machine_views_stay_fast.py",
+      "file": "tests/test_machine_views_stay_fast.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 24,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the 3x faster board and next JSON now; next --json's extra cold-cache merged search at nextstep.py:209 and the test filter that misses it become one follow-up fix",
+      "round": 6,
+      "security": false,
+      "title": "Not done: the shared-cache test misses next's extra GitHub search",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "daeb39e8b719badea7524b2e38575249a818f6a22d0875e85b8811b333ec9403",
+    "changed": "4f6290d67ba8a90185028b2009888d25f4de835790ba7b925f06e49df956a3b5",
+    "commit": "0cfb4f64f9df295f65ba5186313fef4bcc639028",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the 3x faster board and next JSON now; next --json's extra cold-cache merged search at nextstep.py:209 and the test filter that misses it become one follow-up fix",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the 3x faster board and next JSON now; next --json's extra cold-cache merged search at nextstep.py:209 and the test filter that misses it become one follow-up fix",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. `trees` includes the main checkout in a normal repo (`story.py:790-799`), so this condition calls `merged_before_weeks` even when every story and fix is finished. That makes an extra GitHub search when its separate cache is cold, including immediately after `board --json` has warmed the PR cache; the board itself requests older merges only for unfinished stories with older parts (`board.py:585-588`). The extra search can restore the latency this fix is meant to remove.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 209,
+        "priority": "P1",
+        "title": "Not done: next --json makes an unnecessary GitHub search with no work in progress",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. `lists()` expressly excludes the `merged:*..` search made by `merged_before_weeks`. The finished-item and board-then-next assertions use that filtered list, so they pass when `next --json` makes the extra GitHub call at `nextstep.py:209`. The named command-level proof therefore does not detect this violation of the no-extra-calls requirement.",
+        "file": "tests/test_machine_views_stay_fast.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 24,
+        "priority": "P1",
+        "title": "Not done: the shared-cache test misses next's extra GitHub search",
+        "work": 2
+      }
+    ],
+    "id": "b4b655d9-2859-44b5-87f2-55f9472d24c3",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "_report() in src/forge/nextstep.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T08:16:46.065962+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T13:14:18.022225+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T14:20:30.231128+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T15:38:38.090238+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T16:38:46.851944+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T17:16:22.577168+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:05:25.114042+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "_report() in src/forge/nextstep.py",
+    "at": "2026-10-13T18:05:25.114206+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "_report() in src/forge/nextstep.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Coordinator's call (Harm 2, reversible): ship the 3x faster board and next JSON now; next --json's extra cold-cache merged search at nextstep.py:209 and the test filter that misses it become one follow-up fix",
+    "wait_id": "11ba5c11-8b58-4a11-be6f-a9e47b0512ab",
+    "worker_round": null
+  },
+  "why": "The Forge pane stays on Loading in Forge's own repo, because forge board --json and forge next --json each take about 40 seconds and the pane gives up after 20"
+}

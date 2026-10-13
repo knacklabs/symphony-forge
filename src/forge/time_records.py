@@ -474,9 +474,10 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
     if points and end and end > points[-1]:
         points.append(end)
     intervals, totals = [], dict.fromkeys(("working", "waiting", "unknown"), 0.0)
+    parsed = [(x, y, span.get("kind")) for span in spans
+              if (x := when(span.get("start"))) and (y := when(span.get("end")))]
     for a, b in zip(points, points[1:]):
-        kinds = {span.get("kind") for span in spans if (x := when(span.get("start")))
-                 and (y := when(span.get("end"))) and x <= a and y >= b}
+        kinds = {kind for x, y, kind in parsed if x <= a and y >= b}
         kind = "working" if "working" in kinds else "waiting" if "waiting" in kinds else "unknown"
         totals[kind] += (b - a).total_seconds()
         intervals.append({"start": a.isoformat(), "end": b.isoformat(), "kind": kind})
