@@ -17,43 +17,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0af5ab8fb4ead1091c8f388da91ca71637087f14b6d5f490597380a8f56de8b7",
-    "changed": "922e5d7958f55d50697dbbcda43263c9d923239e8b0aede0369925288a12ceb2",
-    "commit": "493bedfb2bdc3891fa300bbfb1ba48c37d40dd49",
+    "branch_diff": "6f6fc138a7e468f1b5ba735e0d8eecc50ca3cdeb1b269f40a72db9e500ad400c",
+    "changed": "58757d4a7277bb799b2fb5add8e297f25530e4cec0b76841b3d66a14192453bb",
+    "commit": "779d283a5fae62b8c1dcf7af601274691dc9e147",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional. If `Build & Test` fails and its fix is started, its stored why uses the unsuffixed cleaned name. When `Build Test` later fails while the first run remains red, this line adds file suffixes to both names. Neither alert then matches the first fix's stored why, so `forge next` offers another `forge fix start` for a run already being fixed. The proof covers two simultaneous failures but not this transition; that is distinct from the earlier collision finding.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 278,
-        "priority": "P1",
-        "title": "Not done: a later workflow-name collision loses the started fix's next step",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The gh stub answers every call beginning with `api repos/{owner}/{repo}/actions/runs`, and the proof checks only that prefix. Removing either `event=schedule` or the default-branch filter from the production request leaves this test green. In a repo with a newer manual or feature-branch run, that regression can hide the failed scheduled run or report the wrong one. No other test checks these query fields.",
-        "file": "tests/test_next_names_a_failed_scheduled_run.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 76,
-        "priority": "P1",
-        "title": "Not done: prove the scheduled default-branch query",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 3, Harm 2\nThe parser accepts only pytest-style `FAILED` or `ERROR` lines containing `::`. A scheduled Vitest, Jest or Go job can therefore fail with named tests while `forge next` lists only the job. The proof supplies pytest output only. This additional runner case remains open.",
+        "body": "Gain 2, Work 3, Harm 2\nThe parser accepts only pytest-style `FAILED` or `ERROR` lines containing `::`. A scheduled Go or JavaScript test job can fail with named tests while `forge next` lists only its job. The named proof supplies pytest output only; [Go's documented failure output](https://go.dev/doc/tutorial/add-a-test) shows a different format. This additional runner case remains open.",
         "file": "src/forge/board_facts.py",
         "gain": 2,
         "harm": 2,
-        "line": 137,
+        "line": 138,
         "priority": "P2",
         "title": "Follow-up: name JavaScript and Go test failures in scheduled runs",
         "work": 3
       },
       {
-        "body": "Gain 2, Work 2, Harm 2\nThe request reads only the newest 100 scheduled runs across all workflows. A workflow scheduled every five minutes can fill that page in about eight hours, hiding another workflow's failed daily run. The coordinator expressly narrowed this case to a follow-up.",
+        "body": "Gain 2, Work 2, Harm 2\nThe query reads only the newest 100 scheduled runs across workflows. A workflow scheduled every five minutes can fill that page in about eight hours, hiding another workflow's failed daily run. [GitHub permits five-minute schedules](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax). The coordinator expressly narrowed this case to a follow-up.",
         "file": "src/forge/board_facts.py",
         "gain": 2,
         "harm": 2,
@@ -63,10 +43,10 @@
         "work": 2
       }
     ],
-    "id": "7ae53954-8965-4f7f-8542-2467df101423",
-    "status": "blocked"
+    "id": "ab7a045f-5127-449e-9d70-59a3d57296aa",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T16:41:28.751000+00:00",
@@ -102,6 +82,10 @@
     },
     {
       "at": "2026-10-13T04:23:03.132747+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:29:22.657273+00:00",
       "step": "review"
     }
   ],
