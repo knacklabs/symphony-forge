@@ -1,10 +1,100 @@
 {
   "branch": "task/FORGE-BOARD-2-GRAPH",
-  "status": "started",
+  "flagged": [
+    "src/forge/board.py",
+    "tests/test_board_graph.py"
+  ],
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 650,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: planned stories in roadmap order",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 651,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: no-plan box for a newly started story",
+      "work": 1
+    },
+    {
+      "area": "test_11_dependency_graph() in tests/test_board_graph.py",
+      "file": "tests/test_board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 65,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: missing-reference graph test",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8a594d22d0a4ca4c087c182f9314adecfd594abaa32499d640aecb71218a19e8",
+    "changed": "ec0d13c1a8efddf99144a144e6f7e7725eb8df189a0500f1d7cf93d55ff280ad",
+    "commit": "75ae98619dfd673e6be2d55febbe64d97faed5d8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 `dependency_maps` appends planned stories in `best.items()` order, which comes from worktree and Git ref discovery, rather than roadmap order. The renderer preserves that order, so rearranging the roadmap does not rearrange its graph rows. The new test converts maps to a dictionary and cannot catch this.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 650,
+        "priority": "P1",
+        "title": "Not done: planned stories in roadmap order",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 `forge story new` creates a planning state and an untouched plan template with no task rows. This line marks every story with a state as `planned: True`, so that common draft appears as an empty planned row instead of its own `planned: false` no-plan box. The test's three no-plan stories have no state, so it misses this path.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 651,
+        "priority": "P1",
+        "title": "Not done: no-plan box for a newly started story",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test \u2014 Done-when 11 requires a missing part reference to count as no wait and put the reason in the label. This command-level test creates only valid references and a cycle; it never introduces a missing reference or checks that label. Removing that behavior from `place` would leave the named proof green.",
+        "file": "tests/test_board_graph.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 65,
+        "priority": "P1",
+        "title": "Not done: missing-reference graph test",
+        "work": 1
+      }
+    ],
+    "id": "857ea4e1-94f0-4432-b559-a2eb7d81abfd",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T16:06:21.297426+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T17:45:40.778616+00:00",
+      "step": "review"
     }
   ]
 }
