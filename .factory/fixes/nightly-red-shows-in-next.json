@@ -55,7 +55,7 @@
     "id": "44a39ea0-9cf4-4dc4-bd8f-6dccfdfa8088",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T16:41:28.751000+00:00",
@@ -88,8 +88,12 @@
   ],
   "stop": {
     "at": "2026-10-13T04:12:17.251645+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/board_facts.py",
-    "wait_id": "6bc3ff87-2e5b-45b5-b854-897c89a220b7"
+    "reason": "Coordinator (Harm 2, reversible): back to one GitHub request \u2014 recent scheduled runs (per page 100), newest per workflow id \u2014 so next stays fast with many workflows; alerts key by workflow id. A very frequent schedule crowding out a daily run is a follow-up.",
+    "wait_id": "6bc3ff87-2e5b-45b5-b854-897c89a220b7",
+    "worker_round": null
   },
   "why": "A failing nightly full run on macOS or Windows is easy to miss, and Windows stayed red for days unseen"
 }
