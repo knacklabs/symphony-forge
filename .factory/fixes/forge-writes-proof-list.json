@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-13T03:12:35.693609+00:00",
+      "because": "Coordinator narrowed at the round 3 stop: tests close cannot read per-test results for (other languages) are marked not checked instead of being removed",
+      "done_when": "Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test proves, so a proof list never names a test that did not run"
+    }
+  ],
   "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
   "branch": "fix/forge-writes-proof-list",
-  "done_when": "Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test proves, so a proof list never names a test that did not run",
+  "done_when": "Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test proves; a named test close did not run shows as not run, and a name close cannot match to its own run's results is marked not checked",
   "flagged": [
     "src/forge/close.py",
     "src/forge/fasttest.py",
