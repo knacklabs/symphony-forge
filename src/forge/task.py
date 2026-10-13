@@ -6,7 +6,6 @@ import argparse
 import hashlib
 import json
 import re
-import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -230,7 +229,7 @@ def start(args: argparse.Namespace) -> None:
                 if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
                     raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
                 raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
-                                   f"git -C {shlex.quote(str(folder))} status; fix the reported problem "
+                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
                                    f"and finish the merge, then {retry}")
             elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
                 git("merge", "--abort", cwd=folder)
@@ -245,7 +244,7 @@ def start(args: argparse.Namespace) -> None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
     text = story._plan(top, key)
     try:
-        story.parse(text, repo.root())
+        story.parse(text, repo.root(), key=key)
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
     notes = show(source, notes_rel)
@@ -341,13 +340,15 @@ def _overlap(a: str, b: str) -> bool:
     return a.startswith(b) or b.startswith(a)
 
 
-def waits_for(key: str, after: list[str], scope: list[str] | None = None,
+def waits_for(part: str, after: list[str], scope: list[str] | None = None,
               busy: dict[str, list[str]] | None = None) -> list[str]:
-    """Published prerequisites and started parts whose scopes block this part."""
+    """Published prerequisites and started parts whose scopes block the part KEY/TASK; a part
+    never waits for itself."""
+    key = part.split("/", 1)[0]
     waits = [item if "/" in item else f"{key}/{item}" for item in after]
     blockers = [item for item, owned in (busy or {}).items()
                 if any(_overlap(a, b) for a in (scope or []) for b in owned)]
-    return list(dict.fromkeys(waits + blockers))
+    return [item for item in dict.fromkeys(waits + blockers) if item != part]
 
 
 # --- forge fix start / forge fix allow-large -------------------------------------------

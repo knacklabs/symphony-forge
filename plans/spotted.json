@@ -2179,6 +2179,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: update the shipped coordinator guidance for exact Codex trust\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 458,
+      "text": "Not done: update the shipped coordinator guidance for exact Codex trust",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tOld-release runs leave skipped chats only in local records\tsync-not-blocked",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -2197,6 +2208,17 @@
       "text": "Skip stale spec-reader records before resolving their document paths",
       "from": "blocking",
       "item": "reuse-worker-chats",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tStandard: each commit leaves the build working\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 82,
+      "text": "Standard: each commit leaves the build working",
+      "from": "blocking",
+      "item": "codex-trust-parent",
       "status": "open",
       "closed_by": null
     },
@@ -2399,6 +2421,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 52,
+      "text": "Not done: Forge counts a project as trusted by Codex only on an exact trusted entry for its own folder or main checkout, refuses otherwise,\u53d9",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 46,
+      "text": "Not done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix enables spotted-list merging in repos adopted on the previous release\tforge-sync-points-git-s-merge-rule-for-t",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -2553,6 +2597,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 51,
+      "text": "Not done: untrusted-entry refusals omit the parent-folder warning and offer an ineffective fix",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tOnly remove a fix created by this doctor run\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -2560,6 +2615,17 @@
       "text": "Only remove a fix created by this doctor run",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tTrust lookup can authorize turns that Codex treats as untrusted\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 48,
+      "text": "Trust lookup can authorize turns that Codex treats as untrusted",
+      "from": "blocking",
+      "item": "codex-trust-parent",
       "status": "open",
       "closed_by": null
     },
@@ -3741,6 +3807,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next never lists an item as waiting for itself; a part waits only for other items\tnext-no-self-wait",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 522,
+      "text": "Not done: forge next never lists an item as waiting for itself; a part waits only for other items",
+      "from": "blocking",
+      "item": "next-no-self-wait",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready fixes without a worktree\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -4322,6 +4399,17 @@
       "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code\tdismissals-carry-forward",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 661,
+      "text": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
+      "from": "blocking",
+      "item": "dismissals-carry-forward",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: A mixed-language proof line leaves an unmatched test unmarked\tforge-writes-proof-list",
@@ -5072,6 +5160,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/sync.py\tSync deletes client-owned Codex config comments\tupgrade-files-agree",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 325,
+      "text": "Sync deletes client-owned Codex config comments",
+      "from": "blocking",
+      "item": "upgrade-files-agree",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tNot done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task\ttask-start-pin",
       "kind": "bug",
       "path": "src/forge/task.py",
@@ -5237,6 +5336,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug filing fails for reporters without Forge triage access\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 197,
+      "text": "Forge bug filing fails for reporters without Forge triage access",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug template command fails in Windows PowerShell\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 179,
+      "text": "Forge bug template command fails in Windows PowerShell",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops\tFORGE-SCORE-1/BAR",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -5244,6 +5365,17 @@
       "text": "Not done: 4 \u2014 shipped loop guidance still describes unconditional three-round stops",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Forge bug reports do not use the bug template\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 184,
+      "text": "Not done: Forge bug reports do not use the bug template",
+      "from": "blocking",
+      "item": "report-forge-bugs",
       "status": "open",
       "closed_by": null
     },
@@ -5290,6 +5422,17 @@
       "item": "pin-switch-leaves-worktree",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: shipped guidance contradicts the new dismissal rule\tdismissals-carry-forward",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 925,
+      "text": "Not done: shipped guidance contradicts the new dismissal rule",
+      "from": "blocking",
+      "item": "dismissals-carry-forward",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: stop guidance for native reads\tFORGE-TOOLS-1/HOLD",
@@ -5853,6 +5996,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: proof that the bug template retains required prompts\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 50,
+      "text": "Not done: proof that the bug template retains required prompts",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: test_1_clients_are_told_to_file_forge_bugs does not prove template use\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 42,
+      "text": "Not done: test_1_clients_are_told_to_file_forge_bugs does not prove template use",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_counts.py\tNot done: proof list\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "tests/test_board_counts.py",
@@ -6377,6 +6542,17 @@
       "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
       "from": "worker",
       "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_trust_parent.py\tNot done: test that parent-only trust stops a Codex turn\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "tests/test_codex_trust_parent.py",
+      "line": 44,
+      "text": "Not done: test that parent-only trust stops a Codex turn",
+      "from": "blocking",
+      "item": "codex-trust-parent",
       "status": "open",
       "closed_by": null
     },
@@ -7180,6 +7356,17 @@
       "text": "Not done: prove the scheduled default-branch query",
       "from": "blocking",
       "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_never_waits_for_itself.py\tNot done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing\tnext-no-self-wait",
+      "kind": "bug",
+      "path": "tests/test_next_never_waits_for_itself.py",
+      "line": 25,
+      "text": "Not done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing",
+      "from": "blocking",
+      "item": "next-no-self-wait",
       "status": "open",
       "closed_by": null
     },
@@ -9171,6 +9358,105 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 802,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 212,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 317,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: every stop question shows the open notes\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 295,
+      "text": "Not done: every stop question shows the open notes",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator asks the owner only for the named decisions\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1423,
+      "text": "Not done: coordinator asks the owner only for the named decisions",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator settles reversible Harm 1 and 2 notes itself\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1397,
+      "text": "Not done: coordinator settles reversible Harm 1 and 2 notes itself",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: low-Harm stops still direct the coordinator to ask the owner\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1421,
+      "text": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_table.py\tNot done: functional check\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_score_table.py",
+      "line": 26,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_table.py\tNot done: tests/test_score_table.py\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_score_table.py",
+      "line": 50,
+      "text": "Not done: tests/test_score_table.py",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
       "status": "open",
       "closed_by": null
     }

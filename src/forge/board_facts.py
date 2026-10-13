@@ -89,7 +89,8 @@ def merged_before_weeks(top: Path) -> dict[str, Item]:
     kept for a minute. Only asked when an unfinished story has parts merged that long ago."""
     # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
     def fetch(now: datetime) -> list[Item] | None:
-        return _listing(top, "merged", "--search", f"merged:<{full_weeks(now, 6)[0]:%Y-%m-%d}")
+        # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
+        return _listing(top, "merged", "--search", f"merged:*..{full_weeks(now, 6)[0] - timedelta(days=1):%Y-%m-%d}")
     return {pr["headRefName"]: pr for pr in _cached(top, "prs-older-cache", fetch) or []
             if isinstance(pr.get("headRefName"), str)}
 

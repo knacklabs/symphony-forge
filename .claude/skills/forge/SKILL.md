@@ -168,6 +168,36 @@ Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land`
 New repos get the setting's default at init; existing repos get this guide when the upgraded
 Forge syncs, keeping their settings as written.
 
+## Reporting a Forge bug
+
+When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
+crash, a command that reports success but did nothing, generated files that contradict each
+other), file a bug on Forge's GitHub. No client code, names, paths or secrets: describe what Forge did.
+Read the template text from GitHub and drop its front matter:
+
+```
+gh api repos/knacklabs/symphony-forge/contents/.github/ISSUE_TEMPLATE/forge-bug.md -H "Accept: application/vnd.github.raw"
+```
+
+Fill every section, then save the filled body with your own file-writing tool as UTF-8.
+
+The template's sections, which the body file keeps exactly:
+
+- `## Forge version`: Output of `forge --version` and the pinned version in `forge.toml`.
+- `## Host and operating system`: The host (Claude Code or Codex) and the operating system.
+- `## Command and output`: The exact command and full output, with private names replaced.
+- `## Expected and actual`: Expected vs what happened.
+- `## Steps to reproduce`: Upgraded from which version, new or adopted repo, and the forge.toml settings without secrets.
+- `## forge next`: The `forge next` output at the time.
+- `## Tried and workaround`: What was tried, and any workaround.
+- `## How often`: How often: always, sometimes or once.
+
+File it with no prompt:
+
+```
+gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --body-file <that file>
+```
+
 ## Laptop setup and after cloning
 
 The repeatable laptop installers are published for
@@ -920,8 +950,10 @@ story's work, using the same overlap rule as `forge task start`.
 
 **Settled findings stay settled.** Readers and reviewers receive all earlier rounds' notes,
 answers and fixed or dismissed findings, including the coordinator's recorded work notes.
-Forge ignores repeats of disposed cold-read text or a fixed or dismissed review title and file;
-they cannot block or start another round. A new defect needs distinct text and new evidence.
+Forge ignores repeats of disposed cold-read text or a fixed review title and file; they cannot
+block or start another round. A dismissed finding stays dismissed while the line its `file:line`
+cites is unchanged, even when it moves; once that line changes, a repeat of it blocks again and
+needs a fix or a new dismissal. A new defect needs distinct text and new evidence.
 Human acceptance still expires when the accepted version changes. New repos get this on init;
 existing repos, including earlier adopted ones, get it on upgrade and sync.
 
@@ -984,7 +1016,9 @@ CI runs the full suite.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers and readers
-all refuse there until the human trusts it; `forge doctor` says how. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
+all refuse there until the human trusts it. Forge needs an exact trusted `[projects]` entry in
+Codex's config for the project folder or its main checkout; a parent folder's entry does not
+count, and the refusal and `forge doctor` name the entry to set. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
 ask the human to review it in Codex's /hooks, then run the command again.
 
 For a quick read-only question about this checkout, hand it to the session's `explorer`
@@ -1226,9 +1260,11 @@ its test command is capped with `--maxprocesses`. `pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
-before anything else. The review's "What counts" list is the boundary: every P0 or P1 finding
-inside it gets a fix round with `forge work <item>`, never a dismissal for being unnecessary, rare
-or low value. Dismiss only a finding outside the boundary or factually wrong, with
+before anything else. The review's "What counts" list is the boundary, and the bar decides
+inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
+`forge work <item>`, whatever its priority. A finding below the bar never holds the work; close
+lists it in the pull request as a follow-up or lived with. Never re-score a finding to change its
+outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
@@ -1354,14 +1390,16 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open,
-whatever files they were in. The existing same-file stop still applies from the third round.
+Close holds the fourth review after three blocked rounds only when a finding at the bar comes
+back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the
+third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
-Ask the human to narrow the part, split it, or accept the remaining findings.
+Settle the stop yourself or ask the owner, by the stop rule below. To ask, ask the human to
+narrow the part, split it, or accept the remaining findings.
 Run `forge land <item>` in the background after a close stop, or keep the current land running.
 With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
 default; it does not send the worker back while the stop is unanswered.
-After their answer, record it with
+Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
@@ -1370,31 +1408,51 @@ needs another review.
 A clean review clears an unanswered review-loop stop.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
-with that finding as its why. The running land records it and carries on without another
-command; the worker's next round narrows the part. A later close can also record an overdue default.
+with that finding as its why. It does this only when every open finding has Harm 1 or 2; with
+Harm 3 or more open, it waits for the owner. The running land records it and carries on without
+another command; the worker's next round narrows the part. A later close can also record an
+overdue default.
 The owner can reverse it later with the same `forge close <item> --resolve` command. To always
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.
 
 Close also stops at the third finding in one area (a Python function, else the file); its question
-proposes a structural move. The owner's answer settles the area: later findings there hold work
+proposes a structural move. The recorded choice settles the area: later findings there hold work
 only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
 
-When a cold read or review loop stops, ask the human the question it printed, in its words, one
-item per question. It names the item and what it delivers, says each open note or finding in plain
-words, and what accept, narrow and split each do; `forge next` prints it again for a stopped item.
+The stop rule: the printed stop says who decides. When every open note has Harm 1 or 2, it says
+"Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) and tell the
+owner after." Then choose accept or narrow, record it with a reason that gives the scores, and
+tell the owner after, in one line; ask the owner instead only when the choice adds scope beyond
+the approved Done when or undoes a decision the owner made. Otherwise, with a note at Harm 3 or
+more or one without scores, it says "Ask the human", and the owner decides.
+When a cold read or review loop stops and you must ask, ask the human the question it printed, in
+its words, one item per question. It names the item and what it delivers, shows the open notes as one table ranked
+by score (number, the problem and who it hits, Gain, Work, Harm, and what is proposed), and says
+what accept, narrow and split each do; `forge next` prints it again for a stopped item. When a note
+has no scores, as one saved before scores, the question lists the notes as plain lines instead.
+
+Every update to the owner that lists notes or findings uses the same table, in the same order.
+The coordinator settles a reversible note with Harm 1 or 2 itself and tells the owner after, in
+one line. It follows the bar's outcome and never re-scores a note: a fix round for a note at the
+bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
+stop. Approval and merge steps stay the owner's.
 
 When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
 the item; close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
-choices. Ask the owner exactly that question; never switch tools yourself. Record the answer with
+choices. Settle it by the stop rule above: when every open note has Harm 1 or 2, choose yourself,
+give the scores in the reason and tell the owner after, in one line. Ask the owner exactly that
+question only when a note has Harm 3 or more, the choice adds scope, or it undoes a decision the
+owner made. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-Read also stops after three blocked cold-read rounds only when a disputed keep at the bar or a note with Harm 3 or more is open, for stories and
-specs alike. Ask the human to accept, narrow or split; do not read again until their choice is
-recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
+Read also stops after three blocked cold-read rounds, for stories and specs alike, only when a
+note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Settle
+it or ask the human to accept, narrow or split, by the stop rule; do not read again until the
+choice is recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
 Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
 the current document; later changes need another read. Narrow or split the part as agreed before
 reading again. A clean round or a recorded choice restarts the three-round count.

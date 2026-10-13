@@ -1,6 +1,7 @@
 """A merged pull request wins over a stale task or fix worktree in `forge next`."""
 
 import json
+import os
 import shlex
 
 from test_story import DOC, setup
@@ -36,9 +37,7 @@ def test_1_next_names_merged_items_and_their_worktree_cleanup(repo, gh):
     assert result.returncode == 0, result.stderr
     assert "SHOP/SAVE is merged" in result.stdout
     assert "The fix tidy-up is merged" in result.stdout
-    cleanup = {tuple(shlex.split(line.removeprefix("Next: ")))
-               for line in result.stdout.splitlines()
-               if line.startswith("Next: git worktree remove ")}
-    assert cleanup == {("git", "worktree", "remove", str(task)),
-                       ("git", "worktree", "remove", str(fix))}
+    quote = (lambda path: f'"{path}"') if os.name == "nt" else (lambda path: shlex.quote(str(path)))
+    cleanup = {line for line in result.stdout.splitlines() if line.startswith("Next: git worktree remove ")}
+    assert cleanup == {f"Next: git worktree remove {quote(task)}", f"Next: git worktree remove {quote(fix)}"}
     assert "waiting for its checks" not in result.stdout

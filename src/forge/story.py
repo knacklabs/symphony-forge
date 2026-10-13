@@ -27,7 +27,6 @@ import itertools
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import tempfile
@@ -67,8 +66,7 @@ REFUSALS = {
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
-    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. "
-                  "Ask the human to accept, narrow or split before reading again, in these words:\n{question}",
+    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. {question}",
                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
                    'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
@@ -467,7 +465,7 @@ def sections(text: str) -> dict[str, str]:
 
 
 def parse(text: str, top: Path | None = None, ref: str | None = None,
-          history: dict[str, Any] | None = None) -> dict[str, Any]:
+          history: dict[str, Any] | None = None, key: str | None = None) -> dict[str, Any]:
     """A story doc's Done-when items, their details and its task rows, once its shape is sound.
     With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
     first at the commit `ref` when given.
@@ -513,7 +511,9 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
         if not scope:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])}
+                       # the story's own KEY/TASK is TASK, so a self or loop through it is a cycle
+                       "after": [after.split("/", 1)[1] if key and after.startswith(f"{key}/") else after
+                                 for after in re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])]}
     for task in tasks.values():
         unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
@@ -839,9 +839,9 @@ def plan_behind(top: Path, key: str, ref: str) -> str:
     if not folder:
         main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
         folder = main.parent / f"{main.name}-story-{key}"
-        add = f"git worktree add {shlex.quote(str(folder))} story/{key} && "
+        add = f"git worktree add {repo.quote(str(folder))} story/{key} && "
     return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
-            f"{add}git -C {shlex.quote(str(folder))} merge {ref}")
+            f"{add}git -C {repo.quote(str(folder))} merge {ref}")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
@@ -1009,15 +1009,17 @@ def read_question(doc: str, notes: str) -> str:
     """A stopped cold-read loop's question: the doc's title and promise, and the latest round's
     blocking notes."""
     flagged = []
-    for block in _latest(*_record(notes)).values():
+    for number, block in _latest(*_record(notes)).items():
         title, _, body = block.split(". ", 1)[1].partition("\n")
         if score.note_holds(block.split(". ", 1)[1]) and not DISPOSITION.search(body):  # cut, deferred or kept
-            flagged.append((review.plain(title, "\n".join(line for line in body.splitlines()
+            flagged.append((number, review.plain(title, "\n".join(line for line in body.splitlines()
                                                    if not DISPOSITION.match(line))), score.parse(body)))
     title = re.search(r"^# (.+)$", doc, re.M)
     found = sections(doc)
     gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
     return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
+                           score.who(flagged, "Ask the human to accept, narrow or split before reading "
+                                              "again, in these words:"),
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else
@@ -1044,7 +1046,7 @@ def agents_section(top: Path, heading: str) -> str:
 
 def _parsed(text: str, rel: str) -> dict[str, Any]:
     try:
-        return parse(text, repo.root())  # checks After entries that name another story's task
+        return parse(text, repo.root(), key=Path(rel).stem)  # checks After entries that name another story's task
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 

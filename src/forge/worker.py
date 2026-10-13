@@ -24,12 +24,14 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open, "
-    "whatever files they were in. The existing same-file stop still applies from the third round. "
+    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes "
+    "back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round. "
     "Wait for a recorded choice only after close has stopped the review loop. "
     "Otherwise, fix the findings inside your Done-when in this round, including new findings "
     "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
-    "Read also stops after three blocked cold-read rounds only when a disputed keep at the bar or a note with Harm 3 or more is open; the coordinator "
+    "Read also stops after three blocked cold-read rounds only when a note at the bar has no scores or is a "
+    "disputed keep, or a note with Harm 3 or more is open. At a stop where every open note has Harm 1 or 2, "
+    "the coordinator chooses accept or narrow itself and tells the owner after; otherwise the owner chooses. The coordinator "
     "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024

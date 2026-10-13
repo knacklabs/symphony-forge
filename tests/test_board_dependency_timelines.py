@@ -83,6 +83,8 @@ def _titles(svg):
     return {node.text for node in svg.iter() if node.tag.rsplit("}", 1)[-1] == "title"}
 
 
+# ponytail: about 25 forge commands; on a loaded Windows runner they need more than the 300 s CI default.
+@pytest.mark.timeout(600)
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         repo, gh, tmp_path, claude_payload, monkeypatch, history):

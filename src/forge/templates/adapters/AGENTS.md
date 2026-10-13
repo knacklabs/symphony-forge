@@ -65,5 +65,10 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
   "Done when" sections exactly, so a summary or a rewrite records nothing, and an edit below
   `## For the builders` needs no new approval. There is no other approval step.
 - Run long `forge work` runs in the background and keep watching them.
+- When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
+  crash, a command that reports success but did nothing, generated files that contradict each
+  other), file a bug on Forge's GitHub with the Forge bug template's sections, fill every one, and
+  leave out the repo's code, names, paths and secrets: describe what Forge did. The forge guide
+  has the sections and the command.
 - Put the rules every review of this repo must follow under `## Review rules`, outside the
   forge:begin and forge:end lines. Forge's review reads them from the default branch.
