@@ -10,6 +10,7 @@
   "branch": "fix/pr-time-record-summaries",
   "done_when": "The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds into one totals line, so a long item never reaches the body limit and the board still shows its total time",
   "flagged": [
+    "src/forge/templates/skill.md",
     "src/forge/time_records.py",
     "tests/test_pull_request_time_summaries.py"
   ],
@@ -222,17 +223,41 @@
       "security": false,
       "title": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
       "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 391,
+      "outcome": "open",
+      "reason": "",
+      "round": 13,
+      "security": false,
+      "title": "Not done: The guide tells agents to add overlapping story parts",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e547910d975818f260753a02b360dfe98b88664586fc532fd7ce56c9769d9b6f",
-    "changed": "2964e6582fb73db5cb01cf0db8001f4e263d2d37d886ef750f440cb6196eed81",
-    "commit": "9f83fa699d161638bcd0e09c6fc3f46ff75d0311",
+    "branch_diff": "7199fe337584b08fccfc528770b946a7b67e0f4b6bcc7f05f0d6fa29f5dec289",
+    "changed": "7723cfd0f79e1d4a8fe941b99b63f2fabbbe2575abd33eeb445e2bdca5a669fd",
+    "commit": "81af0ccd4cb69554e8337ec106b3a4a586b2092c",
     "dismissals": [],
-    "findings": [],
-    "id": "f80afbf9-fb5c-4b1e-90cd-ff446cd71d94",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done\nThe new guide says an item's total time equals \u201cthe sum of its parts,\u201d while the same paragraph says story time counts each instant once. For overlapping story parts, adding their totals overstates the board's total; the new two-part proof itself expects the story total to equal the larger part's total. This conflicting instruction is shipped in `src/forge/templates/skill.md` and both Forge skill copies.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 3,
+        "harm": 2,
+        "line": 391,
+        "priority": "P1",
+        "title": "Not done: The guide tells agents to add overlapping story parts",
+        "work": 1
+      }
+    ],
+    "id": "0da0997b-e59a-42e2-9cb8-d980a8f1d2c7",
+    "status": "blocked"
   },
   "settled_areas": [
     "_compact() in src/forge/time_records.py",
@@ -291,6 +316,10 @@
     {
       "at": "2026-10-13T17:07:05.796131+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T17:39:13.998935+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -302,6 +331,5 @@
     "wait_id": "04239b79-db02-48d6-845f-8ff59ca523a1",
     "worker_round": null
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 67bf8d627a22b201a5bf0f32f9514c295fa699fc` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/time_records.py; GitHub's checks will cover it.\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/_pytest/runner.py\", line 118 in pytest_runtest_protocol\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 227 in run_one_test\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 206 in pytest_runtestloop\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 384 in _main\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 330 in wrap_session\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 377 in pytest_cmdline_main\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 427 in <module>\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1291 in executetask\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 341 in run\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 411 in _perform_spawn\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 389 in integrate_as_primary_thread\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1273 in serve\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1806 in serve\n  File \"<string>\", line 8 in <module>\n  File \"<string>\", line 1 in <module>\n........                                                       [100%]\n=================================== FAILURES ===================================\n__________________ tests/test_pull_request_time_summaries.py ___________________\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-pr-time-record-summaries/.venv/bin/python\nworker 'gw2' crashed while running 'tests/test_pull_request_time_summaries.py::test_2_story_counts_two_parts_overlapping_folded_time_once'\n1 failed, 68 passed in 971.61s (0:16:11)",
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
