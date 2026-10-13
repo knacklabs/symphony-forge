@@ -518,7 +518,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     overlapping: set[str] = set()
     for task in doc["tasks"]:
         if task["id"] in waits:
-            blockers = waits_for(key, [], task["scope"], busy)
+            blockers = waits_for(key, [], task["scope"],
+                                 {item: owned for item, owned in busy.items() if item != f"{key}/{task['id']}"})
             if blockers:
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
@@ -694,8 +695,10 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
                  history: dict[str, Any] | None = None) -> dict[str, Any]:
     """An item started on another machine (its branch is on the remote, as the board reads it, with
     or without a pull request) and no worktree here: its state at the pull request's head."""
-    if not pr and history is not None:  # the board's own bulk read of the remote branches
-        return history["ref_states"].get(f"refs/remotes/origin/{branch}", {}).get(repo.state_path(item)) or {}
+    if not pr and history is not None:  # the board's own bulk read of the branches; a local-only one counts too
+        refs = history["ref_states"]
+        return (refs.get(f"refs/remotes/origin/{branch}") or refs.get(f"refs/heads/{branch}")
+                or {}).get(repo.state_path(item)) or {}
     ref = review_ref(top, branch, pr)
     return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
 
