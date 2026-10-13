@@ -84,12 +84,16 @@ def facts(top: Path, history: Item, counts: Item, items: list[Item],
         found = [{**week, "prs": [pr for pr in week["prs"] if pr.get("state", "MERGED") == "MERGED"]}
                  for week in github["weeks"]]
         full = found[:6]
-        names = sorted({_person(pr) for week in full if week["complete"] for pr in week["prs"]}, key=str.casefold)
+        # Grouped by login, which is unique; the display name is only the label.
+        people = {(pr.get("author") or {}).get("login"): _person(pr)
+                  for week in full if week["complete"] for pr in week["prs"]}
         trends = {"weeks": [week["start"][:10] for week in full],
                   "team": [_split(week["prs"]) if week["complete"] else None for week in full],
                   "people": [{"name": name, "weeks": [
-                      _split([pr for pr in week["prs"] if _person(pr) == name]) if week["complete"] else None
-                      for week in full]} for name in names]}
+                      _split([pr for pr in week["prs"] if (pr.get("author") or {}).get("login") == login])
+                      if week["complete"] else None for week in full]}
+                      for login, name in sorted(people.items(), key=lambda person: (person[1].casefold(),
+                                                                                    str(person[0])))]}
         # Last week's and this week's searches hold the last 7 days; a capped one leaves it unknown.
         if all(week["complete"] for week in found[-2:]):
             around = sorted(({"title": pr.get("title"), "author": _person(pr), "merged_at": pr.get("mergedAt"),
