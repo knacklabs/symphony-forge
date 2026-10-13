@@ -3686,6 +3686,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tClose counts a failed teardown as a second test case\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 663,
+      "text": "Close counts a failed teardown as a second test case",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tClose credits a different nested test file as passed\tforge-writes-proof-list",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3792,6 +3803,17 @@
       "text": "Nested pytest config lets doctests bypass the test place",
       "from": "blocking",
       "item": "reviews-skip-agent-line",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close cannot match Markdown-wrapped pytest node IDs\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 610,
+      "text": "Not done: Close cannot match Markdown-wrapped pytest node IDs",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
       "status": "open",
       "closed_by": null
     },
