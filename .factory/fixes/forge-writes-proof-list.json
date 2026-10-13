@@ -40,7 +40,7 @@
     "id": "6f56235c-dfa1-455b-8db1-91e36b91cfdf",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T16:41:18.842984+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-10-13T00:13:27.069551+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/review.py",
-    "wait_id": "c51e6633-518d-4d97-b459-ff55b12cbad4"
+    "reason": "Coordinator (Harm 2, reversible): one last round on the two cases workers hit every day \u2014 names wrapped in Markdown code marks match like plain names, and each test counts once with a failed teardown counted as that test's failure. Anything further in review.py is accepted as a follow-up.",
+    "wait_id": "c51e6633-518d-4d97-b459-ff55b12cbad4",
+    "worker_round": null
   },
   "why": "Workers write proof lists by hand, and about one review round in five is a gate on a missing or wrong test name in that list"
 }
