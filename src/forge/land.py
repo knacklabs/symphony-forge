@@ -189,10 +189,12 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     """Re-run the pull request's failed checks once per pushed head, when every failure is a job
     whose first attempt's log names none of the change's files and this machine's tests passed on
     these committed files. Any gh call that fails means no re-run."""
-    command = repo.config(top)["test"]
-    passed = review.passed_record(top, command) if command else None
+    default = repo.default_branch(top)
+    # close records only the command it ran: fast_test, when set, else test
+    commands = {repo.config(top)["test"], review.close_test(top, f"origin/{default}")} - {""}
     marker = repo.forge_dir(top) / "reruns" / repo.git("rev-parse", "HEAD", cwd=top)
-    if not (passed and passed.exists()) or marker.exists():
+    if not any((passed := review.passed_record(top, command)) and passed.exists()
+               for command in commands) or marker.exists():
         return False
     try:  # gh exits non-zero when a check fails, so read what it printed either way
         listed = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link",
@@ -200,7 +202,6 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     except ValueError:
         return False
     failing = [check for check in listed if check.get("bucket") not in ("pass", "skipping")]
-    default = repo.default_branch(top)
     changed = [path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                          f"origin/{default}...HEAD", cwd=top).split("\0") if path]
     runs: dict[str, list[str]] = {}
@@ -267,9 +268,11 @@ def _land_all() -> int:
 
 def _queue(top: Path) -> int:
     """Close and merge every change in close, oldest first, up to the agent places at once. A change
-    not yet ready waits for an older one in the run that shares a file with it."""
+    not yet ready waits for an older one in the run that shares a file with it, unless a human
+    merges: then nothing merges in the run, so nothing waits."""
     repo.git("fetch", "-q", "origin", cwd=top)
     default = repo.default_branch(top)
+    hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
     changes, needs = [], {}
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
@@ -314,7 +317,7 @@ def _queue(top: Path) -> int:
             # The hold first, so a held change says whom it waits for whatever the places are doing.
             older = next(((other, min(files & theirs)) for _, other, theirs, _ in changes[:index]
                           if other not in finished and files & theirs), None)
-            if older and not ready:
+            if older and not ready and hold:
                 if item not in waiting:
                     say(f"{item} waits for {older[0]}: both change {older[1]}.")
                     waiting.add(item)
@@ -341,7 +344,7 @@ def _queue(top: Path) -> int:
             url = next((line.rsplit(": ", 1)[1] for line in lines
                         if line.startswith(f"{item} is ready; a human merges")), None)
             if child.returncode == 0 and url:
-                ready_prs.append(f"{item} {url}")
+                ready_prs.append((age, f"{item} {url}"))
                 say(f"{item} is ready for a human merge.")
             elif child.returncode == 0:
                 merged.append(item)
@@ -356,6 +359,7 @@ def _queue(top: Path) -> int:
                 say(f"{item} stopped: {needs[item][1]}")
         time.sleep(0.5)
     stopped = sorted(needs, key=lambda item: needs[item][0])
+    ready_prs = [line for _, line in sorted(ready_prs)]  # oldest first: the order to merge them
     say(f"Merged ({len(merged)}): {', '.join(merged) or 'none'} · Ready to merge ({len(ready_prs)}): "
         f"{', '.join(ready_prs) or 'none'} · Needs you ({len(stopped)}): {', '.join(stopped) or 'none'}")
     for item in stopped:

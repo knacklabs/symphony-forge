@@ -134,7 +134,10 @@ In a client repo, finish the prototype review and customer sign-off above before
    not yet ready that changes a file an older change in the run also changes waits for it. Only
    one run works in a repo at a time. A change that needs a worker or you stops alone; the run
    ends with `Merged (n): ... · Ready to merge (n): ... · Needs you (n): ...` and each stopped
-   change's reason and next step. The last task's merge records the story done, using its title.
+   change's reason and next step. A failed check whose log names none of the change's files
+   runs again once. Where a human merges, the run merges nothing and lists the ready changes
+   oldest first with their links, in the order to merge them. The last task's merge records the
+   story done, using its title.
 
 Only the human approves a story and chooses between options. The agent does the rest, including
 merging when the repo allows agent merges.
