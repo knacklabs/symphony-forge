@@ -250,8 +250,8 @@
       "gain": 3,
       "harm": 2,
       "line": 624,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/review.py:624 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: light-review findings settled as lived with stay in Known and accepted",
       "round": 10,
       "security": false,
       "title": "Not done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context",
@@ -264,7 +264,13 @@
     "branch_diff": "6a9c02d18baf4a407a21a0b9f9ff91b2910bfd7163369ec111c2a9ec68b6fda0",
     "changed": "83c861fc6d071a514e894a44bd51d697c3f659ca2206cf3683dd3872bd656481",
     "commit": "999a4f4a43bfe84d49f742445b98009fd17c01f9",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:624 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: light-review findings settled as lived with stay in Known and accepted",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 A scored `fix now` finding passes a P0-only light review and is recorded in `known` as `lived with`, but `_settled` recognizes earlier below-bar findings only when `score.bar` returns `follow-up` or `live with`. The later review's `$accepted` block is built from `_settled`, so it omits this finding. If the same item is reviewed again after sign-off, a repeat with the same file and title is neither presented as accepted nor automatically ignored, and can hold work under the full review gate.",
@@ -278,13 +284,13 @@
       }
     ],
     "id": "47ea36b7-7464-4f80-824a-2c68fef8ab8b",
-    "status": "blocked"
+    "status": "clean"
   },
   "settled_areas": [
     "src/forge/review.py",
     "src/forge/score.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T18:21:59.003408+00:00",

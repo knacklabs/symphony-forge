@@ -4232,8 +4232,8 @@
       "text": "Not done: 3 \u2014 light-review findings settled by Forge disappear from later accepted context",
       "from": "blocking",
       "item": "FORGE-SCORE-1/BAR",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: 3 \u2014 settled findings disappear from later accepted context\tFORGE-SCORE-1/BAR",
