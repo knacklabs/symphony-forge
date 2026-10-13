@@ -3741,6 +3741,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next never lists an item as waiting for itself; a part waits only for other items\tnext-no-self-wait",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 522,
+      "text": "Not done: forge next never lists an item as waiting for itself; a part waits only for other items",
+      "from": "blocking",
+      "item": "next-no-self-wait",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: forge next omits ready fixes without a worktree\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -7180,6 +7191,17 @@
       "text": "Not done: prove the scheduled default-branch query",
       "from": "blocking",
       "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_next_never_waits_for_itself.py\tNot done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing\tnext-no-self-wait",
+      "kind": "bug",
+      "path": "tests/test_next_never_waits_for_itself.py",
+      "line": 25,
+      "text": "Not done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing",
+      "from": "blocking",
+      "item": "next-no-self-wait",
       "status": "open",
       "closed_by": null
     },
