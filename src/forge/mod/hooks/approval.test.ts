@@ -16,8 +16,9 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('process.run', (_$, e) => ({ value: {
       exitCode: 0, stderr: '', stdout: JSON.stringify(e.argv[1] === 'board'
         ? { version: '1.2.6', repo_root: '/session-checkout', items: [{
-          id: 'SHOP', kind: 'story', title: 'Share a basket', stage: 'awaiting approval',
+          id: 'SHOP', kind: 'story', title: 'Share a basket', stage: 'waiting for approval',
           approval: { doc: '/story-worktree/plans/SHOP.md' }, children: [],
+          next: { command: null, line: 'Approve the story in Plan Mode.' },
         }] }
         : { version: '1.2.6', repo_root: '/session-checkout', next: {
           command: null, line: 'Approve the story in Plan Mode.',
@@ -31,6 +32,6 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(JSON.stringify(await ui.drawn())).toContain('Share a basket')
     expect(await ui.find({ type: 'Button', text: /Approve/ })).toBeUndefined()
     const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toContain('Approve the story in Plan Mode.')
+    expect(reply.text).toBe('NEEDS YOU\n  Share a basket  SHOP\n    The plan is ready for your approval.\n    → Approve the story in Plan Mode.')
   })
 }

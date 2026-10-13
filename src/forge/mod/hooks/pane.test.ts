@@ -50,39 +50,33 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(opens[0]).toEqual({ id: 'forge', title: 'Forge' })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     let drawn = JSON.stringify(await ui.drawn())
-    for (const detail of ['Polish the guide', 'PR #7: fail', 'P1 Clarify setup', 'P2 Explain upgrade', '1 dismissed', 'Windows: timeout', 'Linux: failed', 'codex', 'medium', 'editing the guide', '3/9', 'stalled', 'idle since', 'Plan read: passed']) expect(drawn).toContain(detail)
-    await clock.advance(5000)
+    for (const shown of ['MOVING', 'Polish the guide', '  story', ' · Review running · under a minute']) expect(drawn).toContain(shown)
+    for (const hidden of ['unknown', 'P1', 'dismissed', 'idle since', 'Build → Tests', 'round']) expect(drawn).not.toContain(hidden)
+    await clock.advance(60000)
     drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('5s')
-    if (surface === 'desktop') {
-      const timelines = await ui.findAll({ type: 'Svg' })
-      expect(timelines.length).toBe(2)
-      expect(timelines[0]?.props.alt).toBe('Build → Tests → Review → CI → Merge')
-      expect(timelines[1]?.props.alt).toBe('Build ✓ 4s → Tests ✗ 5s → Review ● 5s → CI → Merge –')
-      for (const timeline of timelines) {
-        expect(timeline.props.source).toContain('<title>')
-      }
-      expect((await ui.findAll({ type: 'Markdown' })).length).toBe(2)
-    }
+    expect(drawn).toContain('Review running · 1 min')
     const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toContain('Windows: timeout')
-    expect(reply.text).toContain('editing the guide')
+    expect(reply.text).toBe('MOVING\n  Polish the guide  story · Review running · 1 min')
     expect(opens.at(-1)).toEqual({ id: 'forge', title: 'Forge', focus: true })
-    for (const [reason, time] of [['clear', '6s'], ['resume', '7s']] as const) {
+    for (const [reason, time] of [['clear', '2 min'], ['resume', '3 min']] as const) {
       await $.session.end({ reason, sessionId: 'previous', resume: { id: 'previous' } })
-      await clock.advance(1000)
+      await clock.advance(60000)
       expect(JSON.stringify(await ui.drawn())).toContain(time)
     }
-    mode = 'bad'; await clock.advance(3000)
+    mode = 'bad'; await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('Polish the guide')
     expect(drawn).toContain("Couldn't refresh: Malformed forge board output")
     mode = 'empty'; await clock.advance(10000)
     expect(JSON.stringify(await ui.drawn())).toContain('Nothing in progress.')
     mode = 'missing'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).toContain('Lost state · unknown')
+    expect(JSON.stringify(await ui.drawn())).toContain('Show waiting or not started (1)')
     mode = 'queued'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).toContain('queued agents #2')
+    expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide')
+    await ui.press({ key: 'waiting' })
+    drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Hide waiting or not started (1)')
+    expect(drawn).toContain('Polish the guide')
   })
 
   test(`2: ${surface} strip rechecks the exact command and handles stale, busy and failed actions`, async ($, on) => {
@@ -267,7 +261,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
 test('1: story action seam and tab host draw through the pane', async () => {
   const { data } = createCore()
-  data.board = board
+  // A story with parts is shown through its parts; this one stands alone.
+  data.board = { ...board, items: [{ ...story, children: [] }] }
   type Draw = (host: CoreEngineInterface, e: RenderInput<'Pane'>) => Promise<RenderElement>
   let draw: Draw | undefined
   // Test-kit inline plugins cannot import sibling modules. Route this instance
