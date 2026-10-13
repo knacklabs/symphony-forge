@@ -1,0 +1,14 @@
+{
+  "base": "67bf8d627a22b201a5bf0f32f9514c295fa699fc",
+  "branch": "fix/team-sentence-short",
+  "done_when": "The team sentence counts stories with no plan instead of naming them, and forge board --json fills the team's in-progress list from the same row states the page uses",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T17:21:36.588894+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The board's team sentence names every story that has no plan, so on a larger team it runs to eight lines, and the board data leaves its in-progress list empty"
+}
