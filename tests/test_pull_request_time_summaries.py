@@ -61,7 +61,8 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
                'checks = ["tests", "forge-pr-check"]\n'
                'models.build = { model = "opus", effort = "high" }\n')
     env.repo.git("push", "-q", "origin", "main")
-    item, where = env.start_fix(round=EARLIER)
+    # The CI case starts fresh, so its review round has a known number.
+    item, where = env.start_fix() if shape == "repeated-ci-closes" else env.start_fix(round=EARLIER)
     install_claude(env.repo)
     env.reviews({"exit": 0, "report": report(finding("P2", "Basket label stays unclear"))})
     worked = env.repo.forge("work", item)
@@ -75,7 +76,7 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
                 for name in ("events", "timings")}
     mine = {name: [r for r in rows if r.get("item") == item] for name, rows in recorded.items()}
     number = max(r["round"] for r in mine["events"] if isinstance(r.get("round"), int))
-    assert number >= EARLIER
+    assert number >= EARLIER or shape == "repeated-ci-closes"
     # The round's merge wait is still open; a later round's work would have ended it.
     template = {name: [r for r in rows if r.get("round") == number and r.get("event") != "owner wait start"]
                 for name, rows in mine.items()}
@@ -128,8 +129,9 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     assert abs(shared["total_seconds"] - parts) < 1
     if shape == "repeated-ci-closes":
         assert shared["time_breakdown"]["waiting_for_ci"] is not None
-        # The one review round's CI retries fold into the totals with its review time.
-        assert "reviewing" in lines[0] and "waiting for CI" in lines[0], lines
+        # The CI retries fold into their own review round's line, which keeps its number and times.
+        assert re.match(rf"Round {number}: .*review \w+ \(\d+ seconds?\).*CI passed[^;]*\(\d+ seconds?\)", lines[-1]), lines
+        assert "Round unknown" not in "".join(lines) and shared["rounds"][-1]["repeat_findings"] is not None
         return
     if shape == "long-current-round":
         assert len(lines) == 2 and all(re.search(r"review \w+ \(\d+ (?:second|minute)", line) for line in lines), lines

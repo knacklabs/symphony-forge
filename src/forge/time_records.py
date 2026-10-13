@@ -1,4 +1,5 @@
 """Elapsed time and review history, shared through pull requests and local observations."""
+import functools
 import json
 import hashlib
 import re
@@ -40,7 +41,7 @@ def _fold(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     first = b.get("first", b["round"]) if first is None else first
     last = b.get("last", b["round"])
     last = a.get("last", a["round"]) if last is None else last
-    line = (("Earlier rounds" if first is None else f"Rounds {first}–{last}") + ": "
+    line = (("Earlier rounds" if first is None else f"Round {first}" if first == last else f"Rounds {first}–{last}") + ": "
             + "".join(f"{label} {duration(seconds[c])}; " for c, label in zip(CATEGORIES, LABELS) if c in seconds)
             + "findings: " + " new, ".join("unknown" if n is None else str(n) for n in counts) + " repeated")
     return {"round": None, "worker_round": None, "line": line, "findings": None, "new_findings": counts[0],
@@ -226,6 +227,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
 
     attempts.sort(key=lambda current: (current["start"] is None, current["start"]))
 
+    @functools.cache  # Called per interval and per timing; a long round has hundreds of each.
     def attempt(number: int | None, at: datetime) -> int | None:
         choices = [(index, r) for index, r in enumerate(attempts) if r["worker_round"] == number]
         return next((index for index, r in reversed(choices) if r["start"] and r["start"] <= at),
@@ -324,6 +326,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                         if matched != failed:
                             outcome = "unknown"
                     outcomes.append(str(outcome).replace("_", " "))
+                if len(outcomes) > 3:  # Many retries name their first and last result.
+                    outcomes = [outcomes[0], f"{len(outcomes) - 2} more", outcomes[-1]]
                 outcomes = ", then ".join(outcomes)
                 categories = {"worker round": ("building", "fixing_findings"), "test run": ("own_tests",),
                               "review": ("reviewing",), "CI wait": ("waiting_for_ci",)}[step]
@@ -463,12 +467,27 @@ def _add(a: float | None, b: float | None) -> float | None:
     return None if a is None and b is None else round((a or 0) + (b or 0), 3)
 
 
+def _joined(older: list[dict[str, Any]], newer: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """A review round cut part-way continues in its own line: later rows with no review of their
+    own (such as CI retries) add their steps and times to it, and it keeps its number."""
+    if older and newer and newer[0]["round"] is None and newer[0]["worker_round"] == older[-1]["worker_round"] \
+            and older[-1]["round"] is not None:
+        a, b = older[-1], newer[0]
+        head, _, tail = a["line"].partition("; findings: ")
+        steps = [step for step in b["line"].removeprefix("Round unknown: ").split("; ")
+                 if not step.startswith("findings: ") and step not in head.split("; ")]
+        line = "; ".join([head, *steps]) + ("; findings: " + tail if tail else "")
+        seconds = _fold(a, {**b, "new_findings": 0, "repeat_findings": 0})["seconds"]
+        return [*older[:-1], {**a, "line": line[:300], "seconds": seconds}, *newer[1:]]
+    return [*older, *newer]
+
+
 def _summed(summary: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
     """The summarised earlier rounds followed by what the remaining rows show."""
     return {**data, **{name: _add(summary[name], data[name]) for name in SUMMED},
             "time_breakdown": {name: _add(summary["time_breakdown"][name], data["time_breakdown"][name])
                                for name in CATEGORIES},
-            "rounds": [*summary["rounds"], *data["rounds"]],
+            "rounds": _joined(summary["rounds"], data["rounds"]),
             "intervals": [*summary["intervals"], *data["intervals"]]}
 
 
@@ -489,7 +508,7 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
     # seconds. Stage events stay.
     rows = {"events": [e for e in data["events"] if e.get("event") != "progress"], "timings": data["timings"]}
     while len(json.dumps([summary, rows])) > RECORD_BUDGET:
-        if summary and len(summary["rounds"]) > 1:
+        if summary and len(summary["rounds"]) > 2:  # The newest summarised line stays its own.
             summary["rounds"][:2] = [_fold(*summary["rounds"][:2])]
         elif summary and summary["intervals"]:
             del summary["intervals"][:max(1, len(summary["intervals"]) // 2)]
@@ -497,11 +516,13 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
             times = sorted(at for name in rows for r in rows[name] if (at := when(r.get("at") or r.get("start"))))
             ends = sorted(at for r in rows["events"] if r.get("event") == "review result" and (at := when(r.get("at"))))
             # Fold the oldest whole review round, with the CI wait after its review, up to where
-            # the next round's work, tests or review start; one round alone folds its oldest quarter.
+            # the next round's work, tests or review start. One round alone folds its oldest
+            # quarter of rows into that round's own line.
             starts = sorted(at for name in rows for r in rows[name] if r.get("kind") != "ci" and (
                 r.get("event") in ("run start", "lane joined", "work phase")
                 or r.get("step") in ("worker round", "test run", "review")) and (at := when(r.get("at") or r.get("start"))))
-            until = next((at for at in starts if ends and at > ends[0]), None) or next(
+            cuts = [next((at for at in starts if at > end), None) for end in ends]
+            until = next((at for at in reversed(cuts) if at), None) or next(
                 (at for at in times[max(1, len(times) // 4):] if at > times[0]), None)
             if until is None:
                 break

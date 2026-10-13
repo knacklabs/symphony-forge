@@ -355,7 +355,8 @@ categories rather than adding overlapping stage timers. The pane and `/forge` sh
 details. The pull request's **How it went** section carries intervals, review rounds (including
 clean reviews), and waits with their ends. The shared record has a fixed size: while it is over, the oldest
 detail of any kind (round lines, intervals, then raw events such as repeated CI waits) folds into
-one "Rounds 1–N" line of totals and finding counts, oldest first. Live progress stays local. So a
+one "Rounds 1–N" line of totals and finding counts, oldest first; the newest round keeps its own numbered line,
+and its folded retries add to it. Live progress stays local. So a
 long item stays inside GitHub's body limit, and its total time still equals the sum of its parts. Close and merge retain observations from other
 checkouts and recompute repeated findings and overlapping time. The board reads this shared
 record alongside local observations; `source` says which it had. A GitHub merge ends the last
