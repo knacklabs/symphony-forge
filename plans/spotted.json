@@ -2410,6 +2410,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tClose merges results from identically named tests in sibling packages\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 372,
+      "text": "Close merges results from identically named tests in sibling packages",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tClose passes test filenames to Python setup commands\ttests-once-per-round",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
@@ -3730,6 +3741,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/review.py\tClose labels inherited pytest methods not run despite matching run results\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 664,
+      "text": "Close labels inherited pytest methods not run despite matching run results",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tClose leaves JavaScript test names unchecked in client proof lists\tforge-writes-proof-list",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3840,6 +3862,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: A mixed-language proof line leaves an unmatched test unmarked\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 685,
+      "text": "Not done: A mixed-language proof line leaves an unmatched test unmarked",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: A partially run parameterized test is reported as passed\tforge-writes-proof-list",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3889,6 +3922,17 @@
       "path": "src/forge/review.py",
       "line": 600,
       "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u0553ves",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 686,
+      "text": "Not done: Close writes the proof list from the tests it ran and their results, and the worker only names which Done-when item each test \u062fves",
       "from": "blocking",
       "item": "forge-writes-proof-list",
       "status": "open",
