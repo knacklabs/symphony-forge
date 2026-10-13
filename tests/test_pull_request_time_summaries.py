@@ -48,7 +48,8 @@ def repeat_round(template, number, offset, worker_round):
     return copies
 
 
-@pytest.mark.parametrize("shape", ["many-worker-rounds", "one-worker-round", "long-current-round"])
+@pytest.mark.parametrize("shape", ["many-worker-rounds", "one-worker-round", "long-current-round",
+                                   "repeated-ci-closes"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size(
         env, previous, shape):
@@ -80,7 +81,16 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
                 for name, rows in mine.items()}
     # Repeated closes put every review in the one worker round; otherwise each has its own.
     earlier = [repeat_round(template, n, number - n + 1, number if repeated_closes else n)
-               for n in range(1, number)] if shape != "long-current-round" else []
+               for n in range(1, number)] if shape in ("many-worker-rounds", "one-worker-round") else []
+    if shape == "repeated-ci-closes":
+        # Closing again on an unchanged commit reuses the review but waits for CI each time.
+        checks = {name: [r for r in rows if r.get("kind") == "ci" or r.get("event") == "CI result"
+                         or r.get("step") == "CI wait"] for name, rows in template.items()}
+        assert checks["events"] and checks["timings"]
+        earlier = [{name: [{**r, **{key: f"{r[key]}-ci-{n}" for key in ("id", "run_id", "lane_id") if key in r},
+                            **{key: (datetime.fromisoformat(r[key]) + timedelta(milliseconds=n)).isoformat()
+                               for key in ("at", "start") if isinstance(r.get(key), str)}}
+                           for r in found] for name, found in checks.items()} for n in range(1, 400)]
     if shape == "long-current-round":
         # As many live progress records as a run of over two hours leaves, one per ten seconds.
         run = next(r for r in template["events"] if r.get("event") == "run start")
@@ -94,7 +104,8 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
         rows = [r for copies in earlier for r in copies.get(name, [])] + recorded[name]
         (logs / f"{name}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
 
-    env.commit(where, "app.py", "print('basket label is clear')\n")
+    if shape != "repeated-ci-closes":
+        env.commit(where, "app.py", "print('basket label is clear')\n")
     if not repeated_closes:
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
@@ -112,6 +123,14 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     env.repo.path = clone
     shared = row(env.repo, item)
     lines = [r["line"] for r in shared["rounds"]]
+    # The board's total time is the sum of its parts.
+    parts = sum(shared[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown"))
+    assert abs(shared["total_seconds"] - parts) < 1
+    if shape == "repeated-ci-closes":
+        assert shared["time_breakdown"]["waiting_for_ci"] is not None
+        # The one review round's CI retries fold into the totals with its review time.
+        assert "reviewing" in lines[0] and "waiting for CI" in lines[0], lines
+        return
     if shape == "long-current-round":
         assert len(lines) == 2 and all(re.search(r"review \w+ \(\d+ (?:second|minute)", line) for line in lines), lines
         assert re.search(r"building \w+ \(\d+ (?:second|minute)", lines[0]), lines
@@ -121,14 +140,12 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     last = int(re.match(r"Rounds 1–(\d+): .*reviewing .*findings: \d+ new, \d+ repeated$", folded)[1])
     assert len(recent) < 20, lines
     numbers = [int(re.match(r"Round (\d+):", line)[1]) for line in recent]
-    assert numbers[0] == last + 1 and numbers == sorted(numbers), lines
+    assert numbers[0] in (last, last + 1) and numbers == sorted(numbers), lines
     for line in recent:  # each recent line keeps its own stage times
         assert re.search(r"review \w+ \(\d+ (?:second|minute)", line), line
     assert "Basket label stays unclear" in recent[-1]
     assert shared["rounds"][-1]["repeat_findings"] == 1
-    # The board's total time is the sum of its parts and spans all 200 earlier rounds.
-    parts = sum(shared[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown"))
-    assert abs(shared["total_seconds"] - parts) < 1
+    # The total spans all 200 earlier rounds.
     assert shared["total_seconds"] > (number - 1) * 3600
     # Clean reviews do not pile up across rounds.
     assert len(shared["clean_reviews"]) <= 2, shared["clean_reviews"]

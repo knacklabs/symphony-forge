@@ -18,8 +18,7 @@ RESUMED = "<!-- forge:history-resumed -->"
 
 
 SEEN = 300  # ponytail: a finding last seen over 300 findings ago counts as new again.
-KEPT_ROUNDS = 16  # Older summarised rounds fold into one line, so the record has a fixed size.
-KEPT_INTERVALS = 40  # Older summarised time stays in the totals; story time sees it as unknown.
+RECORD_BUDGET = 20_000  # bytes of shared time record; older detail folds into the totals line.
 
 
 def _mark(finding: dict[str, Any]) -> str:
@@ -37,8 +36,11 @@ def _fold(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     seconds = {c: round(a["seconds"].get(c, 0) + b["seconds"].get(c, 0), 3)
                for c in CATEGORIES if c in a["seconds"] or c in b["seconds"]}
     counts = [None if a[k] is None or b[k] is None else a[k] + b[k] for k in ("new_findings", "repeat_findings")]
-    first, last = a.get("first", a["round"]), b.get("last", b["round"])
-    line = (f"Rounds {first if first is not None else 'unknown'}–{last if last is not None else 'unknown'}: "
+    first = a.get("first", a["round"])
+    first = b.get("first", b["round"]) if first is None else first
+    last = b.get("last", b["round"])
+    last = a.get("last", a["round"]) if last is None else last
+    line = (("Earlier rounds" if first is None else f"Rounds {first}–{last}") + ": "
             + "".join(f"{label} {duration(seconds[c])}; " for c, label in zip(CATEGORIES, LABELS) if c in seconds)
             + "findings: " + " new, ".join("unknown" if n is None else str(n) for n in counts) + " repeated")
     return {"round": None, "worker_round": None, "line": line, "findings": None, "new_findings": counts[0],
@@ -415,10 +417,8 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     clean = [r for r in data["clean_reviews"] if not summary or not _settled(r, summary["round"], when(summary["until"]))]
     # Close's saved review snapshot has no round or time: keep only the newest one.
     clean = [r for r in clean if r.get("at")] + [r for r in clean if not r.get("at")][-1:]
-    # Progress is live-only: the board reads it locally, and a long round records it every ten
-    # seconds, so publishing it would let one round outgrow the body. Stage events stay.
     shared = {name: data.get(name) for name in ("ready", "clean_reviews", "rebuilt", "legacy_text", "truncated")}
-    shared.update(events=[e for e in rows["events"] if e.get("event") != "progress"],
+    shared.update(events=rows["events"],
                   timings=rows["timings"], summary=summary,
                   clean_reviews=clean,
                   state={"steps": [{"step": "start", "at": s.get("at")}
@@ -482,25 +482,41 @@ def _settled(row: dict[str, Any], number: int, until: datetime) -> bool:
 
 
 def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]]]:
-    """Publish earlier review rounds as one summary each instead of every event, so a long
-    item's record stays well inside GitHub's body limit. Only the current worker round's last
-    review attempt, and whatever follows it, keeps its rows."""
-    summary = data.get("summary")
-    rows = {name: data[name] for name in ("events", "timings")}
-    numbers = [r["round"] for name in rows for r in rows[name]
-               if isinstance(r.get("round"), int) and not isinstance(r["round"], bool)]
-    latest = [at for name in rows for r in rows[name] if numbers and r.get("round") == max(numbers)
-              and (at := when(r.get("at") or r.get("start")))]
-    # Repeated closes in one worker round: cut after the review before the last one.
-    results = sorted(at for r in rows["events"] if numbers and r.get("round") == max(numbers)
-                     and r.get("event") == "review result" and (at := when(r.get("at"))))
-    until = min((at for at in latest if len(results) < 2 or at > results[-2]), default=None)
-    if until is None:
-        return summary, rows
-    number = max(numbers)
+    """Keep the published record under a fixed size: while it is over, fold the oldest detail
+    of any kind (summarised rounds, then their intervals, then raw rows) into the totals."""
+    summary = json.loads(json.dumps(data["summary"])) if data.get("summary") else None
+    # Progress is live-only: the board reads it locally, and a long round records it every ten
+    # seconds. Stage events stay.
+    rows = {"events": [e for e in data["events"] if e.get("event") != "progress"], "timings": data["timings"]}
+    while len(json.dumps([summary, rows])) > RECORD_BUDGET:
+        if summary and len(summary["rounds"]) > 1:
+            summary["rounds"][:2] = [_fold(*summary["rounds"][:2])]
+        elif summary and summary["intervals"]:
+            del summary["intervals"][:max(1, len(summary["intervals"]) // 2)]
+        else:
+            times = sorted(at for name in rows for r in rows[name] if (at := when(r.get("at") or r.get("start"))))
+            ends = sorted(at for r in rows["events"] if r.get("event") == "review result" and (at := when(r.get("at"))))
+            # Fold the oldest whole review round, with the CI wait after its review, up to where
+            # the next round's work, tests or review start; one round alone folds its oldest quarter.
+            starts = sorted(at for name in rows for r in rows[name] if r.get("kind") != "ci" and (
+                r.get("event") in ("run start", "lane joined", "work phase")
+                or r.get("step") in ("worker round", "test run", "review")) and (at := when(r.get("at") or r.get("start"))))
+            until = next((at for at in starts if ends and at > ends[0]), None) or next(
+                (at for at in times[max(1, len(times) // 4):] if at > times[0]), None)
+            if until is None:
+                break
+            number = max([summary["round"]] if summary else [], default=0)
+            number = max([number, *[r["round"] for name in rows for r in rows[name] if isinstance(r.get("round"), int)
+                          and not isinstance(r["round"], bool) and (at := when(r.get("at") or r.get("start")))
+                          and at < until]])
+            summary, rows = _summarised(data, summary, rows, number, until)
+    return summary, rows
+
+
+def _summarised(data: dict[str, Any], summary: dict[str, Any] | None, rows: dict[str, list[dict[str, Any]]],
+                number: int, until: datetime) -> tuple[dict[str, Any], dict[str, list[dict[str, Any]]]]:
+    """Move the rows before the cut into the summary, one short line per review round."""
     past = {name: [{**r, "item": ""} for r in rows[name] if _settled(r, number, until)] for name in rows}
-    if not any(past.values()):
-        return summary, rows
     start = summary["until"] if summary else next(
         (s.get("at") for s in data["state"].get("steps", []) if s.get("step") == "start"), None)
     part = item(Path("."), "", {"status": "merged", "steps": [{"step": "start", "at": start}] if start else []},
@@ -516,9 +532,6 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
     part["intervals"] = intervals
     part["rounds"] = [_short(entry) for entry in part["rounds"]]
     whole = _summed(summary, part) if summary else part
-    while len(whole["rounds"]) > KEPT_ROUNDS:
-        whole["rounds"][:2] = [_fold(*whole["rounds"][:2])]
-    whole["intervals"] = whole["intervals"][-KEPT_INTERVALS:]
     kept = {name: whole[name] for name in ("time_breakdown", *SUMMED, "rounds", "intervals", "seen", "known")}
     return ({**kept, "until": until.isoformat(), "round": number},
             {name: [r for r in rows[name] if not _settled(r, number, until)] for name in rows})
