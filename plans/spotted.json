@@ -4973,6 +4973,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tNot done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 549,
+      "text": "Not done: forge board --json and forge next --json make no extra git or GitHub calls for finished stories and fixes, and a fixed small few",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/story.py\tNot done: forge read accepts only some common no-findings wording and test-not-run notes\tread-no-findings",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -5787,6 +5798,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 60,
+      "text": "Coordinator guidance omits the new Claude recovery step",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tCross-machine rework leaves a published owner wait open\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -5906,6 +5928,17 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: forge work exits with an error and names the reason and the next step whenever it starts no worker\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 651,
+      "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: printed model matches the native Codex role\tFORGE-TOOLS-1/WORK",
@@ -7409,6 +7442,28 @@
       "path": "tests/test_machine_views_stay_fast.py",
       "line": 36,
       "text": "Not done: test bounded calls for read stories and local branches",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test shared GitHub caching and calls per active item\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 76,
+      "text": "Not done: test shared GitHub caching and calls per active item",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test zero git calls for finished stories with retained branches\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 27,
+      "text": "Not done: test zero git calls for finished stories with retained branches",
       "from": "blocking",
       "item": "board-json-fast",
       "status": "open",
@@ -9534,28 +9589,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 60,
-      "text": "Coordinator guidance omits the new Claude recovery step",
-      "from": "blocking",
-      "item": "work-fails-without-worker",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: forge work exits with an error and names the reason and the next step whenever it starts no worker\twork-fails-without-worker",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 651,
-      "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
-      "from": "blocking",
-      "item": "work-fails-without-worker",
       "status": "open",
       "closed_by": null
     }
