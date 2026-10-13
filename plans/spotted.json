@@ -1002,6 +1002,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: join the go-live clause into the team sentence\tFORGE-BOARD-2/TRENDS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 180,
+      "text": "Not done: join the go-live clause into the team sentence",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/TRENDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -1020,6 +1031,17 @@
       "text": "Older merged parts cause unbounded GitHub requests",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_trends.py\tPeople with the same GitHub name are merged into one trend row\tFORGE-BOARD-2/TRENDS",
+      "kind": "bug",
+      "path": "src/forge/board_trends.py",
+      "line": 87,
+      "text": "People with the same GitHub name are merged into one trend row",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/TRENDS",
       "status": "open",
       "closed_by": null
     },
@@ -2679,6 +2701,28 @@
       "path": "src/forge/land.py",
       "line": 300,
       "text": "Not done: readiness checks are not failing before the overlap bypass",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: stale lock takeover permits two land runs\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 269,
+      "text": "Not done: stale lock takeover permits two land runs",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: stopped changes retain close's decision and default rules\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 295,
+      "text": "Not done: stopped changes retain close's decision and default rules",
       "from": "blocking",
       "item": "FORGE-QUEUE-1/QUEUE",
       "status": "open",
@@ -6381,6 +6425,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: test_1 proves the selection and start-order details\tFORGE-QUEUE-1/QUEUE",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 270,
+      "text": "Not done: test_1 proves the selection and start-order details",
+      "from": "blocking",
+      "item": "FORGE-QUEUE-1/QUEUE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_quick_test_suggestions.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
       "kind": "bug",
       "path": "tests/test_quick_test_suggestions.py",
@@ -8192,28 +8247,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_facts.py\tNot done: join the go-live clause into the team sentence\tFORGE-BOARD-2/TRENDS",
-      "kind": "bug",
-      "path": "src/forge/board_facts.py",
-      "line": 180,
-      "text": "Not done: join the go-live clause into the team sentence",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/TRENDS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_trends.py\tPeople with the same GitHub name are merged into one trend row\tFORGE-BOARD-2/TRENDS",
-      "kind": "bug",
-      "path": "src/forge/board_trends.py",
-      "line": 87,
-      "text": "People with the same GitHub name are merged into one trend row",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/TRENDS",
       "status": "open",
       "closed_by": null
     }
