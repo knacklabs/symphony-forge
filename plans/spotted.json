@@ -3455,6 +3455,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test Moving rows' next steps through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 306,
+      "text": "Not done: Test Moving rows' next steps through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test expanded waiting rows through the Board tab\tpane-grouped-board",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.test.ts",
@@ -3581,6 +3592,17 @@
       "path": "src/forge/mod/hooks/summary.ts",
       "line": 106,
       "text": "Not done: Board rows do not show the actual next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Moving Board rows omit their next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 129,
+      "text": "Not done: Moving Board rows omit their next step",
       "from": "blocking",
       "item": "pane-grouped-board",
       "status": "open",
