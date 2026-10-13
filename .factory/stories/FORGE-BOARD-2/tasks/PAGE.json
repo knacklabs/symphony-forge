@@ -8,26 +8,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "51b25d9ed7a9c28ab7dca261d7ecd07413d6d2e80dbab2ebac4c3e9e70b2c470",
-    "changed": "6adf44cebe5a520e68ffb5ebf78cb2b28f90d4162770706644fd4ab62579edce",
-    "commit": "b447bcd6e7e59f42a9cd04c7d43d5efe26283cfb",
+    "branch_diff": "1ae63ee099e10d4946ed3e647209ec21630e071fbecf1ccdb10e463c1bfb09b3",
+    "changed": "d44aae273aa0015cb9b4d857fe001b05a496ba7313d3063bcd3d60581f2abe8d",
+    "commit": "ef9429ace859922e9849d42fda8ea0d5b717f0af",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. The SVG has `width=\"260\"`, while `.board-picture` sets only `max-width: 100%`. The supplied 1440-pixel client screenshots show the dependency map confined to a narrow strip inside its full-width slot. This leaves the roadmap cramped instead of using the available laptop width.",
-        "file": "src/forge/board_visuals.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 19,
-        "priority": "P1",
-        "title": "Roadmap map is fixed at 260 pixels on laptop",
-        "work": 1
-      }
-    ],
-    "id": "28995f82-2855-47f3-991c-52f66f081920",
-    "status": "blocked"
+    "findings": [],
+    "id": "a3ee104c-8e60-4da3-acb1-f35bb0d86bb1",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T23:45:10.134451+00:00",
@@ -43,6 +32,10 @@
     },
     {
       "at": "2026-10-13T05:58:28.261250+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:01:49.078768+00:00",
       "step": "review"
     }
   ],
