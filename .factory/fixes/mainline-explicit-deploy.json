@@ -3,12 +3,20 @@
   "branch": "fix/mainline-explicit-deploy",
   "done_when": "New and existing client repos tell Codex and Claude to use the installed Mainline Deploy plugin and MCP only for deployment the user explicitly requests. Builds, merges and demos never imply permission to deploy. Coordinator guides and worker briefs carry the rule. Command-level tests cover new setup and upgrade from an earlier adoption.",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-13T07:35:50.616272+00:00",
       "step": "start"
     }
   ],
-  "why": "Mainline deployment needs the user's explicit request"
+  "stuck": {
+    "close": null,
+    "head": "96e50b7a365fe74e4394f5cc4e0d97dd714f29b0",
+    "keys": {},
+    "round": null
+  },
+  "why": "Mainline deployment needs the user's explicit request",
+  "worker": "codex"
 }
