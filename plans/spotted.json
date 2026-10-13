@@ -958,6 +958,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tChecking every workflow serially slows forge next in larger repos\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 125,
+      "text": "Checking every workflow serially slows forge next in larger repos",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -3328,6 +3339,17 @@
       "path": "src/forge/nextstep.py",
       "line": 270,
       "text": "Not done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command",
+      "from": "blocking",
+      "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f\tnightly-red-shows-in-next",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 279,
+      "text": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
       "from": "blocking",
       "item": "nightly-red-shows-in-next",
       "status": "open",

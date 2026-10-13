@@ -16,36 +16,46 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d2631c78c9711f3dc048361e292e36adaee7eddc873b8a02c8999c6a07ef3da2",
-    "changed": "f94bc84d048803607a5ed45bac4cf8ed1e62b4898f106ee8be98941ed300f1e1",
-    "commit": "3be1061aa1ece5fe98cba0e98a2298cd959517d1",
+    "branch_diff": "586218157186ad81a6dac7ad6f1f8cecc9826f9621eaccfefe4bc32f7f111823",
+    "changed": "bee2d41f47a921d8d2fda69259425b61a9bf58cf6007a5204d2dc4bb0adcad9f",
+    "commit": "47ba072dfa75e175c815ac880bafd0b0f628a0ca",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 3, Harm 2\nRaise: Not done. `gh workflow list` defaults to 50 results, so a failed scheduled workflow outside that first page is never checked or shown. Also, `src/forge/nextstep.py:282` keys alerts by a cleaned workflow name: two workflows with the same display name, or names that clean to the same text, collapse into one alert and one fix command. The named proof has only two differently named workflows. [GitHub CLI documents the 50-workflow default](https://cli.github.com/manual/gh_workflow_list).",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. `_failed_schedules` keys alerts by a cleaned workflow name. Distinct workflow names such as `Build & Test` and `Build Test` both become `Build Test`, so when both latest scheduled runs fail, the second overwrites the first. `forge next` then omits one run\u2019s failed jobs, tests and fix command. The named proof covers identical names distinguished by file path, but not names that collide after cleaning.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 279,
+        "priority": "P1",
+        "title": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Scale. After the one-minute cache expires, this loop starts a separate `gh run list` process and network request for every active workflow, including workflows with no schedule. A client repo with 40 workflows makes at least 41 sequential GitHub CLI calls whenever `forge next` refreshes; the context and handoff hooks also use this report. That adds substantial delay to a routine command. [GitHub CLI documents that workflow listing includes active workflows by default](https://cli.github.com/manual/gh_workflow_list).",
         "file": "src/forge/board_facts.py",
         "gain": 3,
         "harm": 2,
-        "line": 120,
+        "line": 125,
         "priority": "P1",
-        "title": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
-        "work": 3
+        "title": "Checking every workflow serially slows forge next in larger repos",
+        "work": 2
       },
       {
-        "body": "Gain 2, Work 3, Harm 2\nThe parser at this line recognizes only pytest-style `FAILED` or `ERROR` lines containing `::`. Scheduled Jest, Vitest and Go test jobs can fail with named tests in their logs but no matching line, so `forge next` shows the job without those tests. The shipped guidance supports these runners in `src/forge/templates/skill.md:730` and `:1153`. This is an additional language case.",
+        "body": "Gain 2, Work 3, Harm 2\nThe parser recognizes only pytest-style `FAILED` or `ERROR` lines containing `::`. Scheduled Vitest and Go jobs can fail with named tests but no matching line, so `forge next` names the job without its failing tests. The shipped guidance supports these runners. [Vitest\u2019s reporter format](https://vitest.dev/guide/reporters) and [Go\u2019s failing-test example](https://go.dev/doc/tutorial/add-a-test) show different output. This additional language case is outside the named Done-when case.",
         "file": "src/forge/board_facts.py",
         "gain": 2,
         "harm": 2,
-        "line": 137,
+        "line": 140,
         "priority": "P2",
         "title": "Follow-up: name JavaScript and Go test failures in scheduled runs",
         "work": 3
       }
     ],
-    "id": "7ffede01-36a3-46cf-8a00-f4aa0fbb0141",
+    "id": "44a39ea0-9cf4-4dc4-bd8f-6dccfdfa8088",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T16:41:28.751000+00:00",
@@ -70,16 +80,16 @@
     {
       "at": "2026-10-13T04:08:20.373420+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:12:17.241702+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-13T03:56:05.053336+00:00",
-    "by": "owner",
-    "choice": "narrow",
-    "file": "src/forge/nextstep.py",
-    "reason": "Coordinator (Harm 2, reversible): the generated fix names the failed jobs and the run, not every test (forge next's lines already name every test); a fix started on another machine gets the plain line that it runs on that machine, like other remote items.",
-    "wait_id": "bd9b101a-f6e7-4e01-86ba-56f898345394",
-    "worker_round": null
+    "at": "2026-10-13T04:12:17.251645+00:00",
+    "file": "src/forge/board_facts.py",
+    "wait_id": "6bc3ff87-2e5b-45b5-b854-897c89a220b7"
   },
   "why": "A failing nightly full run on macOS or Windows is easy to miss, and Windows stayed red for days unseen"
 }
