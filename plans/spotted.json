@@ -9217,6 +9217,61 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug filing fails for reporters without Forge triage access\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 197,
+      "text": "Forge bug filing fails for reporters without Forge triage access",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tForge bug template command fails in Windows PowerShell\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 179,
+      "text": "Forge bug template command fails in Windows PowerShell",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: Forge bug reports do not use the bug template\treport-forge-bugs",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 184,
+      "text": "Not done: Forge bug reports do not use the bug template",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: proof that the bug template retains required prompts\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 50,
+      "text": "Not done: proof that the bug template retains required prompts",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_agents_file_forge_bugs.py\tNot done: test_1_clients_are_told_to_file_forge_bugs does not prove template use\treport-forge-bugs",
+      "kind": "bug",
+      "path": "tests/test_agents_file_forge_bugs.py",
+      "line": 42,
+      "text": "Not done: test_1_clients_are_told_to_file_forge_bugs does not prove template use",
+      "from": "blocking",
+      "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
