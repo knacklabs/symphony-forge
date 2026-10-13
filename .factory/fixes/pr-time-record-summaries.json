@@ -45,7 +45,7 @@
     "id": "d96f16ff-604d-42b7-b3b7-c6b0f29aeddd",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
@@ -66,8 +66,12 @@
   ],
   "stop": {
     "at": "2026-10-13T06:36:52.321720+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/time_records.py",
-    "wait_id": "9167f73e-f3aa-4032-a4f4-9b29bfbc25a4"
+    "reason": "Owner chose one more round: fold by the number of records, not by building round, so repeated closes in one round also fold; the test adds many reviews in one round and checks each recent line has its time summary.",
+    "wait_id": "9167f73e-f3aa-4032-a4f4-9b29bfbc25a4",
+    "worker_round": null
   },
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
