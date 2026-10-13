@@ -54,6 +54,11 @@ here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(args) + "\\n")
+if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
+    with open(here / "gh-bodies.jsonl", "a", encoding="utf-8") as bodies:
+        path = args[args.index("--body-file") + 1]
+        body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
+        bodies.write(json.dumps(body) + "\\n")
 responses = here / "gh-responses.json"
 for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
     if args[:len(rule["args"])] == rule["args"]:

@@ -73,7 +73,11 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 
 <!-- proof-list -->
 ## Proof list
-The worker's latest commit supplies this list, which Forge copies into the pull request:
+Forge builds this list from the worker's mapping of Done-when items to tests. A pytest name
+the branch has shows it is in the branch; close's test run, alongside this review, gives its
+result in the pull request. Any other name is marked `not run` or `not checked` and may not
+exist: `not run` means close ran no such test, and `not checked` means close could not match the
+line to its run, so judge it by reading it:
 
 $proof_list
 

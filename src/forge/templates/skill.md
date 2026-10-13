@@ -1104,8 +1104,9 @@ reviews show them only as counts of changed lines.
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 Before close, the worker puts a `Proof list:` paragraph in its last commit message: each Done-when
 item you cover and every detail next to the test or check that proves it, or marked `missing`.
-Name the test's file and case, or the check and its result. Forge copies the list into the pull
-request and the review prompt. The first review checks the whole list, not a sample: Check every
+Name each test by its pytest node ID or file and write no test results: close checks each named
+test against its own run and writes the list with only the tests it ran and their results, and marks every line it cannot match to its run's per-test results `not checked`. Name any other
+check with its result. Forge copies the list into the pull request and the review prompt. The first review checks the whole list, not a sample: Check every
 entry against the code and its named proof, including every Done-when detail. Compare it with the
 covered items so omitted entries cannot hide gaps; report every missing case in that one round,
 even when a finding already blocks. Keep the whole list current and repeat the check on later rounds.
