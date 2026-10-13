@@ -209,7 +209,8 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
 
 def quote(argument: object) -> str:
     """One path or argument quoted for the user's shell, so a printed command runs as shown."""
-    return subprocess.list2cmdline([str(argument)]) if os.name == "nt" else shlex.quote(str(argument))
+    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None,
