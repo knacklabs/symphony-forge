@@ -2,6 +2,7 @@
   "branch": "task/FORGE-BOARD-2-GRAPH",
   "flagged": [
     "src/forge/board.py",
+    "src/forge/board_graph.py",
     "tests/test_board_graph.py"
   ],
   "known": [
@@ -11,7 +12,7 @@
       "gain": 3,
       "harm": 2,
       "line": 650,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +25,7 @@
       "gain": 3,
       "harm": 2,
       "line": 651,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,53 +38,46 @@
       "gain": 3,
       "harm": 2,
       "line": 65,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: missing-reference graph test",
       "work": 1
+    },
+    {
+      "area": "dependencies() in src/forge/board_graph.py",
+      "file": "src/forge/board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 67,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: functional check",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8a594d22d0a4ca4c087c182f9314adecfd594abaa32499d640aecb71218a19e8",
-    "changed": "ec0d13c1a8efddf99144a144e6f7e7725eb8df189a0500f1d7cf93d55ff280ad",
-    "commit": "75ae98619dfd673e6be2d55febbe64d97faed5d8",
+    "branch_diff": "b1d89d8c42a1a8d1e0d43d53eb26f6e6157e08b44190296fa7dc84a185fc20ca",
+    "changed": "9c45b9c6416d099422b1f78612498ad2b9b299a888f86e26ee719efad464e064",
+    "commit": "66c7b78dfaa80e3811a8d4e8984cc9c3bea2a769",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 `dependency_maps` appends planned stories in `best.items()` order, which comes from worktree and Git ref discovery, rather than roadmap order. The renderer preserves that order, so rearranging the roadmap does not rearrange its graph rows. The new test converts maps to a dictionary and cannot catch this.",
-        "file": "src/forge/board.py",
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate \u2014 The required Functional check says \u201cNo change to the drawing,\u201d but this branch replaces the dependency SVG renderer at this line. Its only reported observation is that browser checks pass on a new repo; it does not record what a user saw for the changed columns, cross-story arrows, fixes, done folds, and no-plan boxes. The check is hollow for the UI work in Done-when 11.",
+        "file": "src/forge/board_graph.py",
         "gain": 3,
         "harm": 2,
-        "line": 650,
+        "line": 67,
         "priority": "P1",
-        "title": "Not done: planned stories in roadmap order",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 `forge story new` creates a planning state and an untouched plan template with no task rows. This line marks every story with a state as `planned: True`, so that common draft appears as an empty planned row instead of its own `planned: false` no-plan box. The test's three no-plan stories have no state, so it misses this path.",
-        "file": "src/forge/board.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 651,
-        "priority": "P1",
-        "title": "Not done: no-plan box for a newly started story",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test \u2014 Done-when 11 requires a missing part reference to count as no wait and put the reason in the label. This command-level test creates only valid references and a cycle; it never introduces a missing reference or checks that label. Removing that behavior from `place` would leave the named proof green.",
-        "file": "tests/test_board_graph.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 65,
-        "priority": "P1",
-        "title": "Not done: missing-reference graph test",
+        "title": "Not done: functional check",
         "work": 1
       }
     ],
-    "id": "857ea4e1-94f0-4432-b559-a2eb7d81abfd",
+    "id": "b1c78fe1-87c4-4dee-a444-64ae11643f49",
     "status": "blocked"
   },
   "status": "fixing",
@@ -94,6 +88,10 @@
     },
     {
       "at": "2026-10-13T17:45:40.778616+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:45:54.864375+00:00",
       "step": "review"
     }
   ]
