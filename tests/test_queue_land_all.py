@@ -9,13 +9,14 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import zlib
 from pathlib import Path
 
 import pytest
 
 from conftest import GH_STUB, ROOT, _install
-from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_setup import _fresh_client
 from test_story import worktree
@@ -64,6 +65,12 @@ def save(found, **change):
     (here / ("pr-%d.json" % found["number"])).write_text(json.dumps(found))
 
 
+if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:  # a branch's own checks, if set
+    branch = subprocess.run(["git", "branch", "--show-current"], capture_output=True,
+                            text=True).stdout.strip()
+    own = here / ("checks-" + branch.replace("/", "-") + ".txt")
+    if own.exists():
+        answer(own.read_text())
 if args[:2] == ["pr", "create"]:
     branch = args[args.index("--head") + 1]
     number = zlib.crc32(branch.encode()) % 9000 + 100
@@ -105,13 +112,19 @@ if args[:2] == ["pr", "merge"]:
 '''
 
 # Each fix's review answers come from its own queue, picked by the fix's name in the prompt, so
-# concurrent closes don't share one.
+# concurrent closes don't share one. Each review takes a second and records when it ran.
 OWN_REVIEWS = '''args = sys.argv[1:]
+import atexit, time
+_ran = {"start": time.time()}
+time.sleep(1)
 _said = " ".join(args) + " ".join(Path(path).read_text("utf-8")
                                   for flag, path in zip(args, args[1:]) if flag == "--prompt-file")
 for _own in Path(os.environ["AUTOREVIEW_STUB"]).parent.glob("reviews-fix-*.json"):
     if "Why: Change " + _own.stem[len("reviews-fix-"):] + "\\n" in _said:
         os.environ["AUTOREVIEW_STUB"] = str(_own)
+        _ran["fix"] = _own.stem[len("reviews-fix-"):]
+_times = Path(os.environ["AUTOREVIEW_STUB"]).with_name("review-times.jsonl")
+atexit.register(lambda: _times.open("a").write(json.dumps({**_ran, "end": time.time()}) + "\\n"))
 '''
 SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 
@@ -187,16 +200,16 @@ def _places(env) -> int:
     return json.loads(env.repo.forge("lanes", "--json").stdout)["agents"]["size"]
 
 
-def _most_at_once(stdout: str) -> int:
-    """The most changes in close at one time, from the run's start and end lines."""
-    now = most = 0
-    for line in stdout.splitlines():
-        if re.fullmatch(r"Starting \S+\.", line):
-            now += 1
-        elif re.fullmatch(r"\S+ (merged|stopped: .*|is ready for a human merge)\.?", line):
-            now -= 1
-        most = max(most, now)
-    return most
+def _most_at_once(env) -> int:
+    """The most reviews running at one time, from the times the stub Autoreview recorded."""
+    ran = [json.loads(line) for line in (env.tmp / "review-times.jsonl").read_text("utf-8").splitlines()]
+    return max(sum(other["start"] <= run["start"] < other["end"] for other in ran) for run in ran)
+
+
+def _red(env, slug: str, status: str = "completed", conclusion: str | None = "failure") -> None:
+    """This fix's own checks on GitHub: tests in the given state."""
+    (env.repo.bin / f"checks-fix-{slug}.txt").write_text("".join(json.dumps(row) + "\n" for row in (
+        run("tests", conclusion, status), run("forge-pr-check"))), "utf-8")
 
 
 def _reviews(env, slug: str) -> int:
@@ -226,36 +239,47 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
     _fix(env, monkeypatch, "banana", 2, {"banana.py": "print('banana')\n"})
     _fix(env, monkeypatch, "apple", 3, {"apple.py": "print('apple')\n"})
     started = _fix(env, monkeypatch, "draft", 4, {"draft.py": "x = 1\n"}, status="started")
+    untouched = env.repo.git("rev-parse", "HEAD", cwd=started)
+    # A real close of a fifth fix, waiting for its still-running CI while the run starts.
     busy = _fix(env, monkeypatch, "busy", 5, {"busy.py": "x = 1\n"})
-    events = Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-common-dir")) / "forge" / "events.jsonl"
-    with events.open("a", encoding="utf-8") as log:  # a close waiting for CI, from a minute ago
-        log.write(json.dumps({"id": "ci-wait", "item": "busy", "event": "run start", "kind": "ci",
-                              "at": "2026-10-13T11:59:00+00:00", "round": 0}) + "\n")
-    untouched = {where: env.repo.git("rev-parse", "HEAD", cwd=where) for where in (started, busy)}
-    first = subprocess.Popen([sys.executable, str(env.repo.bin / "forge"), "land", "--all"],
-                             cwd=cherry, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    said = first.stdout.readline()
-    second = _all(env)
-    out, err = first.communicate(timeout=600)
-    out = said + out
-    assert first.returncode == 0, out + err
-    assert second.returncode == 1
-    assert second.stderr.endswith("A land run already works in this repo.\n"
-                                  "Next: wait for it to end, then forge land --all\n")
-    assert not second.stdout
+    _red(env, "busy", "in_progress", None)
+    forge = [sys.executable, str(env.repo.bin / "forge")]
+    waiting = subprocess.Popen([*forge, "close", "busy"], cwd=busy, env={**os.environ, "FORGE_CHECKS_WAIT": "600"},
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        for _ in range(600):
+            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid"] in env.gh.calls():
+                break
+            time.sleep(0.2)
+        # Two runs started at the same moment: one works, the other refuses.
+        runs = [subprocess.Popen([*forge, "land", "--all"], cwd=where, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, text=True) for where in (cherry, env.repo.path)]
+        (out, err), (other, refused) = (run.communicate(timeout=600) for run in runs)
+    finally:
+        waiting.kill()
+        waiting.wait()
+    if runs[0].returncode == 1:
+        (out, err), (other, refused) = (other, refused), (out, err)
+        runs.reverse()
+    assert runs[0].returncode == 0, out + err
+    assert runs[1].returncode == 1, out + err + refused
+    assert refused.endswith("A land run already works in this repo.\n"
+                            "Next: wait for it to end, then forge land --all\n")
+    assert not other, out + err + refused
     lines = out.splitlines()
     assert [line for line in lines if line.startswith("Starting ")] == [
-        "Starting cherry.", "Starting banana.", "Starting apple."]
+        "Starting cherry.", "Starting banana.", "Starting apple."], out + err + refused
     places = _places(env)
-    assert _most_at_once(out) <= places
+    assert _most_at_once(env) <= places, out + err + refused
     if places >= 2:
-        assert _most_at_once(out) >= 2
-    assert "Left out draft: its builder is not done yet." in lines
-    assert "Left out busy: another command works on it." in lines
-    assert all(env.repo.git("rev-parse", "HEAD", cwd=where) == head for where, head in untouched.items())
-    assert len(env.gh_calls("pr", "merge")) == 3
-    assert not cherry.exists()
-    assert re.fullmatch(r"Merged \(3\): .+ · Ready to merge \(0\): none · Needs you \(0\): none", lines[-1])
+        assert _most_at_once(env) >= 2, out + err + refused
+    assert "Left out draft: its builder is not done yet." in lines, out + err + refused
+    assert "Left out busy: another command works on it." in lines, out + err + refused
+    assert "Starting busy." not in lines and "Starting draft." not in lines, out + err + refused
+    assert env.repo.git("rev-parse", "HEAD", cwd=started) == untouched, out + err + refused
+    assert len(env.gh_calls("pr", "merge")) == 3, out + err + refused
+    assert not cherry.exists(), out + err + refused
+    assert re.fullmatch(r"Merged \(3\): .+ · Ready to merge \(0\): none · Needs you \(0\): none", lines[-1]), out + err + refused
 
 
 @pytest.mark.parametrize("older", ["merges", "stops"])
@@ -271,10 +295,15 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
         _fix(env, monkeypatch, "dd", 4, {"shared.py": _edit(4, "middle")}, status="working")
         closed = env.repo.forge("close", "dd")
         assert closed.returncode == 0, closed.stdout + closed.stderr
+    else:  # closed ready earlier, then its check failed: no longer ready, so it waits too
+        _fix(env, monkeypatch, "ee", 4, {"shared.py": _edit(4, "middle")}, status="working")
+        closed = env.repo.forge("close", "ee")
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        _red(env, "ee")
     done = _all(env)
     lines = done.stdout.splitlines()
     assert "bb waits for aa: both change shared.py." in lines, done.stdout
-    assert not any(line.startswith(("cc waits", "dd waits")) for line in lines)
+    assert not any(line.startswith(("cc waits", "dd waits")) for line in lines), done.stdout
     assert _reviews(env, "bb") == 1, done.stdout
     end = "aa merged." if older == "merges" else "aa stopped: The review left serious findings open: finding 1 (Saving drops line one)."
     assert end in lines and lines.index(end) < lines.index("Starting bb."), done.stdout
@@ -287,9 +316,13 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
     else:
         assert done.returncode == 1, done.stdout
         assert "bb merged." in lines, done.stdout
-        assert re.fullmatch(r"Merged \(2\): .+ · Ready to merge \(0\): none · Needs you \(1\): aa", lines[-3]), done.stdout
-        assert lines[-2:] == ["- aa: The review left serious findings open: finding 1 (Saving drops line one).",
-                              "  Next: forge land aa"]
+        assert "ee waits for aa: both change shared.py." in lines, done.stdout
+        summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
+        assert re.fullmatch(r"Merged \(2\): .+ · Ready to merge \(0\): none · Needs you \(2\): aa, ee",
+                            lines[summary]), done.stdout
+        assert lines[summary + 1:summary + 3] == [
+            "- aa: The review left serious findings open: finding 1 (Saving drops line one).",
+            "  Next: forge land aa"]
 
 
 def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):

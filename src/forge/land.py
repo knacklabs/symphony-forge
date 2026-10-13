@@ -254,14 +254,23 @@ def _land_all() -> int:
     top = machine.main_checkout(Path.cwd())
     os.chdir(top)
     lock = repo.forge_dir(top) / "land-all.json"
-    try:
-        held = json.loads(lock.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        held = None
-    if isinstance(held, dict) and codex._alive(held) is not False:
+    for _ in range(2):
+        try:  # created only if absent, so of two runs started together one gets it
+            made = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            break
+        except FileExistsError:
+            try:
+                held = json.loads(lock.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                held = None  # its owner is still writing it
+            if not isinstance(held, dict) or codex._alive(held) is not False:
+                repo.refuse(REFUSALS["one_run"])
+            # ponytail: two runs taking over the same ended run's lock at once may both win.
+            lock.unlink(missing_ok=True)
+    else:
         repo.refuse(REFUSALS["one_run"])
-    # ponytail: read then write, not atomic; two runs started in the same instant could both pass.
-    lock.write_text(json.dumps(codex.identity(os.getpid()) or {"pid": os.getpid()}), encoding="utf-8")
+    os.write(made, json.dumps(codex.identity(os.getpid()) or {"pid": os.getpid()}).encode("utf-8"))
+    os.close(made)
     try:
         return _queue(top)
     finally:
@@ -288,8 +297,8 @@ def _queue(top: Path) -> int:
                 close.REFUSALS["hotspot"][1].format(item=item)
         elif status not in IN_CLOSE:
             say(f"Left out {item}: its builder is not done yet.")
-        elif item in live or any(not (run.get("process") and codex._alive(run["process"]) is False)
-                                 for run in board.active_runs(tree, item)):
+        elif item in live or any(run.get("process") and codex._alive(run["process"]) is not False
+                                 for run in board.active_runs(tree, item)):  # a live CI wait
             say(f"Left out {item}: another command works on it.")
         elif _merged(tree, branch):
             say(f"Left out {item}: its pull request already merged.")
@@ -297,11 +306,16 @@ def _queue(top: Path) -> int:
             files = {path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                                f"origin/{default}...HEAD", cwd=tree).split("\0")
                      if path and path != spotted.PATH and not path.startswith(".factory/")}
-            ready = nextstep._item_readiness(item, state, tree)[0] == "ready"
+            try:  # a check that failed after the ready receipt makes the change not ready
+                seen = checks._seen(tree, item, repo.git("rev-parse", "HEAD", cwd=tree))[0]
+            except repo.Refused:
+                seen = []
+            red = "fail" if any(result == checks.RED for _, result in seen) else "unknown"
+            ready = nextstep._item_readiness(item, state, tree, red)[0] == "ready"
             changes.append((age, item, files, ready))
     changes.sort()
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}
-    finished, waiting, merged, ready_prs = set(), set(), [], []
+    finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     while len(finished) < len(changes):
         for index, (_, item, files, ready) in enumerate(changes):
             if item in running or item in finished or len(running) >= machine.half_cores():
@@ -320,6 +334,12 @@ def _queue(top: Path) -> int:
                 continue
             child, reader, lines = running.pop(item)
             reader.join()
+            # Two closes fetching at the same moment can collide on git's lock of a shared ref.
+            if child.returncode and item not in retried and any("cannot lock ref" in line for line in lines):
+                retried.add(item)
+                say(f"{item} met another change's git lock; starting it again once.")
+                running[item] = _child(top, item)
+                continue
             finished.add(item)
             url = next((line.rsplit(": ", 1)[1] for line in lines
                         if line.startswith(f"{item} is ready; a human merges")), None)
