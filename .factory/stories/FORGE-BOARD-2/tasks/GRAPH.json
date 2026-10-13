@@ -51,36 +51,72 @@
       "gain": 3,
       "harm": 2,
       "line": 67,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
       "title": "Not done: functional check",
       "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 683,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Board crashes whenever a fix is present",
+      "work": 1
+    },
+    {
+      "area": "dependencies() in src/forge/board_graph.py",
+      "file": "src/forge/board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 104,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: stacked fixes lose the part name in their visible label",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b1d89d8c42a1a8d1e0d43d53eb26f6e6157e08b44190296fa7dc84a185fc20ca",
-    "changed": "9c45b9c6416d099422b1f78612498ad2b9b299a888f86e26ee719efad464e064",
-    "commit": "66c7b78dfaa80e3811a8d4e8984cc9c3bea2a769",
+    "branch_diff": "7d106644a08b47b58fdb322a4330ef82105ee37a18b8c619bf247dbf23d9e3be",
+    "changed": "70ff9017f9aacdec8d64021646307c34a6c0f93a0f7f55bd549fb970440f4540",
+    "commit": "2a122d1c94dce2a53f2ffa1d20ebd9b888533d8d",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate \u2014 The required Functional check says \u201cNo change to the drawing,\u201d but this branch replaces the dependency SVG renderer at this line. Its only reported observation is that browser checks pass on a new repo; it does not record what a user saw for the changed columns, cross-story arrows, fixes, done folds, and no-plan boxes. The check is hollow for the UI work in Done-when 11.",
+        "body": "Gain 5, Work 1, Harm 3\nRaise: Functional \u2014 The fixes filter reads `row[\"state\"]`, but `row()` returns `stage` and `status`, with no `state` key. When any fix appears in `items`, both `forge board --json` and the HTML board raise `KeyError: 'state'` instead of showing the graph.",
+        "file": "src/forge/board.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 683,
+        "priority": "P1",
+        "title": "Board crashes whenever a fix is present",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 The fix renderer keeps only `more[0]` after wrapping the status and `started on <part>` text. With four graph columns, the available line is about 29 characters, so an ordinary part title wraps and its remaining words disappear. The SVG title retains the full name, but the required visible stacked-fix label does not.",
         "file": "src/forge/board_graph.py",
         "gain": 3,
         "harm": 2,
-        "line": 67,
+        "line": 104,
         "priority": "P1",
-        "title": "Not done: functional check",
+        "title": "Not done: stacked fixes lose the part name in their visible label",
         "work": 1
       }
     ],
-    "id": "b1c78fe1-87c4-4dee-a444-64ae11643f49",
+    "id": "03901de9-c521-45f1-ad97-6ce0a6799f00",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-13T16:06:21.297426+00:00",
@@ -93,6 +129,17 @@
     {
       "at": "2026-10-13T18:45:54.864375+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:04:49.205478+00:00",
+      "step": "review"
     }
-  ]
+  ],
+  "stop": {
+    "area": "machine_board() in src/forge/board.py",
+    "at": "2026-10-13T19:04:49.205646+00:00",
+    "file": "machine_board() in src/forge/board.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "wait_id": "d9e516bc-3dad-4f56-ae6e-6e007a942c4f"
+  }
 }
