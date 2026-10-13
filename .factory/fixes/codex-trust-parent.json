@@ -2,12 +2,102 @@
   "base": "4e000433f9853203b81b80b2891dad4471976e5f",
   "branch": "fix/codex-trust-parent",
   "done_when": "Forge's Codex trust check accepts a project inside a trusted folder whenever Codex itself trusts it, and asks only when Codex would ask",
+  "flagged": [
+    "src/forge/codex.py",
+    "src/forge/doctor.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "_codex_trust() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 48,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Trust lookup can authorize turns that Codex treats as untrusted",
+      "work": 2
+    },
+    {
+      "area": "_codex_trust() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 46,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask",
+      "work": 2
+    },
+    {
+      "area": "src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 82,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: each commit leaves the build working",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "71cebb05a2f7544d8c77e80452f10e39c9f315fdcfe25caf45704cb663c20dab",
+    "changed": "2e8ededad559daee2a71cab67178e6ec29ee72dc9255faf4f3aee1aa82d21f21",
+    "commit": "f0684a404bd492647138a1cfa7a1cbda74c99fc0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 4\nRaise: Security. `Path(path).resolve()` treats distinct Codex trust keys as the same key. On Windows, a valid TOML entry using `C:/work/app` becomes the same path as `C:\\work\\app` in Forge, but Codex only lowercases trust keys; it does not convert separators. Forge can therefore start a turn while Codex considers the project untrusted and skips its hooks. The new test writes keys with `as_posix()`, so it would endorse this mismatch on Windows. Codex's lookup is in [its pinned source](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/config/src/loader/mod.rs#L1302-L1338).",
+        "file": "src/forge/doctor.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 48,
+        "priority": "P1",
+        "title": "Trust lookup can authorize turns that Codex treats as untrusted",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. Codex checks its configured project root between the current directory and Git repository root, but this code checks only the checkout and main checkout. With `project_root_markers = [\"workspace.marker\"]`, a marker and trusted entry on a containing workspace folder, and a Git project below it, Codex trusts the project while Forge asks for trust. The test covers only Codex's default `.git` marker. See Codex's [decision order](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/config/src/loader/mod.rs#L984-L1025) and [project-root discovery](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/config/src/loader/mod.rs#L1197-L1210).",
+        "file": "src/forge/doctor.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 46,
+        "priority": "P1",
+        "title": "Not done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Gate. The standard says, \"Commit messages are short plain English, and each commit leaves the build working, so any commit can be reverted alone.\" This changed refusal now prints `Next: open Codex here...`, while the unchanged `tests/test_codex_setup.py:170-171` asserts the entire refusal ends with `Next: forge doctor`. That test necessarily fails in the repository's full pytest suite.",
+        "file": "src/forge/codex.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 82,
+        "priority": "P1",
+        "title": "Standard: each commit leaves the build working",
+        "work": 1
+      }
+    ],
+    "id": "45b6d622-c1f0-44ba-8e36-8bce66d04814",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T08:31:39.852564+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:29:00.354660+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge says Codex does not trust a project that sits inside a folder Codex already trusts"

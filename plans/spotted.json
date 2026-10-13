@@ -2201,6 +2201,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tStandard: each commit leaves the build working\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 82,
+      "text": "Standard: each commit leaves the build working",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tSuccessful sync can leave the only reader binding in disposable local records\tsync-in-any-worktree",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -2399,6 +2410,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 46,
+      "text": "Not done: Forge's Codex trust check accepts a project inside a trusted folder whenever Codex trusts it, and asks only when Codex would ask",
+      "from": "blocking",
+      "item": "codex-trust-parent",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix enables spotted-list merging in repos adopted on the previous release\tforge-sync-points-git-s-merge-rule-for-t",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -2560,6 +2582,17 @@
       "text": "Only remove a fix created by this doctor run",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tTrust lookup can authorize turns that Codex treats as untrusted\tcodex-trust-parent",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 48,
+      "text": "Trust lookup can authorize turns that Codex treats as untrusted",
+      "from": "blocking",
+      "item": "codex-trust-parent",
       "status": "open",
       "closed_by": null
     },
