@@ -30,6 +30,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
   test(`1, 7: ${surface} pane and text show live details and retain good rows on failure`, async ($, on) => {
     const clock = mock.clock(on)
     let mode = 'good'
+    // Review started 59 s before the clock, so short advances cross minutes.
+    const early = { ...story, children: [{ ...row, stages: stages.map(s => s.status === 'running' ? { ...s, started_at: '1969-12-31T23:59:01Z' } : s) }] }
     const opens: unknown[] = []
     mock.store(on)
     mock.env(on, {})
@@ -43,46 +45,40 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('ui.open', (_$, e) => { opens.push(e); return { value: undefined } })
     on('process.run', (_$, e) => {
       if (mode === 'bad' && e.argv[1] === 'board') return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
-      const value = e.argv[1] === 'next' ? following : e.argv[1] === 'lanes' ? lanes : { ...board, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [story] }
+      const value = e.argv[1] === 'next' ? following : e.argv[1] === 'lanes' ? lanes : { ...board, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [early] }
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     expect(opens[0]).toEqual({ id: 'forge', title: 'Forge' })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     let drawn = JSON.stringify(await ui.drawn())
-    for (const detail of ['Polish the guide', 'PR #7: fail', 'P1 Clarify setup', 'P2 Explain upgrade', '1 dismissed', 'Windows: timeout', 'Linux: failed', 'codex', 'medium', 'editing the guide', '3/9', 'stalled', 'idle since', 'Plan read: passed']) expect(drawn).toContain(detail)
+    for (const shown of ['MOVING', 'Polish the guide', '  story', ' · Review running · under a minute']) expect(drawn).toContain(shown)
+    for (const hidden of ['unknown', 'P1', 'dismissed', 'idle since', 'Build → Tests', 'round']) expect(drawn).not.toContain(hidden)
     await clock.advance(5000)
     drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('5s')
-    if (surface === 'desktop') {
-      const timelines = await ui.findAll({ type: 'Svg' })
-      expect(timelines.length).toBe(2)
-      expect(timelines[0]?.props.alt).toBe('Build → Tests → Review → CI → Merge')
-      expect(timelines[1]?.props.alt).toBe('Build ✓ 4s → Tests ✗ 5s → Review ● 5s → CI → Merge –')
-      for (const timeline of timelines) {
-        expect(timeline.props.source).toContain('<title>')
-      }
-      expect((await ui.findAll({ type: 'Markdown' })).length).toBe(2)
-    }
+    expect(drawn).toContain('Review running · 1 min')
     const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toContain('Windows: timeout')
-    expect(reply.text).toContain('editing the guide')
+    expect(reply.text).toBe('MOVING\n  Polish the guide  story · Review running · 1 min')
     expect(opens.at(-1)).toEqual({ id: 'forge', title: 'Forge', focus: true })
-    for (const [reason, time] of [['clear', '6s'], ['resume', '7s']] as const) {
+    for (const [reason, time, step] of [['clear', '2 min', 30000], ['resume', '3 min', 60000]] as const) {
       await $.session.end({ reason, sessionId: 'previous', resume: { id: 'previous' } })
-      await clock.advance(1000)
+      await clock.advance(step)
       expect(JSON.stringify(await ui.drawn())).toContain(time)
     }
-    mode = 'bad'; await clock.advance(3000)
+    mode = 'bad'; await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('Polish the guide')
     expect(drawn).toContain("Couldn't refresh: Malformed forge board output")
     mode = 'empty'; await clock.advance(10000)
     expect(JSON.stringify(await ui.drawn())).toContain('Nothing in progress.')
     mode = 'missing'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).toContain('Lost state · unknown')
+    expect(JSON.stringify(await ui.drawn())).toContain('Show waiting or not started (1)')
     mode = 'queued'; await clock.advance(10000)
-    expect(JSON.stringify(await ui.drawn())).toContain('queued agents #2')
+    expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide')
+    await ui.press({ key: 'waiting' })
+    drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('Hide waiting or not started (1)')
+    expect(drawn).toContain('Polish the guide')
   })
 
   test(`2: ${surface} strip rechecks the exact command and handles stale, busy and failed actions`, async ($, on) => {
@@ -267,7 +263,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
 test('1: story action seam and tab host draw through the pane', async () => {
   const { data } = createCore()
-  data.board = board
+  // A story with parts is shown through its parts; this one stands alone.
+  data.board = { ...board, items: [{ ...story, children: [] }] }
   type Draw = (host: CoreEngineInterface, e: RenderInput<'Pane'>) => Promise<RenderElement>
   let draw: Draw | undefined
   // Test-kit inline plugins cannot import sibling modules. Route this instance
@@ -297,3 +294,64 @@ test('1: story action seam and tab host draw through the pane', async () => {
     expect(JSON.stringify(await draw!(host, event))).toContain('Machine lane')
   }
 })
+
+// A board like `forge board --json` gives: team facts and one row for each group.
+const plain = { stage: 'building', state: 'in progress', activity: { status: 'idle' }, stalled: false, needs_person: false, findings: { count: 0, titles: [] }, children: [] }
+const grouped = {
+  version: '1.2.5', repo_root: '/repo',
+  team: { counts: { parts: { 'in progress': 2 }, fixes: { 'in progress': 1 } }, needs_you: null, blocked: null, go_live: { status: 'about', earliest: '1970-01-20' } },
+  items: [
+    { ...plain, id: 'ASK', kind: 'story', title: 'Ask story', children: [{ ...plain, id: 'ASK/PERIOD', kind: 'task', title: 'Ask asks for the period', needs_person: true, findings: { count: 3, titles: [] }, next: { command: null, line: 'Close stopped.', step: 'forge close ASK/PERIOD --resolve <narrow|split>' } }] },
+    { ...plain, id: 'late', kind: 'fix', title: 'Budget answers', stalled: true, idle_since: '1969-12-24T00:00:00Z', next: { command: 'forge work late', line: 'Build it.', step: 'forge work late' } },
+    { ...plain, id: 'counts', kind: 'fix', title: 'Board counts', activity: { status: 'running', action: 'review' }, stages: [{ name: 'Review', status: 'running', started_at: '1969-12-31T23:48:00Z' }], next: { command: null, line: 'Review is running.', step: 'wait for the review, then forge close counts' } },
+    { ...plain, id: 'trust', kind: 'fix', title: 'Codex trust fix', stage: 'ready', state: 'ready to merge', pr: { number: 9, checks: 'pass' }, next: { command: null, line: 'Ready.', step: 'merge its pull request, then forge next' } },
+    { ...plain, id: 'later', kind: 'fix', title: 'Later fix', state: 'to do' },
+  ],
+}
+
+function host(on: On, surface: 'terminal' | 'desktop', run: (argv: readonly string[]) => unknown) {
+  mock.store(on)
+  mock.env(on, {})
+  on('session.start', () => ({ cwd: '/repo' }))
+  on('session.id', () => ({ value: 'pane' }))
+  on('session.cwd', () => ({ value: '/repo' }))
+  on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
+  on('session.surfaces', () => ({ value: [surface] }))
+  on('command.register', () => ({ value: { command: 'forge' } }))
+  on('ui.open', () => ({ value: undefined }))
+  on('process.run', async (_$, e) => run(e.argv) as never)
+}
+
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`${surface} Board tab draws the summary and all four groups with their steps`, async ($, on) => {
+    mock.clock(on)
+    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'board' ? grouped : argv[1] === 'next' ? following : lanes) } }))
+    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
+    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
+    const drawn = JSON.stringify(await ui.drawn())
+    const order = ['3 in progress · 1 needs you · 1 stuck · go-live about Jan 20', 'NEEDS YOU', 'Ask asks for the period', 'Review found 3 problems. The builder is stuck.',
+      '→ decide: forge close ASK/PERIOD --resolve <narrow|split>', 'STUCK (no progress 8 days)', 'Budget answers', 'Building · last activity Dec 24', '→ forge work late',
+      'MOVING', 'Board counts', 'Review running · 12 min', '→ wait for the review, then forge close counts', 'READY TO MERGE', 'Codex trust fix', 'checks green', '→ merge its pull request, then forge next',
+      'Show waiting or not started (1)']
+    const at = order.map(text => drawn.indexOf(text))
+    expect(at.every(n => n >= 0)).toBe(true)
+    expect([...at].sort((a, b) => a - b)).toEqual(at)
+    expect(drawn).toContain('  ASK')
+    expect(drawn).not.toContain('Later fix')
+  })
+
+  test(`${surface} Board tab shows the error when the very first refresh times out`, async ($, on) => {
+    const clock = mock.clock(on)
+    host(on, surface, async () => { await clock.sleep(60001); return { deny: 'Refresh took over 60 seconds' } })
+    const starting = $.session.start({ cwd: '/repo', surface, isInteractive: true })
+    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
+    expect(JSON.stringify(await ui.drawn())).toContain('Loading Forge…')
+    await clock.advance(60001)
+    await clock.settle()
+    await starting
+    const drawn = JSON.stringify(await ui.drawn())
+    expect(drawn).toContain("Couldn't refresh:")
+    expect(drawn).toContain('Refresh took over 60 seconds')
+    expect(drawn).not.toContain('Loading Forge…')
+  })
+}

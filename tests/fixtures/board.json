@@ -7,7 +7,7 @@
   "next": {
     "version": "1.2.3",
     "repo_root": "/example/repo",
-    "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it."},
+    "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it.", "step": "merge its pull request, then forge next"},
     "team": {
       "sentence": null,
       "counts": {
@@ -64,7 +64,8 @@
           {"name": "Merge", "status": null, "started_at": null, "ended_at": null, "seconds": null}
         ],
         "occurrences": [],
-        "next": {"command": null, "line": "Polish the guide is ready and waiting for someone to merge it."},
+        "next": {"command": null, "line": "Polish the guide is ready and waiting for someone to merge it.", "step": "merge its pull request, then forge next"},
+        "needs_person": false,
         "children": []
       },
       {
@@ -93,7 +94,8 @@
           {"name": "Merge", "status": null, "started_at": null, "ended_at": null, "seconds": null}
         ],
         "occurrences": [],
-        "next": {"command": "forge read WAIT", "line": "Planning Board shows each story in plain English: plans/WAIT.read.md is missing."},
+        "next": {"command": "forge read WAIT", "line": "Planning Board shows each story in plain English: plans/WAIT.read.md is missing.", "step": "forge read WAIT"},
+        "needs_person": false,
         "children": []
       }
     ]

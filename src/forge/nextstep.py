@@ -154,7 +154,17 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
         command = shlex.join(words) if "#" in command else command
     return {"command": command if runnable else None,
             "line": next((text for text in lines if not text.startswith("Next: ")),
-                         "Nothing in progress.")}
+                         "Nothing in progress."),
+            "step": line.removeprefix("Next: ") if line else None}
+
+
+def needs_person(top: Path, item: str, state: dict[str, Any], path: Path | None, stage: str) -> bool:
+    """The item waits on a person: a plan waiting for approval, a stop no one has answered
+    (unless close will record its default), or a worker question, as forge next and close decide."""
+    stop = state.get("stop") or {}
+    return (stage == "waiting for approval"
+            or bool(stop) and not stop.get("choice") and not default_due(path or top, state)
+            or bool(codex.record(top, item).get("question")))
 
 
 def context_hook(args: Any) -> int:
@@ -809,6 +819,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         return [f"Close stopped {label}: {stop['file']} keeps breaking.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
+    if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
+        return [f"The worker on {label} asked a question. Ask the human:", question,
+                "Next: " + close.REFUSALS["question"][1].format(item=item)]
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":
