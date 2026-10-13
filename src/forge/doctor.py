@@ -38,13 +38,22 @@ def _forge_hooks(text: str) -> list[tuple[str, str]]:
         return [(event, hook["command"]) for event, groups in hooks.items() for group in groups
                 for hook in group.get("hooks", []) if sync.FORGE_COMMAND.search(hook.get("command", ""))]
     except (ValueError, AttributeError, TypeError, KeyError): return []
-def _codex_trusts(top: Path, config: Path) -> bool:
+def _codex_trust(top: Path, config: Path) -> tuple[bool, Path]:
+    """Codex's own rule (decision_for_dir in codex-rs/config/src/loader/mod.rs): the checkout's exact
+    [projects] entry, then its main checkout's; the first with a trust level decides. A parent
+    folder's entry counts for neither. Returns whether Codex trusts it and the folder to set."""
     common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
-    roots = {top.resolve(), common.resolve().parent}
+    folders = [top.resolve(), common.resolve().parent]
     try:
-        projects = tomllib.loads(sync.read(config)).get("projects", {})
-        return any(Path(path).resolve() in roots and project.get("trust_level") == "trusted" for path, project in projects.items())
-    except (tomllib.TOMLDecodeError, AttributeError): return False
+        levels = {Path(path).resolve(): project["trust_level"] for path, project
+                  in tomllib.loads(sync.read(config)).get("projects", {}).items() if "trust_level" in project}
+    except (tomllib.TOMLDecodeError, AttributeError, TypeError): levels = {}
+    folder = next((folder for folder in folders if folder in levels), folders[-1])
+    return levels.get(folder) == "trusted", folder
+def trust_fix(folder: Path, config: Path) -> str:
+    return ("open Codex here and trust the project, or set trust_level = \"trusted\" under "
+            f'[projects."{folder}"] in {config}; Codex reads only that folder\'s own entry, not a parent folder\'s, '
+            "and the main checkout's entry covers every worktree Forge makes")
 def _last(done: subprocess.CompletedProcess[str] | Exception) -> str:
     if not isinstance(done, (subprocess.CompletedProcess, subprocess.CalledProcessError)): return str(done).partition("\nNext: ")[0]
     return ((done.stderr or "").strip() or (done.stdout or "").strip() or f"exit code {done.returncode}").splitlines()[-1]
@@ -411,8 +420,8 @@ def doctor(args: argparse.Namespace) -> int:
                                               for end in ('"', " --splits ")):
         add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    trusted = _codex_trusts(top, codex_config)
-    trust = ("open Codex here and trust the project, or add " f'[projects."{top}"] with trust_level = "trusted" to {codex_config}')
+    trusted, folder = _codex_trust(top, codex_config)
+    trust = trust_fix(folder, codex_config)
     if on_codex and not trusted: add("Codex doesn't trust this project, so it would skip Forge's hooks and the "
                      "project's Codex settings.", trust)
     skills = {"claude": [Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"), top / ".claude"],
