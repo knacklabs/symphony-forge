@@ -1264,7 +1264,11 @@ the run starts that change again once and says so. It runs no fix rounds: a chan
 alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
 its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
-answers. Close's stop rule decides each stopped change, its 30-minute default included.
+answers. Close's stop rule decides each stopped change, its 30-minute default included. A failed
+check whose log names none of the change's files runs again once when the tests passed here; a
+second failure stops that change. Where a human merges, the run closes every change, holds none
+and merges none, and lists the ready ones oldest first with their pull request links: merge them
+in that order.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.

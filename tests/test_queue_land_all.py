@@ -88,6 +88,14 @@ if args[:2] == ["api", "graphql"]:  # the board's one read of open pull requests
         nodes.append({**found, "commits": {"nodes": [{"commit": {"oid": found["headRefOid"], "statusCheckRollup": {
             "contexts": {"pageInfo": {"hasNextPage": False}, "nodes": contexts}}}}]}})
     answer(json.dumps({"data": {"repository": {"pullRequests": {"nodes": nodes}}}}))
+if args[:2] == ["run", "rerun"]:  # the re-run's second attempt; a healed run's checks turn green
+    (here / ("rerun-" + args[2])).touch()
+    heal = here / ("heal-" + args[2])
+    if heal.exists():
+        (here / heal.read_text()).unlink()
+    answer("")
+if args[:2] == ["run", "view"] and "attempt" in args:
+    answer(json.dumps({"attempt": 2 if (here / ("rerun-" + args[2])).exists() else 1}))
 if args[:2] == ["pr", "create"]:
     branch = args[args.index("--head") + 1]
     number = zlib.crc32(branch.encode()) % 9000 + 100
@@ -139,6 +147,11 @@ for _own in Path(os.environ["AUTOREVIEW_STUB"]).parent.glob("reviews-fix-*.json"
         with open(_own.with_name("review-starts.jsonl"), "a") as _log:  # when this fix's close got here
             import time
             _log.write(json.dumps({"fix": _own.stem[len("reviews-fix-"):], "at": time.time()}) + "\\n")
+        _wait = _own.with_name("wait-" + _own.stem[len("reviews-fix-"):])  # until the file it names exists
+        for _ in range(600 if _wait.exists() else 0):
+            if Path(_wait.read_text()).exists():
+                break
+            time.sleep(0.1)
 '''
 SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 
@@ -198,6 +211,19 @@ def _fix(env, monkeypatch, slug: str, day: int, files: dict[str, str], status: s
     env.repo.git("add", "-A", cwd=where)
     env.repo.git("commit", "-q", "-m", message, cwd=where)
     return where
+
+
+def _settings(env, **values: str) -> None:
+    """The default branch's forge.toml with these settings, published as the fixture publishes it."""
+    repo = env.repo
+    repo.git("switch", "fix/upgrade-client")
+    kept = [line for line in (repo.path / "forge.toml").read_text("utf-8").splitlines()
+            if line.partition("=")[0].strip() not in values]
+    env.commit(repo.path, "forge.toml", "\n".join(kept + [f"{key} = {json.dumps(value)}"
+                                                         for key, value in values.items()]) + "\n")
+    _publish_default(repo, Path(repo.git("remote", "get-url", "origin")).as_posix())
+    repo.git("switch", "main")
+    repo.git("merge", "--ff-only", "fix/upgrade-client")
 
 
 def _edit(line: int, text: str) -> str:
@@ -366,6 +392,31 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
             "  Next: forge land aa"]
 
 
+def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monkeypatch):
+    env = client
+    # Close runs fast_test, so only its passed record says the tests passed here.
+    _settings(env, test=f"{sys.executable} -c \"print(1)\"", fast_test=f"{sys.executable} -c pass")
+    for day, (slug, run_id) in enumerate((("flaky", "5"), ("broken", "6")), 1):
+        _fix(env, monkeypatch, slug, day, {f"{slug}.py": "x = 1\n"})
+        _red(env, slug)
+        env.gh.respond("pr", "checks", f"fix/{slug}", exit=1, stdout=json.dumps([{
+            "name": "tests", "bucket": "fail", "link": f"https://github.com/acme/shop/actions/runs/{run_id}/job/9{run_id}"}]))
+        env.gh.respond("run", "view", "--job", f"9{run_id}", stdout="ConnectionResetError: the runner lost its network\n")
+    (env.repo.bin / "heal-5").write_text("checks-fix-flaky.txt", "utf-8")  # only flaky's re-run passes
+    done = _all(env)
+    assert done.returncode == 1, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    for slug in ("flaky", "broken"):
+        assert (f"{slug}: Re-running tests once: its failure names none of this change's files and the tests "
+                "passed here.") in lines, done.stdout
+    assert sorted(env.gh_calls("run", "rerun")) == [["run", "rerun", "5", "--failed"], ["run", "rerun", "6", "--failed"]]
+    assert "flaky merged." in lines, done.stdout
+    assert not env.gh_calls("pr", "merge", _number("fix/broken"))
+    summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
+    assert lines[summary:] == ["Merged (1): flaky · Ready to merge (0): none · Needs you (1): broken",
+                               "- broken: Checks failed on the pull request: tests.", "  Next: forge land broken"], done.stdout
+
+
 def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     env = client
     _fix(env, monkeypatch, "stuck", 1, {"stuck.py": "x = 1\n"},
@@ -411,3 +462,25 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     assert not (env.repo.bin / "claude-calls.jsonl").exists()
     assert not env.gh_calls("pr", "merge", _number("fix/stuck"))
     assert (record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)) == before
+
+
+def test_5_a_human_merge_run_closes_all_and_lists_them_oldest_first(client, monkeypatch):
+    env = client
+    machine_cores(env.repo, 4)  # two agent places
+    _settings(env, merge="human")
+    _fix(env, monkeypatch, "aa", 1, {"shared.py": _edit(1, "first")})
+    _fix(env, monkeypatch, "bb", 2, {"shared.py": _edit(7, "last")})
+    # The older review goes on only once the newer change is ready: both are in close at once,
+    # and the newer one ends first.
+    common = Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-common-dir"))
+    (env.tmp / "wait-aa").write_text(str(common / "forge" / "ready" / "bb.json"), "utf-8")
+    done = _all(env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert not any(" waits for " in line for line in lines), done.stdout
+    ready = [line.split(": ", 1)[0] for line in lines if " is ready; a human merges its pull request: " in line]
+    assert ready == ["bb", "aa"], done.stdout  # the newer one ends first, so the list is sorted
+    assert not env.gh_calls("pr", "merge")
+    url = "https://github.com/acme/shop/pull/{}".format
+    assert lines[-1] == (f"Merged (0): none · Ready to merge (2): aa {url(_number('fix/aa'))}, "
+                         f"bb {url(_number('fix/bb'))} · Needs you (0): none"), done.stdout
