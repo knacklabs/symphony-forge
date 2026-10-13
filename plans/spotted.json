@@ -3807,6 +3807,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: A partially run parameterized test is reported as passed\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 663,
+      "text": "Not done: A partially run parameterized test is reported as passed",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: Close cannot match Markdown-wrapped pytest node IDs\tforge-writes-proof-list",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -3882,6 +3893,17 @@
       "item": "admit-by-load",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Proof lists retain names of tests Close did not run\tforge-writes-proof-list",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 677,
+      "text": "Not done: Proof lists retain names of tests Close did not run",
+      "from": "blocking",
+      "item": "forge-writes-proof-list",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/review.py\tNot done: When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names\tstop-question-plain",
