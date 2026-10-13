@@ -3913,8 +3913,8 @@
       "text": "Not done: next --json makes an unnecessary GitHub search with no work in progress",
       "from": "blocking",
       "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: older blocked reads lose their question in forge next after upgrade\tstop-question-plain",
@@ -7488,8 +7488,8 @@
       "text": "Not done: the shared-cache test misses next's extra GitHub search",
       "from": "blocking",
       "item": "board-json-fast",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_merge_command.py\tNot done: test a worktree held open by another process\tpin-switch-leaves-worktree",
