@@ -3,11 +3,18 @@ work folded away, all from the same derivation as `forge board --json`."""
 import json
 import re
 import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
+from html import escape
 
 import pytest
 
+import conftest
 from conftest import REAL_UV
+from test_board_counts import ONE_PART, board, clock, configure, github, read_story
+from test_close import blocked, env, finding  # noqa: F401
+from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_story import READER
 from test_board import DOC, seen
 from test_board_dependency_timelines import _configured, _land_fixture
 from test_story import claude_plan, hook, new_story, ready, worktree
@@ -193,3 +200,146 @@ def _plain(seconds):
             f" {minutes} minute" + ("s" if minutes != 1 else "") if minutes else "")
     days = round(value / 86400)
     return f"{days} day" + ("s" if days != 1 else "")
+
+
+def _plain_text(html):
+    return " ".join(re.sub(r"<[^>]+>", " ", html).split())
+
+
+def _list(section, name):
+    """(rows shown, the "and N more" count, rows folded behind it) for one first-screen list."""
+    block = re.search(rf'<div class="lanes" id="{name}">(.*?)<!-- end {name} -->', section, re.S)[1]
+    shown, _, rest = block.partition('<details class="rest">')
+    more = re.search(r"<summary>and (\d+) more</summary>", rest)
+    titles = lambda html: re.findall(r'<span class="name"[^>]*>(.*?)</span>', html)  # noqa: E731
+    return titles(shown), int(more[1]) if more else 0, titles(rest)
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+def test_7_first_screen(env, monkeypatch, previous):
+    client(env, previous)
+    conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
+    configure(env, "human")
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    clock(monkeypatch, now)
+    # Seven plans waiting for their approval: seven waits on a person.
+    for n in range(7):
+        read_story(env.repo, f"WAIT-{n + 1}", ONE_PART)
+    # Two fixes nobody touched for two days: blocked or slow.
+    earlier = (now - timedelta(days=2)).isoformat()
+    monkeypatch.setenv("GIT_COMMITTER_DATE", earlier)
+    clock(monkeypatch, now - timedelta(days=2))
+    for n in range(2):
+        started = env.repo.forge("fix", "start", f"Tidy help page {n + 1}", "--done", "It is tidy", "--slug", f"tidy-{n}")
+        assert started.returncode == 0, started.stderr
+    monkeypatch.delenv("GIT_COMMITTER_DATE")
+    clock(monkeypatch, now)
+    # Six fixes in progress; one has a blocked review round.
+    for n in range(6):
+        started = env.repo.forge("fix", "start", f"Speed up page {n + 1}", "--done", "It is fast", "--slug", f"speed-{n}")
+        assert started.returncode == 0, started.stderr
+    tree = worktree(env.repo, "fix/speed-0")
+    env.commit(tree, "speed.txt", "fast\n", "Speed up the page")
+    env.reviews(blocked(finding("P1", "The page still loads every row")))
+    env.repo.forge("close", "speed-0", cwd=tree)
+    github(env, [])
+    clock(monkeypatch, now + timedelta(minutes=2))
+
+    data = board(env.repo)
+    team = data["team"]
+    out = env.tmp / "first.html"
+    made = env.repo.forge("board", "--out", str(out))
+    assert made.returncode == 0, made.stderr
+    page = out.read_text("utf-8")
+    section = re.search(r'<section id="first-screen".*?</section>', page, re.S)[0]
+    text = _plain_text(section)
+
+    # The sentence and the labelled totals, equal to team.counts.
+    assert escape(team["sentence"]) in section
+    labels = {"finished_last_7_days": "Finished in the last 7 days"}
+    for kind, counts in team["counts"].items():
+        line = labels.get(kind, kind.capitalize()) + " — " + "; ".join(
+            f"{name.capitalize()}: {count}" for name, count in counts.items())
+        assert line in text, line
+
+    # At most five rows each, the rest behind "and N more", which opens them in place.
+    needs = {row["id"] for row in team["needs_you"] or []}
+    stuck = {row["id"] for row in team["blocked"] or []}
+    building = [row["title"] for row in data["items"] if row["id"] not in needs | stuck
+                and row["state"] in ("building", "in progress", "ready to merge")]
+    assert len(building) == (6 if team["blocked"] is not None else 8)
+    for name, rows in (("in-progress", building),
+                       ("needs-you", [row["title"] for row in team["needs_you"] or []]),
+                       ("blocked", [row["title"] for row in team["blocked"] or []])):
+        shown, more, rest = _list(section, name)
+        assert len(shown) == min(5, len(rows)) and more == max(0, len(rows) - 5) == len(rest), name
+        assert sorted(shown + rest) == sorted(escape(title) for title in rows), name
+    if team["needs_you"] is not None:
+        assert len(team["needs_you"]) == 7 and "and 2 more" in text
+    if team["blocked"] is not None:
+        assert len(team["blocked"]) == 2 and _list(section, "blocked")[1] == 0
+    if team["needs_you"] is None:
+        assert "Not worked out by this release" in text
+
+    # Go-live in words, and a row's detail holds its round lines and who started it.
+    assert "Not enough history to estimate go-live" in text
+    row = next(r for r in data["items"] if r["id"] == "speed-0")
+    assert row["rounds"], "The blocked close recorded a round"
+    detail = re.search(r'<details class="lane">.*?' + re.escape(escape(row["title"])) + r".*?</details>", section, re.S)[0]
+    for line in row["rounds"]:
+        assert escape(line["line"]) in detail
+    assert "Started by" in detail
+    _first_screen_browser(out)
+
+
+def _first_screen_browser(page):
+    """In real Chrome: at 1440 by 900 the first screen ends above the fold; nothing scrolls
+    sideways at 1440 or 390; "and N more" and a row's detail open in place and close again;
+    Tab reaches every row with a visible focus ring."""
+    script = """
+import sys
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
+    try:
+        for width, height in ((1440, 900), (390, 844)):
+            for scheme in ('light', 'dark'):
+                page = browser.new_page(viewport={'width': width, 'height': height}, color_scheme=scheme)
+                page.goto(sys.argv[1])
+                assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), width
+                if width == 1440:
+                    bottom = page.evaluate("document.getElementById('first-screen').getBoundingClientRect().bottom")
+                    assert bottom <= height, ('The first screen fits', bottom)
+                rest = page.locator('#first-screen details.rest').first
+                rest.locator('> summary').click()
+                assert rest.evaluate('d => d.open'), 'and N more opens'
+                rest.locator('> summary').click()
+                assert not rest.evaluate('d => d.open'), 'and N more closes'
+                lane = page.locator('#first-screen details.lane').first
+                lane.locator('> summary').click()
+                assert lane.evaluate('d => d.open') and lane.locator('.more').is_visible(), 'A row opens'
+                lane.locator('> summary').click()
+                assert not lane.evaluate('d => d.open'), 'A row closes'
+                rows = page.locator('#first-screen details.lane:visible > summary').count()
+                page.mouse.click(1, 1)
+                reached = 0
+                for _ in range(rows + 10):
+                    page.keyboard.press('Tab')
+                    focus = page.evaluate('''() => {
+                        const el = document.activeElement;
+                        if (!el.matches('#first-screen details.lane > summary')) return null;
+                        const style = getComputedStyle(el);
+                        return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
+                    }''')
+                    if focus is not None:
+                        assert focus, 'A focused row shows a ring'
+                        reached += 1
+                assert reached == rows, (reached, rows)
+                page.close()
+    finally:
+        browser.close()
+"""
+    shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
+                            "playwright==1.55.0", "python", "-c", script, page.resolve().as_uri()],
+                           capture_output=True, text=True, encoding="utf-8", timeout=180)
+    assert shown.returncode == 0, shown.stdout + shown.stderr

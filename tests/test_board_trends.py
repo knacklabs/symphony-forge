@@ -2,7 +2,9 @@
 
 Only GitHub is a stub; board output is all the test reads.
 """
+import re
 from datetime import datetime, timedelta, timezone
+from html import escape
 
 import pytest
 
@@ -59,6 +61,25 @@ def test_6_weekly_trends_through_and_around_forge_and_this_weeks_around_list(env
         expected.append({"title": "A change", "author": "cara-dev", "merged_at": day(5).isoformat(),
                          "url": "https://github.com/acme/shop/pull/5"})
     assert team["around_forge"] == expected
+
+    # The page draws the same weeks: each person's through and around numbers in the JSON's
+    # alphabetical order with no totals or rank, beside each around-Forge pull request's title,
+    # author and merge day.
+    out = env.tmp / "trends.html"
+    made = env.repo.forge("board", "--out", str(out))
+    assert made.returncode == 0, made.stderr
+    section = re.search(r'<section id="trends".*?</section>', out.read_text("utf-8"), re.S)[0]
+    people = re.findall(r'<tr class="person"><th scope="row">(.*?)</th>(.*?)</tr>', section, re.S)
+    assert [name for name, _ in people] == [escape(p["name"]) for p in team["trends"]["people"]]
+    for person, (_, cells) in zip(team["trends"]["people"], people):
+        found = re.findall(r'<span class="through">(\d+)</span> through, <span class="around">(\d+)</span> around',
+                           cells)
+        assert [(int(a), int(b)) for a, b in found] == [(w["through"], w["around"]) for w in person["weeks"]]
+    text = " ".join(re.sub(r"<[^>]+>", " ", section).split())
+    assert not re.search(r"\b(total|rank|top)\b", text, re.I)
+    for row in expected:
+        at = datetime.fromisoformat(row["merged_at"])
+        assert f'{escape(row["title"])} {escape(row["author"])} {at.day} {at:%B}' in text, row
 
     # A week whose search hits GitHub's cap is unknown; the other weeks stay known.
     capped = [pr(100 + n, f"bulk-{n}", BEN, day(2)) for n in range(1000)]

@@ -191,7 +191,9 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     assert not re.search(r"\b[0-9a-f]{7,}\b", page.read_text("utf-8")), "a hash is on the page"
     assert not re.search(r"\w/\w|\.(py|md|json|toml|txt)\b", text), "a file path is on the page"
     assert not re.search(r"\b(P0|P1|CI|PR|commit|branch|worktree)\b", text, re.I), text
-    assert "bump" not in text.lower()  # only Forge's own work is on the board
+    # Only Forge's own work is on the board; other pull requests show only in the around-Forge list.
+    around = re.sub(r'<div class="around">.*?</div>', "", page.read_text("utf-8"), flags=re.S)
+    assert "bump" not in re.sub(r"<[^>]+>", " ", around).lower()
 
     # Without gh: the state and its dates, and a plain word that the finished work list is missing.
     gh.respond("pr", "list", exit=1)

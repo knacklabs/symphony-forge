@@ -279,6 +279,14 @@ matches the JSON: every story and fix sorted needs you, blocked, in progress, pl
 yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
 fix and plan. It uses the full window, has light and dark themes and stacks to one column below
 720px. Each call reads current state without a history cache.
+The page's first screen answers what is in progress, what needs a person, what is stuck and when
+the work can go live, on one time axis with a today line: the team sentence, the labelled totals,
+then Needs you (an amber bar for each wait), In progress (each story or fix as a runway, solid
+where working, thin where waiting, dotted where unknown) and Blocked or slow, five rows each with
+"and N more" opening the rest, then Pace with go-live as a date band. Every row opens in place to
+its time split, round lines and who started, approved and merged it. Below the map, the team and
+each person show merged pull requests per week, through and around Forge, in alphabetical order,
+beside the pull requests merged around Forge in the last 7 days.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
 task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
