@@ -253,28 +253,14 @@ def _land_all() -> int:
     """One run per repo, from the main checkout: a merge may remove the worktree it started in."""
     top = machine.main_checkout(Path.cwd())
     os.chdir(top)
-    lock = repo.forge_dir(top) / "land-all.json"
-    for _ in range(2):
-        try:  # created only if absent, so of two runs started together one gets it
-            made = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            break
-        except FileExistsError:
-            try:
-                held = json.loads(lock.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                held = None  # its owner is still writing it
-            if not isinstance(held, dict) or codex._alive(held) is not False:
-                repo.refuse(REFUSALS["one_run"])
-            # ponytail: two runs taking over the same ended run's lock at once may both win.
-            lock.unlink(missing_ok=True)
-    else:
-        repo.refuse(REFUSALS["one_run"])
-    os.write(made, json.dumps(codex.identity(os.getpid()) or {"pid": os.getpid()}).encode("utf-8"))
-    os.close(made)
-    try:
-        return _queue(top)
-    finally:
-        lock.unlink(missing_ok=True)
+    # Never deleted: the system lets go of the lock when its run ends, however it ends.
+    with (repo.forge_dir(top) / "land-all.lock").open("ab") as lock:
+        if not codex._try_lock(lock):
+            repo.refuse(REFUSALS["one_run"])
+        try:
+            return _queue(top)
+        finally:
+            codex._unlock(lock)
 
 
 def _queue(top: Path) -> int:
@@ -289,13 +275,18 @@ def _queue(top: Path) -> int:
         if not found:
             continue
         item, state = found
-        status = state.get("status")
         age = (int(repo.git("log", "-1", "--diff-filter=A", "--format=%ct", "--",
                             repo.state_path(item), cwd=tree) or 0), item)
-        if status == "hotspot":
-            needs[item] = age, review.stop_question(tree, item, state), \
-                close.REFUSALS["hotspot"][1].format(item=item)
-        elif status not in IN_CLOSE:
+        if state.get("stop"):  # close decides: the owner's choice, its 30-minute default, or a stop
+            try:
+                close.check_stop(item, state, tree)
+            except repo.Refused as error:
+                problem, _, step = str(error).partition("\nNext: ")
+                needs[item] = age, problem, step
+                continue
+            state = repo.read_state(item, tree) or state
+        status = state.get("status")
+        if status not in IN_CLOSE:
             say(f"Left out {item}: its builder is not done yet.")
         elif item in live or any(run.get("process") and codex._alive(run["process"]) is not False
                                  for run in board.active_runs(tree, item)):  # a live CI wait

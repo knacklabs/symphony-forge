@@ -11,6 +11,7 @@ import subprocess
 import sys
 import time
 import zlib
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -24,7 +25,7 @@ from test_story import worktree
 # In front of the stub gh: one pull request per branch, a squash merge done in the bare remote as
 # GitHub would, and every other call answered by the stub's queued responses.
 GH = '''#!PYTHON
-import json, pathlib, subprocess, sys, tempfile, zlib
+import json, pathlib, subprocess, sys, tempfile, time, zlib
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 remote = REMOTE
@@ -33,6 +34,8 @@ remote = REMOTE
 def answer(out, code=0):
     with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as log:
         log.write(json.dumps(args) + "\\n")
+    with open(here / "gh-timed.jsonl", "a", encoding="utf-8") as log:
+        log.write(json.dumps({"args": args, "at": time.time()}) + "\\n")
     sys.stdout.write(out)
     sys.exit(code)
 
@@ -112,19 +115,13 @@ if args[:2] == ["pr", "merge"]:
 '''
 
 # Each fix's review answers come from its own queue, picked by the fix's name in the prompt, so
-# concurrent closes don't share one. Each review takes a second and records when it ran.
+# concurrent closes don't share one.
 OWN_REVIEWS = '''args = sys.argv[1:]
-import atexit, time
-_ran = {"start": time.time()}
-time.sleep(1)
 _said = " ".join(args) + " ".join(Path(path).read_text("utf-8")
                                   for flag, path in zip(args, args[1:]) if flag == "--prompt-file")
 for _own in Path(os.environ["AUTOREVIEW_STUB"]).parent.glob("reviews-fix-*.json"):
     if "Why: Change " + _own.stem[len("reviews-fix-"):] + "\\n" in _said:
         os.environ["AUTOREVIEW_STUB"] = str(_own)
-        _ran["fix"] = _own.stem[len("reviews-fix-"):]
-_times = Path(os.environ["AUTOREVIEW_STUB"]).with_name("review-times.jsonl")
-atexit.register(lambda: _times.open("a").write(json.dumps({**_ran, "end": time.time()}) + "\\n"))
 '''
 SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 
@@ -200,10 +197,17 @@ def _places(env) -> int:
     return json.loads(env.repo.forge("lanes", "--json").stdout)["agents"]["size"]
 
 
-def _most_at_once(env) -> int:
-    """The most reviews running at one time, from the times the stub Autoreview recorded."""
-    ran = [json.loads(line) for line in (env.tmp / "review-times.jsonl").read_text("utf-8").splitlines()]
-    return max(sum(other["start"] <= run["start"] < other["end"] for other in ran) for run in ran)
+def _in_close(env, *slugs: str) -> dict[str, tuple[float, float]]:
+    """When each fix's own land process entered close (its first pull request lookup after the
+    run's own) and when GitHub merged it, from the times the stub gh recorded."""
+    timed = [json.loads(line) for line in (env.repo.bin / "gh-timed.jsonl").read_text("utf-8").splitlines()]
+    spans = {}
+    for slug in slugs:
+        looks = [call["at"] for call in timed if call["args"][:3] == ["pr", "list", "--head"]
+                 and call["args"][3] == f"fix/{slug}"]
+        merged = next(call["at"] for call in timed if call["args"][:3] == ["pr", "merge", _number(f"fix/{slug}")])
+        spans[slug] = looks[1], merged  # the first lookup is the run's own selection
+    return spans
 
 
 def _red(env, slug: str, status: str = "completed", conclusion: str | None = "failure") -> None:
@@ -240,6 +244,12 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
     _fix(env, monkeypatch, "apple", 3, {"apple.py": "print('apple')\n"})
     started = _fix(env, monkeypatch, "draft", 4, {"draft.py": "x = 1\n"}, status="started")
     untouched = env.repo.git("rev-parse", "HEAD", cwd=started)
+    gone = _fix(env, monkeypatch, "gone", 6, {"gone.py": "x = 1\n"})  # its pull request merged already
+    number = int(_number("fix/gone"))
+    (env.repo.bin / f"pr-{number}.json").write_text(json.dumps({
+        "number": number, "headRefName": "fix/gone", "baseRefName": "main", "title": "Gone", "isDraft": False,
+        "body": "", "url": f"https://github.com/acme/shop/pull/{number}"}), "utf-8")
+    (env.repo.bin / f"merged-{number}").write_text(env.repo.git("rev-parse", "HEAD", cwd=gone), "utf-8")
     # A real close of a fifth fix, waiting for its still-running CI while the run starts.
     busy = _fix(env, monkeypatch, "busy", 5, {"busy.py": "x = 1\n"})
     _red(env, "busy", "in_progress", None)
@@ -270,9 +280,15 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
     assert [line for line in lines if line.startswith("Starting ")] == [
         "Starting cherry.", "Starting banana.", "Starting apple."], out + err + refused
     places = _places(env)
-    assert _most_at_once(env) <= places, out + err + refused
+    spans = _in_close(env, "cherry", "banana", "apple")
+    entered = sorted(spans, key=lambda slug: spans[slug][0])
+    oldest = ["cherry", "banana", "apple"][:min(places, 3)]
+    assert set(entered[:len(oldest)]) == set(oldest), spans
+    at_once = max(sum(start <= spans[slug][0] < end for start, end in spans.values()) for slug in spans)
+    assert at_once <= places, spans
     if places >= 2:
-        assert _most_at_once(env) >= 2, out + err + refused
+        assert at_once >= 2, spans
+    assert "Left out gone: its pull request already merged." in lines, out + err + refused
     assert "Left out draft: its builder is not done yet." in lines, out + err + refused
     assert "Left out busy: another command works on it." in lines, out + err + refused
     assert "Starting busy." not in lines and "Starting draft." not in lines, out + err + refused
@@ -280,6 +296,11 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
     assert len(env.gh_calls("pr", "merge")) == 3, out + err + refused
     assert not cherry.exists(), out + err + refused
     assert re.fullmatch(r"Merged \(3\): .+ · Ready to merge \(0\): none · Needs you \(0\): none", lines[-1]), out + err + refused
+    # The close waiting for CI was killed: the next run takes its change again.
+    (env.repo.bin / "checks-fix-busy.txt").unlink()
+    again = _all(env)
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert "Starting busy." in again.stdout.splitlines() and "busy merged." in again.stdout.splitlines(), again.stdout
 
 
 @pytest.mark.parametrize("older", ["merges", "stops"])
@@ -331,7 +352,7 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
          answer=blocked(finding("P1", "Saving drops the basket", "stuck.py")))
     _fix(env, monkeypatch, "clean", 2, {"clean.py": "x = 1\n"})
     held = _fix(env, monkeypatch, "loop", 3, {"loop.py": "x = 1\n"}, status="hotspot",
-                stop={"file": "loop.py", "round": 4, "at": "2026-10-13T12:00:00+00:00"},
+                stop={"file": "loop.py", "round": 4, "at": datetime.now(timezone.utc).isoformat()},
                 review={"findings": [finding("P1", "Saving loses the name", "loop.py")], "dismissals": []})
     record = held / ".factory" / "fixes" / "loop.json"
     before = record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)
@@ -344,7 +365,7 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     summary = lines.index("Merged (1): clean · Ready to merge (0): none · Needs you (2): stuck, loop")
     tail = "\n".join(lines[summary + 1:])
     assert tail.startswith("- stuck: The review left serious findings open: finding 1 "
-                           "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Change loop")
+                           "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Review round ")
     assert "Saving loses the name" in tail and "Accept, narrow or split?" in tail
     assert tail.endswith('  Next: forge close loop --resolve <narrow|split|accept> --reason "<human\'s choice>"')
     assert not (env.repo.bin / "claude-calls.jsonl").exists()

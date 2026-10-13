@@ -1262,8 +1262,8 @@ works in a repo at a time. When two closes in the run collide on git's ref lock 
 the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
 alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
-its fix rounds, or the review loop's question and its `forge close <item> --resolve` step, which
-only the owner answers.
+its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+answers. Close's stop rule decides each stopped change, its 30-minute default included.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
