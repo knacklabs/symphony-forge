@@ -9,6 +9,7 @@ none of those. Without gh the page shows the state and its dates only.
 """
 from __future__ import annotations
 
+import functools
 import json
 import os
 import re
@@ -267,11 +268,31 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)",
         "refs/heads", "refs/remotes/origin", cwd=top).splitlines())
     timing_dates: dict[str, list[str]] = {}
+    timings_by_item: dict[Any, list[Item]] = {}
     for timing in timings:
+        timings_by_item.setdefault(timing.get("item"), []).append(timing)
         start = _when(timing.get("start"))
         if start:
             end = start + timedelta(seconds=timing.get("seconds") or 0)
             timing_dates.setdefault(timing.get("item"), []).append(end.isoformat())
+
+    @functools.cache
+    def story_read(key: str) -> tuple[str, Item]:
+        """A story's plan read and task rows: the same for the story and each of its parts."""
+        where = landed if key in completed else story.plan_ref(top, key, history)  # finished: the landed plan
+        if where == f"story/{key}":
+            where = trees.get(where) or where
+        notes = _read(top, where, f"plans/{key}.read.md", history)
+        assignments = task.rows(task.sections(story._plan(top, key, landed if key in completed else None, history)))
+        if not story._record(notes)[0]:
+            return "none", assignments
+        text = _read(top, where, f"plans/{key}.md", history)
+        digest = repo.blob_hash(text)
+        try:
+            story.gate(key, f"plans/{key}.md", notes, digest, text, top)
+            return "passed", assignments
+        except repo.Refused:
+            return "blocked", assignments
 
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if kind == "story" and item in completed:
@@ -393,14 +414,14 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             tests.update(next(({k: e[k] for k in ("done", "total") if e.get(k) is not None}
                                for e in reversed(activity) if e.get("run_id") == current["id"]
                                and e.get("event") == "progress"), {}))
-        item_timings = [r for r in timings if r.get("item") == item]
+        item_timings = timings_by_item.get(item, [])
         round_number = (worker.get("round") if worker and worker.get("round") is not None else
                         state.get("round", (activity or item_timings or [{}])[-1].get("round")))
         stages = []
         for name, step, kinds in (("Build", "worker round", ("work", "worker")),
                                   ("Tests", "test run", ("test",)), ("Review", "review", ("review",)),
                                   ("CI", "CI wait", ("ci",)), ("Merge", "merge", ())):
-            records = [r for r in timings if round_number is not None and r.get("item") == item
+            records = [r for r in item_timings if round_number is not None
                        and r.get("round") == round_number and r.get("step") == step]
             live = [e for e in active if e.get("round") == round_number and e.get("kind") in kinds]
             outcome = records[-1].get("outcome") if records else None
@@ -451,21 +472,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
                and approval.waiting_digest(item, tree) else None)
         read_key = item.split("/")[0] if kind != "fix" else None
-        read_where = story.plan_ref(top, read_key, history) if read_key else where
-        if read_key and read_where == f"story/{read_key}":
-            read_where = trees.get(f"story/{read_key}") or read_where
-        notes = _read(top, read_where, f"plans/{read_key}.read.md") if read_key else ""
-        read_record, _ = story._record(notes)
-        assignments = task.rows(task.sections(story._plan(top, read_key, history=history))) if read_key else {}
-        plan_read = "none"
-        if read_record:
-            text = _read(top, read_where, f"plans/{read_key}.md")
-            digest = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
-            try:
-                story.gate(read_key, f"plans/{read_key}.md", notes, digest, text, top)
-                plan_read = "passed"
-            except repo.Refused:
-                plan_read = "blocked"
+        plan_read, assignments = story_read(read_key) if read_key else ("none", {})
         ci = {"status": {"pass": "green", "fail": "red", "running": "running"}.get(checks, "none")}
         if checks == "running":
             starts = [c.get("startedAt") for c in _rollup(pr or {}) if _when(c.get("startedAt"))
@@ -514,7 +521,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
                 **({k: v for k, v in time_records.merged(
-                    time_records.item(top, item, state, events=recorded, timings=timings,
+                    time_records.item(top, item, state, events=activity, timings=item_timings,
                                       ended_at=merged_dates.get(branch)),
                     time_records.from_body((pr or {}).get("body") or "")).items()
                     if k not in ("events", "timings", "state", "ended_at")} if kind != "story" else {}),
@@ -534,7 +541,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             key, tid = match["key"], match["task"]
             plan_where = trees.get(f"story/{key}") or best.get(repo.state_path(key), ({}, where))[1]
             text = (_read(top, plan_where, f"plans/{key}.md", history)
-                    if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+                    if key in completed or story.plan_ref(top, key, history) == landed
+                    else story._plan(top, key, history=history))
             names = task.rows(task.sections(text))
             names = {cell.strip("` "): spec for cell, spec in names.items()}
             title = (names.get(tid) or {}).get("Name") or "A part with no name yet"
@@ -582,13 +590,14 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if rel in merged or branch in merged_prs or key in completed:
             state = {**state, "status": "merged"}
         older_parts.setdefault(key, []).append(time_records.merged(
-            time_records.item(top, f"{key}/{tid}", state, events=recorded, timings=timings,
+            time_records.item(top, f"{key}/{tid}", state, events=by_item.get(f"{key}/{tid}", []),
+                              timings=timings_by_item.get(f"{key}/{tid}", []),
                               ended_at=by_branch.get(branch, {}).get("mergedAt")),
             time_records.from_body(by_branch.get(branch, {}).get("body") or "")))
-    notes_by_story = {key: _read(top, story.plan_ref(top, key, history), f"plans/{key}.read.md")
+    notes_by_story = {key: _read(top, landed if key in completed else story.plan_ref(top, key, history),
+                                 f"plans/{key}.read.md", history)
                       for key, current in items.items() if current["kind"] == "story"}
-    past_notes = _blob_texts(top, list(dict.fromkeys(previous for notes in notes_by_story.values()
-                             if (previous := story._record(notes)[0].get("notes_seen")))), follow_notes=True)
+    past_notes = history["past notes"]  # read with every plan read, in the same one git process
     for key, notes in notes_by_story.items():
         current = items[key]
         read_rounds, seen = [], set()
@@ -618,7 +627,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             continue
         key = match["key"]
         text = (_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)
-                if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+                if key in completed or story.plan_ref(top, key, history) == landed
+                else story._plan(top, key, history=history))
         specs = task.rows(task.sections(text))
         parts = []
         for tid, spec in specs.items():
@@ -795,16 +805,22 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     so they win a tie), then Forge's branches on the remote, then the default branch."""
     found: list[tuple[str, Item, Path | str]] = []
     trees = story.worktrees(top)
+    parsed: dict[str, Item] = {}  # most copies match; a shared state is never changed in place
     for branch, path in trees.items():
         if branch.startswith(PREFIXES):
             for file in sorted(path.glob(".factory/**/*.json")):
                 rel = file.relative_to(path).as_posix()
                 if STATE.fullmatch(rel):
-                    found.append((rel, story.json_of(file.read_text(encoding="utf-8")), path))
-    listing = repo.git("for-each-ref", "--format=%(refname) %(tree)",
+                    text = file.read_text(encoding="utf-8")
+                    if text not in parsed:
+                        parsed[text] = story.json_of(text)
+                    found.append((rel, parsed[text], path))
+    listing = repo.git("for-each-ref", "--format=%(refname) %(tree) %(objectname)",
                        *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES),
                        *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()), cwd=top)
-    refs = dict(line.split() for line in listing.splitlines())
+    refs = {line.split()[0]: line.split()[1] for line in listing.splitlines()}
+    if history is not None:
+        history["tips"] = {line.split()[0]: line.split()[2] for line in listing.splitlines()}
     refs[landed] = repo.git("show", "-s", "--format=%T", landed, cwd=top)
     empty = repo.run("git", "hash-object", "-t", "tree", "--stdin", cwd=top)
     empty.check_returncode()
@@ -813,7 +829,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     # Git requires LF pairs; text-mode stdin adds CR on Windows and Git silently lists nothing.
     done = subprocess.run([shutil.which("git") or "git", "diff-tree", "--stdin", "-r", "--raw",
                            "-z", "--no-abbrev", "--no-renames", "--", ".factory/stories",
-                           ".factory/fixes", "plans"], cwd=top,
+                           ".factory/fixes", "plans", "forge.toml"], cwd=top,
                           input="".join(f"{empty.stdout.strip()} {tree}\n" for tree in snapshots).encode("utf-8"),
                           capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
     fields = iter(done.stdout.decode("utf-8", errors="replace").split("\0"))
@@ -821,7 +837,8 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         for line in field.splitlines():
             if line.startswith(":"):
                 rel = next(fields)
-                if STATE.fullmatch(rel) or re.fullmatch(r"plans/[A-Z0-9][A-Z0-9-]*\.md", rel):
+                if (STATE.fullmatch(rel) or rel == "forge.toml"
+                        or re.fullmatch(r"plans/[A-Z0-9][A-Z0-9-]*(\.read)?\.md", rel)):
                     snapshots[tree][rel] = line.split()[3]
             elif line:
                 tree = line.split()[1]
@@ -836,7 +853,14 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                                        if STATE.fullmatch(rel)} for ref, tree in refs.items()}
         history["docs"] = {f"{alias}:{rel}": texts[blob] for ref, tree in refs.items()
                            for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
-                           for rel, blob in snapshots[tree].items() if rel.startswith("plans/")}
+                           for rel, blob in snapshots[tree].items() if not STATE.fullmatch(rel)}
+        # The doc each plan read saw, for "changed since the read": one git process for all of them.
+        seen = list(dict.fromkeys(h for text in history["docs"].values()
+                                  for h in map(story._record(text)[0].get,  # pyright: ignore[reportPrivateUsage]
+                                               ("read_hash", "notes_seen")) if h))
+        history["past notes"] = _blob_texts(top, seen, follow_notes=True)
+        for blob, text in history["past notes"].items():
+            repo.command_fact(("read blob", blob), top, lambda text=text: text)
     return found
 
 
@@ -929,10 +953,14 @@ def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) 
     """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
     if display_names is None:
         display_names = _display_names(top)
-    author = repo.command_fact(("approver", key), top, lambda: repo.git(
-        "log", "--all", "-1", "--format=%aN%x00%aE", "-F", "--grep=Approve the plan: ", "--",
-        repo.state_path(key), cwd=top))
-    name, _, email = author.partition("\0")
+    log = repo.command_fact("board approvers", top, lambda: repo.git(
+        "log", "--all", "--format=%x00%aN%x00%aE%x00", "-F", "--grep=Approve the plan: ", "--name-only",
+        "--", ".factory/stories", cwd=top)).split("\0")[1:]
+    newest = {}
+    for found, address, paths in zip(log[::3], log[1::3], log[2::3]):
+        for rel in paths.splitlines():
+            newest.setdefault(rel, (found, address))
+    name, email = newest.get(repo.state_path(key), ("", ""))
     name = display_names.get(email.casefold(), name)
     return name or None
 
