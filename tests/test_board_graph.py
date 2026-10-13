@@ -63,7 +63,10 @@ def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, hi
     _story(repo, "BETA", "Shoppers share a list", [("T1", "Send the list", "ALPHA/T2")])
     # A wait cycle across two stories: neither can start before the other.
     _story(repo, "GAMMA", "Couriers plan a route", [("T1", "Map the route", "DELTA/T1")], read=False)
-    _story(repo, "DELTA", "Couriers book a slot", [("T1", "Book the slot", "GAMMA/T1")], read=False)
+    # A wait on a part no plan names counts as no wait, and the label says why.
+    _story(repo, "DELTA", "Couriers book a slot", [("T1", "Book the slot", "GAMMA/T1"),
+                                                     ("T2", "Confirm the slot", "ALPHA/T9")], read=False)
+    new_story(repo, "IDEA", "Shoppers get ideas")  # made by forge story new: an untouched template
 
     def start(tid):
         branch, folder = f"task/ALPHA-{tid}", tmp_path / f"part-{tid}"
@@ -101,12 +104,15 @@ def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, hi
 
     machine = repo.forge("board", "--json")
     assert machine.returncode == 0, machine.stderr
-    maps = {entry["id"]: entry for entry in json.loads(machine.stdout)["dependency_maps"]}
+    listed = json.loads(machine.stdout)["dependency_maps"]
+    assert [entry["id"] for entry in listed if entry.get("kind") != "fixes"] == [
+        "ALPHA", "BETA", "GAMMA", "DELTA", "IDEA", "NOTE", "LATER"], "Roadmap order"
+    maps = {entry["id"]: entry for entry in listed}
     columns = {part["id"]: part.get("column") for entry in maps.values() for part in entry["parts"]}
     assert {k: columns[k] for k in ("ALPHA/T1", "ALPHA/T3", "ALPHA/T2", "BETA/T1")} == {
         "ALPHA/T1": 0, "ALPHA/T3": 0, "ALPHA/T2": 1, "BETA/T1": 2}
     assert columns["ALPHA/T0"] is None and maps["ALPHA"]["done"] == 1
-    assert columns["GAMMA/T1"] == columns["DELTA/T1"] == 0
+    assert columns["GAMMA/T1"] == columns["DELTA/T1"] == columns["DELTA/T2"] == 0
     assert [maps[k]["planned"] for k in ("IDEA", "NOTE", "LATER")] == [False] * 3
     assert all(maps[k]["planned"] for k in ("ALPHA", "BETA", "GAMMA", "DELTA"))
     fixes = next(entry for entry in maps.values() if entry.get("kind") == "fixes")
@@ -134,6 +140,9 @@ def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, hi
     assert "Land the stored list" not in " ".join(titles)
     assert _x(_node(svg, "Map the route")) == _x(_node(svg, "Book the slot"))
     assert "waits on each other" in _painted(_node(svg, "Map the route"))
+    assert "waits on a part no plan names" in _painted(_node(svg, "Confirm the slot"))
+    assert not any("Confirm the slot waits for" in t for t in titles)
+    assert any(t.startswith("No plan yet: Shoppers get ideas") for t in titles)
     if history == "new":
         _browser(out)
 

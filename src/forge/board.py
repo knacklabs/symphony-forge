@@ -648,11 +648,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 + (f", {ready_parts} ready to merge" if ready_parts else ""))
             items[key]["stage"] = phase
         maps.append({"id": key, "title": items.get(key, {}).get("title") or state.get("title")
-                     or "A story with no title yet", "parts": parts, "stage": phase, "planned": True})
+                     or "A story with no title yet", "parts": parts, "stage": phase, "planned": bool(parts)})
     mapped = {m["id"] for m in maps}
     maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet",
                  "parts": [], "stage": "done" if s["key"] in completed else "needs a spec", "planned": False}
                 for s in roadmap.values() if s["key"] not in mapped)
+    order = list(roadmap)  # roadmap order; stories off the roadmap keep theirs, after it
+    maps.sort(key=lambda entry: order.index(entry["id"]) if entry["id"] in roadmap else len(order))
     part_titles = {part["id"]: part["title"] for entry in maps for part in entry["parts"]}
     for parent in items.values():
         for item in [parent, *parent["children"]]:
