@@ -1,0 +1,14 @@
+{
+  "base": "ae31c71ce88d3b1b5f5dbf674cc8e6687f9c495d",
+  "branch": "fix/results-hook-nested-pytest",
+  "done_when": "A test suite whose tests start their own pytest runs the same under close as without Forge, and close still reads per-test results from its own run",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T06:43:01.529053+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close's test-results hook breaks a client test suite that starts its own pytest with a different import path, because the nested run inherits the hook and cannot load it"
+}
