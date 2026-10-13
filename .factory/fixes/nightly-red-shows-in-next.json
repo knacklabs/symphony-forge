@@ -38,7 +38,7 @@
     "id": "73f88862-da3d-4ac0-b3d7-5250fbcc18da",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T16:41:28.751000+00:00",
@@ -59,8 +59,12 @@
   ],
   "stop": {
     "at": "2026-10-13T03:56:05.053336+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/nextstep.py",
-    "wait_id": "bd9b101a-f6e7-4e01-86ba-56f898345394"
+    "reason": "Coordinator (Harm 2, reversible): the generated fix names the failed jobs and the run, not every test (forge next's lines already name every test); a fix started on another machine gets the plain line that it runs on that machine, like other remote items.",
+    "wait_id": "bd9b101a-f6e7-4e01-86ba-56f898345394",
+    "worker_round": null
   },
   "why": "A failing nightly full run on macOS or Windows is easy to miss, and Windows stayed red for days unseen"
 }
