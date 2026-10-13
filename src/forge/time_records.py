@@ -379,15 +379,6 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
             if review := state.get("review"):
                 data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
                                               for r in [*data["clean_reviews"], review]}.values())
-    summary, rows = _compact(data)
-    # Show what the pull request keeps, so the visible history stays as bounded as the record.
-    view = merged({"ended_at": data.get("ended_at")}, {**rows, "summary": summary, "state": data["state"]}) \
-        if summary else data
-    times = "; ".join(f"{label}: {duration(view['time_breakdown'][category])}"
-                      for category, label in zip(CATEGORIES, LABELS))
-    times = "; ".join(f"{kind}: {duration(view[f'{kind}_seconds'])}"
-                      for kind in ("working", "waiting", "unknown")) + "\n\n" + times
-    current = times + "\n\n" + "\n".join(r["line"] for r in view["rounds"])
     managed = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", published, re.S)
     previous = HISTORY_SECTION.search(managed[0]) if managed else None
     retained = data.get("legacy_text") or ""
@@ -410,6 +401,26 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
             retained = ""
     if retained:
         data["legacy_text"] = retained
+    # The whole published record is measured, and each entry in it has a fixed maximum size.
+    # An earlier release's retained history text is one entry with a larger fixed limit.
+    legacy = data.get("legacy_text") or None
+    base = {**_capped({**{name: data.get(name) for name in ("ready", "rebuilt", "truncated")},
+                       "state": {"steps": [{"step": "start", "at": s.get("at")}
+                                           for s in data["state"].get("steps", []) if s.get("step") == "start"]}}),
+            "legacy_text": legacy[:7999] + "…" if legacy and len(legacy) > 8000 else legacy}
+    clean = [{k: r[k] for k in ("id", "commit", "at", "round", "outcome") if k in r} for r in data["clean_reviews"]]
+    # Close's saved review snapshot has no round or time: keep only the newest one.
+    clean = [r for r in clean if r.get("at")] + [r for r in clean if not r.get("at")][-1:]
+    summary, rows, clean = _compact(data, base, clean)
+    # Show what the pull request keeps, so the visible history stays as bounded as the record.
+    view = merged({"ended_at": data.get("ended_at")}, {**rows, "summary": summary, "state": data["state"]}) \
+        if summary else data
+    times = "; ".join(f"{label}: {duration(view['time_breakdown'][category])}"
+                      for category, label in zip(CATEGORIES, LABELS))
+    times = "; ".join(f"{kind}: {duration(view[f'{kind}_seconds'])}"
+                      for kind in ("working", "waiting", "unknown")) + "\n\n" + times
+    current = times + "\n\n" + "\n".join(r["line"] for r in view["rounds"])
+    if retained:
         current = (retained + "\n\n" + RESUMED + "\n\n"
                    "Observed after resuming in this checkout (totals are separate from the "
                    "published measurements above):\n\n" + current)
@@ -418,15 +429,7 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
     if data.get("truncated"):
         current = "Older time detail was shortened to fit GitHub; missing time is unknown.\n\n" + current
     saved = {name: checkpoint(found) for name, found in records.items()}
-    clean = [r for r in data["clean_reviews"] if not summary or not _settled(r, summary["round"], when(summary["until"]))]
-    # Close's saved review snapshot has no round or time: keep only the newest one.
-    clean = [r for r in clean if r.get("at")] + [r for r in clean if not r.get("at")][-1:]
-    shared = {name: data.get(name) for name in ("ready", "clean_reviews", "rebuilt", "legacy_text", "truncated")}
-    shared.update(events=rows["events"],
-                  timings=rows["timings"], summary=summary,
-                  clean_reviews=clean,
-                  state={"steps": [{"step": "start", "at": s.get("at")}
-                                   for s in data["state"].get("steps", []) if s.get("step") == "start"]})
+    shared = {**base, "clean_reviews": clean, **rows, "summary": summary}
     return "## How it went\n\n" + current.rstrip() + "\n<!-- forge:history " + json.dumps(saved) + " -->" + \
         "\n<!-- forge:time-record " + json.dumps(shared, separators=(",", ":")) + " -->"
 
@@ -515,7 +518,8 @@ def _capped(value: Any) -> Any:
     return value[:299] + "…" if isinstance(value, str) and len(value) > 300 else value
 
 
-def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]]]:
+def _compact(data: dict[str, Any], base: dict[str, Any], clean: list[dict[str, Any]],
+             ) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
     """Keep the published record under a fixed size: while it is over, fold the oldest detail
     of any kind (summarised rounds, then their intervals, then raw rows) into the totals."""
     summary = json.loads(json.dumps(data["summary"])) if data.get("summary") else None
@@ -523,7 +527,11 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
     # seconds. Stage events stay.
     rows = {"events": [_capped(e) for e in data["events"] if e.get("event") != "progress"],
             "timings": [_capped(t) for t in data["timings"]]}
-    while len(json.dumps([summary, rows])) > RECORD_BUDGET:
+    def kept() -> list[dict[str, Any]]:
+        return [r for r in clean if not summary or not _settled(r, summary["round"], when(summary["until"]))]
+
+    while len(json.dumps({**base, "clean_reviews": kept(), **rows, "summary": summary}, separators=(",", ":"))) \
+            > RECORD_BUDGET:
         if summary and len(summary["rounds"]) > 2:  # The newest summarised line stays its own.
             summary["rounds"][:2] = [_fold(*summary["rounds"][:2])]
         elif summary and summary["intervals"]:
@@ -555,7 +563,7 @@ def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, lis
                           and not isinstance(r["round"], bool) and (at := when(r.get("at") or r.get("start")))
                           and at < until]])
             summary, rows = _summarised(data, summary, rows, number, until)
-    return summary, rows
+    return summary, rows, kept()
 
 
 def _summarised(data: dict[str, Any], summary: dict[str, Any] | None, rows: dict[str, list[dict[str, Any]]],
