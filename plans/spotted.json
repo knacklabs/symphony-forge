@@ -815,6 +815,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: forge board --json and forge next --json still make calls per story\tboard-json-fast",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 290,
+      "text": "Not done: forge board --json and forge next --json still make calls per story",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: identify jobs cancelled at their time limit\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -7299,6 +7310,17 @@
       "path": "tests/test_machine_views_stay_fast.py",
       "line": 31,
       "text": "Not done: proof that machine-view calls stay bounded as stories grow",
+      "from": "blocking",
+      "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_stay_fast.py\tNot done: test bounded calls for read stories and local branches\tboard-json-fast",
+      "kind": "bug",
+      "path": "tests/test_machine_views_stay_fast.py",
+      "line": 36,
+      "text": "Not done: test bounded calls for read stories and local branches",
       "from": "blocking",
       "item": "board-json-fast",
       "status": "open",
