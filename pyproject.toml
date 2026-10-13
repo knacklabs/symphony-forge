@@ -7,7 +7,7 @@ name = "symphony-forge"
 dynamic = ["version"]
 description = "Forge: one small tool that takes a story from approval to a merged pull request."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pillow>=12.3.0"]
 
 [dependency-groups]
 dev = ["pytest", "pytest-xdist", "pytest-split", "pytest-timeout"]
