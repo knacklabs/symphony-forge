@@ -473,23 +473,28 @@ def _summed(summary: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _settled(row: dict[str, Any], number: int, until: datetime) -> bool:
-    """A row a summary replaces: an earlier worker round's, or an unnumbered one before it."""
+    """A row a summary replaces: an earlier worker round's, or any row before its cut."""
     mark = row.get("round")
-    if isinstance(mark, int) and not isinstance(mark, bool):
-        return mark < number
+    if isinstance(mark, int) and not isinstance(mark, bool) and mark < number:
+        return True
     at = when(row.get("at") or row.get("start"))
     return at is not None and at < until
 
 
 def _compact(data: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]]]:
-    """Publish earlier worker rounds as one summary each instead of every event, so a long
-    item's record stays well inside GitHub's body limit; the current round keeps its rows."""
+    """Publish earlier review rounds as one summary each instead of every event, so a long
+    item's record stays well inside GitHub's body limit. Only the current worker round's last
+    review attempt, and whatever follows it, keeps its rows."""
     summary = data.get("summary")
     rows = {name: data[name] for name in ("events", "timings")}
     numbers = [r["round"] for name in rows for r in rows[name]
                if isinstance(r.get("round"), int) and not isinstance(r["round"], bool)]
-    until = min((at for name in rows for r in rows[name] if numbers and r.get("round") == max(numbers)
-                 and (at := when(r.get("at") or r.get("start")))), default=None)
+    latest = [at for name in rows for r in rows[name] if numbers and r.get("round") == max(numbers)
+              and (at := when(r.get("at") or r.get("start")))]
+    # Repeated closes in one worker round: cut after the review before the last one.
+    results = sorted(at for r in rows["events"] if numbers and r.get("round") == max(numbers)
+                     and r.get("event") == "review result" and (at := when(r.get("at"))))
+    until = min((at for at in latest if len(results) < 2 or at > results[-2]), default=None)
     if until is None:
         return summary, rows
     number = max(numbers)

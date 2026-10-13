@@ -27,12 +27,12 @@ def shifted(value, hours):
     return (datetime.fromisoformat(value) - timedelta(hours=hours)).isoformat()
 
 
-def repeat_round(template, number, offset):
+def repeat_round(template, number, offset, worker_round):
     """Copy the recorded round as an earlier one with its own ids, times and eleven findings."""
     copies = {}
     for name in ("events", "timings"):
         for record in template[name]:
-            copy = {**record, "round": number}
+            copy = {**record, "round": worker_round}
             for key in ("id", "run_id", "lane_id", "wait_id"):
                 if isinstance(copy.get(key), str):
                     copy[key] += f"-{number}"
@@ -48,8 +48,10 @@ def repeat_round(template, number, offset):
     return copies
 
 
+@pytest.mark.parametrize("repeated_closes", [False, True], ids=["many-worker-rounds", "one-worker-round"])
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size(env, previous):
+def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size(
+        env, previous, repeated_closes):
     client(env, previous)
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
@@ -75,15 +77,18 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     # The round's merge wait is still open; a later round's work would have ended it.
     template = {name: [r for r in rows if r.get("round") == number and r.get("event") != "owner wait start"]
                 for name, rows in mine.items()}
-    earlier = [repeat_round(template, n, number - n + 1) for n in range(1, number)]
+    # Repeated closes put every review in the one worker round; otherwise each has its own.
+    earlier = [repeat_round(template, n, number - n + 1, number if repeated_closes else n)
+               for n in range(1, number)]
     for name in ("events", "timings"):
         rows = [r for copies in earlier for r in copies.get(name, [])] + recorded[name]
         (logs / f"{name}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), "utf-8")
 
     env.commit(where, "app.py", "print('basket label is clear')\n")
-    worked = env.repo.forge("work", item)
-    env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
-    assert worked.returncode == 0, worked.stdout + worked.stderr
+    if not repeated_closes:
+        worked = env.repo.forge("work", item)
+        assert worked.returncode == 0, worked.stdout + worked.stderr
+        env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
@@ -101,7 +106,10 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     folded, recent = lines[0], lines[1:]
     last = int(re.match(r"Rounds 1–(\d+): .*reviewing .*findings: \d+ new, \d+ repeated$", folded)[1])
     assert len(recent) < 20, lines
-    assert [int(re.match(r"Round (\d+):", line)[1]) for line in recent[:-1]] == list(range(last + 1, number + 1))
+    numbers = [int(re.match(r"Round (\d+):", line)[1]) for line in recent]
+    assert numbers[0] == last + 1 and numbers == sorted(numbers), lines
+    for line in recent:  # each recent line keeps its own stage times
+        assert re.search(r"review \w+ \(\d+ (?:second|minute)", line), line
     assert "Basket label stays unclear" in recent[-1]
     assert shared["rounds"][-1]["repeat_findings"] == 1
     # The board's total time is the sum of its parts and spans all 200 earlier rounds.
