@@ -293,14 +293,14 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     assert rows["polish"]["title"] == "Polish the guide"
     assert rows["polish"]["kind"] == "fix"
     # Live adds failures and severity; the previous number/checks/count contract stays.
-    assert rows["polish"]["pr"] == {"number": 2, "checks": "pass", "failures": []}
+    assert rows["polish"]["pr"] == {"number": 2, "url": "https://github.com/a/b/pull/2", "checks": "pass", "failures": []}
     item = rows["BOARD"]
     assert item["title"] == "Board shows each story in plain English"
     assert item["approval"] is None
     child = item["children"][0]
     assert child["title"] == "The page"
     assert child["stage"] == "working"
-    assert child["pr"] == {"number": 1, "checks": "pass", "failures": []}
+    assert child["pr"] == {"number": 1, "url": "https://github.com/a/b/pull/1", "checks": "pass", "failures": []}
     assert child["findings"] == {"count": 1, "titles": ["Missing empty state"],
                                  "items": [{"title": "Missing empty state", "priority": "P1"}],
                                  "dismissed": 1}

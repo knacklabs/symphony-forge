@@ -84,9 +84,17 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
                 "in progress" if state in ("building", "in progress", "ready to merge") else "planned")
 
     def people(row: dict) -> str:
-        said = [f"{label} {row[field]}" for field, label in (("started_by", "Started by"),
-                ("approved_by", "Approved by"), ("merged_by", "Merged by")) if row.get(field)]
-        return f'<p class="people">{escape(" · ".join(said))}</p>' if said else ""
+        said = " ".join(f"{label} {row[field]}." for field, label in (
+            ("started_by", "Started by"), ("approved_by", "Approved by"), ("developer", "Assigned to"),
+            ("merged_by", "Merged by")) if row.get(field))
+        return f'<p class="people">{escape(said)}</p>' if said else ""
+
+    def waits(row: dict) -> str:
+        """What a stalled item waits on in forge next's words, its pull request and a story's outcome."""
+        url = (row.get("pr") or {}).get("url")
+        return ((f'<p class="waits">{escape(row["waits_on"])}</p>' if row.get("stalled") and row.get("waits_on") else "")
+                + (f'<p>Pull request: <a href="{escape(url, quote=True)}">{escape(row["title"])}</a></p>' if url else "")
+                + (f'<p>The story was finished. {escape(row["outcome"])}</p>' if row.get("outcome") else ""))
 
     def times(row: dict) -> str:
         seconds = [row.get(f"{kind}_seconds") for kind in ("working", "waiting", "unknown")]
@@ -97,20 +105,22 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
     def line(row: dict, name: str) -> str:
         state = (row.get("state") or "unknown").capitalize()
         status = row.get("status") or ""
+        if row.get("stalled"):
+            status = (status + ". " if status else "") + f"Stalled for {duration(row.get('idle_seconds'))}"
         return (f'<summary><span class="title">{escape(row["title"])}</span>'
                 f'<span class="kind">{name}</span><span class="state">{escape(state)}</span>'
                 f'<span class="status">{escape("" if status.lower() == state.lower() else status)}</span></summary>')
 
     def part(row: dict) -> str:
-        more = times(row) + people(row)
-        if row.get("state") != "done" and row.get("stages"):
+        more = waits(row) + times(row) + people(row)
+        if row.get("state") in ("in progress", "ready to merge") and row.get("stages"):
             more += timeline(row)
         return f'<li><details>{line(row, "Part")}<div class="more">{more}</div></details></li>'
 
     def entry(row: dict) -> str:
         parts = "".join(part(child) for child in row["children"])
-        more = times(row) + people(row) + (f'<ul class="parts">{parts}</ul>' if parts else "")
-        if row["kind"] == "fix" and row.get("state") != "done" and row.get("stages"):
+        more = waits(row) + times(row) + people(row) + (f'<ul class="parts">{parts}</ul>' if parts else "")
+        if row["kind"] == "fix" and row.get("state") in ("in progress", "ready to merge") and row.get("stages"):
             more += timeline(row)
         name = "Story" if row["kind"] == "story" else "Fix"
         return (f'<div class="row" data-group="{group(row)}"><details>{line(row, name)}'

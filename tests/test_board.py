@@ -174,7 +174,7 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     # Every story and fix, its state and its people; finished work sits in the done fold.
     for line in (
             "Shoppers can save a basket Story Done Finished on 18 September 2026",
-            "Started by Forge Test · Approved by Forge Test",
+            "Started by Forge Test. Approved by Forge Test.",
             "Save a basket Part Done Finished on 14 September 2026",
             "Show when it was saved Part Done Finished on 15 September 2026",
             "Share a basket Part Done Finished on 18 September 2026",

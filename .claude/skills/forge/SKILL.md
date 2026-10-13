@@ -276,11 +276,11 @@ Live readers, workers and reviews take precedence
 over a saved status, including in `forge next`. Approval history uses one display name per
 Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
-`started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
+`started_at`, or null), `pr` (number, url and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
 `approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
 absolute path to its document in its own worktree; other rows have null approval.
-Task and fix rows add `time_breakdown` and `rounds`.
+Task and fix rows add `time_breakdown` and `rounds`; story rows add `outcome` (null until done).
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story

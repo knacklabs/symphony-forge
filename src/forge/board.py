@@ -494,6 +494,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "started_by": starters.get(repo.state_path(item)),
                 "approved_by": _approver(top, read_key) if read_key else None,
                 "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
+                "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
                          + board_visuals.stage_duration(s) for s in stages
                          if board_visuals.stage_seconds(s) is not None],
@@ -507,7 +508,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                               {"status": "clean" if review else "none"}, "ci": ci},
                 "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,
-                "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
+                "worker": worker, "pr": {"number": (pr or {}).get("number"), "url": (pr or {}).get("url"),
+                       "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
