@@ -64,10 +64,16 @@ QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
          "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
 # leaves out included: the driver trusts a hook only when its whole definition is one of these.
+# Earlier releases' commands count too: an upgrade's worker runs while the default branch, whose
+# hooks Codex reads for every worktree, still holds them.
+EARLIER_COMMANDS = ("sh -c 'forge hook {hook} || exit 2' || exit 2",  # v1.0.0 to v1.2.1
+                    "sh -c '. \"$(git rev-parse --show-toplevel)/.forge/hooks.sh\" && "
+                    "forge hook {hook} || exit 2' || exit 2")  # v1.2.2 to v1.2.8
 FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
-                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "handlerType": "command", "command": command, "async": False,
                 "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
-               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
+               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()
+               for command in (sync.command(hook), *(old.format(hook=hook) for old in EARLIER_COMMANDS))]
 
 REFUSALS = {
     # Sync turns these three into warnings after it writes its files: see preserve_chats.
@@ -79,7 +85,7 @@ REFUSALS = {
                    "commit or undo those changes, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
-                  "no Codex turn here.", "forge doctor"),
+                  "no Codex turn here.", "{fix}"),
     # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
     "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
              "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
@@ -449,8 +455,9 @@ def require_trust(top: Path) -> None:
     doesn't trust, Codex lists and runs no project hook, Forge's own included."""
     from forge import doctor  # doctor imports codex
     config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
-        repo.refuse(REFUSALS["untrusted"])
+    trusted, fix = doctor._codex_trust(top, config)  # pyright: ignore[reportPrivateUsage]
+    if not trusted:
+        repo.refuse(REFUSALS["untrusted"], fix=fix)
 
 
 def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:

@@ -168,6 +168,36 @@ Hand-back restores `forge.toml` and records a `Question:`. Then run `forge land`
 New repos get the setting's default at init; existing repos get this guide when the upgraded
 Forge syncs, keeping their settings as written.
 
+## Reporting a Forge bug
+
+When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
+crash, a command that reports success but did nothing, generated files that contradict each
+other), file a bug on Forge's GitHub. No client code, names, paths or secrets: describe what Forge did.
+Read the template text from GitHub and drop its front matter:
+
+```
+gh api repos/knacklabs/symphony-forge/contents/.github/ISSUE_TEMPLATE/forge-bug.md -H "Accept: application/vnd.github.raw"
+```
+
+Fill every section, then save the filled body with your own file-writing tool as UTF-8.
+
+The template's sections, which the body file keeps exactly:
+
+- `## Forge version`: Output of `forge --version` and the pinned version in `forge.toml`.
+- `## Host and operating system`: The host (Claude Code or Codex) and the operating system.
+- `## Command and output`: The exact command and full output, with private names replaced.
+- `## Expected and actual`: Expected vs what happened.
+- `## Steps to reproduce`: Upgraded from which version, new or adopted repo, and the forge.toml settings without secrets.
+- `## forge next`: The `forge next` output at the time.
+- `## Tried and workaround`: What was tried, and any workaround.
+- `## How often`: How often: always, sometimes or once.
+
+File it with no prompt:
+
+```
+gh issue create --repo knacklabs/symphony-forge --title "<short plain title>" --body-file <that file>
+```
+
 ## Laptop setup and after cloning
 
 The repeatable laptop installers are published for
@@ -244,7 +274,11 @@ worktree path, shared by the repo's worktrees).
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
-the HTML board keeps their history. Each call reads current state without a history cache.
+the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
+matches the JSON: every story and fix sorted needs you, blocked, in progress, planned, no plan
+yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
+fix and plan. It uses the full window, has light and dark themes and stacks to one column below
+720px. Each call reads current state without a history cache.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
 task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
@@ -285,11 +319,11 @@ Live readers, workers and reviews take precedence
 over a saved status, including in `forge next`. Approval history uses one display name per
 Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
-`started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
+`started_at`, or null), `pr` (number, url and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
 `approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
 absolute path to its document in its own worktree; other rows have null approval.
-Task and fix rows add `time_breakdown` and `rounds`.
+Task and fix rows add `time_breakdown` and `rounds`; story rows add `outcome` (null until done).
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
@@ -980,7 +1014,9 @@ CI runs the full suite.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers and readers
-all refuse there until the human trusts it; `forge doctor` says how. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
+all refuse there until the human trusts it. Forge needs an exact trusted `[projects]` entry in
+Codex's config for the project folder or its main checkout; a parent folder's entry does not
+count, and the refusal and `forge doctor` name the entry to set. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
 ask the human to review it in Codex's /hooks, then run the command again.
 
 For a quick read-only question about this checkout, hand it to the session's `explorer`
