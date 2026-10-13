@@ -529,6 +529,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tpyproject.toml\tStandard: Fewest moving parts\treview-images",
+      "kind": "bug",
+      "path": "pyproject.toml",
+      "line": 10,
+      "text": "Standard: Fewest moving parts",
+      "from": "blocking",
+      "item": "review-images",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
