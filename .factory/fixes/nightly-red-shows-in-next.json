@@ -16,43 +16,43 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "586218157186ad81a6dac7ad6f1f8cecc9826f9621eaccfefe4bc32f7f111823",
-    "changed": "bee2d41f47a921d8d2fda69259425b61a9bf58cf6007a5204d2dc4bb0adcad9f",
-    "commit": "47ba072dfa75e175c815ac880bafd0b0f628a0ca",
+    "branch_diff": "e2f6e921885e8320d250816b456f7461157a690af662baa939a0c2600469a314",
+    "changed": "c57eebb89556a482b9c336e6555eeb466b06e18978cfa51912a8ac0a34c71041",
+    "commit": "ea449edec01f8843d1268ca8509f21db362954f1",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. `_failed_schedules` keys alerts by a cleaned workflow name. Distinct workflow names such as `Build & Test` and `Build Test` both become `Build Test`, so when both latest scheduled runs fail, the second overwrites the first. `forge next` then omits one run\u2019s failed jobs, tests and fix command. The named proof covers identical names distinguished by file path, but not names that collide after cleaning.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 279,
-        "priority": "P1",
-        "title": "Not done: When the latest scheduled run of a workflow failed, forge next names its failed jobs and every failing test, and gives one forge f",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Scale. After the one-minute cache expires, this loop starts a separate `gh run list` process and network request for every active workflow, including workflows with no schedule. A client repo with 40 workflows makes at least 41 sequential GitHub CLI calls whenever `forge next` refreshes; the context and handoff hooks also use this report. That adds substantial delay to a routine command. [GitHub CLI documents that workflow listing includes active workflows by default](https://cli.github.com/manual/gh_workflow_list).",
+        "body": "Gain 2, Work 2, Harm 1\nRaise: Not done. A pytest failure such as `FAILED tests/test_a.py::test_mode[basic - legacy] - AssertionError` is reported as `tests/test_a.py::test_mode[basic`, so `forge next` does not name that failing test. The ` - ` delimiter in this regex also occurs inside valid parameter IDs. This is a distinct case from the settled space-ID finding: the proof covers `[previous release]`, which has no spaced hyphen. [Pytest documents that parameter IDs identify failing cases](https://docs.pytest.org/en/stable/example/parametrize.html).",
         "file": "src/forge/board_facts.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 125,
+        "gain": 2,
+        "harm": 1,
+        "line": 138,
         "priority": "P1",
-        "title": "Checking every workflow serially slows forge next in larger repos",
+        "title": "Not done: parameter IDs containing spaced hyphens are truncated",
         "work": 2
       },
       {
-        "body": "Gain 2, Work 3, Harm 2\nThe parser recognizes only pytest-style `FAILED` or `ERROR` lines containing `::`. Scheduled Vitest and Go jobs can fail with named tests but no matching line, so `forge next` names the job without its failing tests. The shipped guidance supports these runners. [Vitest\u2019s reporter format](https://vitest.dev/guide/reporters) and [Go\u2019s failing-test example](https://go.dev/doc/tutorial/add-a-test) show different output. This additional language case is outside the named Done-when case.",
+        "body": "Gain 2, Work 3, Harm 2\nThe parser accepts only pytest-style `FAILED` or `ERROR` lines containing `::`. A scheduled Vitest or Go job can fail with named tests in its log while `forge next` lists only the job. The named proof supplies pytest output only. The shipped guidance supports these runners; this additional language case remains open.",
         "file": "src/forge/board_facts.py",
         "gain": 2,
         "harm": 2,
-        "line": 140,
+        "line": 137,
         "priority": "P2",
         "title": "Follow-up: name JavaScript and Go test failures in scheduled runs",
         "work": 3
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\nThe query reads only the newest 100 scheduled runs across all workflows. A workflow scheduled every five minutes can fill that page in about eight hours, hiding a failed daily workflow whose latest run is older. The coordinator explicitly narrowed this case to a follow-up; the proof uses only three runs.",
+        "file": "src/forge/board_facts.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 116,
+        "priority": "P2",
+        "title": "Follow-up: retain failed daily workflows beyond the recent-run page",
+        "work": 2
       }
     ],
-    "id": "44a39ea0-9cf4-4dc4-bd8f-6dccfdfa8088",
+    "id": "336bb7fe-da99-427e-8df6-4f847a5b405b",
     "status": "blocked"
   },
   "status": "fixing",
@@ -83,6 +83,10 @@
     },
     {
       "at": "2026-10-13T04:12:17.241702+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:19:16.945773+00:00",
       "step": "review"
     }
   ],
