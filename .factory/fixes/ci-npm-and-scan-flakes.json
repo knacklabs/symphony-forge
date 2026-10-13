@@ -1,0 +1,14 @@
+{
+  "base": "8911ac1f23f12a3818b451c7d855fd8d5eeb2efe",
+  "branch": "fix/ci-npm-and-scan-flakes",
+  "done_when": "The Node client tests keep npm's download cache between CI runs and give a cold download enough time, and the leftover-process scan skips files that disappear while it runs",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-13T04:09:21.479871+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Pull request test groups time out while npm downloads jest or vitest, and a leftover-process scan fails when a git folder vanishes mid-scan"
+}
