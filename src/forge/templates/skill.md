@@ -1249,7 +1249,8 @@ its builder, one already merged and one another command works on. It starts them
 several at a time up to this machine's agent places, and merges each one when it passes. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
-works in a repo at a time. It runs no fix rounds: a change that needs a worker or the owner stops
+works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
+the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
 alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
 its fix rounds, or the review loop's question and its `forge close <item> --resolve` step, which
