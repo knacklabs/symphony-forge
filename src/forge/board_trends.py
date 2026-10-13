@@ -74,7 +74,7 @@ def facts(top: Path, history: Item, counts: Item, items: list[Item],
                           if earliest == latest else
                           ("range", f"Planned work can go live between {_day(earliest)} and {_day(latest)}"))
     if no_plan:
-        clause += f"; unknown, with no plan yet: {', '.join(no_plan)}"
+        clause += f"; unknown: {len(no_plan)} {'story has' if len(no_plan) == 1 else 'stories have'} no plan yet"
     go_live = {"status": status, "earliest": earliest and earliest.isoformat(),
                "latest": latest and latest.isoformat(), "remaining_parts": remaining,
                "no_plan": {"count": len(no_plan), "titles": no_plan}}

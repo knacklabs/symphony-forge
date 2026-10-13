@@ -92,6 +92,10 @@ def test_8_below_the_fold(repo, gh, tmp_path, claude_payload, monkeypatch, histo
     assert by_title["A story with no title yet"][0] == "no plan yet"
     assert by_title["Greet returning shoppers"][0] == "done"
 
+    # The JSON's in-progress list is the page's In progress group.
+    assert sorted(row["title"] for row in data["team"]["in_progress"]) == sorted(
+        title for group, title, *_ in rows if group == "in progress")
+
     # Every top-level item the JSON lists under Needs you or Blocked or slow sits in that group;
     # Needs you wins when an item is in both. Both lists stay null until their part lands.
     top = {row["id"]: row for row in data["items"]}
