@@ -370,7 +370,7 @@ timings stay unknown until complete activity recording begins. Earlier run and q
 do not establish completeness; historical questions without a recorded end stay unknown.
 
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
-categories rather than adding overlapping stage timers. The pane and `/forge` show these same
+categories rather than adding overlapping stage timers. The board page shows these same
 details. The pull request's short **How it went** section comes from the same logs and keeps
 earlier findings after later reviews. Forge keeps the pull request body in an agent squash
 merge; when the human merges, keep this section in the squash commit body too. New repos get
@@ -381,7 +381,7 @@ the current checkout's observations separately. Quote each snapshot separately; 
 their totals, because their intervals may overlap.
 
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
-categories rather than adding overlapping stage timers. The pane and `/forge` show these same
+categories rather than adding overlapping stage timers. The board page shows these same
 details. The pull request's **How it went** section carries intervals, review rounds (including
 clean reviews), and waits with their ends. Close and merge retain observations from other
 checkouts and recompute repeated findings and overlapping time. The board reads this shared
@@ -449,7 +449,7 @@ If that Forge has no lanes command, lane data is absent. A due refresh is skippe
 while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
 Drawing ticks advance live timers every second without fetching state.
 
-A failed or malformed refresh, or a command taking over 20 seconds, keeps the
+A failed or malformed refresh, or a command taking over 60 seconds, keeps the
 last good rows and adds a dim `Couldn't refresh: <first line of the error>`.
 It retries on the next tick. Only a non-zero command result containing
 `unrecognized arguments: --json` shows
@@ -497,20 +497,26 @@ Type `/forge` at any width, including 80 columns, to open and focus the pane.
 The mod requests it at interactive session start too; Claude Code places it
 automatically at 144 columns, or 110 after the person has opened it once.
 The strip below that wide-screen threshold ends with `/forge for the board`.
-The terminal pane shows each story, its tasks and each fix with their stage,
-running worker's kind, model and elapsed time, pull request checks and open
-findings. Recorded details add tool, effort, round, current step, activity,
-idle time and stalled state, stage times, test progress, failed job and timeout
-cause, and findings' severity and dismissed count. Missing state or timing stays
-unknown. An empty board says `Nothing in progress.`
-
-The Desktop app's Code tab draws the same facts as tables and a stage timeline
-for each item, with hover times, equivalent alt text and native buttons for key
-actions. The strip stays text. `/forge` always returns the summary and full board
-as text, two lines per item, with tasks indented under their story, as well as
-opening the pane. Where mods draw nothing (the VS Code chat panel, `claude -p`
-and Remote Control from a phone or claude.ai), that text is the status reply.
-It uses the last completed snapshot, including any refresh error.
+The pane's Board tab, on the terminal and the Desktop app's Code tab alike, opens
+with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
+Each part shows only when the board's `team` fact behind it is known and not zero; an
+older Forge with no `team` shows no summary line. Groups follow in this order, each only
+when it has items: NEEDS YOU (approvals, review-loop choices, questions and other stops),
+STUCK (no activity past the board's stall threshold, with the longest wait in days),
+MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
+READY TO MERGE (with the checks in words), then a folded count of the work waiting or not
+started, opened with a native button. Each item shows its plain title, the story key small
+beside it, one line of state in words and, where there is something to do, its next step
+after `→`. At most five rows show per group, then `and N more · forge board for all`.
+The pane never shows zero counts, unknown times, raw timestamps, priority codes or
+dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
+relative (`12 min`, `8 days`). Stage chains, round lines and the time breakdown stay on
+the board page. An empty board says `Nothing in progress.` `/forge` always returns the
+same lines as text, as well as opening the pane. Where mods draw nothing (the VS Code
+chat panel, `claude -p` and Remote Control from a phone or claude.ai), that text is the
+status reply. It uses the last completed snapshot, including any refresh error. Until a
+first refresh succeeds, the pane, the strip and `/forge` say `Loading Forge…`, or
+`Couldn't refresh: <first line of the error>` once that refresh failed.
 
 The strip above the prompt uses at most three lines. Its first line shows
 `Agents N/M (W waiting) · Tests N/M (K waiting) · <running item or idle> · 1: <next command>`.
