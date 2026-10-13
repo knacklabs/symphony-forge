@@ -4067,8 +4067,8 @@
       "text": "Recorded allowance covers multiple problems and interface changes",
       "from": "blocking",
       "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance does not match the interface and timeout changes\tpane-grouped-board",

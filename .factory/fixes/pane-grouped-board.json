@@ -148,8 +148,8 @@
       "gain": 3,
       "harm": 2,
       "line": 158,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/nextstep.py:158 The owner explicitly allowed this scope as one large fix on 2026-10-13: the pane's groups need needs_person and next.step in the board and next JSON, and a 60-second refresh wait; the allowance text lists all three",
       "round": 3,
       "security": false,
       "title": "Recorded allowance covers multiple problems and interface changes",
@@ -187,7 +187,13 @@
     "branch_diff": "b40d03bba0b9e9c371185d36153057f6ffa47c69d3612c06d370c7234af223f2",
     "changed": "8f1ebbef65ffdb9e363eeb2e169f914f2ef7785ef72386c35b61f783a7392c62",
     "commit": "98f4f68a0fbe8e65afea6745315469959785b2e6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/nextstep.py:158 The owner explicitly allowed this scope as one large fix on 2026-10-13: the pane's groups need needs_person and next.step in the board and next JSON, and a 60-second refresh wait; the allowance text lists all three",
+        "finding": 3,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. The Moving branch sets the row's state but never copies `next.step` into `row.next`. Normal working and reviewing items have steps such as \u201cwait for the review, then forge close <item>\u201d (`src/forge/nextstep.py:52-53`), yet the Board tab shows only their stage and elapsed time. This leaves the Done-when requirement that each item show its next step unmet.",
