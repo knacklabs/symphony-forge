@@ -1,0 +1,30 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/old-hooks-are-forge",
+  "done_when": "During forge upgrade, hooks written by any earlier Forge release are recognized as Forge's, so the worker starts without a manual hooks approval",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a435938f16e285b807f64e7c0cb83b65bba685e794e00d0bb1ff04928fc84dd7",
+    "changed": "b114deb3b31cb3047d9eed186fa589752f27773d9990427499ed51a336aebb1c",
+    "commit": "a33424358760950a19d05822faad3265a0a11f23",
+    "dismissals": [],
+    "findings": [],
+    "id": "4b30f0af-0501-4db3-99b6-3dd064173ea0",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:45.775969+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:26:41.966108+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "During an upgrade from an early release, that release's Forge hooks still on the default branch count as not Forge's, so Codex holds the worker until someone approves them in its hooks screen"
+}
