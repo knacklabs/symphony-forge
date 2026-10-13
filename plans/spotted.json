@@ -5710,6 +5710,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tStandard: Input is checked where it enters\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 645,
+      "text": "Standard: Input is checked where it enters",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tStory breakdown miscounts overlapping folded task time\tpr-time-record-summaries",
       "kind": "bug",
       "path": "src/forge/time_records.py",

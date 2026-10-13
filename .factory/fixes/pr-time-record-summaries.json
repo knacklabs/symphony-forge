@@ -151,49 +151,62 @@
       "gain": 3,
       "harm": 2,
       "line": 140,
-      "outcome": "open",
+      "outcome": "fixed in round 9",
       "reason": "",
       "round": 8,
       "security": false,
       "title": "Not done: prove the board's total time after old rounds fold",
       "work": 1
+    },
+    {
+      "area": "_claim() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 645,
+      "outcome": "open",
+      "reason": "",
+      "round": 9,
+      "security": true,
+      "title": "Standard: Input is checked where it enters",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e947f7eeb98857aa46038e1344ee74c28f04b8f2d0b6fcba8c68e411a5011782",
-    "changed": "f65dbbb0d3d6f5189d01a69658d092fb3cf06423cd8086b1ee959076e608adc9",
-    "commit": "3075bc048aeeb551ccd31690e4fee3d618ba2c8b",
+    "branch_diff": "ac2c2d3d52105c094a7223b4921094d347fabeb2d044682284889c9046371751",
+    "changed": "68688947bee7cff954492063abdd08094ef6746423b13f7a4dddfc7a68525b58",
+    "commit": "34b958a327c99caf07309d9534d17b5e44bf0a97",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nThe loop recalculates available unknown time from unchanged `intervals` for every folded task. When two long tasks in one story have overlapping folded ranges, both can reassign the same seconds, making the story's unknown time negative and its working and waiting totals too large. Even one folded task can misclassify time when another task works during part of its folded range: the code assigns the remaining unknown time to working first, without knowing when the folded task actually worked. The new story proof uses only one part, so it does not exercise either overlap.",
+        "body": "Gain 4, Work 1, Harm 4\nRaise: Security\nThe rule says, \"Input is checked where it enters.\" A pull request author can edit the shared record so `summary.folded` has valid `start` and `end` timestamps but a string `working` value. `from_body()` accepts it because its validation calls `merged()` without checking folded category values. When `forge board` builds the story, this `min()` compares the string with seconds and raises `TypeError`, making the board unavailable.",
+        "file": "src/forge/time_records.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 645,
+        "priority": "P1",
+        "title": "Standard: Input is checked where it enters",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\n`_claim()` assigns folded working seconds to the earliest still-unknown interval, regardless of when that work occurred. If one task's folded ten-minute range contains five minutes of work followed by five minutes of waiting, while another task has recorded work during the first five minutes, the story already marks that first half as working. This code assigns the folded work to the second half and drops its waiting time, showing ten minutes working instead of five working and five waiting. The new overlapping-parts proof checks only a category upper bound, so it passes with this breakdown.",
         "file": "src/forge/time_records.py",
         "gain": 3,
         "harm": 3,
-        "line": 659,
+        "line": 644,
         "priority": "P1",
         "title": "Story breakdown miscounts overlapping folded task time",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test\nThe `story-part` proof reads the board but asserts only the story's working, waiting and unknown fields; its total-time assertion applies to the task row, not the story row. A regression that makes the board report an incorrect `story[\"total_seconds\"]` while leaving those category fields intact would pass this named proof. The Done-when line explicitly requires the board to show the total time.",
-        "file": "tests/test_pull_request_time_summaries.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 140,
-        "priority": "P1",
-        "title": "Not done: prove the board's total time after old rounds fold",
-        "work": 1
       }
     ],
-    "id": "088cc1c8-8731-46be-89ae-c2b706ec3000",
+    "id": "62e0d81f-374c-4d83-a5c7-89a8d93fe08e",
     "status": "blocked"
   },
   "settled_areas": [
     "_compact() in src/forge/time_records.py"
   ],
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
@@ -230,18 +243,16 @@
     {
       "at": "2026-10-13T12:28:59.178113+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-13T14:16:18.661060+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "area": "_compact() in src/forge/time_records.py",
-    "at": "2026-10-13T08:56:20.298799+00:00",
-    "by": "owner",
-    "choice": "narrow",
-    "file": "_compact() in src/forge/time_records.py",
-    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "reason": "Owner chose one general rule: when the record goes over its size limit, fold the oldest rows of any kind into the totals line until it fits; add a close-retry test.",
-    "wait_id": "3962423e-82a7-4ab1-bb59-87145a2e7a94",
-    "worker_round": null
+    "at": "2026-10-13T14:16:18.680162+00:00",
+    "file": "src/forge/time_records.py",
+    "wait_id": "04239b79-db02-48d6-845f-8ff59ca523a1"
   },
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
