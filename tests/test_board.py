@@ -171,33 +171,20 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     page = repo.path / ".git" / "forge" / "board.html"
     assert made.stdout == f"Wrote the board to {page}\n"
     text = seen(page)
-    # Current rows use recorded round times, not inferred time between saved transitions;
-    # this earlier-release history has no stage records. Archived rows keep their saved history.
+    # Every story and fix, its state and its people; finished work sits in the done fold.
     for line in (
-            "Shoppers can save a basket Finished on 18 September 2026.",
-            "Planning took 1 hour. A person stepped in 3 times, plus accepting 3 finished parts.",
-            "Save a basket : Finished on 14 September 2026. Approved by Forge Test. Built in 1 hour 10 minutes; reviewed and "
-            "checked in 20 minutes; waited 30 minutes to be accepted.",
-            "Show when it was saved : Finished on 15 September 2026. Approved by Forge Test.",
-            "Share a basket : Finished on 18 September 2026. Approved by Forge Test. This part was open for 3 working days, which is "
-            "slow.",
-            "Shoppers can keep a wish list Not started yet.",
-            "Readme greets new readers : In progress. This fix has been open for 3 working days, which "
-            "is slow.",
-            "Upgrade Forge to the newest version : Finished on 16 September 2026. Forge now runs its "
-            "newest version here.",
-            "A part usually takes 1 hour 50 minutes from its start to ready (target: under 2 hours).",
-            "A story usually needs a person 3 times (target: 3 times or fewer).",
+            "Shoppers can save a basket Story Done Finished on 18 September 2026",
+            "Started by Forge Test. Approved by Forge Test.",
+            "Save a basket Part Done Finished on 14 September 2026",
+            "Show when it was saved Part Done Finished on 15 September 2026",
+            "Share a basket Part Done Finished on 18 September 2026",
+            "Shoppers can keep a wish list Story No plan yet Not started yet",
+            "Readme greets new readers Fix In progress",
+            "Upgrade Forge to the newest version Fix Done Finished on 16 September 2026",
+            "How the factory is doing: a part usually takes 1 hour 50 minutes from its start to ready "
+            "(target: under 2 hours); a story usually needs a person 3 times (target: 3 times or fewer); "
             "1 of the last 5 finished changes fixed Forge itself (target: under 10%)."):
         assert line in text, f"{line!r} is not on the page:\n{text}"
-    # The timeline, oldest first: the approval, each merged part by merge date, then the outcome.
-    timeline = ["14 September 2026 Forge Test approved the plan.",
-                "14 September 2026 Save a basket Shoppers can save their basket with one click.",
-                "15 September 2026 Show when it was saved The basket page now says when it was saved.",
-                "18 September 2026 Share a basket Shoppers can send a saved basket to a friend.",
-                "18 September 2026 The story was finished. Shoppers keep their basket between visits."]
-    assert all(entry in text for entry in timeline), text
-    assert [text.index(entry) for entry in timeline] == sorted(text.index(entry) for entry in timeline)
     # Plain English: no IDs, hashes, file paths or jargon, and nothing but a pull request's summary.
     for word in IDS:
         assert not re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", text), word
@@ -213,13 +200,9 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     assert repo.forge("board", "--out", str(out)).returncode == 0
     offline = seen(out)
     assert "GitHub couldn't be reached, so the list of finished work isn't available." in offline
-    for line in ("Shoppers can save a basket Finished on 18 September 2026.",
-                 "Share a basket : Finished on 18 September 2026. Approved by Forge Test. This part was open "
-                 "for 3 working days, which is slow.",
-                 "14 September 2026 Forge Test approved the plan. 18 September 2026 The story was "
-                 "finished. Shoppers keep their basket between visits."):
+    for line in ("Shoppers can save a basket Story Done Finished on 18 September 2026",
+                 "Share a basket Part Done Finished on 18 September 2026"):
         assert line in offline, f"{line!r} is not on the page:\n{offline}"
-    assert "one click" not in offline
 
     # forge next shows the three numbers in one line, only from the check date on.
     assert "How the factory is doing" not in repo.forge("next").stdout

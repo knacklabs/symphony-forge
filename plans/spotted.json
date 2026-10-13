@@ -397,6 +397,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/board-screens/page/page-client-390-light-rows.png\tNot done: client mobile rows browser proof\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "docs/board-screens/page/page-client-390-light-rows.png",
+      "line": 1,
+      "text": "Not done: client mobile rows browser proof",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/board-screens/page/page-forge-1440-light.png\tNot done: proof list\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "docs/board-screens/page/page-forge-1440-light.png",
+      "line": 1,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/commands.md\tNot done: guide's land row and paragraph\tFORGE-QUEUE-1/QUEUE",
       "kind": "bug",
       "path": "docs/commands.md",
@@ -1130,6 +1152,39 @@
       "text": "People with the same GitHub name are merged into one trend row",
       "from": "blocking",
       "item": "FORGE-BOARD-2/TRENDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_visuals.py\tNot done: functional check\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 73,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_visuals.py\tNot done: one-line graph key\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 11,
+      "text": "Not done: one-line graph key",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_visuals.py\tRoadmap map is fixed at 260 pixels on laptop\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 19,
+      "text": "Roadmap map is fixed at 260 pixels on laptop",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
       "status": "open",
       "closed_by": null
     },
@@ -5838,6 +5893,39 @@
       "text": "Not done: test_board_github_once verifies unknown facts on failure",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tNot done: below-the-fold row test\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 87,
+      "text": "Not done: below-the-fold row test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tNot done: test needs-you and blocked row ordering\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 78,
+      "text": "Not done: test needs-you and blocked row ordering",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tStandard: Add a Playwright browser test for the board page\tFORGE-BOARD-2/PAGE",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 109,
+      "text": "Standard: Add a Playwright browser test for the board page",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PAGE",
       "status": "open",
       "closed_by": null
     },

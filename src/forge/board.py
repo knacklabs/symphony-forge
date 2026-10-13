@@ -9,7 +9,6 @@ none of those. Without gh the page shows the state and its dates only.
 """
 from __future__ import annotations
 
-import html
 import json
 import os
 import re
@@ -20,7 +19,6 @@ import sys
 import webbrowser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from string import Template
 from textwrap import shorten
 from typing import Any
 
@@ -42,7 +40,6 @@ STATE = re.compile(r"\.factory/(?:stories/(?P<key>[A-Z][A-Z0-9-]*)/(?:story|task
                    r"|fixes/(?P<fix>[a-z0-9][a-z0-9-]*))\.json")
 # ponytail: a merged fix "fixed Forge" when it changed Forge's own files; widen once a miss shows up.
 FORGE_FILES = ("forge.toml", ".claude/", ".codex/", ".github/workflows/forge.yml", "src/forge/")
-WAITING = "Ready to merge"
 STATUS = {"started": "Waiting to start", "working": "In progress", "reviewing": "Under review",
           "fixing": "Needs fixes", "waiting for checks": "Checks running",
           "ready": "Ready to merge", "hotspot": "Needs your decision"}
@@ -57,10 +54,13 @@ def board(args: Any) -> int:
     if args.json:
         print(json.dumps(machine_board(top)))
         return 0
-    stories, fixes, prs = _gather(top)
+    view = machine_board(top, trim=False)
+    stories, prs = _gather(top)
+    page = board_visuals.page(view, "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + ".",
+                              prs is not None, _when(repo.now()) or datetime.now(timezone.utc))
     out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(_page(stories, fixes, prs, machine_board(top)).encode("utf-8"))  # same bytes on Windows
+    out.write_bytes(page.encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
     if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
         webbrowser.open(out.resolve().as_uri())
@@ -224,12 +224,15 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
     return runs
 
 
-def machine_board(top: Path, history: Item | None = None) -> Item:
-    """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
+def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> Item:
+    """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
+    `trim` leaves out work finished more than seven days ago; the page keeps it."""
     from forge import nextstep, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
+    if not trim:
+        history = {**history, "expired": set()}
     landed = history["landed"]
     starters = _starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
@@ -491,6 +494,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                 "started_by": starters.get(repo.state_path(item)),
                 "approved_by": _approver(top, read_key) if read_key else None,
                 "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
+                "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
                          + board_visuals.stage_duration(s) for s in stages
                          if board_visuals.stage_seconds(s) is not None],
@@ -504,7 +508,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                               {"status": "clean" if review else "none"}, "ci": ci},
                 "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,
-                "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
+                "worker": worker, "pr": {"number": (pr or {}).get("number"), "url": (pr or {}).get("url"),
+                       "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
@@ -672,25 +677,21 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
 
 def numbers_line(top: Path, checks: list[str]) -> str:
     """The three success numbers in one line, for `forge next`."""
-    stories, _, prs = _gather(top, checks)
+    stories, prs = _gather(top, checks)
     return "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + "."
 
 
 # --- reading the state and GitHub ------------------------------------------------------------
 
 
-def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], list[Item], list[Item] | None]:
-    """Each story (roadmap order first) with its parts and timeline, each fix, and gh's pull
+def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], list[Item] | None]:
+    """Each story with its parts' start, green and touches, for the success numbers, and gh's pull
     requests (None without a working gh)."""
-    landed, now = story.landed_ref(top), _when(repo.now()) or datetime.now(timezone.utc)
-    starters = _starters(top)
-    best: dict[str, tuple[Item, Path | str]] = {}
-    merged: set[str] = set()
-    for rel, state, where in _copies(top, landed):
-        if where == landed:
-            merged.add(rel)
-        if rel not in best or len(_steps(state)) > len(_steps(best[rel][0])):
-            best[rel] = (state, where)
+    landed = story.landed_ref(top)
+    best: dict[str, Item] = {}
+    for rel, state, _ in _copies(top, landed):
+        if rel not in best or len(_steps(state)) > len(_steps(best[rel])):
+            best[rel] = state
     prs = _prs(top)
     by_branch: dict[str, Item] = {}
     for pr in prs or []:  # newest first; a merged one wins
@@ -698,61 +699,29 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
             by_branch[str(pr.get("headRefName"))] = pr
     if checks is None:
         checks = repo.config(top)["checks"] if (top / "forge.toml").is_file() else []
-
-    def part(rel: str, state: Item, branch: str, noun: str) -> Item:
-        pr = by_branch.get(state.get("branch") or branch)
-        result = _part(top, landed, rel, state, rel in merged, pr, checks, now, noun)
+    found: dict[str, Item] = {}
+    parts: dict[str, list[Item]] = {}
+    for rel, state in best.items():
         match = STATE.fullmatch(rel)
-        result["id"] = f"{match['key']}/{match['task']}" if match["task"] else match["fix"]
-        return {**result,
-                "started_by": starters.get(rel),
-                "approved_by": _approver(top, match["key"]) if match["key"] else None,
-                "developer": task.developer(task.rows(task.sections(story._plan(top, match["key"]))).get(
-                    match["task"], {})) if match["task"] else None}
-
-    found: dict[str, tuple[Item, Path | str]] = {}
-    tasks: dict[str, dict[str, Item]] = {}
-    fixes: list[Item] = []
-    for rel, (state, where) in best.items():
-        match = STATE.fullmatch(rel)
-        assert match  # _copies keeps only state files
-        if match["fix"]:
-            if state.get("kind") != "story-done":  # a story's outcome shows in its own timeline
-                fix = part(rel, state, f"fix/{match['fix']}", "fix")
-                fixes.append({**fix, "id": match["fix"], "name": state.get("why") or (fix["pr"] or {}).get("title")
-                              or "A small fix"})
-        elif match["task"]:
-            tasks.setdefault(match["key"], {})[match["task"]] = part(
-                rel, state, f"task/{match['key']}-{match['task']}", "part")
-        else:
-            found[match["key"]] = (state, where)
+        if match["task"]:
+            pr = by_branch.get(state.get("branch") or f"task/{match['key']}-{match['task']}")
+            parts.setdefault(match["key"], []).append({"start": _step(state, "start"), "touches": state.get("touches", 0),
+                                                       "green": _green_at(pr, checks)})
+        elif match["key"]:
+            found[match["key"]] = state
     roadmap = {item["key"]: item for item in repo.roadmap(top) if item.get("status") != "superseded"}
-    titles = {item["key"]: item.get("title") for item in roadmap.values()
-              if item.get("status") != "superseded"}
     stories = []
-    display_names = _display_names(top)
-    for key in [*titles, *sorted((set(found) | set(tasks)) - set(titles))]:
-        state, where = found.get(key, ({}, landed))
+    for key in [*roadmap, *sorted((set(found) | set(parts)) - set(roadmap))]:
+        state = found.get(key, {})
         completed = story.completed(top, key, landed)
         if state.get("status") != "done" and completed.get("status") == "done":
             state = completed
         if roadmap.get(key, {}).get("status") == "done":
             state = {**state, **roadmap[key]}
-        rows = task.rows(task.sections(story._plan(top, key)))
-        names = {cell.strip("` "): row.get("Name") or "" for cell, row in rows.items()}
-        mine = tasks.get(key, {})
-        for tid, spec in rows.items():
-            if task.developer(spec) and tid not in mine:
-                mine[tid] = {**part(repo.state_path(f"{key}/{tid}"), {}, f"task/{key}-{tid}", "part"),
-                             "status": "Not started yet"}
-        parts = [(names.get(tid) or "A part with no name yet", mine.get(tid))
-                 for tid in [*names, *sorted(set(mine) - set(names))]]
-        stories.append({**_story(top, key, state, state.get("title") or titles.get(key), parts, display_names),
-                        "started_by": starters.get(repo.state_path(key)),
-                        "approved_by": _approver(top, key), "developer": None})
-    stories.sort(key=lambda item: item["finished"])
-    fixes.sort(key=lambda fix: fix["start"] or now, reverse=True)
-    return stories, fixes, prs
+        mine = parts.get(key, [])
+        stories.append({"parts": mine, "approved": bool(_when((state.get("approval") or {}).get("at"))),
+                        "touches": state.get("touches", 0) + sum(part["touches"] for part in mine)})
+    return stories, prs
 
 
 def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> dict[str, str]:
@@ -897,83 +866,11 @@ def _read(top: Path, where: Path | str, rel: str, history: Item | None = None) -
 # --- a story, a part and the numbers ------------------------------------------------------------
 
 
-def _story(top: Path, key: str, state: Item, title: str | None,
-           parts: list[tuple[str, Item | None]], display_names: dict[str, str]) -> Item:
-    """A story's state sentence, planning time, human touches and dated timeline."""
-    started = [part for _, part in parts if part and part["status"] != "Not started yet"]
-    finished = [part for part in started if part["finished"]]
-    waiting = [part for part in started if part["status"] == WAITING]
-    approved = _when((state.get("approval") or {}).get("at"))
-    if not state:
-        sentence = "Not started yet."
-    elif state.get("status") == "done":
-        sentence = f"Finished on {_day(_when(state.get('finished')))}."
-    elif not approved:
-        sentence = "Planning." if state.get("status") == "planning" else "Waiting for approval."
-    elif parts and len(finished) == len(parts):
-        sentence = "All parts finished; record the outcome."
-    elif not started:
-        sentence = "Approved; no part has started yet."
-    else:
-        sentence = (f"In progress: {len(finished)} of {len(parts)} parts finished"
-                    + (f", {len(waiting)} ready to merge" if waiting else "") + ".")
-    touches = state.get("touches", 0) + sum(part["touches"] for part in started)
-    meta = []
-    begun = _step(state, "start")
-    if begun and approved:
-        meta.append(f"Planning took {_took(approved - begun)}.")
-    if state:
-        meta.append(f"A person stepped in {_times(touches)}, plus accepting "
-                    f"{_n(len(finished), 'finished part')}.")
-    approver = _approver(top, key, display_names)
-    headline = f"{approver} approved the plan." if approver else "The plan was approved."
-    timeline = [(approved, headline, "")] if approved else []
-    timeline += sorted((part["finished"], part["pr"].get("title") or name, _summary(part["pr"]))
-                       for name, part in parts if part and part["pr"] and part["pr"].get("mergedAt")
-                       and part["finished"])
-    ended = _when(state.get("finished"))
-    if state.get("status") == "done" and ended:
-        timeline.append((ended, "The story was finished.", state.get("outcome") or ""))
-    return {"id": key, "title": title or "A story with no title yet", "sentence": sentence, "meta": meta,
-            "parts": parts, "timeline": timeline, "touches": touches, "approved": bool(approved),
-            "finished": state.get("status") == "done"}
-
-
-def _part(top: Path, landed: str, rel: str, state: Item, merged: bool, pr: Item | None,
-          checks: list[str], now: datetime, noun: str) -> Item:
-    """A task's or fix's status, how long each step took, and its slow lines."""
-    start, reviewed, green = _step(state, "start"), _step(state, "review"), _green_at(pr, checks)
-    finished = (_when(pr.get("mergedAt")) if pr and pr.get("mergedAt")
-                else _when(story.merged_at(top, landed, rel)) if merged else None)
-    if finished:
-        status = f"Finished on {_day(finished)}"
-    elif green and pr and pr.get("state") == "OPEN" and state.get("status") in ("waiting for checks", "ready"):
-        status = WAITING
-    else:
-        status = STATUS.get(state.get("status"), "In progress")
-    took = []
-    if start and reviewed:
-        took.append(f"built in {_took(reviewed - start)}")
-    if reviewed and green:
-        took.append(f"reviewed and checked in {_took(green - reviewed)}")
-    if green and finished:
-        took.append(f"waited {_took(finished - green)} to be accepted")
-    slow = []
-    days = _working_days(start, finished or now) if start else 0
-    if days > 2:
-        slow.append(f"This {noun} {'was' if finished else 'has been'} open for {days} working days, "
-                    "which is slow.")
-    if reviewed and green and green - reviewed > timedelta(minutes=30):
-        slow.append(f"Reviewing and checking this {noun} took {_took(green - reviewed)}, which is slow.")
-    return {"status": status, "took": took, "slow": slow, "start": start, "green": green,
-            "finished": finished, "pr": pr, "touches": state.get("touches", 0)}
-
-
 def _numbers(stories: list[Item], prs: list[Item] | None) -> list[str]:
     """The three success numbers, as plain phrases: task cycle time, human touches per story, and
     the share of the last 25 finished changes that fixed Forge itself."""
-    cycles = [part["green"] - part["start"] for s in stories for _, part in s["parts"]
-              if part and part["start"] and part["green"]]
+    cycles = [part["green"] - part["start"] for s in stories for part in s["parts"]
+              if part["start"] and part["green"]]
     touches = [s["touches"] for s in stories if s["approved"]]
     merged = sorted((pr for pr in prs or [] if pr.get("mergedAt")), key=lambda pr: str(pr["mergedAt"]),
                     reverse=True)[:25]
@@ -1060,10 +957,6 @@ def _when(text: Any) -> datetime | None:
         return None
 
 
-def _working_days(start: datetime, end: datetime) -> int:
-    """Weekdays from the start day up to, not including, the end day."""
-    # ponytail: weekends only; public holidays count as working days.
-    return sum((start + timedelta(days=n)).weekday() < 5 for n in range((end.date() - start.date()).days))
 
 
 def _took(delta: timedelta) -> str:
@@ -1071,8 +964,6 @@ def _took(delta: timedelta) -> str:
     return plain(delta.total_seconds())
 
 
-def _n(n: float, word: str) -> str:
-    return f"{n:g} {word}{'' if n == 1 else 's'}"
 
 
 def _times(n: float) -> str:
@@ -1083,90 +974,4 @@ def _day(when: datetime | None) -> str:
     return f"{when.day} {when:%B %Y}" if when else "a date that wasn't recorded"
 
 
-def _summary(pr: Item) -> str:
-    """A pull request's done-when line, or the first line of an older body."""
-    lines = str(pr.get("body") or "").strip().splitlines()
-    line = next((line.removeprefix("Done when: ") for line in lines
-                 if line.startswith("Done when: ")), lines[0].strip() if lines else "")
-    return "" if line.startswith("<!--") else line
 
-
-def _cap(text: str) -> str:
-    return text[:1].upper() + text[1:]
-
-
-# --- the page --------------------------------------------------------------------------------
-
-
-def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: Item) -> str:
-    esc = html.escape
-    rows = {r["id"]: r for parent in view["items"] for r in [parent, *parent["children"]]}
-
-    def people(item: Item) -> str:
-        return " ".join(f"{label} {item[field]}." for field, label in
-                        (("started_by", "Started by"), ("approved_by", "Approved by"),
-                         ("developer", "Assigned to")) if item.get(field))
-
-    def part(name: str, item: Item | None, summary: str = "", finished_story: bool = False) -> str:
-        if item is None:
-            return f'<li><b>{esc(name)}</b>: <span class="status">{"Finished" if finished_story else "Not started yet"}.</span></li>'
-        current = rows.get(item.get("id"))
-        status = (current["status"] if current else "Finished"
-                  if finished_story and not item["finished"] else item["status"])
-        took = current["took"] if current else item["took"]
-        name = current["title"] if current else shorten(name, width=70, placeholder="…")
-        lines = [f'<span class="detail">{esc(summary)}</span>'] if summary else []
-        lines += [f'<p class="meta">{esc(people(item))}</p>'] if people(item) else []
-        lines += [f'<p class="took">{esc(_cap("; ".join(took)))}.</p>'] if took else []
-        lines += [f'<p class="slow">{esc(line)}</p>' for line in item["slow"]
-                  if (not finished_story or item["finished"]) and (not current or line.startswith("This "))]
-        if current and current["stalled"]:
-            lines.append(f'<p class="slow">Stalled; idle for {esc(board_visuals.duration(current["idle_seconds"]))}. '
-                         f'{esc(current["waits_on"] or "")}</p>')
-        if current and current["stage"] not in ("merged", "done"):
-            lines.append(board_visuals.timeline(current))
-        url = (item.get("pr") or {}).get("url")
-        label = (f'<a href="{esc(url, quote=True)}">{esc(name)}</a>' if url else esc(name))
-        return f'<li><b>{label}</b>: <span class="status">{esc(status)}.</span>{"".join(lines)}</li>'
-
-    def card(s: Item) -> str:
-        current = rows.get(s["id"])
-        sentence = current["status"] + "." if current else s["sentence"]
-        body = [f"<h3>{esc(s['title'])}</h3>", f'<p class="sentence">{esc(sentence)}</p>']
-        if current and current["stalled"]:
-            body.append(f'<p class="slow">Stalled; idle for {esc(board_visuals.duration(current["idle_seconds"]))}. '
-                        f'{esc(current["waits_on"] or "")}</p>')
-        body += [f'<p class="meta">{esc(people(s))}</p>'] if people(s) else []
-        body += [f'<p class="meta">{esc(" ".join(s["meta"]))}</p>'] if s["meta"] else []
-        if s["parts"]:
-            body.append("<h4>Parts</h4><ul>" + "".join(part(n, p, finished_story=s["finished"])
-                                                     for n, p in s["parts"]) + "</ul>")
-        if s["timeline"]:
-            body.append("<h4>What happened</h4><ol class=\"timeline\">" + "".join(
-                f'<li><time datetime="{when:%Y-%m-%d}">{_day(when)}</time><b>{esc(headline)}</b>'
-                + (f'<span class="detail">{esc(detail)}</span>' if detail else "") + "</li>"
-                for when, headline, detail in s["timeline"]) + "</ol>")
-        return f'<article class="card">{"".join(body)}</article>'
-
-    note = ("" if prs is not None else '<p class="card note">GitHub couldn\'t be reached, so the list of '
-            "finished work isn't available. This page shows the saved dates only.</p>")
-    active = [fix for fix in fixes if not fix["finished"]]
-    finished = [fix for fix in fixes if fix["finished"]]
-    fixed = "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in active)
-    if finished:
-        fixed += (f'<li><details><summary>{len(finished)} finished '
-                  f'fix{"es" if len(finished) != 1 else ""}</summary><ul>'
-                  + "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in finished)
-                  + "</ul></details></li>")
-    now = _when(repo.now()) or datetime.now(timezone.utc)
-    return Template((Path(__file__).parent / "board.html").read_text(encoding="utf-8")).substitute(
-        updated=f"{_day(now)} at {now:%H:%M} UTC",
-        numbers="".join(f"<li>{esc(_cap(number))}.</li>" for number in _numbers(stories, prs)),
-        note=note,
-        map=board_visuals.dependencies(view["dependency_maps"]),
-        counts=" · ".join({"finished_last_7_days": "Finished in the last 7 days"}.get(kind, kind.capitalize())
-                          + " — " + "; ".join(f"{name.capitalize()}: {count}" for name, count in counts.items())
-                          for kind, counts in view["team"]["counts"].items()),
-        stories="".join(card(s) for s in stories) or '<p class="card">No story is on the roadmap yet.</p>',
-        fixes=f'<section class="card"><ul>{fixed}</ul></section>' if fixed
-        else '<p class="card">No small fixes yet.</p>')
