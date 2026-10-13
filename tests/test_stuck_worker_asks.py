@@ -125,6 +125,9 @@ def test_3_switch_runs_the_next_round_on_the_other_tool(land, sdk_data, monkeypa
     monkeypatch.setenv("CODEX_BIN", str(env.repo.bin / (
         "codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    # From Claude Code, so the switched-to Codex worker runs through its kit.
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")
     home = env.tmp / "codex-home"
     home.mkdir()
     (home / "config.toml").write_text(

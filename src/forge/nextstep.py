@@ -190,7 +190,7 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
     prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
-           if isinstance(pr.get("url"), str)} if trees else {}
+           if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
                     for pr in board._machine_prs(top)
@@ -215,6 +215,18 @@ def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str]
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
+    pushed = repo.git("for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/fix/",
+                      "refs/remotes/origin/forge/", cwd=top).splitlines()
+    landed = story.landed_ref(top)
+    for branch in sorted(set(prs) | set(pushed)):  # a fix started elsewhere, with no worktree here
+        kind, _, name = branch.partition("/")
+        if (branch in trees or branch in merged_prs or kind not in ("fix", "forge")
+                or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
+                or history is not None and repo.state_path(name) in history["expired"]
+                or story.show(top, landed, repo.state_path(name)) is not None):  # merged
+            continue
+        if state := remote_state(top, name, branch, prs.get(branch), history):
+            lines += _item(name, f"The fix {name}", state, top, None, prs, refusals)
     for path in sorted(trees.values()):  # a spec read stopped on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
             text = notes.read_text(encoding="utf-8")
@@ -434,7 +446,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         return _approval(top, key, path, title, digest, refusals, text, readiness), []
     if readiness is not None:
         readiness["stage"] = "building"
-    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history)
+    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history, prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
     cleanup = [line for task in doc["tasks"]
@@ -582,8 +594,8 @@ def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> 
             (story.REFUSALS["read_loop"][0], "Next: " + cd + story.REFUSALS["read_loop"][1])]
 
 
-def _task(top: Path, key: str, task: str, trees: dict[str, Path],
-          merged_prs: set[str], history: dict[str, Any] | None = None) -> dict[str, Any]:
+def _task(top: Path, key: str, task: str, trees: dict[str, Path], merged_prs: set[str],
+          history: dict[str, Any] | None = None, prs: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     """A task's state: merged on the default branch or GitHub, else from its worktree."""
     item = f"{key}/{task}"
     if history is not None:
@@ -595,7 +607,8 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
         return {**landed, "status": "merged"}
     branch = f"task/{key}-{task}"
     path = trees.get(branch)
-    state = (repo.read_state(item, path) if path else None) or {}
+    state = ((repo.read_state(item, path) if path else remote_state(top, item, branch, (prs or {}).get(branch), history))
+             or {})
     return {**state, "status": "merged"} if branch in merged_prs else state
 
 
@@ -611,21 +624,19 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     if not isinstance(receipt, dict):
         receipt = {}
     status, branch = state.get("status"), state.get("branch")
-    local_head = repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip() if branch else ""
-    if pr and pr.get("headRefOid"):
-        from forge import time_records
-        record = time_records.from_body(pr.get("body") or "")
-        shared = record.get("ready") or {}
-        head = pr["headRefOid"]
-        ahead = local_head and local_head != head and repo.run(
-            "git", "merge-base", "--is-ancestor", head, local_head, cwd=top).returncode == 0
-        if ahead:
-            receipt = {}
-        elif shared.get("commit") == head and shared.get("review") == "clean":
-            receipt = shared
-            local_head = head
-        elif record or receipt.get("commit") != head:
-            receipt = {}
+    ref = review_ref(top, branch, pr) if branch else ""
+    record = time_records.from_body((pr or {}).get("body") or "")
+    evidence = {}
+    if ref and receipt.get("review") == "clean" and receipt.get("commit") == ref:
+        evidence = receipt
+    elif ref and (record.get("ready") or {}).get("commit") == ref:
+        evidence = {"commit": ref, "review": "clean", "shared": True}
+    elif ref and not receipt and not record and checks == "pass":
+        # An older release's pull request: its state file at the head says it was closed clean.
+        older = story.json_of(story.show(top, ref, repo.state_path(item)))
+        if older.get("review") and not review.blocking(older["review"]) and \
+                older.get("status") in ("waiting for checks", "ready"):
+            evidence = {"commit": ref, "review": "clean", "shared": True}
     if status not in ("merged", "done", "hotspot"):
         live = [run for run in (runs if runs is not None else board.active_runs(top, item, round_number=state.get("round")))
                 if run.get("kind") in ("work", "worker", "review")
@@ -634,12 +645,51 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
             status = "reviewing" if live[-1]["kind"] == "review" else "working"
         elif checks == "fail":
             status = "checks failed"
-        elif (branch and receipt.get("review") == "clean"
-              and local_head == receipt.get("commit")):
+        elif evidence:
             status = "ready"
         elif status == "ready":
             status = "waiting for checks"
-    return status, receipt
+    return status, evidence if status == "ready" else receipt
+
+
+def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = None,
+                 history: dict[str, Any] | None = None) -> dict[str, Any]:
+    """An item started on another machine (its branch is on the remote, as the board reads it, with
+    or without a pull request) and no worktree here: its state at the pull request's head."""
+    if not pr and history is not None:  # the board's own bulk read of the remote branches
+        return history["ref_states"].get(f"refs/remotes/origin/{branch}", {}).get(repo.state_path(item)) or {}
+    ref = review_ref(top, branch, pr)
+    return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
+
+
+def _commit(top: Path, ref: str) -> str:
+    return repo.run("git", "rev-parse", "-q", "--verify", f"{ref}^{{commit}}", cwd=top).stdout.strip()
+
+
+def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
+    """The commit an item's review history and readiness are read at: the pull request's head
+    (GitHub's head, else origin's branch), unless the local branch contains it."""
+    local = _commit(top, f"refs/heads/{branch}")
+    head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
+    if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it
+        repo.run("git", "fetch", "-q", "origin", head, cwd=top)
+    if local and (not head or local == head or repo.run(
+            "git", "merge-base", "--is-ancestor", head, local, cwd=top).returncode == 0):
+        return local
+    return head
+
+
+def at_ref(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The item's state as board and next read it: the copy at `review_ref`, so its status,
+    findings and round match readiness; the local copy when that is the local branch."""
+    branch = state.get("branch")
+    if not branch or state.get("status") in ("merged", "done"):
+        return state
+    ref = review_ref(top, branch, pr)
+    if not ref or ref == _commit(top, f"refs/heads/{branch}"):
+        return state
+    there = story.json_of(story.show(top, ref, repo.state_path(item)))
+    return {**there, "branch": branch} if there else state
 
 
 def default_due(top: Path, state: dict[str, Any]) -> bool:
@@ -670,11 +720,15 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if held := _native_round(top, item, label, "Build"):
         return held
     pr = (prs or {}).get(state.get("branch", "")) or {}
+    state = at_ref(top, item, state, pr)
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks, pr=pr)
     status = status or "started"
     if statuses is not None:
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
+    if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
+        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+        return [f"{label} was started by {starter} and runs on their machine."]
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         if "question" in stop:
@@ -690,9 +744,15 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":
-        from forge import task
-        starter = task.starters(top).get(repo.state_path(item)) or "The person who started it"
-        return [f"{label} is ready; {starter} merges it from its worktree."]
+        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+        return [f"{label} is ready to merge; {starter} merges it from their machine."]
+    if status == "ready" and path and receipt.get("shared"):
+        if repo.git("rev-parse", "HEAD", cwd=path) == receipt["commit"]:  # close here writes the receipt
+            return [f"{label} was closed clean on another machine; close it here to check it again.",
+                    f"Next: forge close {item}"]
+        if repo.merge_setting(top) == "agent":  # forge merge needs this machine's receipt
+            return [f"{label} is ready to merge, but this worktree is behind its pull request.",
+                    f"Next: git -C {shlex.quote(str(path))} pull, then forge close {item}"]
     if status == "merged" and path:
         if repo.merge_setting(top) == "agent" and receipt.get("review") == "clean":
             return [f"{label} is merged; Forge needs to finish tidying up.",

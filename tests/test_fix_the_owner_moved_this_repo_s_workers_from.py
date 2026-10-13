@@ -78,7 +78,8 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     # A sync that silently drops both nested entries must not make doctor appear healthy.
     for name in ("worker", "coder", "frontend", "tester", "refactorer"):
         assert _settings(repo.path, name) == (
-            ("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium")), name
+            ("gpt-6.1-sol", "high" if name == "frontend" else "medium"),
+            ("claude-opus-5-5", "medium")), name  # frontend builds on the design entry
     # Explorer now uses read-only explore settings; implementation roles still use Opus medium.
     assert _settings(repo.path, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))

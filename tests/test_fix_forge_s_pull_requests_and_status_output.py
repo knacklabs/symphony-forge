@@ -20,11 +20,12 @@ def test_1_pr_title_and_labeled_body(env):
 @pytest.mark.parametrize("why, expected", [
     ("The owner cannot tell which action to take from this very long pull request title "
      "when the first clause runs beyond the stated limit, with more details afterward",
-     "The owner cannot tell which action to take from this very long pull re"),
+     "The owner cannot tell which action to take from this very long pull"),
     ("Readers cannot tell what to do, because the title buries the action",
-     "Readers cannot tell what to do"),
+     "Readers cannot tell what to do, because the title buries the action"),
+    ("x" * 80, "x" * 70),
 ])
-def test_2_fix_title_uses_first_clause_and_seventy_characters(env, why, expected):
+def test_2_fix_title_is_at_most_seventy_characters(env, why, expected):
     item, _ = env.start_fix(why=why)
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0
@@ -79,8 +80,8 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     state.write_text(json.dumps({"branch": "fix/tidy-up", "why": "Tidy up",
                                  "status": "waiting for checks"}))
     head = repo.git("rev-parse", "HEAD", cwd=fix)
-    gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
-               "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url", stdout=json.dumps([{
+    gh.respond("pr", "list", "--state", "merged", "--limit", "1000", stdout="[]")
+    gh.respond("pr", "list", "--state", "open", "--limit", "1000", stdout=json.dumps([{
                    "headRefName": "fix/tidy-up", "state": "OPEN", "title": "Tidy up",
                    "headRefOid": head,
                    "url": "https://github.com/acme/shop/pull/7"}]))
@@ -103,8 +104,8 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in page
     assert "Ready to merge" in page
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
-    # SVG and text share the board snapshot; neither doubles the bulk requests.
-    assert len(calls) == 2
+    # SVG and text share the board snapshot: one open list, seven weekly searches, one detail list.
+    assert len(calls) == 9
     assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
 
 

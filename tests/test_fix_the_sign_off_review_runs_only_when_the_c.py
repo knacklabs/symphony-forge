@@ -20,7 +20,7 @@ def test_1_accept_before_the_reply_runs_the_review_and_stops(repo, tmp_path, mon
     page = _decision(fix, answers, via="", on="")
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
-        "priority": "P1", "title": "Prototype fails", "body": "Demo cannot finish",
+        "priority": "P1", "title": "Prototype fails", "body": "Gain 3, Work 2, Harm 1\nDemo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     gaps = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert gaps.returncode == 1
