@@ -2,7 +2,9 @@
   "base": "e4bf532175ba8dd40f400424d228cc4fe3b93984",
   "branch": "fix/pane-summary-always",
   "done_when": "The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in planning, and the mounted Board-tab test covers both of those boards",
-  "flagged": [],
+  "flagged": [
+    "src/forge/mod/hooks/summary.ts"
+  ],
   "kind": "fix",
   "known": [
     {
@@ -17,30 +19,43 @@
       "security": false,
       "title": "Not done: test Board summaries in new and upgraded client repos",
       "work": 3
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 152,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9dc231dba2a144ac575a4f86cb34c3d8eeda18e6cc76319ad0c2ec8497c8cb35",
-    "changed": "57c16936be7acb0096abfdbb5870ff0ae9aded2ac4ed714f8baa4ad7248ec8b1",
-    "commit": "741028931bdd10f82e626051afd9202a9f8e5002",
+    "branch_diff": "ec83a23c70dd86c0957d0b7740f17515550a7088aa5cd54e72b7bee856800db9",
+    "changed": "0b0a8108967ac0291fb6afb6bc3209d69a884e2f9992c3fe670d8eda63600b38",
+    "commit": "25bd3bc0d87c42cbec3614fb88c56de09f7a1d94",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 3, Harm 2\nRaise: Test. The new mounted test mocks every `forge board` response with hand-built data. Its ready-only fixture contains two fixes but reports one ready part and one ready fix. It therefore does not verify that real board counts produce the summary in a new client repo or one adopted on an earlier release and upgraded. The existing installation test opens an empty repo and checks an old-version warning (`tests/test_mod_install.py:108,118`); it does not check the updated summary after upgrade. The repository's review rule requires coverage of both delivery paths.",
-        "file": "src/forge/mod/hooks/pane.test.ts",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. The fallback runs only when a row is waiting or ready to merge. During a live plan read, Forge still reports the story as planning (`tests/test_board_status_and_times.py:411-417`), but the pane puts its running row in MOVING. On a planning-only board with no go-live estimate, neither side of this guard produces a summary, so the Board tab again opens with a bare group. The mounted planning fixture at `src/forge/mod/hooks/pane.test.ts:317-319` uses only idle rows and misses this normal planning state.",
+        "file": "src/forge/mod/hooks/summary.ts",
         "gain": 3,
-        "harm": 2,
-        "line": 352,
+        "harm": 3,
+        "line": 152,
         "priority": "P1",
-        "title": "Not done: test Board summaries in new and upgraded client repos",
-        "work": 3
+        "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+        "work": 2
       }
     ],
-    "id": "82cf638e-fc27-4a65-8b08-e4fd01f2e6b7",
-    "status": "clean"
+    "id": "01de277d-b624-4a82-97b0-54edc1256bc4",
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T19:01:26.423992+00:00",
@@ -48,6 +63,10 @@
     },
     {
       "at": "2026-10-13T19:57:53.202129+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T20:41:49.086638+00:00",
       "step": "review"
     }
   ],

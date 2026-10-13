@@ -3653,6 +3653,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 152,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+      "from": "blocking",
+      "item": "pane-summary-always",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tReady rows on another machine suggest the wrong merge action\tpane-grouped-board",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
