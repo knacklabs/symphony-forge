@@ -3686,6 +3686,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 802,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: When the latest nightly full run failed, forge next names the platforms and failing tests and gives the forge fix start command\tnightly-red-shows-in-next",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -4089,6 +4100,17 @@
       "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
       "from": "blocking",
       "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 212,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
       "status": "open",
       "closed_by": null
     },
@@ -4595,6 +4617,17 @@
       "text": "Not done: every review result has a fresh id",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: every stop question shows the open notes\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 295,
+      "text": "Not done: every stop question shows the open notes",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
       "status": "open",
       "closed_by": null
     },
@@ -5413,6 +5446,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator asks the owner only for the named decisions\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1423,
+      "text": "Not done: coordinator asks the owner only for the named decisions",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator settles reversible Harm 1 and 2 notes itself\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1397,
+      "text": "Not done: coordinator settles reversible Harm 1 and 2 notes itself",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: low-Harm stops still direct the coordinator to ask the owner\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1421,
+      "text": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: proof list\tpin-switch-leaves-worktree",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -5677,6 +5743,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 60,
+      "text": "Coordinator guidance omits the new Claude recovery step",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tCross-machine rework leaves a published owner wait open\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -5796,6 +5873,17 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: forge work exits with an error and names the reason and the next step whenever it starts no worker\twork-fails-without-worker",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 651,
+      "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
+      "from": "blocking",
+      "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/worker.py\tNot done: printed model matches the native Codex role\tFORGE-TOOLS-1/WORK",
@@ -6014,6 +6102,17 @@
       "text": "Not done: test_1_clients_are_told_to_file_forge_bugs does not prove template use",
       "from": "blocking",
       "item": "report-forge-bugs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
+      "kind": "bug",
+      "path": "tests/test_board_counts.py",
+      "line": 317,
+      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
+      "from": "blocking",
+      "item": "windows-green-5",
       "status": "open",
       "closed_by": null
     },
@@ -7642,6 +7741,28 @@
       "text": "Not done: test the data-loss Harm floor",
       "from": "blocking",
       "item": "FORGE-SCORE-1/SCORES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_table.py\tNot done: functional check\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_score_table.py",
+      "line": 26,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_score_table.py\tNot done: tests/test_score_table.py\tFORGE-SCORE-1/GUIDE",
+      "kind": "bug",
+      "path": "tests/test_score_table.py",
+      "line": 50,
+      "text": "Not done: tests/test_score_table.py",
+      "from": "blocking",
+      "item": "FORGE-SCORE-1/GUIDE",
       "status": "open",
       "closed_by": null
     },
@@ -9358,105 +9479,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 802,
-      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
-      "from": "blocking",
-      "item": "windows-green-5",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 212,
-      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
-      "from": "blocking",
-      "item": "windows-green-5",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
-      "kind": "bug",
-      "path": "tests/test_board_counts.py",
-      "line": 317,
-      "text": "Not done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an",
-      "from": "blocking",
-      "item": "windows-green-5",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: every stop question shows the open notes\tFORGE-SCORE-1/GUIDE",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 295,
-      "text": "Not done: every stop question shows the open notes",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator asks the owner only for the named decisions\tFORGE-SCORE-1/GUIDE",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 1423,
-      "text": "Not done: coordinator asks the owner only for the named decisions",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: coordinator settles reversible Harm 1 and 2 notes itself\tFORGE-SCORE-1/GUIDE",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 1397,
-      "text": "Not done: coordinator settles reversible Harm 1 and 2 notes itself",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: low-Harm stops still direct the coordinator to ask the owner\tFORGE-SCORE-1/GUIDE",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 1421,
-      "text": "Not done: low-Harm stops still direct the coordinator to ask the owner",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_score_table.py\tNot done: functional check\tFORGE-SCORE-1/GUIDE",
-      "kind": "bug",
-      "path": "tests/test_score_table.py",
-      "line": 26,
-      "text": "Not done: functional check",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_score_table.py\tNot done: tests/test_score_table.py\tFORGE-SCORE-1/GUIDE",
-      "kind": "bug",
-      "path": "tests/test_score_table.py",
-      "line": 50,
-      "text": "Not done: tests/test_score_table.py",
-      "from": "blocking",
-      "item": "FORGE-SCORE-1/GUIDE",
       "status": "open",
       "closed_by": null
     }
