@@ -13,7 +13,7 @@
       "gain": 3,
       "harm": 4,
       "line": 325,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -23,26 +23,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e40d70563f7b85e7f89f703a029107ea393b25edb45eae3db4a381f621a3de38",
-    "changed": "ee789201577f86afdf0e0d770f524b24f84c32acbb2c347005af3a3d581ddb47",
-    "commit": "e258788044df73d336edb2b03523b41fbb3942ea",
+    "branch_diff": "7fdc3739d7b90d74b0a56f9d2b26b5876c5d4ed3e739ccead5f602f5a5c6c4a1",
+    "changed": "bbf620d56a7828e8731634a4635c9101541e2a9e9a642222ee2d4f9f5779282c",
+    "commit": "582013bc5499974869c22bbc838aafa65286cda8",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 4\nRaise: Data loss. `_access_comment` removes every contiguous comment above `sandbox_mode` or `approval_policy`, regardless of who wrote it. In a client config with a team comment explaining an access setting directly above that setting, `forge sync` or upgrade permanently removes the team's comment. The new test covers only Forge's stale comment, so it does not catch this loss.",
-        "file": "src/forge/sync.py",
-        "gain": 3,
-        "harm": 4,
-        "line": 325,
-        "priority": "P1",
-        "title": "Sync deletes client-owned Codex config comments",
-        "work": 1
-      }
-    ],
-    "id": "6f4d42d4-51d7-4362-aa6c-da44744103da",
-    "status": "blocked"
+    "findings": [],
+    "id": "ea4034bb-8595-4a35-a2c6-78e6c8f31bbc",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T08:31:20.086548+00:00",
@@ -50,6 +39,10 @@
     },
     {
       "at": "2026-10-13T09:26:31.422498+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T09:53:15.269534+00:00",
       "step": "review"
     }
   ],
