@@ -467,7 +467,7 @@ def sections(text: str) -> dict[str, str]:
 
 
 def parse(text: str, top: Path | None = None, ref: str | None = None,
-          history: dict[str, Any] | None = None) -> dict[str, Any]:
+          history: dict[str, Any] | None = None, key: str | None = None) -> dict[str, Any]:
     """A story doc's Done-when items, their details and its task rows, once its shape is sound.
     With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
     first at the commit `ref` when given.
@@ -513,7 +513,9 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
         if not scope:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])}
+                       # the story's own KEY/TASK is TASK, so a self or loop through it is a cycle
+                       "after": [after.split("/", 1)[1] if key and after.startswith(f"{key}/") else after
+                                 for after in re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])]}
     for task in tasks.values():
         unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
@@ -1044,7 +1046,7 @@ def agents_section(top: Path, heading: str) -> str:
 
 def _parsed(text: str, rel: str) -> dict[str, Any]:
     try:
-        return parse(text, repo.root())  # checks After entries that name another story's task
+        return parse(text, repo.root(), key=Path(rel).stem)  # checks After entries that name another story's task
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 
