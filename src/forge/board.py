@@ -287,7 +287,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if not story._record(notes)[0]:
             return "none", assignments
         text = _read(top, where, f"plans/{key}.md", history)
-        digest = story.blob_hash(text)
+        digest = repo.blob_hash(text)
         try:
             story.gate(key, f"plans/{key}.md", notes, digest, text, top)
             return "passed", assignments

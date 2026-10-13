@@ -6,6 +6,7 @@ templates and raises its entries with refuse(). The CLI prints the problem, then
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -114,6 +115,20 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
     if key not in _command_cache:
         _command_cache[key] = read()
     return _command_cache[key]
+
+
+def blob_hash(text: str) -> str:
+    """What `git hash-object --stdin` prints for text, without a git process."""
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def read_blob(top: Path, name: str) -> str | None:
+    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    def read() -> str | None:
+        done = run("git", "cat-file", "blob", name, cwd=top)
+        return done.stdout if done.returncode == 0 else None
+    return command_fact(("read blob", name), top, read)
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,

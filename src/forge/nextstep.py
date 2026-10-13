@@ -488,7 +488,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
-    doc_hash = story.blob_hash(text)
+    doc_hash = repo.blob_hash(text)
     try:
         doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:

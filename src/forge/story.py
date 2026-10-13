@@ -702,16 +702,8 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
     else only one above `## For the builders`, which needs no new approval and so no new round."""
     if doc_hash == read_hash or text is None:
         return doc_hash != read_hash
-    old = read_blob(top, read_hash or "-")
+    old = repo.read_blob(top, read_hash or "-")
     return old is None or above_builders(old) != above_builders(text)
-
-
-def read_blob(top: Path, name: str) -> str | None:
-    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
-    def read() -> str | None:
-        done = repo.run("git", "cat-file", "blob", name, cwd=top)
-        return done.stdout if done.returncode == 0 else None
-    return repo.command_fact(("read blob", name), top, read)
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
@@ -741,7 +733,7 @@ def _streak(top: Path, record: dict[str, str], findings: str) -> int:
         if record.get("blocked_rounds"):
             return min(3, count + int(record["blocked_rounds"]))
         count += 1
-        record, findings = _record(read_blob(top, record.get("notes_seen") or "-") or "")
+        record, findings = _record(repo.read_blob(top, record.get("notes_seen") or "-") or "")
     return count
 
 
@@ -865,12 +857,6 @@ def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = 
         add = f"git worktree add {repo.quote(str(folder))} story/{key} && "
     return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
             f"{add}git -C {repo.quote(str(folder))} merge {ref}")
-
-
-def blob_hash(text: str) -> str:
-    """What `git hash-object --stdin` prints for text, without a git process."""
-    data = text.encode("utf-8")
-    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
