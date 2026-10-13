@@ -18,33 +18,23 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9635e1cae3364046bd5ab3ba0a7800c7f5601aa23054226f306ecdd3e10e2029",
-    "changed": "324b7ef8eae3de38f4baa68ac833ca8ae248a4bab1ba73e93143310ad7802ee9",
-    "commit": "76e500982e322969c6b527caad1d704007fb2aae",
+    "branch_diff": "7adfea0178fe47bbf57d5a362f26e6313f2c547f058524643d308b75b05664de",
+    "changed": "c4775d10990ced813677d83ccd17fb7e00817d1b07412ba6905029075cc08062",
+    "commit": "4ae4cad3108936f89c0db122d36c5287dd710ff3",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done. The new fallback copies lines that contain no Python pytest name into the published proof list and adds `not checked`. A client using JavaScript tests can therefore publish an unrun `src/greet.test.ts` or `__tests__/greeting.js` as a named test. The new command test explicitly expects both names to remain in the published list (tests/test_close_checks_named_tests.py:103-104). The `not checked` marker is new evidence beyond the earlier JavaScript finding, but the Done-when requirement still says the list never names a test that did not run.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 677,
-        "priority": "P1",
-        "title": "Not done: Proof lists retain names of tests Close did not run",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. If the worker names `tests/test_greeting.py::test_case` and Close runs only `test_case[new]`, this branch strips the parameter ID when comparing the sole match and publishes the whole function as `passed`. It neither names the case that ran nor shows the count of cases run, although another parameter case remains unrun. The command test covers individual parameter IDs and a whole file, but never a bare parameterized function.",
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. When Close skips its test command for a documentation-only change, `test_run` returns before running any tests and produces no results header. This branch then labels an existing named pytest test `not checked` at this line, although Close knows it did not run the test. The Done-when requirement says a named test Close did not run must show as `not run`. The new no-results test covers an opaque runner, not a run Close deliberately skipped.",
         "file": "src/forge/review.py",
         "gain": 3,
-        "harm": 2,
-        "line": 663,
+        "harm": 1,
+        "line": 661,
         "priority": "P1",
-        "title": "Not done: A partially run parameterized test is reported as passed",
+        "title": "Not done: A deliberately skipped close run marks named tests not checked",
         "work": 2
       }
     ],
-    "id": "c65f1f58-68f6-4654-869b-e994456f291a",
+    "id": "64e97ec7-6c86-415b-a1e7-a6cdb96c1680",
     "status": "blocked"
   },
   "status": "fixing",
@@ -91,6 +81,10 @@
     },
     {
       "at": "2026-10-13T03:12:08.461097+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:35:57.273336+00:00",
       "step": "review"
     }
   ],
