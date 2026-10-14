@@ -257,6 +257,13 @@
       "spec": "docs/specs/item-cost.md",
       "status": "pending",
       "order": 82
+    },
+    {
+      "key": "FORGE-NOTES-1",
+      "title": "A coordinator's note reaches a running worker at once",
+      "spec": "docs/specs/live-notes.md",
+      "status": "pending",
+      "order": 83
     }
   ],
   "epics": [
