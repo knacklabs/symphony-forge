@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-TOOLS-1-SDK",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T16:46:51.827799+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c61a54919dc412176efe180fb31e4996fbbef0a6",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
