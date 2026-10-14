@@ -99,6 +99,13 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
                         {**FIX, "why": "Asks", "round": 1}, {"asks.py": "x\n"})
     assert env.close("asks").returncode == 0
     share(env, prs, "asks", 3)
+    if previous:  # an earlier release's worker answered a question without recording its end
+        with (env.repo.path / ".git/forge/events.jsonl").open("a", encoding="utf-8") as log:
+            for event in ({"id": "old-question", "event": "worker question", "question": "Question: Keep it?",
+                           "at": (now + timedelta(minutes=2)).isoformat()},
+                          {"id": "old-round", "event": "run start", "kind": "worker", "round": 2,
+                           "at": (now + timedelta(minutes=2, seconds=30)).isoformat()}):
+                log.write(json.dumps({**event, "item": "asks"}) + "\n")
     clock(monkeypatch, now + timedelta(minutes=3))
     stub = env.repo.bin / "claude"
     plain = stub.read_text("utf-8")
@@ -138,6 +145,12 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         assert [entry["waited_seconds"] for entry in team["needs_you"]] == [300, 240, 180, 120, 60, None], where
         assert team["needs_you"][-1]["since"] is None
         assert "6 need you" in team["sentence"]
+    # Past the 30 minutes after which close records the repo's default choice, the stop still
+    # waits on a person until a choice is committed.
+    env.repo.path = machine_a
+    clock(monkeypatch, now + timedelta(minutes=40))
+    assert ("loop", "review loop") in needs(env.repo)
+    clock(monkeypatch, now + timedelta(minutes=5))
 
     # Each clears: the approval, a choice recorded on machine B, the merge, the answer given on
     # machine B and a clean close of the resolved conflict, which then waits on a human merge only.
@@ -228,6 +241,8 @@ def blocking_problems(env):
     following = env.repo.forge("next").stdout
     team = board(env.repo)["team"]
     found = {entry["id"]: entry for entry in team["needs_you"]}
+    rows = {row["id"]: row for row in board(env.repo)["items"]}
+    assert rows["CART"]["needs_person"] is True and rows["BAD"]["needs_person"] is True
     assert {key: found[key]["reason"] for key in ("CART", "BAD")} == {"CART": "blocked plan", "BAD": "blocked plan"}
     for key in ("CART", "BAD"):
         assert found[key]["detail"] in following, (found[key]["detail"], following)

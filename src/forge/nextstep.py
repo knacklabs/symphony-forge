@@ -158,10 +158,10 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
             "step": line.removeprefix("Next: ") if line else None}
 
 
-def needs_person(top: Path, item: str, state: dict[str, Any], path: Path | None, stage: str,
-                 body: str = "") -> bool:
+def needs_person(top: Path, item: str, state: dict[str, Any], stage: str, body: str = "",
+                 blocker: dict[str, Any] | None = None) -> bool:
     """The item waits on a person, as the board's Needs you decides it (`person_waits`)."""
-    return bool(person_waits(top, item, state, path, stage, body))
+    return bool(person_waits(top, item, state, stage, body, blocker))
 
 
 def context_hook(args: Any) -> int:
@@ -798,20 +798,36 @@ def default_due(top: Path, state: dict[str, Any]) -> bool:
 
 def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
     """The item's waits on a person, oldest first, from this machine's log and its pull request's
-    record together, each marked `open` while no record has ended it."""
-    events = {e.get("id"): e for e in [*time_records.from_body(body).get("events", []),
-                                       *time_records.read(top, "events")] if e.get("item") == item}
+    record together, each marked `open` while nothing has ended it. Earlier workers answered
+    questions without recording an end: a question with a later worker round, or one this
+    machine asked whose record it has since cleared, counts as answered."""
+    local = [e for e in time_records.read(top, "events") if e.get("item") == item]
+    events = {e.get("id"): e for e in [*time_records.from_body(body).get("events", []), *local]
+              if e.get("item") == item}
     ended = {e.get("wait_id") for e in events.values() if e.get("event") == "owner wait end"}
-    return sorted(({**e, "open": e.get("id") not in ended} for e in events.values()
+    rounds = [at for e in events.values() if e.get("event") == "run start" and e.get("kind") in ("work", "worker")
+              and (at := time_records.when(e.get("at")))]
+    cleared = codex.record(top, item).get("question", "") is None
+    asked_here = {e.get("id") for e in local}
+
+    def answered(e: dict[str, Any]) -> bool:
+        at = time_records.when(e.get("at"))
+        return e.get("event") == "worker question" and (
+            bool(at and any(start > at for start in rounds)) or cleared and e.get("id") in asked_here)
+    return sorted(({**e, "open": e.get("id") not in ended and not answered(e)} for e in events.values()
                    if e.get("event") in ("owner wait start", "worker question")), key=lambda e: str(e.get("at")))
 
 
-def person_waits(top: Path, item: str, state: dict[str, Any], path: Path | None, stage: str,
-                 body: str = "") -> list[dict[str, Any]]:
+def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, body: str = "",
+                 blocker: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """What the item waits on a person for, each {reason, since, detail}: a plan waiting for
     approval, a stop no one has answered (unless close will record its default), a worker
-    question, a merge conflict close stopped on, or a ready pull request a human merges. The one
+    question, a merge conflict close stopped on, a ready pull request a human merges, or a story
+    plan blocked by a problem forge next reports (`blocker`, from its story readiness). The one
     decision behind the board's Needs you; `bool()` of it is whether the item needs a person."""
+    if blocker:
+        return [{"reason": "blocked plan", "since": blocker["since"], "detail": blocker["problem"]},
+                *person_waits(top, item, state, stage, body)]
     if stage == "waiting for approval":
         notes = story.show(top, story.plan_ref(top, item), f"plans/{item}.read.md") or ""
         return [{"reason": "approval", "since": story._record(notes)[0].get("read_at"),
@@ -823,8 +839,9 @@ def person_waits(top: Path, item: str, state: dict[str, Any], path: Path | None,
         return next((e.get("at") for e in reversed(opened) if e.get("reason") == reason), None)
     stop = state.get("stop") or {}
     ended = {e.get("id") for e in recorded if not e["open"]}
-    # A choice recorded on another machine ends the stop's wait in the pull request's record.
-    if stop and not stop.get("choice") and stop.get("wait_id") not in ended and not default_due(path or top, state):
+    # A choice recorded on another machine ends the stop's wait in the pull request's record. A
+    # stop the repo's default will answer still waits until that choice is committed.
+    if stop and not stop.get("choice") and stop.get("wait_id") not in ended:
         waits.append({"reason": "review loop",  # a review loop or stuck worker's choice
                       "since": stop.get("at") or since("stuck" if "question" in stop else "review loop"),
                       "detail": stop.get("question")})
