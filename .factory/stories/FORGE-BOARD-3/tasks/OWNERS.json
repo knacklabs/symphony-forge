@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-3-OWNERS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "da5bd82f2f9382718ac56b2b85466ce87c7c1325",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
