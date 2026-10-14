@@ -489,6 +489,9 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     for item, branch, number in ((opened, "fix/" + opened, 16), ("SHOP/T2", "task/SHOP-T2", 17)):
         resumed = up.tmp / ("second-" + branch.replace("/", "-"))
         repo.git("worktree", "add", "-q", "-b", branch, resumed.as_posix(), "origin/" + branch)
+        # Resume with the landed upgrade's files. Close no longer merges a clean main move
+        # just to refresh an active branch; this upgrade fixture brings it in explicitly.
+        repo.git("merge", "-q", "--no-edit", "origin/main", cwd=resumed)
         if number == 17:
             # Losing check history at first publication must keep the PR
             # record absent. Otherwise the retry sees a local-only record and

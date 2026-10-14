@@ -407,14 +407,17 @@ def close(args: argparse.Namespace) -> int:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
-    finally:
-        pr = _publish(top, item, state, branch, default, pr, result, evidence)
+    except BaseException:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        raise
+    # Publish successful CI with Ready, or once before restarting on a refreshed head.
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
     pr = _pull_request(top, branch) or pr
     _merge_default(top, item, branch, default, pr)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
+        _publish(top, item, state, branch, default, pr, result, evidence)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
                         accepted=choice == "accept", before=getattr(args, "pin_before", None))
         again = argparse.Namespace(**vars(args))
@@ -427,7 +430,6 @@ def close(args: argparse.Namespace) -> int:
         pending = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
-        _publish(top, item, state, branch, default, pr, result, evidence)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)

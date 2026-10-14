@@ -70,7 +70,8 @@ if args[:2] in (["pr", "list"], ["pr", "view"], ["pr", "ready"], ["pr", "edit"])
           "isDraft": state["isDraft"], "mergeable": "MERGEABLE",
           "mergeStateStatus": status, "headRefOid": head}
     with (here / "draft-pr-looks.jsonl").open("a", encoding="utf-8") as looks:
-        looks.write(json.dumps({"args": args, "head": head, "status": status}) + "\\n")
+        looks.write(json.dumps({"args": args, "head": head, "status": status,
+                               **({"body": state["body"]} if args[:2] == ["pr", "edit"] else {})}) + "\\n")
     if args[:2] == ["pr", "list"]:
         print(json.dumps([pr]))
     elif args[:2] == ["pr", "view"]:
@@ -246,6 +247,9 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         looks = [json.loads(line) for line in
                  (env.repo.bin / "draft-pr-looks.jsonl").read_text("utf-8").splitlines()]
         assert looks[0]["args"][:2] == ["pr", "list"] and looks[0]["status"] == "CLEAN"
+        written = [look["body"] for look in looks if look["args"][:2] == ["pr", "edit"]]
+        assert len(written) <= (3 if clash == "LATE-clean" else 6), written
+        assert len(set(written)) == len(written), written
         assert not any(look["args"][:2] == ["pr", "ready"] for look in looks)
         if clash == "LATE-BEHIND":
             behind = next(n for n, look in enumerate(looks) if look["status"] == "BEHIND")
@@ -254,6 +258,10 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
             assert all(look["status"] == "CLEAN" for look in looks)
         pushed_head = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme").split()[0]
         assert any(f"/commits/{pushed_head}/check-runs" in call[-1] for call in env.gh_calls("api"))
+        published = json.loads(re.search(r"<!-- forge:time-record (\{.*?\}) -->", written[-1], re.S)[1])
+        assert published["ready"] == {"commit": pushed_head, "review": "clean"}
+        assert any(event.get("event") == "CI result" and event.get("commit") == pushed_head
+                   and event.get("outcome") == "passed" for event in published["events"])
         for call in env.review_calls():
             base = call["args"][call["args"].index("--base") + 1]
             reviewed = env.repo.git("diff", "--name-only", f"{base}...{call['head']}", cwd=where)
@@ -272,10 +280,20 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         env.commit(writer, "AFTER.md", "Unrelated work after the clash\n")
         env.repo.git("push", "-q", "origin", "main", cwd=writer)
 
+    if clash.startswith("LATE"):
+        before_looks = len((env.repo.bin / "draft-pr-looks.jsonl").read_text("utf-8").splitlines())
     second = env.close(item)
 
     assert second.returncode == 0, second.stdout + second.stderr
     assert "Ready:" in second.stdout
+    if clash.startswith("LATE"):
+        subsequent = [json.loads(line) for line in
+                      (env.repo.bin / "draft-pr-looks.jsonl").read_text("utf-8").splitlines()[before_looks:]]
+        edits = [look["body"] for look in subsequent if look["args"][:2] == ["pr", "edit"]]
+        # A reused clean review and Ready each need at most one update; rereading GitHub
+        # must not discard an updated body and send the same Ready text again.
+        assert len(edits) <= 2, edits
+        assert len(set(edits)) == len(edits), edits
     assert env.repo.git("rev-list", "--merges", "origin/main..HEAD", cwd=where).splitlines() == merges
     pushed = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme").split()[0]
     assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)

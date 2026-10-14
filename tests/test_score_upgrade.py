@@ -82,10 +82,16 @@ def test_6_saved_unscored_notes_hold_until_scored_and_the_readme_explains_the_ba
         _move_to(repo, tmp_path, config + 'models.grill.claude = { model = "opus", effort = "high" }\n',
                  current, "fix/upgrade")
         assert "finding 1" in repo.forge("next").stdout
+        # Explicitly adopt the upgrade on this active branch: close now leaves a clean
+        # unrelated main move alone instead of bringing in its release pin and generated files.
+        repo.git("fetch", "-q", "origin", cwd=where)
+        repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
+        before = len(env.review_calls())
         env.reviews(CLEAN)  # a new review would pass: only the saved one can hold close
         held = env.close(item)
         assert held.returncode == 1, held.stdout + held.stderr
         assert "Saved serious finding" in held.stderr
+        assert len(env.review_calls()) == before
         notes = shop / "plans/SHOP.read.md"
         notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep because sign-in is "
                          "out of scope\n", encoding="utf-8")
