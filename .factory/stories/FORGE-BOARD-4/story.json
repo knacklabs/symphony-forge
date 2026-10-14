@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-14T19:34:31.570414+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01RenXGttXdjCtbCbZX3TC3S",
+    "hash": "5f1f17870ca6b10c9c321e496626f27c52b0fa288bf4b2f0410067a01a1938f0",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-BOARD-4.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-14T19:06:32.432616+00:00",
@@ -17,8 +27,12 @@
     {
       "at": "2026-10-14T19:29:51.076136+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-14T19:34:31.570915+00:00",
+      "step": "approved"
     }
   ],
   "title": "The board shows a team what moves, what needs them and when it ships, at a glance",
-  "touches": 0
+  "touches": 1
 }
