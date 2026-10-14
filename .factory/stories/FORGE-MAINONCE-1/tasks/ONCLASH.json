@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-MAINONCE-1-ONCLASH",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T16:46:39.875996+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c76acdae957bad43d39ea66d92579704a58ec1d9",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
