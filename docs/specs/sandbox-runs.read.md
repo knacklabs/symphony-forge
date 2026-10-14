@@ -1,19 +1,19 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T07:10:29.830430+00:00
-seconds: 290.601
-read_hash: f7783af32af3f05e95bc647dc6b7d01d8104e7d3
-round: 12
+read_at: 2026-10-14T07:12:37.825222+00:00
+seconds: 103.721
+read_hash: 1ed3d23bee389cd1733346af74b36ae2bb3839b9
+round: 13
 passed: no
-doc_seen: f7783af32af3f05e95bc647dc6b7d01d8104e7d3
+doc_seen: 1ed3d23bee389cd1733346af74b36ae2bb3839b9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: dc2ad3276f59377f8dfc9ad6989ed1d647533d9c
+notes_seen: 9a96ec721616065802e1c0fadc822904162bc944
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 2
-loop_choice:
-loop_reason:
+blocked_rounds: 3
+loop_choice: narrow
+loop_reason: Owner chose 'One more hour, then stop' on 2026-10-14: the acceptance line now matches the bounded overdraft
 ---
 # Cold read notes
 
@@ -149,4 +149,11 @@ No findings.
 18. Blocking: The promised small overdraft has no spending bound.
     Raise: Scale. [The credit rule](/docs/specs/sandbox-runs.md:145) lets running rounds finish after credits reach zero, but specifies neither a maximum charge nor runtime limit. Four active workers continuing overnight can keep accruing charges despite the dashboard’s spending limit. The reused [Claude runner](/src/forge/worker.py:635) waits for completion without an overall deadline. Admission and overdraft limits need a rule consistent with allowing those rounds to finish.
     Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+## Round 13
+
+19. Blocking: The new one-hour stop rule contradicts the acceptance criterion’s completion guarantee.
+    Raise: Plan gap. [The credit rule](/docs/specs/sandbox-runs.md:150) now stops unfinished rounds one hour after credits run out, but [criterion 2](/docs/specs/sandbox-runs.md:178) still requires running rounds to finish. A long build can hit this case: the reused [worker runner](/src/forge/worker.py:642) has no overall deadline. The criterion must reflect the chosen stop-and-collect behaviour so implementation and acceptance agree.
+    Gain 3, Work 1, Harm 3
     Disposition: cut
