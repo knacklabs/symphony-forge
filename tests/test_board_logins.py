@@ -42,7 +42,7 @@ def _without_github_cli(env, monkeypatch, previous):
     assert data["viewer"] is None
     item = rows(data)["local-work"]
     assert (item["started_by"], item["started_by_login"]) == ("Local Builder", "local-dev")
-    assert item["stage"] == "working" and item["intervals"]
+    assert item["stage"] == "started" and item["intervals"]
     out = env.tmp / "offline.html"
     rendered = env.repo.forge("board", "--out", out.as_posix())
     assert rendered.returncode == 0, rendered.stdout + rendered.stderr
