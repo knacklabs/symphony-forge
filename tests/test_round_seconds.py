@@ -1,4 +1,4 @@
-"""Round seconds survive publication; text can compact without losing measurements.
+"""Round seconds from src/forge/time_records.py survive publication without lost measurements.
 
 Audit: real work and close produce rounds. Independent lifecycle intervals exercise
 arithmetic and old missing evidence; only third-party tools are faked.
@@ -51,7 +51,8 @@ def lifecycle(item, number, began, *, legacy=False):
         timings += [{"step": "worker round", "start": at(0), "seconds": 20, "outcome": "completed"},
                     {"step": "test run", "start": at(5), "seconds": 10, "outcome": "passed"},
                     {"step": "CI wait", "start": at(37), "seconds": 11 + number, "outcome": "passed"}]
-    return {name: [{"item": item, "round": number, **record} for record in records]
+    return {name: [{"item": item, "round": number, "id": f"{name}-{number}-{index}", **record}
+                  for index, record in enumerate(records)]
             for name, records in (("events", events), ("timings", timings))}
 
 
