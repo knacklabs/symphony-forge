@@ -1,10 +1,8 @@
 ---
 slug: sandbox-runs
 title: Close and build rounds overflow to a remote sandbox when the laptop is full
-status: confirmed
-saved: 2026-10-14T05:18:47.231672+00:00
-confirmed_by: "Ravi Kiran Vemula"
-confirmed_hash: dd4585954bf0413b8ab341b643fb87ce7b1ba5f490cf3cb1c41a49520ab73042
+status: draft
+saved: 2026-10-14T07:32:38.069936+00:00
 ---
 
 # Close and build rounds overflow to a remote sandbox when the laptop is full
@@ -194,6 +192,11 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
 7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes and disks in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
 8. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
+
+## Roadmap
+
+- FORGE-SANDBOX-1: Close runs in a Mainline sandbox when the laptop's test lane is full
+- FORGE-SANDBOX-2: Build rounds run in a Mainline sandbox when the laptop's agent line is full
 
 ## Success measure
 
