@@ -3,12 +3,20 @@
   "branch": "fix/test-audit-followups",
   "done_when": "The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-12T15:44:42.456146+00:00",
       "step": "start"
     }
   ],
-  "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job"
+  "stuck": {
+    "close": null,
+    "head": "a07b70541f72e3382368988cce1d7358d1532b17",
+    "keys": {},
+    "round": null
+  },
+  "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job",
+  "worker": "codex"
 }
