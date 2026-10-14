@@ -76,8 +76,8 @@
     "id": "75a99ca8-b1bd-4a39-86df-dfb8ba8c0bba",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T16:46:39.875996+00:00",
@@ -97,13 +97,10 @@
     }
   ],
   "stuck": {
-    "close": "382d3034-d620-4bfa-9fc2-eca51e9dfd39",
-    "head": "d24a30ea9480a5df5dcd37a17ee11d1d25fac277",
-    "keys": {
-      "the review finding \"Not done: bring main in when a pull request becomes BEHIND during close\" in src/forge/close.py": 1,
-      "the review finding \"The unrelated spotted-record rewrite is outside ONCLASH scope\" in plans/spotted.json": 1
-    },
-    "round": 2
+    "close": "7629cfef-9f75-4897-ad2a-847b3ee9627a",
+    "head": "331c68abfd65d349d1e146af89dd2aac0e289ef9",
+    "keys": {},
+    "round": 3
   },
   "worker": "codex"
 }
