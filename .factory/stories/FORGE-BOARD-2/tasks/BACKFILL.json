@@ -115,7 +115,7 @@
     "id": "a451738a-9d3b-469c-8383-6172f9dfd33e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -128,10 +128,14 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "eec5ad02af83a43ac09deea9ae90c6f27a0a27fd",
-    "keys": {},
-    "round": null
+    "close": "589b8070-9834-455d-8588-62401777926a",
+    "head": "cb48cda469b4ed9842802ae40c534471e060997c",
+    "keys": {
+      "the review finding \"An unrelated fix-prefixed PR prevents the backfill from finishing\" in src/forge/backfill.py": 1,
+      "the review finding \"Not done: CI waits for every pushed head\" in src/forge/backfill.py": 1,
+      "the review finding \"Not done: the exact 42-day cut\" in src/forge/backfill.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
