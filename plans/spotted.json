@@ -584,6 +584,39 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/backfill.py\tAn unrelated fix-prefixed PR prevents the backfill from finishing\tFORGE-BOARD-2/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 167,
+      "text": "An unrelated fix-prefixed PR prevents the backfill from finishing",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: CI waits for every pushed head\tFORGE-BOARD-2/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 88,
+      "text": "Not done: CI waits for every pushed head",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: the exact 42-day cut\tFORGE-BOARD-2/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 164,
+      "text": "Not done: the exact 42-day cut",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tMobile time-axis labels overlap\tFORGE-BOARD-2/RUNWAY",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -6887,6 +6920,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_sections.py\tNot done: prove Overview and Roadmap open by default\tFORGE-BOARD-2/NAV",
+      "kind": "bug",
+      "path": "tests/test_board_sections.py",
+      "line": 48,
+      "text": "Not done: prove Overview and Roadmap open by default",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/NAV",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_status_and_times.py\tNot done: required tests check\tboard-data-truth",
       "kind": "bug",
       "path": "tests/test_board_status_and_times.py",
@@ -6916,6 +6960,17 @@
       "text": "Not done: test_3_story_idle_time_tracks_its_parts",
       "from": "blocking",
       "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_story_history.py\tNot done: prove merged parts in story history\tFORGE-BOARD-2/NAV",
+      "kind": "bug",
+      "path": "tests/test_board_story_history.py",
+      "line": 67,
+      "text": "Not done: prove merged parts in story history",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/NAV",
       "status": "open",
       "closed_by": null
     },
@@ -10348,28 +10403,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_sections.py\tNot done: prove Overview and Roadmap open by default\tFORGE-BOARD-2/NAV",
-      "kind": "bug",
-      "path": "tests/test_board_sections.py",
-      "line": 48,
-      "text": "Not done: prove Overview and Roadmap open by default",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/NAV",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_story_history.py\tNot done: prove merged parts in story history\tFORGE-BOARD-2/NAV",
-      "kind": "bug",
-      "path": "tests/test_board_story_history.py",
-      "line": 67,
-      "text": "Not done: prove merged parts in story history",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/NAV",
       "status": "open",
       "closed_by": null
     }
