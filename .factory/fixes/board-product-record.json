@@ -1,0 +1,14 @@
+{
+  "base": "163859cdf856cc85a6ad4388aa3966b606d5804a",
+  "branch": "fix/board-product-record",
+  "done_when": "PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live local page, the design must move to Mainline's team board later, and it shows cost, time, releases and go-live",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T18:01:16.991283+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The board's product record was written without asking the owner and pins a no-script single page, which turned the board into one long unusable page"
+}
