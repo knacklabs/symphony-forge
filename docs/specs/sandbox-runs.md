@@ -62,9 +62,10 @@ The owner chose each of these on 14 October 2026:
 4. **When remote: only when the laptop is full.** Each kind of run follows its own line. Close's
    test run (with its review) goes to the sandbox when the laptop's test lane is full; a build round
    goes there when the agent line is full. With a free place, either runs locally. The sandbox has its
-   own cap in `forge.toml`, separate from the laptop's lanes. When both the laptop and the sandbox cap
-   are full, the run waits in its usual first-come line and says its place; it takes the next free
-   place, local or remote.
+   own cap and size in `forge.toml` (size default: small), separate from the laptop's lanes. When both
+   the laptop and the sandbox cap are full, the run waits in its usual first-come line and says its
+   place; it takes the next free place, local or remote. Mainline never queues a run: when the team has
+   no free place it refuses with a plain reason, and the run stays in Forge's own line.
 5. **Mainline only, paid in credits.** Forge's sandboxes come only from Mainline. A team buys Mainline
    sandbox credits, priced at our cost plus a markup; Mainline runs them on its own backends (AWS
    first, others later), which teams never see or sign in to. It ships to every repo turned off. A
@@ -95,11 +96,14 @@ If the repo's own commit checks refuse that commit, the relay returns the change
 the laptop applies the patch to the worktree as uncommitted changes, so the next round runs locally and
 the worker sees why the commit was refused.
 
-**Secrets come from a vault.** Each repo's secrets live in a vault on the laptop, kept in the system
-keychain: `forge secrets set NAME` adds one, and `forge secrets list` shows the names, never the
-values. Each run gets them as environment variables only for that run. At setup Forge reads the names
+**Secrets come from Mainline's vault.** Each repo's secrets live in a per-repo vault in Mainline, owned
+by the repo's team, the same store its deployed apps use: `forge secrets set NAME` writes one through
+Mainline's API, and `forge secrets list` shows the names, never the values. Mainline injects them as
+environment variables only for a run, so a teammate's remote run gets them too; the laptop keychain
+holds only the Mainline token. At setup Forge reads the names
 in the repo's `.env` and offers to move each value into the vault. `forge.toml` holds only the
-sandbox cap, the secret names a run needs and the Mainline team the repo belongs to, never a value.
+on/off switch, the sandbox cap and size, the secret names a run needs and the Mainline team the repo
+belongs to, never a value; Mainline's dashboard shows them read-only.
 Setup links the repo to one Mainline team, and every run of that repo spends that team's credits. Each
 laptop signs in to Mainline once through a short browser code, and the token lives in the system
 keychain; a person who is not a member of the repo's team cannot start its sandbox runs.
@@ -108,10 +112,13 @@ keychain; a person who is not a member of the repo's team cannot start its sandb
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
 version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
 check in a sandbox and reports what the repo still needs before rounds can move there. Each image is
-named by a hash of the repo's lockfiles, its test setup and its services in `forge.toml`; when any of
+named by a hash of the repo's lockfiles, its test setup, its services in `forge.toml` and the repo's
+pinned Forge release; when any of
 them changes on the branch, the next remote run builds a new image, and the old one stays in use for
-other branches until no run needs it. The Mainline token stays on the laptop: the laptop starts and
-stops sandboxes. The sandbox never gets a GitHub credential. `forge doctor` reports a missing or
+other branches until no run needs it. Forge sends the image's hash when it asks for a place; when
+Mainline has no image for that hash, it says so, and Forge asks Mainline to build it from the bundle
+first. The Mainline token stays on the laptop: the laptop starts and stops sandboxes; each run's relay
+gets only a token for that run's own result upload. The sandbox never gets a GitHub credential. `forge doctor` reports a missing or
 expired Mainline sign-in and a token found in a tracked file.
 
 **Forge relays every message.** The coordinator never talks to the sandbox agent directly; it runs
@@ -158,8 +165,9 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   has stopped the remote round or collected its result; one item never runs two rounds at once.
   Other items keep using the laptop, so work never stops.
 - **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait in
-  Mainline: the relay writes each result to the sandbox's kept disk, and Mainline sets each backend's expiry so a finished sandbox pauses with its disk, never deletes, until Forge has
-  collected the result. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
+  Mainline: the relay uploads each result (its bundle and record, or a patch) to Mainline's result
+  store before the round ends, and Mainline then pauses the sandbox with its disk. A result stays until
+  Forge collects it. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
   rounds it collected.
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
