@@ -1,0 +1,14 @@
+{
+  "base": "56747770778d0130faea34ba812abae4b6428090",
+  "branch": "fix/sandbox-runs-spec",
+  "done_when": "docs/specs/sandbox-runs.md is saved as a draft spec with the measured numbers, the payback for today and for an overload month, the five owner choices, the risks and when to build",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T05:18:07.998852+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Owner wants Forge to run build rounds in remote sandboxes so one laptop is not the limit; before any build, a measured viability spec must say how much it helps and how it would work"
+}
