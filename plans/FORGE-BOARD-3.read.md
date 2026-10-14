@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T19:13:44.790602+00:00
-seconds: 259.66
-read_hash: 816ac9cdb80ea671483f56d4af4376b325750f12
-round: 1
+read_at: 2026-10-14T19:19:14.339725+00:00
+seconds: 158.033
+read_hash: d674cd55e877fec23020acd5c87c7f13d7cb0166
+round: 2
 passed: no
-doc_seen: 816ac9cdb80ea671483f56d4af4376b325750f12
+doc_seen: d674cd55e877fec23020acd5c87c7f13d7cb0166
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 7fc9a18f97dd3a8c1d8e4e40cb8b0b207e088b3b
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13bd1-cadb-7d41-8991-0e2f83034b4a
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -70,6 +70,24 @@ Only a genuine trade-off goes to the human, as a question with options.
    Disposition: cut
 8. Blocking: The documented release process records no tag-creation date.
    Raise: Plan gap. `plans/FORGE-BOARD-3.md:74–76` requires release dates and approval-to-release durations. `docs/guide.md:330` creates lightweight tags, which contain no tagger timestamp. Tagging an older merge commit later cannot reveal when tagging occurred; its commit date is a different fact. The plan must define the date’s meaning and the unknown-date behavior before builders can implement these fields without guessing.
+   Gain 4, Work 2, Harm 2
+
+   Disposition: cut
+
+## Round 2
+
+9. Blocking: The compatibility rewrite leaves the promised username display unmet.
+   Raise: Not done. `plans/FORGE-BOARD-3.md:30` promises usernames beside names on the board, but lines 60–65 preserve existing person strings and leave HTML unchanged. `src/forge/board_visuals.py:75–79,227,297` renders only those existing names, ignoring the added login fields. The earlier crash is removed, but a board that still shows only git names would pass the new “still renders” check.
+   Gain 4, Work 2, Harm 2
+
+   Disposition: cut
+10. Blocking: KNOWN and RELEASES cannot pass their required command-level tests before WIRING.
+   Raise: Plan gap. `plans/FORGE-BOARD-3.md:108–110` gives these tasks only new helper modules and makes WIRING depend on their completion. Neither module reaches `forge board` until WIRING changes `src/forge/board.py:703–705`. Yet `AGENTS.md:121` forbids importing Forge in tests, and `src/forge/templates/brief.md:159–165,189` requires each task’s named boundary tests to pass. The new split therefore leaves their command-level proof dependent on a downstream task.
+   Gain 4, Work 2, Harm 2
+
+   Disposition: cut
+11. Blocking: Release membership and the shared `released_in` result remain undefined.
+   Raise: Plan gap. `plans/FORGE-BOARD-3.md:87–94,109` defines eligible tags and dates, but never defines which items each release carries, which containing tag supplies `released_in`, or that result’s mapping shape for WIRING. A story’s parts can land across two releases; completion already distinguishes individual task merges from story completion (`src/forge/story.py:874–901`). RELEASES and WIRING still need an agreed rule for that ordinary case.
    Gain 4, Work 2, Harm 2
 
    Disposition: cut
