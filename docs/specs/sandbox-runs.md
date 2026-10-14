@@ -59,11 +59,12 @@ The owner chose each of these on 14 October 2026:
 3. **Model access: the owner's plan login.** Forge carries the laptop's current Claude or ChatGPT
    plan login into each run and wipes it when the run ends, so nobody signs in again. Before Forge relies on it, the first part of the work checks each plan's terms for use
    on a remote machine. Where the terms forbid it, the repo's own API keys are the fallback.
-4. **When remote: only when the laptop is full.** A build round runs locally while the agent line has
-   a free place. When the line is full, the next round goes to the sandbox instead of waiting. The
-   sandbox has its own cap in `forge.toml`, separate from the laptop's half of the cores. When both
-   the laptop and the sandbox cap are full, the round waits in the same first-come line and says its
-   place; it takes the next free place, local or remote.
+4. **When remote: only when the laptop is full.** Each kind of run follows its own line. Close's
+   test run (with its review) goes to the sandbox when the laptop's test lane is full; a build round
+   goes there when the agent line is full. With a free place, either runs locally. The sandbox has its
+   own cap in `forge.toml`, separate from the laptop's lanes. When both the laptop and the sandbox cap
+   are full, the run waits in its usual first-come line and says its place; it takes the next free
+   place, local or remote.
 5. **Rollout: each repo's own provider account.** It ships to every repo turned off. A repo turns it
    on in `forge.toml`, set by the agent in a fix after the owner agrees. Forge's own repo uses it
    first, then client repos on upgrade.
@@ -84,6 +85,11 @@ default branch and checks it out in a fresh history with no remote, so the worke
 Files git ignores, such as `.env`, never go up, and neither does the laptop's `.git` folder (its
 remotes, hooks and settings).
 
+**Uncommitted work stays local.** A run goes to the sandbox only from a worktree with no uncommitted
+changes; otherwise it waits for a laptop place and says why. A remote build round that ends with
+changes it did not commit (for example when it is stopped or stuck) has them committed by the relay as
+one "left over from round N" commit in its bundle, so the next round, local or remote, starts from them.
+
 **Secrets come from a vault.** Each repo's secrets live in a vault on the laptop, kept in the system
 keychain: `forge secrets set NAME` adds one, and `forge secrets list` shows the names, never the
 values. Each run gets them as environment variables only for that run. At setup Forge reads the names
@@ -94,7 +100,10 @@ key lives (an environment variable or the system keychain entry), never a value.
 **Ready images and test services.** The repo's sandbox image is built once from its lockfiles and
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
 version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
-check in a sandbox and reports what the repo still needs before rounds can move there. The provider
+check in a sandbox and reports what the repo still needs before rounds can move there. Each image is
+named by a hash of the repo's lockfiles, its test setup and its services in `forge.toml`; when any of
+them changes on the branch, the next remote run builds a new image, and the old one stays in use for
+other branches until no run needs it. The provider
 key stays on the laptop: the laptop starts and stops sandboxes. The sandbox never gets a GitHub
 credential. `forge doctor` reports a provider key that is missing or found in a tracked file.
 

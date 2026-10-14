@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T06:46:42.026715+00:00
-seconds: 52.609
-read_hash: debdf897070a8ca99ac1526561ed601c3ffd298c
-round: 10
-passed: yes
-doc_seen: debdf897070a8ca99ac1526561ed601c3ffd298c
+read_at: 2026-10-14T07:00:27.537904+00:00
+seconds: 612.604
+read_hash: 9c332429c3750eb359430f1ebc11989665012b9f
+round: 11
+passed: no
+doc_seen: 9c332429c3750eb359430f1ebc11989665012b9f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 61f0fb4f348b320452a9ce8b8dc5612c73ff57f5
+notes_seen: 6f374d1de6b182136ab35a8a323b7262adfdee30
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -116,3 +116,20 @@ No findings.
 ## Round 10
 
 No findings.
+
+## Round 11
+
+13. Blocking: Close’s overflow trigger does not distinguish the test lane from the agent lane.
+    Raise: Plan gap. [Criterion 2](/docs/specs/sandbox-runs.md:157) refers to “the laptop’s line,” while behaviour item 4 still uses agent capacity. Forge has [separate agent and test lanes](/src/forge/machine.py:300), and close tests join the [test lane](/src/forge/review.py:426). When tests fill their lane but agent places remain free, the routing rule does not establish whether close overflows—the newly named main case. It also leaves whether tests and review move together unresolved.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+14. Blocking: Committed-only dispatch leaves dirty worker retries without a rule.
+    Raise: Plan gap. [Lines 81–85](/docs/specs/sandbox-runs.md:81) now transfer committed code only. A failed worker can leave tracked edits and new files uncommitted; current continuation explicitly includes those changes in [worker.py](/src/forge/worker.py:418). If its retry overflows remotely, the bundle omits that working state. The spec defines neither preserving it nor keeping/refusing that retry locally until it is committed.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut
+
+15. Blocking: Ready images have no refresh rule when dependencies or test setup change.
+    Raise: Plan gap. [Lines 94–96](/docs/specs/sandbox-runs.md:94) say the image is built once from lockfiles and test setup. After a local worker commits a dependency upgrade, remote close can receive the new code with the old installed dependencies. A valid client command such as `npm test` performs no installation; [review.py](/src/forge/review.py:454) executes the configured command directly. The image needs a refresh or dependency reconciliation rule before checking changed inputs.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
