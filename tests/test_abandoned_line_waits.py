@@ -48,5 +48,7 @@ def test_1_abandoned_line_wait_ends_at_the_next_item_event(env, tmp_path, monkey
     assert current["total_seconds"] == 100
     assert current["time_breakdown"]["waiting_in_line"] == 50
     assert current["time_breakdown"]["nothing_running"] == 50
-    assert current["rounds"][0]["seconds"]["waiting_in_line"] == 50
+    # Round seconds now expose the four board groups; the item breakdown keeps
+    # its detailed category names. Both still account for the same 50-second wait.
+    assert current["rounds"][0]["seconds"]["in_line"] == 50
     assert "in line 50 seconds" in current["rounds"][0]["line"]

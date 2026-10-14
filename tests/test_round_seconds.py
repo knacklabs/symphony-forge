@@ -171,6 +171,11 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
     env.repo.path = clone
     rounds = row(env.repo, item)["rounds"]
     assert [one["round"] for one in rounds[:200]] == list(range(1, 201))
+    # Compaction can keep a group's findings only in its labelled group sentence.
+    # Per-round counts are unknown once their individual evidence was folded.
+    assert all(one["new_findings"] in (None, 11) for one in rounds[:200])
+    assert all(one["repeat_findings"] in (None, 0) for one in rounds[:200])
+    assert all(one["line"].strip() for one in rounds), "Every round must have readable detail"
     assert rounds[0]["seconds"] is None
     assert rounds[0]["line"]
     for one in rounds[1:200]:

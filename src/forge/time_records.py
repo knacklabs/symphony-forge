@@ -658,8 +658,11 @@ def _board_rounds(data: dict[str, Any]) -> dict[str, Any]:
                                        or any(type(v) not in (int, float) for v in values)):
                 raise ValueError("Invalid round seconds")
             rounds.append({**{k: v for k, v in entry.items() if k != "round_times"},
+                           **({"findings": None, "new_findings": None, "repeat_findings": None}
+                              if "first" in entry else {}),
                            "round": number, "worker_round": worker_round,
-                           "line": entry["line"] if index == 0 else "",
+                           "line": entry["line"] if index == 0 else
+                                   f"Round {number if number is not None else 'unknown'}: Earlier detail folded.",
                            "seconds": dict(zip(ROUND_CATEGORIES, values)) if values is not None else None})
     return {**data, "rounds": rounds}
 

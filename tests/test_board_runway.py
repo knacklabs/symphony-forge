@@ -1,7 +1,5 @@
 """The board page below the first screen: one key line, every story and fix in one order, done
-work folded away, all from the same derivation as `forge board --json`.
-Time history owner: src/forge/time_records.py.
-"""
+work folded away, all from the same derivation as `forge board --json`."""
 import json
 import re
 import subprocess
