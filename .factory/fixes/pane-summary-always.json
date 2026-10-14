@@ -26,36 +26,49 @@
       "gain": 3,
       "harm": 3,
       "line": 152,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
       "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
       "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 156,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ec83a23c70dd86c0957d0b7740f17515550a7088aa5cd54e72b7bee856800db9",
-    "changed": "0b0a8108967ac0291fb6afb6bc3209d69a884e2f9992c3fe670d8eda63600b38",
-    "commit": "25bd3bc0d87c42cbec3614fb88c56de09f7a1d94",
+    "branch_diff": "41fcea56af08acccaa467d2d34ebde96e31bf75cba6b8ea92b85a793117a471c",
+    "changed": "d49cd17ff614a2abc6f8b4227dafa8d7cae66f35b9ac98aec629b32e4520585d",
+    "commit": "613b07b5452e196965a8905d13caef4708de1a1c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. The fallback runs only when a row is waiting or ready to merge. During a live plan read, Forge still reports the story as planning (`tests/test_board_status_and_times.py:411-417`), but the pane puts its running row in MOVING. On a planning-only board with no go-live estimate, neither side of this guard produces a summary, so the Board tab again opens with a bare group. The mounted planning fixture at `src/forge/mod/hooks/pane.test.ts:317-319` uses only idle rows and misses this normal planning state.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. A newly approved story can be `building` while all its parts are `to do` (`src/forge/board_facts.py:181-210`). With no go-live estimate yet (`src/forge/board_trends.py:66-68`), the Board tab has waiting rows, but this fallback counts only ready-to-merge parts and planning stories, so it returns no summary. The mounted test covers ready-only and planning-only boards but misses this normal active-work state.",
         "file": "src/forge/mod/hooks/summary.ts",
         "gain": 3,
         "harm": 3,
-        "line": 152,
+        "line": 156,
         "priority": "P1",
-        "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+        "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
         "work": 2
       }
     ],
-    "id": "01de277d-b624-4a82-97b0-54edc1256bc4",
+    "id": "6d6e1516-9a7d-4386-96e0-63201e33bcb2",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-13T19:01:26.423992+00:00",
@@ -68,7 +81,16 @@
     {
       "at": "2026-10-13T20:41:49.086638+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:21:38.856987+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-14T04:21:38.882384+00:00",
+    "file": "src/forge/mod/hooks/summary.ts",
+    "wait_id": "dcc0716b-6e0a-452b-9f60-2b0e1fc9a89a"
+  },
   "why": "The pane's Board tab opens with no summary line when the only active work is ready to merge or still in planning, so a person sees a bare list with no overview"
 }
