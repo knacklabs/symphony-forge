@@ -45,7 +45,7 @@
       "gain": 3,
       "harm": 3,
       "line": 412,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -58,7 +58,7 @@
       "gain": 4,
       "harm": 3,
       "line": 9486,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -68,37 +68,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "89906989885f9a778d839e285b75bdf27db7f61d94b828afaf2cbb2951a50011",
-    "changed": "1a32b85488485d592915fa31a9450aa4edb93e98e1ecc20829625ae0189b0216",
-    "commit": "72d76a534f132f98e678ce9a63b159640f419b91",
+    "branch_diff": "952e3b6ee94d9158779bf5a812477ac7ff5cf40c257dcc20710ade035097134e",
+    "changed": "9a4460bbaa20f67c86f5ed7291c6b5e2e9028a678eb6ea01be50d2249db77d38",
+    "commit": "4da5cc950696050affc1b68c028b38a97faaaf69",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The only merge-state refresh after the check wait is guarded by `pr.get(\"isDraft\")`. For an already ready pull request, main can advance during review or CI; GitHub can then report `BEHIND` while `mergeable` remains `MERGEABLE`, because those fields describe different conditions. The wait reads only `mergeable`, so close writes a Ready receipt for a head that a strict up-to-date rule will refuse to merge. The new tests provide `BEHIND` before close's first PR lookup or immediately after making a draft ready, missing this normal interval. GitHub documents the two fields separately: [pull request states](https://docs.github.com/en/graphql/reference/pulls).",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 412,
-        "priority": "P1",
-        "title": "Not done: bring main in when a pull request becomes BEHIND during close",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. This branch moves more than a thousand existing spotted records, including unrelated PRODUCT.md findings, in `plans/spotted.json`. That file is outside ONCLASH's Scope, and Done-when items 1\u20133 require no change to its records. The large shared-file rewrite creates avoidable conflicts with concurrent changes that record spotted problems\u2014the clash this story is meant to remove.",
-        "file": "plans/spotted.json",
-        "gain": 4,
-        "harm": 3,
-        "line": 9486,
-        "priority": "P1",
-        "title": "The unrelated spotted-record rewrite is outside ONCLASH scope",
-        "work": 1
-      }
-    ],
-    "id": "3ce7ebad-f127-4676-9202-0152cb0ec821",
-    "status": "blocked"
+    "findings": [],
+    "id": "75a99ca8-b1bd-4a39-86df-dfb8ba8c0bba",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T16:46:39.875996+00:00",
@@ -110,6 +89,10 @@
     },
     {
       "at": "2026-10-14T20:00:15.398856+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T20:26:12.908498+00:00",
       "step": "review"
     }
   ],
