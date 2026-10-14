@@ -123,7 +123,7 @@ if args[:2] in (["pr", "merge"], ["pr", "view"], ["pr", "list"]):
     git("push", "-q", "origin", "main", cwd=checkout)
     merged.write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", json.dumps(remote)).replace("CONFLICT", repr(conflict)).replace(
+'''.replace("REMOTE", json.dumps(remote)).replace("conflict = CONFLICT", f"conflict = {conflict!r}").replace(
     "MERGE_STATE", json.dumps(merge_state)).replace("UPGRADED", repr(upgraded)).replace(
     "FAILING_TEST", repr(failing_test))
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]

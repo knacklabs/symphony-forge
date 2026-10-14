@@ -84,12 +84,13 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         # Same-line generated-guide conflicts are real trial conflicts, resolved by close's sync.
         advanced = env.commit(env.repo.path, "AGENTS.md", original.replace("Working here with Forge", "Default guide", 1))
     elif clash == "CONFLICTING":
-        env.commit(env.repo.path, "plans/roadmap.json", json.dumps({"items": []}, indent=2) + "\n")
+        common = {"key": "BASE-1", "title": "Base plan", "status": "pending", "order": 1}
+        env.commit(env.repo.path, "plans/roadmap.json", json.dumps({"items": [common]}, indent=2) + "\n")
         env.repo.git("push", "-q", "origin", "main")
-        item, where = env.start_fix({"plans/roadmap.json": json.dumps({"items": [
+        item, where = env.start_fix({"plans/roadmap.json": json.dumps({"items": [common,
             {"key": "WORKER-1", "title": "Worker plan", "status": "pending", "order": 1}
         ]}, indent=2) + "\n"})
-        advanced = env.commit(env.repo.path, "plans/roadmap.json", json.dumps({"items": [
+        advanced = env.commit(env.repo.path, "plans/roadmap.json", json.dumps({"items": [common,
             {"key": "MAIN-1", "title": "Main plan", "status": "pending", "order": 1}
         ]}, indent=2) + "\n")
         _open_pr(env, "", mergeable="CONFLICTING", merge_state="DIRTY")
@@ -120,7 +121,7 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         assert len(env.gh_calls("pr", "create")) == 1
     elif clash == "CONFLICTING":
         assert {row["key"] for row in json.loads(
-            (where / "plans/roadmap.json").read_text("utf-8"))["items"]} == {"WORKER-1", "MAIN-1"}
+            (where / "plans/roadmap.json").read_text("utf-8"))["items"]} == {"BASE-1", "WORKER-1", "MAIN-1"}
     else:
         assert (where / "NEWS.md").read_text("utf-8") == "Main has moved\n"
     content = body((env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"))[-1])
