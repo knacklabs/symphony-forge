@@ -1,10 +1,8 @@
 ---
 slug: item-cost
 title: Each story, task and fix shows what it cost in tokens and time
-status: confirmed
-saved: 2026-10-14T10:26:09.556816+00:00
-confirmed_by: "Ravi"
-confirmed_hash: 3af75669965b4177343f2f9070e011a3691659fdd7420fcf02875b3766860a2d
+status: draft
+saved: 2026-10-14T10:44:00.399204+00:00
 ---
 
 # Each story, task and fix shows what it cost in tokens and time
@@ -27,18 +25,25 @@ but it loses many of them, and the board shows none.
 
 Measured in Forge's own repo, from the local logs and the turn logs, for 11 to 14 October 2026:
 
-| Run kind | Runs | With token counts | Without |
-|---|---|---|---|
-| Codex build round (`forge work`) | 53 | 7 | 46, all on 11 October, before the run record kept counts |
-| Codex turns in those rounds (turn log) | 58 | 50 | 8: 7 started and never ended, 1 interrupted |
-| Codex review | 412 | 218 | 194: 178 on 11 and 12 October, before reviews kept counts, and 16 failed reviews |
-| Codex cold read | 48 | 32 in the run record, 48 in the turn log | 16 in the run record, on 11 and 12 October |
-| Headless Claude run | 0 | none ran | none ran |
-| Native Claude build | at least 67 items | 0 | 67 of the 96 items that reached review had no recorded build round |
-| Codex helper agent threads | unknown | unknown | Forge does not record a helper thread apart from its parent turn |
-| Capacity retries | 9 in all saved turn logs | last attempt only | earlier attempts are not added to the run |
+Each row states its unit. Rows with different units are not added together.
 
-Over all runs that Forge can count, 257 of 580 (44%) have token counts.
+| What | Unit | Total | With token counts | Without |
+|---|---|---|---|---|
+| Codex build and fix turns (turn log) | attempts | 58 | 50 | 8: 7 started and never ended, 1 interrupted |
+| Codex capacity retries | attempts | 0 | none | none; the only 2 in all saved logs were on 4 and 5 October |
+| Codex review | attempts (one per review run) | 412 | 218 | 194: 178 on 11 and 12 October, before reviews kept counts, and 16 failed reviews |
+| Codex cold read (turn log) | attempts | 48 | 48 | 0; the run record has counts for only 32, as it kept none on 11 and 12 October |
+| Codex build round (`forge work` run record) | rounds | 53 | 7 | 46, all on 11 October, before the run record kept counts |
+| Headless Claude run | attempts | 0 | none ran | none ran |
+| Native Claude build | items | at least 67 | 0 | 67 of the 96 items that reached review have no attempt record at all |
+| Codex helper agent threads | attempts | unknown | unknown | Forge does not record a helper thread apart from its parent turn |
+
+Coverage per unit:
+
+- Codex build and fix turn attempts: 50 of 58 have counts (86%).
+- Review attempts: 218 of 412 have counts (53%).
+- Cold-read attempts: 48 of 48 have counts in the turn log (100%), 32 of 48 in the run record (67%).
+- Native Claude builds: at least 67 items have no attempt record, so their attempts cannot be counted.
 
 Of the last 100 merged pull requests (10 to 14 October), 57 carry a time record. 56 of those keep
 some token rows. 3 records are compacted, and none of the 3 summaries keeps a token total. 43 pull
@@ -155,7 +160,7 @@ engineering manager who answers for the team's model spend.
 
 ## Success measure
 
-- Metric: the share of runs in Forge's own repo that have token counts, and the share of compacted pull request records that keep token totals
-- Baseline: 257 of 580 runs (44%) from 11 to 14 October 2026, and 0 of 3 compacted records
-- Target: at least 95% of runs from the release on have counts, and every compacted record keeps its totals
+- Metric: in Forge's own repo, the share of attempts of each kind (Codex build and fix turns, reviews, cold reads, native builds) that have token counts, and the share of compacted pull request records that keep token totals
+- Baseline: from 11 to 14 October 2026, Codex build and fix turn attempts 50 of 58 (86%), review attempts 218 of 412 (53%), cold-read attempts 48 of 48 in the turn log (32 of 48 in the run record), native Claude builds at least 67 items with no attempt record, and 0 of 3 compacted records
+- Target: from the release on, at least 95% of attempts of each kind have counts, every native build has attempt records, and every compacted record keeps its totals
 - Check date: 2026-12-15
