@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-MAINONCE-1-ONCLASH",
+  "chat": {
+    "approval": "a43c91a72bf376779d9921b61734a305e342c9e332474fc14234e7340bde79b3",
+    "claude": null,
+    "conversation": "01a13b50-e5ed-7ba0-ac01-04552f0b5cfc",
+    "head": null,
+    "start": "ebb780706982c44908e5a3a6ddc832b84297e662"
+  },
   "round": 1,
   "status": "working",
   "steps": [
