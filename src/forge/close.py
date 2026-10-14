@@ -401,7 +401,7 @@ def close(args: argparse.Namespace) -> int:
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
         # DRAFT hides an up-to-date requirement until GitHub can judge the ready pull request.
-        pr = _pull_request(top, branch)
+        pr = _pull_request(top, branch) or pr
         _merge_default(top, item, branch, default, pr)
         if repo.git("rev-parse", "HEAD", cwd=top) != head:
             repo.resume_pin(top, repo.config(top)["version"], getattr(args, "land_rounds", None),

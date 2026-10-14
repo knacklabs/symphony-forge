@@ -220,7 +220,6 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         _open_pr(env, content)
     # GitHub now reports MERGEABLE and main moves on unrelated lines. The old
     # unconditional merge would add a second merge; this round must leave it out.
-    if not clash.startswith("DRAFT"):
     if clash != "DRAFT":  # the up-to-date rule still applies after the first required refresh
         writer = env.tmp / "later-main"
         env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(writer))
