@@ -97,7 +97,7 @@
     "id": "3ce7ebad-f127-4676-9202-0152cb0ec821",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -114,13 +114,13 @@
     }
   ],
   "stuck": {
-    "close": "26ee81e3-6899-4bb9-9cdb-7507a369ccb0",
-    "head": "cf37bc26db098a251b4a5d7e9ac9f97fe1cb6013",
+    "close": "382d3034-d620-4bfa-9fc2-eca51e9dfd39",
+    "head": "d24a30ea9480a5df5dcd37a17ee11d1d25fac277",
     "keys": {
-      "the review finding \"A draft pull request can reach Ready while still behind a required base\" in src/forge/close.py": 1,
-      "the review finding \"A failed mergeability lookup can let green checks reach Ready\" in src/forge/checks.py": 1
+      "the review finding \"Not done: bring main in when a pull request becomes BEHIND during close\" in src/forge/close.py": 1,
+      "the review finding \"The unrelated spotted-record rewrite is outside ONCLASH scope\" in plans/spotted.json": 1
     },
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
