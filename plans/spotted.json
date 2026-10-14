@@ -606,6 +606,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tWritable user settings can switch Claude from the developer\u2019s token to an API key\tsandbox-claude-plan",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 89,
+      "text": "Writable user settings can switch Claude from the developer\u2019s token to an API key",
+      "from": "blocking",
+      "item": "sandbox-claude-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
       "kind": "bug",
       "path": "forge.toml",
