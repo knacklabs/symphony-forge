@@ -65,7 +65,9 @@ The owner chose each of these on 14 October 2026:
    own cap and size in `forge.toml` (size default: small), separate from the laptop's lanes. When both
    the laptop and the sandbox cap are full, the run waits in its usual first-come line and says its
    place; it takes the next free place, local or remote. Mainline never queues a run: when the team has
-   no free place it refuses with a plain reason, and the run stays in Forge's own line.
+   no free place it refuses with a plain reason, and the run stays in Forge's own line. Mainline shares
+   a team's places fairly: each active developer has an equal slice of the team cap, and a slice
+   nobody is using is lent to others and returned as soon as its owner needs it.
 5. **Mainline only, paid in credits.** Forge's sandboxes come only from Mainline. A team buys Mainline
    sandbox credits, priced at our cost plus a markup; Mainline runs them on its own backends (AWS
    first, others later), which teams never see or sign in to. It ships to every repo turned off. A
@@ -80,7 +82,9 @@ resume a sandbox, copy files in and out, start one process, give that process a 
 delete the sandbox. Inside Mainline each backend is one small adapter for those five, so Mainline can
 change backends without any change to Forge; Forge reads only the fields it uses from Mainline's
 replies (principle 7).
-The relay accepts only the laptop that started the sandbox, with a secret made for that sandbox.
+Only the laptop that started a run can send it notes or stop it through the relay, with a secret made
+for that sandbox. The relay also forwards the run's output to Mainline, so every member of the team
+can watch any run on the board and in their pane.
 
 **What goes up: committed code only.** The sandbox gets a git bundle of the item's branch and the
 default branch and checks it out in a fresh history with no remote, so the worker can commit and
@@ -146,6 +150,12 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   the developer through signing in to Mainline (a short browser code; the team gets starter credits),
   moving the `.env` values
   into the vault, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
+- **A team on one app.** Several developers' laptops share one Mainline team: its fair-share places,
+  its result store and one live team board that Mainline hosts. The board shows Symphony's team view
+  (in progress, needs whom, blocked, go-live) with every run on every laptop and sandbox, by person,
+  and each developer's pane reads the same feed. A finished round waits in the result store, and any
+  team member's Forge can collect it and push it with their own GitHub access, so a laptop that is
+  asleep never blocks the team.
 - **Teammates.** Nothing changes for a teammate until their laptop is full. Then the agent says the
   repo uses sandbox runs and asks them to sign in to Mainline and join the team, which keeps the token in
   that laptop's keychain. Without a sign-in their work stays local.
@@ -191,7 +201,8 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback; credits, balance alerts and top-ups live on Mainline's dashboard.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
 7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes and disks in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
-8. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
+8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes or stop it; the team board and every pane show every run on every laptop and sandbox.
+9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Roadmap
 
