@@ -287,5 +287,6 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     env.repo.path = clone
     shared = row(env.repo, item)
     assert shared["rounds"][-1]["line"].startswith("Round 1: "), shared["rounds"]
+    assert shared["rounds"][-1]["seconds"] is not None, "A later close must retain the compacted round's measurements"
     assert re.search(r"review \w+ \(\d+ seconds?\)", shared["rounds"][-1]["line"])
     assert shared["rounds"][-1]["new_findings"] == (200 if huge == "long-titles" else 20)

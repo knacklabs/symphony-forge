@@ -19,7 +19,7 @@ RESUMED = "<!-- forge:history-resumed -->"
 
 
 SEEN = 300  # ponytail: a finding last seen over 300 findings ago counts as new again.
-RECORD_BUDGET = 20_000  # bytes of shared time record; older detail folds into the totals line.
+RECORD_BUDGET = 20_000  # bytes of shared detail; numeric round history stays outside this budget.
 ROUND_CATEGORIES = {"work": CATEGORIES[:4], "in_line": ("waiting_in_line",),
                     "waiting_for_person": ("waiting_for_owner",),
                     "waiting_for_checks": ("waiting_for_ci",)}
@@ -297,6 +297,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     totals = {k: round(v, 3) if v is not None else None for k, v in totals.items()}
     # A published summary carries the finding history of the rounds it replaced.
     rounds, seen = [], dict.fromkeys((summary or {}).get("seen", []))
+    recorded_rounds = {one[1] for r in (summary or {}).get("rounds", [])
+                       for one in r.get("round_times", []) if one[2] is not None}
     first_review = next((r for r in attempts if r["result"] or r["review_timings"]), {})
     known_history = summary["known"] if summary else first_review.get("number") == 1
     for index, current in enumerate(attempts):
@@ -360,7 +362,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                        "round_times": [[number, worker_round, [round(sum(
                            per_attempt.get(index, {}).get(c, 0) for c in categories), 3)
                            for categories in ROUND_CATEGORIES.values()]
-                           if complete_since and current["start"] and current["start"] >= complete_since else None]]})
+                           if (complete_since and current["start"] and current["start"] >= complete_since
+                               or worker_round in recorded_rounds) else None]]})
     grouped = {f"{kind}_seconds": round(sum((when(span["end"]) - when(span["start"])).total_seconds()
                                            for span in intervals if span["kind"] == kind), 3)
                if intervals or (start and end) else None for kind in ("working", "waiting", "unknown")}
@@ -541,8 +544,8 @@ def _capped(value: Any) -> Any:
 
 def _compact(data: dict[str, Any], base: dict[str, Any], clean: list[dict[str, Any]],
              ) -> tuple[dict[str, Any] | None, dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
-    """Keep the published record under a fixed size: while it is over, fold the oldest detail
-    of any kind (summarised rounds, then their intervals, then raw rows) into the totals."""
+    """Keep published detail under a fixed size, excluding numeric round history: fold the
+    oldest sentences, then intervals, then raw rows into the totals."""
     summary = json.loads(json.dumps(data["summary"])) if data.get("summary") else None
     # Progress is live-only: the board reads it locally, and a long round records it every ten
     # seconds. Stage events stay.
