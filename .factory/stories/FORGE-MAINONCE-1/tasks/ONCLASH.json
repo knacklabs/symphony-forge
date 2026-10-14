@@ -70,7 +70,7 @@
     "id": "ea76f7f5-2096-4dd4-b9f2-6e2d7f8ec2fd",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -83,10 +83,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c76acdae957bad43d39ea66d92579704a58ec1d9",
-    "keys": {},
-    "round": null
+    "close": "26ee81e3-6899-4bb9-9cdb-7507a369ccb0",
+    "head": "cf37bc26db098a251b4a5d7e9ac9f97fe1cb6013",
+    "keys": {
+      "the review finding \"A draft pull request can reach Ready while still behind a required base\" in src/forge/close.py": 1,
+      "the review finding \"A failed mergeability lookup can let green checks reach Ready\" in src/forge/checks.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
