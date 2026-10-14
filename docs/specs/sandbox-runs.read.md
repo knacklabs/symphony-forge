@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T06:28:51.420042+00:00
-seconds: 44.564
-read_hash: bb7d5d6a423c414fa16484b2ef66c017d87c6c20
-round: 7
-passed: yes
-doc_seen: bb7d5d6a423c414fa16484b2ef66c017d87c6c20
+read_at: 2026-10-14T06:43:14.984276+00:00
+seconds: 403.909
+read_hash: 25e6016ecc476e8654f68f79ed9dd165da3e1724
+round: 8
+passed: no
+doc_seen: 25e6016ecc476e8654f68f79ed9dd165da3e1724
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 88227df2491e4b5230abf2a58d49acfed8c99195
+notes_seen: a1a506e5a2bb4a1f3201f3ea8f1c5045d803cdc2
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -98,3 +98,10 @@ No findings.
 ## Round 7
 
 No findings.
+
+## Round 8
+
+11. Blocking: Trap: E2B’s default expiry destroys results awaiting collection.
+    Raise: Data loss. [The new provider choice](/docs/specs/sandbox-runs.md:75) adds E2B without a lifetime or retention rule. Its [creation API](https://docs.e2b.dev/api-reference/sandboxes/create-sandbox-v2) defaults to a 300-second lifetime with auto-pause disabled; [expiry kills the sandbox](https://docs.e2b.dev/sandbox/persistence). If a round finishes while the laptop sleeps for ten minutes, its uncollected commits and result can disappear before wake-up. Keeping the worker alive through Forge’s relay does not prevent provider expiry. E2B needs an explicit non-destructive expiry policy and a runtime policy that covers disconnected rounds.
+    Gain 5, Work 2, Harm 4
+    Disposition: cut

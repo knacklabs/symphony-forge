@@ -124,7 +124,9 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
   has stopped the remote round or collected its result; one item never runs two rounds at once.
   Other items keep using the laptop, so work never stops.
 - **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait at the
-  provider. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
+  provider: the relay writes each result to the sandbox's kept disk, and each provider's adapter sets
+  that provider's expiry so a finished sandbox pauses with its disk, never deletes, until Forge has
+  collected the result (or 14 days pass, when Forge reports the lost round). When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
   rounds it collected.
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
