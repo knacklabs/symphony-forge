@@ -6,6 +6,7 @@ its own. Keys a later part fills stay null until then.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import shutil
@@ -56,14 +57,14 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any) -> Any:
-    """`fetch()`'s answer, kept for a minute in .git/forge/<name>.json; None is never kept."""
+def _cached(top: Path, name: str, fetch: Any, *, seconds: int = 60) -> Any:
+    """`fetch()`'s answer, kept for `seconds` in .git/forge/<name>.json; None is never kept."""
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         at = time_records.when(saved.get("fetched_at"))
-        if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
+        if at and 0 <= (now - at).total_seconds() < seconds and "data" in saved:
             return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
@@ -126,23 +127,38 @@ def people(body: str) -> Item:
             for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
 
 
-def actor_login(top: Path, email: str | None, commit: str | None) -> str | None:
-    """Only an actor's own commit or GitHub noreply address establishes a login."""
-    match = re.fullmatch(r"(?:\d+\+)?([\w-]+)@users\.noreply\.github\.com", email or "", re.I)
-    if match:
-        return match[1]
-    if not commit:
-        return None
+def actor_logins(top: Path, commits: set[str]) -> Item:
+    """Resolve visible actors in batches. Successful answers, including unknowns, last a day."""
+    ordered = sorted(commits)
+    batches = [ordered[start:start + 50] for start in range(0, len(ordered), 50)]
 
-    def fetch(now: datetime) -> str | None:
-        result = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{commit}", cwd=top)
-        try:
-            author = json.loads(result.stdout).get("author") if result.returncode == 0 else None
-            return author.get("login") if isinstance(author, dict) else None
-        except (ValueError, AttributeError):
-            return None
-    return repo.command_fact(f"actor login {commit}", top,
-                             lambda: _cached(top, f"actor-{commit}", fetch))
+    def batch(shas: list[str]) -> Item:
+        def fetch(now: datetime) -> Item | None:
+            fields = " ".join(f'c{index}:object(oid:"{sha}"){{... on Commit{{author{{user{{login}}}}}}}}'
+                              for index, sha in enumerate(shas))
+            query = 'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){' + fields + '}}'
+            result = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
+                              "-f", f"query={query}", cwd=top)
+            try:
+                response = json.loads(result.stdout) if result.returncode == 0 else {}
+                authors = response["data"]["repository"]
+                if response.get("errors") or not all(f"c{index}" in authors for index in range(len(shas))):
+                    return None
+                found = {}
+                for index, sha in enumerate(shas):
+                    user = ((authors[f"c{index}"] or {}).get("author") or {}).get("user") or {}
+                    login = user.get("login")
+                    found[sha] = login if isinstance(login, str) else None
+                return found
+            except (ValueError, KeyError, TypeError, AttributeError):
+                return None  # Service failures remain retryable.
+        name = "actors-" + hashlib.sha256("".join(shas).encode()).hexdigest()
+        return _cached(top, name, fetch, seconds=86400) or {}
+
+    if not batches:
+        return {}
+    with ThreadPoolExecutor(min(4, len(batches))) as pool:
+        return {sha: login for found in pool.map(batch, batches) for sha, login in found.items()}
 
 
 def actor_commits(top: Path) -> dict[str, Item]:
@@ -165,17 +181,22 @@ def actor_commits(top: Path) -> dict[str, Item]:
     return found
 
 
-def person_login(top: Path, field: str, body: str, original: Any = None) -> str | None:
+def person_actor(field: str, body: str, original: Any = None) -> Item:
+    """Keep exact actor evidence until all visible commits can be resolved together."""
     record = time_records.from_body(body)
     summary = record.get("summary") or {}
-    if summary.get(field):
-        return summary.get(field + "_login")  # Older name-only summaries stay unknown.
     event_name = {"started_by": "item started", "approved_by": "plan approved"}[field]
-    event = next((e for e in record.get("events", []) if e.get("event") == event_name), None)
-    if event:
-        commit = re.fullmatch(r"rebuilt-(?:start|approval)-([0-9a-f]{40})", event.get("id") or "")
-        return event.get("login") or actor_login(top, event.get("email"), commit[1] if commit else None)
-    return actor_login(top, *original) if original else None
+    event = summary.get(field + "_actor") or next(
+        (e for e in record.get("events", []) if e.get("event") == event_name), None)
+    email, commit = original or (None, None)
+    login = summary.get(field + "_login")
+    if isinstance(event, dict):
+        identity = event.get("id")
+        match = re.fullmatch(r"rebuilt-(?:start|approval)-([0-9a-f]{40})", identity) if isinstance(identity, str) else None
+        email, commit = event.get("email"), match[1] if match else None
+        login = login or event.get("login")
+    match = re.fullmatch(r"(?:\d+\+)?([\w-]+)@users\.noreply\.github\.com", email, re.I) if isinstance(email, str) else None
+    return {"login": login if isinstance(login, str) else match[1] if match else None, "commit": commit}
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:
