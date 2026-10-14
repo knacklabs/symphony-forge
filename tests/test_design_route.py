@@ -30,7 +30,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     result = repo.forge("work", "BOARD/PAGE")
     assert result.returncode == 0, result.stdout + result.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert call["cwd"] == str(folder)
     assert "| PAGE | The page |" in call["brief"]
     assert _sent(codex_log, "turn/start") == []
@@ -75,12 +75,12 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     monkeypatch.delenv("CLAUDECODE")
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("custom-opus", "high")
     # The round before ran on Codex, so this one starts a fresh Claude session with the whole
     # brief (it used to continue the first round's session).
     assert "because its last round ran on Codex" in custom.stdout
     assert "## Tests first" in calls(claude_log)[-1]["brief"]
-    assert "--resume" not in calls(claude_log)[-1]["args"]
+    assert not calls(claude_log)[-1]["options"].get("resume")
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # A client story row without User-facing uses the configured Codex worker.
@@ -101,7 +101,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     monkeypatch.delenv("CLAUDECODE")
     claude_worker = repo.forge("work", "BOARD/PAGE")
     assert claude_worker.returncode == 0, claude_worker.stdout + claude_worker.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("custom-opus", "high")
     assert len(_sent(codex_log, "turn/start")) == 3
 
 
@@ -160,11 +160,11 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # If Claude leaves a file behind, the same failure must stay with Claude.
-    script = repo.bin / "claude"
+    script = repo.bin / "claude_agent_sdk" / "__init__.py"
     original = script.read_text("utf-8")
-    script.write_text(original.replace('print("stub claude: built it")',
-                                       'pathlib.Path("worker-change.txt").write_text("changed")\n'
-                                       'print("stub claude: built it")'), encoding="utf-8")
+    script.write_text(original.replace('    yield ResultMessage(session_id=session',
+                                       '    Path("worker-change.txt").write_text("changed", encoding="utf-8")\n'
+                                       '    yield ResultMessage(session_id=session'), encoding="utf-8")
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     failed = repo.forge("work", "BOARD/PAGE")
     assert failed.returncode == 1
@@ -174,11 +174,10 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert len(calls(claude_log)) == 2
     assert len(_sent(codex_log, "turn/start")) == 2
 
-    script.write_text(original.replace('print("stub claude: built it")',
-                                       'import subprocess\n'
-                                       'pathlib.Path("README.md").write_text("staged change")\n'
-                                       'subprocess.run(["git", "add", "README.md"], check=True)\n'
-                                       'print("stub claude: built it")'), encoding="utf-8")
+    script.write_text(original.replace('    yield ResultMessage(session_id=session',
+                                       '    Path("README.md").write_text("staged change", encoding="utf-8")\n'
+                                       '    subprocess.run(["git", "add", "README.md"], check=True)\n'
+                                       '    yield ResultMessage(session_id=session'), encoding="utf-8")
     staged = repo.forge("work", "BOARD/PAGE")
     assert staged.returncode == 1 and "exit code 3" in staged.stderr
     assert repo.git("diff", "--cached", "--name-only", cwd=folder) == "README.md"

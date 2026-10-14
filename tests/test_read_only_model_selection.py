@@ -97,7 +97,7 @@ def test_5_a_fix_first_build_keeps_lite_with_explore_configured(
         repo, monkeypatch, sdk_data, host, request):
     if host == "codex":
         request.getfixturevalue("claude_session")
-    log = _sdk(repo, monkeypatch, sdk_data, repo.path) if host == "codex" else install_claude(repo)
+    log = _sdk(repo, monkeypatch, sdk_data, repo.path) if host == "codex" else install_claude(repo, worker=False)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
                              f'workers = "{host}"\ntest = "echo ok"\n{MODELS}')

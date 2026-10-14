@@ -61,7 +61,7 @@ def _board_shows_recorded_live_agent_metadata(env, kind):
         configure(env)
         item, _ = env.start_fix()
         command, model = "work", "sonnet"
-        marker = 'print("stub claude: built it")'
+        marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
     else:
         setup(repo)
         folder = new_story(repo, "SHOP")
@@ -73,12 +73,13 @@ def _board_shows_recorded_live_agent_metadata(env, kind):
     listener.bind(("127.0.0.1", 0))
     listener.listen()
     listener.settimeout(30)
-    stub = repo.bin / "claude"
+    stub = repo.bin / ("claude_agent_sdk/__init__.py" if kind == "worker" else "claude")
     source = stub.read_text("utf-8")
-    stub.write_text(source.replace(marker,
-        'import socket\n'
-        f'with socket.create_connection({listener.getsockname()!r}, timeout=30) as gate:\n    gate.recv(1)\n'
-        + marker), "utf-8")
+    wait = ('import socket\n'
+            f'with socket.create_connection({listener.getsockname()!r}, timeout=30) as gate:\n    gate.recv(1)\n')
+    if kind == "worker":
+        wait = "".join("    " + line + "\n" for line in wait.splitlines())
+    stub.write_text(source.replace(marker, wait + marker), "utf-8")
     process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), command, item],
         cwd=repo.path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
@@ -112,11 +113,10 @@ def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priori
     from test_close import blocked, finding, report, CLEAN
     repo = configure(env)
     item, folder = env.start_fix()
-    stub = repo.bin / "claude"
+    stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
     question = "Question: May I reuse the parser?"
-    stub.write_text(source.replace('print("stub claude: built it")',
-                                   f'print("\\n\\n" + {question!r})'), "utf-8")
+    stub.write_text(source.replace('"stub claude: built it\\n"', repr(question)), "utf-8")
     assert repo.forge("work", item).returncode == 0
     events = records(repo, "events.jsonl")
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)

@@ -77,21 +77,24 @@ for rule in rules:
         answer(out)
 '''
 
-# The stub claude, committing a file as a worker does when its round succeeds.
+# The SDK stub commits a file as a worker does when its round succeeds.
 COMMITS = '''if not int(os.environ.get("STUB_CLAUDE_EXIT", "0")):
     import subprocess
-    done = len(list(pathlib.Path.cwd().glob("work-*.txt")))
-    pathlib.Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")
+    done = len(list(Path.cwd().glob("work-*.txt")))
+    Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")
     subprocess.run(["git", "add", "-A"], check=True)
     subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
-print("stub claude: built it")'''
+'''
 
 
 @pytest.fixture
 def land(env, tmp_path):
     root = Path(__file__).resolve().parent
-    stub = (root / "stubs" / "claude").read_text("utf-8")
-    _install(env.repo.bin, "claude", stub.replace('print("stub claude: built it")', COMMITS))
+    stub = (root / "stubs" / "claude_agent_sdk.py").read_text("utf-8")
+    module = env.repo.bin / "claude_agent_sdk" / "__init__.py"
+    commits = "".join("    " + line + "\n" for line in COMMITS.splitlines())
+    module.write_text(stub.replace('    yield ResultMessage(session_id=session',
+                                  commits + '    yield ResultMessage(session_id=session'), "utf-8")
     _install(env.repo.bin, "gh", GH.format(python=sys.executable, remote=str(tmp_path / "remote.git"),
                                            url=URL) + GH_STUB.format(python=sys.executable).split("\n", 1)[1])
     toml = env.repo.path / "forge.toml"
@@ -139,7 +142,7 @@ def _steps(done) -> list[str]:
 
 
 def _workers(env) -> list[dict]:
-    return calls(env.repo.bin / "claude-calls.jsonl")
+    return calls(env.repo.bin / "claude-sdk-calls.jsonl")
 
 
 def _refusal(done) -> list[str]:
