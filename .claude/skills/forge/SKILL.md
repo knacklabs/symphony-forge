@@ -291,11 +291,20 @@ each person show merged pull requests per week, through and around Forge, in alp
 beside the pull requests merged around Forge in the last 7 days.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
 task IDs in the plan are ignored by both boards.
-The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
-external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
-parts, plain titles, labelled states and `waits_for` item references, including old merged
-dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
-distinguish merged, running, waiting, can start now and not started. Startability and scope
+The HTML page also draws one inline dependency graph of every roadmap story and stage timelines, without scripts or
+external assets. `forge board --json` supplies `dependency_maps`: one entry per roadmap story
+with `planned` (false for a story with no plan yet, which has no parts), `done` (its finished
+parts) and its full planned parts, plain titles, labelled states and `waits_for` item references,
+including old merged dependencies omitted from active rows. Each unfinished part has `column`:
+0 when it waits on nothing unfinished, else one more than the largest column it waits on, across
+stories, so parts in one column can run at the same time; parts that wait on each other share a
+column and say so in `note`. Finished parts have a null `column`. When fixes are open, an entry
+with `kind: "fixes"` lists them in column 0 with `running` and `started_on` (the story part a
+stacked fix was started on). The graph draws the Fixes row first, then a row per story with
+parts placed by column and arrows to the waiting part, finished parts folded into "N done",
+finished stories and stories with no plan as small boxes. It keeps its own size and fills a
+laptop-wide window; a narrow window scrolls it sideways inside its box. Shapes and labels
+distinguish running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
 `go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and

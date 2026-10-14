@@ -23,7 +23,7 @@ from pathlib import Path
 from textwrap import shorten
 from typing import Any
 
-from forge import __version__, approval, board_facts, board_visuals, codex, machine, repo, story, task
+from forge import __version__, approval, board_facts, board_graph, board_visuals, codex, machine, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -658,11 +658,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 + (f", {ready_parts} ready to merge" if ready_parts else ""))
             items[key]["stage"] = phase
         maps.append({"id": key, "title": items.get(key, {}).get("title") or state.get("title")
-                     or "A story with no title yet", "parts": parts, "stage": phase})
+                     or "A story with no title yet", "parts": parts, "stage": phase, "planned": bool(parts)})
     mapped = {m["id"] for m in maps}
     maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet",
-                 "parts": [], "stage": "done" if s["key"] in completed else "needs a spec"}
+                 "parts": [], "stage": "done" if s["key"] in completed else "needs a spec", "planned": False}
                 for s in roadmap.values() if s["key"] not in mapped)
+    order = list(roadmap)  # roadmap order; stories off the roadmap keep theirs, after it
+    maps.sort(key=lambda entry: order.index(entry["id"]) if entry["id"] in roadmap else len(order))
     part_titles = {part["id"]: part["title"] for entry in maps for part in entry["parts"]}
     for parent in items.values():
         for item in [parent, *parent["children"]]:
@@ -673,6 +675,14 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
     team = board_facts.team(top, history, items, maps, best, completed, github, readiness)
+    fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
+              or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
+              "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
+                                  if "/" in str(on)), None)}  # stacked on a story part, not on a fix
+             for row in items.values() if row["kind"] == "fix" and row["stage"] not in ("merged", "done")]
+    if fixes:
+        maps.insert(0, {"id": "fixes", "kind": "fixes", "title": "Fixes", "parts": fixes, "planned": True})
+    board_graph.place(maps)
     event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
     recent = [{"time": e.get("at"), "item": e.get("item"), "line":
                " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else

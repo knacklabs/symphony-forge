@@ -10218,6 +10218,83 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tBoard crashes whenever a fix is present\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 683,
+      "text": "Board crashes whenever a fix is present",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: no-plan box for a newly started story\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 651,
+      "text": "Not done: no-plan box for a newly started story",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: planned stories in roadmap order\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 650,
+      "text": "Not done: planned stories in roadmap order",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: finished planned stories remain in roadmap order\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 71,
+      "text": "Not done: finished planned stories remain in roadmap order",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: functional check\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 67,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: stacked fixes lose the part name in their visible label\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 104,
+      "text": "Not done: stacked fixes lose the part name in their visible label",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_graph.py\tNot done: missing-reference graph test\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "tests/test_board_graph.py",
+      "line": 65,
+      "text": "Not done: missing-reference graph test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
