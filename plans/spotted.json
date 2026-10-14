@@ -650,6 +650,17 @@
       "closed_by": "worker-no-settings"
     },
     {
+      "key": "bug\tplans/FORGE-BOARD-2.md\tNot done: 9. The pane's first screen matches the board\tFORGE-BOARD-2/PANE",
+      "kind": "bug",
+      "path": "plans/FORGE-BOARD-2.md",
+      "line": 578,
+      "text": "Not done: 9. The pane's first screen matches the board",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tplans/spotted.json\tStandard: Touch only what the task needs\tclaude-sonnet-default",
       "kind": "bug",
       "path": "plans/spotted.json",
@@ -6960,6 +6971,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "team-sentence-short",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_pane_lines.py\tNot done: the pane first-screen parity test\tFORGE-BOARD-2/PANE",
+      "kind": "bug",
+      "path": "tests/test_board_pane_lines.py",
+      "line": 40,
+      "text": "Not done: the pane first-screen parity test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PANE",
       "status": "open",
       "closed_by": null
     },
