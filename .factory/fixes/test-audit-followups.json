@@ -92,7 +92,7 @@
     "status": "blocked"
   },
   "round": 5,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:42.456146+00:00",
@@ -108,9 +108,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "The test audit left four follow-ups: a guide test copying about 110 is stuck. It should deliver: The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards\nTwo rounds in a row left the review finding \"Not done: proof list\" in tests/test_mod_guide.py.\nThe worker tried: Review of test-audit-followups: blocked; Keep main's Forge pin, generated files and plan records.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "Owner chose one more round with the same worker: the last blocker is a missing proof list",
     "tool": "codex",
-    "wait_id": "54ac144e-eb2d-4c86-98f0-82e2069aa40c"
+    "wait_id": "54ac144e-eb2d-4c86-98f0-82e2069aa40c",
+    "worker_round": 5
   },
   "stuck": {
     "close": "97f4aec5-3b2c-48ff-a402-e67a00f5229f",
