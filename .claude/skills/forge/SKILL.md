@@ -281,13 +281,30 @@ matches the JSON: every story and fix sorted needs you, blocked, in progress, pl
 yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
 fix and plan. It uses the full window, has light and dark themes and stacks to one column below
 720px. Each call reads current state without a history cache.
+The page's first screen answers what is in progress, what needs a person, what is stuck and when
+the work can go live, on one time axis with a today line: the team sentence, the labelled totals,
+then Needs you (an amber bar for each wait), In progress (each story or fix as a runway, solid
+where working, thin where waiting, dotted where unknown) and Blocked or slow, five rows each with
+"and N more" opening the rest, then Pace with go-live as a date band. Every row opens in place to
+its time split, round lines and who started, approved and merged it. Below the map, the team and
+each person show merged pull requests per week, through and around Forge, in alphabetical order,
+beside the pull requests merged around Forge in the last 7 days.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
 task IDs in the plan are ignored by both boards.
-The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
-external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
-parts, plain titles, labelled states and `waits_for` item references, including old merged
-dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
-distinguish merged, running, waiting, can start now and not started. Startability and scope
+The HTML page also draws one inline dependency graph of every roadmap story and stage timelines, without scripts or
+external assets. `forge board --json` supplies `dependency_maps`: one entry per roadmap story
+with `planned` (false for a story with no plan yet, which has no parts), `done` (its finished
+parts) and its full planned parts, plain titles, labelled states and `waits_for` item references,
+including old merged dependencies omitted from active rows. Each unfinished part has `column`:
+0 when it waits on nothing unfinished, else one more than the largest column it waits on, across
+stories, so parts in one column can run at the same time; parts that wait on each other share a
+column and say so in `note`. Finished parts have a null `column`. When fixes are open, an entry
+with `kind: "fixes"` lists them in column 0 with `running` and `started_on` (the story part a
+stacked fix was started on). The graph draws the Fixes row first, then a row per story with
+parts placed by column and arrows to the waiting part, finished parts folded into "N done",
+finished stories and stories with no plan as small boxes. It keeps its own size and fills a
+laptop-wide window; a narrow window scrolls it sideways inside its box. Shapes and labels
+distinguish running, waiting, can start now and not started. Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
 `go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and
@@ -388,12 +405,18 @@ their totals, because their intervals may overlap.
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
 categories rather than adding overlapping stage timers. The board page shows these same
 details. The pull request's **How it went** section carries intervals, review rounds (including
-clean reviews), and waits with their ends. Close and merge retain observations from other
+clean reviews), and waits with their ends. The shared record has a fixed size: while it is over, the oldest
+detail of any kind (round lines, intervals, then raw events such as repeated CI waits) folds into
+one "Rounds 1–N" line of totals and finding counts, oldest first; the newest round keeps its own numbered line,
+and its folded retries add to it. Free text in each entry is cut to 300 characters, and a round
+too big on its own, such as a huge review, folds whole into its line. Live progress stays local. So a
+long item stays inside GitHub's body limit, and folding never changes its total time. Close and merge retain observations from other
 checkouts and recompute repeated findings and overlapping time. The board reads this shared
 record alongside local observations; `source` says which it had. A GitHub merge ends the last
 wait at its merge time and names its merger. Story time counts each instant once: working when
 any part or recorded plan read is working, waiting when none is working and any is waiting,
-otherwise unknown. Human times use rounded plain units; JSON keeps raw seconds. Rebuilt history
+otherwise unknown. Inside a part's folded time range, the story's split between working and
+waiting is approximate; the totals stay exact. Human times use rounded plain units; JSON keeps raw seconds. Rebuilt history
 keeps its label and missing evidence remains unknown. New repos get this at init; existing
 repos, including earlier adoptions, get it on upgrade and sync.
 Worker questions and their answers refresh an existing pull request's record; a question before
