@@ -10,7 +10,7 @@
   },
   "done_when": "The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real cause, not by skipping it",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
