@@ -1,8 +1,10 @@
 ---
 slug: live-notes
 title: A coordinator's note reaches a running worker at once
-status: draft
+status: confirmed
 saved: 2026-10-14T13:03:30.999562+00:00
+confirmed_by: "Ravi"
+confirmed_hash: 64210bbc2d9841daa7106b4fb989eb710212dffeccf63d169d4253200ea13358
 ---
 
 # A coordinator's note reaches a running worker at once
