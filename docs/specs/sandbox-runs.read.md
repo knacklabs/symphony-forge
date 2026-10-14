@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T12:06:43.213298+00:00
-seconds: 97.107
-read_hash: 9ab103c67b500f305b6aa744969c355ccf2ce00d
-round: 30
-passed: yes
-doc_seen: 9ab103c67b500f305b6aa744969c355ccf2ce00d
+read_at: 2026-10-14T12:21:44.765538+00:00
+seconds: 177.055
+read_hash: 3bd366ebb2f8d629aef2212e6458d3b4c5994e0d
+round: 31
+passed: no
+doc_seen: 3bd366ebb2f8d629aef2212e6458d3b4c5994e0d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9d0949ab5aa834e7bbcaf97b181ea1d5e0eced82
+notes_seen: 1f7b16cbd4ca40ebb172bc39cf6c8ecf92597955
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -256,3 +256,10 @@ No findings.
 ## Round 30
 
 No findings.
+
+## Round 31
+
+29. Blocking: Turning sandbox runs off cannot complete after Mainline refuses a bundle.
+    Raise: Plan gap. [The new bundle rule](/docs/specs/sandbox-runs.md:64) retains refused results without pushing them—for example, a round changing `.github/workflows`. But [turning it off](/docs/specs/sandbox-runs.md:219) now waits until Mainline has pushed every finished round. That refusal can never satisfy the cleanup condition. The spec needs a recovery path for refused results that also permits shutdown.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut

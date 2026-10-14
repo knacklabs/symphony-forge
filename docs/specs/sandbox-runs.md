@@ -62,8 +62,9 @@ The owner chose each of these on 14 October 2026:
    pushes the bundle with a GitHub App installation token for that one repo, with contents and
    pull-request permissions and no workflows permission. The token never enters the sandbox. Mainline
    keeps a round's result until its push succeeds and Forge has fetched it; then it deletes it. If the
-   checks refuse a bundle, Mainline pushes nothing, the item shows the reason in Needs you, and the
-   round's result waits for the developer.
+   checks refuse a bundle, Mainline pushes nothing and the item shows the reason in Needs you. Forge
+   then collects the refused bundle into a local branch, where the developer reviews it and pushes it
+   with their own GitHub access, or discards it; either choice clears the result.
 3. **Model access: each tool's own sign-in.** A Codex round carries the developer's current ChatGPT
    login into the run and wipes it when the run ends; OpenAI supports that login on remote machines.
    A Claude round uses the team's Anthropic API key from Mainline's vault, because Anthropic does not
@@ -217,7 +218,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   names the waiting results, and only the team's own choice deletes one.
 - **Turning it off.** A fix turns it off. Forge first lets running rounds finish (or stops them when
   the team asks). It waits until Mainline has pushed every finished round and Forge has fetched it, and
-  it collects what stopped sandboxes left. Only then does
+  it collects what stopped sandboxes left and every refused bundle into local branches. Only then does
   it delete the repo's sandboxes, images, caches and stored results in Mainline (the code copies), and it
   says what it removed. No commit is lost. The delete needs an Owner's Mainline sign-in; when a
   Developer turns it off, new runs stop and the delete waits for an Owner on Mainline's dashboard.
