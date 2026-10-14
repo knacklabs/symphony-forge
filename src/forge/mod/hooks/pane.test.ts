@@ -308,6 +308,16 @@ const grouped = {
     { ...plain, id: 'later', kind: 'fix', title: 'Later fix', state: 'to do' },
   ],
 }
+// Boards whose only active work is ready to merge, or only in planning, still get a summary line.
+const quiet = { stories: { planning: 0 }, parts: { 'ready to merge': 0, 'in progress': 0 }, fixes: { 'ready to merge': 0, 'in progress': 0 } }
+const readyOnly = {
+  ...grouped, team: { ...grouped.team, counts: { ...quiet, parts: { 'ready to merge': 1, 'in progress': 0 }, fixes: { 'ready to merge': 1, 'in progress': 0 } }, go_live: null },
+  items: [grouped.items[3], { ...grouped.items[3], id: 'polish', title: 'Polish the guide' }],
+}
+const planningOnly = {
+  ...grouped, team: { ...grouped.team, counts: { ...quiet, stories: { planning: 3 } }, go_live: null },
+  items: ['A', 'B', 'C'].map(id => ({ ...plain, id, kind: 'story', title: `Plan ${id}`, stage: 'planning', state: 'planning' })),
+}
 
 function host(on: On, surface: 'terminal' | 'desktop', run: (argv: readonly string[]) => unknown) {
   mock.store(on)
@@ -325,7 +335,8 @@ function host(on: On, surface: 'terminal' | 'desktop', run: (argv: readonly stri
 for (const surface of ['terminal', 'desktop'] as const) {
   test(`${surface} Board tab draws the summary and all four groups with their steps`, async ($, on) => {
     mock.clock(on)
-    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'board' ? grouped : argv[1] === 'next' ? following : lanes) } }))
+    let shown: object = grouped
+    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'board' ? shown : argv[1] === 'next' ? following : lanes) } }))
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     const drawn = JSON.stringify(await ui.drawn())
@@ -338,6 +349,15 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect([...at].sort((a, b) => a - b)).toEqual(at)
     expect(drawn).toContain('  ASK')
     expect(drawn).not.toContain('Later fix')
+    // A live plan read keeps the story in planning, but its running row draws under MOVING.
+    const reading = { ...planningOnly, items: [{ ...planningOnly.items[0], activity: { status: 'running', action: 'read' } }] }
+    // A newly approved story is building with every part still to do.
+    const approved = { ...planningOnly, items: [{ ...plain, id: 'NEW', kind: 'story', title: 'New story', children: ['ONE', 'TWO'].map(id => ({ ...plain, id: `NEW/${id}`, kind: 'task', title: `Part ${id}`, state: 'to do' })) }] }
+    for (const [board, line] of [[readyOnly, '2 ready to merge'], [planningOnly, '3 waiting'], [reading, '1 moving'], [approved, '2 waiting']] as const) {
+      shown = board
+      await $.session.start({ cwd: '/repo', surface, isInteractive: true })
+      expect(JSON.stringify(await ui.drawn())).toContain(line)
+    }
   })
 
   test(`${surface} Board tab shows the error when the very first refresh times out`, async ($, on) => {

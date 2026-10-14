@@ -584,6 +584,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/board.html\tMobile time-axis labels overlap\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "src/forge/board.html",
+      "line": 90,
+      "text": "Mobile time-axis labels overlap",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -602,6 +613,17 @@
       "text": "An ongoing story loses older parts from its time runway",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tBoard crashes whenever a fix is present\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 683,
+      "text": "Board crashes whenever a fix is present",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
       "status": "open",
       "closed_by": null
     },
@@ -859,6 +881,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: no-plan box for a newly started story\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 651,
+      "text": "Not done: no-plan box for a newly started story",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: plan_read from the story's current read record\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -866,6 +899,17 @@
       "text": "Not done: plan_read from the story's current read record",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: planned stories in roadmap order\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 650,
+      "text": "Not done: planned stories in roadmap order",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
       "status": "open",
       "closed_by": null
     },
@@ -1156,6 +1200,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: finished planned stories remain in roadmap order\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 71,
+      "text": "Not done: finished planned stories remain in roadmap order",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: functional check\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 67,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: stacked fixes lose the part name in their visible label\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 104,
+      "text": "Not done: stacked fixes lose the part name in their visible label",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_trends.py\tPeople with the same GitHub name are merged into one trend row\tFORGE-BOARD-2/TRENDS",
       "kind": "bug",
       "path": "src/forge/board_trends.py",
@@ -1178,6 +1255,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_visuals.py\tNot done: in-place story details omit round lines\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 130,
+      "text": "Not done: in-place story details omit round lines",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_visuals.py\tNot done: one-line graph key\tFORGE-BOARD-2/PAGE",
       "kind": "bug",
       "path": "src/forge/board_visuals.py",
@@ -1185,6 +1273,17 @@
       "text": "Not done: one-line graph key",
       "from": "blocking",
       "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_visuals.py\tNot done: the first screen fits at 1440 by 900\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "src/forge/board_visuals.py",
+      "line": 192,
+      "text": "Not done: the first screen fits at 1440 by 900",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
       "status": "open",
       "closed_by": null
     },
@@ -3466,6 +3565,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test Moving rows' next steps through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 306,
+      "text": "Not done: Test Moving rows' next steps through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test expanded waiting rows through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 81,
+      "text": "Not done: Test expanded waiting rows through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test the Board summary when only ready or waiting items remain\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 303,
+      "text": "Not done: Test the Board summary when only ready or waiting items remain",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.test.ts",
@@ -3484,6 +3616,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: Expanded waiting rows omit their state and next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 64,
+      "text": "Not done: Expanded waiting rows omit their state and next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -3543,6 +3686,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNeeds you gives worker questions a command that refuses the answerless call\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 117,
+      "text": "Needs you gives worker questions a command that refuses the answerless call",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
@@ -3550,6 +3704,83 @@
       "text": "Not done: /forge returns the summary of detail 2",
       "from": "blocking",
       "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Board rows do not show the actual next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 106,
+      "text": "Not done: Board rows do not show the actual next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Moving Board rows omit their next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 129,
+      "text": "Not done: Moving Board rows omit their next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Ready-to-merge rows can omit their state and next step\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 131,
+      "text": "Not done: Ready-to-merge rows can omit their state and next step",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Review stops and worker questions are missing from Needs you\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 108,
+      "text": "Not done: Review stops and worker questions are missing from Needs you",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 156,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
+      "from": "blocking",
+      "item": "pane-summary-always",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 152,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+      "from": "blocking",
+      "item": "pane-summary-always",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tReady rows on another machine suggest the wrong merge action\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 133,
+      "text": "Ready rows on another machine suggest the wrong merge action",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -4001,6 +4232,28 @@
       "text": "Published story state can hide locally recorded question touches in the context hook.",
       "from": "worker",
       "item": "skipped-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance covers multiple problems and interface changes\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 158,
+      "text": "Recorded allowance covers multiple problems and interface changes",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance does not match the interface and timeout changes\tpane-grouped-board",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 158,
+      "text": "Recorded allowance does not match the interface and timeout changes",
+      "from": "blocking",
+      "item": "pane-grouped-board",
       "status": "open",
       "closed_by": null
     },
@@ -5501,6 +5754,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The guide tells agents to add overlapping story parts\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 391,
+      "text": "Not done: The guide tells agents to add overlapping story parts",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/skill.md\tNot done: close skips always_test for settings and docs changes\tclose-always-tests",
       "kind": "bug",
       "path": "src/forge/templates/skill.md",
@@ -5633,6 +5897,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tClean review snapshots still grow without bound\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 420,
+      "text": "Clean review snapshots still grow without bound",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tDeeply nested pull request records can crash board and next\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -5644,6 +5919,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tFolding an open owner wait loses its remaining waiting time\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 558,
+      "text": "Folding an open owner wait loses its remaining waiting time",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tFolding intervals makes recorded story work appear as unknown time\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 514,
+      "text": "Folding intervals makes recorded story work appear as unknown time",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tMalformed pull request records can crash board and next\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -5653,6 +5950,83 @@
       "item": "FORGE-BOARD-2/RECORD",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: A large latest review escapes the fixed time record limit\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 540,
+      "text": "Not done: A large latest review escapes the fixed time record limit",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Current-round progress leaves the time record unbounded\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 497,
+      "text": "Not done: Current-round progress leaves the time record unbounded",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Large clean reviews bypass the fixed time-record limit\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 427,
+      "text": "Not done: Large clean reviews bypass the fixed time-record limit",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Legacy Unicode history can exceed the pull request body limit\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 407,
+      "text": "Not done: Legacy Unicode history can exceed the pull request body limit",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 478,
+      "text": "Not done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request time record has a fixed size limit\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 496,
+      "text": "Not done: The pull request time record has a fixed size limit",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 497,
+      "text": "Not done: The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tNot done: item time is not split into working, waiting and unknown seconds\tFORGE-BOARD-2/RECORD",
@@ -5772,6 +6146,28 @@
       "text": "Refreshing a PR from an older checkout erases newer clean readiness",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tStandard: Input is checked where it enters\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 645,
+      "text": "Standard: Input is checked where it enters",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tStory breakdown miscounts overlapping folded task time\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 659,
+      "text": "Story breakdown miscounts overlapping folded task time",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
       "status": "open",
       "closed_by": null
     },
@@ -6227,6 +6623,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_graph.py\tNot done: missing-reference graph test\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "tests/test_board_graph.py",
+      "line": 65,
+      "text": "Not done: missing-reference graph test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_pace.py\tNot done: proof list\tteam-sentence-short",
       "kind": "bug",
       "path": "tests/test_board_pace.py",
@@ -6249,6 +6656,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_runway.py\tNot done: browser proof for team trends and around-list details\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 378,
+      "text": "Not done: browser proof for team trends and around-list details",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tNot done: browser proof that \u201cand N more\u201d reveals the remaining rows\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 352,
+      "text": "Not done: browser proof that \u201cand N more\u201d reveals the remaining rows",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_board_runway.py\tNot done: test needs-you and blocked row ordering\tFORGE-BOARD-2/PAGE",
       "kind": "bug",
       "path": "tests/test_board_runway.py",
@@ -6267,6 +6696,17 @@
       "text": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
       "from": "blocking",
       "item": "team-sentence-short",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tNot done: trends browser test\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 374,
+      "text": "Not done: trends browser test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
       "status": "open",
       "closed_by": null
     },
@@ -6344,6 +6784,17 @@
       "text": "Not done: board test still rejects a review running alongside tests",
       "from": "blocking",
       "item": "board-test-review-row",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_trends.py\tNot done: trends browser test\tFORGE-BOARD-2/RUNWAY",
+      "kind": "bug",
+      "path": "tests/test_board_trends.py",
+      "line": 69,
+      "text": "Not done: trends browser test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/RUNWAY",
       "status": "open",
       "closed_by": null
     },
@@ -7019,6 +7470,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: End-to-end proof for grouped pane and first refresh error\tpane-grouped-board",
+      "kind": "bug",
+      "path": "tests/test_fix_pane_grouped_board.py",
+      "line": 25,
+      "text": "Not done: End-to-end proof for grouped pane and first refresh error",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: Test the worker-question and ready-row paths through the Board tab\tpane-grouped-board",
+      "kind": "bug",
+      "path": "tests/test_fix_pane_grouped_board.py",
+      "line": 119,
+      "text": "Not done: Test the worker-question and ready-row paths through the Board tab",
+      "from": "blocking",
+      "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_fix_plain_english_skill.py\tNot done: the checker test cannot detect a lost semicolon rule\tplain-english-skill",
       "kind": "bug",
       "path": "tests/test_fix_plain_english_skill.py",
@@ -7675,6 +8148,83 @@
       "text": "Not done: the pull-request body-limit command test passes",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: proof list\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 56,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove a large latest review stays within the fixed record size\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 43,
+      "text": "Not done: prove a large latest review stays within the fixed record size",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove repeated close retries stay bounded\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 51,
+      "text": "Not done: prove repeated close retries stay bounded",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove the board's total time after old rounds fold\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 140,
+      "text": "Not done: prove the board's total time after old rounds fold",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 98,
+      "text": "Not done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 104,
+      "text": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget\tpr-time-record-summaries",
+      "kind": "bug",
+      "path": "tests/test_pull_request_time_summaries.py",
+      "line": 255,
+      "text": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
+      "from": "blocking",
+      "item": "pr-time-record-summaries",
       "status": "open",
       "closed_by": null
     },
@@ -9633,534 +10183,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test Moving rows' next steps through the Board tab\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.test.ts",
-      "line": 306,
-      "text": "Not done: Test Moving rows' next steps through the Board tab",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test expanded waiting rows through the Board tab\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.test.ts",
-      "line": 81,
-      "text": "Not done: Test expanded waiting rows through the Board tab",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: Test the Board summary when only ready or waiting items remain\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.test.ts",
-      "line": 303,
-      "text": "Not done: Test the Board summary when only ready or waiting items remain",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: Expanded waiting rows omit their state and next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/pane.ts",
-      "line": 64,
-      "text": "Not done: Expanded waiting rows omit their state and next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNeeds you gives worker questions a command that refuses the answerless call\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 117,
-      "text": "Needs you gives worker questions a command that refuses the answerless call",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Board rows do not show the actual next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 106,
-      "text": "Not done: Board rows do not show the actual next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Moving Board rows omit their next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 129,
-      "text": "Not done: Moving Board rows omit their next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Ready-to-merge rows can omit their state and next step\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 131,
-      "text": "Not done: Ready-to-merge rows can omit their state and next step",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Review stops and worker questions are missing from Needs you\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 108,
-      "text": "Not done: Review stops and worker questions are missing from Needs you",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tReady rows on another machine suggest the wrong merge action\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 133,
-      "text": "Ready rows on another machine suggest the wrong merge action",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance covers multiple problems and interface changes\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 158,
-      "text": "Recorded allowance covers multiple problems and interface changes",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tRecorded allowance does not match the interface and timeout changes\tpane-grouped-board",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 158,
-      "text": "Recorded allowance does not match the interface and timeout changes",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: End-to-end proof for grouped pane and first refresh error\tpane-grouped-board",
-      "kind": "bug",
-      "path": "tests/test_fix_pane_grouped_board.py",
-      "line": 25,
-      "text": "Not done: End-to-end proof for grouped pane and first refresh error",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_pane_grouped_board.py\tNot done: Test the worker-question and ready-row paths through the Board tab\tpane-grouped-board",
-      "kind": "bug",
-      "path": "tests/test_fix_pane_grouped_board.py",
-      "line": 119,
-      "text": "Not done: Test the worker-question and ready-row paths through the Board tab",
-      "from": "blocking",
-      "item": "pane-grouped-board",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tBoard crashes whenever a fix is present\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 683,
-      "text": "Board crashes whenever a fix is present",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: no-plan box for a newly started story\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 651,
-      "text": "Not done: no-plan box for a newly started story",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: planned stories in roadmap order\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 650,
-      "text": "Not done: planned stories in roadmap order",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_graph.py\tNot done: finished planned stories remain in roadmap order\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board_graph.py",
-      "line": 71,
-      "text": "Not done: finished planned stories remain in roadmap order",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/board_graph.py\tNot done: functional check\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board_graph.py",
-      "line": 67,
-      "text": "Not done: functional check",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_graph.py\tNot done: stacked fixes lose the part name in their visible label\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board_graph.py",
-      "line": 104,
-      "text": "Not done: stacked fixes lose the part name in their visible label",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_graph.py\tNot done: missing-reference graph test\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "tests/test_board_graph.py",
-      "line": 65,
-      "text": "Not done: missing-reference graph test",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.html\tMobile time-axis labels overlap\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "src/forge/board.html",
-      "line": 90,
-      "text": "Mobile time-axis labels overlap",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_visuals.py\tNot done: in-place story details omit round lines\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "src/forge/board_visuals.py",
-      "line": 130,
-      "text": "Not done: in-place story details omit round lines",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_visuals.py\tNot done: the first screen fits at 1440 by 900\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "src/forge/board_visuals.py",
-      "line": 192,
-      "text": "Not done: the first screen fits at 1440 by 900",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/skill.md\tNot done: The guide tells agents to add overlapping story parts\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/templates/skill.md",
-      "line": 391,
-      "text": "Not done: The guide tells agents to add overlapping story parts",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tClean review snapshots still grow without bound\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 420,
-      "text": "Clean review snapshots still grow without bound",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tFolding an open owner wait loses its remaining waiting time\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 558,
-      "text": "Folding an open owner wait loses its remaining waiting time",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tFolding intervals makes recorded story work appear as unknown time\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 514,
-      "text": "Folding intervals makes recorded story work appear as unknown time",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: A large latest review escapes the fixed time record limit\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 540,
-      "text": "Not done: A large latest review escapes the fixed time record limit",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: Current-round progress leaves the time record unbounded\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 497,
-      "text": "Not done: Current-round progress leaves the time record unbounded",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: Large clean reviews bypass the fixed time-record limit\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 427,
-      "text": "Not done: Large clean reviews bypass the fixed time-record limit",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: Legacy Unicode history can exceed the pull request body limit\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 407,
-      "text": "Not done: Legacy Unicode history can exceed the pull request body limit",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 478,
-      "text": "Not done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request time record has a fixed size limit\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 496,
-      "text": "Not done: The pull request time record has a fixed size limit",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 497,
-      "text": "Not done: The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tStandard: Input is checked where it enters\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 645,
-      "text": "Standard: Input is checked where it enters",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/time_records.py\tStory breakdown miscounts overlapping folded task time\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 659,
-      "text": "Story breakdown miscounts overlapping folded task time",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_runway.py\tNot done: browser proof for team trends and around-list details\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "tests/test_board_runway.py",
-      "line": 378,
-      "text": "Not done: browser proof for team trends and around-list details",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_runway.py\tNot done: browser proof that \u201cand N more\u201d reveals the remaining rows\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "tests/test_board_runway.py",
-      "line": 352,
-      "text": "Not done: browser proof that \u201cand N more\u201d reveals the remaining rows",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_board_runway.py\tNot done: trends browser test\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "tests/test_board_runway.py",
-      "line": 374,
-      "text": "Not done: trends browser test",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_trends.py\tNot done: trends browser test\tFORGE-BOARD-2/RUNWAY",
-      "kind": "bug",
-      "path": "tests/test_board_trends.py",
-      "line": 69,
-      "text": "Not done: trends browser test",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: proof list\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 56,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove a large latest review stays within the fixed record size\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 43,
-      "text": "Not done: prove a large latest review stays within the fixed record size",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove repeated close retries stay bounded\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 51,
-      "text": "Not done: prove repeated close retries stay bounded",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: prove the board's total time after old rounds fold\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 140,
-      "text": "Not done: prove the board's total time after old rounds fold",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 98,
-      "text": "Not done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 104,
-      "text": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pull_request_time_summaries.py\tNot done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget\tpr-time-record-summaries",
-      "kind": "bug",
-      "path": "tests/test_pull_request_time_summaries.py",
-      "line": 255,
-      "text": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
-      "from": "blocking",
-      "item": "pr-time-record-summaries",
       "status": "open",
       "closed_by": null
     }

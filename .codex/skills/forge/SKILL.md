@@ -528,8 +528,9 @@ automatically at 144 columns, or 110 after the person has opened it once.
 The strip below that wide-screen threshold ends with `/forge for the board`.
 The pane's Board tab, on the terminal and the Desktop app's Code tab alike, opens
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
-Each part shows only when the board's `team` fact behind it is known and not zero; an
-older Forge with no `team` shows no summary line. Groups follow in this order, each only
+Each part shows only when the board's `team` fact behind it is known and not zero; when
+none of them applies, the line counts the rows the tab shows in its own group words instead,
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Groups follow in this order, each only
 when it has items: NEEDS YOU (rows whose `needs_person` is true),
 STUCK (no activity past the board's stall threshold, with the longest wait in days),
 MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
