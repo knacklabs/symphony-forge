@@ -694,17 +694,6 @@
       "closed_by": "dismissed"
     },
     {
-      "key": "bug\tplans/spotted.json\tThe unrelated spotted-record rewrite is outside ONCLASH scope\tFORGE-MAINONCE-1/ONCLASH",
-      "kind": "bug",
-      "path": "plans/spotted.json",
-      "line": 9486,
-      "text": "The unrelated spotted-record rewrite is outside ONCLASH scope",
-      "from": "blocking",
-      "item": "FORGE-MAINONCE-1/ONCLASH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tpyproject.toml\tStandard: Fewest moving parts\treview-images",
       "kind": "bug",
       "path": "pyproject.toml",
@@ -1519,17 +1508,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/checks.py\tA failed mergeability lookup can let green checks reach Ready\tFORGE-MAINONCE-1/ONCLASH",
-      "kind": "bug",
-      "path": "src/forge/checks.py",
-      "line": 73,
-      "text": "A failed mergeability lookup can let green checks reach Ready",
-      "from": "blocking",
-      "item": "FORGE-MAINONCE-1/ONCLASH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/checks.py\tBound doctor's job-history requests\tqueued-not-stop",
       "kind": "bug",
       "path": "src/forge/checks.py",
@@ -1603,17 +1581,6 @@
       "text": "A blocked review is shown as waiting for checks when its tests pass on retry",
       "from": "blocking",
       "item": "review-alongside-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tA draft pull request can reach Ready while still behind a required base\tFORGE-MAINONCE-1/ONCLASH",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 655,
-      "text": "A draft pull request can reach Ready while still behind a required base",
-      "from": "blocking",
-      "item": "FORGE-MAINONCE-1/ONCLASH",
       "status": "open",
       "closed_by": null
     },
@@ -2010,17 +1977,6 @@
       "text": "Not done: an unidentified failure does not break the consecutive-round count",
       "from": "blocking",
       "item": "stuck-worker-asks",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: bring main in when a pull request becomes BEHIND during close\tFORGE-MAINONCE-1/ONCLASH",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 412,
-      "text": "Not done: bring main in when a pull request becomes BEHIND during close",
-      "from": "blocking",
-      "item": "FORGE-MAINONCE-1/ONCLASH",
       "status": "open",
       "closed_by": null
     },

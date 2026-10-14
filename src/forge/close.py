@@ -411,15 +411,15 @@ def close(args: argparse.Namespace) -> int:
         pr = _publish(top, item, state, branch, default, pr, result, evidence)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
-        # DRAFT hides an up-to-date requirement until GitHub can judge the ready pull request.
-        pr = _pull_request(top, branch) or pr
-        _merge_default(top, item, branch, default, pr)
-        if repo.git("rev-parse", "HEAD", cwd=top) != head:
-            repo.resume_pin(top, repo.config(top)["version"], getattr(args, "land_rounds", None),
-                            accepted=choice == "accept", before=getattr(args, "pin_before", None))
-            again = argparse.Namespace(**vars(args))
-            again.dismiss = again.because = again.resolve = again.reason = None
-            return close(again)
+    # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
+    pr = _pull_request(top, branch) or pr
+    _merge_default(top, item, branch, default, pr)
+    if repo.git("rev-parse", "HEAD", cwd=top) != head:
+        repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
+                        accepted=choice == "accept", before=getattr(args, "pin_before", None))
+        again = argparse.Namespace(**vars(args))
+        again.dismiss = again.because = again.resolve = again.reason = None
+        return close(again)
     merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)

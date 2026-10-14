@@ -37,13 +37,18 @@ def _open_pr(env, content, *, mergeable="MERGEABLE", merge_state="CLEAN"):
     }]))
 
 
-def _draft_pull_request(env, content, require_current):
+def _draft_pull_request(env, content, require_current, *, is_draft=True, advance_on_checks=None):
     remote = env.repo.git("remote", "get-url", "origin")
     state = env.repo.bin / "draft-pr.json"
-    state.write_text(json.dumps({"body": content, "isDraft": True}), encoding="utf-8")
+    state.write_text(json.dumps({"body": content, "isDraft": is_draft}), encoding="utf-8")
     code = '''import json, pathlib, subprocess, sys
 args = sys.argv[1:]
 here = pathlib.Path(__file__).resolve().parent
+if (ADVANCE_ON_CHECKS is not None and args[:1] == ["api"]
+        and any("/check-runs" in arg for arg in args)
+        and not (here / "main-advanced-during-checks").exists()):
+    subprocess.run(["git", "push", "-q", "origin", "main"], cwd=ADVANCE_ON_CHECKS, check=True)
+    (here / "main-advanced-during-checks").write_text("advanced", encoding="utf-8")
 if args[:2] in (["pr", "list"], ["pr", "view"], ["pr", "ready"], ["pr", "edit"]):
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(args) + "\\n")
@@ -71,7 +76,8 @@ if args[:2] in (["pr", "list"], ["pr", "view"], ["pr", "ready"], ["pr", "edit"])
     elif args[:2] == ["pr", "view"]:
         print(json.dumps(pr))
     sys.exit(0)
-'''.replace("REMOTE", json.dumps(remote)).replace("REQUIRE_CURRENT", repr(require_current))
+'''.replace("REMOTE", json.dumps(remote)).replace("REQUIRE_CURRENT", repr(require_current)).replace(
+    "ADVANCE_ON_CHECKS", json.dumps(advance_on_checks.as_posix()) if advance_on_checks else "None")
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + fallback)
 
@@ -103,6 +109,23 @@ def _draft_clash(env, require_current):
     advanced = env.commit(env.repo.path, "NEWS.md", "New news from another change\n")
     env.repo.git("push", "-q", "origin", "main")
     return item, where, advanced, tested
+
+
+def _clash_during_checks(env, require_current):
+    env.commit(env.repo.path, "NEWS.md", "Old news\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
+    first = env.close(item)
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert "Ready:" in first.stdout
+    created = env.gh_calls("pr", "create")[-1]
+    writer = env.tmp / "main-during-checks"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(writer))
+    advanced = env.commit(writer, "NEWS.md", "Main advanced while checks ran\n")
+    _draft_pull_request(env, body(created), require_current,
+                        is_draft=False, advance_on_checks=writer)
+    env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
+    return item, where, advanced
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
@@ -140,7 +163,8 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
-@pytest.mark.parametrize("clash", ["trial", "CONFLICTING", "BEHIND", "DRAFT", "DRAFT-clean"])
+@pytest.mark.parametrize("clash", ["trial", "CONFLICTING", "BEHIND", "DRAFT", "DRAFT-clean",
+                                   "LATE-BEHIND", "LATE-clean"])
 def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, previous, clash):
     client(env, previous)
     _green_pull_request(env)
@@ -165,6 +189,8 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         _open_pr(env, "", mergeable="CONFLICTING", merge_state="DIRTY")
     elif clash.startswith("DRAFT"):
         item, where, advanced, tested = _draft_clash(env, clash == "DRAFT")
+    elif clash.startswith("LATE"):
+        item, where, advanced = _clash_during_checks(env, clash == "LATE-BEHIND")
     else:
         item, where = env.start_fix()
         advanced = env.commit(env.repo.path, "NEWS.md", "Main has moved\n")
@@ -183,10 +209,10 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
 
     assert first.returncode == 0, first.stdout + first.stderr
     assert "Ready:" in first.stdout
-    if clash != "DRAFT-clean":
+    if clash not in ("DRAFT-clean", "LATE-clean"):
         env.repo.git("merge-base", "--is-ancestor", advanced, "HEAD", cwd=where)
     merges = env.repo.git("rev-list", "--merges", "origin/main..HEAD", cwd=where).splitlines()
-    assert len(merges) == (0 if clash == "DRAFT-clean" else 1)
+    assert len(merges) == (0 if clash in ("DRAFT-clean", "LATE-clean") else 1)
     if merges:
         assert len(env.repo.git("rev-list", "--parents", "-1", merges[0], cwd=where).split()) == 3
     if clash == "trial":
@@ -213,14 +239,34 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
         assert env.repo.git("show", f"{test_heads[-1]}:app.py", cwd=where) == "print('hello')"
         pushed_head = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme").split()[0]
         assert any(f"/commits/{pushed_head}/check-runs" in call[-1] for call in env.gh_calls("api"))
+    elif clash.startswith("LATE"):
+        assert (env.repo.bin / "main-advanced-during-checks").exists()
+        assert (where / "NEWS.md").read_text("utf-8") == (
+            "Main advanced while checks ran\n" if clash == "LATE-BEHIND" else "Old news\n")
+        looks = [json.loads(line) for line in
+                 (env.repo.bin / "draft-pr-looks.jsonl").read_text("utf-8").splitlines()]
+        assert looks[0]["args"][:2] == ["pr", "list"] and looks[0]["status"] == "CLEAN"
+        assert not any(look["args"][:2] == ["pr", "ready"] for look in looks)
+        if clash == "LATE-BEHIND":
+            behind = next(n for n, look in enumerate(looks) if look["status"] == "BEHIND")
+            assert any(look["status"] == "CLEAN" for look in looks[behind + 1:])
+        else:
+            assert all(look["status"] == "CLEAN" for look in looks)
+        pushed_head = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme").split()[0]
+        assert any(f"/commits/{pushed_head}/check-runs" in call[-1] for call in env.gh_calls("api"))
+        for call in env.review_calls():
+            base = call["args"][call["args"].index("--base") + 1]
+            reviewed = env.repo.git("diff", "--name-only", f"{base}...{call['head']}", cwd=where)
+            assert {path for path in reviewed.splitlines()
+                    if not path.startswith((".factory/", "plans/"))} == {"app.py"}
     else:
         assert (where / "NEWS.md").read_text("utf-8") == "Main has moved\n"
     content = body((env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"))[-1])
-    if not clash.startswith("DRAFT"):
+    if not clash.startswith(("DRAFT", "LATE")):
         _open_pr(env, content)
     # GitHub now reports MERGEABLE and main moves on unrelated lines. The old
     # unconditional merge would add a second merge; this round must leave it out.
-    if clash != "DRAFT":  # the up-to-date rule still applies after the first required refresh
+    if clash not in ("DRAFT", "LATE-BEHIND"):  # the up-to-date rule still applies after refresh
         writer = env.tmp / "later-main"
         env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(writer))
         env.commit(writer, "AFTER.md", "Unrelated work after the clash\n")
