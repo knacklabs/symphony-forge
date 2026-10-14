@@ -3,12 +3,20 @@
   "branch": "fix/gain-three-follows-up",
   "done_when": "A note holds the work only at Harm 4 or 5 or Gain 5 (stop), or at Harm 3 or Gain 4 with Work 1 or 2 (fix this round); every other Gain 3 or 4 note becomes a follow-up fix and the work continues, and the README bar table, the guide and the reader and review instructions all say so",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T03:41:57.649841+00:00",
       "step": "start"
     }
   ],
-  "why": "A Gain 3 review note with little work holds the work for another round, and each fix round brings a fresh review with new Gain 3 notes, so items loop for many rounds (one fix tonight took 16) on test gaps and rare cases"
+  "stuck": {
+    "close": null,
+    "head": "23c3147df39659985b1fba3c870cfc89f251d7f2",
+    "keys": {},
+    "round": null
+  },
+  "why": "A Gain 3 review note with little work holds the work for another round, and each fix round brings a fresh review with new Gain 3 notes, so items loop for many rounds (one fix tonight took 16) on test gaps and rare cases",
+  "worker": "codex"
 }
