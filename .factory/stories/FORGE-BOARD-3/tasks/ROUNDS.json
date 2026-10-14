@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-3-ROUNDS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T19:31:58.599703+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "de7d78d72d3263889f1e691d992083c43dda0029",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
