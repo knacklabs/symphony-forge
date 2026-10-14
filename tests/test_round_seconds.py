@@ -93,7 +93,9 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
         assert [one["round"] for one in rounds] == [1, 2]
         for one in rounds:
             assert_seconds(one, {"work": 25, "in_line": 3,
-                                 "waiting_for_person": 7, "waiting_for_checks": 11 + one["round"]})
+                                 "waiting_for_person": 21 - one["round"],
+                                 "waiting_for_checks": 11 + one["round"]})
+            assert sum(one["seconds"].values()) == 60
         return
 
     configured_client(env, previous)
@@ -158,6 +160,11 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
         result["findings"] = [{"priority": "P2", "file": f"basket/{n}.py",
                                "title": f"Round {result['review_round']} finding {n}: " + "quantity detail " * 4}
                               for n in range(11)]
+    # This next round begins exactly an hour after round 200. No process runs
+    # in its gaps, which still belong to that round's elapsed time.
+    earlier.append({"events": [{"item": item, "id": "next-round-start", "round": 201,
+                                 "event": "work phase", "phase": "building",
+                                 "at": (began + timedelta(hours=201)).isoformat()}], "timings": []})
     write_history(env, earlier, append=True)
     env.commit(where, "app.py", "print('long history published')\n")
     closed = env.close(item)
@@ -180,7 +187,9 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
     assert rounds[0]["line"]
     for one in rounds[1:200]:
         assert_seconds(one, {"work": 25, "in_line": 3,
-                             "waiting_for_person": 7, "waiting_for_checks": 11 + one["round"]})
+                             "waiting_for_person": 3561 - one["round"],
+                             "waiting_for_checks": 11 + one["round"]})
+        assert sum(one["seconds"].values()) == 3600
     assert len(rounds) >= 201
     for one in rounds[200:]:
         assert_seconds(one)

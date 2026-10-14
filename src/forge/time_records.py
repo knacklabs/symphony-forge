@@ -22,7 +22,7 @@ RESUMED = "<!-- forge:history-resumed -->"
 SEEN = 300  # ponytail: a finding last seen over 300 findings ago counts as new again.
 RECORD_BUDGET = 20_000  # bytes of shared detail; numeric round history stays outside this budget.
 ROUND_CATEGORIES = {"work": CATEGORIES[:4], "in_line": ("waiting_in_line",),
-                    "waiting_for_person": ("waiting_for_owner",),
+                    "waiting_for_person": ("waiting_for_owner", "nothing_running"),
                     "waiting_for_checks": ("waiting_for_ci",)}
 
 
@@ -237,8 +237,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     attempts.sort(key=lambda current: (current["start"] is None, current["start"]))
 
     @functools.cache  # Called per interval and per timing; a long round has hundreds of each.
-    def attempt(number: int | None, at: datetime) -> int | None:
-        choices = [(index, r) for index, r in enumerate(attempts) if r["worker_round"] == number]
+    def attempt(number: int | None, at: datetime, *, idle: bool = False) -> int | None:
+        choices = [(index, r) for index, r in enumerate(attempts) if idle or r["worker_round"] == number]
         return next((index for index, r in reversed(choices) if r["start"] and r["start"] <= at),
                     choices[0][0] if choices else None)
 
@@ -282,7 +282,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 continue
             seconds = (b - a).total_seconds()
             totals[category] = (totals[category] or 0) + seconds
-            if (index := attempt(number, a)) is not None:
+            # Idle time has no run's round tag; it belongs to the latest started round.
+            if (index := attempt(number, a, idle=category == "nothing_running")) is not None:
                 by_category = per_attempt.setdefault(index, {})
                 by_category[category] = by_category.get(category, 0) + seconds
                 if category == "waiting_for_owner":
