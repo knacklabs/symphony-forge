@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-14T09:02:39.101741+00:00",
+      "because": "The owner chose a full build and confirmed the spec on 14 October 2026, so the goal is a confirmed spec on the roadmap, not a draft",
+      "done_when": "docs/specs/sandbox-runs.md is saved as a draft spec with the measured numbers, the payback for today and for an overload month, the five owner choices, the risks and when to build"
+    }
+  ],
   "base": "56747770778d0130faea34ba812abae4b6428090",
   "branch": "fix/sandbox-runs-spec",
-  "done_when": "docs/specs/sandbox-runs.md is saved as a draft spec with the measured numbers, the payback for today and for an overload month, the five owner choices, the risks and when to build",
+  "done_when": "docs/specs/sandbox-runs.md is a confirmed spec with the measured numbers, the payback for today and for an overload month from forge spec payback, the owner's choices, the risks, and its two roadmap items on plans/roadmap.json",
   "flagged": [
     "docs/specs/sandbox-runs.md"
   ],
