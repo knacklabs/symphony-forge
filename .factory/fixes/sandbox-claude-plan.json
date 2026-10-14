@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-14T13:49:26.168215+00:00",
+      "because": "The owner decided on 14 October 2026 that LLM API keys serve only runtime apps and agents",
+      "done_when": "docs/specs/sandbox-runs.md says Claude rounds use the developer's claude setup-token token from the vault, names the terms risk the owner accepted and the API key fallback, passes a cold read and is confirmed again"
+    }
+  ],
   "base": "ab3992272b5b33feb0c6a9f89df480b607894e20",
   "branch": "fix/sandbox-claude-plan",
-  "done_when": "docs/specs/sandbox-runs.md says Claude rounds use the developer's claude setup-token token from the vault, names the terms risk the owner accepted and the API key fallback, passes a cold read and is confirmed again",
+  "done_when": "docs/specs/sandbox-runs.md says Claude rounds use the developer's claude setup-token token from the vault, names the terms risk the owner accepted, uses no API keys for build work, passes a cold read and is confirmed again",
   "kind": "fix",
   "status": "started",
   "steps": [
