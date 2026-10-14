@@ -13,7 +13,7 @@
       "gain": 4,
       "harm": 2,
       "line": 169,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -23,26 +23,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "96ca0d5a297649bd82ae48397527b4f780ea0aa7434c436602730262b34e9c0d",
-    "changed": "5609e81f271de8538f437c4cce1f50f094fa16c8f5ccfd1977b34d54098c7533",
-    "commit": "e0e30cc9285cc8fc24b64a9f0c6f788e7578266b",
+    "branch_diff": "f8cc2afe59ae9f7e89153a01c012ce7bfec19acd1834cf1769716af76a0c8dc9",
+    "changed": "e04e1aeaa75617ddde3abe2b4b813d91aad34ce7814487c50fc24e7b00822dff",
+    "commit": "8f0ae9b11d6928a982c4d8d3a641fe12632780be",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Plan gap. This spec assigns FORGE-LIVE-1 to live notes, but `plans/roadmap.json:130-132` already assigns that key to the live-app adoption story. `src/forge/records.py:325-328` refuses `forge roadmap add live-notes` when a key belongs to another spec, so the proof-list claim that this item was added is false and the live-notes work cannot enter the roadmap under this key.",
-        "file": "docs/specs/live-notes.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 169,
-        "priority": "P1",
-        "title": "Roadmap key FORGE-LIVE-1 already belongs to another story",
-        "work": 1
-      }
-    ],
-    "id": "850a2358-76d0-4be3-873d-ce29a9db9aa7",
-    "status": "blocked"
+    "findings": [],
+    "id": "bd2573b3-85f5-4acc-96a8-4219a08910ec",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T12:30:22.875697+00:00",
@@ -50,6 +39,10 @@
     },
     {
       "at": "2026-10-14T13:02:15.993872+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T13:09:45.890030+00:00",
       "step": "review"
     }
   ],
