@@ -9,13 +9,56 @@
     "start": "87845e9a853f0fdb4e0c6b4c948ea9731d897b87"
   },
   "done_when": "The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real cause, not by skipping it",
+  "flagged": [
+    "tests/test_queue_land_all.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_queue_land_all.py",
+      "file": "tests/test_queue_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 146,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real\u539f\u56e0",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a74205445716c085f97b1415165d9f97bbdcf742fd025834d7dfed71f8085a5d",
+    "changed": "277ef7c59cfd6491c89b91d73f157c1a477e1a1593cfc4ef5c41cfa276f38e3d",
+    "commit": "a5bc3a23ad3e8a619b2688d0e61d90c7c1248e7e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. The concurrent land test still writes `review-starts.jsonl` with an unlocked append at line 146. Two closes start reviewers concurrently, so on Windows one write can overwrite the other; `_in_close` then lacks a review start and the test fails. This log was not covered by the new locking helper, despite the ruling that concurrent stub logs were serialized.",
+        "file": "tests/test_queue_land_all.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 146,
+        "priority": "P1",
+        "title": "Not done: The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real\u539f\u56e0",
+        "work": 1
+      }
+    ],
+    "id": "fb42a4b5-c305-4a85-9742-6d856f8dfb09",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T14:50:18.085042+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T20:09:37.179337+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
