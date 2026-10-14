@@ -124,8 +124,10 @@ keychain; a person who is not a member of the repo's team cannot start its sandb
 **Ready images and test services.** The repo's sandbox image is built once from its lockfiles and
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
 version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
-check in a sandbox and reports what the repo still needs before rounds can move there. A repo whose
-tests need Docker keeps its close and its build rounds on the laptop, and `forge doctor` says so. Each image is
+check in a sandbox and reports what the repo still needs before rounds can move there. Each run gets
+its own machine with Docker, used once and then removed, so integration and end-to-end tests that
+start containers (for example with Docker Compose or Testcontainers) run in the sandbox as they do on
+the laptop. Each image is
 named by a hash of the repo's lockfiles, its test setup, its services in `forge.toml` and the repo's
 pinned Forge release; when any of
 them changes on the branch, the next remote run builds a new image, and the old one stays in use for
@@ -182,7 +184,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   steps, `o` for output, `s` to stop) with an "in sandbox" tag and its minutes. Nothing new to learn.
   The item's "How it went" records the round as a sandbox round, with its minutes.
 - **Starting.** Each run gets a fresh sandbox, used once and then removed, from the repo's ready
-  image, which already has the tools and packages installed, so a run starts in about a minute. A test
+  image, which already has the tools and packages installed, on its own machine with Docker. A test
   command that installs packages itself still runs as written; it downloads them again until the team's
   package cache arrives in a later phase.
 - **Cost.** Forge shows the minutes and credits used; buying credits, the balance and limits live on
