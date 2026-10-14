@@ -162,7 +162,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-14T07:11:28.611471+00:00",
@@ -181,6 +181,12 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-14T09:43:43.502680+00:00",
+    "file": "src/forge/backfill.py",
+    "round": 4,
+    "wait_id": "86740f59-44e9-4831-aae1-c46881d4816a"
+  },
   "stuck": {
     "close": "7c0a7e3d-5a28-4e74-a914-3999d6590a28",
     "head": "5034c68b48cfb2d1a542bbde9afbe7d6d9c8091a",
