@@ -264,6 +264,12 @@
       "spec": "docs/specs/live-notes.md",
       "status": "pending",
       "order": 83
+    },
+    {
+      "key": "FORGE-BOARD-4",
+      "title": "The board shows a team what moves, what needs them and when it ships, at a glance",
+      "status": "pending",
+      "order": 84
     }
   ],
   "epics": [
