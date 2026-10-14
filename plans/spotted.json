@@ -536,8 +536,8 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "sandbox-runs-spec",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tdocs/specs/sandbox-runs.md\tNot done: sandbox-runs.md is confirmed instead of draft\tsandbox-runs-spec",
@@ -547,8 +547,8 @@
       "text": "Not done: sandbox-runs.md is confirmed instead of draft",
       "from": "blocking",
       "item": "sandbox-runs-spec",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tdocs/specs/sandbox-runs.md\tOverload payback contradicts the stated build effort\tsandbox-runs-spec",
@@ -558,8 +558,8 @@
       "text": "Overload payback contradicts the stated build effort",
       "from": "blocking",
       "item": "sandbox-runs-spec",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
