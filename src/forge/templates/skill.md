@@ -277,16 +277,21 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
-matches the JSON: every story and fix sorted needs you, blocked, in progress, planned, no plan
-yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
-fix and plan. It uses the full window, has light and dark themes and stacks to one column below
+matches the JSON. A bar pinned to the top jumps to Overview, Roadmap, Stories and Fixes, and
+each section folds; Stories and Fixes start folded when they hold more than 20 rows. Each section
+sorts its rows needs you, blocked, in progress, planned, no plan yet, then done in one closed
+fold, and the Roadmap has a one-line key to the map's shapes and the words part, fix and plan.
+Each story shows its key small beside its title, the one ID on the board. Story rows carry
+`read_rounds`: each cold-read round of the plan with its number, its findings' first lines and
+their dispositions (`cut`, `defer` or `keep` with its `reason`), and `read_at` on the latest round
+only; a story's history on the page lists them before its approval and merged parts. It uses the full window, has light and dark themes and stacks to one column below
 720px. Each call reads current state without a history cache.
 The page's first screen answers what is in progress, what needs a person, what is stuck and when
 the work can go live, on one time axis with a today line: the team sentence, the labelled totals,
 then Needs you (an amber bar for each wait), In progress (each story or fix as a runway, solid
 where working, thin where waiting, dotted where unknown) and Blocked or slow, five rows each with
 "and N more" opening the rest, then Pace with go-live as a date band. Every row opens in place to
-its time split, round lines and who started, approved and merged it. Below the map, the team and
+its time split, round lines and who started, approved and merged it. Below it, the team and
 each person show merged pull requests per week, through and around Forge, in alphabetical order,
 beside the pull requests merged around Forge in the last 7 days.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around

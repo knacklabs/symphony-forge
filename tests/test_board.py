@@ -173,12 +173,12 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     text = seen(page)
     # Every story and fix, its state and its people; finished work sits in the done fold.
     for line in (
-            "Shoppers can save a basket Story Done Finished on 18 September 2026",
+            "Shoppers can save a basket SHOP Story Done Finished on 18 September 2026",
             "Started by Forge Test. Approved by Forge Test.",
             "Save a basket Part Done Finished on 14 September 2026",
             "Show when it was saved Part Done Finished on 15 September 2026",
             "Share a basket Part Done Finished on 18 September 2026",
-            "Shoppers can keep a wish list Story No plan yet Not started yet",
+            "Shoppers can keep a wish list WISH Story No plan yet Not started yet",
             "Readme greets new readers Fix In progress",
             "Upgrade Forge to the newest version Fix Done Finished on 16 September 2026",
             "How the factory is doing: a part usually takes 1 hour 50 minutes from its start to ready "
@@ -186,8 +186,11 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
             "1 of the last 5 finished changes fixed Forge itself (target: under 10%)."):
         assert line in text, f"{line!r} is not on the page:\n{text}"
     # Plain English: no IDs, hashes, file paths or jargon, and nothing but a pull request's summary.
+    # The one exception is a story's own key, small beside its title.
+    unkeyed = page.with_name("board-unkeyed.html")
+    unkeyed.write_text(re.sub(r'<span class="key">[^<]*</span>', "", page.read_text("utf-8")), "utf-8")
     for word in IDS:
-        assert not re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", text), word
+        assert not re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", seen(unkeyed)), word
     assert not re.search(r"\b[0-9a-f]{7,}\b", page.read_text("utf-8")), "a hash is on the page"
     assert not re.search(r"\w/\w|\.(py|md|json|toml|txt)\b", text), "a file path is on the page"
     assert not re.search(r"\b(P0|P1|CI|PR|commit|branch|worktree)\b", text, re.I), text
@@ -202,7 +205,7 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     assert repo.forge("board", "--out", str(out)).returncode == 0
     offline = seen(out)
     assert "GitHub couldn't be reached, so the list of finished work isn't available." in offline
-    for line in ("Shoppers can save a basket Story Done Finished on 18 September 2026",
+    for line in ("Shoppers can save a basket SHOP Story Done Finished on 18 September 2026",
                  "Share a basket Part Done Finished on 18 September 2026"):
         assert line in offline, f"{line!r} is not on the page:\n{offline}"
 

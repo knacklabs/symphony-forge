@@ -599,6 +599,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     past_notes = history["past notes"]  # read with every plan read, in the same one git process
     for key, notes in notes_by_story.items():
         current = items[key]
+        current["read_rounds"] = _read_rounds(notes)
         read_rounds, seen = [], set()
         while notes:
             record, _ = story._record(notes)
@@ -956,6 +957,24 @@ def _starters(top: Path) -> dict[str, str]:
             if rel.endswith(".json"):
                 found.setdefault(rel, names.get(email.casefold(), name))
     return found
+
+
+def _read_rounds(notes: str) -> list[Item]:
+    """Each round of a plan's cold read, from its notes: the round number, each finding's first
+    line with its disposition (cut, defer or keep, and keep's reason), and the date of the latest
+    round only, which is the one the notes' frontmatter records."""
+    record, body = story._record(notes)  # pyright: ignore[reportPrivateUsage]
+    rounds = []
+    for number, text in re.findall(r"^## Round (\d+)[ \t]*\n(.*?)(?=^## Round \d|\Z)", body, re.M | re.S):
+        findings = []
+        for finding in story._findings(text).values():  # pyright: ignore[reportPrivateUsage]
+            said = re.search(r"^\s*Disposition:\s*(cut|defer|keep)\b[\s:\-]*(?:because\s+)?(.*)$", finding, re.M | re.I)
+            findings.append({"title": finding.split("\n", 1)[0].split(". ", 1)[1].strip(),
+                             "disposition": said[1].lower() if said else None,
+                             "reason": (said[2].strip() or None) if said else None})
+        rounds.append({"round": int(number), "findings": findings,
+                       "read_at": record.get("read_at") if number == record.get("round") else None})
+    return rounds
 
 
 def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) -> str | None:
