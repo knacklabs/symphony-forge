@@ -1,0 +1,14 @@
+{
+  "base": "30983d7a6bfcb5ac51a62f73a6ac8a8c2844a8d3",
+  "branch": "fix/board-json-under-5s",
+  "done_when": "forge board --json finishes in under 5 seconds on Forge's own repo once GitHub's answers are cached, with the same output as before",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T14:59:23.224749+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge board --json takes 16 to 40 seconds on Forge's own repo, so the Claude Code pane's refresh, which gives up after 20 seconds, often fails. A profile shows each of about 550 rows rereads forge.toml, reparses time records and runs its own git calls"
+}
