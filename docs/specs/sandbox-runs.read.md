@@ -93,3 +93,4 @@ No findings.
 10. Blocking: The branch-only bundle leaves the remote worker unable to run `forge test`.
     Raise: Plan gap. [The new bootstrap rule](/docs/specs/sandbox-runs.md:75) supplies only the item’s branch history, with no remote. [fasttest.py](/src/forge/fasttest.py:262) requires `origin/<default branch>` and otherwise refuses with “Fetch … first: run git fetch origin, then forge test.” This affects the required worker tests, including Forge’s own first rollout. The bootstrap contract must also supply the pinned default-branch reference and its history locally, without adding credentials or a remote connection.
     Gain 4, Work 2, Harm 3
+    Disposition: cut
