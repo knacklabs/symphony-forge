@@ -7,13 +7,79 @@
     "head": null,
     "start": "ef6c5c572ae9af483ef836078ebaae3519dd5d8e"
   },
+  "flagged": [
+    "src/forge/time_records.py"
+  ],
+  "known": [
+    {
+      "area": "_board_rounds() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 660,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Compacted rounds expose aggregate findings as individual round data",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 3,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Unneeded board runway test edit is outside this part's scope",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9baa48d03fde6c62fd888bb21a670fe7e8d92d369661597cb67407882842168a",
+    "changed": "8f4fa5f1a93282a14c8110007d674a0d10ca4b2638041c36531d70028067def4",
+    "commit": "fb409cd45f4425ada41fe278cd8e5ced75986ac3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. At src/forge/time_records.py:660\u2013663, each expanded round copies the folded entry's aggregate finding counts while receiving its own round number and seconds. After the named 200-round compaction case, each round can therefore appear to have the group's total findings. The same expansion gives later rounds an empty line, which the existing board renderer emits as empty paragraphs (src/forge/board_visuals.py:134\u2013137).",
+        "file": "src/forge/time_records.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 660,
+        "priority": "P1",
+        "title": "Compacted rounds expose aggregate findings as individual round data",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. tests/test_board_runway.py:3 adds only a test-module docstring. It changes no assertion or setup needed for round seconds, so this edit is outside the part's permitted path without meeting the exception for a needed test change.",
+        "file": "tests/test_board_runway.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 3,
+        "priority": "P1",
+        "title": "Unneeded board runway test edit is outside this part's scope",
+        "work": 1
+      }
+    ],
+    "id": "0dbad534-57f6-440d-8c5b-1118e5cb651a",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:58.599703+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T20:12:02.657471+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

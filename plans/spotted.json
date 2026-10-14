@@ -6183,6 +6183,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tCompacted rounds expose aggregate findings as individual round data\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 660,
+      "text": "Compacted rounds expose aggregate findings as individual round data",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tDeeply nested pull request records can crash board and next\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/time_records.py",
