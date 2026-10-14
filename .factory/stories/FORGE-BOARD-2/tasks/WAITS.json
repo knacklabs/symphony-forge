@@ -221,29 +221,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ad3a4904aaf96f1b63d7486b11fe09beb2a83a22ea002d87c75181248a221184",
-    "changed": "7118f7da88f67d814faceccd65da06f28143ef85802ecec51521038d9e4a43cd",
-    "commit": "91e834b5e559830fd0b2d96ef9456510cf93d75e",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner chose 'Ship, follow-up' on 2026-10-14: a teammate's open worker question skipped by a second machine's new round becomes one follow-up fix",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. If machine B asks a question on an existing pull request while machine A has the item's worktree but no local question, `asking` is false here. A's `forge work` skips the pull request record and starts a worker round without an answer. That later `run start` also makes `wait_records.answered` treat B's question as answered, so A's Needs you view drops an open wait. The new test asks its second question on A and does not cover this handoff.",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 102,
-        "priority": "P1",
-        "title": "Unanswered shared worker question can be bypassed on another machine",
-        "work": 2
-      }
-    ],
-    "id": "8c34409b-9d51-4d7d-abdb-ec90122ce59c",
+    "branch_diff": "86cd245118adce4e2bca27194bccd6415d47faec61258420624bca9713960c32",
+    "changed": "749ac15e6ef5087391c53d7f30e57c211532c376a9d7f5b4b746cdb232cb18fd",
+    "commit": "25af3dd39fe703b861574f7d9f39585f030ab324",
+    "dismissals": [],
+    "findings": [],
+    "id": "e8ae107c-b733-4c3d-b833-1091fff2b823",
     "status": "clean"
   },
   "settled_areas": [
@@ -282,6 +265,10 @@
     },
     {
       "at": "2026-10-14T06:12:43.901052+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T06:59:07.592473+00:00",
       "step": "review"
     }
   ],
