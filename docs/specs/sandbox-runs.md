@@ -138,8 +138,16 @@ not used.
 **The round's result comes back whole.** At the end of a round the sandbox returns two things: the
 git bundle and the worker's result, which is the same record a local round writes (done, a question
 for the owner, or stuck, with its text). The laptop records that result exactly as for a local round,
-so `forge work --note`, Needs you and close work the same for local and remote rounds. A sandbox that
-stops without a result counts as a failed round with the reason, and the next round can run.
+so `forge work --note`, Needs you and close work the same for local and remote rounds.
+
+**No work is lost when a sandbox is reclaimed.** Mainline may run sandboxes on capacity that AWS can
+take back with two minutes' notice. On that notice the relay commits the worker's changes as one
+"left over from round N" commit (or a patch, as above), uploads the result and ends the round as
+interrupted; the next round starts from those commits, on the laptop or in another sandbox. The relay
+also uploads a checkpoint bundle after every commit the worker makes and every 5 minutes, so a
+sandbox that stops with no notice loses at most 5 minutes of changes; Forge collects the latest
+checkpoint and the next round starts from it. An interrupted close holds no code and simply runs
+again. A sandbox that stops with no result or checkpoint counts as a failed round with the reason.
 
 ## The experience
 
@@ -204,7 +212,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 3. The sandbox gets only committed code (a bundle of the item's branch and the default branch, in a fresh history with no remote, where `forge test` runs), never an ignored file, the laptop's `.git` folder or a GitHub credential; secrets reach it only from the vault, as environment variables for that run; a bundle with commits outside the round's branch is refused with the reason.
 4. A sandbox run shows in the machine view with its minutes, credits used and output, and `forge stop` ends it.
 5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback; credits, balance alerts and top-ups live on Mainline's dashboard.
-6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
+6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does; a reclaimed sandbox loses at most 5 minutes of a round's changes, and the next round starts from the last saved commits.
 7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
 8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes or stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
 9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
