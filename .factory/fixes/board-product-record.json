@@ -2,12 +2,55 @@
   "base": "163859cdf856cc85a6ad4388aa3966b606d5804a",
   "branch": "fix/board-product-record",
   "done_when": "PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live local page, the design must move to Mainline's team board later, and it shows cost, time, releases and go-live",
+  "flagged": [
+    "PRODUCT.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "PRODUCT.md",
+      "file": "PRODUCT.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 59,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8f85a4053beff1e05295660fbc9a007c5148bbbacf087a4d9c2482da343daf2b",
+    "changed": "4f847dfca7c18ce77ce9ca01051a1d940bc60d7b25df8b039a020786d30f8dff",
+    "commit": "573365d31e4649357c7e1fd34a666dea68d79bee",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. PRODUCT.md requires merged-but-not-live work, a go-live forecast, and deploy history only once Mainline deploys exist, but it does not require the board to show releases. A builder could follow this record without showing which work shipped in a release.",
+        "file": "PRODUCT.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 59,
+        "priority": "P1",
+        "title": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+        "work": 1
+      }
+    ],
+    "id": "1f4c3684-1de4-427b-8d68-a3433c0cab4f",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T18:01:16.991283+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T18:16:03.377241+00:00",
+      "step": "review"
     }
   ],
   "why": "The board's product record was written without asking the owner and pins a no-script single page, which turned the board into one long unusable page"
