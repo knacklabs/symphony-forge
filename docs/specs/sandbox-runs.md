@@ -78,8 +78,8 @@ The owner chose each of these on 14 October 2026:
 **Mainline, through Forge's own relay.** Forge puts its own small relay process in each sandbox,
 and the laptop connects to it over the sandbox's web address. The relay starts the worker, streams its
 output, passes notes and questions both ways, stops it, keeps it running when the laptop disconnects,
-and lets the laptop reattach later. So Mainline's API needs only five plain operations: create or
-resume a sandbox, copy files in and out, start one process, give that process a web address, and
+and lets the laptop reattach later. So Mainline's API needs only five plain operations: create a
+sandbox, copy files in and out, start one process, give that process a web address, and
 delete the sandbox. Inside Mainline each backend is one small adapter for those five, so Mainline can
 change backends without any change to Forge; Forge reads only the fields it uses from Mainline's
 replies (principle 7).
@@ -165,8 +165,9 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 - **While a round runs.** The Forge pane's Machine tab shows a sandbox round as an ordinary row (live
   steps, `o` for output, `s` to stop) with an "in sandbox" tag and its minutes. Nothing new to learn.
   The item's "How it went" records the round as a sandbox round, with its minutes.
-- **Starting fast.** The first run installs what the repo needs from its lockfiles and the test
-  setup in `forge.toml`; Mainline keeps that sandbox's disk, so later rounds start in seconds.
+- **Starting.** Each run gets a fresh sandbox, used once and then removed, from the repo's ready
+  image, which already has the tools and packages installed; with shared package caches, a run starts
+  in about a minute and never installs dependencies again.
 - **Cost.** Forge shows the minutes and credits used; buying credits, the balance and limits live on
   Mainline's dashboard, and the lead gets an email at 80% used and at zero.
 - **Credits run out.** No new remote run starts at zero. Running rounds may go on for at most one more
@@ -181,12 +182,12 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   Other items keep using the laptop, so work never stops.
 - **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait in
   Mainline: the relay uploads each result (its bundle and record, or a patch) to Mainline's result
-  store before the round ends, and Mainline then pauses the sandbox with its disk. A result stays until
+  store before the round ends, and Mainline then removes the sandbox. A result stays until
   Forge collects it. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
   rounds it collected.
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
-  it delete the repo's sandboxes and their disks in Mainline (the code copy), and it
+  it delete the repo's sandboxes, images, caches and stored results in Mainline (the code copies), and it
   says what it removed. No commit is lost.
 
 ## Out of scope
@@ -203,7 +204,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 4. A sandbox run shows in the machine view with its minutes, credits used and output, and `forge stop` ends it.
 5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback; credits, balance alerts and top-ups live on Mainline's dashboard.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
-7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes and disks in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
+7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
 8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes or stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
 9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
