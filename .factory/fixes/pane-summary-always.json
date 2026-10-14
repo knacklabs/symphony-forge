@@ -1,0 +1,96 @@
+{
+  "base": "e4bf532175ba8dd40f400424d228cc4fe3b93984",
+  "branch": "fix/pane-summary-always",
+  "done_when": "The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in planning, and the mounted Board-tab test covers both of those boards",
+  "flagged": [
+    "src/forge/mod/hooks/summary.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 352,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test Board summaries in new and upgraded client repos",
+      "work": 3
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 152,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 156,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2627b15961fb3b4eed07a1ebd60d2dd47784e218b07e64bafb37ee099b5a75c0",
+    "changed": "2415818aeba00d4f58c00d89ebc4e515c726fe67f2dae8cd182adb5b5e388927",
+    "commit": "a7e00d1025176a206ebd703324778292a3ff5c87",
+    "dismissals": [],
+    "findings": [],
+    "id": "abef8b03-4880-47f3-bf5a-036fb1c4070c",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "src/forge/mod/hooks/summary.ts"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T19:01:26.423992+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T19:57:53.202129+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T20:41:49.086638+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:21:38.856987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:29:09.148496+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-14T04:21:38.882384+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "src/forge/mod/hooks/summary.ts",
+    "reason": "Owner chose 'One rule from rows' on 2026-10-14: rebuild the summary's fallback line from the rows the Board tab shows (counts per group, e.g. '2 waiting \u00b7 1 ready to merge') so no board state with rows is left without a summary",
+    "wait_id": "dcc0716b-6e0a-452b-9f60-2b0e1fc9a89a",
+    "worker_round": null
+  },
+  "why": "The pane's Board tab opens with no summary line when the only active work is ready to merge or still in planning, so a person sees a bare list with no overview"
+}

@@ -1,0 +1,49 @@
+{
+  "base": "57d852931d2e2ec71e9f01feb1cdd51019da3392",
+  "branch": "fix/gain-three-follows-up",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13880-ddf4-7c12-b827-863feb42cb7f",
+    "head": null,
+    "start": "0c181ed3151ef593cef2772ec257f6cad24b18d6"
+  },
+  "done_when": "A note holds the work only at Harm 4 or 5 or Gain 5 (stop), or at Harm 3 or Gain 4 with Work 1 or 2 (fix this round); every other Gain 3 or 4 note becomes a follow-up fix and the work continues, and the README bar table, the guide and the reader and review instructions all say so",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7bfeac2e46a45f45e67f2650ff29c05d1b761708b45464430280b1ba50ed0b2c",
+    "changed": "e8652a068bf2f8bc1f03996ce007d761dc2230672c58d4a5412585a9f17463ee",
+    "commit": "641e0385716ed6dae5be7238af1bc1bb80acb59a",
+    "dismissals": [],
+    "findings": [],
+    "id": "c2c33c33-0d11-4bfe-aa24-bc9485387429",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T03:41:57.649841+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T04:14:12.246583+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:36:10.614329+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "23c3147df39659985b1fba3c870cfc89f251d7f2",
+    "keys": {},
+    "round": null
+  },
+  "why": "A Gain 3 review note with little work holds the work for another round, and each fix round brings a fresh review with new Gain 3 notes, so items loop for many rounds (one fix tonight took 16) on test gaps and rare cases",
+  "worker": "codex"
+}

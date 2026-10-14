@@ -1,6 +1,7 @@
 import type { Elements, On, RenderInput, RenderNode, Timer } from 'claude-code'
 import type { Data, Item, Next } from './forge.ts'
 import { TOO_OLD } from './forge.ts'
+import type { Row } from './summary.ts'
 import { activeRows, board, itemTime, laneCounts, pending, record, stageText, stages, summary, total } from './summary.ts'
 
 type Tab = (e: RenderInput<'Pane'>, t: Elements['terminal'] | Elements['desktop'], now: number) => RenderNode
@@ -43,25 +44,27 @@ export function registerPane(on: On, data: Data) {
       if (!data.board) children.push(t.Text({ dimColor: true, children: pending(data) }))
       else {
         const view = board(data, now)
+        // One item: title and story key, then its state and step, or both on one line with no step.
+        const draw = (row: Row): RenderNode[] => {
+          const title = [row.title, ...(row.key ? [t.Text({ dimColor: true, children: `  ${row.key}` })] : [])]
+          const lines: RenderNode[] = row.next ? [
+            t.Text({ wrap: 'wrap', children: title }),
+            ...(row.state ? [t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: row.state }) })] : []),
+            t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: `→ ${row.next}` }) }),
+          ] : [t.Text({ wrap: 'wrap', children: [...title, ...(row.state ? [` · ${row.state}`] : [])] })]
+          return [...lines, ...(actions.get(row.item.kind ?? '') ?? []).map(render => render(row.item, e))]
+        }
         if (view.summary) children.push(t.Text({ bold: true, wrap: 'wrap', children: view.summary }))
         if (!view.groups.length && !view.waiting.length) children.push(t.Text({ children: 'Nothing in progress.' }))
         for (const group of view.groups) {
           const lines: RenderNode[] = [t.Text({ bold: true, children: group.name })]
-          for (const row of group.rows) {
-            const title = [row.title, ...(row.key ? [t.Text({ dimColor: true, children: `  ${row.key}` })] : [])]
-            if (row.next) {
-              lines.push(t.Text({ wrap: 'wrap', children: title }))
-              if (row.state) lines.push(t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: row.state }) }))
-              lines.push(t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: `→ ${row.next}` }) }))
-            } else lines.push(t.Text({ wrap: 'wrap', children: [...title, ...(row.state ? [` · ${row.state}`] : [])] }))
-            for (const render of actions.get(row.item.kind ?? '') ?? []) lines.push(render(row.item, e))
-          }
+          for (const row of group.rows) lines.push(...draw(row))
           if (group.more) lines.push(t.Text({ dimColor: true, children: `and ${group.more} more · forge board for all` }))
           children.push(t.Box({ flexDirection: 'column', children: [lines[0]!, t.Box({ flexDirection: 'column', paddingLeft: 2, children: lines.slice(1) })] }))
         }
         if (view.waiting.length) {
           children.push(t.Button({ key: 'waiting', label: `${showWaiting ? 'Hide' : 'Show'} waiting or not started (${view.waiting.length})`, onPress: () => { showWaiting = !showWaiting; $.ui.invalidate('ui.render') } }))
-          if (showWaiting) children.push(t.Box({ flexDirection: 'column', paddingLeft: 2, children: view.waiting.map(row => t.Text({ wrap: 'wrap', children: [row.title, ...(row.key ? [t.Text({ dimColor: true, children: `  ${row.key}` })] : [])] })) }))
+          if (showWaiting) children.push(t.Box({ flexDirection: 'column', paddingLeft: 2, children: view.waiting.flatMap(draw) }))
         }
       }
     }

@@ -1,0 +1,50 @@
+{
+  "base": "b033aee150a239b6d20d16c38954df7b2e83c6a2",
+  "branch": "fix/live-notes-spec",
+  "done_when": "docs/specs/live-notes.md is a confirmed spec where a note reaches a running worker at once and stop interrupts the turn, and docs/specs/sandbox-runs.md uses browser sign-in with a redirect and CI results as events for repos on Mainline, both confirmed",
+  "flagged": [
+    "docs/specs/live-notes.md"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "docs/specs/live-notes.md",
+      "file": "docs/specs/live-notes.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 169,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Roadmap key FORGE-LIVE-1 already belongs to another story",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f8cc2afe59ae9f7e89153a01c012ce7bfec19acd1834cf1769716af76a0c8dc9",
+    "changed": "e04e1aeaa75617ddde3abe2b4b813d91aad34ce7814487c50fc24e7b00822dff",
+    "commit": "8f0ae9b11d6928a982c4d8d3a641fe12632780be",
+    "dismissals": [],
+    "findings": [],
+    "id": "bd2573b3-85f5-4acc-96a8-4219a08910ec",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T12:30:22.875697+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T13:02:15.993872+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T13:09:45.890030+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A coordinator's note reaches a running Codex or Claude worker only at the next round, and a sandbox round still waits on polled sign-in and CI checks"
+}

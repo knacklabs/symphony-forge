@@ -1,0 +1,411 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-13T06:16:27.861003+00:00",
+      "because": "A fixed size and every round's own summary forever cannot both hold; the owner's goal is never hitting the limit",
+      "done_when": "The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its whole round history"
+    }
+  ],
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/pr-time-record-summaries",
+  "done_when": "The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds into one totals line, so a long item never reaches the body limit and the board still shows its total time",
+  "flagged": [
+    "src/forge/templates/skill.md",
+    "src/forge/time_records.py",
+    "tests/test_pull_request_time_summaries.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 478,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its",
+      "work": 4
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 420,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Clean review snapshots still grow without bound",
+      "work": 2
+    },
+    {
+      "area": "test_1_long_item_keeps_every_round_time_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 98,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_1_long_item_keeps_every_round_time_within_a_fixed_body_size",
+      "work": 2
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 496,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: The pull request time record has a fixed size limit",
+      "work": 3
+    },
+    {
+      "area": "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 104,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size",
+      "work": 2
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 497,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: Current-round progress leaves the time record unbounded",
+      "work": 3
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 497,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: The pull request time record has a fixed size limit: it keeps a time summary for each of the recent rounds and folds older rounds",
+      "work": 2
+    },
+    {
+      "area": "tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 51,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: prove repeated close retries stay bounded",
+      "work": 2
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 514,
+      "outcome": "fixed in round 8",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Folding intervals makes recorded story work appear as unknown time",
+      "work": 2
+    },
+    {
+      "area": "story() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 659,
+      "outcome": "fixed in round 10",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "Story breakdown miscounts overlapping folded task time",
+      "work": 2
+    },
+    {
+      "area": "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 140,
+      "outcome": "fixed in round 9",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "Not done: prove the board's total time after old rounds fold",
+      "work": 1
+    },
+    {
+      "area": "_claim() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 645,
+      "outcome": "fixed in round 10",
+      "reason": "",
+      "round": 9,
+      "security": true,
+      "title": "Standard: Input is checked where it enters",
+      "work": 1
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 540,
+      "outcome": "fixed in round 11",
+      "reason": "",
+      "round": 10,
+      "security": false,
+      "title": "Not done: A large latest review escapes the fixed time record limit",
+      "work": 2
+    },
+    {
+      "area": "repeat_round() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 43,
+      "outcome": "fixed in round 11",
+      "reason": "",
+      "round": 10,
+      "security": false,
+      "title": "Not done: prove a large latest review stays within the fixed record size",
+      "work": 2
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 427,
+      "outcome": "fixed in round 12",
+      "reason": "",
+      "round": 11,
+      "security": false,
+      "title": "Not done: Large clean reviews bypass the fixed time-record limit",
+      "work": 2
+    },
+    {
+      "area": "test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 255,
+      "outcome": "fixed in round 12",
+      "reason": "",
+      "round": 11,
+      "security": false,
+      "title": "Not done: test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_budget",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 391,
+      "outcome": "fixed in round 14",
+      "reason": "",
+      "round": 13,
+      "security": false,
+      "title": "Not done: The guide tells agents to add overlapping story parts",
+      "work": 1
+    },
+    {
+      "area": "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py",
+      "file": "tests/test_pull_request_time_summaries.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 56,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2): the only open note was a missing proof list, caused by the coordinator's one-line guide repair commit; the next commit carries the proof list forward",
+      "round": 14,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
+    },
+    {
+      "area": "how_it_went() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 407,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+      "round": 16,
+      "security": false,
+      "title": "Not done: Legacy Unicode history can exceed the pull request body limit",
+      "work": 1
+    },
+    {
+      "area": "_compact() in src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 558,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+      "round": 16,
+      "security": false,
+      "title": "Folding an open owner wait loses its remaining waiting time",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2286b706cf4af33fa336262c3841e5e21c46085b3974301041f0315f60cd6e5a",
+    "changed": "80de8d9f6076a8db5c6e7adcd0eeb858fcbe2578e0d1ac16589dcea67f765c91",
+    "commit": "11005e408ea4c9b94a20428d87952123f407220d",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nThe legacy history cap is measured in characters, but JSON escapes each non-BMP character as 12 ASCII bytes. An earlier release's retained history containing 8,000 emoji produces a `legacy_text` field of about 96 KB by itself. `_compact` eventually runs out of timestamped rows and exits while the record is oversized; `_bounded_body` cannot remove that field. The resulting pull request body exceeds GitHub's 64 KB limit, so the stated fixed-size outcome is unmet.",
+        "file": "src/forge/time_records.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 407,
+        "priority": "P1",
+        "title": "Not done: Legacy Unicode history can exceed the pull request body limit",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nWhen repeated closes make the latest round exceed the budget, the fallback cut folds every row through the last timestamp, including an open `owner wait start`. The summary stores elapsed totals but no pending wait ID. On a fresh clone, `pending_merge_wait()` finds no start to end, and `merged()` measures time after the cut without a waiting span. The board then labels the remaining human merge wait as unknown, and a later close can start a second wait. The repeated-close proof does not exercise an open owner wait.",
+        "file": "src/forge/time_records.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 558,
+        "priority": "P1",
+        "title": "Folding an open owner wait loses its remaining waiting time",
+        "work": 2
+      }
+    ],
+    "id": "9d8ab84d-3863-4c16-b9da-af0ef1c0ad84",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "_compact() in src/forge/time_records.py",
+    "how_it_went() in src/forge/time_records.py",
+    "src/forge/time_records.py",
+    "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:33.693930+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T05:33:45.675392+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:16:04.354282+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:36:52.311099+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T07:23:52.564572+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T08:10:21.686929+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T08:56:20.297431+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:20:17.348786+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T12:28:59.178113+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T14:16:18.661060+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T15:27:38.877644+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T16:09:21.325541+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T17:07:05.796131+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T17:39:13.998935+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:23:06.994438+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:14:33.192579+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T20:15:15.135487+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "how_it_went() in src/forge/time_records.py",
+    "at": "2026-10-13T20:15:15.135672+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "how_it_went() in src/forge/time_records.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+    "wait_id": "689c7f68-f7a2-4e4e-a084-f2474cb9cb8e",
+    "worker_round": null
+  },
+  "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
+}

@@ -24,12 +24,14 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes back or one with Harm 3 or more is open, "
-    "whatever files they were in. The existing same-file stop still applies from the third round. "
+    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes "
+    "back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round. "
     "Wait for a recorded choice only after close has stopped the review loop. "
     "Otherwise, fix the findings inside your Done-when in this round, including new findings "
     "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
-    "Read also stops after three blocked cold-read rounds only when a disputed keep at the bar or a note with Harm 3 or more is open; the coordinator "
+    "Read also stops after three blocked cold-read rounds only when a note at the bar has no scores or is a "
+    "disputed keep, or a note with Harm 3 or more is open. At a stop where every open note has Harm 1 or 2, "
+    "the coordinator chooses accept or narrow itself and tells the owner after; otherwise the owner chooses. The coordinator "
     "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
@@ -53,6 +55,9 @@ REFUSALS = {
     "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
               "forge work {item}"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
+    "no_turn": ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
+                "prompt such as a hooks review. Its log is {log}.",
+                "run claude once in {top} and answer its prompt, then forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
@@ -92,8 +97,18 @@ def _work(args: argparse.Namespace) -> bool:
     match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
-    from forge import time_records
-    published = is_published(top, item)
+    from forge import close, nextstep, time_records  # close imports story, which imports this module
+    # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
+    asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
+    pr = close.branch_pr(top, state) if asking else None
+    # A question answered on another machine is ended in the pull request's record; the newest open
+    # one, here or there, is the one to answer.
+    waits = nextstep.wait_records(top, item, (pr or {}).get("body") or "")
+    shared_ends = {e.get("wait_id") for e in time_records.from_body((pr or {}).get("body") or "").get("events", [])
+                   if e.get("event") == "owner wait end"}
+    if codex.record(top, item).get("question_id") in shared_ends:
+        codex._record(codex._item_file(top, item, ".json", "Build"), question=None, question_id=None)
+    asked_open = [e for e in waits if e["open"] and e.get("event") == "worker question"]
     if match["task"]:
         doc = f"plans/{match['key']}.md"
         story._parsed(story._text(top / doc), doc)  # pyright: ignore[reportPrivateUsage]
@@ -108,7 +123,8 @@ def _work(args: argparse.Namespace) -> bool:
     # The coordinating app's own tool runs the round as one of the session's subagents.
     is_native = repo.route(config, family, command="work", item=item) == "native"
     role = "frontend" if design else "worker" if match["task"] else "fixer"
-    if note is None and (question := codex.record(top, item).get("question")):
+    if note is None and (question := (asked_open[-1].get("question") if asked_open else None)
+                         or codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
     # round: it continues the item's conversation.
@@ -125,11 +141,7 @@ def _work(args: argparse.Namespace) -> bool:
                 f"because {why}")
     if not on_codex or is_native:
         print(building, flush=True)
-    pr = None
-    if published:
-        from forge import close
-        pr = close._pull_request(top, state.get("branch") or repo.current_branch(top))
-    answered = note is not None and codex.record(top, item).get("question_id")
+    answered = note is not None and ((asked_open or [{}])[-1].get("id") or codex.record(top, item).get("question_id"))
     if answered:
         repo.record_event(top, item, "owner wait end", wait_id=answered)
     pending_merge = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
@@ -331,8 +343,9 @@ def _work(args: argparse.Namespace) -> bool:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
-            if published and (asked or note is not None or pending_merge):
-                from forge import close
+            if asked:
+                close.share_wait(top, item, state)
+            elif pr and (note is not None or pending_merge):
                 close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
@@ -342,14 +355,6 @@ def _work(args: argparse.Namespace) -> bool:
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
     return False
-
-
-def is_published(top: Path, item: str) -> bool:
-    """Review and body files can survive a failed first publication; only success needs a refresh."""
-    from forge import time_records
-    return repo.ready_path(item, top).exists() or any(
-        event.get("item") == item and event.get("event") == "pull request published"
-        for event in time_records.read(top, "events"))
 
 
 def questions(*answers: str) -> str:
@@ -623,7 +628,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
                "--output-format", "stream-json", "--verbose",
                "--add-dir", str(CONVENTIONS), *(session or [])]
-    lines, final_result = [], None
+    final_result = None
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],
                          effort=models[models.index("--effort") + 1]) as ran, \
@@ -642,17 +647,18 @@ def _run(item: str, top: Path, brief: str, models: list[str],
                 event = None
             if isinstance(event, dict):
                 line = repo.claude_output(top, item, ran, event)
-                if event.get("type") == "result":
+                # A result after no model turn (the prompt used up before the model ran) is no round.
+                if event.get("type") == "result" and event.get("num_turns") != 0:
                     final_result = line.rstrip("\n")
-            if line:
-                if not isinstance(event, dict) or event.get("type") == "result":
-                    print(line, end="", flush=True)
-                lines.append(line)
+            if line and (not isinstance(event, dict) or event.get("type") == "result"):
+                print(line, end="", flush=True)
         worker.wait()
-        ran["outcome"] = "completed" if worker.returncode == 0 else "failed"
+        ran["outcome"] = "completed" if worker.returncode == 0 and final_result is not None else "failed"
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
-    return final_result if final_result is not None else "".join(lines)
+    if final_result is None:  # every Claude turn ends with a result event
+        refuse(REFUSALS["no_turn"], log=log, top=top, item=item)
+    return final_result
 
 
 COMMANDS = [{

@@ -6,9 +6,11 @@ templates and raises its entries with refuse(). The CLI prints the problem, then
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -115,6 +117,20 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
     return _command_cache[key]
 
 
+def blob_hash(text: str) -> str:
+    """What `git hash-object --stdin` prints for text, without a git process."""
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def read_blob(top: Path, name: str) -> str | None:
+    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    def read() -> str | None:
+        done = run("git", "cat-file", "blob", name, cwd=top)
+        return done.stdout if done.returncode == 0 else None
+    return command_fact(("read blob", name), top, read)
+
+
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         input: str | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
@@ -137,6 +153,9 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
+    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
+        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+        (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
         key = ("landed ref", _common_path(cwd))
         if key in _command_cache and not _command_cache[key].startswith("origin/"):
@@ -144,6 +163,9 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if _command_cache is not None and done.returncode == 0 and args[:3] == ("git", "remote", "set-head"):
         for kind in ("default branch", "landed ref"):
             _command_cache.pop((kind, _common_path(cwd)), None)
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and (args[1] in ("switch", "checkout", "worktree", "branch"))):
+        _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
@@ -204,6 +226,12 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
             return subprocess.CompletedProcess(done.args, 1, "",
                                                REFUSALS["no_github"][0] + "\n")
         time.sleep(pause)
+
+
+def quote(argument: object) -> str:
+    """One path or argument quoted for the user's shell, so a printed command runs as shown."""
+    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None,

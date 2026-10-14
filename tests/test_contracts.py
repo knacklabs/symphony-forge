@@ -522,10 +522,13 @@ def test_8_plain_english(env):
     page = env.tmp / "board.html"
     assert repo.forge("board", "--out", str(page)).returncode == 0
     text = page_text(page)
-    for line in ("Save a basket", "Shoppers can share a cart",
+    for line in ("Save a basket", "Shoppers can share a cart CART",
                  "Readme greets new readers Fix Done Finished on 25 September 2026"):
         assert line in text, text
-    assert not _not_plain(text), (_not_plain(text), text)
+    # The one ID the board shows is a story's own key, small beside its title.
+    unkeyed = env.tmp / "board-unkeyed.html"
+    unkeyed.write_text(re.sub(r'<span class="key">[^<]*</span>', "", page.read_text("utf-8")), "utf-8")
+    assert not _not_plain(page_text(unkeyed)), (_not_plain(page_text(unkeyed)), text)
     # Inline SVG geometry also preserves the page's no-hash contract.
     assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
 

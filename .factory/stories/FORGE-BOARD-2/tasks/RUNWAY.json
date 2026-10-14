@@ -1,0 +1,179 @@
+{
+  "branch": "task/FORGE-BOARD-2-RUNWAY",
+  "flagged": [
+    "src/forge/board.html",
+    "src/forge/board_visuals.py",
+    "tests/test_board_runway.py",
+    "tests/test_board_trends.py"
+  ],
+  "known": [
+    {
+      "area": "first_screen() in src/forge/board_visuals.py",
+      "file": "src/forge/board_visuals.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 192,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the first screen fits at 1440 by 900",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board.html",
+      "file": "src/forge/board.html",
+      "gain": 3,
+      "harm": 2,
+      "line": 90,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Mobile time-axis labels overlap",
+      "work": 1
+    },
+    {
+      "area": "test_6_weekly_trends_through_and_around_forge_and_this_weeks_around_list() in tests/test_board_trends.py",
+      "file": "tests/test_board_trends.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 69,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: trends browser test",
+      "work": 2
+    },
+    {
+      "area": "test_7_first_screen() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 277,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: WAITS must supply the populated first-screen lists",
+      "work": 4
+    },
+    {
+      "area": "_first_screen_browser() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 374,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: trends browser test",
+      "work": 2
+    },
+    {
+      "area": "first_screen.lane() in src/forge/board_visuals.py",
+      "file": "src/forge/board_visuals.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 130,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: in-place story details omit round lines",
+      "work": 2
+    },
+    {
+      "area": "_first_screen_browser() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 378,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: browser proof for team trends and around-list details",
+      "work": 2
+    },
+    {
+      "area": "_first_screen_browser() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 352,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2, test only): ship the runway now; the browser proof that 'and N more' reveals the extra rows becomes a follow-up",
+      "round": 4,
+      "security": false,
+      "title": "Not done: browser proof that \u201cand N more\u201d reveals the remaining rows",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "57e1f67c29de4555cfe99e99747e721d0a0a8b1fdb587ca11f0b37c40cb8141e",
+    "changed": "dc2ce2dd77143976a7b9293fde4e7c6c51da3a6c5d9dbffc4e000c1e35e38eec",
+    "commit": "5ed6ff56caee2435c3b3cadf628fae1932d5f93c",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2, test only): ship the runway now; the browser proof that 'and N more' reveals the extra rows becomes a follow-up",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The browser fixture creates five Needs you rows, then inserts an empty `details.rest` with \u201cand 2 more\u201d. The check only confirms that this empty fold toggles open and closed; it never verifies that two additional rows appear. The browser proof therefore passes even if opening the fold reveals no remaining work.",
+        "file": "tests/test_board_runway.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 352,
+        "priority": "P1",
+        "title": "Not done: browser proof that \u201cand N more\u201d reveals the remaining rows",
+        "work": 2
+      }
+    ],
+    "id": "50b79540-203d-40c5-99ed-d9ef297ef9d6",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "_first_screen_browser() in tests/test_board_runway.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T16:06:12.302160+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T17:49:53.067291+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:53:20.129263+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:41:27.367562+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T20:40:02.106607+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "_first_screen_browser() in tests/test_board_runway.py",
+    "at": "2026-10-13T20:40:02.106715+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "_first_screen_browser() in tests/test_board_runway.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Coordinator's call (Harm 2, test only): ship the runway now; the browser proof that 'and N more' reveals the extra rows becomes a follow-up",
+    "wait_id": "52616368-1cb0-4132-9617-97351108ce0e",
+    "worker_round": null
+  }
+}

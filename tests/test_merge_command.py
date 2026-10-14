@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -234,9 +235,8 @@ def _check_dirty_merge(
     assert item not in next_step.stdout
     (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").unlink()
     legacy = env.repo.forge("next")
-    command = legacy.stdout.splitlines()[-1]
-    assert command.startswith("Next: git worktree remove ")
-    assert Path(command.removeprefix("Next: git worktree remove ").strip("'")) == where
+    quoted = f'"{where}"' if os.name == "nt" else shlex.quote(str(where))
+    assert legacy.stdout.splitlines()[-1] == f"Next: git worktree remove {quoted}"
 
 
 def _check_later_local_commit(env):

@@ -36,11 +36,11 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py"),
                         finding("P2", "Follow-up: advice", "src/a.py"),
                         finding("P3", "Polish advice", "src/a.py")))
-    assert "Ask the human" in env.close(item).stderr
+    assert "settle it yourself" in env.close(item).stderr
     before = len(env.review_calls())
     later(monkeypatch, 20)
     waiting = env.close(item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
     assert follow_ups(env) == []
 
     later(monkeypatch, 31)
@@ -86,10 +86,10 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
     item, _ = stopped(env)
     later(monkeypatch, 600)
     waiting = env.close(item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
     waiting = env.repo.forge("land", item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
-    assert "Ask the human" in env.repo.forge("next").stdout
+    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
+    assert "settle it yourself" in env.repo.forge("next").stdout
     assert follow_ups(env) == []
 
 

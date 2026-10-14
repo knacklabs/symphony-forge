@@ -104,15 +104,17 @@ export function board(data: Data, now: number): View {
     const own = i.kind === 'story' ? i.id : key
     for (const child of i.children ?? []) walk(child, own)
     const next = record(i.next), command = typeof next.command === 'string' ? next.command : null
-    const step = command ?? (typeof next.line === 'string' ? next.line : undefined)
-    const ask = asked.get(i.id) ?? (i.state === 'waiting for approval' || i.stage === 'waiting for approval' ? { reason: 'approval' } : command?.includes(' --resolve') ? { reason: 'review loop' } : undefined)
+    // `step` is forge next's Next text even when it is not one runnable command; older Forge lacks it.
+    const step = typeof next.step === 'string' ? next.step : command ?? undefined
+    const approval = i.state === 'waiting for approval' || i.stage === 'waiting for approval'
+    const ask = asked.get(i.id) ?? (approval ? { reason: 'approval' } : i.needs_person === true ? { reason: '' } : undefined)
     const row: Row = { title: i.title, key: own, item: i }
     if (i.state === 'done' || i.stage === 'done') return
     if (ask) {
       const found = i.findings?.count ? `Review found ${plural(i.findings.count, 'problem')}. ` : ''
       const reason = String(ask.reason ?? '')
-      row.state = found + (reason === 'approval' ? 'The plan is ready for your approval.' : ASKS[reason] ?? (reason ? `${reason.charAt(0).toUpperCase()}${reason.slice(1)}.` : '')).trim()
-      row.next = step && (command ? `decide: ${command}` : step)
+      row.state = found + (reason === 'approval' ? 'The plan is ready for your approval.' : ASKS[reason] ?? (reason ? `${reason.charAt(0).toUpperCase()}${reason.slice(1)}.` : found ? 'The builder is stuck.' : 'The builder is waiting for your answer.')).trim()
+      row.next = step && (step.startsWith('forge ') ? `decide: ${step}` : step)
       groups['NEEDS YOU']!.push(row)
     } else if (i.children?.length) return // its parts show the work
     else if (i.stalled === true || blocked.has(i.id)) {
@@ -124,11 +126,19 @@ export function board(data: Data, now: number): View {
       const stage = stages(i).find(s => s.status === 'running'), w = record(i.worker), a = record(i.activity)
       const start = stage?.started_at ?? (typeof w.started_at === 'string' ? w.started_at : null)
       row.state = [DOING[stage?.name ?? String(w.kind ?? a.action)] ?? 'Running', start ? ago(elapsed(start, now)) : ''].filter(Boolean).join(' · ')
+      row.next = step
       groups.MOVING!.push(row)
     } else if (i.state === 'ready to merge' || i.stage === 'ready') {
-      row.state = CHECKS[String(i.pr?.checks)]
+      row.state = ['Ready to merge', CHECKS[String(i.pr?.checks)]].filter(Boolean).join(' · ')
+      // With no step (another machine's item, or an older Forge), forge next's own line says who merges.
+      row.next = step ?? (typeof next.line === 'string' ? next.line : 'see forge next')
       groups['READY TO MERGE']!.push(row)
-    } else waiting.push(row)
+    } else {
+      const word = record(i.activity).status === 'queued' ? 'waiting in line' : typeof i.state === 'string' ? i.state : i.stage
+      row.state = word ? `${word.charAt(0).toUpperCase()}${word.slice(1)}` : undefined
+      row.next = step
+      waiting.push(row)
+    }
   }
   for (const i of data.board?.items ?? []) walk(i)
   const count = (kind: string) => Number(record(counts[kind])['in progress'] ?? 0)
@@ -139,6 +149,12 @@ export function board(data: Data, now: number): View {
     groups['NEEDS YOU']!.length ? `${groups['NEEDS YOU']!.length} needs you` : '',
     groups.STUCK!.length ? `${groups.STUCK!.length} stuck` : '',
     golive,
+  ].filter(Boolean).join(' · ') || [
+    // Nothing in progress, asking or stuck: count the rows the tab shows, in its group words.
+    // With no rows this is empty and the board says Nothing in progress. on its own.
+    groups.MOVING!.length ? `${groups.MOVING!.length} moving` : '',
+    groups['READY TO MERGE']!.length ? `${groups['READY TO MERGE']!.length} ready to merge` : '',
+    waiting.length ? `${waiting.length} waiting` : '',
   ].filter(Boolean).join(' · ') || null : null
   const idle = Math.max(0, ...groups.STUCK!.flatMap(r => r.item.idle_since ? [elapsed(String(r.item.idle_since), now)] : []))
   return {

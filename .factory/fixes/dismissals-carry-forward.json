@@ -1,0 +1,84 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/dismissals-carry-forward",
+  "done_when": "A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code changes",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/templates/skill.md"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_cited_changed() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 661,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator (Harm 2, reversible): moving a cited line within its file reopens the finding \u2014 the safe direction, it only blocks again; tracking moved lines is a follow-up.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A dismissed finding stays dismissed in later rounds while the code its reason cites is unchanged, and returns only when that code",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 1,
+      "line": 925,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: shipped guidance contradicts the new dismissal rule",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b687c09636526ce60d60479fce17ed5ba244058a0b9a76dacf864cce006f05a2",
+    "changed": "f3f2179b2adac9745ab6cb9ddd74b06692c4894217ea3d904ea1f55809b438c1",
+    "commit": "44cbf279f1f3196a5adc956547b9958bdd3de84b",
+    "dismissals": [],
+    "findings": [],
+    "id": "58293664-0446-463c-9647-006adcc24e49",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "src/forge/review.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:52.068554+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:48:25.218942+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:01:10.067639+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:39:24.879160+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T15:09:16.035350+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-13T11:39:24.898477+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/review.py",
+    "reason": "Coordinator (Harm 2, reversible): moving a cited line within its file reopens the finding \u2014 the safe direction, it only blocks again; tracking moved lines is a follow-up.",
+    "wait_id": "c05006bb-4ed4-4234-a643-317850aedda6",
+    "worker_round": null
+  },
+  "why": "Every new commit throws away the review's dismissals, so an unchanged dismissed finding costs another full review round"
+}

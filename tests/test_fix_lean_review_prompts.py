@@ -106,7 +106,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     # The coordinator guide synced into the repo holds the orchestrator to the same boundary.
     for guide in (where / ".claude/skills/forge/SKILL.md", where / ".codex/skills/forge/SKILL.md"):
         text = flat(guide.read_text("utf-8"))
-        assert ("every P0 or P1 finding inside it gets a fix round with `forge work <item>`, never "
-                "a dismissal for being unnecessary, rare or low value") in text, guide
+        assert ("every finding at the bar (Proposed \"fix now\" or \"fix this round\") gets a fix round "
+                "with `forge work <item>`, whatever its priority") in text, guide
         assert "Dismiss only a finding outside the boundary or factually wrong" in text, guide
         assert "never kept as unnecessary" in text, guide

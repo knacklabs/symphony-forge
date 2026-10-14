@@ -219,6 +219,21 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
             (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
 
 
+def blocked_rounds(top: Path, item: str, ref: str = "HEAD") -> tuple[int, str | None]:
+    """The latest consecutive blocked review results at ref, counted once per reviewed commit,
+    and the commit date of the first of them. Committed results include older releases and
+    later dismissals."""
+    seen, since, path = set(), None, repo.state_path(item)
+    for line in repo.git("log", "--first-parent", "--format=%H %cI", ref, "--", path, cwd=top).splitlines():
+        commit, date = line.split()
+        result = json.loads(repo.git("show", f"{commit}:{path}", cwd=top)).get("review") or {}
+        if not result or not blocking(result):
+            break
+        seen.add(result["commit"])
+        since = date
+    return len(seen), since
+
+
 def area(top: Path, commit: str, file: str, line: Any) -> str:
     """A finding's area: the qualified name of the innermost Python def holding its line at the
     commit, else (another language, no parse, a line outside every def) the file."""
@@ -260,10 +275,10 @@ def plain(title: str, body: str = "") -> str:
     return f"{title.rstrip('.!?:')}: " + (body if body[1:2].isupper() else body[:1].lower() + body[1:])
 
 
-def question(name: str, delivers: str, flagged: list[str], accept: str,
+def question(name: str, delivers: str, flagged: list[str], who: str, accept: str,
                   parts: str = "Done when") -> str:
-    """The question a stopped read or review loop asks the human, ready to ask as written."""
-    return "\n".join([f"{name}: {delivers}" if delivers else name,
+    """Who decides a stopped read or review loop, then its question, ready to ask as written."""
+    return "\n".join([who, f"{name}: {delivers}" if delivers else name,
                       *(["It still has these problems:", *flagged] if flagged else []),
                       "Accept, narrow or split?",
                       f"- Accept: {accept}",
@@ -289,16 +304,17 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
         name = plain(row.get("Name") or item) + (f" (part of {plain(title[1])})" if title else "")
         delivers = plain(row.get("What it delivers", ""))
     result = state.get("review") or {}
-    rows = [(plain(finding["title"], finding.get("body", "")), score.of(finding)) for finding in score.open_findings(result)
-            if score.holds(finding, result.get("blocking_level")) or finding.get("harm", 0) >= 3]
-    # Accept dismisses every finding not yet dismissed, advice included.
-    dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
-    advice = sum(n not in dismissed for n in range(1, len(result.get("findings", [])) + 1)) - len(rows)
+    # The table lists every open finding, the ones Accept dismisses, below the bar included.
+    opened = [id(finding) for finding in score.open_findings(result)]
+    rows = [(n, plain(finding["title"], finding.get("body", "")), score.of(finding))
+            for n, finding in enumerate(result.get("findings", []), 1) if id(finding) in opened]
     stop = state.get("stop") or {}
-    said = question(name, delivers, score.table(rows),
-                               f"every finding in this review, the {len(rows)} listed and {advice} "
-                               "advice notes, is dismissed with your reason and recorded; close then "
-                               "goes on to the checks, and merging is still a separate step.")
+    said = question(name, delivers, score.table(rows), score.who(rows, (
+                        "Ask the human to narrow the part, split it, or accept the remaining findings, "
+                        "in these words:")),
+                               f"every finding in this review, the {len(rows)} listed, is dismissed with "
+                               "your reason and recorded; close then goes on to the checks, and merging "
+                               "is still a separate step.")
     return said if not stop.get("area") else said.replace("It still has these problems:", (
         f"Findings keep coming in {stop['area']}; proposed: {stop['proposed']}. It still has these problems:"), 1)
 
@@ -637,6 +653,40 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
     return {names[key]: reason for key, reason in settled.items()}
 
 
+def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str], head: str) -> bool:
+    """Whether git's diff from the commit of the newest own (not carried) dismissal to head touches
+    the line its `file:line` cites; a line only shifted by edits elsewhere counts as unchanged."""
+    cited = None
+    for result in history:
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            where = re.fullmatch(r"(.+):(\d+)", (dismissal["because"].split() or [""])[0])
+            if (where and score.identity(finding["file"], finding["title"]) == key
+                    and not dismissal.get("accepted") and not dismissal.get("carried")):
+                cited = (result["commit"], where[1], int(where[2]))
+    if not cited:
+        return False  # no cited line to compare: the dismissal stands, as before
+    commit, path, number = cited
+    diff = repo.run("git", "diff", "-U0", "-M", commit, head, cwd=top)
+    if diff.returncode:
+        return True  # the dismissal's commit is gone: nothing proves the line unchanged
+    old, header = "", False
+    for line in diff.stdout.splitlines():
+        if line.startswith("diff --git "):
+            old, header = "", True
+        elif header and line.startswith("--- "):
+            old = line[6:] if line.startswith("--- a/") else ""
+        elif header and line == "+++ /dev/null" and old == path:
+            return True  # the cited file was deleted
+        elif header and line.startswith("@@"):
+            header = False
+        if not header and old == path and (hunk := re.match(r"@@ -(\d+)(?:,(\d+))? ", line)):
+            first, count = int(hunk[1]), int(hunk[2] or 1)
+            if first <= number < first + count:
+                return True
+    return False
+
+
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     """The worker's functional check: the `Functional check:` paragraph of its last commit message,
     to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
@@ -877,13 +927,14 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    settled = {score.identity(*key): reason
-               for key, reason in _settled(_history(top, item, base, previous)).items()}
+    history = _history(top, item, base, previous)
+    settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
     findings = [finding for finding in findings if not settled.get(
         score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
-    dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because ")}
+    dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because "), "carried": True}
                   for number, finding in enumerate(findings, 1)
-                  if (reason := settled.get(score.identity(finding["file"], finding["title"]), ""))]
+                  if (reason := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
+                  and not (reason.startswith("dismissed because ") and _cited_changed(top, history, key, head))]
     result = {"findings": findings, "dismissals": dismissals,
               "blocking_level": "P0" if light else "P1"}
     identity = repo.record_event(top, item, "review result", commit=head,

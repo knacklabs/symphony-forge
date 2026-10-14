@@ -6,7 +6,6 @@ import argparse
 import hashlib
 import json
 import re
-import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -230,7 +229,7 @@ def start(args: argparse.Namespace) -> None:
                 if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
                     raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
                 raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
-                                   f"git -C {shlex.quote(str(folder))} status; fix the reported problem "
+                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
                                    f"and finish the merge, then {retry}")
             elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
                 git("merge", "--abort", cwd=folder)
@@ -294,15 +293,17 @@ def start(args: argparse.Namespace) -> None:
     print(f"Next: forge work {item}")
 
 
-def start_base(main: str, key: str, row: dict[str, str]) -> str:
+def start_base(main: str, key: str, row: dict[str, str], history: dict[str, Any] | None = None,
+               top: Path | None = None) -> str:
     """Where forge task start branches a task, so the task takes that branch's forge.toml: the
     default branch once the story doc is there, or when the task comes after another story's
     task, whose merged code is only there; else the story branch."""
     if (any("/" in dep for dep in cell_list(row.get("After", "")))
-            or show(main, f"plans/{key}.md") is not None):
+            or (history["docs"].get(f"{main}:plans/{key}.md") is not None if history is not None
+                else show(main, f"plans/{key}.md") is not None)):
         return main
     from forge import story
-    return story.plan_ref(repo.root(), key)
+    return story.plan_ref(top or repo.root(), key, history)
 
 
 def _merged(main: str, item: str, top: Path | None = None) -> bool:
