@@ -46,7 +46,7 @@
     "id": "29df5d6a-015f-4443-ab53-a20827010a1c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -59,10 +59,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d93ffa42f72671dea8fc04db767b3e9f28127afe",
-    "keys": {},
-    "round": null
+    "close": "fe59fbe8-8cba-42fe-929b-d955515d1146",
+    "head": "4d4e92b8f37b1c00abeed31beb0b107b532caa62",
+    "keys": {
+      "the review finding \"Not done: item 4 client lifecycle test\" in tests/test_mainonce_spotted.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
