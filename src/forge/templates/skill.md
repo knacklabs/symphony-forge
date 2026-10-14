@@ -1305,7 +1305,10 @@ When `forge close` stops on a finding, open the line it cites, and the code that
 before anything else. The review's "What counts" list is the boundary, and the bar decides
 inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
 `forge work <item>`, whatever its priority. A finding below the bar never holds the work; close
-lists it in the pull request as a follow-up or lived with. Never re-score a finding to change its
+lists it in the pull request as a follow-up or lived with. Harm 4 or 5, or Gain 5 stops the work.
+Otherwise, Gain 4, or Gain 3 with Harm 3, holds the work only with Work 1 or 2. Every other
+Gain 3 or 4 finding becomes a follow-up fix, even at Work 1 or 2 when Gain is 3 and Harm is 1 or 2.
+Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.

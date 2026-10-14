@@ -142,11 +142,11 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert reviewed.returncode == 0, reviewed.stderr
     assert len(env.review_calls()) == before + 1
     prompt = env.prompt()
-    assert "Unfixed defect (src/a.py:1): Gain 3, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
+    assert "Unfixed defect (src/a.py:1): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
     # The owner's acceptance reaches the reviewer as known and accepted, not as a ruling.
     known = prompt.split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert f"Unfixed defect (src/a.py): accepted by the owner: Human accepted the remaining finding: {reason}" in known
-    assert f"Proven safe (src/a.py:1): Gain 3, Work 2, Harm 1\nEvidence for: Proven safe; dismissed because {evidence}" in prompt
+    assert f"Proven safe (src/a.py:1): Gain 4, Work 2, Harm 1\nEvidence for: Proven safe; dismissed because {evidence}" in prompt
     assert f"Proven safe (src/a.py): dismissed because {evidence}" in prompt
 
 
