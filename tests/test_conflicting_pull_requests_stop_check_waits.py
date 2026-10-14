@@ -124,10 +124,31 @@ if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.
     return where, before, moved
 
 
-@pytest.mark.parametrize("mode", ["conflict", "unknown-once", "unknown-always", "merge-conflict"])
+@pytest.mark.parametrize("mode", ["conflict", "unknown-once", "unknown-always", "merge-conflict",
+                                  "lookup-error", "lookup-unreadable", "lookup-wrong-shape"])
 def test_1_close_and_merge_check_clashes_before_green_checks(client, monkeypatch, mode):
     env, _, remote = client
     repo = env.repo
+    if mode.startswith("lookup-"):
+        _fix(env, "working", worked=True)
+        response = {"lookup-error": ("", 1), "lookup-unreadable": ("not JSON", 0),
+                    "lookup-wrong-shape": ("[]", 0)}[mode]
+        script = '''
+if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.index("--json") + 1]:
+    answer(RESPONSE, CODE)
+'''.replace("RESPONSE", repr(response[0])).replace("CODE", str(response[1]))
+        stub = repo.bin / "gh"
+        stub.write_text(stub.read_text(encoding="utf-8").replace(
+            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'),
+            encoding="utf-8")
+        monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
+        done = repo.forge("close", ITEM)
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "not green yet" in done.stderr and "GitHub did not answer" in done.stderr
+        assert "Ready:" not in done.stdout
+        assert len(env.gh_calls(*RUNS)) == 1
+        assert not env.gh_calls("pr", "ready")
+        return
     if mode == "merge-conflict":
         repo.git("switch", "fix/upgrade-client")
         env.commit(repo.path, "forge.toml", (repo.path / "forge.toml").read_text(encoding="utf-8")
