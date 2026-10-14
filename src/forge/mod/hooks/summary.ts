@@ -149,6 +149,12 @@ export function board(data: Data, now: number): View {
     groups['NEEDS YOU']!.length ? `${groups['NEEDS YOU']!.length} needs you` : '',
     groups.STUCK!.length ? `${groups.STUCK!.length} stuck` : '',
     golive,
+  ].filter(Boolean).join(' · ') || [
+    // Nothing in progress, asking or stuck: count the rows the tab shows, in its group words.
+    // With no rows this is empty and the board says Nothing in progress. on its own.
+    groups.MOVING!.length ? `${groups.MOVING!.length} moving` : '',
+    groups['READY TO MERGE']!.length ? `${groups['READY TO MERGE']!.length} ready to merge` : '',
+    waiting.length ? `${waiting.length} waiting` : '',
   ].filter(Boolean).join(' · ') || null : null
   const idle = Math.max(0, ...groups.STUCK!.flatMap(r => r.item.idle_since ? [elapsed(String(r.item.idle_since), now)] : []))
   return {

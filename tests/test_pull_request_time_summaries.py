@@ -140,8 +140,8 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
         result = env.repo.forge("board", "--json")
         story = next(i for i in json.loads(result.stdout)["items"] if i["id"] == "SHOP")
         assert abs(story["waiting_seconds"] - shared["waiting_seconds"]) < 1, (story, shared)
-        # The story also counts its plan reads as working, a few seconds here; the shared record keeps milliseconds.
-        assert -0.01 <= story["working_seconds"] - shared["working_seconds"] < 5, (story, shared)
+        # The story also counts its plan reads as working, a few seconds here; the shared record rounds each interval, as the waiting check allows.
+        assert -1 < story["working_seconds"] - shared["working_seconds"] < 5, (story, shared)
         assert story["unknown_seconds"] <= shared["unknown_seconds"] + 1
         assert abs(story["total_seconds"] - shared["total_seconds"]) < 1, (story, shared)
         # Anyone can edit the body: a folded entry with a word or a negative number never breaks the board.

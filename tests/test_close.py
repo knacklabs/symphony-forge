@@ -58,7 +58,7 @@ Risks: none
 
 
 # A default score line per priority that keeps each finding's outcome under today's rule.
-SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 3, Work 2, Harm 1"}
+SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
 
 
 def finding(priority: str, title: str, file: str = "app.py", line: int = 1) -> dict:
@@ -582,8 +582,8 @@ def test_18_close(env, kind):
 # --- criterion 19: the functional check -----------------------------------------------------
 
 MISSING_CHECK = finding("P1", "Not done: functional check", "show.py")
-HOLLOW_CHECK = {**MISSING_CHECK, "body": "Gain 3, Work 2, Harm 1\nThe check says only 'it works'; nothing was exercised."}
-STALE_CHECK = {**MISSING_CHECK, "body": "Gain 3, Work 2, Harm 1\nThe only check is in an older commit's message."}
+HOLLOW_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe check says only 'it works'; nothing was exercised."}
+STALE_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe only check is in an older commit's message."}
 
 
 @pytest.mark.parametrize("task, answer, refused", [

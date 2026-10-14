@@ -45,7 +45,7 @@ def parts_per_week(env, monkeypatch, weeks, counts, first=0):
 def go_live(env):
     team = board(env.repo)["team"]
     assert team["go_live"]["no_plan"] == {"count": 1, "titles": [NO_PLAN]}
-    assert f"unknown, with no plan yet: {NO_PLAN}" in team["sentence"]
+    assert "unknown: 1 story has no plan yet" in team["sentence"] and NO_PLAN not in team["sentence"]
     return team
 
 
@@ -104,3 +104,14 @@ def test_4_pace_and_go_live_from_the_last_three_and_six_weeks(env, monkeypatch, 
                                "latest": (today + timedelta(days=63)).isoformat(), "remaining_parts": 6,
                                "no_plan": team["go_live"]["no_plan"]}
     assert team["sentence"].startswith(IDLE + "planned work can go live between")
+
+
+def test_13_team_sentence_counts_unplanned_stories_instead_of_naming_them(env):
+    client(env, False)
+    titles = ["Pay by card", "Gift wrap", "Wish lists"]
+    env.commit(env.repo.path, "plans/roadmap.json", json.dumps({"items": [
+        {"key": f"K{n}", "title": title} for n, title in enumerate(titles)]}), "Plan three stories later")
+    env.repo.git("push", "-q", "origin", "main")
+    sentence = board(env.repo)["team"]["sentence"]
+    assert "3 stories have no plan yet" in sentence
+    assert not any(title in sentence for title in titles)

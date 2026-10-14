@@ -324,8 +324,9 @@ week for the last six full weeks and this one.
 UTC) for six weeks. `team.go_live` gives a date range for the parts of approved stories still to
 merge, from the last three and six weeks' pace: `range`, `about` when the two agree, `not enough
 history` when the oldest merged part is under three weeks old or the last three weeks merged none,
-or `done`; it names the stories with no plan yet as the unknown, and `team.sentence` says the
-same. `team.trends` counts merged pull requests per week for the team and each person
+or `done`; it counts the stories with no plan yet as the unknown, and `team.sentence` says the
+same in a count, not names. `team.in_progress` lists the stories and fixes the page shows under In
+progress (`id`, `title`, `kind`, `state`). `team.trends` counts merged pull requests per week for the team and each person
 (alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
 branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
 Both are null without GitHub, and a week capped at 1,000 results is null.
@@ -532,8 +533,9 @@ automatically at 144 columns, or 110 after the person has opened it once.
 The strip below that wide-screen threshold ends with `/forge for the board`.
 The pane's Board tab, on the terminal and the Desktop app's Code tab alike, opens
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
-Each part shows only when the board's `team` fact behind it is known and not zero; an
-older Forge with no `team` shows no summary line. Groups follow in this order, each only
+Each part shows only when the board's `team` fact behind it is known and not zero; when
+none of them applies, the line counts the rows the tab shows in its own group words instead,
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Groups follow in this order, each only
 when it has items: NEEDS YOU (rows whose `needs_person` is true),
 STUCK (no activity past the board's stall threshold, with the longest wait in days),
 MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
@@ -1308,7 +1310,10 @@ When `forge close` stops on a finding, open the line it cites, and the code that
 before anything else. The review's "What counts" list is the boundary, and the bar decides
 inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
 `forge work <item>`, whatever its priority. A finding below the bar never holds the work; close
-lists it in the pull request as a follow-up or lived with. Never re-score a finding to change its
+lists it in the pull request as a follow-up or lived with. Harm 4 or 5, or Gain 5 stops the work.
+Otherwise, Gain 4, or Gain 3 with Harm 3, holds the work only with Work 1 or 2. Every other
+Gain 3 or 4 finding becomes a follow-up fix, even at Work 1 or 2 when Gain is 3 and Harm is 1 or 2.
+Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.

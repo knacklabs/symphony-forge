@@ -1,0 +1,30 @@
+{
+  "base": "56747770778d0130faea34ba812abae4b6428090",
+  "branch": "fix/story-time-tolerance",
+  "done_when": "The check allows up to one second below, the same tolerance the test's waiting-time check uses, and still fails when the story's time is wrong by seconds",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "756671c1021c8f9b6af0dac5fb5db412353cb70a589f5318c0be603dbd09c8de",
+    "changed": "a470f3c094a8d8706563e49452ddf05eaa662d3e3b669366db3704e670bb4d0f",
+    "commit": "dc9e0ba416f67da522452f7aed895b24c6400b0d",
+    "dismissals": [],
+    "findings": [],
+    "id": "46529089-a4ee-4a74-9c8a-cac937caf1b4",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T05:15:13.507218+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T05:17:29.127532+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The story time check in the time-record test fails at random on CI: the story's working time comes out a few hundredths of a second below its part's, because the shared record rounds each interval to milliseconds"
+}

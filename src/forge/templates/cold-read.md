@@ -22,9 +22,11 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-Your scores (see Scores below) decide: a note with Harm 4 or 5, Gain 5, or Gain 3 or 4 and Work 1
-or 2 is at the bar and holds the plan; any other is a follow-up or lived with, and Forge writes its
-disposition. A read passes when no note is at the bar. Score a note at the bar only when
+Your scores (see Scores below) decide: Harm 4 or 5, or Gain 5 holds the plan. Otherwise, Gain 4,
+or Gain 3 with Harm 3, holds the plan only with Work 1 or 2. Every other Gain 3 or 4 note is a
+follow-up, even a Gain 3 note with Harm 1 or 2 and Work 1 or 2. Gain 1 or 2 is lived with.
+Forge writes each below-bar note's disposition. A read passes when no note is at the bar.
+Score a note at the bar only when
 the plan is wrong, contradicts itself, or a builder could not act on it. Still start each note with
 `Blocking:` or `Advisory:`; Forge reads that label only for a note without scores.
 
