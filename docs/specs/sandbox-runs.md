@@ -78,7 +78,7 @@ The owner chose each of these on 14 October 2026:
    **Model credentials stay apart from repository commands.** The relay starts the Claude Code CLI
    with a clean environment that holds only the developer's `CLAUDE_CODE_OAUTH_TOKEN`: no
    `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or provider-selection variable, so the subscription is
-   always the credential in use. It also sets `CLAUDE_CODE_SCRUB_SUBPROC_ENV=1`, so Bash and hook
+   always the credential in use. It also sets `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`, so Bash and hook
    subprocesses (the tests and every repository command) do not inherit the token. The repo's sandbox
    secrets reach only those commands, through `forge test` and the worker's command runner, never the
    Claude process itself, so an app secret named `ANTHROPIC_API_KEY` cannot replace the developer's
