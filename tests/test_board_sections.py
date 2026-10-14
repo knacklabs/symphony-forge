@@ -39,6 +39,9 @@ def pinned_bar_and_folding_sections(repo, gh, tmp_path, history):
     fixes = re.search(r'<section id="fixes".*?</section>', page, re.S)[0]
     # More than 20 stories: Stories starts folded; the short Fixes section starts open.
     assert '<details class="fold">' in stories and '<details class="fold" open>' in fixes
+    # Overview and Roadmap always start open.
+    for name in ("overview", "roadmap"):
+        assert re.search(rf'<section id="{name}"[^>]*><details class="fold" open>', page), name
     # Stories sorted by state, with no group headings, each title followed by its key.
     assert "<h3" not in stories
     groups = re.findall(r'<div class="row" data-group="([^"]+)">', stories)

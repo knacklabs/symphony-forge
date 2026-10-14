@@ -140,7 +140,7 @@ def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkey
     data, text, _ = _board(client, tmp_path)
     row = _row(data, "PAST")
     assert row["stage"] == "done" and not row["stalled"]
-    assert "People keep saved baskets Story Done Finished" in text
+    assert "People keep saved baskets PAST Story Done Finished" in text
     assert row["status"] == "Finished"
     assert "People keep saved baskets Finished on" not in text
     assert data["team"]["counts"]["stories"]["done"] == 1

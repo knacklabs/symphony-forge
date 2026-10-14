@@ -5,8 +5,8 @@ import json
 import re
 
 from test_board import DOC
-from test_board_dependency_timelines import _configured
-from test_story import claude_plan, hook, new_story
+from test_board_dependency_timelines import _configured, _land_fixture
+from test_story import claude_plan, hook, new_story, worktree
 
 STORY = "FORGE-BOARD-2"
 
@@ -42,6 +42,16 @@ def story_history_lists_read_rounds(repo, gh, tmp_path, claude_payload, history)
     assert read.returncode == 0, read.stderr
     approved = hook(repo, claude_plan(claude_payload, amended, cwd=shop))
     assert approved.returncode == 0, approved.stderr
+    # One part built and merged after the approval.
+    repo.git("merge", "-q", "--no-edit", "story/SHOP")
+    started = repo.forge("task", "start", "SHOP/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+    part = worktree(repo, "task/SHOP-SAVE")
+    (part / "basket.txt").write_text("saved\n", encoding="utf-8")
+    repo.git("add", "-A", cwd=part)
+    repo.git("commit", "-qm", "Save a basket", cwd=part)
+    repo.git("merge", "-q", "--no-edit", "task/SHOP-SAVE")
+    _land_fixture(repo)
 
     data = json.loads(repo.forge("board", "--json").stdout)
     row = next(item for item in data["items"] if item["id"] == "SHOP")
@@ -71,3 +81,6 @@ def story_history_lists_read_rounds(repo, gh, tmp_path, claude_payload, history)
     assert lines[:approval][:2] == expected[:2], lines
     assert lines[2].startswith(expected[2]) and lines[2].endswith("No findings."), lines
     assert approval == 3 and row["approved_by"] and row["approved_by"] in lines[approval]
+    merged = next(part for part in row["children"] if part["id"] == "SHOP/SAVE")
+    assert merged["state"] == "done", merged["state"]
+    assert lines[approval + 1].startswith(f'{merged["title"]} merged'), lines
