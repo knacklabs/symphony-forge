@@ -256,8 +256,8 @@
       "gain": 4,
       "harm": 3,
       "line": 407,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
       "round": 16,
       "security": false,
       "title": "Not done: Legacy Unicode history can exceed the pull request body limit",
@@ -269,8 +269,8 @@
       "gain": 3,
       "harm": 3,
       "line": 558,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
       "round": 16,
       "security": false,
       "title": "Folding an open owner wait loses its remaining waiting time",
@@ -282,7 +282,18 @@
     "branch_diff": "2286b706cf4af33fa336262c3841e5e21c46085b3974301041f0315f60cd6e5a",
     "changed": "80de8d9f6076a8db5c6e7adcd0eeb858fcbe2578e0d1ac16589dcea67f765c91",
     "commit": "11005e408ea4c9b94a20428d87952123f407220d",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nThe legacy history cap is measured in characters, but JSON escapes each non-BMP character as 12 ASCII bytes. An earlier release's retained history containing 8,000 emoji produces a `legacy_text` field of about 96 KB by itself. `_compact` eventually runs out of timestamped rows and exits while the record is oversized; `_bounded_body` cannot remove that field. The resulting pull request body exceeds GitHub's 64 KB limit, so the stated fixed-size outcome is unmet.",
@@ -306,14 +317,15 @@
       }
     ],
     "id": "9d8ab84d-3863-4c16-b9da-af0ef1c0ad84",
-    "status": "blocked"
+    "status": "clean"
   },
   "settled_areas": [
     "_compact() in src/forge/time_records.py",
+    "how_it_went() in src/forge/time_records.py",
     "src/forge/time_records.py",
     "test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_body_size() in tests/test_pull_request_time_summaries.py"
   ],
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T15:44:33.693930+00:00",
@@ -387,9 +399,13 @@
   "stop": {
     "area": "how_it_went() in src/forge/time_records.py",
     "at": "2026-10-13T20:15:15.135672+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "how_it_went() in src/forge/time_records.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "689c7f68-f7a2-4e4e-a084-f2474cb9cb8e"
+    "reason": "Owner chose 'Ship, fix both after' on 2026-10-14: the emoji-heavy old history size case and the folded open merge wait become one follow-up fix",
+    "wait_id": "689c7f68-f7a2-4e4e-a084-f2474cb9cb8e",
+    "worker_round": null
   },
   "why": "A long item's pull request time record grows toward GitHub's 64 KB body limit, and Forge trims older time detail from about round 16"
 }
