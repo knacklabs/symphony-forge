@@ -68,13 +68,23 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
 1. `forge board` starts a server on 127.0.0.1 at a free port, with a per-run token in the page
    address, opens the browser, and stops the server when the command ends. Routes: the page,
    `/board.json`, `/plan/<KEY>` (added in SERVER), `/assign` (added in ASSIGNUI). Every route
-   checks the token. `/board.json` is the untrimmed derivation (the one the HTML board uses
-   today), built fresh on every request with no cache kept between requests; the server fetches
-   from the remote at most once a minute. The page polls every 10 seconds while visible. The page
-   sends a Content-Security-Policy that allows only its own scripts and styles. `forge board --json`
+   checks the token. Speed: one full derivation takes about 5 seconds warm and 16 to 40 cold,
+   so the server never rebuilds blindly. (a) On every request it checks the inputs cheaply: git
+   refs and packed refs, Forge's record and event files under the git directory, the lanes
+   files and each worktree's HEAD; when none changed it serves the last snapshot, otherwise it
+   rebuilds. Nothing that changed is ever served stale. (b) Each item's row is cached by its
+   inputs (branch head and state file) and only changed rows are rebuilt. (c) `/board.json`
+   serves the Now view: active items and team facts. Releases, Insights and an item's full history
+   come from `/board.json?page=releases|insights|item&id=...`, built from the untrimmed
+   derivation on first open and cached until a ref changes. (d) `/events` is a server-sent events
+   stream that says "changed" when a new snapshot exists; the page listens to it and falls back to
+   polling every 10 seconds if the stream drops. On start the page shows the last snapshot at once.
+   The server fetches from the remote at most once a minute. Measured target on this repo: a
+   refresh with one changed item under 1 second, an unchanged one under 100 ms. `forge board --json`
    and `--out` keep working. Tests: the server answers only on 127.0.0.1 and only with the token;
-   a change to the repo between two polls appears in the second; a teammate's pushed assignment
-   appears after the next fetch.
+   a change to the repo between two requests appears in the second; an unchanged repo serves the
+   same snapshot without rebuilding; one changed item rebuilds only that row; the events stream
+   sends "changed" after a commit; a teammate's pushed assignment appears after the next fetch.
 2. Shell interfaces, pinned by SERVER with stubs and one test that crosses them:
    `Board.onSnapshot(fn)`, `Board.select(itemId)`, `Board.openDrawer(itemId)`,
    `Board.openItem(itemId)`, `Board.navigate(page)` and `Board.api.assign(key, login) ->
