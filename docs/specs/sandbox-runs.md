@@ -76,16 +76,19 @@ The owner chose each of these on 14 October 2026:
    uses it first, then client repos on upgrade.
 
 **Mainline, through Forge's own relay.** Forge puts its own small relay process in each sandbox,
-and the laptop connects to it over the sandbox's web address. The relay starts the worker, streams its
+and the laptop and the relay both connect out to the run's address on Mainline's relay gateway, so
+the sandbox takes no inbound traffic. The relay starts the worker, streams its
 output, passes notes and questions both ways, stops it, keeps it running when the laptop disconnects,
 and lets the laptop reattach later. So Mainline's API needs only five plain operations: create a
-sandbox, copy files in and out, start one process, give that process a web address, and
+sandbox, copy files in and out, start one process, give that process an address on the relay gateway, and
 delete the sandbox. Inside Mainline each backend is one small adapter for those five, so Mainline can
 change backends without any change to Forge; Forge reads only the fields it uses from Mainline's
 replies (principle 7).
-Only the laptop that started a run can send it notes or stop it through the relay, with a secret made
-for that sandbox. The relay also forwards the run's output to Mainline, so every member of the team
-can watch any run on the board and in their pane.
+Who may act on a run is one rule: any team member can watch it and collect its result; only the
+developer who started it sends it notes; the starter or an Owner can stop it. The relay forwards the
+run's output to Mainline for the board and every pane. Each run has its own token, valid for that run
+and its reconnects; removing a person from the team closes their sessions within a minute, while the
+run keeps only the right to upload its own result.
 
 **What goes up: committed code only.** The sandbox gets a git bundle of the item's branch and the
 default branch and checks it out in a fresh history with no remote, so the worker can commit and
@@ -118,7 +121,8 @@ keychain; a person who is not a member of the repo's team cannot start its sandb
 **Ready images and test services.** The repo's sandbox image is built once from its lockfiles and
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
 version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
-check in a sandbox and reports what the repo still needs before rounds can move there. Each image is
+check in a sandbox and reports what the repo still needs before rounds can move there. A repo whose
+tests need Docker keeps its close on the laptop, and `forge doctor` says so. Each image is
 named by a hash of the repo's lockfiles, its test setup, its services in `forge.toml` and the repo's
 pinned Forge release; when any of
 them changes on the branch, the next remote run builds a new image, and the old one stays in use for
@@ -192,8 +196,8 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   Other items keep using the laptop, so work never stops.
 - **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait in
   Mainline: the relay uploads each result (its bundle and record, or a patch) to Mainline's result
-  store before the round ends, and Mainline then removes the sandbox. A result stays until
-  Forge collects it. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
+  store before the round ends, and Mainline then removes the sandbox. Collecting a result can be
+  repeated safely; a result stays until Forge acknowledges that it has pushed the commits. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
   rounds it collected.
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
