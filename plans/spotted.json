@@ -10614,6 +10614,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md omits releases from the owner's 14 October board requirements\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
