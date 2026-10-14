@@ -375,6 +375,28 @@
       "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
     },
     {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md omits releases from the owner's 14 October board requirements\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "README.md",
