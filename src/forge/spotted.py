@@ -170,6 +170,10 @@ def check(top: Path, item: str) -> None:
         read(top)
     except Unreadable as problem:
         path = problem.path
+        if not _path(path):
+            # A contributor's filename must not become shell code or another output line.
+            repo.refuse(REFUSALS["bad"], path=json.dumps(path), problem=problem,
+                        repair="remove or restore this file with your file manager", item=item)
         repair = f"git -C {top} rm -q {path}"
         for commit in repo.git("log", "--format=%H", "HEAD", "--", path, cwd=top).split():
             # Bytes, so a copy that isn't UTF-8 stays unreadable.

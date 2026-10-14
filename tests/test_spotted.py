@@ -212,6 +212,20 @@ def _an_unreadable_other_items_file_is_refused(env):
         f"Next: git -C {where} rm -q {path}, commit it, then forge close {item}\n")
 
 
+def _unsafe_record_filenames_never_enter_repair_commands(env):
+    item, where = env.start_fix()
+    path = "plans/spotted/$(echo unsafe).json"
+    for readable_history in (False, True):
+        if readable_history:
+            env.commit(where, path, '{"items": []}\n', "Keep readable records")
+        env.commit(where, path, "{broken", "Break the records")
+        said, repair = _refused(env, item, where)
+        assert said == f"{json.dumps(path)} isn't a list Forge can read: it isn't UTF-8 JSON."
+        # Neither removal nor restoration may put a contributor's filename into a shell.
+        assert repair == "remove or restore this file with your file manager"
+        assert (where / path).read_bytes() == b"{broken"
+
+
 def _a_linked_list_is_refused(env):
     item, where = env.start_fix()
     outside = env.tmp / "outside.json"
@@ -394,6 +408,7 @@ def _git_merges_the_list_by_forges_rule(env):
     _a_review_citing_the_list_stays_current, _every_unreadable_list_is_refused,
     _a_linked_list_is_refused, _a_linked_own_file_is_refused,
     _a_task_records_in_one_flat_file, _an_unreadable_other_items_file_is_refused,
+    _unsafe_record_filenames_never_enter_repair_commands,
     _the_repair_restores_the_last_readable_copy,
     _sync_adds_the_rule_once, _git_merges_the_list_by_forges_rule])
 def test_1_close_keeps_spotted_records(env, case):
