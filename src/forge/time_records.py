@@ -161,12 +161,15 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         a, seconds = when(t.get("start")), t.get("seconds")
         if a and isinstance(seconds, (int, float)) and seconds >= 0 and category:
             spans.append((a, a + timedelta(seconds=seconds), category, t.get("round")))
-    for e in events:
+    for index, e in enumerate(events):
         if e.get("event") == "lane joined":
             finish = next((f for f in events if f.get("lane_id") == e.get("lane_id")
                            and f.get("event") in ("lane admitted", "lane left")), None)
             a = when(e.get("at"))
-            b = when(finish.get("at")) if finish and finish.get("end_known", True) else end if not finish else None
+            b = when(finish.get("at")) if finish and finish.get("end_known", True) else None
+            if finish is None:
+                # An abandoned wait cannot span later item activity.
+                b = when(events[index + 1].get("at")) if index + 1 < len(events) else end
             if a and b:
                 spans.append((a, b, "waiting_in_line", e.get("round")))
             elif a and end:
