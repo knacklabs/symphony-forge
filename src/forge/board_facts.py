@@ -126,6 +126,58 @@ def people(body: str) -> Item:
             for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
 
 
+def actor_login(top: Path, email: str | None, commit: str | None) -> str | None:
+    """Only an actor's own commit or GitHub noreply address establishes a login."""
+    match = re.fullmatch(r"(?:\d+\+)?([\w-]+)@users\.noreply\.github\.com", email or "", re.I)
+    if match:
+        return match[1]
+    if not commit:
+        return None
+
+    def fetch(now: datetime) -> str | None:
+        result = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{commit}", cwd=top)
+        try:
+            author = json.loads(result.stdout).get("author") if result.returncode == 0 else None
+            return author.get("login") if isinstance(author, dict) else None
+        except (ValueError, AttributeError):
+            return None
+    return repo.command_fact(f"actor login {commit}", top,
+                             lambda: _cached(top, f"actor-{commit}", fetch))
+
+
+def actor_commits(top: Path) -> dict[str, Item]:
+    """Original start and latest approval commits, in one git read for all items."""
+    log = repo.git("log", "--all", "--reverse", "--diff-filter=A", "--no-renames",
+                   "--grep=^Start ", "--format=%x00%H%x00%aE%x00", "--name-only",
+                   "--", ".factory/stories", ".factory/fixes", cwd=top).split("\0")[1:]
+    found: dict[str, Item] = {}
+    for commit, email, paths in zip(log[::3], log[1::3], log[2::3]):
+        for rel in paths.splitlines():
+            if rel.endswith(".json"):
+                found.setdefault(rel, {}).setdefault("started_by", (email, commit))
+    log = repo.git("log", "--all", "-F", "--grep=Approve the plan: ",
+                   "--format=%x00%H%x00%aE%x00", "--name-only", "--", ".factory/stories",
+                   cwd=top).split("\0")[1:]
+    for commit, email, paths in zip(log[::3], log[1::3], log[2::3]):
+        for rel in paths.splitlines():
+            if rel.endswith("/story.json"):
+                found.setdefault(rel, {}).setdefault("approved_by", (email, commit))
+    return found
+
+
+def person_login(top: Path, field: str, body: str, original: Any = None) -> str | None:
+    record = time_records.from_body(body)
+    summary = record.get("summary") or {}
+    if summary.get(field):
+        return summary.get(field + "_login")  # Older name-only summaries stay unknown.
+    event_name = {"started_by": "item started", "approved_by": "plan approved"}[field]
+    event = next((e for e in record.get("events", []) if e.get("event") == event_name), None)
+    if event:
+        commit = re.fullmatch(r"rebuilt-(?:start|approval)-([0-9a-f]{40})", event.get("id") or "")
+        return event.get("login") or actor_login(top, event.get("email"), commit[1] if commit else None)
+    return actor_login(top, *original) if original else None
+
+
 def merged_before_weeks(top: Path) -> dict[str, Item]:
     """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
     kept for a minute. Only asked when an unfinished story has parts merged that long ago."""

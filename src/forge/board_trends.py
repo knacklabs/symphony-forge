@@ -87,18 +87,21 @@ def facts(top: Path, history: Item, counts: Item, items: list[Item],
                  for week in github["weeks"]]
         full = found[:6]
         # Grouped by login, which is unique; the display name is only the label.
-        people = {(pr.get("author") or {}).get("login"): _person(pr)
+        identity = lambda pr: ((pr.get("author") or {}).get("login"),
+                               None if (pr.get("author") or {}).get("login") else _person(pr))
+        people = {identity(pr): _person(pr)
                   for week in full if week["complete"] for pr in week["prs"]}
         trends = {"weeks": [week["start"][:10] for week in full],
                   "team": [_split(week["prs"]) if week["complete"] else None for week in full],
-                  "people": [{"name": name, "weeks": [
-                      _split([pr for pr in week["prs"] if (pr.get("author") or {}).get("login") == login])
+                  "people": [{"name": name, "login": person[0], "weeks": [
+                      _split([pr for pr in week["prs"] if identity(pr) == person])
                       if week["complete"] else None for week in full]}
-                      for login, name in sorted(people.items(), key=lambda person: (person[1].casefold(),
+                      for person, name in sorted(people.items(), key=lambda person: (person[1].casefold(),
                                                                                     str(person[0])))]}
         # Last week's and this week's searches hold the last 7 days; a capped one leaves it unknown.
         if all(week["complete"] for week in found[-2:]):
-            around = sorted(({"title": pr.get("title"), "author": _person(pr), "merged_at": pr.get("mergedAt"),
+            around = sorted(({"title": pr.get("title"), "author": _person(pr),
+                              "author_login": (pr.get("author") or {}).get("login"), "merged_at": pr.get("mergedAt"),
                               "url": pr.get("url")} for week in found[-2:] for pr in week["prs"]
                              if not _through(pr) and (at := time_records.when(pr.get("mergedAt")))
                              and at >= now - WEEK),

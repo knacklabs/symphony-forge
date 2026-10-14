@@ -236,6 +236,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         history = {**history, "expired": set()}
     landed = history["landed"]
     starters = _starters(top)
+    actors = board_facts.actor_commits(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
@@ -502,11 +503,18 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             if tests.get("elapsed") is not None:
                 status += " for " + board_visuals.duration(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
+        body = (pr or {}).get("body") or ""
+        developer = task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
                 "started_by": board_facts.people((pr or {}).get("body") or "")["started_by"] or starters.get(repo.state_path(item)),
                 "approved_by": (board_facts.people((pr or {}).get("body") or "")["approved_by"]
                                 or (_approver(top, read_key) if read_key else None)),
-                "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
+                "started_by_login": board_facts.person_login(
+                    top, "started_by", body, actors.get(repo.state_path(item), {}).get("started_by")),
+                "approved_by_login": board_facts.person_login(
+                    top, "approved_by", body, actors.get(repo.state_path(read_key), {}).get("approved_by")
+                    if read_key else None),
+                "developer": developer, "developer_login": developer,
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
                          + board_visuals.stage_duration(s) for s in stages
@@ -700,7 +708,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
-    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()),
+    return {"version": __version__, "repo_root": repo_root(top), "viewer": task.github_login(top),
+            "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
 
@@ -1038,4 +1047,3 @@ def _times(n: float) -> str:
 
 def _day(when: datetime | None) -> str:
     return f"{when.day} {when:%B %Y}" if when else "a date that wasn't recorded"
-
