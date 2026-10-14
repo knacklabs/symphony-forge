@@ -349,7 +349,9 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect([...at].sort((a, b) => a - b)).toEqual(at)
     expect(drawn).toContain('  ASK')
     expect(drawn).not.toContain('Later fix')
-    for (const [board, line] of [[readyOnly, '2 ready to merge'], [planningOnly, '3 in planning']] as const) {
+    // A live plan read keeps the story in planning, but its running row draws under MOVING.
+    const reading = { ...planningOnly, team: { ...planningOnly.team, counts: { ...quiet, stories: { planning: 1 } } }, items: [{ ...planningOnly.items[0], activity: { status: 'running', action: 'read' } }] }
+    for (const [board, line] of [[readyOnly, '2 ready to merge'], [planningOnly, '3 in planning'], [reading, '1 in planning']] as const) {
       shown = board
       await $.session.start({ cwd: '/repo', surface, isInteractive: true })
       expect(JSON.stringify(await ui.drawn())).toContain(line)

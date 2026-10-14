@@ -149,7 +149,7 @@ export function board(data: Data, now: number): View {
     groups['NEEDS YOU']!.length ? `${groups['NEEDS YOU']!.length} needs you` : '',
     groups.STUCK!.length ? `${groups.STUCK!.length} stuck` : '',
     golive,
-  ].filter(Boolean).join(' · ') || (waiting.length || groups['READY TO MERGE']!.length ? [
+  ].filter(Boolean).join(' · ') || (waiting.length || Object.values(groups).some(rows => rows.length) ? [
     // Nothing moving, asking or stuck: count what waits instead of showing no overview.
     // With no rows the board says Nothing in progress. on its own.
     count('parts', 'ready to merge') + count('fixes', 'ready to merge') ? `${count('parts', 'ready to merge') + count('fixes', 'ready to merge')} ready to merge` : '',
