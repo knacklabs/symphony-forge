@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-BOARD-2-BACKFILL",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T07:11:28.611471+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "eec5ad02af83a43ac09deea9ae90c6f27a0a27fd",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
