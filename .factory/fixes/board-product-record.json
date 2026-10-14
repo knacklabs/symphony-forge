@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-14T18:19:21.393458+00:00",
+      "because": "The first wording read as if this fix must make forge board serve a live page; the fix only records the owner's answers",
+      "done_when": "PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live local page, the design must move to Mainline's team board later, and it shows cost, time, releases and go-live"
+    }
+  ],
   "base": "163859cdf856cc85a6ad4388aa3966b606d5804a",
   "branch": "fix/board-product-record",
-  "done_when": "PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live local page, the design must move to Mainline's team board later, and it shows cost, time, releases and go-live",
+  "done_when": "PRODUCT.md records the owner's 14 October answers about the board as product facts: who it serves (engineering manager and developer), that it becomes a live local page on the laptop with no phone layout and no commands, that the design must move to Mainline's team board later, and that it shows cost, time, releases and go-live. This fix changes only PRODUCT.md; a later story builds the page",
   "flagged": [
     "PRODUCT.md"
   ],
