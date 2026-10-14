@@ -1,0 +1,14 @@
+{
+  "base": "ab3992272b5b33feb0c6a9f89df480b607894e20",
+  "branch": "fix/sandbox-claude-plan",
+  "done_when": "docs/specs/sandbox-runs.md says Claude rounds use the developer's claude setup-token token from the vault, names the terms risk the owner accepted and the API key fallback, passes a cold read and is confirmed again",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T13:40:09.856221+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Claude rounds in Mainline sandboxes must use the developer's own Claude subscription, as the owner decided, with the team's API key only as the fallback"
+}
