@@ -7,12 +7,55 @@
     "head": null,
     "start": "8227d7a1fb1e1a918da5b2e4747efbb246bbb418"
   },
+  "flagged": [
+    "tests/test_mainonce_spotted.py"
+  ],
+  "known": [
+    {
+      "area": "test_4_changes_keep_spotted_records_and_closures_separate() in tests/test_mainonce_spotted.py",
+      "file": "tests/test_mainonce_spotted.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 33,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: item 4 client lifecycle test",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3271826ab25c57e1114beed10bd912185ce766ae74a7c2b8caf280dd7002ed82",
+    "changed": "2b9a36b6307240b70c8c1008077c2127fab52870ebbbda92544ae08521ace4e5",
+    "commit": "e97cb1b186b9a23b62afdfef343792c81877405a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. This command-level test uses the `env` fixture, which creates a plain Git repository (`tests/conftest.py:356-368`), then seeds a legacy list by hand. It never exercises spotted records in a repo made by `forge init` or in the earlier-adopted client fixture. The adopted-client case in `tests/test_hotspots.py:186` checks guide wording only. The required new-client and upgrade paths could break while these proofs pass.",
+        "file": "tests/test_mainonce_spotted.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 33,
+        "priority": "P1",
+        "title": "Not done: item 4 client lifecycle test",
+        "work": 2
+      }
+    ],
+    "id": "29df5d6a-015f-4443-ab53-a20827010a1c",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T16:46:44.598114+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T18:01:31.734875+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
