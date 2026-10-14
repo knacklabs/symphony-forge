@@ -364,7 +364,7 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
     assert waiting["rounds"][0]["worker_round"] == 1
     question_event = next(event for event in records(env.repo, "events.jsonl")
                           if event["event"] == "worker question")
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse it")
     assert answered.returncode == 0, answered.stderr
     current = row(env.repo, item)

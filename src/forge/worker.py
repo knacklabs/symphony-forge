@@ -622,14 +622,13 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
 def _run(item: str, top: Path, brief: str, models: list[str],
          *, resume: str | None = None, session_id: str | None = None) -> str:
     """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
-    exe = shutil.which("claude")
-    if exe is None:
+    if shutil.which("claude") is None:
         refuse(repo.REFUSALS["missing_tool"], tool="claude")
     log = repo.work_log(top, item)
     if problem := claude_sdk.sdk_problem():
         refuse(REFUSALS["sdk"], problem=problem)
     command = [str(claude_sdk.python()), str(claude_sdk.TURN)]
-    request = {"prompt": brief, "cwd": str(top), "cli_path": exe,
+    request = {"prompt": brief, "cwd": str(top),
                "model": models[models.index("--model") + 1],
                "effort": models[models.index("--effort") + 1],
                "permission_mode": "bypassPermissions", "add_dirs": [str(CONVENTIONS)],

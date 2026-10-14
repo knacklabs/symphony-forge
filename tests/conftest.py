@@ -330,6 +330,9 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 # Time zones need no pin: Forge writes UTC times and runs `ps` with TZ=UTC itself.
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Pytest already parsed the outer run's selector. A client's nested pytest must
+    # receive only the options that client or its test explicitly supplies.
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):

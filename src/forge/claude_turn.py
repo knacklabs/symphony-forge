@@ -32,7 +32,7 @@ async def turn(request):
         cwd=request["cwd"], model=request["model"], effort=request["effort"],
         permission_mode=request["permission_mode"], resume=request.get("resume"),
         session_id=request.get("session_id"), add_dirs=request["add_dirs"],
-        cli_path=request["cli_path"], env={"FORGE_WORKER": "1"},
+        env={"FORGE_WORKER": "1"},
         system_prompt={"type": "preset", "preset": "claude_code"},
         setting_sources=["user", "project", "local"],
         stderr=lambda line: print(line, file=sys.stderr, flush=True))
@@ -46,6 +46,8 @@ async def turn(request):
 
 
 if __name__ == "__main__":
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         status = asyncio.run(turn(json.load(sys.stdin)))
     except Exception as error:

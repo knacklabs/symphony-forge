@@ -482,7 +482,7 @@ def question_wait(env, monkeypatch):
     published(env, item)
     at = datetime.now(timezone.utc) + timedelta(seconds=60)
     monkeypatch.setenv("FORGE_NOW", at.isoformat())
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     published(env, item)
@@ -496,7 +496,7 @@ def question_wait(env, monkeypatch):
                and datetime.fromisoformat(interval["start"]) >= at
                for interval in waiting["intervals"])
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, keep the existing parser")
     assert answered.returncode == 0, answered.stderr
     published(env, item)

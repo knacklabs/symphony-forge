@@ -110,6 +110,10 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
             '[TextBlock("SDK worker output")]',
             '[TextBlock("SDK worker output"), ToolUseBlock("read-1", "Read", '
             '{"file_path": "app.py"})]'), encoding="utf-8")
+        # The SDK driver writes UTF-8 even when its Python inherits a legacy pipe encoding.
+        monkeypatch.setenv("PYTHONIOENCODING", "ascii")
+        response = "stub claude: built it — नमस्ते café"
+        monkeypatch.setenv("STUB_CLAUDE_RESULT", response)
         first = host.forge("work", ITEM)
         assert first.returncode == 0, first.stdout + first.stderr
         [fresh] = calls(sdk_log)
@@ -119,6 +123,7 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         assert fresh["options"]["model"] == "sonnet"
         assert fresh["options"]["effort"] == "medium"
         assert fresh["options"]["permission_mode"] == "bypassPermissions"
+        assert fresh["options"]["cli_path"] is None  # SDK resolves its bundled native program.
         assert fresh["options"]["env"]["FORGE_WORKER"] == "1"
         assert fresh["options"]["system_prompt"] == {"type": "preset", "preset": "claude_code"}
         assert fresh["options"]["setting_sources"] == ["user", "project", "local"]
@@ -126,6 +131,7 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         assert fresh["worker"] == "1"
         assert str(ROOT / "src/forge/templates/conventions") in fresh["options"]["add_dirs"]
         assert "stub claude: built it" in first.stdout
+        assert response in first.stdout
         log = repo.path / f".git/forge/work-{ITEM}.log"
         messages = [json.loads(line) for line in log.read_text("utf-8").splitlines()
                     if line.startswith("{")]

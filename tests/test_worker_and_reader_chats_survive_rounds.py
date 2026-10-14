@@ -710,12 +710,13 @@ def test_15_previous_release_split_worker_follows_its_last_successful_tool(
     fallback = _old_round(repo, tmp_path, folder, "work", item)
     assert "fell back to Codex" in fallback.stdout
     assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1
-    first = _chat(claude, "claude")
+    legacy = repo.bin / "claude-calls.jsonl"
+    first = _chat(legacy, "claude")
     monkeypatch.delenv("STUB_CLAUDE_EXIT")
     if last == "claude":
         successful = _old_round(repo, tmp_path, folder, "work", item)
         assert "fell back to Codex" not in successful.stdout
-        first = _chat(claude, "claude", resumed=True)
+        first = _chat(legacy, "claude", resumed=True)
     _sync_elsewhere(repo, tmp_path)
     shutil.rmtree(repo.path / ".git/forge")
     said = _work(repo, item)
@@ -838,7 +839,7 @@ def test_19_upgrade_preserves_previous_release_worker_on_forge_branch(
     folder, item, log, _ = _worker(repo, monkeypatch, sdk_data, family, "fix", adopted=True)
     repo.git("branch", "-m", "forge/" + item, cwd=folder)
     _old_round(repo, tmp_path, folder, "work", item)
-    first = _chat(log, family)
+    first = _chat(repo.bin / "claude-calls.jsonl" if family == "claude" else log, family)
     _sync_elsewhere(repo, tmp_path)
     shutil.rmtree(repo.path / ".git/forge")
     said = _work(repo, item)

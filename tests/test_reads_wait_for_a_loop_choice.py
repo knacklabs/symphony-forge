@@ -156,9 +156,9 @@ def test_2_a_clean_read_restarts_the_three_blocked_round_count(repo):
 
 def test_4_fresh_and_resumed_workers_wait_for_both_read_and_review_choices(env):
     item, _ = env.start_fix()
-    log = install_claude(env.repo, worker=False)
+    log = install_claude(env.repo)
     for _ in range(2):
         result = env.repo.forge("work", item)
         assert result.returncode == 0, result.stdout + result.stderr
         assert "three blocked cold-read rounds" in " ".join(calls(log)[-1]["brief"].split())
-    assert "--resume" in calls(log)[-1]["args"]
+    assert calls(log)[-1]["options"]["resume"]
