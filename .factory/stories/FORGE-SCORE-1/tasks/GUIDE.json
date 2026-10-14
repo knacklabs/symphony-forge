@@ -1,0 +1,191 @@
+{
+  "branch": "task/FORGE-SCORE-1-GUIDE",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/templates/skill.md",
+    "tests/test_score_table.py"
+  ],
+  "known": [
+    {
+      "area": "stop_question() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 295,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: every stop question shows the open notes",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1397,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: coordinator settles reversible Harm 1 and 2 notes itself",
+      "work": 2
+    },
+    {
+      "area": "test_5_stop_questions_rank_open_notes_in_one_table() in tests/test_score_table.py",
+      "file": "tests/test_score_table.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 50,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_score_table.py",
+      "work": 2
+    },
+    {
+      "area": "README.md",
+      "file": "README.md",
+      "gain": 2,
+      "harm": 1,
+      "line": 130,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: README describes legacy stop questions incorrectly",
+      "work": 1
+    },
+    {
+      "area": "test_5_stop_questions_rank_open_notes_in_one_table() in tests/test_score_table.py",
+      "file": "tests/test_score_table.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: functional check",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1423,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: coordinator asks the owner only for the named decisions",
+      "work": 2
+    },
+    {
+      "area": ".codex/config.toml",
+      "file": ".codex/config.toml",
+      "gain": 1,
+      "harm": 1,
+      "line": 9,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Unneeded change outside Scope: .codex/config.toml",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1421,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: low-Harm stops still direct the coordinator to ask the owner",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 1442,
+      "outcome": "lived with",
+      "reason": "settled area: src/forge/templates/skill.md",
+      "round": 4,
+      "security": false,
+      "title": "Not done: low-Harm worker stops still direct the coordinator to ask the owner",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "855853a924ae619e977fd345f1f07643ca517b47ff894fefb7e52da066369cdb",
+    "changed": "60496422175e5584bf04924e1d56a1e917afe4bc2835505e55cb999c52ba2165",
+    "commit": "c9d611e4d2032eb870dc90e9ee9c2f16e42023a1",
+    "dismissals": [
+      {
+        "because": "settled area: src/forge/templates/skill.md",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The guide says the coordinator settles a stop when every open note has Harm 1 or 2, but a normal worker stop still instructs it to ask the human. After two rounds leave the same scored, at-bar Harm 1 or 2 finding open, `worker.py:199` calls `close.stuck_round`; `close.py:551\u2013575` creates a stop and prints the unchanged `REFUSALS[\"stuck\"]` instruction, \u201cAsk the human.\u201d `nextstep.py:775\u2013777` repeats that instruction. The coordinator is never told to make and record its own decision on this path.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 1,
+        "line": 1442,
+        "priority": "P1",
+        "title": "Not done: low-Harm worker stops still direct the coordinator to ask the owner",
+        "work": 2
+      }
+    ],
+    "id": "56a3620d-5382-45f9-a395-0e48bcc109ab",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "src/forge/templates/skill.md"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T07:50:44.142939+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T10:16:25.497085+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T11:49:35.682805+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T12:37:02.546787+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T14:51:18.498031+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "src/forge/templates/skill.md",
+    "at": "2026-10-13T12:37:02.547449+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "src/forge/templates/skill.md",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Coordinator (Harm 1-2, reversible): one round with the structural fix \u2014 the printed stop message itself says who decides: when every open note has Harm 1 or 2 it tells the coordinator to settle it and tell the owner after; otherwise it asks the owner. The guide matches.",
+    "wait_id": "8759a8b4-6c49-4c73-ad7f-129ae8b2fc24",
+    "worker_round": null
+  }
+}

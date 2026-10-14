@@ -132,7 +132,7 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     assert len(calls.read_text("utf-8").splitlines()) == 4
     for host in (".codex", ".claude"):
         guide = (where / host / "skills/forge/SKILL.md").read_text("utf-8")
-        assert "three consecutive cold-read rounds" in " ".join(guide.split())
+        assert "three blocked cold-read rounds" in " ".join(guide.split())
         assert '--resolve <accept|narrow|split> --reason "<human\'s choice>"' in guide
         assert QUESTION_RULE in " ".join(guide.split())
 
@@ -160,5 +160,5 @@ def test_4_fresh_and_resumed_workers_wait_for_both_read_and_review_choices(env):
     for _ in range(2):
         result = env.repo.forge("work", item)
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "three consecutive cold-read rounds" in " ".join(calls(log)[-1]["brief"].split())
+        assert "three blocked cold-read rounds" in " ".join(calls(log)[-1]["brief"].split())
     assert "--resume" in calls(log)[-1]["args"]

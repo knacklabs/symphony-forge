@@ -1,0 +1,31 @@
+{
+  "allow_large": "Version bump touches every recorded version and generated file",
+  "base": "d76d2adcfaa4efb3ef33849f8ca041b3cd90c869",
+  "branch": "fix/release-1212",
+  "done_when": "Forge's version is 1.2.12 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fce0d7e65ff48a328039d3e29887fc0b1a0625767db3cdb1e6f4be5ce35d3a21",
+    "changed": "3a915403c751dd3edacb5c7c63aa0d4d4962ecbff9a7407f50c8925ba5b10079",
+    "commit": "0d2892add2e9a39dc76f93fcd04bfdeddeeb7a08",
+    "dismissals": [],
+    "findings": [],
+    "id": "e030b173-992b-44a6-b361-fd9303db6d94",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T08:05:07.954683+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T08:14:25.649916+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.12 for the scoring bar, close-written proof lists, always-run tests, the merge queue, red scheduled runs in forge next, sync in any worktree and screenshot reviews merged since v1.2.11"
+}

@@ -14,6 +14,8 @@ from test_setup import _fresh_client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
 STORY = "FIX-CODEX-FAST-WHEN-NEEDED"
+# From Claude Code, so these Codex workers run through the Codex kit.
+pytestmark = pytest.mark.usefixtures("claude_session")
 NOTICE = ("Codex Fast is now on for quick work: every fix, after the first repair round, "
           "or when other planned work waits.")
 

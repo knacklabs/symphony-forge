@@ -1,0 +1,36 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-13T03:47:43.019073+00:00",
+      "because": "Only one test file had over-60-second cases; at load 12 or more they stay slow because each needs six real closes, and a faster close is a product change",
+      "done_when": "Time-sensitive tests use the fake clock or a range, and no single test takes over 60 seconds on this machine"
+    }
+  ],
+  "base": "2845df61d0a256a343a91c5fccd8b23cbfc579f8",
+  "branch": "fix/steady-time-tests",
+  "done_when": "Time-sensitive tests use the fake clock or a range, and the review-loop stop-choice test runs its wait, status and repeat checks once, at the second stop, so each case takes under 60 seconds on this machine at light load",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2d1fd1f7c1827666bb101f4b014660dc76d89539898967e9b891f812a810c386",
+    "changed": "6bdf78be3af353d0d8d39b3a235ee2f2b94e383df189e630e9be97daf268a738",
+    "commit": "bb9db096aacfddd0d98604888090aa07a91fe88e",
+    "dismissals": [],
+    "findings": [],
+    "id": "6be7e190-e944-4f38-93c3-1c4b3165284e",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T18:28:27.551605+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T03:53:12.884193+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Some tests assert exact elapsed seconds or run for over a minute, so they fail on slow or loaded runners"
+}

@@ -1,0 +1,284 @@
+{
+  "branch": "task/FORGE-BOARD-2-WAITS",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/board_facts.py",
+    "src/forge/close.py",
+    "src/forge/nextstep.py",
+    "src/forge/worker.py",
+    "tests/test_board_blocked.py",
+    "tests/test_board_needs_you.py"
+  ],
+  "known": [
+    {
+      "area": "needs_you() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 181,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Disputed keep 6: a choice made on another machine remains in Needs you",
+      "work": 2
+    },
+    {
+      "area": "person_waits() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 790,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A newer shared worker question is hidden and cannot be cleared from a machine with an older question",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 347,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: publish stuck-worker choice waits",
+      "work": 2
+    },
+    {
+      "area": "stuck_stop() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 549,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: publish waits from a teammate's worktree",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 143,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "An answered question still prevents work on the asking machine",
+      "work": 2
+    },
+    {
+      "area": "test_3_blocked_or_slow_names_each_reason_and_how_long() in tests/test_board_blocked.py",
+      "file": "tests/test_board_blocked.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 50,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
+    },
+    {
+      "area": "test_2_needs_you_lists_every_wait_oldest_first_on_every_machine() in tests/test_board_needs_you.py",
+      "file": "tests/test_board_needs_you.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 155,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_board_needs_you.py",
+      "work": 1
+    },
+    {
+      "area": "test_3_blocked_or_slow_names_each_reason_and_how_long() in tests/test_board_blocked.py",
+      "file": "tests/test_board_blocked.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 90,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_board_blocked.py",
+      "work": 1
+    },
+    {
+      "area": "share_wait() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 568,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 1, reversible): ship the shared waits now; a size choice before any pull request, close on the asking machine after a teammate's answer (forge work clears it), and the question text in the worker brief on a fresh clone become one follow-up fix",
+      "round": 3,
+      "security": false,
+      "title": "Not done: publish a size choice on the first close",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 107,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 1, reversible): ship the shared waits now; a size choice before any pull request, close on the asking machine after a teammate's answer (forge work clears it), and the question text in the worker brief on a fresh clone become one follow-up fix",
+      "round": 3,
+      "security": false,
+      "title": "An answer from another machine still blocks close on the asking machine",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 142,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 1, reversible): ship the shared waits now; a size choice before any pull request, close on the asking machine after a teammate's answer (forge work clears it), and the question text in the worker brief on a fresh clone become one follow-up fix",
+      "round": 3,
+      "security": false,
+      "title": "Answering a shared worker question omits the question from the worker brief",
+      "work": 1
+    },
+    {
+      "area": "wait_records() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 805,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Answered pre-upgrade questions can block work",
+      "work": 2
+    },
+    {
+      "area": "person_waits() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 827,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Needs you drops a review choice before its ending is recorded",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 512,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Blocked plans disagree with the row-level Needs you flag",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 675,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Later: NAV and PANE complete item 12",
+      "work": 4
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 102,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose 'Ship, follow-up' on 2026-10-14: a teammate's open worker question skipped by a second machine's new round becomes one follow-up fix",
+      "round": 7,
+      "security": false,
+      "title": "Unanswered shared worker question can be bypassed on another machine",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "86cd245118adce4e2bca27194bccd6415d47faec61258420624bca9713960c32",
+    "changed": "749ac15e6ef5087391c53d7f30e57c211532c376a9d7f5b4b746cdb232cb18fd",
+    "commit": "25af3dd39fe703b861574f7d9f39585f030ab324",
+    "dismissals": [],
+    "findings": [],
+    "id": "e8ae107c-b733-4c3d-b833-1091fff2b823",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "_work() in src/forge/worker.py",
+    "src/forge/worker.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T16:05:33.429096+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T17:57:32.812202+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:00:16.026907+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T20:28:17.868683+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T03:49:24.561992+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:12:46.798603+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T05:22:41.209851+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T06:12:43.901052+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T06:59:07.592473+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-14T06:12:43.913793+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/worker.py",
+    "reason": "Owner chose 'Ship, follow-up' on 2026-10-14: a teammate's open worker question skipped by a second machine's new round becomes one follow-up fix",
+    "wait_id": "8db8eb4f-6980-405d-a299-0a068acc1fd6",
+    "worker_round": null
+  }
+}

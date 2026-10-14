@@ -75,7 +75,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
-<node>      - run: <test>
+<npm-cache><node>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 
   tests-passed:
@@ -189,6 +189,11 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
+                # Forge's own Node client tests download jest and vitest into npm's cache.
+                .replace("<npm-cache>", "      - uses: actions/cache@v4\n"
+                         "        if: steps.parent-tests.outputs.reuse != 'true'\n"
+                         "        with:\n          path: ~/.npm\n"
+                         "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(test))
                 .replace("<groups>", str(groups))

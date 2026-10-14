@@ -16,8 +16,9 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('process.run', (_$, e) => ({ value: {
       exitCode: 0, stderr: '', stdout: JSON.stringify(e.argv[1] === 'board'
         ? { version: '1.2.6', repo_root: '/session-checkout', items: [{
-          id: 'SHOP', kind: 'story', title: 'Share a basket', stage: 'awaiting approval',
+          id: 'SHOP', kind: 'story', title: 'Share a basket', stage: 'waiting for approval',
           approval: { doc: '/story-worktree/plans/SHOP.md' }, children: [],
+          needs_person: true, next: { command: null, line: 'Share a basket is waiting for approval.', step: 'in Claude Code, show plans/SHOP.md in Plan Mode and exit Plan Mode with it as the plan' },
         }] }
         : { version: '1.2.6', repo_root: '/session-checkout', next: {
           command: null, line: 'Approve the story in Plan Mode.',
@@ -31,6 +32,6 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(JSON.stringify(await ui.drawn())).toContain('Share a basket')
     expect(await ui.find({ type: 'Button', text: /Approve/ })).toBeUndefined()
     const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toContain('Approve the story in Plan Mode.')
+    expect(reply.text).toBe('NEEDS YOU\n  Share a basket  SHOP\n    The plan is ready for your approval.\n    → in Claude Code, show plans/SHOP.md in Plan Mode and exit Plan Mode with it as the plan')
   })
 }

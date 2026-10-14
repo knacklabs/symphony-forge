@@ -118,7 +118,7 @@ def _unblocks(top: Path, item: str) -> bool:
             dependent = f"{key}/{tid.strip('` ')}"
             if repo.state_path(dependent) in paths:
                 continue
-            waits = task.waits_for(key, task.cell_list(part.get("After", "")),
+            waits = task.waits_for(dependent, task.cell_list(part.get("After", "")),
                                    task.cell_list(part.get("Scope", "")) if dependent not in busy else [], busy)
             if item in waits:
                 return True
@@ -426,7 +426,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 run["process"] = run["agent"] or run["forge"]
         # A work round can launch a commit nudge, and a review can retry. Between those model
         # calls its live Forge process holds the admission. Tests hold only their command once
-        # started. A reused child pid is dropped, never reassigned to its new owner.
+        # started. A reused child pid falls back to that Forge process, never to its new owner.
         before = list(runs)
         retained = []
         for run in runs:
@@ -438,9 +438,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                                         or codex._legacy_identity(recorded)
                                         or current["started"] == recorded["started"]):
                 retained.append(run)
-            elif (run["kind"] != "test"
-                    and current is None
-                    and _running(run.get("forge"))):
+            elif run["kind"] != "test" and _running(run.get("forge")):
                 run["process"] = run["forge"]
                 retained.append(run)
         runs[:] = retained

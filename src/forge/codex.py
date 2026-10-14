@@ -64,21 +64,28 @@ QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
          "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
 # leaves out included: the driver trusts a hook only when its whole definition is one of these.
+# Earlier releases' commands count too: an upgrade's worker runs while the default branch, whose
+# hooks Codex reads for every worktree, still holds them.
+EARLIER_COMMANDS = ("sh -c 'forge hook {hook} || exit 2' || exit 2",  # v1.0.0 to v1.2.1
+                    "sh -c '. \"$(git rev-parse --show-toplevel)/.forge/hooks.sh\" && "
+                    "forge hook {hook} || exit 2' || exit 2")  # v1.2.2 to v1.2.8
 FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
-                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "handlerType": "command", "command": command, "async": False,
                 "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
-               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
+               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()
+               for command in (sync.command(hook), *(old.format(hook=hook) for old in EARLIER_COMMANDS))]
 
 REFUSALS = {
+    # Sync turns these three into warnings after it writes its files: see preserve_chats.
+    "chat_owner": ("More than one worktree holds docs/specs/{item}.md, so sync can't tell which "
+                   "branch owns its earlier reader chat.", ""),
+    "chat_origin": ("Codex has no starting commit for the earlier reader chat of "
+                    "docs/specs/{item}.md, so sync can't tell which branch owns it.", ""),
     "chat_dirty": ("The chat record at {path} has uncommitted changes, so sync left it alone.",
                    "commit or undo those changes, then forge sync"),
-    "chat_owner": ("More than one worktree contains docs/specs/{item}.md, so sync cannot locate its earlier reader chat.",
-                   "run forge read {item} in its owning checkout, then forge sync"),
-    "chat_origin": ("Codex has no starting commit for the earlier reader chat of docs/specs/{item}.md, so sync cannot locate its owner.",
-                    "run forge read {item} in its owning checkout, then forge sync"),
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
-                  "no Codex turn here.", "forge doctor"),
+                  "no Codex turn here.", "{fix}"),
     # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
     "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
              "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
@@ -91,6 +98,9 @@ REFUSALS = {
                "so it stopped the driver before any conversation.", "forge {command} {item}"),
     "server": ("Forge can't read the start time and command of the Codex app-server, process "
                "{pid}, so it stopped Codex before any conversation.", "forge {command} {item}"),
+    "old_run": ("forge {command} {item} is running on an earlier Forge release, which doesn't save "
+                "its own chat, so sync can't move that chat yet.",
+                "let forge {command} {item} finish, then forge sync"),
     "busy": ("forge {command} {item} is already running as process {pid}, and only one runs per "
              "item; wait for it to finish.", "forge {command} {item}"),
     "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
@@ -237,10 +247,10 @@ def preserve_chats(top: Path) -> None:
              if branch != repo.default_branch(top)}
     refs = set(repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads", cwd=top).splitlines())
     with tempfile.TemporaryDirectory(prefix="forge-chats-") as temporary:
-        for path in paths:
+        def keep(path: Path) -> None:
             folder, item = path.relative_to(threads).as_posix().removesuffix(".json").split("/", 1)
             if folder not in ("fix", "task", "read"):
-                continue
+                return
             saved = _json(path)
             branch = (f"story/{item}" if folder == "read" and story.KEY.fullmatch(item) else
                       f"{folder}/{item.replace('/', '-')}" if folder != "read" else "")
@@ -265,7 +275,7 @@ def preserve_chats(top: Path) -> None:
                 if (fields.get("conversation") or fields.get("session")) and (
                         fields.get("conversation") or None, fields.get("session") or None) == (
                         binding.get("conversation"), (binding.get("claude") or {}).get("id")):
-                    continue  # The landed binding already recovers this chat without an owner search.
+                    return  # The landed binding already recovers this chat without an owner search.
                 landed = story.show(top, repo.default_branch(top), rel)
                 begun = saved.get("head") or saved.get("start")
                 if not begun:
@@ -280,7 +290,7 @@ def preserve_chats(top: Path) -> None:
                 ancestry = repo.run("git", "merge-base", "--is-ancestor", begun,
                                     repo.default_branch(top), cwd=top).returncode if begun else None
                 if (fields.get("conversation") or fields.get("session")) and ancestry == 0:
-                    continue  # A newer landed binding supersedes this machine's old record.
+                    return  # A newer landed binding supersedes this machine's old record.
                 owning = set()
                 if ancestry == 1:
                     owning = set(repo.git("for-each-ref", f"--contains={begun}",
@@ -311,26 +321,33 @@ def preserve_chats(top: Path) -> None:
                     top / "docs/specs" / f"{item}.md").is_file():
                 owner = top  # A landed spec's notes travel with the upgrade fix to the default branch.
             if owner is None:
-                continue
+                return
             try:
                 kind = "Grill" if folder == "read" else "Fix"
                 if folder == "read":
                     if not branch and not (owner / "docs/specs" / f"{item}.md").is_file():
-                        continue  # A renamed or deleted spec no longer owns this reader record.
+                        return  # A renamed or deleted spec no longer owns this reader record.
                     _, _, notes, _ = story._paths(item, owner)
                     fields, _ = story._record(sync.read(notes))
                     if not recovered and (fields.get("conversation") or fields.get("session")):
-                        continue
+                        return
                     rel = notes.relative_to(owner).as_posix()
                 else:
                     state = repo.read_state(item, owner)
                     if not state or state.get("chat"):
-                        continue
+                        return
                     rel = repo.state_path(item)
+                running = _json(_item_file(owner, item, ".lock", kind))
+                if running and _alive(running) is not False:
+                    command = "read" if kind == "Grill" else "work"
+                    if not running.get("saves_chat"):  # an earlier release keeps it only here
+                        repo.refuse(REFUSALS["old_run"], item=item, command=command)
+                    print(f"Left {item}'s chat alone: forge {command} {item} is running and keeps it.")
+                    return
                 with hold(owner, item, kind):
                     saved = recovered or record(owner, item, kind)
                     if not (saved.get("conversation") or (saved.get("claude") or {}).get("id")):
-                        continue
+                        return
                     if repo.git("status", "--porcelain", "--", rel, cwd=owner):
                         repo.refuse(REFUSALS["chat_dirty"], path=owner / rel)
                     if folder == "read":
@@ -347,6 +364,17 @@ def preserve_chats(top: Path) -> None:
             finally:
                 if added:
                     repo.git("worktree", "remove", str(owner), cwd=top)
+
+        for path in paths:
+            try:
+                keep(path)
+            except repo.Refused as refused:
+                # Generated files are already written; the record stays in .git/forge untouched.
+                folder, item = path.relative_to(threads).as_posix().removesuffix(".json").split("/", 1)
+                what, command = ("reader", "read") if folder == "read" else ("worker", "work")
+                print(f"Warning: {refused}\nThe earlier {what} conversation for {item} stays on "
+                      f"this machine only; run forge {command} {item} on its own branch before "
+                      "removing .git/forge to keep it.")
 
 
 def archive(checkout: Path, item: str, kind: str, thread: str) -> bool:
@@ -427,8 +455,9 @@ def require_trust(top: Path) -> None:
     doesn't trust, Codex lists and runs no project hook, Forge's own included."""
     from forge import doctor  # doctor imports codex
     config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
-        repo.refuse(REFUSALS["untrusted"])
+    trusted, fix = doctor._codex_trust(top, config)  # pyright: ignore[reportPrivateUsage]
+    if not trusted:
+        repo.refuse(REFUSALS["untrusted"], fix=fix)
 
 
 def fast_needed(top: Path, item: str, kind: str, cfg: dict[str, Any]) -> bool:
@@ -622,6 +651,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         repo.record_progress(checkout, item, ran["run_id"],
                                              model=said["selection"]["model"],
                                              effort=said["selection"]["effort"])
+                        ran.update(model=said["selection"]["model"], effort=said["selection"]["effort"])
                     text = "\n".join(filter(None, [fast_said(said["selection"]),
                                                   *before_selection]))
                     before_selection.clear()
@@ -678,6 +708,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         "input_tokens": usage.get("inputTokens"),
                         "cached_input_tokens": usage.get("cachedInputTokens"),
                         "output_tokens": usage.get("outputTokens")})
+                    ran.update(chat=result["conversation"], **result["usage"],
+                               reasoning_output_tokens=usage.get("reasoningOutputTokens"))
                     _append(turns, {**started, **continued, "status": said["status"],
                                     "ended": repo.now(), **result["usage"]})
                     _record(record, head=repo.git("rev-parse", "HEAD", cwd=checkout))
@@ -990,7 +1022,8 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
     command = "read" if kind == "Grill" else "work"
-    held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
+    # This release's runs commit their own chat to their branch, so sync can leave them be.
+    held = _take(lock, {**(identity(os.getpid()) or {"pid": os.getpid()}), "saves_chat": True})
     if held:
         owner, alive = held
         repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock,

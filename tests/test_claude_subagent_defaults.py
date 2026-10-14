@@ -82,10 +82,11 @@ def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
             assert _settings(top, name)[0] == ("gpt-6.1-sol", "high"), name
 
     if models is not None:
-        for name in ("worker", "coder", "frontend", "tester", "refactorer"):
+        for name in ("worker", "coder", "tester", "refactorer"):
             assert _settings(repo.path, name)[0] == ("gpt-6.1-sol", "medium"), name
         assert _settings(repo.path, "explorer")[0] == ("gpt-6-luna", "max")
-        for name in ("planner", "architect"):
+        # The frontend role builds on the design entry, as planning does here.
+        for name in ("frontend", "planner", "architect"):
             assert _settings(repo.path, name)[0] == ("gpt-6-sol", "xhigh"), name
         for name in ("debugger", "security", "performance"):
             assert _settings(repo.path, name)[0] == ("gpt-6.1-sol", "high"), name

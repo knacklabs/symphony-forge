@@ -91,10 +91,10 @@ if args[:2] in (["pr", "merge"], ["pr", "view"]):
         git("clone", "-q", remote, str(checkout))
         text = (checkout / "README.md").read_text(encoding="utf-8")
         text = text.replace("Original greeting", "Other greeting") if conflict else text.replace("Old closing", "Other closing")
-        (checkout / "README.md").write_text(text, encoding="utf-8")
+        (checkout / "README.md").write_bytes(text.encode("utf-8"))  # Same bytes on Windows as on Linux.
         git("add", "README.md", cwd=checkout)
         if upgraded is not None:
-            (checkout / "forge.toml").write_text(upgraded, encoding="utf-8")
+            (checkout / "forge.toml").write_bytes(upgraded.encode("utf-8"))
             git("add", "forge.toml", cwd=checkout)
         if failing_test:
             (checkout / "verify.py").write_text("raise AssertionError('The upgraded client test fails')\\n", encoding="utf-8")
@@ -247,4 +247,8 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert env.repo.git("show", "origin/main:forge.toml") == upgraded.strip()
     assert env.repo.git("show", "origin/main:README.md") == (
         "Branch greeting\n\nKeep this paragraph.\n\nOther closing")
-    assert not where.exists()
+    if sys.platform == "win32" and where.exists():
+        # Windows keeps a folder a waiting process is in; the merge still finishes and says so.
+        assert f"Merged {item}. Forge could not fully remove its worktree at " in done.stdout
+    else:
+        assert not where.exists()

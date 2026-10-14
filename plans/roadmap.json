@@ -210,6 +210,60 @@
       "spec": "docs/specs/board-for-the-team.md",
       "status": "pending",
       "order": 75
+    },
+    {
+      "key": "FORGE-SCORE-1",
+      "title": "Reads and reviews score each note on Gain, Work and Harm, and only notes above the bar hold work back",
+      "status": "pending",
+      "order": 76
+    },
+    {
+      "key": "FORGE-QUEUE-1",
+      "title": "Forge merges ready changes for you, several at a time, in a safe order",
+      "status": "pending",
+      "order": 77
+    },
+    {
+      "key": "FORGE-SANDBOX-1",
+      "title": "Close runs in a Mainline sandbox when the laptop's test lane is full",
+      "spec": "docs/specs/sandbox-runs.md",
+      "status": "pending",
+      "order": 78
+    },
+    {
+      "key": "FORGE-SANDBOX-2",
+      "title": "Build rounds run in a Mainline sandbox when the laptop's agent line is full",
+      "spec": "docs/specs/sandbox-runs.md",
+      "status": "pending",
+      "order": 79
+    },
+    {
+      "key": "FORGE-SANDBOX-3",
+      "title": "A team shares sandbox places, one live team board and its credits",
+      "spec": "docs/specs/sandbox-runs.md",
+      "status": "pending",
+      "order": 80
+    },
+    {
+      "key": "FORGE-COST-1",
+      "title": "Every run keeps its token count, and the board shows cost and time per item",
+      "spec": "docs/specs/item-cost.md",
+      "status": "pending",
+      "order": 81
+    },
+    {
+      "key": "FORGE-COST-2",
+      "title": "The board shows how close each developer is to their plan limits",
+      "spec": "docs/specs/item-cost.md",
+      "status": "pending",
+      "order": 82
+    },
+    {
+      "key": "FORGE-NOTES-1",
+      "title": "A coordinator's note reaches a running worker at once",
+      "spec": "docs/specs/live-notes.md",
+      "status": "pending",
+      "order": 83
     }
   ],
   "epics": [

@@ -37,6 +37,18 @@ each item:
 
 ### Rules
 
+Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
+that the plugin and MCP are installed or that the user is signed in.
+Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is
+installed in the current host. If it is missing, use the organization's plugin catalog and the
+host's installation flow. Do not invent an installation command or marketplace address.
+Then follow the Mainline Deploy skill. Check OAuth sign-in and have the user complete it if needed.
+Wait for successful authentication before deployment. Installation alone does not mean the user is signed in.
+Deploy only the requested app to the requested environment. A build, fix, merge, ship/land request,
+successful test or review, demo preparation, or Forge next step does not by itself authorize deployment.
+Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
+"deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
+
 - Never commit to the default branch. Work happens on a story, task or fix branch, and the
   git hooks refuse anything else.
 - Never run `gh pr merge` or use `--no-verify`. The agent merges only through
@@ -46,12 +58,17 @@ each item:
 - No running commentary. Speak only when something lands, when a failure or finding needs the
   human, or when a decision is theirs, in a line or two.
 - Write for humans in plain English: no IDs, hashes or jargon in questions, pull request
-  summaries or the board.
+  summaries or the board, except story keys shown small beside titles on the board.
 - A story is approved through Plan Mode: exit Plan Mode with the text of the story doc that
   `forge next` names, unchanged, as the plan: from its title down to `## For the builders`, or the
   whole doc when it has no such heading. The approval matches its "What changes for you" and
   "Done when" sections exactly, so a summary or a rewrite records nothing, and an edit below
   `## For the builders` needs no new approval. There is no other approval step.
 - Run long `forge work` runs in the background and keep watching them.
+- When Forge itself misbehaves (a wrong or confusing message, a refusal that shouldn't happen, a
+  crash, a command that reports success but did nothing, generated files that contradict each
+  other), file a bug on Forge's GitHub with the Forge bug template's sections, fill every one, and
+  leave out the repo's code, names, paths and secrets: describe what Forge did. The forge guide
+  has the sections and the command.
 - Put the rules every review of this repo must follow under `## Review rules`, outside the
   forge:begin and forge:end lines. Forge's review reads them from the default branch.

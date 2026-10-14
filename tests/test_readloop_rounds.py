@@ -267,7 +267,7 @@ def _setup(repo, monkeypatch, tmp_path, sdk_data, app: str) -> Reader:  # noqa: 
     monkeypatch.setenv("FORGE_NOW", "2026-09-29T10:00:00+00:00")
     new_story(repo, "SHOP")
     reader = Reader(repo, monkeypatch, app)
-    reader.doc.write_text(DOC, encoding="utf-8")
+    reader.doc.write_bytes(DOC.encode("utf-8"))  # Windows would write CRLF; forge reads the raw bytes.
     return reader
 
 
@@ -610,28 +610,3 @@ def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     (_one_app, "both"), (_spec_diff, "claude")], ids=lambda value: getattr(value, "__name__", value))
 def test_1_the_same_reader_reads_again(repo, monkeypatch, tmp_path, sdk_data, walk, app):  # noqa: F811
     walk(repo, monkeypatch, tmp_path, sdk_data, app)
-
-
-def test_6_forge_next_holds_a_read_that_doesnt_converge(repo, monkeypatch, tmp_path, sdk_data):  # noqa: F811
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "claude")
-    for number in range(1, 4):
-        if number == 3:
-            reader.say(f"{number}. Gap number {number}.\n")
-            held = reader.read()
-            assert held.returncode == 1 and "Ask the human to accept, narrow or split" in held.stderr
-        else:
-            reader.ok(f"{number}. Gap number {number}.\n")
-        reader.dispose(f"Gap number {number}.", "cut")
-        said = repo.forge("next").stdout.splitlines()[-2:]
-        if number == 3:
-            assert "Ask the human to accept, narrow or split" in repo.forge("next").stdout
-            assert said[1] == ('Next: forge read SHOP --resolve <accept|narrow|split> '
-                               '--reason "<human\'s choice>"')
-        else:
-            assert said[0].startswith(f"Planning Shoppers can save a basket: round {number} of its "
-                                      f"cold read had findings, so round {number + 1} is next.")
-            assert said[1] == "Next: forge read SHOP"
-    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep this slice")
-    assert chosen.returncode == 0, chosen.stderr
-    reader.ok()
-    assert "Next: in Claude Code, show plans/SHOP.md in Plan Mode" in repo.forge("next").stdout

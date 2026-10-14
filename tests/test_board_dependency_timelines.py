@@ -52,6 +52,25 @@ def _client(repo, gh, tmp_path, history):
         _land_fixture(repo)
 
 
+def _configured(repo, gh, tmp_path, history, keys):
+    """A new or adopted client with the grill models, a stub reader and these roadmap keys."""
+    _client(repo, gh, tmp_path, history)
+    configured = repo.forge("fix", "start", "Configure the client", "--done", "The client is configured",
+                            "--slug", "configure-client")
+    assert configured.returncode == 0, configured.stderr
+    main = repo.path
+    repo.path = worktree(repo, "fix/configure-client")
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{GRILL}')
+    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Configure the client")
+    _install(repo.bin, "claude", READER.format(python=sys.executable))
+    repo.path = main
+    repo.git("merge", "-q", "--ff-only", "fix/configure-client")
+    _land_fixture(repo)
+
+
 def _svg(page, label):
     drawings = [ET.fromstring(raw) for raw in re.findall(r"<svg\b.*?</svg>", page, re.S)]
     matches = [drawing for drawing in drawings if drawing.attrib.get("aria-label") == label]
@@ -64,27 +83,14 @@ def _titles(svg):
     return {node.text for node in svg.iter() if node.tag.rsplit("}", 1)[-1] == "title"}
 
 
+# ponytail: about 25 forge commands; on a loaded Windows runner they need more than the 300 s CI default.
+@pytest.mark.timeout(600)
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         repo, gh, tmp_path, claude_payload, monkeypatch, history):
     # Coverage owns the renderer boundary. Machine-view tests own production of these
     # records; plain-text run fixtures give deterministic visible durations here.
-    _client(repo, gh, tmp_path, history)
-    configured = repo.forge("fix", "start", "Configure the client", "--done", "The client is configured",
-                            "--slug", "configure-client")
-    assert configured.returncode == 0, configured.stderr
-    main = repo.path
-    repo.path = worktree(repo, "fix/configure-client")
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{GRILL}')
-    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}, {"key": "PACK"},
-                                                        {"key": "PLAN"}, {"key": "IDEA"}]}))
-    repo.git("add", "-A")
-    repo.git("commit", "-qm", "Configure the client")
-    _install(repo.bin, "claude", READER.format(python=sys.executable))
-    repo.path = main
-    repo.git("merge", "-q", "--ff-only", "fix/configure-client")
-    _land_fixture(repo)
+    _configured(repo, gh, tmp_path, history, ("SHOP", "PACK", "PLAN", "IDEA"))
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T10:00:00+00:00")
     packing = DOC.replace("Shoppers can save a basket", "Baskets can be packed").replace(
         "Save a basket |", "Prepare packaging |")
@@ -173,12 +179,12 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert not re.search(r"\b[0-9a-f]{7,}\b", page), "SVG coordinates must not look like hashes"
     drawing = _svg(page, "Roadmap dependencies")
     titles = _titles(drawing)
-    node_titles = {"Save a basket: Merged", "Show when it was saved: Running",
+    # The merged part folds into the story's "1 done"; the four unfinished states each draw.
+    node_titles = {"Show when it was saved: Running",
                    "Share a basket: Waiting", "Print a basket: Can start now",
                    "Prepare packaging: Not started"}
     assert node_titles <= titles
-    assert {"Show when it was saved waits for Save a basket",
-            "Share a basket waits for Show when it was saved",
+    assert {"Share a basket waits for Show when it was saved",
             "Share a basket waits for Prepare packaging",
             "Change the basket page waits for Show when it was saved"} <= titles
     shapes = []
@@ -187,7 +193,7 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
             shape = next(n for n in group if n.tag.rsplit("}", 1)[-1] in
                          ("rect", "circle", "ellipse", "polygon", "path"))
             shapes.append((shape.tag, shape.get("rx"), shape.get("stroke-dasharray")))
-    assert len(set(shapes)) == 5, "Each state needs its own shape, beyond its colour and label"
+    assert len(set(shapes)) == 4, "Each state needs its own shape, beyond its colour and label"
 
     for row in (children["SHOP/SHOW"], rows["readme-greets"]):
         stages = {s["name"]: s for s in row["stages"]}
@@ -202,22 +208,28 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         assert all(label in painted for label in ("Build", "Tests", "Review", "Checks", "Merge",
                                                  "2 minutes", "30 seconds", "1 minute", "unknown", "current"))
     text = seen(out)
-    assert all(section in text for section in ("Parts", "Small fixes", "How the factory is doing"))
-    assert "In progress: 1 of 5 parts finished." in text
+    assert all(section in text for section in ("Roadmap", "Stories", "Fixes", "How the factory is doing"))
+    assert "Shoppers can save a basket SHOP Story Building In progress: 1 of 5 parts finished" in text
     assert len(re.findall(r"<svg\b", page)) == 3, "One roadmap map and two active-item timelines"
     assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
                "Prepare packaging: Not started" for n in drawing.iter()) == 1
     assert all("(other story)" not in title for title in titles)
-    expected_counts = {"needs a spec": 1, "planning": 1, "waiting for approval": 1,
-                       "building": 2, "ready to merge": 0,
-                       "done": 3 if history == "adopted-v1.2.2" else 2}
-    assert data["stage_counts"] == expected_counts
-    # The old header mixed stories and fixes. Each labelled group now matches its JSON counts.
-    for kind, counts in data["kind_stage_counts"].items():
+    done = 3 if history == "adopted-v1.2.2" else 2
+    expected_counts = {
+        "stories": {"done": 0, "building": 1, "approved, not started": 0, "waiting for approval": 1,
+                    "planning": 1, "no plan yet": 1},
+        "parts": {"done": 1, "ready to merge": 0, "in progress": 1, "to do": 3},
+        "fixes": {"done": done, "ready to merge": 0, "in progress": 1, "to do": 0},
+        "finished_last_7_days": {"parts": 0, "fixes": done}}
+    assert data["team"]["counts"] == expected_counts
+    # Stories, parts and fixes are labelled apart, each matching its JSON counts.
+    for kind, counts in data["team"]["counts"].items():
+        if kind == "finished_last_7_days":
+            continue
         assert kind.capitalize() in text
         assert all(f"{name.capitalize()}: {count}" in text for name, count in counts.items())
-    numbers = re.search(r'<ul class="numbers">(.*?)</ul>', page, re.S).group(1)
-    assert len(re.findall(r"<li>", numbers)) == 3, "The three factory measures stay"
+    numbers = re.search(r'<p class="numbers">(.*?)</p>', page, re.S).group(1)
+    assert numbers.count("(target: ") == 3, "The three factory measures stay, in one quiet line"
     # These are the shipped, script-free theme and responsive-page contracts.
     assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in page
     css = re.search(r"<style>(.*?)</style>", page, re.S).group(1)
@@ -226,9 +238,13 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         colors = re.findall(rf"--{token}:\s*(#[0-9a-f]+)", css)
         assert len(set(colors)) == 2, f"{token} has light and dark values"
     picture_css = re.search(r"\.board-picture\s*\{([^}]+)\}", css).group(1)
-    assert "width: 100%" in picture_css and "color: var(--ink)" in picture_css
+    assert "max-width: 100%" in picture_css and "color: var(--ink)" in picture_css
+    # The page uses the full window: no fixed width caps it, and below 720px it is one column.
+    assert not re.search(r"[{;]\s*max-width:\s*\d+(?:px|rem|em)", css)
+    narrow = re.search(r"@media \(max-width: 720px\)\s*\{(.*)\}", css, re.S).group(1)
+    assert "grid-template-columns: 1rem minmax(0, 1fr)" in narrow
     assert "fill: currentColor" in css and "fill: var(--muted)" in css
-    assert drawing.attrib["viewBox"].split()[:3] == ["0", "0", "260"]
+    assert drawing.attrib["viewBox"].split()[2] == drawing.attrib["width"], "Drawn at its own size"
     assert "<script" not in page.lower()
     assert not re.search(r"<(?:img|link|script)\b|<svg[^>]*\bsrc=|<image\b|<use\b", page, re.I)
 
@@ -253,13 +269,13 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         events.write(json.dumps({"event": "run end", "id": "readme-greets:ci:end",
                                  "run_id": "readme-greets:ci", "item": "readme-greets",
                                  "kind": "ci", "at": "2026-10-09T10:00:00Z"}) + "\n")
-    ready_counts = {**expected_counts, "building": 1, "ready to merge": 1}
+    ready_counts = {**expected_counts, "fixes": {**expected_counts["fixes"], "in progress": 0, "ready to merge": 1}}
     ready_page = repo.forge("board", "--out", str(out))
     assert ready_page.returncode == 0, ready_page.stderr
     assert "Ready to merge: 1" in seen(out)
     ready_json = repo.forge("board", "--json")
     assert ready_json.returncode == 0, ready_json.stderr
-    assert json.loads(ready_json.stdout)["stage_counts"] == ready_counts
+    assert json.loads(ready_json.stdout)["team"]["counts"] == ready_counts
 
     # A story counts once as ready only when every remaining part is ready.
     plan_tree = worktree(repo, "story/PLAN")
@@ -274,7 +290,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     for tid in ("SAVE", "SHOW"):
         started = repo.forge("task", "start", f"PLAN/{tid}")
         assert started.returncode == 0, started.stderr
-    part_counts = {**ready_counts, "planning": 0, "building": 2}
+    part_counts = {**ready_counts, "stories": {**ready_counts["stories"], "planning": 0, "building": 2},
+                   "parts": {"done": 1, "ready to merge": 1, "in progress": 2, "to do": 3}}
     for tid in ("SAVE", "SHOW"):
         (receipts / "PLAN").mkdir(exist_ok=True)
         (receipts / "PLAN" / f"{tid}.json").write_text(json.dumps({
@@ -282,8 +299,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         plan_json = repo.forge("board", "--json")
         assert plan_json.returncode == 0, plan_json.stderr
         if tid == "SHOW":
-            part_counts = {**part_counts, "building": 1, "ready to merge": 2}
-        assert json.loads(plan_json.stdout)["stage_counts"] == part_counts
+            part_counts = {**part_counts, "parts": {"done": 1, "ready to merge": 2, "in progress": 1, "to do": 3}}
+        assert json.loads(plan_json.stdout)["team"]["counts"] == part_counts
     plan_next = repo.forge("next")
     assert plan_next.returncode == 0, plan_next.stderr
     assert all(f"PLAN/{tid} is ready and waiting for someone to merge it." in plan_next.stdout
@@ -291,8 +308,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert "Next: merge its pull request, then forge next" in plan_next.stdout
     plan_page = repo.forge("board", "--out", str(out))
     assert plan_page.returncode == 0, plan_page.stderr
-    # One ready story and one ready fix remain separate in the labelled header.
-    assert seen(out).count("Ready to merge: 1") == 2 and "Building: 1" in seen(out)
+    # Ready parts and the ready fix remain separate in the labelled header.
+    assert "Ready to merge: 2" in seen(out) and "Ready to merge: 1" in seen(out) and "Building: 2" in seen(out)
 
     # Task/fix checkouts retain an equally recent inherited story record, but
     # the owning story's live task table is what next and board must both read.
@@ -323,12 +340,10 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert table_page.returncode == 0, table_page.stderr
     edited_drawing = _svg(out.read_text("utf-8"), "Roadmap dependencies")
     edited_titles = _titles(edited_drawing)
-    assert {"Export a basket: Not started", "Save a basket: Merged",
-            "Show when it was saved: Running", "Share a basket waits for Save a basket"} <= edited_titles
+    assert {"Export a basket: Not started", "Show when it was saved: Running"} <= edited_titles
     assert "Share a basket waits for Show when it was saved" not in edited_titles
     assert all("Unknown part" not in title for title in edited_titles)
-    assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
-               "Save a basket: Merged" for n in edited_drawing.iter()) == 1
+    assert "Save a basket: Merged" not in edited_titles, "Merged parts fold into the story's done count"
 
     # An edited approved plan requires another read before an idle part starts.
     changed = doc.replace("Shoppers can save a basket and come back to it later.",

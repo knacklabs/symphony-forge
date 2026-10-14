@@ -1,16 +1,21 @@
 name: forge-next
 
-# Full suite on every platform on main and release tags (pull requests run it in forge.yml); Windows installer checks on every event.
+# Full suite on Linux on each merge to main, and on every platform nightly, on release tags and on demand
+# (pull requests run it in forge.yml); Windows installer checks on every event.
 
 on:
   pull_request:
   push:
     branches: [main]
     tags: ['v*']
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
 
+# A newer merge cancels the older main run; a tag, nightly or manual run is never cancelled.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.event_name == 'push' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -47,9 +52,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Slower platforms need more runners as the suite grows.
+        # Merges to main run Linux only; slower platforms need more runners as the suite grows.
         include: >-
-          ${{ fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
+          ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[
+            {"os":"ubuntu-latest","group":1,"groups":3},
+            {"os":"ubuntu-latest","group":2,"groups":3},
+            {"os":"ubuntu-latest","group":3,"groups":3}]' || '[
+            {"os":"ubuntu-latest","group":1,"groups":3},
             {"os":"ubuntu-latest","group":2,"groups":3},
             {"os":"ubuntu-latest","group":3,"groups":3},
             {"os":"macos-latest","group":1,"groups":6},
@@ -68,12 +77,14 @@ jobs:
             {"os":"windows-latest","group":8,"groups":8}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || matrix.os == 'macos-latest' && 30 || 20 }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # Only a merge may reuse its parent's Linux-only run; full runs always test every platform.
       - id: parent-tests
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -81,10 +92,25 @@ jobs:
         run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
+      - uses: actions/setup-go@v5
+        if: runner.os == 'macOS' && steps.parent-tests.outputs.reuse != 'true'
+        with:
+          go-version: stable
+      # Save npm's cache from main on Linux: pull requests restore only caches saved from main.
+      - uses: actions/cache@v4
+        if: runner.os == 'Linux'
+        with:
+          path: ~/.npm
+          key: npm-jest-30.2.0-vitest-3.2.4
+      # Download the runners the tests start once, so no test spends its time limit on it.
+      - run: |
+          npm exec --yes --package=jest@30.2.0 -- jest --version
+          npm exec --yes --package=vitest@3.2.4 -- vitest --version
+        if: steps.parent-tests.outputs.reuse != 'true'
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path .test_durations
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path .test_durations
         if: steps.parent-tests.outputs.reuse != 'true'
 
   net-lines:

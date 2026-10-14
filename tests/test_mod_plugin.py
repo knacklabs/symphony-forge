@@ -125,11 +125,9 @@ await new Promise(resolve => setImmediate(resolve));
 replies.push((await fire('command.run', {{command: 'forge'}}, api)).text);
 console.log(JSON.stringify({{replies, processCalls}}));
 """)
-    assert "PR #7: pass" in answer["replies"][0]
-    assert all("PR #7: pass" in reply for reply in answer["replies"][1:6])
-    assert "PR #7: fail" in answer["replies"][6]
+    # Checks show only on a row ready to merge; this fix is still in progress.
+    assert all(reply.startswith("1 in progress\n\nWAITING OR NOT STARTED (1)") for reply in answer["replies"])
     assert len(answer["processCalls"]) == 24  # only initial load + seven scheduled ticks
-    assert "PR #7: unknown" in answer["replies"][7]
 
 
 HOST = """
@@ -227,7 +225,8 @@ assert.equal(first.prompts.length, 1);
 assert.deepEqual(second.prompts, first.prompts);
 assert.match(first.prompts[0], /Question: May I reuse the parser\\?/);
 assert.match(first.prompts[0], /Worker finished/);
-assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith({json.dumps('Next: forge close ' + item)})));
+// The answer step has a placeholder, so the event names forge next, which prints it.
+assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith('Next: forge next')));
 await first.tick(); await second.tick();
 assert.equal(first.prompts.length, 1);
 assert.equal(second.prompts.length, 1);
@@ -341,7 +340,7 @@ const api = {{
   ui: {{invalidate(){{}}, open: async () => ({{isPlaced: false}})}},
   process: {{run: async (argv, init) => {{
     calls++;
-    assert.equal(init.timeoutMs, 20000);
+    assert.equal(init.timeoutMs, 60000);
     assert.equal(init.cwd, '/repo with spaces');
     const command = argv[1];
     if (mode === 'slow') return new Promise((resolve, reject) => pending.push({{resolve, reject}}));
@@ -371,7 +370,7 @@ const atStart = calls;
 await tick();
 assert.equal(calls, atStart); // due refresh skipped, not queued
 now += 10000;
-for (const wait of pending) wait.reject(new Error('Refresh took over 20 seconds'));
+for (const wait of pending) wait.reject(new Error('Refresh took over 60 seconds'));
 await new Promise(resolve => setImmediate(resolve));
 texts.push(await text());
 mode = 'good'; await tick(); texts.push(await text());
@@ -387,8 +386,8 @@ console.log(JSON.stringify(texts));
         assert "second line" not in text
     assert "Couldn't refresh:" not in answer[5]
     assert "Polish the guide" in answer[6]
-    assert "Couldn't refresh: Refresh took over 20 seconds" in answer[6]
+    assert "Couldn't refresh: Refresh took over 60 seconds" in answer[6]
     assert "Couldn't refresh:" not in answer[7]
     assert "Nothing in progress." in answer[8]
-    assert "Lost state · unknown" in answer[9]
+    assert "WAITING OR NOT STARTED (1)" in answer[9]
     assert answer[10] == "This repo's Forge is too old for the pane: upgrade Forge here."

@@ -9,7 +9,7 @@ export type Item = {
   round?: number | null; total_seconds?: number | null; stages?: Stage[]
   children?: Item[]; [key: string]: unknown
 }
-export type Board = { version: string; repo_root: string; items: Item[] }
+export type Board = { version: string; repo_root: string; items: Item[]; team?: Record<string, unknown> | null }
 export type Next = { version: string; repo_root: string; next: { command: string | null; line: string } }
 export type Data = {
   board: Board | null; next: Next | null; lanes: Record<string, unknown> | null

@@ -1,0 +1,63 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/sync-not-blocked",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12b1e-cef1-77f2-b73c-1c8e71c31b87",
+    "head": null,
+    "start": "6f2f1d5dc35a09b7a5cebab14634c0b71837ddfa"
+  },
+  "done_when": "forge sync refreshes generated files while other items' work or land runs, and waits for or skips only what that run actually holds, saying so in one line",
+  "flagged": [
+    "src/forge/codex.py",
+    "tests/test_sync_not_blocked_by_other_runs.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "afedef2fdf15901dec8965c70b925203f4eee65013211ee2e9efde519b5cae2f",
+    "changed": "408dc848651fa6602299f282dced51f7777ab9cc0c5241bd4a0b538e9232ba8a",
+    "commit": "64bbd4ba2b79b9757d9b49b1782918f732373e42",
+    "dismissals": [],
+    "findings": [],
+    "id": "29233e94-b0d9-4b45-aa5e-6440f8b01032",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T10:29:38.316552+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T12:59:33.420384+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:35:18.799324+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:15:44.399651+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:38:05.756886+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:28:24.247671+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "accept",
+    "file": "src/forge/codex.py",
+    "reason": "Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 1): during an upgrade with an older-release run still going, sync stops with a plain next step instead of refreshing other files; nothing is lost. Recorded as lived-with.",
+    "wait_id": "31200b99-6ad3-4335-810d-9ccf59db7d65"
+  },
+  "why": "forge sync refuses whenever any other item's forge work or land is running on the machine, so workers copy the guide by hand",
+  "worker": "codex"
+}

@@ -1,0 +1,29 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/board-time-test-margin",
+  "done_when": "The plain-times test leaves room for the overlapping CI waits a slower runner records, and still checks the round shows whole seconds",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e88e437bf9076e8c41be0dd06bc2d8a86f1bfb2328185a4b6134c9058f14ca50",
+    "changed": "b84a4f419cdb8e8569a6b0f8974e242dde4d7e951120acc1516200f0c2d29d7b",
+    "commit": "0d63ef72481566aefbe6bf1de1dbd012ae6703ee",
+    "dismissals": [],
+    "findings": [],
+    "id": "b4cdedad-fdd5-4785-84b3-192d5e2464bc",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:52:21.522048+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T15:56:22.476755+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A board time test expects a 15-second review on a round, but slower Windows CI waits overlap it and the round shows 14 seconds"
+}

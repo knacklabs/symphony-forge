@@ -1,0 +1,50 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T16:51:50.631742+00:00",
+      "because": "The reviewer scored the broken-main case Gain 2, Work 2, Harm 2, below the bar: it needs main itself to hold unparsable Forge code",
+      "done_when": "When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never reports a syntax error"
+    }
+  ],
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/merge-clash-names-files",
+  "done_when": "When taking in main clashes in a file Forge does not generate, and main's own Forge code parses, close names the clashing files and the next step instead of a syntax error",
+  "flagged": [
+    "src/forge/close.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1e1e08c491666be34b9f25ea2160b40ebd0f55dfab44e6668ca2bb35469b1604",
+    "changed": "01d214f4d6089b13a238de092d694afc46be6dbd8e77d04b5cc1e749392a0592",
+    "commit": "aeefad9c7f1406a634c8560e497a93aa7a79a5fc",
+    "dismissals": [],
+    "findings": [],
+    "id": "8093ad1c-c1ac-4c02-884c-eee086aee177",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:23.655368+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T16:03:36.715122+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:29:27.303364+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:51:27.094924+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T17:08:33.331895+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "When close takes in main and a Python file clashes, it reports 'invalid syntax (<unknown>, line N)' instead of naming the clashing files, so workers lose a round finding them"
+}

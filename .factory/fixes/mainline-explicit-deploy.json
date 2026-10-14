@@ -1,0 +1,45 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-13T07:56:17.313946+00:00",
+      "because": "The user clarified that organization availability does not mean installed and deployment requires user OAuth sign-in.",
+      "done_when": "New and existing client repos tell Codex and Claude to use the installed Mainline Deploy plugin and MCP only for deployment the user explicitly requests. Builds, merges and demos never imply permission to deploy. Coordinator guides and worker briefs carry the rule. Command-level tests cover new setup and upgrade from an earlier adoption."
+    }
+  ],
+  "base": "9b58580428d99ce652fedca0378744ac9782ab1f",
+  "branch": "fix/mainline-explicit-deploy",
+  "done_when": "New and existing client repos tell Codex and Claude to use Mainline Deploy only for deployment the user explicitly requests. Agents check installation through the organization's plugin catalog and require successful user OAuth sign-in before deployment. Builds, merges and demos never imply permission to install, sign in or deploy. Coordinator guides and worker briefs carry the rule. Command-level tests cover new setup and upgrade from an earlier adoption.",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ac3d6d50f7581d1a1407dccdaead1f8181446c114a6a29f78305ccb6780648e8",
+    "changed": "cc13ca5a5e88537cb565df22957dab7748dbf913d734c4f86f383d24a5c8d476",
+    "commit": "b581b28f6f2602d3708985735bbf8f92dbae2d8d",
+    "dismissals": [],
+    "findings": [],
+    "id": "89191f22-4b1b-4b00-8465-74edfabd6cda",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T07:35:50.616272+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T08:02:06.700255+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "f66e9ec1-fab5-4d43-a595-b2c0cec64b15",
+    "head": "614ec426646a3383711af4d3cb83a921fec8ccc1",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Mainline deployment needs the user's explicit request",
+  "worker": "codex"
+}

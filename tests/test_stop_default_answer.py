@@ -36,11 +36,11 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py"),
                         finding("P2", "Follow-up: advice", "src/a.py"),
                         finding("P3", "Polish advice", "src/a.py")))
-    assert "Ask the human" in env.close(item).stderr
+    assert "settle it yourself" in env.close(item).stderr
     before = len(env.review_calls())
     later(monkeypatch, 20)
     waiting = env.close(item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
     assert follow_ups(env) == []
 
     later(monkeypatch, 31)
@@ -86,10 +86,10 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
     item, _ = stopped(env)
     later(monkeypatch, 600)
     waiting = env.close(item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
     waiting = env.repo.forge("land", item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
-    assert "Ask the human" in env.repo.forge("next").stdout
+    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
+    assert "settle it yourself" in env.repo.forge("next").stdout
     assert follow_ups(env) == []
 
 
@@ -122,6 +122,9 @@ time.sleep = advance
     landed = _land(land, item)
     assert landed.returncode == 0, landed.stdout + landed.stderr
     assert f"{item} is ready; a human merges" in landed.stdout
+    if entry == "running":  # new Harm 1 findings in three files never stop: the fourth review runs
+        assert "Nobody answered the review loop stop" not in landed.stdout
+        return
     assert "Nobody answered the review loop stop in 30 minutes" in landed.stdout
     brief = _workers(land)[-1]["brief"]
     assert "the repo's default choice: narrow this part to its Done-when lines" in brief

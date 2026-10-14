@@ -15,6 +15,8 @@ from test_setup import _autoreview, _fresh_client, _stub_forge
 STORY = "fast-mode-visible"
 
 
+# From Claude Code, so these Codex workers run through the Codex kit.
+@pytest.mark.usefixtures("claude_session")
 @pytest.mark.parametrize("tiers, mode, receipt, received, said, doctor", [
     ([{"id": "priority", "name": "Fast"}], "needed", None, "priority",
      "Codex Fast: requested for this turn.",

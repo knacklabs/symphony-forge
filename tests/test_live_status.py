@@ -32,7 +32,9 @@ def row(repo, item):
     return next(r for r in rows if r["id"] == item), boards[0]
 
 
+# ponytail: each case runs several forge commands; a busy machine needs more than the 150 s default.
 @pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "read default claude", "read default codex", "review claude", "review codex", "review default claude", "review default codex", "review fallback claude", "review fallback codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "plan detached", "ci", "ci red", "ci green"])
+@pytest.mark.timeout(600)
 def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     # Both commands read at different instants; freeze their clock for timer equality.
     monkeypatch.setenv("FORGE_NOW", "2026-10-06T12:00:00+00:00")
@@ -269,8 +271,10 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         elif case.startswith("ci"):
             stub = repo.bin / "gh"
             source = stub.read_text("utf-8")
+            # History rebuilds also read check runs. Hold the live wait's commit-status
+            # request, after its run starts, rather than an earlier historical lookup.
             stub.write_text(source.replace('responses = here / "gh-responses.json"',
-                'if args and "check-runs?" in args[-1] and not (here / "ci-held").exists():\n'
+                'if args and "/status?" in args[-1] and not (here / "ci-held").exists():\n'
                 '    (here / "ci-held").touch()\n    ' + gate.replace("\n", "\n    ") +
                 '\nresponses = here / "gh-responses.json"'), "utf-8")
             pr = pull(7, f"fix/{item}", None)

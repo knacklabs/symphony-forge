@@ -3,7 +3,6 @@ from outside is missed; close names each such file and workers search the tests 
 from __future__ import annotations
 
 import json
-import shlex
 import sys
 from pathlib import Path
 
@@ -27,8 +26,11 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
     for rel in ("forge.toml", "pyproject.toml", "uv.lock"):
         env.repo.write(rel, (ROOT / rel).read_text("utf-8"))
     settings = tomllib.loads((ROOT / "forge.toml").read_text("utf-8"))
-    later = shlex.join([Path(sys.executable).as_posix(), "-c", "for i in range(40): print(i)"])
-    env.repo.write("forge.toml", (ROOT / "forge.toml").read_text("utf-8").replace(
+    later = f'"{Path(sys.executable).as_posix()}" -c "for i in range(40): print(i)"'  # sh and cmd
+    # Forge's always_test names Forge's own test files, which this repo does not have.
+    env.repo.write("forge.toml", "".join(
+        line for line in (ROOT / "forge.toml").read_text("utf-8").splitlines(keepends=True)
+        if not line.startswith("always_test")).replace(
         json.dumps(settings["fast_test"]), json.dumps(settings["fast_test"] + " && " + later)))
     monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", sys.prefix)
     monkeypatch.setenv("UV_NO_SYNC", "1")  # Reuse the enclosing run's installed test dependencies.

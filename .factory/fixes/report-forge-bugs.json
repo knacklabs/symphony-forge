@@ -1,0 +1,125 @@
+{
+  "base": "165bf92f0e0abe463163f4f95d45e1fe9317a58c",
+  "branch": "fix/report-forge-bugs",
+  "done_when": "Every Forge repo's AGENTS.md tells agents to file a Forge bug with the bug template, and the template asks for everything needed to reproduce and fix it without any client code, names or secrets",
+  "flagged": [
+    "src/forge/templates/skill.md",
+    "tests/test_agents_file_forge_bugs.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 184,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Forge bug reports do not use the bug template",
+      "work": 2
+    },
+    {
+      "area": "test_2_guide_names_every_bug_template_section() in tests/test_agents_file_forge_bugs.py",
+      "file": "tests/test_agents_file_forge_bugs.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 50,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof that the bug template retains required prompts",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 179,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Forge bug template command fails in Windows PowerShell",
+      "work": 2
+    },
+    {
+      "area": "test_1_clients_are_told_to_file_forge_bugs() in tests/test_agents_file_forge_bugs.py",
+      "file": "tests/test_agents_file_forge_bugs.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 42,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test_1_clients_are_told_to_file_forge_bugs does not prove template use",
+      "work": 1
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 197,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Forge bug filing fails for reporters without Forge triage access",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "197752be9806605fbe797cb24e504e34286ce31a317d5c5c9c9c661fde5a8c93",
+    "changed": "7301d5d12102c507cf3ff860b00cbb7a62eefbb7080ab300e00715b20c7861fe",
+    "commit": "f57e8ba46a95d80af153ba3e34518e6f1b5c9ffc",
+    "dismissals": [],
+    "findings": [],
+    "id": "ae5a4773-6770-426a-945b-bf2709a51692",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "src/forge/templates/skill.md"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T09:21:32.237676+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:42:09.236201+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T10:02:21.047149+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T10:14:32.228449+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T10:23:45.116965+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "src/forge/templates/skill.md",
+    "at": "2026-10-13T10:14:32.229263+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "src/forge/templates/skill.md",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Coordinator (both Harm 2, reversible): drop --label bug (reporters may lack label rights; the bug template already labels it), and have the agent save the filled body with its own file-writing tool as UTF-8 instead of a shell redirect, so it works in every shell.",
+    "wait_id": "801e8055-bcc0-403f-a375-96d3453f98cb",
+    "worker_round": null
+  },
+  "why": "When a coding agent hits a Forge bug in a client repo, nothing tells it to report the bug to Forge, so the Forge team learns late and without the details needed to fix it"
+}

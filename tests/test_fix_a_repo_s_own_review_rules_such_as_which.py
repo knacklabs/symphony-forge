@@ -74,7 +74,7 @@ def test_4_the_client_sign_off_review_gets_the_repo_s_review_rules(repo, tmp_pat
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stderr
     [call] = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
-    prompt = call["args"][call["args"].index("--prompt") + 1]
+    prompt = "\n\n".join(call["prompt_files"].values())
     assert "## Client prototype sign-off review" in prompt
     rules = _rules_in(prompt)
     assert "- A copy change needs no new test." in rules

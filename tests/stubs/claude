@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
+"""Stub claude: records its arguments, folder and brief, prints one line like a worker, inside the result event claude ends with, and exits
 with STUB_CLAUDE_EXIT (0 by default). With STUB_CLAUDE_LEAVE set, it writes that file in its folder
 and leaves it uncommitted; with STUB_CLAUDE_COMMIT_FROM=<n>, from its nth call it commits
 everything in its folder, as a worker does. Like claude, it keeps each --session-id it starts, for its
 folder, in claude-sessions.json beside it, and refuses to --resume an ID it doesn't have.
 Explicit --resume IDs can cross folders; --continue instead selects the current folder."""
+import atexit
 import io
 import json
 import os
@@ -27,6 +28,32 @@ if args[:1] == ["plugin"]:
     sys.exit(0)
 # The brief arrives as UTF-8 whatever the console code page (Windows would read it as cp1252).
 brief = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
+# Like claude -p --output-format stream-json: JSON events go out as printed, and unless one is
+# the result, it ends with a result event holding the plain text it printed.
+class Said:
+    def __init__(self, out):
+        self.out, self.line, self.text, self.ended = out, "", "", False
+
+    def write(self, text):
+        self.line += text
+        while "\n" in self.line:
+            line, self.line = self.line.split("\n", 1)
+            if line.startswith("{"):
+                self.ended = self.ended or '"type": "result"' in line
+                self.out.write(line + "\n")
+            else:
+                self.text += line + "\n"
+        return len(text)
+
+    def flush(self):
+        self.out.flush()
+
+
+said = Said(sys.stdout)
+if "--output-format" in args:
+    sys.stdout = said
+    atexit.register(lambda: said.ended or said.out.write(
+        json.dumps({"type": "result", "result": said.text + said.line}) + "\n"))
 call = {"args": args, "cwd": os.getcwd(), "brief": brief}
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(call) + "\n")

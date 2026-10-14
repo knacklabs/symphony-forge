@@ -123,13 +123,21 @@ In a client repo, finish the prototype review and customer sign-off above before
    stories in every Forge repo this machine has used, including its worktrees. Forge remembers
    those repos automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
-   `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
+   `forge work <KEY>/<TASK>`. Tasks with separate Scopes run at
    the same time, but one machine runs agents on half its available cores (at least one; work rounds, plan reads and
    close reviews, across all its repos): the rest wait in line, first come, first served, and print
    their place when they start waiting and each time it changes; a run that dies frees its place
    once its agent ends.
-6. Merge each ready pull request as described below. `forge merge` records the story done in its
-   last task's merge, using `--outcome "<outcome>"` or the story's title.
+6. Run `forge land --all` in the background in place of closing and merging by hand. It takes
+   every task and fix in close, starts them oldest first, several at a time up to the machine's
+   agent places, and merges each one when it passes, where the repo allows agent merges. A change
+   not yet ready that changes a file an older change in the run also changes waits for it. Only
+   one run works in a repo at a time. A change that needs a worker or you stops alone; the run
+   ends with `Merged (n): ... · Ready to merge (n): ... · Needs you (n): ...` and each stopped
+   change's reason and next step. A failed check whose log names none of the change's files
+   runs again once. Where a human merges, the run merges nothing and lists the ready changes
+   oldest first with their links, in the order to merge them. The last task's merge records the
+   story done, using its title.
 
 Only the human approves a story and chooses between options. The agent does the rest, including
 merging when the repo allows agent merges.
@@ -316,13 +324,13 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Confirm the merge commit's `forge-next` run on main is green for the full Linux, Mac and
-   Windows matrix before tagging. Pull request CI runs only Linux test groups; it does not
-   prove the other platforms ready for release.
+2. Start a full run on the merge commit with `gh workflow run forge-next.yml --ref main`, and
+   confirm it is green on Linux, Mac and Windows before tagging. Pull requests and merges to
+   main run only the Linux test groups; they do not prove the other platforms ready for release.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
-   Release tags run the same full matrix; confirm that run is green too.
+   The tag push runs the full matrix again; confirm that run is green too.
 4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
 
 What the switch to this Forge removed from the repo, and where to find it, is in
