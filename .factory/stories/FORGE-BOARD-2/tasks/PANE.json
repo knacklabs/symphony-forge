@@ -64,7 +64,7 @@
       "gain": 5,
       "harm": 3,
       "line": 162,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -90,57 +90,50 @@
       "gain": 4,
       "harm": 2,
       "line": 84,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
       "title": "Not done: test the first-screen facts and overflow parity",
       "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 168,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: waiting and blocked ages in the pane",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fcd0b04d22c7478493821e4e08c84a0eba0d75e2ece4f8c48973b43d9882b970",
-    "changed": "695d840d20fe7ccfa97ee96ba57b7ce4d109a2f380d40c697678998f9bd46dc8",
-    "commit": "b0832f741669bb1acd48c78fed7e2593e8162cdc",
+    "branch_diff": "7b69b92a7e2dd4403d78292f497f34e12cbfc98896c19e317356d74066b5b8a8",
+    "changed": "e1431b482e49c5c46b3ef76ba23775e916ef3c5f6402caeda8a61072e782c3ab",
+    "commit": "7266cb34950edf7ff2e35ae0ebc191095656e82e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done. `board()` builds a new headline from selected counts instead of `team.sentence`, omits the labelled totals, and never reads `team.in_progress`; an in-progress item without a running worker goes into WAITING OR NOT STARTED. It also omits the board's go-live wording when the status is `done` or `not enough history`. The page draws those first-screen facts from `team` (`board_visuals.py:109-203,332`), so the Board tab and `/forge` still do not open with the same facts.",
-        "file": "src/forge/mod/hooks/summary.ts",
-        "gain": 5,
-        "harm": 3,
-        "line": 162,
-        "priority": "P1",
-        "title": "Not done: 9's sentence, totals and In progress lines",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. `team.needs_you` is sorted oldest first (`board_facts.py:224`), but the pane looks up its entries while walking `board.items`, so its Needs you rows follow item order instead. With two people waiting on different items, the pane can put the newer wait first and show different first five rows from the board.",
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. The earlier rounds established sentence, totals, and row-order parity; the remaining gap is the duration on those rows. `team.needs_you` supplies `waited_seconds`, and the board page shows how long each person has waited (`board_visuals.py:144-147`), but the pane builds those rows from the reason alone. Likewise, for a looping review or a part that blocks the most work, `team.blocked` supplies `seconds` and the page displays it (`board_visuals.py:171-174`), while the pane uses only `detail` at line 170. On these normal first-screen rows, the Board tab and `/forge` omit the age the page shows.",
         "file": "src/forge/mod/hooks/summary.ts",
         "gain": 3,
         "harm": 2,
-        "line": 118,
+        "line": 168,
         "priority": "P1",
-        "title": "Not done: Needs you follows the board's oldest-first order",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Test. The command-level Board tab test checks one count line and the Needs you and Stuck titles, but never asserts `team.sentence`, the labelled totals, `team.in_progress`, or five-row overflow for all three board lists. The separate seven-item case calls `text()` directly with a fixture. These tests pass while the first-screen mismatches above remain.",
-        "file": "tests/test_board_pane_lines.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 84,
-        "priority": "P1",
-        "title": "Not done: test the first-screen facts and overflow parity",
+        "title": "Not done: waiting and blocked ages in the pane",
         "work": 2
       }
     ],
-    "id": "d6898456-8e4d-47f7-827c-4705fedf2515",
-    "status": "blocked"
+    "id": "cdb2f7dd-9e82-4c33-b3b3-0321a9a7d566",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T11:57:45.229895+00:00",
@@ -152,6 +145,10 @@
     },
     {
       "at": "2026-10-14T15:16:53.113472+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T16:05:45.310404+00:00",
       "step": "review"
     }
   ],
