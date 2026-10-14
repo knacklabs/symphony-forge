@@ -25,7 +25,9 @@ the wrong way, it must wait for the round to end and then start a new round with
   (https://developers.openai.com/codex/app-server.md).
 - A headless Claude round (`_run` in `src/forge/worker.py`) runs `claude -p` and writes the brief
   to stdin once. Then stdin closes, so no message can reach the round. The Claude Agent SDK has
-  streaming input, which sends messages into a running session, and an interrupt. Forge already
+  streaming input and an interrupt. Streaming input queues a message into the running session,
+  and Claude takes the messages in order, one turn after the other: a message does not change the
+  turn that runs (https://code.claude.com/docs/en/agent-sdk/streaming-vs-single-mode). Forge already
   uses streaming input for its Claude cold reads (`src/forge/story.py`), but closes stdin after
   the first message.
 - A native round (`src/forge/native.py`) is a subagent of the coordinating Claude Code or Codex
@@ -33,12 +35,12 @@ the wrong way, it must wait for the round to end and then start a new round with
   `forge handback`. Forge has no channel to the running subagent. `forge stop` on a native round
   frees Forge's hold and tells the person to stop the subagent in the session.
 
-So today the run kinds can take a live note as follows:
+So the run kinds can take a live note as follows:
 
 | Run kind | Live note | Clean stop |
 |---|---|---|
 | Codex build, fix and light turns (app server) | Yes, through `turn/steer` | Yes, through `turn/interrupt` |
-| Headless Claude rounds | Yes, after the move to streaming input | Yes, through the SDK's interrupt |
+| Headless Claude rounds | Queued: the worker takes it when its current turn ends, in the same round | Yes, through the SDK's interrupt |
 | Native session subagents (Claude Code or Codex) | No: the note waits for the next round | No: as today |
 
 Measured in Forge's own repo, from the local turn logs (307 files) and the events log, read on
@@ -72,15 +74,20 @@ running round.
 
 The owner chose each of these on 14 October 2026:
 
-1. **A note reaches the running turn.** While a Codex or headless Claude round runs,
-   `forge work <item> --note "<text>"` delivers the note into that turn at once: Codex through
-   `turn/steer`, Claude through streaming input. The turn log records the note with its time and
-   the turn's id. Forge prints that the worker received the note in its running round. When no
-   round runs, the note goes into the next round's brief, as today. When the round ends before the
-   tool takes the note, the note goes into the next round's brief, and Forge says so. The note
-   rules do not change: Forge refuses an empty note, and a note never widens the item's Scope.
-   When a Codex turn fails at capacity and Forge sends it again, the notes the failed attempt
-   received go with the new attempt.
+1. **A note reaches the running round.** While a Codex or headless Claude round runs,
+   `forge work <item> --note "<text>"` sends the note into that round at once. The turn log
+   records the note once, with its time and the turn's id. When no round runs, the note goes into
+   the next round's brief, as today. When the round ends before the tool takes the note, the note
+   goes into the next round's brief, and Forge says so. The note rules do not change: Forge
+   refuses an empty note, and a note never widens the item's Scope.
+   - **Codex** takes the note inside the running turn, through `turn/steer`. Forge prints that the
+     worker received the note in its running turn. When a Codex turn fails at capacity and Forge
+     sends it again, the notes the failed attempt received go with the new attempt. A note that
+     arrives while Forge waits to send the turn again goes into the new attempt's input.
+   - **Claude** queues the note into the running session, through streaming input. The worker
+     takes it as soon as its current turn ends, in the same Forge round, with no new brief. Forge
+     ends a Claude round only when a turn ends and no note waits. Forge prints that the note is
+     queued and that the worker takes it when its current turn ends.
 2. **Stop ends the turn cleanly.** `forge stop <item>` on a Codex or headless Claude round asks the
    tool to interrupt the turn (Codex `turn/interrupt`, the Claude interrupt). The round is recorded
    as interrupted. The worker's commits stay, and its uncommitted changes stay in the worktree.
@@ -113,9 +120,10 @@ has no socket, so a note to it goes into the next round's brief, and Forge says 
 ## The experience
 
 - **The coordinator.** It watches a round and sees the worker take a wrong path. It runs
-  `forge work <item> --note "Reuse codex.identity(); do not add a new helper."`. Forge prints that
-  the worker received the note. The worker changes its path in the same turn. There is no new
-  round and no new brief.
+  `forge work <item> --note "Reuse codex.identity(); do not add a new helper."`. On Codex, Forge
+  prints that the worker received the note, and the worker changes its path in the same turn. On
+  Claude, Forge prints that the note is queued, and the worker takes it when its current turn
+  ends. In both cases there is no new round and no new brief.
 - **The owner.** The owner wants a round to end. The owner runs `forge stop <item>`. The turn ends
   as interrupted, and the commits stay. The next `forge work` continues from there.
 - **A native round.** The coordinator gives a note to a native round. Forge prints that the note
@@ -133,11 +141,13 @@ has no socket, so a note to it goes into the next round's brief, and Forge says 
 ## Acceptance criteria
 
 1. While a Codex round runs, `forge work <item> --note "<text>"` sends the note through
-   `turn/steer` into that turn, records it in the turn log with its time and the turn's id, and
-   prints that the worker received it; a turn that fails at capacity and is sent again carries the
-   notes it received; an empty note is refused.
-2. While a headless Claude round runs, the same command sends the note into the session through
-   streaming input, records it in the turn log, and prints that the worker received it.
+   `turn/steer` into the running turn, records it once in the turn log with its time and the
+   turn's id, and prints that the worker received it; a turn that fails at capacity and is sent
+   again carries the notes it received, and a note given while Forge waits to send it again goes
+   into the new attempt's input and is recorded once; an empty note is refused.
+2. While a headless Claude round runs, the same command queues the note into the session through
+   streaming input, records it in the turn log, and prints that it is queued; the worker takes it
+   in its next turn in the same round, and the round does not end while a note waits.
 3. When no round runs, or the round ends before the tool takes the note, or the round is native,
    the note goes into the next round's brief, and Forge says which case it was.
 4. `forge stop <item>` on a Codex or headless Claude round interrupts the turn through the tool,
@@ -156,7 +166,7 @@ has no socket, so a note to it goes into the next round's brief, and Forge says 
 
 ## Success measure
 
-- Metric: in Forge's own repo, the share of notes given while a Codex or headless Claude round runs that the running turn receives, and the time from the note to the worker receiving it
+- Metric: in Forge's own repo, the share of notes given while a Codex or headless Claude round runs that reach that round without a new round, and for Codex the time from the note to the running turn receiving it
 - Baseline: from 26 September to 14 October 2026, 0 notes reached a running turn; a note waited for the round to end (a median 14 minutes per round) and for a new round to start
-- Target: at least 95% of notes given while such a round runs reach the running turn, each within 5 seconds
+- Target: at least 95% of notes given while such a round runs reach that round without a new round; on Codex, each reaches the running turn within 5 seconds
 - Check date: 2026-12-15
