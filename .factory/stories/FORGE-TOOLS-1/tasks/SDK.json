@@ -7,12 +7,102 @@
     "head": null,
     "start": "f4f39ba34bcf09a07fb5415b852a2419a200ae20"
   },
+  "flagged": [
+    "src/forge/claude_turn.py",
+    "src/forge/worker.py"
+  ],
+  "known": [
+    {
+      "area": "_run() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 625,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Claude SDK workers still require a separate claude executable",
+      "work": 1
+    },
+    {
+      "area": "_run() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 628,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: missing-SDK refusal before state changes",
+      "work": 2
+    },
+    {
+      "area": "event() in src/forge/claude_turn.py",
+      "file": "src/forge/claude_turn.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 26,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "An SDK result without text or errors crashes Forge's result handling",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b5c71ce749371e5998f84033ee55998e0a7fa1037ed4ac92aa9a932d86baed2b",
+    "changed": "b6e446fb72882570c4915c3f8819bef129f595fecb0e20e339c0b2bfedef930e",
+    "commit": "4afe2f7095abdf7e86e0e6eb8343e0f18ef62217",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. `_run` refuses when `claude` is absent from PATH, even though the pinned SDK [uses its bundled Claude executable](https://raw.githubusercontent.com/anthropics/claude-agent-sdk-python/v0.2.161/src/claude_agent_sdk/_internal/transport/subprocess_cli.py). A client with the SDK installed by `forge doctor --fix` but no separate CLI cannot run a Claude worker. The new test always installs a CLI stub, so it misses this case.",
+        "file": "src/forge/worker.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 625,
+        "priority": "P1",
+        "title": "Claude SDK workers still require a separate claude executable",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Design rounds skip `ready()` at worker.py:136, so its new SDK check at line 380 never runs. Forge commits the round's state at line 238 before `_run` checks the SDK here. With `workers = \"split\"`, a user-facing Claude round therefore changes state and may fall back to Codex when the SDK is missing, instead of refusing before state changes as this part requires. The new missing-SDK test covers only a lite worker.",
+        "file": "src/forge/worker.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 628,
+        "priority": "P1",
+        "title": "Not done: missing-SDK refusal before state changes",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. The pinned SDK [allows `ResultMessage.result` and `errors` to both be `None`](https://raw.githubusercontent.com/anthropics/claude-agent-sdk-python/v0.2.161/src/claude_agent_sdk/types.py). Serializing the whole dataclass includes `\"errors\": null`; when the result has no text, the unchanged adapter at repo.py:414 expands that value as a list and raises `TypeError`. A no-answer result then produces a traceback instead of Forge's no-turn refusal, and an affected failed resume cannot reach the fresh-session recovery. The stub sets `errors` to an empty list, masking this SDK shape.",
+        "file": "src/forge/claude_turn.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 26,
+        "priority": "P1",
+        "title": "An SDK result without text or errors crashes Forge's result handling",
+        "work": 1
+      }
+    ],
+    "id": "8e4b090a-ddb1-4a53-a2ca-8c5c1f2d7e6e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T16:46:51.827799+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T19:24:23.103929+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

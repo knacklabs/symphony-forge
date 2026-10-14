@@ -1574,6 +1574,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/claude_turn.py\tAn SDK result without text or errors crashes Forge's result handling\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/claude_turn.py",
+      "line": 26,
+      "text": "An SDK result without text or errors crashes Forge's result handling",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tA blocked review is shown as waiting for checks when its tests pass on retry\treview-alongside-tests",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -6513,6 +6524,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tClaude SDK workers still require a separate claude executable\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 625,
+      "text": "Claude SDK workers still require a separate claude executable",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -6652,6 +6674,17 @@
       "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
       "from": "blocking",
       "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: missing-SDK refusal before state changes\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 628,
+      "text": "Not done: missing-SDK refusal before state changes",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
       "status": "open",
       "closed_by": null
     },
