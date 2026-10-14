@@ -6260,6 +6260,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Each round records its full duration in the four time groups\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 24,
+      "text": "Not done: Each round records its full duration in the four time groups",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: Large clean reviews bypass the fixed time-record limit\tpr-time-record-summaries",
       "kind": "bug",
       "path": "src/forge/time_records.py",

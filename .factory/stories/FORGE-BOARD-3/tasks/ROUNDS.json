@@ -17,7 +17,7 @@
       "gain": 4,
       "harm": 3,
       "line": 660,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -36,38 +36,41 @@
       "security": false,
       "title": "Unneeded board runway test edit is outside this part's scope",
       "work": 1
+    },
+    {
+      "area": "src/forge/time_records.py",
+      "file": "src/forge/time_records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 24,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Each round records its full duration in the four time groups",
+      "work": 2
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9baa48d03fde6c62fd888bb21a670fe7e8d92d369661597cb67407882842168a",
-    "changed": "8f4fa5f1a93282a14c8110007d674a0d10ca4b2638041c36531d70028067def4",
-    "commit": "fb409cd45f4425ada41fe278cd8e5ced75986ac3",
+    "branch_diff": "2482e3bb5ba705ad88dd5d19fa9703c3a87e1ad01f0995f0db68289fd9cb4450",
+    "changed": "7f65b27be8a3a70ca8a8add3c719543cd3189c38fa826f3d24f9229b42763cd1",
+    "commit": "ee74d20465d19b32af24d796070eea16b5aaf5aa",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. At src/forge/time_records.py:660\u2013663, each expanded round copies the folded entry's aggregate finding counts while receiving its own round number and seconds. After the named 200-round compaction case, each round can therefore appear to have the group's total findings. The same expansion gives later rounds an empty line, which the existing board renderer emits as empty paragraphs (src/forge/board_visuals.py:134\u2013137).",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. ROUND_CATEGORIES omits `nothing_running`, but a round can contain that measured interval. The changed abandoned-line-wait test has one 100-second round with 50 seconds `waiting_in_line` and 50 seconds `nothing_running` (tests/test_abandoned_line_waits.py:47\u201353). Its new `rounds[].seconds` reports only the 50 seconds in line and zeros for the other groups, so it does not show how long that round took.",
         "file": "src/forge/time_records.py",
         "gain": 4,
         "harm": 3,
-        "line": 660,
+        "line": 24,
         "priority": "P1",
-        "title": "Compacted rounds expose aggregate findings as individual round data",
+        "title": "Not done: Each round records its full duration in the four time groups",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. tests/test_board_runway.py:3 adds only a test-module docstring. It changes no assertion or setup needed for round seconds, so this edit is outside the part's permitted path without meeting the exception for a needed test change.",
-        "file": "tests/test_board_runway.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 3,
-        "priority": "P1",
-        "title": "Unneeded board runway test edit is outside this part's scope",
-        "work": 1
       }
     ],
-    "id": "0dbad534-57f6-440d-8c5b-1118e5cb651a",
+    "id": "a89e8484-72b6-47b4-bff2-e2f46208fc39",
     "status": "blocked"
   },
   "round": 2,
@@ -79,6 +82,10 @@
     },
     {
       "at": "2026-10-14T20:12:02.657471+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T21:08:31.158589+00:00",
       "step": "review"
     }
   ],
