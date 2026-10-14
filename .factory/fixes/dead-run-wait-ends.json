@@ -1,0 +1,14 @@
+{
+  "base": "225dfa0835a9d03d9a9a59503d961021657194ad",
+  "branch": "fix/dead-run-wait-ends",
+  "done_when": "A line wait with no admit or leave ends when its process is gone (or at the item's next recorded event), so item times and the board show only real waiting, for new and earlier-adopted repos",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T04:33:42.213483+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a run's process dies after it joins the machine's line, Forge counts it as waiting in line until the item ends, so five items showed 47 hours of waiting that never happened"
+}
