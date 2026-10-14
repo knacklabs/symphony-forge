@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-BOARD-4.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-14T19:06:32.432616+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T19:17:29.717984+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-14T19:23:02.027690+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-14T19:29:51.076136+00:00",
+      "step": "read"
     }
   ],
   "title": "The board shows a team what moves, what needs them and when it ships, at a glance",
