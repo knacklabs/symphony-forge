@@ -222,6 +222,20 @@
       "title": "Forge merges ready changes for you, several at a time, in a safe order",
       "status": "pending",
       "order": 77
+    },
+    {
+      "key": "FORGE-SANDBOX-1",
+      "title": "Close runs in a Mainline sandbox when the laptop's test lane is full",
+      "spec": "docs/specs/sandbox-runs.md",
+      "status": "pending",
+      "order": 78
+    },
+    {
+      "key": "FORGE-SANDBOX-2",
+      "title": "Build rounds run in a Mainline sandbox when the laptop's agent line is full",
+      "spec": "docs/specs/sandbox-runs.md",
+      "status": "pending",
+      "order": 79
     }
   ],
   "epics": [
