@@ -529,6 +529,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/item-cost.md\tNot done: measured run coverage mixes rounds, attempts and items\titem-cost-spec",
+      "kind": "bug",
+      "path": "docs/specs/item-cost.md",
+      "line": 41,
+      "text": "Not done: measured run coverage mixes rounds, attempts and items",
+      "from": "blocking",
+      "item": "item-cost-spec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/live-notes.md\tRoadmap key FORGE-LIVE-1 already belongs to another story\tlive-notes-spec",
+      "kind": "bug",
+      "path": "docs/specs/live-notes.md",
+      "line": 169,
+      "text": "Roadmap key FORGE-LIVE-1 already belongs to another story",
+      "from": "blocking",
+      "item": "live-notes-spec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/specs/sandbox-runs.md\tNot done: proof list\tsandbox-runs-spec",
       "kind": "bug",
       "path": "docs/specs/sandbox-runs.md",
@@ -10469,17 +10491,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/specs/item-cost.md\tNot done: measured run coverage mixes rounds, attempts and items\titem-cost-spec",
-      "kind": "bug",
-      "path": "docs/specs/item-cost.md",
-      "line": 41,
-      "text": "Not done: measured run coverage mixes rounds, attempts and items",
-      "from": "blocking",
-      "item": "item-cost-spec",
       "status": "open",
       "closed_by": null
     }
