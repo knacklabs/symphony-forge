@@ -122,7 +122,7 @@ keychain; a person who is not a member of the repo's team cannot start its sandb
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
 version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
 check in a sandbox and reports what the repo still needs before rounds can move there. A repo whose
-tests need Docker keeps its close on the laptop, and `forge doctor` says so. Each image is
+tests need Docker keeps its close and its build rounds on the laptop, and `forge doctor` says so. Each image is
 named by a hash of the repo's lockfiles, its test setup, its services in `forge.toml` and the repo's
 pinned Forge release; when any of
 them changes on the branch, the next remote run builds a new image, and the old one stays in use for
@@ -219,7 +219,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback; credits, balance alerts and top-ups live on Mainline's dashboard.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does; a reclaimed sandbox loses at most 5 minutes of a round's changes, and the next round starts from the last saved commits.
 7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
-8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes or stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
+8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes, and the starter or an Owner can stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
 9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Roadmap

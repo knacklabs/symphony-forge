@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T08:29:12.012517+00:00
-seconds: 103.772
-read_hash: a774cf657060c270ed1a8faa6fbdf088b018486d
-round: 24
-passed: yes
-doc_seen: a774cf657060c270ed1a8faa6fbdf088b018486d
+read_at: 2026-10-14T08:55:34.138542+00:00
+seconds: 153.737
+read_hash: 59edc80699539f5ee20acb93a13eb21c9576b2e5
+round: 25
+passed: no
+doc_seen: 59edc80699539f5ee20acb93a13eb21c9576b2e5
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 71def01b7b500354404757fc34c8a58088a37286
+notes_seen: 00f52ff1d9033b139ce88542123903fbdb5726e1
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -221,3 +221,15 @@ No findings.
 ## Round 24
 
 No findings.
+
+## Round 25
+
+26. Blocking: The Docker exception leaves remote build rounds without a worker-test rule.
+    Raise: Plan gap. [The new exception](/docs/specs/sandbox-runs.md:124) keeps Docker-dependent close runs local, but build rounds still overflow remotely and must run their tests there. Forge’s [standard database-client test command](/src/forge/templates/conventions/testing.md:20) uses Docker Compose, and [workers must complete those tests](/src/forge/templates/brief.md:48). The spec must establish how Docker-dependent build rounds remain eligible or stay local.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+27. Blocking: Owner stop permission contradicts the only-starter acceptance rule.
+    Raise: Plan gap. [The changed authorization rule](/docs/specs/sandbox-runs.md:87) permits the starter or an Owner to stop a run, while [criterion 8](/docs/specs/sandbox-runs.md:222) still permits only the starter. An Owner stopping another developer’s run therefore requires opposite acceptance outcomes. Current [stop handling](/src/forge/machine.py:370) has no Mainline role rule resolving this.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut
