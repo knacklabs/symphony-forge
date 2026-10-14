@@ -1,19 +1,19 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T07:12:37.825222+00:00
-seconds: 103.721
-read_hash: 1ed3d23bee389cd1733346af74b36ae2bb3839b9
-round: 13
+read_at: 2026-10-14T07:15:01.032471+00:00
+seconds: 79.062
+read_hash: f53c8b3f1cf45ba5b27d662803a5f67ae4eb932b
+round: 14
 passed: no
-doc_seen: 1ed3d23bee389cd1733346af74b36ae2bb3839b9
+doc_seen: f53c8b3f1cf45ba5b27d662803a5f67ae4eb932b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9a96ec721616065802e1c0fadc822904162bc944
+notes_seen: f489560ffcd1ebfe04b2caec8e137128de40489e
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 3
-loop_choice: narrow
-loop_reason: Owner chose 'One more hour, then stop' on 2026-10-14: the acceptance line now matches the bounded overdraft
+blocked_rounds: 1
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -155,5 +155,12 @@ No findings.
 
 19. Blocking: The new one-hour stop rule contradicts the acceptance criterion’s completion guarantee.
     Raise: Plan gap. [The credit rule](/docs/specs/sandbox-runs.md:150) now stops unfinished rounds one hour after credits run out, but [criterion 2](/docs/specs/sandbox-runs.md:178) still requires running rounds to finish. A long build can hit this case: the reused [worker runner](/src/forge/worker.py:642) has no overall deadline. The criterion must reflect the chosen stop-and-collect behaviour so implementation and acceptance agree.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut
+
+## Round 14
+
+20. Blocking: Criterion 2 now applies the credit-exhaustion timeout to Mainline outages too.
+    Raise: Plan gap. [The amended criterion](/docs/specs/sandbox-runs.md:178) requires stopping running rounds after one hour when Mainline is down **or** credits are exhausted. [The failure behaviour](/docs/specs/sandbox-runs.md:154) instead waits for confirmed termination or collection after connectivity loss; only credit exhaustion imposes the deadline. An API outage while a long worker still has credits therefore has conflicting rules. The reused [runner](/src/forge/worker.py:642) supplies no existing one-hour timeout. The criterion must distinguish these triggers.
     Gain 3, Work 1, Harm 3
     Disposition: cut
