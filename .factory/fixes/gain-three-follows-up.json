@@ -1,6 +1,13 @@
 {
   "base": "57d852931d2e2ec71e9f01feb1cdd51019da3392",
   "branch": "fix/gain-three-follows-up",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13880-ddf4-7c12-b827-863feb42cb7f",
+    "head": null,
+    "start": "0c181ed3151ef593cef2772ec257f6cad24b18d6"
+  },
   "done_when": "A note holds the work only at Harm 4 or 5 or Gain 5 (stop), or at Harm 3 or Gain 4 with Work 1 or 2 (fix this round); every other Gain 3 or 4 note becomes a follow-up fix and the work continues, and the README bar table, the guide and the reader and review instructions all say so",
   "kind": "fix",
   "round": 1,
