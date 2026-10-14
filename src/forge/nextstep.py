@@ -158,12 +158,6 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
             "step": line.removeprefix("Next: ") if line else None}
 
 
-def needs_person(top: Path, item: str, state: dict[str, Any], stage: str, pr: dict[str, Any] | None = None,
-                 blocker: dict[str, Any] | None = None) -> bool:
-    """The item waits on a person, as the board's Needs you decides it (`person_waits`)."""
-    return bool(person_waits(top, item, state, stage, pr, blocker))
-
-
 def context_hook(args: Any) -> int:
     lines, states = _report(repo.root())
     print("\n".join(lines + states))

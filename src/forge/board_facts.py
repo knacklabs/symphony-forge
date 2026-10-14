@@ -165,13 +165,12 @@ def _entry(row: Item, reason: str, detail: str | None, since: Any, now: datetime
             "since": since if at else None, "seconds": max(0, (now - at).total_seconds()) if at else None}
 
 
-def needs_you(top: Path, rows: list[Item], best: dict[str, Any], github: Item | None,
-              readiness: dict[str, Item], now: datetime) -> list[Item]:
-    """Every item waiting on a person, oldest first, as `nextstep.person_waits` decides it, and
-    each story plan a problem forge next reports blocks."""
+def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_waits: dict[str, list[Item]],
+              now: datetime) -> list[Item]:
+    """Every item waiting on a person, oldest first, as `nextstep.person_waits` decides it: the
+    waits each part's and fix's row worked out, and each story's plan approval or blocking problem."""
     from forge import nextstep  # nextstep imports this module
 
-    opened = {pr.get("headRefName"): pr for pr in (github or {}).get("open", [])}
     found = []
     for row in rows:
         waits = []
@@ -180,11 +179,7 @@ def needs_you(top: Path, rows: list[Item], best: dict[str, Any], github: Item | 
             if blocker or row.get("state") == "waiting for approval":
                 waits = nextstep.person_waits(top, row["id"], {}, row["state"], blocker=blocker)
         elif row.get("state") in ("in progress", "ready to merge"):
-            state = best.get(repo.state_path(row["id"]), ({}, None))[0]
-            branch = _branch(row, state)
-            # The state at the pull request's head when this checkout is behind it, as the row reads it.
-            state = nextstep.at_ref(top, row["id"], {**state, "branch": branch}, opened.get(branch))
-            waits = nextstep.person_waits(top, row["id"], state, row["stage"], opened.get(branch))
+            waits = person_waits.get(row["id"], [])
         found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
     for entry in found:
         entry["waited_seconds"] = entry.pop("seconds")
@@ -238,7 +233,8 @@ def blocked(top: Path, rows: list[Item], best: dict[str, Any], maps: list[Item],
 
 
 def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], best: dict[str, Any],
-         completed: dict[str, Item], github: Item | None, readiness: dict[str, Item]) -> Item:
+         completed: dict[str, Item], github: Item | None, readiness: dict[str, Item],
+         person_waits: dict[str, list[Item]]) -> Item:
     """Give every row its `state` and return the board's `team` facts."""
     stories = "\0".join(rel for rel in best if rel.startswith(".factory/stories/"))
     approvals: dict[str, list[Any]] = {}
@@ -305,7 +301,7 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     later, clause = board_trends.facts(top, history, counts, list(items.values()), github)
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     rows = [row for parent in items.values() for row in (parent, *parent["children"])]
-    waiting, slow = needs_you(top, rows, best, github, readiness, now), blocked(top, rows, best, maps, now)
+    waiting, slow = needs_you(top, rows, readiness, person_waits, now), blocked(top, rows, best, maps, now)
     work = [counts[kind][state] for state in ("in progress", "ready to merge") for kind in ("parts", "fixes")]
     building = counts["stories"]["building"]
     sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "

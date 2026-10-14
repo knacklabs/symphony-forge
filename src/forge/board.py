@@ -256,6 +256,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
     readiness: dict[str, Item] = {}
+    person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
     completed = {key: state for key, state in history["stories"].items() if state.get("status") == "done"}
     completed.update({key: state for key, state in roadmap.items() if state.get("status") == "done"})
@@ -509,8 +510,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                             {"status": "running", "action": worker["kind"]} if worker else {"status": "idle"},
                 "idle_since": idle_since, "idle_seconds": idle_seconds,
                 "waits_on": lines[0] if not finished and not active and not worker and lines else None,
-                "needs_person": not finished and nextstep.needs_person(
-                    top, item, state, stage, pr, readiness.get(item, {}).get("blocker")),
+                "needs_person": not finished and bool(person_waits.setdefault(item, nextstep.person_waits(
+                    top, item, state, stage, pr, readiness.get(item, {}).get("blocker")))),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
                           "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
@@ -674,7 +675,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    team = board_facts.team(top, history, items, maps, best, completed, github, readiness)
+    team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits)
     fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
