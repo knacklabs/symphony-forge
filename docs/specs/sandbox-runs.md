@@ -1,10 +1,8 @@
 ---
 slug: sandbox-runs
 title: Close and build rounds overflow to a remote sandbox when the laptop is full
-status: confirmed
-saved: 2026-10-14T13:56:39.661134+00:00
-confirmed_by: "Ravi"
-confirmed_hash: 09325f416ba88b736d8ee703cb7c05d7ec422cefc074867b61a6fab9cdae2e56
+status: draft
+saved: 2026-10-14T14:05:24.327889+00:00
 ---
 
 # Close and build rounds overflow to a remote sandbox when the laptop is full
