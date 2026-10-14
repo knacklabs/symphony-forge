@@ -180,7 +180,7 @@ def a_review_stop_needs_you_with_the_step_forge_next_prints(request, tmp_path):
     assert polish["next"]["command"] is None
     assert polish["next"]["step"] == step.removeprefix("Next: ")
     shown = lines(tmp_path, board)
-    assert f"NEEDS YOU\n  Polish the guide\n    The builder is waiting for your answer.\n    → decide: {polish['next']['step']}" in shown
+    assert f"NEEDS YOU\n  Polish the guide\n    The builder is stuck.\n    → decide: {polish['next']['step']}" in shown
 
 
 def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
@@ -194,7 +194,7 @@ def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
     step = next(line for line in repo.forge("next").stdout.splitlines() if line.startswith("Next: "))
     assert step == f'Next: forge work {item} --note "<answer>"'
     shown = board_tab(tmp_path, repo)
-    assert f"NEEDS YOU\nReadme greets new readers\nThe builder is waiting for your answer.\n→ decide: {step.removeprefix('Next: ')}" in shown, shown
+    assert f"NEEDS YOU\nReadme greets new readers\nThe builder asked a question.\n→ decide: {step.removeprefix('Next: ')}" in shown, shown
 
 
 def opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step(_request, tmp_path):

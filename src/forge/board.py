@@ -256,6 +256,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
     readiness: dict[str, Item] = {}
+    person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
     completed = {key: state for key, state in history["stories"].items() if state.get("status") == "done"}
     completed.update({key: state for key, state in roadmap.items() if state.get("status") == "done"})
@@ -509,7 +510,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                             {"status": "running", "action": worker["kind"]} if worker else {"status": "idle"},
                 "idle_since": idle_since, "idle_seconds": idle_seconds,
                 "waits_on": lines[0] if not finished and not active and not worker and lines else None,
-                "needs_person": not finished and nextstep.needs_person(top, item, state, tree, stage),
+                "needs_person": not finished and bool(person_waits.setdefault(item, nextstep.person_waits(
+                    top, item, state, stage, pr, readiness.get(item, {}).get("blocker")))),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
                           "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
@@ -599,6 +601,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     past_notes = history["past notes"]  # read with every plan read, in the same one git process
     for key, notes in notes_by_story.items():
         current = items[key]
+        current["read_rounds"] = _read_rounds(notes)
         read_rounds, seen = [], set()
         while notes:
             record, _ = story._record(notes)
@@ -673,7 +676,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    team = board_facts.team(top, history, items, maps, best, completed, github)
+    team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits)
     fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
@@ -956,6 +959,24 @@ def _starters(top: Path) -> dict[str, str]:
             if rel.endswith(".json"):
                 found.setdefault(rel, names.get(email.casefold(), name))
     return found
+
+
+def _read_rounds(notes: str) -> list[Item]:
+    """Each round of a plan's cold read, from its notes: the round number, each finding's first
+    line with its disposition (cut, defer or keep, and keep's reason), and the date of the latest
+    round only, which is the one the notes' frontmatter records."""
+    record, body = story._record(notes)  # pyright: ignore[reportPrivateUsage]
+    rounds = []
+    for number, text in re.findall(r"^## Round (\d+)[ \t]*\n(.*?)(?=^## Round \d|\Z)", body, re.M | re.S):
+        findings = []
+        for finding in story._findings(text).values():  # pyright: ignore[reportPrivateUsage]
+            said = re.search(r"^\s*Disposition:\s*(cut|defer|keep)\b[\s:\-]*(?:because\s+)?(.*)$", finding, re.M | re.I)
+            findings.append({"title": finding.split("\n", 1)[0].split(". ", 1)[1].strip(),
+                             "disposition": said[1].lower() if said else None,
+                             "reason": (said[2].strip() or None) if said else None})
+        rounds.append({"round": int(number), "findings": findings,
+                       "read_at": record.get("read_at") if number == record.get("round") else None})
+    return rounds
 
 
 def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) -> str | None:

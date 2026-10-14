@@ -98,9 +98,12 @@ def test_8_below_the_fold(repo, gh, tmp_path, claude_payload, monkeypatch, histo
     rows = _rows(page)
     by_title = {title: (group, state, times) for group, title, state, times in rows}
 
-    # Every story and fix, sorted needs you, blocked, in progress, planned, no plan yet, done.
-    groups = [group for group, *_ in rows]
-    assert groups == sorted(groups, key=ORDER.index), groups
+    # Every story and fix, each section sorted needs you, blocked, in progress, planned, no plan
+    # yet, done.
+    sections = {name: re.search(rf'<section id="{name}".*?</section>', page, re.S)[0] for name in ("stories", "fixes")}
+    for section in sections.values():
+        groups = [group for group, *_ in _rows(section)]
+        assert groups == sorted(groups, key=ORDER.index), groups
     assert by_title["Shoppers can save a basket"][0] == "in progress"
     assert by_title["Readme greets new readers"][0] == "in progress"
     assert by_title["Plan the next improvement"][0] == "planned"
@@ -125,9 +128,10 @@ def test_8_below_the_fold(repo, gh, tmp_path, claude_payload, monkeypatch, histo
     if data["team"]["blocked"] is not None:
         assert "tidy-help" in {entry["id"] for entry in data["team"]["blocked"]}
 
-    # Done rows sit inside one closed fold, including the fix finished ten days ago, which the
-    # trimmed JSON leaves out.
-    folds = re.findall(r'<details class="done">(.*?)</details>\s*</section>', page, re.S)
+    # Done rows sit inside one closed fold per section, including the fix finished ten days ago,
+    # which the trimmed JSON leaves out.
+    assert all(section.count('<details class="done">') <= 1 for section in sections.values())
+    folds = re.findall(r'<details class="done">(.*?)</details>\s*</details></section>', sections["fixes"], re.S)
     assert len(folds) == 1 and 'data-group="done"' in folds[0]
     assert "Greet returning shoppers" in folds[0]
     assert all(row[0] == "done" for row in _rows(folds[0]))

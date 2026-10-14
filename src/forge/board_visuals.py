@@ -244,6 +244,7 @@ def trends(team: dict) -> str:
 def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
     """The whole board page, from `machine_board(..., trim=False)` only."""
     from forge import board_graph
+    from forge.time_records import when
     team = view["team"]
     needs = {row.get("id") for row in team.get("needs_you") or []}
     blocked = {row.get("id") for row in team.get("blocked") or []}
@@ -266,7 +267,10 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
         status = row.get("status") or ""
         if row.get("stalled"):
             status = (status + ". " if status else "") + f"Stalled for {duration(row.get('idle_seconds'))}"
-        return (f'<summary><span class="title">{escape(row["title"])}</span>'
+        title = f'<span class="title">{escape(row["title"])}</span>'
+        if name == "Story":  # a story's own key, small and muted: the one ID the board shows
+            title = f'<span class="named">{title} <span class="key">{escape(row["id"])}</span></span>'
+        return (f'<summary>{title}'
                 f'<span class="kind">{name}</span><span class="state">{escape(state)}</span>'
                 f'<span class="status">{escape("" if status.lower() == state.lower() else status)}</span></summary>')
 
@@ -276,28 +280,52 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
             more += timeline(row)
         return f'<li><details>{line(row, "Part")}<div class="more">{more}</div></details></li>'
 
+    def history(row: dict) -> str:
+        """Each cold-read round of the plan with its findings and their answers, the approval,
+        then the merged parts."""
+        words = {"cut": "Cut.", "defer": "Deferred.", "keep": "Kept.", None: "Not answered yet."}
+        lines = []
+        for read in row.get("read_rounds") or []:
+            said = "".join("<li>" + escape(f"{f['title']} " + (
+                f"Kept: {f['reason'].rstrip('.')}." if f["disposition"] == "keep" and f["reason"]
+                else words[f["disposition"]])) + "</li>" for f in read["findings"])
+            on = f' on {_day(when(read["read_at"]))}' if when(read.get("read_at")) else ""
+            lines.append(f'<li class="step">Cold read round {read["round"]}{on}: '
+                         + (f"<ul>{said}</ul>" if said else "No findings.") + "</li>")
+        if row.get("approved_by"):
+            lines.append(f'<li class="step">Plan approved by {escape(row["approved_by"])}.</li>')
+        for child in row["children"]:
+            if child.get("state") == "done":
+                on = f' on {_day(when(child["merged_at"]))}' if when(child.get("merged_at")) else ""
+                lines.append(f'<li class="step">{escape(child["title"])} merged{on}.</li>')
+        return f'<ol class="history">{"".join(lines)}</ol>' if lines else ""
+
     def entry(row: dict) -> str:
         parts = "".join(part(child) for child in row["children"])
-        more = waits(row) + times(row) + people(row) + (f'<ul class="parts">{parts}</ul>' if parts else "")
+        more = (waits(row) + times(row) + people(row) + (history(row) if row["kind"] == "story" else "")
+                + (f'<ul class="parts">{parts}</ul>' if parts else ""))
         if row["kind"] == "fix" and row.get("state") in ("in progress", "ready to merge") and row.get("stages"):
             more += timeline(row)
         name = "Story" if row["kind"] == "story" else "Fix"
         return (f'<div class="row" data-group="{group(row)}"><details>{line(row, name)}'
                 f'<div class="more">{more}</div></details></div>')
 
-    rows = sorted(view["items"], key=lambda row: ORDER.index(group(row)))
-    shown, done = [], [row for row in rows if group(row) == "done"]
-    for name in ORDER[:-1]:
-        mine = [entry(row) for row in rows if group(row) == name]
-        if mine:
-            shown.append(f'<h3>{name.capitalize()}</h3>' + "".join(mine))
-    if done:
-        shown.append(f'<details class="done"><summary>Done ({len(done)})</summary>'
-                     + "".join(entry(row) for row in done) + "</details>")
+    def section(kind: str) -> tuple[str, str]:
+        """One kind's rows sorted by state with no group headings, done ones in one closed fold,
+        and the section's fold: open unless it holds more than 20 rows."""
+        rows = sorted((row for row in view["items"] if row["kind"] == kind), key=lambda row: ORDER.index(group(row)))
+        done = [row for row in rows if group(row) == "done"]
+        shown = "".join(entry(row) for row in rows if group(row) != "done") + (
+            f'<details class="done"><summary>Done ({len(done)})</summary>'
+            + "".join(entry(row) for row in done) + "</details>" if done else "")
+        empty = {"story": "No story yet. Start one with forge story new.",
+                 "fix": "No fix yet. Start one with forge fix start."}[kind]
+        return shown or f'<p class="empty">{empty}</p>', "" if len(rows) > 20 else " open"
     labels = {"finished_last_7_days": "Finished in the last 7 days"}
     totals = " ".join(f'<span><b>{labels.get(kind, kind.capitalize())}</b> — ' + escape("; ".join(
         f"{name.capitalize()}: {count}" for name, count in counts.items())) + "</span>"
         for kind, counts in team["counts"].items())
+    (stories, stories_open), (fixes, fixes_open) = section("story"), section("fix")
     return Template((Path(__file__).parent / "board.html").read_text(encoding="utf-8")).substitute(
         updated=f"{now.day} {now:%B %Y} at {now:%H:%M} UTC",
         sentence=f'<p class="sentence">{escape(team["sentence"])}</p>' if team.get("sentence") else "",
@@ -308,5 +336,5 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
                                 "work isn't available. This page shows the saved dates only.</p>"),
         graph=board_graph.dependencies(view["dependency_maps"]),
         key=KEY,
-        rows="".join(shown) or '<p class="empty">No story or fix yet. Start one with forge story new or forge fix start.</p>',
+        stories=stories, stories_open=stories_open, fixes=fixes, fixes_open=fixes_open,
         numbers=escape(numbers))

@@ -20,7 +20,7 @@ SIX_PARTS = PLAN.replace(
     "| T5 | Name a basket | A shopper can name a basket | 2 | `name.py` | `tests/test_name.py` | — | no |\n"
     "| T6 | Copy a basket | A shopper can copy a basket | 2 | `copy.py` | `tests/test_copy.py` | — | no |")
 NO_PLAN = "Shoppers can buy gift cards"
-IDLE = "0 stories building, 0 parts and fixes in progress, 0 ready to merge; "
+IDLE = "0 stories building, 0 parts and fixes in progress, 0 ready to merge, 0 need you, 0 blocked or slow; "
 
 
 def merged(env, monkeypatch, at, rel, state):

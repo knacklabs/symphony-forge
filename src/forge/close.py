@@ -126,6 +126,8 @@ def close(args: argparse.Namespace) -> int:
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+                _push(top, repo.current_branch(top))  # every machine's board sees the wait end
+                _refresh_record(top, item, state)
         if choice in ("switch", "same"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
@@ -244,12 +246,14 @@ def close(args: argparse.Namespace) -> int:
         at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
         choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
     if (not switch and not fresh and round_number - choice_round >= 3 and
-            _three_blocked_reviews(top, item) and
+            review.blocked_rounds(top, item)[0] >= 3 and
             score.loop_stops(previous, _known(top, item, state, f"origin/{default}", previous), round_number)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
+        _push(top, branch)  # every machine's board sees the stop
+        _refresh_record(top, item, state, pr)
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.proof_list(top, f"origin/{default}"))
@@ -419,23 +423,6 @@ def close(args: argparse.Namespace) -> int:
     return 0
 
 
-def _three_blocked_reviews(top: Path, item: str) -> bool:
-    """Use committed review results, including older releases and later dismissals."""
-    seen = set()
-    path = repo.state_path(item)
-    for commit in repo.git("log", "--first-parent", "--format=%H", "--", path,
-                           cwd=top).split():
-        result = json.loads(repo.git("show", f"{commit}:{path}", cwd=top)).get("review") or {}
-        if not result or not review.blocking(result):
-            return False
-        if result["commit"] in seen:
-            continue
-        seen.add(result["commit"])
-        if len(seen) == 3:
-            return True
-    return False
-
-
 def _settled_areas(state: dict[str, Any]) -> list[str]:
     return [*state.get("settled_areas", []), *[(state.get("stop") or {}).get("file")] * bool((state.get("stop") or {}).get("choice"))]
 
@@ -558,7 +545,30 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
+    share_wait(top, item, state, push=True)
     repo.refuse(REFUSALS["stuck"], item=item, question=question)
+
+
+def branch_pr(top: Path, state: dict[str, Any]) -> dict[str, Any] | None:
+    """The item's open pull request, found on GitHub by its branch; None without one, without
+    GitHub or when the branch was never pushed."""
+    branch = state.get("branch") or repo.current_branch(top)
+    if repo.run("git", "rev-parse", "-q", "--verify", f"refs/remotes/origin/{branch}", cwd=top).returncode:
+        return None
+    with contextlib.suppress(repo.Refused, subprocess.CalledProcessError, ValueError):
+        pr = _pull_request(top, branch)
+        return pr if pr and pr.get("state") == "OPEN" else None
+    return None
+
+
+def share_wait(top: Path, item: str, state: dict[str, Any], push: bool = False) -> None:
+    """Forge just recorded a wait on a person: when the branch has a pull request, publish the
+    record (pushing first when the wait lives in the committed state), so every machine's board
+    sees the wait."""
+    if pr := branch_pr(top, state):
+        if push:
+            _push(top, state.get("branch") or repo.current_branch(top))
+        _refresh_record(top, item, state, pr)
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:

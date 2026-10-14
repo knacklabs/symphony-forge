@@ -208,8 +208,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         assert all(label in painted for label in ("Build", "Tests", "Review", "Checks", "Merge",
                                                  "2 minutes", "30 seconds", "1 minute", "unknown", "current"))
     text = seen(out)
-    assert all(section in text for section in ("Roadmap", "Stories and fixes", "How the factory is doing"))
-    assert "Shoppers can save a basket Story Building In progress: 1 of 5 parts finished" in text
+    assert all(section in text for section in ("Roadmap", "Stories", "Fixes", "How the factory is doing"))
+    assert "Shoppers can save a basket SHOP Story Building In progress: 1 of 5 parts finished" in text
     assert len(re.findall(r"<svg\b", page)) == 3, "One roadmap map and two active-item timelines"
     assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
                "Prepare packaging: Not started" for n in drawing.iter()) == 1

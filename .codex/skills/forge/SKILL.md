@@ -277,16 +277,21 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
-matches the JSON: every story and fix sorted needs you, blocked, in progress, planned, no plan
-yet, then done in one closed fold, with a one-line key to the map's shapes and the words part,
-fix and plan. It uses the full window, has light and dark themes and stacks to one column below
+matches the JSON. A bar pinned to the top jumps to Overview, Roadmap, Stories and Fixes, and
+each section folds; Stories and Fixes start folded when they hold more than 20 rows. Each section
+sorts its rows needs you, blocked, in progress, planned, no plan yet, then done in one closed
+fold, and the Roadmap has a one-line key to the map's shapes and the words part, fix and plan.
+Each story shows its key small beside its title, the one ID on the board. Story rows carry
+`read_rounds`: each cold-read round of the plan with its number, its findings' first lines and
+their dispositions (`cut`, `defer` or `keep` with its `reason`), and `read_at` on the latest round
+only; a story's history on the page lists them before its approval and merged parts. It uses the full window, has light and dark themes and stacks to one column below
 720px. Each call reads current state without a history cache.
 The page's first screen answers what is in progress, what needs a person, what is stuck and when
 the work can go live, on one time axis with a today line: the team sentence, the labelled totals,
 then Needs you (an amber bar for each wait), In progress (each story or fix as a runway, solid
 where working, thin where waiting, dotted where unknown) and Blocked or slow, five rows each with
 "and N more" opening the rest, then Pace with go-live as a date band. Every row opens in place to
-its time split, round lines and who started, approved and merged it. Below the map, the team and
+its time split, round lines and who started, approved and merged it. Below it, the team and
 each person show merged pull requests per week, through and around Forge, in alphabetical order,
 beside the pull requests merged around Forge in the last 7 days.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
@@ -325,6 +330,17 @@ progress (`id`, `title`, `kind`, `state`). `team.trends` counts merged pull requ
 (alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
 branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
 Both are null without GitHub, and a week capped at 1,000 results is null.
+`team.needs_you` lists every item that waits on a person, oldest first, each with its `reason`,
+`since` and `waited_seconds`: `approval` (a plan waiting for approval), `review loop` (a review
+loop or stuck-worker choice), `worker question`, `conflict` (a merge conflict close stopped on),
+`merge` (a ready pull request a human merges) and `blocked plan`, with the question or the
+problem `forge next` reports in `detail`. Close and `forge work` publish
+these waits to the pull request, so every machine lists the same ones; answer a worker question
+with `forge work <item> --note` on any machine. `team.blocked` lists started parts and fixes
+idle 24 hours or more (`stalled`), reviews blocked three or more rounds in a row (`looping`) and
+the unfinished part the most unfinished parts wait on (`blocks the most`), longest first, each
+with `detail` and `seconds`. `team.sentence` counts both. Ask the human about each Needs you
+item as `forge next` words it.
 Active parts and fixes show recorded
 Build, Tests, Review, CI and Merge times for their current round, with the current stage
 marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
@@ -342,7 +358,7 @@ Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number, url and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
 `approval`, `needs_person`, and its own `next`. `needs_person` is true while the item waits on
-a person: a plan waiting for approval, a stop nobody has answered, or a worker question.
+a person, by the same decision as `team.needs_you`.
 A story awaiting approval has `approval.doc`, the
 absolute path to its document in its own worktree; other rows have null approval.
 Task and fix rows add `time_breakdown` and `rounds`; story rows add `outcome` (null until done).

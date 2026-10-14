@@ -97,8 +97,18 @@ def _work(args: argparse.Namespace) -> bool:
     match, top = checkout(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
-    from forge import time_records
-    published = is_published(top, item)
+    from forge import close, nextstep, time_records  # close imports story, which imports this module
+    # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
+    asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
+    pr = close.branch_pr(top, state) if asking else None
+    # A question answered on another machine is ended in the pull request's record; the newest open
+    # one, here or there, is the one to answer.
+    waits = nextstep.wait_records(top, item, (pr or {}).get("body") or "")
+    shared_ends = {e.get("wait_id") for e in time_records.from_body((pr or {}).get("body") or "").get("events", [])
+                   if e.get("event") == "owner wait end"}
+    if codex.record(top, item).get("question_id") in shared_ends:
+        codex._record(codex._item_file(top, item, ".json", "Build"), question=None, question_id=None)
+    asked_open = [e for e in waits if e["open"] and e.get("event") == "worker question"]
     if match["task"]:
         doc = f"plans/{match['key']}.md"
         story._parsed(story._text(top / doc), doc)  # pyright: ignore[reportPrivateUsage]
@@ -113,7 +123,8 @@ def _work(args: argparse.Namespace) -> bool:
     # The coordinating app's own tool runs the round as one of the session's subagents.
     is_native = repo.route(config, family, command="work", item=item) == "native"
     role = "frontend" if design else "worker" if match["task"] else "fixer"
-    if note is None and (question := codex.record(top, item).get("question")):
+    if note is None and (question := (asked_open[-1].get("question") if asked_open else None)
+                         or codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
     # round: it continues the item's conversation.
@@ -130,11 +141,7 @@ def _work(args: argparse.Namespace) -> bool:
                 f"because {why}")
     if not on_codex or is_native:
         print(building, flush=True)
-    pr = None
-    if published:
-        from forge import close
-        pr = close._pull_request(top, state.get("branch") or repo.current_branch(top))
-    answered = note is not None and codex.record(top, item).get("question_id")
+    answered = note is not None and ((asked_open or [{}])[-1].get("id") or codex.record(top, item).get("question_id"))
     if answered:
         repo.record_event(top, item, "owner wait end", wait_id=answered)
     pending_merge = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
@@ -336,8 +343,9 @@ def _work(args: argparse.Namespace) -> bool:
                 if asked:
                     print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
-            if published and (asked or note is not None or pending_merge):
-                from forge import close
+            if asked:
+                close.share_wait(top, item, state)
+            elif pr and (note is not None or pending_merge):
                 close._refresh_record(top, item, state)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
@@ -347,14 +355,6 @@ def _work(args: argparse.Namespace) -> bool:
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
     return False
-
-
-def is_published(top: Path, item: str) -> bool:
-    """Review and body files can survive a failed first publication; only success needs a refresh."""
-    from forge import time_records
-    return repo.ready_path(item, top).exists() or any(
-        event.get("item") == item and event.get("event") == "pull request published"
-        for event in time_records.read(top, "events"))
 
 
 def questions(*answers: str) -> str:

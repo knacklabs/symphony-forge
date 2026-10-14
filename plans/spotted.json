@@ -617,6 +617,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tBlocked plans disagree with the row-level Needs you flag\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 512,
+      "text": "Blocked plans disagree with the row-level Needs you flag",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tBoard crashes whenever a fix is present\tFORGE-BOARD-2/GRAPH",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -1075,6 +1086,17 @@
       "text": "Checking every workflow serially slows forge next in larger repos",
       "from": "blocking",
       "item": "nightly-red-shows-in-next",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tDisputed keep 6: a choice made on another machine remains in Needs you\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 181,
+      "text": "Disputed keep 6: a choice made on another machine remains in Needs you",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
       "status": "open",
       "closed_by": null
     },
@@ -1880,6 +1902,28 @@
       "item": "stuck-worker-asks",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: publish a size choice on the first close\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 568,
+      "text": "Not done: publish a size choice on the first close",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: publish waits from a teammate's worktree\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 549,
+      "text": "Not done: publish waits from a teammate's worktree",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: repeated close calls count one worker round twice\tstuck-worker-asks",
@@ -3829,6 +3873,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tA newer shared worker question is hidden and cannot be cleared from a machine with an older question\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 790,
+      "text": "A newer shared worker question is hidden and cannot be cleared from a machine with an older question",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tA repo setting change does not reach an already stopped item\tstop-default-answer",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -3858,6 +3913,17 @@
       "text": "Allowance mismatch: forge next --json can use stale pull request state",
       "from": "blocking",
       "item": "board-json-fast",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tAnswered pre-upgrade questions can block work\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 805,
+      "text": "Answered pre-upgrade questions can block work",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
       "status": "open",
       "closed_by": null
     },
@@ -3902,6 +3968,17 @@
       "text": "Human-merge PRs without a local worktree name the wrong merger",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNeeds you drops a review choice before its ending is recorded\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 827,
+      "text": "Needs you drops a review choice before its ending is recorded",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
       "status": "open",
       "closed_by": null
     },
@@ -6205,6 +6282,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tAn answer from another machine still blocks close on the asking machine\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 107,
+      "text": "An answer from another machine still blocks close on the asking machine",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tAn answered question still prevents work on the asking machine\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 143,
+      "text": "An answered question still prevents work on the asking machine",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tAnswering a shared worker question omits the question from the worker brief\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 142,
+      "text": "Answering a shared worker question omits the question from the worker brief",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -6359,6 +6469,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNot done: publish stuck-worker choice waits\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 347,
+      "text": "Not done: publish stuck-worker choice waits",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: split fallback uses the Codex kit inside a Codex session\tFORGE-TOOLS-1/WORK",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -6469,6 +6590,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tUnanswered shared worker question can be bypassed on another machine\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 102,
+      "text": "Unanswered shared worker question can be bypassed on another machine",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -6568,6 +6700,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_blocked.py\tNot done: proof list\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "tests/test_board_blocked.py",
+      "line": 50,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_blocked.py\tNot done: test_board_blocked.py\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "tests/test_board_blocked.py",
+      "line": 90,
+      "text": "Not done: test_board_blocked.py",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_counts.py\tNot done: The board counts, dependency map and merge queue tests pass on Windows as they do on Linux and macOS, with any real Windows bug an\twindows-green-5",
       "kind": "bug",
       "path": "tests/test_board_counts.py",
@@ -6630,6 +6784,17 @@
       "text": "Not done: missing-reference graph test",
       "from": "blocking",
       "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_needs_you.py\tNot done: test_board_needs_you.py\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "tests/test_board_needs_you.py",
+      "line": 155,
+      "text": "Not done: test_board_needs_you.py",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
       "status": "open",
       "closed_by": null
     },
@@ -10183,6 +10348,28 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_sections.py\tNot done: prove Overview and Roadmap open by default\tFORGE-BOARD-2/NAV",
+      "kind": "bug",
+      "path": "tests/test_board_sections.py",
+      "line": 48,
+      "text": "Not done: prove Overview and Roadmap open by default",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/NAV",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_story_history.py\tNot done: prove merged parts in story history\tFORGE-BOARD-2/NAV",
+      "kind": "bug",
+      "path": "tests/test_board_story_history.py",
+      "line": 67,
+      "text": "Not done: prove merged parts in story history",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/NAV",
       "status": "open",
       "closed_by": null
     }

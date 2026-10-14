@@ -155,8 +155,86 @@ def work_state(row: Item) -> str:
             else "to do" if row["stage"] == "unstarted" else "in progress")
 
 
+def _branch(row: Item, state: Item) -> str:
+    return state.get("branch") or (f"task/{row['id'].replace('/', '-')}" if row["kind"] == "task" else f"fix/{row['id']}")
+
+
+def _entry(row: Item, reason: str, detail: str | None, since: Any, now: datetime) -> Item:
+    at = time_records.when(since)
+    return {"id": row["id"], "kind": row["kind"], "title": row["title"], "reason": reason, "detail": detail,
+            "since": since if at else None, "seconds": max(0, (now - at).total_seconds()) if at else None}
+
+
+def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_waits: dict[str, list[Item]],
+              now: datetime) -> list[Item]:
+    """Every item waiting on a person, oldest first, as `nextstep.person_waits` decides it: the
+    waits each part's and fix's row worked out, and each story's plan approval or blocking problem."""
+    from forge import nextstep  # nextstep imports this module
+
+    found = []
+    for row in rows:
+        waits = []
+        if row["kind"] == "story":
+            blocker = readiness.get(row["id"], {}).get("blocker")
+            if blocker or row.get("state") == "waiting for approval":
+                waits = nextstep.person_waits(top, row["id"], {}, row["state"], blocker=blocker)
+        elif row.get("state") in ("in progress", "ready to merge"):
+            waits = person_waits.get(row["id"], [])
+        found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
+    for entry in found:
+        entry["waited_seconds"] = entry.pop("seconds")
+    return sorted(found, key=lambda entry: (entry["since"] is None, time_records.when(entry["since"]) or now))
+
+
+def blocked(top: Path, rows: list[Item], best: dict[str, Any], maps: list[Item], now: datetime) -> list[Item]:
+    """Started work idle a day or more, reviews blocked three or more rounds in a row, and the
+    unfinished part the most unfinished parts wait on, longest-standing first."""
+    from forge import nextstep, review  # both import this module
+
+    found = []
+    for row in rows:
+        if row["kind"] == "story" or row.get("state") not in ("in progress", "ready to merge"):
+            continue
+        if row["idle_seconds"] is not None and row["idle_seconds"] >= 86400:
+            found.append({**_entry(row, "stalled", f"No activity for {time_records.plain(row['idle_seconds'])}",
+                                   None, now), "seconds": row["idle_seconds"]})
+        if row["gates"]["review"]["status"] == "blocked":
+            ref = nextstep.review_ref(top, _branch(row, best.get(repo.state_path(row["id"]), ({}, None))[0]))
+            count, since = review.blocked_rounds(top, row["id"], ref) if ref else (0, None)
+            if count >= 3:
+                found.append(_entry(row, "looping", f"Review blocked {count} rounds in a row", since, now))
+    states = {row["id"]: row.get("state") for row in rows}
+    parts = [part for entry in maps if states.get(entry["id"]) in ("building", "approved, not started")
+             for part in entry["parts"] if part["status"] != "Merged"]
+    waiting: dict[str, list[str]] = {}
+    for part in parts:
+        for other in part["waits_for"]:
+            waiting.setdefault(other, []).append(part["id"])
+    most, top_part = 0, None
+    for part in parts:  # in plan order, so a tie goes to the earlier part
+        seen, stack = set(), [part["id"]]
+        while stack:
+            for dependant in waiting.get(stack.pop(), []):
+                if dependant not in seen:
+                    seen.add(dependant)
+                    stack.append(dependant)
+        if len(seen - {part["id"]}) > most:
+            most, top_part = len(seen - {part["id"]}), part
+    if top_part:
+        state = best.get(repo.state_path(top_part["id"]), ({}, None))[0]
+        story_state = best.get(repo.state_path(top_part["id"].split("/")[0]), ({}, None))[0]
+        since = next((step.get("at") for step in state.get("steps", []) if step.get("step") == "start"),
+                     (story_state.get("approval") or {}).get("at"))
+        found.append(_entry({**top_part, "kind": "task"}, "blocks the most",
+                            f"{most} unfinished part{'s wait' if most != 1 else ' waits'} on it", since, now))
+    for entry in found:
+        entry.pop("since")
+    return sorted(found, key=lambda entry: (entry["seconds"] is None, -(entry["seconds"] or 0)))
+
+
 def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], best: dict[str, Any],
-         completed: dict[str, Item], github: Item | None) -> Item:
+         completed: dict[str, Item], github: Item | None, readiness: dict[str, Item],
+         person_waits: dict[str, list[Item]]) -> Item:
     """Give every row its `state` and return the board's `team` facts."""
     stories = "\0".join(rel for rel in best if rel.startswith(".factory/stories/"))
     approvals: dict[str, list[Any]] = {}
@@ -221,11 +299,17 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
         else:
             counts["fixes"]["done"] += 1  # a fix left out of the rows finished more than seven days ago
     later, clause = board_trends.facts(top, history, counts, list(items.values()), github)
+    now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    rows = [row for parent in items.values() for row in (parent, *parent["children"])]
+    waiting, slow = needs_you(top, rows, readiness, person_waits, now), blocked(top, rows, best, maps, now)
     work = [counts[kind][state] for state in ("in progress", "ready to merge") for kind in ("parts", "fixes")]
     building = counts["stories"]["building"]
     sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "
-                f"in progress, {sum(work[2:])} ready to merge; {clause[0].lower()}{clause[1:]}")
-    return {"sentence": sentence, "counts": counts, "needs_you": None,
+                f"in progress, {sum(work[2:])} ready to merge, {len(waiting)} need{'s' if len(waiting) == 1 else ''} "
+                f"you, {len(slow)} blocked or slow; {clause[0].lower()}{clause[1:]}")
+    return {"sentence": sentence, "counts": counts, "needs_you": waiting,
+            # The page's In progress group: an item that needs you or is blocked sits in that group instead.
             "in_progress": [{key: row[key] for key in ("id", "title", "kind", "state")}
-                            for row in items.values() if row.get("state") in IN_PROGRESS_STATES], "blocked": None,
+                            for row in items.values() if row.get("state") in IN_PROGRESS_STATES
+                            and row["id"] not in {entry["id"] for entry in [*waiting, *slow]}], "blocked": slow,
             **later}

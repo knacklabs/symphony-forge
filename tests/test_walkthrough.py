@@ -161,9 +161,10 @@ def test_42_story_done(env, claude_payload, monkeypatch):
         assert fact in recorded, fact
 
     # The board shows the finished story, who approved it, its outcome and each merged part.
-    # ponytail: the dated approval and merge lines return with the story history (NAV).
     text = seen["board"]
-    for line in ("Shoppers can share a cart Story Done Finished on 23 September 2026",
+    for line in ("Shoppers can share a cart CART Story Done Finished on 23 September 2026",
+                 "Plan approved by Forge Test.", "Save a cart merged on 22 September.",
+                 "Send a cart merged on 23 September.",
                  "Approved by Forge Test.", f"The story was finished. {OUTCOME}",
                  "Save a cart Part Done Finished on 22 September 2026",
                  "Send a cart Part Done Finished on 23 September 2026"):
