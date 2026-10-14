@@ -89,17 +89,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\t.codex/skills/forge/SKILL.md\tRestore explicit deployment authorization in both checked-in guides\ttest-audit-followups",
-      "kind": "bug",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 11,
-      "text": "Restore explicit deployment authorization in both checked-in guides",
-      "from": "blocking",
-      "item": "test-audit-followups",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
       "kind": "bug",
       "path": ".factory/fixes/board-spec.json",
@@ -386,6 +375,28 @@
       "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
     },
     {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md omits releases from the owner's 14 October board requirements\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "README.md",
@@ -426,17 +437,6 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "FORGE-BOARD-2/PAGE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/commands.md\tGate: retain current coordinator commands in generated guidance\ttest-audit-followups",
-      "kind": "bug",
-      "path": "docs/commands.md",
-      "line": 27,
-      "text": "Gate: retain current coordinator commands in generated guidance",
-      "from": "blocking",
-      "item": "test-audit-followups",
       "status": "open",
       "closed_by": null
     },
@@ -659,17 +659,6 @@
       "item": "workers-split",
       "status": "done",
       "closed_by": "worker-no-settings"
-    },
-    {
-      "key": "bug\tforge.toml\tRestore the Forge v1.2.12 pin\ttest-audit-followups",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 2,
-      "text": "Restore the Forge v1.2.12 pin",
-      "from": "blocking",
-      "item": "test-audit-followups",
-      "status": "open",
-      "closed_by": null
     },
     {
       "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
@@ -8449,17 +8438,6 @@
       "closed_by": "dismissed"
     },
     {
-      "key": "bug\ttests/test_mod_guide.py\tNot done: proof list\ttest-audit-followups",
-      "kind": "bug",
-      "path": "tests/test_mod_guide.py",
-      "line": 37,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "test-audit-followups",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "tests/test_mod_install.py",
@@ -10612,28 +10590,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md omits releases from the owner's 14 October board requirements\tboard-product-record",
-      "kind": "bug",
-      "path": "PRODUCT.md",
-      "line": 59,
-      "text": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
-      "from": "blocking",
-      "item": "board-product-record",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40\tboard-product-record",
-      "kind": "bug",
-      "path": "PRODUCT.md",
-      "line": 59,
-      "text": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
-      "from": "blocking",
-      "item": "board-product-record",
       "status": "open",
       "closed_by": null
     }
