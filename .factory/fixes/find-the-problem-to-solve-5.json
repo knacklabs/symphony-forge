@@ -1,0 +1,15 @@
+{
+  "base": "2d30574654b797e5f19d12efda504eacd5f190a9",
+  "branch": "fix/find-the-problem-to-solve-5",
+  "done_when": "The discovery notes hold a filled problem card and the brief names it",
+  "kind": "fix",
+  "stacked_on": "FORGE-MAINONCE-1/ONCLASH",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T16:49:42.437519+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Find the problem to solve"
+}
