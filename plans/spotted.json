@@ -375,6 +375,28 @@
       "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
     },
     {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md omits releases from the owner's 14 October board requirements\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tPRODUCT.md\tNot done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40\tboard-product-record",
+      "kind": "bug",
+      "path": "PRODUCT.md",
+      "line": 59,
+      "text": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+      "from": "blocking",
+      "item": "board-product-record",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "README.md",
@@ -551,6 +573,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tClaude project settings can override the personal-token boundary\tsandbox-claude-plan",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 80,
+      "text": "Claude project settings can override the personal-token boundary",
+      "from": "blocking",
+      "item": "sandbox-claude-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tIsolate the developer\u2019s Claude token from sandbox commands and app API keys\tsandbox-claude-plan",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 72,
+      "text": "Isolate the developer\u2019s Claude token from sandbox commands and app API keys",
+      "from": "blocking",
+      "item": "sandbox-claude-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/specs/sandbox-runs.md\tNot done: proof list\tsandbox-runs-spec",
       "kind": "bug",
       "path": "docs/specs/sandbox-runs.md",
@@ -580,6 +624,17 @@
       "text": "Overload payback contradicts the stated build effort",
       "from": "blocking",
       "item": "sandbox-runs-spec",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tWritable user settings can switch Claude from the developer\u2019s token to an API key\tsandbox-claude-plan",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 89,
+      "text": "Writable user settings can switch Claude from the developer\u2019s token to an API key",
+      "from": "blocking",
+      "item": "sandbox-claude-plan",
       "status": "done",
       "closed_by": "dismissed"
     },
@@ -615,6 +670,17 @@
       "item": "workers-split",
       "status": "done",
       "closed_by": "worker-no-settings"
+    },
+    {
+      "key": "bug\tplans/FORGE-BOARD-2.md\tNot done: 9. The pane's first screen matches the board\tFORGE-BOARD-2/PANE",
+      "kind": "bug",
+      "path": "plans/FORGE-BOARD-2.md",
+      "line": 578,
+      "text": "Not done: 9. The pane's first screen matches the board",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PANE",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tplans/spotted.json\tStandard: Touch only what the task needs\tclaude-sonnet-default",
@@ -3873,6 +3939,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: 9's sentence, totals and In progress lines\tFORGE-BOARD-2/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 162,
+      "text": "Not done: 9's sentence, totals and In progress lines",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: Board rows do not show the actual next step\tpane-grouped-board",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
@@ -6927,6 +7004,28 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "team-sentence-short",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_pane_lines.py\tNot done: test the first-screen facts and overflow parity\tFORGE-BOARD-2/PANE",
+      "kind": "bug",
+      "path": "tests/test_board_pane_lines.py",
+      "line": 84,
+      "text": "Not done: test the first-screen facts and overflow parity",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_pane_lines.py\tNot done: the pane first-screen parity test\tFORGE-BOARD-2/PANE",
+      "kind": "bug",
+      "path": "tests/test_board_pane_lines.py",
+      "line": 40,
+      "text": "Not done: the pane first-screen parity test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/PANE",
       "status": "open",
       "closed_by": null
     },

@@ -1,0 +1,45 @@
+{
+  "base": "30983d7a6bfcb5ac51a62f73a6ac8a8c2844a8d3",
+  "branch": "fix/board-json-under-5s",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13aed-0e28-7840-a62a-973ab00602cf",
+    "head": null,
+    "start": "d0533b1a4409f3d87b7da54cc7abd53853e2bcb7"
+  },
+  "done_when": "forge board --json finishes in under 5 seconds on Forge's own repo once GitHub's answers are cached, with the same output as before",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "09e68e019ba28d60b3d440b50f6533a34abbdb97a827658aef4c051e6b6e57a6",
+    "changed": "0988922db1a797d9cc3b28fd6cb57d1937f5f957401e2779797aff628586939e",
+    "commit": "f027b2edc46ea26455ee828073ba4c3bb47cfeb2",
+    "dismissals": [],
+    "findings": [],
+    "id": "be0a2edb-e4de-45d9-bd26-b3138a8bbd10",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T14:59:23.224749+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T15:36:59.859752+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0451e2a3eda53e09bfd09eba00740ee53e6a33c6",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge board --json takes 16 to 40 seconds on Forge's own repo, so the Claude Code pane's refresh, which gives up after 20 seconds, often fails. A profile shows each of about 550 rows rereads forge.toml, reparses time records and runs its own git calls",
+  "worker": "codex"
+}
