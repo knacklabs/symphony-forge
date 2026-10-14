@@ -98,7 +98,9 @@ def _work(args: argparse.Namespace) -> bool:
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     from forge import close, nextstep, time_records  # close imports story, which imports this module
-    pr = close.branch_pr(top, state)
+    # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
+    asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
+    pr = close.branch_pr(top, state) if asking else None
     # A question answered on another machine is ended in the pull request's record; the newest open
     # one, here or there, is the one to answer.
     waits = nextstep.wait_records(top, item, (pr or {}).get("body") or "")
