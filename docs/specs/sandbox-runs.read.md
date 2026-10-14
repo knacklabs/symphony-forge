@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T12:25:00.717234+00:00
-seconds: 62.653
-read_hash: da4ea9f782b312ee4a00de91e79878cdb8bc272c
-round: 33
-passed: yes
-doc_seen: da4ea9f782b312ee4a00de91e79878cdb8bc272c
+read_at: 2026-10-14T12:53:24.270979+00:00
+seconds: 128.69
+read_hash: 143b1dc8fc796dbba0e17c28ffe9ee6f7ad41249
+round: 34
+passed: no
+doc_seen: 143b1dc8fc796dbba0e17c28ffe9ee6f7ad41249
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 2c8b14dc79a46047475774d42e2c179486b87238
+notes_seen: 5063c8df27ee9ee12143ebaead08057c70f4a90a
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -274,3 +274,20 @@ No findings.
 ## Round 33
 
 No findings.
+
+## Round 34
+
+31. Blocking: Mainline’s Claude token vault conflicts with Anthropic’s credential restrictions.
+    Raise: Plan gap. [The new rule](/docs/specs/sandbox-runs.md:71) makes Mainline store and distribute developers’ Claude OAuth tokens. [Anthropic’s policy](https://code.claude.com/docs/en/legal-and-compliance#authentication-and-credential-use) permits users to authenticate inside hosted, unmodified Claude Code, but expressly prohibits third-party developers from collecting or storing Claude session tokens. Switching from the SDK to the CLI does not resolve that separate storage restriction.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+32. Blocking: Event-based CI waiting has no catch-up or missed-delivery rule.
+    Raise: Plan gap. [The new CI rule](/docs/specs/sandbox-runs.md:175) only forwards events and waits. CI can finish before close starts or while the laptop sleeps; GitHub also [does not automatically redeliver failed webhooks](https://docs.github.com/en/webhooks/using-webhooks/handling-failed-webhook-deliveries). Unlike the current [commit-specific snapshot](/src/forge/checks.py:204), this supplies no way to recover those completed checks. Close needs an initial snapshot or replay and missed-delivery reconciliation.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+33. Blocking: Reclamation can leave the vault holding an unusable Codex login.
+    Raise: Plan gap. [The new authentication rule](/docs/specs/sandbox-runs.md:79) writes refreshed credentials back only when the run ends. If Codex rotates its token and the sandbox disappears without notice, the vault retains the consumed token; the code checkpoint does not preserve credentials. [OpenAI’s recovery guidance](https://learn.chatgpt.com/docs/auth/ci-cd-auth#what-to-do-when-refresh-stops-working) requires reseeding after a failed write-back restores stale credentials. The spec needs a rule for invalidating that login and recovering or replacing it before another round borrows it.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
