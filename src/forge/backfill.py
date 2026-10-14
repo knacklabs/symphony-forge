@@ -139,8 +139,10 @@ def seed(body: str, record: dict[str, Any]) -> str:
     managed = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", body, re.S)
     previous = time_records.HISTORY_SECTION.search(managed[0]) if managed else None
     if previous and not time_records.from_body(body):
+        # Keep rendered prose, not provenance comments inside the new JSON comment.
+        legacy = re.sub(r"<!--.*?-->", "", previous[0], flags=re.S)
         record = {**record, "legacy_text": record.get("legacy_text") or
-                  previous[0].removeprefix("## How it went\n").strip()}
+                  legacy.removeprefix("## How it went\n").strip()}
     marker = "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->\n"
     if "<!-- forge:begin -->" not in body:
         body = body.rstrip() + "\n\n<!-- forge:begin -->\n<!-- forge:end -->\n"
