@@ -159,7 +159,7 @@
       "gain": 3,
       "harm": 1,
       "line": 805,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -172,7 +172,7 @@
       "gain": 3,
       "harm": 1,
       "line": 827,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -185,7 +185,7 @@
       "gain": 3,
       "harm": 1,
       "line": 512,
-      "outcome": "open",
+      "outcome": "fixed in round 5",
       "reason": "",
       "round": 4,
       "security": false,
@@ -208,59 +208,18 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4ebc5823254951b589f1d156a117b05b3c8f62abeb72671ba35e07fda02ae35e",
-    "changed": "d2f88364a396db9c37208fced7de33175498e09891e8122a08b04a5b663b16b9",
-    "commit": "6366e3abe7b9376020d34dbc0992c0bdabeaedec",
+    "branch_diff": "601a5dbd2527e283ada2089768e988ed9980d795dde2768c969dbb3b0cbbb6dc",
+    "changed": "5cc3404c32b91101edf847f0497c15724262fe19f72c933915c0cb640e0bbd99",
+    "commit": "77b73507ae42ec60b4d070daccb89917b8ec10ab",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. `wait_records` treats every worker-question event without an `owner wait end` as open. `time_records.item` explicitly recognizes that older workers could answer questions without recording that end (`time_records.py:175-179`). After an earlier adopted repo upgrades, `forge board` can show an answered question in Needs you, and `forge work` refuses a new round at `worker.py:124-126` even when its local question record was cleared. The adoption test creates its question after upgrading, so it does not cover this history.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 805,
-        "priority": "P1",
-        "title": "Answered pre-upgrade questions can block work",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. With the default `stop_default = \"narrow\"`, `default_due` becomes true after 30 minutes and this condition removes an unchosen review-loop stop from Needs you. No command has yet committed `stop.choice` or published an `owner wait end`; that happens only when close runs. Done-when 2 says the wait clears at the choice commit, so a board opened after the timeout can omit an outstanding recorded wait. The Needs you test checks the stop after five minutes and misses this case.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 827,
-        "priority": "P1",
-        "title": "Needs you drops a review choice before its ending is recorded",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Functional. `board_facts.needs_you` adds a malformed or conflicting plan as a `blocked plan` entry (`board_facts.py:178-180`), but this changed row field calls `needs_person`, whose `person_waits` has no blocked-plan case. The same story therefore has `team.needs_you` containing it while its `needs_person` is false. The shipped guide says the flag uses the same decision as Needs you and describes pane NEEDS YOU rows as selected by that flag, so consumers of the row omit the blocking problem.",
-        "file": "src/forge/board.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 512,
-        "priority": "P1",
-        "title": "Blocked plans disagree with the row-level Needs you flag",
-        "work": 1
-      },
-      {
-        "body": "Gain 2, Work 4, Harm 1\nItem 12 remains partly unmet in this branch: the board page has no pinned four-link navigation or folding sections, story keys and cold-read history are absent, the shipped adapters' AGENTS.md still forbids all board IDs, and pane time rounding remains separate. The story's Tasks table assigns these behaviors and their tests to NAV and PANE. This branch supplies item 12's blocked-plan Needs you portion.",
-        "file": "src/forge/board.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 675,
-        "priority": "P2",
-        "title": "Later: NAV and PANE complete item 12",
-        "work": 4
-      }
-    ],
-    "id": "928871f3-f355-48c3-829a-ba4c35d0097a",
-    "status": "blocked"
+    "findings": [],
+    "id": "265275db-191b-4352-b7ad-b9be775c6b41",
+    "status": "clean"
   },
   "settled_areas": [
     "_work() in src/forge/worker.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T16:05:33.429096+00:00",
@@ -280,6 +239,10 @@
     },
     {
       "at": "2026-10-14T03:49:24.561992+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:12:46.798603+00:00",
       "step": "review"
     }
   ],
