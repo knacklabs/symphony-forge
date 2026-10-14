@@ -350,8 +350,10 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(drawn).toContain('  ASK')
     expect(drawn).not.toContain('Later fix')
     // A live plan read keeps the story in planning, but its running row draws under MOVING.
-    const reading = { ...planningOnly, team: { ...planningOnly.team, counts: { ...quiet, stories: { planning: 1 } } }, items: [{ ...planningOnly.items[0], activity: { status: 'running', action: 'read' } }] }
-    for (const [board, line] of [[readyOnly, '2 ready to merge'], [planningOnly, '3 in planning'], [reading, '1 in planning']] as const) {
+    const reading = { ...planningOnly, items: [{ ...planningOnly.items[0], activity: { status: 'running', action: 'read' } }] }
+    // A newly approved story is building with every part still to do.
+    const approved = { ...planningOnly, items: [{ ...plain, id: 'NEW', kind: 'story', title: 'New story', children: ['ONE', 'TWO'].map(id => ({ ...plain, id: `NEW/${id}`, kind: 'task', title: `Part ${id}`, state: 'to do' })) }] }
+    for (const [board, line] of [[readyOnly, '2 ready to merge'], [planningOnly, '3 waiting'], [reading, '1 moving'], [approved, '2 waiting']] as const) {
       shown = board
       await $.session.start({ cwd: '/repo', surface, isInteractive: true })
       expect(JSON.stringify(await ui.drawn())).toContain(line)
