@@ -126,7 +126,7 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
 - **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait at the
   provider: the relay writes each result to the sandbox's kept disk, and each provider's adapter sets
   that provider's expiry so a finished sandbox pauses with its disk, never deletes, until Forge has
-  collected the result (or 14 days pass, when Forge reports the lost round). When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
+  collected the result. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
   rounds it collected.
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does

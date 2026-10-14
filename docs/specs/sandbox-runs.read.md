@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T06:43:14.984276+00:00
-seconds: 403.909
-read_hash: 25e6016ecc476e8654f68f79ed9dd165da3e1724
-round: 8
+read_at: 2026-10-14T06:45:34.243621+00:00
+seconds: 122.048
+read_hash: 61224abd9c17b8e01a2fd24a564e29dd29ba6a98
+round: 9
 passed: no
-doc_seen: 25e6016ecc476e8654f68f79ed9dd165da3e1724
+doc_seen: 61224abd9c17b8e01a2fd24a564e29dd29ba6a98
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: a1a506e5a2bb4a1f3201f3ea8f1c5045d803cdc2
+notes_seen: 745613ea0e1430d579135fefc7f53ca101f6c6fd
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -104,4 +104,11 @@ No findings.
 11. Blocking: Trap: E2B’s default expiry destroys results awaiting collection.
     Raise: Data loss. [The new provider choice](/docs/specs/sandbox-runs.md:75) adds E2B without a lifetime or retention rule. Its [creation API](https://docs.e2b.dev/api-reference/sandboxes/create-sandbox-v2) defaults to a 300-second lifetime with auto-pause disabled; [expiry kills the sandbox](https://docs.e2b.dev/sandbox/persistence). If a round finishes while the laptop sleeps for ten minutes, its uncollected commits and result can disappear before wake-up. Keeping the worker alive through Forge’s relay does not prevent provider expiry. E2B needs an explicit non-destructive expiry policy and a runtime policy that covers disconnected rounds.
     Gain 5, Work 2, Harm 4
+    Disposition: cut
+
+## Round 9
+
+12. Blocking: The new 14-day cutoff permits losing commits that acceptance criterion 7 promises to collect.
+    Raise: Data loss. [Lines 127–129](/docs/specs/sandbox-runs.md:127) end retention after 14 days and report the round lost. A developer returning after two weeks away can therefore lose uncollected worker commits. [Criterion 7](/docs/specs/sandbox-runs.md:150) still promises that results wait and are collected on wake, without that exception. This is a new deliberate loss policy, distinct from the provider’s default expiry in finding 11; its deletion and recovery behaviour must agree with the acceptance criterion.
+    Gain 4, Work 2, Harm 4
     Disposition: cut
