@@ -1801,8 +1801,8 @@
       "text": "Not done: publish a size choice on the first close",
       "from": "blocking",
       "item": "FORGE-BOARD-2/WAITS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: publish waits from a teammate's worktree\tFORGE-BOARD-2/WAITS",
@@ -5992,8 +5992,8 @@
       "text": "An answer from another machine still blocks close on the asking machine",
       "from": "blocking",
       "item": "FORGE-BOARD-2/WAITS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/worker.py\tAn answered question still prevents work on the asking machine\tFORGE-BOARD-2/WAITS",
@@ -6014,8 +6014,8 @@
       "text": "Answering a shared worker question omits the question from the worker brief",
       "from": "blocking",
       "item": "FORGE-BOARD-2/WAITS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
