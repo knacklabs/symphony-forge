@@ -1,6 +1,13 @@
 {
   "base": "4243dd51024a14d39be742c1904238be2d655429",
   "branch": "fix/test-audit-followups",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13b84-ba66-7c70-8343-7fdb8b7b8417",
+    "head": null,
+    "start": "df4c1075a9b16e01eff42336c00ee378bb27473d"
+  },
   "done_when": "The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards",
   "kind": "fix",
   "round": 1,
