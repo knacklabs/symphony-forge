@@ -55,8 +55,9 @@ def test_9_the_pane_opens_with_the_boards_first_screen_lines(tmp_path, case):
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_9_the_board_tab_shows_the_boards_team_facts(env, monkeypatch, tmp_path, previous):
-    """Real forge commands build a repo with a plan waiting for approval, a stalled fix, a part
-    other parts wait on and enough pace for go-live; the mounted Board tab shows the same facts as `forge board --json`."""
+    """Real forge commands build a repo with six plans waiting for approval, read newest-first by key,
+    six stalled fixes, a part other parts wait on, six fixes in progress and enough pace for
+    go-live; the mounted Board tab shows the same facts as `forge board --json`."""
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
     configure(env, "agent")
@@ -66,18 +67,29 @@ def test_9_the_board_tab_shows_the_boards_team_facts(env, monkeypatch, tmp_path,
     parts_per_week(env, monkeypatch, [monday - timedelta(weeks=n) for n in range(6, 0, -1)], [1] * 6)
     env.commit(env.repo.path, ".factory/stories/OLD/story.json", '{"status": "done"}', "An older story is done")
     env.repo.git("push", "-q", "origin", "main")
-    monkeypatch.setenv("FORGE_NOW", now.isoformat())
+
+    def at(when):
+        for name in ("FORGE_NOW", "GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
+            monkeypatch.setenv(name, when.isoformat())
+
+    at(now)
     approve_story(env.repo, STORY_DOC)  # its second part waits on its first, which blocks the most
-    read_story(env.repo, "WAIT", ONE_PART.replace("# Shoppers can save a basket", "# Shoppers can wait", 1))
-    for name in ("FORGE_NOW", "GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
-        monkeypatch.setenv(name, (now - timedelta(hours=30)).isoformat())
-    env.start("slow", "fix/slow", ".factory/fixes/slow.json",
-              {"kind": "fix", "why": "Slow fix", "done_when": "It works"}, {"slow.py": "x\n"})
-    for name in ("FORGE_NOW", "GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE"):
-        monkeypatch.setenv(name, now.isoformat())
+    for n in range(1, 7):  # W1 is read last, so oldest first is not key order
+        at(now - timedelta(hours=n))
+        read_story(env.repo, f"W{n}", ONE_PART.replace("# Shoppers can save a basket", f"# Shoppers wait {n}", 1))
+    for n in range(1, 7):
+        at(now - timedelta(hours=30 + n))
+        env.start(f"slow{n}", f"fix/slow{n}", f".factory/fixes/slow{n}.json",
+                  {"kind": "fix", "why": f"Slow fix {n}", "done_when": "It works"}, {f"slow{n}.py": "x\n"})
+        at(now - timedelta(minutes=n))
+        env.start(f"busy{n}", f"fix/busy{n}", f".factory/fixes/busy{n}.json",
+                  {"kind": "fix", "why": f"Busy fix {n}", "done_when": "It works"}, {f"busy{n}.py": "x\n"})
+    at(now)
 
     team = board(env.repo)["team"]
-    assert team["needs_you"] and team["blocked"] and team["go_live"]["status"] == "about"
+    assert [len(team[name]) > 5 for name in ("needs_you", "blocked", "in_progress")] == [True] * 3
+    assert team["go_live"]["status"] == "about"
+    assert [e["id"] for e in team["needs_you"]] != sorted(e["id"] for e in team["needs_you"])
     shown = board_tab(tmp_path, env.repo).splitlines()
     counts = team["counts"]
     due = datetime.fromisoformat(team["go_live"]["earliest"])
@@ -85,19 +97,34 @@ def test_9_the_board_tab_shows_the_boards_team_facts(env, monkeypatch, tmp_path,
         f"{counts['parts']['in progress'] + counts['fixes']['in progress']} in progress",
         f"{len(team['needs_you'])} needs you", f"{len(team['blocked'])} stuck",
         f"go-live about {due:%b} {due.day}"]) in shown, shown
+    # The page's sentence and its labelled totals, word for word.
+    assert team["sentence"] in shown, shown
+    labels = {"finished_last_7_days": "Finished in the last 7 days"}
+    for kind, by in counts.items():
+        line = f"{labels.get(kind, kind.capitalize())} — " + "; ".join(f"{name[0].upper()}{name[1:]}: {n}"
+                                                                      for name, n in by.items())
+        assert line in shown, (line, shown)
 
-    def titles(name, entries):
-        """The row titles under a group heading, the story key beside each set aside."""
+    def shown_as(e):
+        """A row's first line: its title, with the story key small beside it for a story or part."""
+        key = e["id"] if e["kind"] == "story" else e["id"].split("/")[0] if "/" in e["id"] else None
+        return f"{e['title']}  {key}" if key else e["title"]
+
+    def group(name, entries):
+        """The first five rows under a heading, in order, and its overflow line."""
         start = next(n for n, line in enumerate(shown) if line.startswith(name))
         end = next((n for n, line in enumerate(shown) if n > start and line.isupper()), len(shown))
-        wanted = {e["title"] for e in entries}
-        return shown[start + 1:end], [line.split("  ")[0] for line in shown[start + 1:end]
-                                      if line.split("  ")[0] in wanted]
+        lines = shown[start + 1:end]
+        assert f"and {len(entries) - 5} more · forge board for all" in lines, (name, lines)
+        wanted = {shown_as(e) for e in entries}
+        rows = [line.split(" · ")[0] for line in lines if line.split(" · ")[0] in wanted]
+        assert rows == [shown_as(e) for e in entries][:5], (name, lines)
+        return lines
 
-    assert titles("NEEDS YOU", team["needs_you"])[1] == [e["title"] for e in team["needs_you"]]
-    stuck, found = titles("STUCK", team["blocked"])
-    assert found == [e["title"] for e in team["blocked"]], stuck
-    assert all(any(e["detail"] in line for line in stuck) for e in team["blocked"]), stuck
+    group("NEEDS YOU", team["needs_you"])
+    stuck = group("STUCK", team["blocked"])
+    assert all(any(e["detail"] in line for line in stuck) for e in team["blocked"][:5]), stuck
+    group("MOVING", [e for e in team["in_progress"] if e["state"] != "ready to merge"])
 
 
 def test_9_pane_times_round_like_the_board(tmp_path):
