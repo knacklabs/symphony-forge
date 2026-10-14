@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T07:33:34.167730+00:00
-seconds: 54.299
-read_hash: eda56f012203072f47c205a26608653c3c2d1e3e
-round: 18
-passed: yes
-doc_seen: eda56f012203072f47c205a26608653c3c2d1e3e
+read_at: 2026-10-14T08:02:57.210279+00:00
+seconds: 229.645
+read_hash: 761207e179edf7934fd5b4347bde45e05b6744ed
+round: 19
+passed: no
+doc_seen: 761207e179edf7934fd5b4347bde45e05b6744ed
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e6e0ea8f28a60a1e7dec88370a259c7521817743
+notes_seen: a799e06ef9366ed832c130c93ff35fb43804708f
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -183,3 +183,15 @@ No findings.
 ## Round 18
 
 No findings.
+
+## Round 19
+
+22. Blocking: Borrowed capacity cannot be returned immediately without a rule for running borrowers.
+    Raise: Plan gap. [The new fairness rule](/docs/specs/sandbox-runs.md:68) promises immediate return of lent places. With a team cap of two, one developer can occupy both places before another requests their share. The spec does not choose whether to interrupt the borrower or wait for completion. Existing [admission](/src/forge/machine.py:174) waits for occupied places; it supplies no reclamation behaviour. The fairness rule must settle this normal case.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+23. Blocking: Local-only teammates cannot supply the promised live team feed under the onboarding rule.
+    Raise: Plan gap. [The new team view](/docs/specs/sandbox-runs.md:153) requires every laptop’s runs, but [teammate onboarding](/docs/specs/sandbox-runs.md:159) defers Mainline sign-in until that laptop fills. A teammate whose runs remain local therefore has neither authenticated publication nor a sandbox relay forwarding output. Current [board data](/src/forge/board.py:694) reads that machine’s lanes. The spec needs a consistent sign-in and publication rule for participating local laptops.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut

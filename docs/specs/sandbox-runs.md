@@ -67,7 +67,8 @@ The owner chose each of these on 14 October 2026:
    place; it takes the next free place, local or remote. Mainline never queues a run: when the team has
    no free place it refuses with a plain reason, and the run stays in Forge's own line. Mainline shares
    a team's places fairly: each active developer has an equal slice of the team cap, and a slice
-   nobody is using is lent to others and returned as soon as its owner needs it.
+   nobody is using is lent to others. Lending never stops a running round: when the owner needs the
+   slice back, no new borrowed run starts, and the owner gets the next place that frees.
 5. **Mainline only, paid in credits.** Forge's sandboxes come only from Mainline. A team buys Mainline
    sandbox credits, priced at our cost plus a markup; Mainline runs them on its own backends (AWS
    first, others later), which teams never see or sign in to. It ships to every repo turned off. A
@@ -153,7 +154,9 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 - **A team on one app.** Several developers' laptops share one Mainline team: its fair-share places,
   its result store and one live team board that Mainline hosts. The board shows Symphony's team view
   (in progress, needs whom, blocked, go-live) with every run on every laptop and sandbox, by person,
-  and each developer's pane reads the same feed. A finished round waits in the result store, and any
+  and each developer's pane reads the same feed. A teammate's laptop runs appear there once that
+  teammate signs in to Mainline; until then the board shows their work from git and GitHub only, the
+  way Symphony's board does today, and marks them "not signed in". A finished round waits in the result store, and any
   team member's Forge can collect it and push it with their own GitHub access, so a laptop that is
   asleep never blocks the team.
 - **Teammates.** Nothing changes for a teammate until their laptop is full. Then the agent says the
@@ -201,7 +204,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback; credits, balance alerts and top-ups live on Mainline's dashboard.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
 7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes and disks in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
-8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes or stop it; the team board and every pane show every run on every laptop and sandbox.
+8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes or stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
 9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Roadmap
