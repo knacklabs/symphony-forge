@@ -93,7 +93,7 @@
     "id": "f4ef94e2-f40c-4fea-a08e-71e8af851e94",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -106,10 +106,14 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "da5bd82f2f9382718ac56b2b85466ce87c7c1325",
-    "keys": {},
-    "round": null
+    "close": "319b7f05-58bb-41d5-b0de-895f2c5e6710",
+    "head": "fafb8ce2792bcf38f77ec4b625f66a036cf69a0e",
+    "keys": {
+      "the review finding \"Not done: known logins disappear when past work is compacted\" in src/forge/board_facts.py": 1,
+      "the review finding \"Not done: test past work in the adopted client\" in tests/test_board_logins.py": 1,
+      "the review finding \"Serial commit lookups make board reads slow as the team grows\" in src/forge/board_facts.py": 1
+    },
+    "round": 2
   },
   "worker": "codex"
 }
