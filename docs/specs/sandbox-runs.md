@@ -100,7 +100,9 @@ the worker sees why the commit was refused.
 by the repo's team, the same store its deployed apps use: `forge secrets set NAME` writes one through
 Mainline's API, and `forge secrets list` shows the names, never the values. Mainline injects them as
 environment variables only for a run, so a teammate's remote run gets them too; the laptop keychain
-holds only the Mainline token. At setup Forge reads the names
+holds only the Mainline token. The vault keeps each environment apart: sandbox runs read only the
+repo's `sandbox` environment, never `staging` or `production`, and a deploy reads only its own
+environment, so an agent's run can never see a production secret. At setup Forge reads the names
 in the repo's `.env` and offers to move each value into the vault. `forge.toml` holds only the
 on/off switch, the sandbox cap and size, the secret names a run needs and the Mainline team the repo
 belongs to, never a value; Mainline's dashboard shows them read-only.

@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T07:16:03.130069+00:00
-seconds: 45.69
-read_hash: 7a608dd21cca634f2cc9f014c9794fb5ce3fddd5
-round: 15
-passed: yes
-doc_seen: 7a608dd21cca634f2cc9f014c9794fb5ce3fddd5
+read_at: 2026-10-14T07:29:53.254783+00:00
+seconds: 147.581
+read_hash: 947c09d5045c5357db5773e0e0bd7324b0624f26
+round: 16
+passed: no
+doc_seen: 947c09d5045c5357db5773e0e0bd7324b0624f26
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 5dff3f41449186ced5e64bb6c27ad984b262721c
+notes_seen: 8ec3b7ea5ce950dcd168cf77add64c714472ad9b
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -168,3 +168,10 @@ No findings.
 ## Round 15
 
 No findings.
+
+## Round 16
+
+21. Blocking: The shared Mainline vault has no boundary between sandbox and deployment secrets.
+    Raise: Security. [The new vault rule](/docs/specs/sandbox-runs.md:99) uses the deployed apps’ secret store and writes entries by name, without an environment namespace or overwrite rule. A deployed client app and its tests normally both use `DATABASE_URL`: [deployment guidance](/src/forge/templates/conventions/deploy.md:15) supplies that variable, while [test guidance](/src/forge/templates/conventions/testing.md:14) requires a fresh test database. Importing the developer’s test value must not replace the deployed value, and sandbox runs must not inherit deployment credentials. The spec pins neither separation.
+    Gain 5, Work 2, Harm 4
+    Disposition: cut
