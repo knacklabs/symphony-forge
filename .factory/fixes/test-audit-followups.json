@@ -91,7 +91,7 @@
     "id": "5b61fb3d-cffa-4ad0-accc-6d1fb30f9b20",
     "status": "blocked"
   },
-  "round": 5,
+  "round": 6,
   "status": "fixing",
   "steps": [
     {
@@ -107,25 +107,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "The test audit left four follow-ups: a guide test copying about 110 is stuck. It should deliver: The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards\nTwo rounds in a row left the review finding \"Not done: proof list\" in tests/test_mod_guide.py.\nThe worker tried: Review of test-audit-followups: blocked; Keep main's Forge pin, generated files and plan records.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "Owner chose one more round with the same worker: the last blocker is a missing proof list",
-    "tool": "codex",
-    "wait_id": "54ac144e-eb2d-4c86-98f0-82e2069aa40c",
-    "worker_round": 5
-  },
   "stuck": {
-    "close": "97f4aec5-3b2c-48ff-a402-e67a00f5229f",
-    "head": "68dc6e3e121812af37fd4ad38ad57674f13069a9",
+    "close": "4e3e2201-c096-425c-b738-9574297bece9",
+    "head": "c983fb055fa312a905ae31452949eab8021af322",
     "keys": {
-      "the review finding \"Gate: retain current coordinator commands in generated guidance\" in docs/commands.md": 1,
-      "the review finding \"Not done: proof list\" in tests/test_mod_guide.py": 1,
-      "the review finding \"Restore explicit deployment authorization in both checked-in guides\" in .codex/skills/forge/SKILL.md": 1,
-      "the review finding \"Restore the Forge v1.2.12 pin\" in forge.toml": 1
+      "the review finding \"Not done: proof list\" in tests/test_mod_guide.py": 2
     },
-    "round": 3
+    "round": 5
   },
   "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job",
   "worker": "codex"
