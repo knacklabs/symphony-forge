@@ -80,8 +80,8 @@
     "id": "749daf97-b1a2-4c2e-832c-9663517a82e9",
     "status": "clean"
   },
-  "round": 6,
-  "status": "waiting for checks",
+  "round": 7,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:42.456146+00:00",
@@ -101,12 +101,10 @@
     }
   ],
   "stuck": {
-    "close": "4e3e2201-c096-425c-b738-9574297bece9",
-    "head": "c983fb055fa312a905ae31452949eab8021af322",
-    "keys": {
-      "the review finding \"Not done: proof list\" in tests/test_mod_guide.py": 2
-    },
-    "round": 5
+    "close": "956dd7d7-d0d1-45ba-9a74-4e8978533309",
+    "head": "7a48baf148f4d656660a3b5a9021592f3288054f",
+    "keys": {},
+    "round": 6
   },
   "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job",
   "worker": "codex"
