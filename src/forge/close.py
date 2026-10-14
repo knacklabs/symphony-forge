@@ -935,7 +935,7 @@ def _bounded_body(body: str) -> str:
         record = time_records.from_body(body)
         before, after = body[:marker.start()], body[marker.end():]
         if record:
-            record = {k: record.get(k) for k in ("events", "timings", "state", "ready", "rebuilt", "clean_reviews")}
+            record = {k: record.get(k) for k in ("events", "timings", "summary", "state", "ready", "rebuilt", "clean_reviews")}
             record["truncated"] = True
             while True:
                 body = before + "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->" + after
