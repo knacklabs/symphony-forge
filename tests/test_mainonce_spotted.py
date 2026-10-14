@@ -46,8 +46,13 @@ def test_4_changes_keep_spotted_records_and_closures_separate(env, tmp_path, pre
     assert (where / LIST).read_bytes() == old_bytes
     prepared = env.close(setup)
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
-    env.repo.git("merge", "-q", "--ff-only", f"fix/{setup}")
-    env.repo.git("push", "-q", "origin", "main")
+    clone = env.tmp / "github-merge"
+    remote = env.repo.git("remote", "get-url", "origin")
+    env.repo.git("clone", "-q", remote, str(clone))
+    env.repo.git("config", "user.name", "Test", cwd=clone)
+    env.repo.git("config", "user.email", "test@example.test", cwd=clone)
+    _merge(env, clone, (setup,))
+    env.repo.git("pull", "-q", "--ff-only", "origin", "main")
     env.repo.git("worktree", "remove", str(where))
     assert "plans/spotted.json merge=forge-roadmap" in (
         env.repo.path / ".gitattributes").read_text("utf-8").splitlines()
@@ -72,11 +77,6 @@ def test_4_changes_keep_spotted_records_and_closures_separate(env, tmp_path, pre
         assert json.loads((where / own).read_text("utf-8"))["items"] == [
             entry("bug", "app.py", 1, text, "worker", item=name)]
 
-    clone = env.tmp / "github-merge"
-    remote = env.repo.git("remote", "get-url", "origin")
-    env.repo.git("clone", "-q", remote, str(clone))
-    env.repo.git("config", "user.name", "Test", cwd=clone)
-    env.repo.git("config", "user.email", "test@example.test", cwd=clone)
     _merge(env, clone, names)
     shown = env.repo.forge("next", cwd=clone)
     assert shown.returncode == 0, shown.stderr
