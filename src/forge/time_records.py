@@ -610,10 +610,17 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     """Union observations, then derive once so overlapping snapshots never add time."""
     if not published:
         return {**local, "source": "local"}
+    # A reconstructed review and its original local observation are the same review.
+    observed = {(e.get("commit"), e.get("outcome")) for e in local.get("events", [])
+                if e.get("event") == "review result" and e.get("commit")}
+    replaced = {e["rebuilt_commit"] for e in published.get("events", [])
+                if e.get("rebuilt_commit") and (e.get("commit"), e.get("outcome")) in observed}
     rows = {}
     for name in ("events", "timings"):
         unique = {}
         for row in [*published.get(name, []), *local.get(name, [])]:
+            if row.get("rebuilt_commit") in replaced:
+                continue
             identity = row.get("id") if name == "events" else None
             unique.setdefault(identity or json.dumps(row, sort_keys=True), {**row})
         rows[name] = sorted(unique.values(), key=lambda row: row.get("at") or row.get("start") or "")
@@ -624,7 +631,7 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     reviews = [r for r in rows["events"] if r.get("event") == "review result"]
     if reviews and reviews[0].get("review_round") == 1:
         for number, result in enumerate(reviews, 1):
-            if result.get("review_round") is None and isinstance(result.get("findings"), list):
+            if isinstance(result.get("findings"), list):
                 result["review_round"] = number
     state = {**published.get("state", {}), **local.get("state", {})}
     starts = [step for data in (local, published) for step in data.get("state", {}).get("steps", [])

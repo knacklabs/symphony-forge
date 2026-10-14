@@ -66,7 +66,7 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
     return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
 
 
-def prs(top: Path) -> Item | None:
+def prs(top: Path, *, fresh: bool = False) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
     this one, cached together for a minute. None when gh is missing or any list fails."""
     # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
@@ -85,7 +85,16 @@ def prs(top: Path) -> Item | None:
             # A capped week need not hold all of its rows, so its counts are unknown.
             weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
         return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
+    if fresh:
+        return fetch(time_records.when(repo.now()) or datetime.now(timezone.utc))
     return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
+
+
+def people(body: str) -> Item:
+    """Original actors survive a deleted squash branch in the item's shared evidence."""
+    events = time_records.from_body(body).get("events", [])
+    return {field: next((event.get("by") for event in events if event.get("event") == name), None)
+            for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:

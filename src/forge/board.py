@@ -251,6 +251,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if isinstance(pr.get("headRefName"), str):
             by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
     finished_prs = board_facts.merged_prs(github)
+    # The upgrade's six-week history is visible immediately, including older finished rows.
+    history = {**history, "expired": history["expired"] - {
+        rel for rel, (state, _) in best.items()
+        if state.get("branch") in {pr["headRefName"] for pr in finished_prs}}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
@@ -499,8 +503,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 status += " for " + board_visuals.duration(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
-                "started_by": starters.get(repo.state_path(item)),
-                "approved_by": _approver(top, read_key) if read_key else None,
+                "started_by": board_facts.people((pr or {}).get("body") or "")["started_by"] or starters.get(repo.state_path(item)),
+                "approved_by": (board_facts.people((pr or {}).get("body") or "")["approved_by"]
+                                or (_approver(top, read_key) if read_key else None)),
                 "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
@@ -1030,6 +1035,5 @@ def _times(n: float) -> str:
 
 def _day(when: datetime | None) -> str:
     return f"{when.day} {when:%B %Y}" if when else "a date that wasn't recorded"
-
 
 

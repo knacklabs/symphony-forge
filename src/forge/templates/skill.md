@@ -875,6 +875,12 @@ also stay in place; only recognized cache directories may be discarded.
 3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
+Close runs the time-story backfill as part of the upgrade, with nothing extra to type. It
+rebuilds open items and items merged in the last six weeks from git and GitHub, marks them
+"rebuilt from history", and leaves spans without evidence unknown. If GitHub cannot be reached,
+the next close on this machine retries the backfill. The agent then opens the board and reports
+what is still missing.
+
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.

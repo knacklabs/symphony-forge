@@ -83,10 +83,13 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
+    from forge import backfill
     from forge.merge import ENABLE
 
     item = args.item
     top = _worktree(item)
+    if (repo.forge_dir(top) / "backfill-pending").exists():
+        backfill.run(top)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
@@ -153,7 +156,10 @@ def close(args: argparse.Namespace) -> int:
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
         _attach(top, item, branch)
-        return _merged(top, item)
+        done = _merged(top, item)
+        if backfill.upgrade_fix(top, item, state):
+            backfill.run(top)
+        return done
 
     previous = state.get("review") or {}
     legacy_diff = None
@@ -420,6 +426,8 @@ def close(args: argparse.Namespace) -> int:
         print(f"Next: forge merge {item}")
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+    if backfill.upgrade_fix(top, item, state):
+        backfill.run(top)
     return 0
 
 
@@ -836,6 +844,14 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     """Open the pull request, or refresh its contract and Forge's block. While the review is
     blocked or the local tests failed, the pull request is a draft."""
     check, proof = evidence
+    if pr and not time_records.from_body(pr.get("body") or ""):
+        from forge import backfill
+        try:
+            _, _, record = backfill.rebuild(top, {**pr, "headRefName": branch},
+                                            pushed_head=repo.git("rev-parse", "HEAD", cwd=top))
+            pr = {**pr, "body": backfill.seed(pr.get("body") or "", record)}
+        except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
+            backfill.failed(top)
     history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = (result["status"] == "blocked" or bool(state.get("tests")) or
@@ -855,8 +871,18 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         print(f"Opened the pull request: {url.strip()}")
         number = int(url.strip().rsplit("/", 1)[1])
         repo.record_event(top, item, "pull request published", number=number)
-        return {"number": number, "state": "OPEN",
-                "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}
+        opened = {"number": number, "state": "OPEN",
+                  "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}
+        # First publish has a real PR now, but its new local record must not hide older evidence.
+        from forge import backfill
+        try:
+            _, _, record = backfill.rebuild(top, {**opened, "headRefName": branch},
+                                            pushed_head=repo.git("rev-parse", "HEAD", cwd=top))
+            opened["body"] = _refresh_record(top, item, state, {
+                **opened, "body": backfill.seed(opened["body"], record)})
+        except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
+            backfill.failed(top)
+        return opened
     if not any(event.get("item") == item and event.get("event") == "pull request published"
                and event.get("number") == pr["number"] for event in time_records.read(top, "events")):
         repo.record_event(top, item, "pull request published", number=pr["number"])

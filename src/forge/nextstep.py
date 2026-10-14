@@ -709,6 +709,8 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
         evidence = receipt
     elif ref and (record.get("ready") or {}).get("commit") == ref:
         evidence = {"commit": ref, "review": "clean", "shared": True}
+    elif ref and checks == "pass" and any(r.get("commit") == ref for r in record.get("clean_reviews", [])):
+        evidence = {"commit": ref, "review": "clean", "shared": True}
     elif ref and not receipt and not record and checks == "pass":
         # An older release's pull request: its state file at the head says it was closed clean.
         older = story.json_of(story.show(top, ref, repo.state_path(item)))

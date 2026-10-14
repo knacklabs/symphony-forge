@@ -83,7 +83,8 @@ def times(row: dict) -> str:
     seconds = [row.get(f"{kind}_seconds") for kind in ("working", "waiting", "unknown")]
     if seconds == [None] * 3:
         return '<p class="times">No time recorded yet</p>'
-    return '<p class="times">Working {} · waiting {} · unknown {}</p>'.format(*map(duration, seconds))
+    rebuilt = '<p class="detail">Rebuilt from history.</p>' if row.get("rebuilt") else ""
+    return rebuilt + '<p class="times">Working {} · waiting {} · unknown {}</p>'.format(*map(duration, seconds))
 
 
 def _day(at: datetime) -> str:
