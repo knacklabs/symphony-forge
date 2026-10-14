@@ -2,9 +2,9 @@
 slug: sandbox-runs
 title: Close and build rounds overflow to a remote sandbox when the laptop is full
 status: confirmed
-saved: 2026-10-14T07:59:06.130546+00:00
+saved: 2026-10-14T09:25:10.152351+00:00
 confirmed_by: "Ravi"
-confirmed_hash: 1a46cac9ead64c98a6fc2d2aeb55c47b8957df172872fb30878df06fd116c8f3
+confirmed_hash: 8fedd79f919fda769464b0f681b094716a6d6cc2b2b56d0031898615d357b0b8
 ---
 
 # Close and build rounds overflow to a remote sandbox when the laptop is full
@@ -58,13 +58,14 @@ The owner chose each of these on 14 October 2026:
 2. **GitHub access: the laptop pushes.** The sandbox holds no GitHub credential. It returns its
    commits as a git bundle, and the laptop checks the bundle (the right branch, only new commits on
    top of the round's start) and pushes it.
-3. **Model access: the owner's plan login.** Forge carries the laptop's current Claude or ChatGPT
-   plan login into each run and wipes it when the run ends, so nobody signs in again. Before Forge relies on it, the first part of the work checks each plan's terms for use
-   on a remote machine. Where the terms forbid it, the repo's own API keys are the fallback.
+3. **Model access: each tool's own sign-in.** A Codex round carries the developer's current ChatGPT
+   login into the run and wipes it when the run ends; OpenAI supports that login on remote machines.
+   A Claude round uses the team's Anthropic API key from Mainline's vault, because Anthropic does not
+   allow claude.ai login in products built on its Agent SDK.
 4. **When remote: only when the laptop is full.** Each kind of run follows its own line. Close's
    test run (with its review) goes to the sandbox when the laptop's test lane is full; a build round
    goes there when the agent line is full. With a free place, either runs locally. The sandbox has its
-   own cap and size in `forge.toml` (size default: small), separate from the laptop's lanes. When both
+   own cap and size in `forge.toml` (2, 4 or 8 CPUs; default 2), separate from the laptop's lanes. When both
    the laptop and the sandbox cap are full, the run waits in its usual first-come line and says its
    place; it takes the next free place, local or remote. Mainline never queues a run: when the team has
    no free place it refuses with a plain reason, and the run stays in Forge's own line. Mainline shares
@@ -108,7 +109,7 @@ the worker sees why the commit was refused.
 
 **Secrets come from Mainline's vault.** Each repo's secrets live in a per-repo vault in Mainline, owned
 by the repo's team, the same store its deployed apps use: `forge secrets set NAME` writes one through
-Mainline's API, and `forge secrets list` shows the names, never the values. Mainline injects them as
+Mainline's API, and `forge secrets list` shows the names, never the values. Any team member sets `sandbox` secrets; only an Owner sets `dev` and `production` ones. Mainline injects them as
 environment variables only for a run, so a teammate's remote run gets them too; the laptop keychain
 holds only the Mainline token. The vault keeps each environment apart: sandbox runs read only the
 repo's `sandbox` environment, never `staging` or `production`, and a deploy reads only its own
@@ -163,7 +164,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 
 - **Meeting it.** When work waits for a free place on the laptop, `forge next` says how many runs are
   waiting and that sandbox runs could start them now, and the agent offers it once. On yes it walks
-  the developer through signing in to Mainline (a short browser code; the team gets starter credits),
+  the developer through signing in to Mainline (a short browser code; the team's $5 starter credits arrive once an Owner adds a card or UPI mandate),
   moving the `.env` values
   into the vault, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
 - **A team on one app.** Several developers' laptops share one Mainline team: its fair-share places,
@@ -182,8 +183,8 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   The item's "How it went" records the round as a sandbox round, with its minutes.
 - **Starting.** Each run gets a fresh sandbox, used once and then removed, from the repo's ready
   image, which already has the tools and packages installed, so a run starts in about a minute. A test
-  command that installs packages itself still runs as written; it finds them in the shared package
-  cache, so nothing is downloaded again.
+  command that installs packages itself still runs as written; it downloads them again until the team's
+  package cache arrives in a later phase.
 - **Cost.** Forge shows the minutes and credits used; buying credits, the balance and limits live on
   Mainline's dashboard, and the lead gets an email at 80% used and at zero.
 - **Credits run out.** No new remote run starts at zero. Running rounds may go on for at most one more
@@ -204,7 +205,8 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
   it delete the repo's sandboxes, images, caches and stored results in Mainline (the code copies), and it
-  says what it removed. No commit is lost.
+  says what it removed. No commit is lost. The delete needs an Owner's Mainline sign-in; when a
+  Developer turns it off, new runs stop and the delete waits for an Owner on Mainline's dashboard.
 
 ## Out of scope
 
@@ -218,16 +220,17 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 2. With them on and the laptop's line full, and Mainline reachable with credits left, close's test run and review, and the next build round, run in the sandbox, with close's results posted to the pull request by the laptop, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when Mainline is down or the team's credits are used up, new runs return to the laptop's line and say why; when credits are used up, running rounds may go on for at most one more hour each, then stop and are collected.
 3. The sandbox gets only committed code (a bundle of the item's branch and the default branch, in a fresh history with no remote, where `forge test` runs), never an ignored file, the laptop's `.git` folder or a GitHub credential; secrets reach it only from the vault, as environment variables for that run; a bundle with commits outside the round's branch is refused with the reason.
 4. A sandbox run shows in the machine view with its minutes, credits used and output, and `forge stop` ends it.
-5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback; credits, balance alerts and top-ups live on Mainline's dashboard.
+5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; a Codex round carries the developer's ChatGPT login and a Claude round uses the team's Anthropic API key from the vault; credits, balance alerts and top-ups live on Mainline's dashboard (FORGE-SANDBOX-3).
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does; a reclaimed sandbox loses at most 5 minutes of a round's changes, and the next round starts from the last saved commits.
-7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
-8. On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes, and the starter or an Owner can stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
+7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then, with an Owner's sign-in, deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
+8. (FORGE-SANDBOX-3) On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes, and the starter or an Owner can stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
 9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Roadmap
 
 - FORGE-SANDBOX-1: Close runs in a Mainline sandbox when the laptop's test lane is full
 - FORGE-SANDBOX-2: Build rounds run in a Mainline sandbox when the laptop's agent line is full
+- FORGE-SANDBOX-3: A team shares sandbox places, one live team board and its credits
 
 ## Success measure
 

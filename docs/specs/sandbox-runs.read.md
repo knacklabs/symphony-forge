@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T08:57:11.424278+00:00
-seconds: 62.918
-read_hash: c4242e5d45d9e7158a4774034b9ff528bb71d92a
-round: 26
+read_at: 2026-10-14T09:26:28.788179+00:00
+seconds: 73.531
+read_hash: 0d25caee4ca6f73614f9d1f7f18f7e60153320cd
+round: 28
 passed: yes
-doc_seen: c4242e5d45d9e7158a4774034b9ff528bb71d92a
+doc_seen: 0d25caee4ca6f73614f9d1f7f18f7e60153320cd
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 2ec56b9cd8a02b012e9bb06c8f8083cc54c6b99a
+notes_seen: d788f627ecd40f19cda12d8a1a67bb407e4a5604
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
@@ -235,5 +235,16 @@ No findings.
     Disposition: cut
 
 ## Round 26
+
+No findings.
+
+## Round 27
+
+28. Blocking: The confirmation hash does not match the revised spec.
+    Raise: Gate. [The new frontmatter](/docs/specs/sandbox-runs.md:7) records a hash beginning `1a46cac9`, but the current body’s SHA-256 begins `8fedd79f`. [Roadmap admission](/src/forge/records.py:318) therefore refuses this spec, preventing its new third phase from being added. Confirmation must cover the revised body.
+    Gain 4, Work 1, Harm 3
+    Disposition: cut
+
+## Round 28
 
 No findings.

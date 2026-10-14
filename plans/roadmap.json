@@ -236,6 +236,13 @@
       "spec": "docs/specs/sandbox-runs.md",
       "status": "pending",
       "order": 79
+    },
+    {
+      "key": "FORGE-SANDBOX-3",
+      "title": "A team shares sandbox places, one live team board and its credits",
+      "spec": "docs/specs/sandbox-runs.md",
+      "status": "pending",
+      "order": 80
     }
   ],
   "epics": [
