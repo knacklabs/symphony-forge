@@ -182,9 +182,11 @@ def test_9_board_puts_active_work_first_and_folds_finished_fixes(repo, gh, tmp_p
     result = repo.forge("board", "--out", str(out))
     assert result.returncode == 0, result.stderr
     page = out.read_text()
-    assert page.index("A current story") < page.index("An earlier story")
-    fold = page.index('<details class="done"><summary>Done (2)</summary>')
-    assert page.index("An active fix") < fold < page.index("A finished fix")
+    # The item list, not the roadmap graph above it, puts active work first.
+    listed = page[page.index('<section id="work"'):]
+    assert listed.index("A current story") < listed.index("An earlier story")
+    fold = listed.index('<details class="done"><summary>Done (2)</summary>')
+    assert listed.index("An active fix") < fold < listed.index("A finished fix")
     assert '<a href="https://github.com/acme/shop/pull/8">A finished fix</a>' in page
     assert ('<span class="title">An active fix</span><span class="kind">Fix</span>'
             '<span class="state">In progress</span>') in page
