@@ -43,6 +43,8 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         for host in (".codex", ".claude"):
             shutil.copytree(ROOT / host / "skills", old / host / "skills")
         shutil.copyfile(ROOT / "tests/fixtures/close-before-choice-round.txt", old / "src/forge/close.py")
+        # Keep the earlier close's spotted writer too; it commits the shared-list path.
+        shutil.copyfile(ROOT / "tests/fixtures/spotted-before-per-change.txt", old / "src/forge/spotted.py")
         current = (env.repo.bin / "forge").read_text("utf-8")
         _install(env.repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=(old / "src").as_posix()))
     paths = [PATHS[0]] * 3 if same_file else PATHS

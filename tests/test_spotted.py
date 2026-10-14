@@ -1,5 +1,5 @@
 """The spotted list: forge close records what workers and reviews noticed outside the change in
-one shared file, git merges it by Forge's rule, and every worker brief asks for it.
+per-change files, reads the old list, and every worker brief asks for it.
 
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
@@ -10,18 +10,19 @@ import subprocess
 
 import pytest
 
-from test_close import CLEAN, blocked, env, finding  # noqa: F401 (env is a fixture)
+from test_close import CLEAN, STORY_DOC, blocked, env, finding  # noqa: F401 (env is a fixture)
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401 (sdk_data is a fixture)
 from test_task import story
 from test_worker import calls, install_claude
 
 STORY = "FORGE-SPOTTED-1"
 LIST = "plans/spotted.json"
+OWN = "plans/spotted/tidy-readme.json"
 FIX = "tidy-readme"
 PARAGRAPH = ("Note anything you spot outside your item instead of fixing it: end a commit "
              "message's body with one line each, `Spotted: <bug|simplify|edge|improve> "
              "<path>:<line> <one plain sentence>`. Never widen this change for one, and never edit "
-             "`plans/spotted.json`; Forge keeps it. The one exception is a bug that stops your item "
+             "the spotted records; Forge keeps them. The one exception is a bug that stops your item "
              "from working: fix it and name it in your handoff.")
 
 
@@ -33,7 +34,13 @@ def entry(kind: str, path: str, line: int, text: str, source: str, item: str = F
 
 
 def listed(where) -> list[dict]:
-    return json.loads((where / LIST).read_text("utf-8"))["items"]
+    entries = {}
+    for path in [where / LIST, *sorted((where / "plans/spotted").glob("*.json"))]:
+        if path.is_file():
+            for item in json.loads(path.read_text("utf-8"))["items"]:
+                if item["key"] not in entries or entries[item["key"]]["status"] != "done":
+                    entries[item["key"]] = item
+    return sorted(entries.values(), key=lambda item: item["key"])
 
 
 def note(env, where, message: str) -> None:
@@ -61,9 +68,9 @@ def _close_records_the_workers_spotted_lines(env):
     assert listed(where) == [
         entry("bug", "app.py", 3, "Totals skip refunds.", "worker"),
         entry("simplify", "lib/cart.py", 12, "The cart rebuilds its index twice.", "worker")]
-    assert (where / LIST).read_bytes().endswith(b"}\n") and b"\r" not in (where / LIST).read_bytes()
+    assert (where / OWN).read_bytes().endswith(b"}\n") and b"\r" not in (where / OWN).read_bytes()
     # Only close's review commit wrote it.
-    assert subjects(env, where, LIST) == [f"Review of {item}: clean"]
+    assert subjects(env, where, OWN) == [f"Review of {item}: clean"]
 
 
 def _close_records_the_reviews_findings_and_dismissals(env):
@@ -87,7 +94,7 @@ def _close_records_the_reviews_findings_and_dismissals(env):
               entry("bug", "app.py", 7, "Saving drops the basket", "blocking"),
               entry("simplify", "app.py", 8, "Simpler: one save path", "blocking")]
     assert listed(where) == sorted(wanted, key=lambda e: e["key"])
-    assert subjects(env, where, LIST) == [f"Review of {item}: blocked"]
+    assert subjects(env, where, OWN) == [f"Review of {item}: blocked"]
 
     # Dismissing a blocking finding closes its entry.
     env.close(item, "--dismiss", "6", "--because", "app.py:1 saving keeps the basket")
@@ -129,7 +136,7 @@ def _a_serious_finding_counts_once_per_change(env):
 def _a_reused_review_still_records_new_lines(env):
     item, where = env.start_fix()
     assert env.close(item).returncode == 0
-    assert not (where / LIST).exists()  # nothing spotted: no file
+    assert not (where / OWN).exists()  # nothing spotted: no file
     assert env.repo.git("show", "--name-only", "--format=", "HEAD", cwd=where) == (
         ".factory/fixes/tidy-readme.json")
     note(env, where, "Notes\n\nSpotted: improve app.py:1 The greeting is hard-coded.\n")
@@ -144,7 +151,7 @@ def _a_reused_review_still_records_new_lines(env):
 
 
 def _naming_the_list_in_done_when_never_makes_the_review_stale(env):
-    item, where = env.start_fix(done_when="plans/spotted.json lists what workers spot")
+    item, where = env.start_fix(done_when="plans/spotted/tidy-readme.json lists what workers spot")
     assert env.close(item).returncode == 0
     note(env, where, "Notes\n\nSpotted: improve app.py:1 The greeting is hard-coded.\n")
     assert env.close(item).returncode == 0
@@ -154,13 +161,69 @@ def _naming_the_list_in_done_when_never_makes_the_review_stale(env):
 
 def _a_review_citing_the_list_stays_current(env):
     # A finding that cites the list must not make the review stale once close writes the list.
-    env.reviews(blocked(finding("P3", "The list repeats a path", file=LIST)))
+    env.reviews(blocked(finding("P3", "The list repeats a path", file=OWN)))
     item, where = env.start_fix()
     note(env, where, "Notes\n\nSpotted: improve app.py:1 The greeting is hard-coded.\n")
     assert env.close(item).returncode == 0
     assert listed(where) == [entry("improve", "app.py", 1, "The greeting is hard-coded.", "worker")]
     assert env.close(item).returncode == 0
     assert len(env.review_calls()) == 1
+
+
+def _a_task_records_in_one_flat_file(env):
+    item, where = env.start_approved_task(STORY_DOC)
+    note(env, where, "Notes\n\nSpotted: bug app.py:1 Totals skip refunds.\n")
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    own = "plans/spotted/SHOP.T1.json"
+    assert json.loads((where / own).read_text("utf-8"))["items"] == [
+        entry("bug", "app.py", 1, "Totals skip refunds.", "worker", item=item)]
+    assert not (where / LIST).exists()
+    assert subjects(env, where, own) == [f"Review of {item}: clean"]
+
+
+def _a_linked_own_file_is_refused(env):
+    item, where = env.start_fix()
+    outside = env.tmp / "outside.json"
+    outside.write_bytes(b'{"items": []}\n')
+    (where / OWN).parent.mkdir(parents=True, exist_ok=True)
+    try:
+        (where / OWN).symlink_to(outside)
+    except OSError:
+        pytest.skip("this machine can't make symbolic links")
+    env.repo.git("add", OWN, cwd=where)
+    env.repo.git("commit", "-q", "-m", "Link the records", cwd=where)
+    refused = env.close(item)
+    assert refused.returncode == 1
+    assert refused.stderr == (
+        f"{OWN} or plans/ is a link, so Forge won't write the list through it.\n"
+        f"Next: replace the link with a real file or folder, commit it, then forge close {item}\n")
+    assert not env.review_calls() and outside.read_bytes() == b'{"items": []}\n'
+
+
+def _an_unreadable_other_items_file_is_refused(env):
+    item, where = env.start_fix()
+    path = "plans/spotted/earlier.json"
+    env.commit(where, path, "{broken", "Edit earlier records by hand")
+    refused = env.close(item)
+    assert refused.returncode == 1 and not env.review_calls()
+    assert refused.stderr == (
+        f"{path} isn't a list Forge can read: it isn't UTF-8 JSON.\n"
+        f"Next: git -C {where} rm -q {path}, commit it, then forge close {item}\n")
+
+
+def _unsafe_record_filenames_never_enter_repair_commands(env):
+    item, where = env.start_fix()
+    path = "plans/spotted/$(echo unsafe).json"
+    for readable_history in (False, True):
+        if readable_history:
+            env.commit(where, path, '{"items": []}\n', "Keep readable records")
+        env.commit(where, path, "{broken", "Break the records")
+        said, repair = _refused(env, item, where)
+        assert said == f"{json.dumps(path)} isn't a list Forge can read: it isn't UTF-8 JSON."
+        # Neither removal nor restoration may put a contributor's filename into a shell.
+        assert repair == "remove or restore this file with your file manager"
+        assert (where / path).read_bytes() == b"{broken"
 
 
 def _a_linked_list_is_refused(env):
@@ -235,14 +298,14 @@ def _the_repair_restores_the_last_readable_copy(env):
     assert env.close(item).returncode == 0  # round 2 no longer raises it; the entry stays
     kept = listed(where)
     assert kept == [entry("improve", "app.py", 1, "Name the tax constant", "review")]
-    readable = env.repo.git("log", "-1", "--format=%H", "--", LIST, cwd=where)
-    env.commit(where, LIST, "{broken", "Edit the list by hand")
+    readable = env.repo.git("log", "-1", "--format=%H", "--", OWN, cwd=where)
+    env.commit(where, OWN, "{broken", "Edit the list by hand")
     calls_before = len(env.review_calls())
 
     refused = env.close(item)
     assert refused.returncode == 1 and len(env.review_calls()) == calls_before
-    repair = f"git -C {where} checkout {readable} -- {LIST}"
-    assert refused.stderr == (f"plans/spotted.json isn't a list Forge can read: it isn't UTF-8 JSON.\n"
+    repair = f"git -C {where} checkout {readable} -- {OWN}"
+    assert refused.stderr == (f"{OWN} isn't a list Forge can read: it isn't UTF-8 JSON.\n"
                               f"Next: {repair}, commit it, then forge close {item}\n")
     subprocess.run(repair, shell=True, check=True)
     env.repo.git("commit", "-q", "-m", "Repair the list", cwd=where)
@@ -343,10 +406,12 @@ def _git_merges_the_list_by_forges_rule(env):
     _a_reused_review_still_records_new_lines,
     _naming_the_list_in_done_when_never_makes_the_review_stale,
     _a_review_citing_the_list_stays_current, _every_unreadable_list_is_refused,
-    _a_linked_list_is_refused,
+    _a_linked_list_is_refused, _a_linked_own_file_is_refused,
+    _a_task_records_in_one_flat_file, _an_unreadable_other_items_file_is_refused,
+    _unsafe_record_filenames_never_enter_repair_commands,
     _the_repair_restores_the_last_readable_copy,
     _sync_adds_the_rule_once, _git_merges_the_list_by_forges_rule])
-def test_1_close_keeps_one_shared_spotted_list(env, case):
+def test_1_close_keeps_spotted_records(env, case):
     case(env)
 
 

@@ -1038,7 +1038,7 @@ review rounds. For each kind of finding the plan missed that cost two or more fi
 two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
 outside Forge's block, in the last task's worktree; create the section when it is missing.
 Commit it before closing the task. Every cold read checks plans against that section.
-Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or
+Count the story's items' entries per file in the spotted records on the default branch, open or
 done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one
 trap line naming the file and the kind of problem that kept coming back.
 
@@ -1456,7 +1456,7 @@ other refusals' next actions instead of repeatedly retrying them.
 ## Hotspots
 
 A worker or review notes problems outside its change as spotted items, which Forge keeps in
-`plans/spotted.json` and nobody edits by hand. A spotted item never widens the change in hand,
+spotted records and nobody edits by hand. A spotted item never widens the change in hand,
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 When `forge next` says the latest scheduled run of the default branch failed, it names the
