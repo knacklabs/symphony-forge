@@ -6597,8 +6597,8 @@
       "text": "Unanswered shared worker question can be bypassed on another machine",
       "from": "blocking",
       "item": "FORGE-BOARD-2/WAITS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
