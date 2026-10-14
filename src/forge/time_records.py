@@ -1,5 +1,6 @@
 """Elapsed time and review history, shared through pull requests and local observations."""
 import functools
+import copy
 import json
 import hashlib
 import re
@@ -452,6 +453,11 @@ def _sane(text: str) -> float:
 
 
 def from_body(body: str) -> dict[str, Any]:
+    # Callers can amend a record; only its validated snapshot is shared within the command.
+    return copy.deepcopy(repo.command_fact(("time record", body), None, lambda: _from_body(body)))
+
+
+def _from_body(body: str) -> dict[str, Any]:
     block = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", body or "", re.S)
     match = re.search(r"<!-- forge:time-record (\{.*?\}) -->", block[0], re.S) if block else None
     if not match:

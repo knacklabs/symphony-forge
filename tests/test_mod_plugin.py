@@ -126,7 +126,10 @@ replies.push((await fire('command.run', {{command: 'forge'}}, api)).text);
 console.log(JSON.stringify({{replies, processCalls}}));
 """)
     # Checks show only on a row ready to merge; this fix is still in progress.
-    assert all(reply.startswith("1 in progress\n\nWAITING OR NOT STARTED (1)") for reply in answer["replies"])
+    # The board's In progress list is the tab's MOVING group, under the board's own sentence and totals.
+    assert all(reply.startswith("1 in progress\n\n0 stories building, 1 parts and fixes in progress")
+               and "\n\nMOVING\n  Readme greets new readers\n    In progress\n" in reply
+               for reply in answer["replies"]), answer["replies"]
     assert len(answer["processCalls"]) == 24  # only initial load + seven scheduled ticks
 
 
