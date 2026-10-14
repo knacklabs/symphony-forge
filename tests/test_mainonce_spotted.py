@@ -5,6 +5,7 @@ import json
 import pytest
 
 from test_close import env  # noqa: F401 (fixture)
+from test_close_holds_after_three_blocked_reviews import client_item
 from test_hotspots import seed
 from test_spotted import LIST, entry, note
 
@@ -26,15 +27,32 @@ def _merge(env, clone, names):
     env.repo.git("push", "-q", "origin", "main", cwd=clone)
 
 
-def test_4_changes_keep_spotted_records_and_closures_separate(env):
+@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adopted-client"])
+def test_4_changes_keep_spotted_records_and_closures_separate(env, tmp_path, previous):
     legacy = [entry("bug", "app.py", 1, "Alpha", "worker", item="earlier"),
               *[entry("bug", "legacy.py", 1, text, "worker", item="earlier")
                 for text in ("Alpha", "Beta", "Gamma")]]
-    env.repo.write("legacy.py", "pass\n")
-    # Existing adopted repos retain this attribute; GitHub has no local driver executable.
-    env.repo.write(".gitattributes", "plans/spotted.json merge=forge-json\n")
-    seed(env, legacy)
-    old_bytes = (env.repo.path / LIST).read_bytes()
+    if previous:
+        # The old list exists before the earlier-adopted client's pin and adapters upgrade.
+        env.repo.write("legacy.py", "pass\n")
+        seed(env, legacy)
+        old_bytes = (env.repo.path / LIST).read_bytes()
+    setup, where = client_item(env, tmp_path, previous)
+    if not previous:
+        # The new client came from real init; add the old-list compatibility data afterward.
+        env.commit(where, "legacy.py", "pass\n")
+        env.commit(where, LIST, json.dumps({"items": legacy}))
+        old_bytes = (where / LIST).read_bytes()
+    assert (where / LIST).read_bytes() == old_bytes
+    prepared = env.close(setup)
+    assert prepared.returncode == 0, prepared.stdout + prepared.stderr
+    env.repo.git("merge", "-q", "--ff-only", f"fix/{setup}")
+    env.repo.git("push", "-q", "origin", "main")
+    env.repo.git("worktree", "remove", str(where))
+    assert "plans/spotted.json merge=forge-roadmap" in (
+        env.repo.path / ".gitattributes").read_text("utf-8").splitlines()
+    # Both lifecycles retain the old list, including across the setup close and its merge.
+    assert (env.repo.path / LIST).read_bytes() == old_bytes
     before = env.repo.forge("next")
     assert before.returncode == 0, before.stderr
     assert "legacy.py keeps breaking: 3 noted problems are open there." in before.stdout
