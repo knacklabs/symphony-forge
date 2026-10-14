@@ -1,4 +1,4 @@
-"""Independent changes record and close spotted problems without GitHub merge conflicts."""
+"""src/forge/spotted.py: independent records and closures avoid GitHub merge conflicts."""
 from __future__ import annotations
 
 import json
