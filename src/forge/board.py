@@ -531,7 +531,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 **({k: v for k, v in time_records.combined(
                     top, item, state, (pr or {}).get("body") or "", events=activity, timings=item_timings,
                     ended_at=merged_dates.get(branch)).items()
-                    if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")} if kind != "story" else {}),
+                    if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")}
+                   if kind != "story" or time_records.from_body((pr or {}).get("body") or "") else {}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 
@@ -621,7 +622,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             seen.add(previous)
             notes = past_notes.get(previous, "")
         started = _step(best.get(repo.state_path(key), ({}, landed))[0], "start")
-        current.update(time_records.story([*current["children"], *older_parts.get(key, [])], read_rounds,
+        # Union the story's own history with its parts so overlapping time is counted once.
+        own = [current] if current.get("intervals") else []
+        current.update(time_records.story([*own, *current["children"], *older_parts.get(key, [])], read_rounds,
                                           unfinished=current["stage"] != "done",
                                           started_at=started.isoformat() if started else None,
                                           finished_at=completed.get(key, {}).get("finished")))
@@ -1035,5 +1038,4 @@ def _times(n: float) -> str:
 
 def _day(when: datetime | None) -> str:
     return f"{when.day} {when:%B %Y}" if when else "a date that wasn't recorded"
-
 

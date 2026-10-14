@@ -100,11 +100,9 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
         opened = _listing(top, "open")
         if opened is None:
             return None  # GitHub is unreachable: one call, not eight
+        # Board restoration and backfill share these windows. The first Monday
+        # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
-        if fresh:
-            # Backfill's windows start at the exact cutoff day, independent of the board's Mondays.
-            cutoff = datetime(now.year, now.month, now.day, tzinfo=timezone.utc) - timedelta(days=42)
-            starts = [cutoff + timedelta(weeks=n) for n in range(7)]
         with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
             lists = list(pool.map(lambda start: _listing(
                 top, "merged", "--search", f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"), starts))

@@ -7,12 +7,15 @@ production seam or prebuilt time record supplies the asserted result.
 The fixture independently filters GitHub's date search, includes required
 checks on pushed work heads, and puts a manual fix-prefixed PR before Forge
 items. These protect the cutoff, complete CI waits, and retry completion.
+A second story's squashed approval survives only in its pull ref; the board
+must show that actor and the story's own rebuilt history, even without parts.
 """
 import json
 import re
 import shutil
 import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -136,6 +139,43 @@ class History:
         approve_story(self.repo, STORY_DOC)
         self.repo.git("merge", "-q", "--ff-only", "story/SHOP")
         self.repo.git("push", "-q", "origin", "main")
+
+    def merged_story(self):
+        key, branch, number = "ARCHIVE", "story/ARCHIVE", 20
+        title = "Readers can keep an archive"
+        begin, merged = NOW - timedelta(days=12), NOW - timedelta(days=7)
+        self.at(begin)
+        self.repo.git("config", "user.name", "Original Starter")
+        self.repo.git("config", "user.email", "starter@example.test")
+        approve_story(self.repo, STORY_DOC.replace("Shoppers can save a basket", title), key=key)
+        worktree = re.search(r"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/ARCHIVE$",
+                             self.repo.git("worktree", "list", "--porcelain"), re.M)[1]
+        where = Path(worktree)
+        # The previous release records approval as a commit. Give that original
+        # approval its own actor, distinct from the story's start commit.
+        self.at(begin + timedelta(days=1))
+        self.repo.git("commit", "-q", "--amend", "--no-edit", "--author",
+                      "Plan Approver <approver@example.test>", cwd=where)
+        path = f".factory/stories/{key}/story.json"
+        state = json.loads((where / path).read_text("utf-8"))
+        state.update(status="done", finished=merged.isoformat(), outcome=title)
+        head = self.commit(where, path, json.dumps(state), "Record the completed archive", merged)
+        files = [{"path": name} for name in self.repo.git("diff", "--name-only", "main", head).splitlines()]
+        self.repo.git("push", "-q", "origin", "--delete", branch)
+        self.repo.git("push", "-q", "origin", branch)
+        self.repo.git("push", "-q", "origin", head + f":refs/pull/{number}/head")
+        self.repo.git("merge", "-q", "--squash", branch)
+        self.repo.git("commit", "-qm", title)
+        self.repo.git("push", "-q", "origin", "main")
+        self.repo.git("worktree", "remove", where.as_posix())
+        self.repo.git("branch", "-D", branch)
+        self.repo.git("push", "-q", "origin", "--delete", branch)
+        self.prs.append({"number": number, "headRefName": branch, "headRefOid": head, "files": files,
+                        "baseRefName": "main", "state": "MERGED", "isDraft": False,
+                        "title": title, "body": "Owner notes remain.\n", "mergedAt": merged.isoformat(),
+                        "mergedBy": {"login": "merger", "name": "Human Merger"},
+                        "author": {"login": "starter", "name": "Original Starter"},
+                        "url": f"https://github.com/acme/shop/pull/{number}"})
 
     def at(self, at):
         for name in ("GIT_AUTHOR_DATE", "GIT_COMMITTER_DATE", "FORGE_NOW"):
@@ -273,6 +313,7 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     up, repo = history.up, history.repo
     history.around_forge()
     history.story()
+    history.merged_story()
     history.item("saved-basket", 10, 24, task="T1")
     history.item("deleted", 11, 21)
     history.item("ordinary-merge", 12, 14, merge="merge")
@@ -333,6 +374,13 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     data = board(repo)
     assert any(pr["title"] == "A heading changed outside Forge" for pr in data["team"]["around_forge"])
     visible = rows(data)
+    archived = visible["ARCHIVE"]
+    assert archived["approved_by"] == "Plan Approver", "Approval survives squash and deletion of the story branch"
+    assert archived["started_by"] == "Original Starter"
+    assert archived["merged_by"]["name"] == "Human Merger"
+    assert archived["merged_at"] == before[20]["mergedAt"]
+    assert archived["rebuilt"] is True, "The story's own record reaches the board, even without built parts"
+    assert archived["unknown_seconds"] > 0
     for item in ("SHOP/T1", "deleted", "ordinary-merge", "fast-forward", "inside-cut", "exact-cut"):
         row = visible[item]
         branch = "task/SHOP-T1" if item == "SHOP/T1" else "fix/" + item
@@ -358,7 +406,12 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     page = up.tmp / "rebuilt-board.html"
     written = repo.forge("board", "--out", page.as_posix())
     assert written.returncode == 0, written.stdout + written.stderr
-    assert "rebuilt from history" in page.read_text("utf-8").lower()
+    html = page.read_text("utf-8")
+    assert "rebuilt from history" in html.lower()
+    archive_detail = re.search(r'<div class="row"[^>]*><details><summary><span class="named">'
+                               r'<span class="title">Readers can keep an archive</span>.*?</details></div>', html, re.S)
+    assert archive_detail and "rebuilt from history" in archive_detail[0].lower()
+    assert "Plan Approver" in archive_detail[0]
     assert repo.git("rev-parse", "HEAD") == before_board, "Reading the board must add no commit"
 
     # The second machine never upgraded and has neither old receipts nor local

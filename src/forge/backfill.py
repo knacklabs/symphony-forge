@@ -111,7 +111,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
                                 "outcome": "passed" if green else "unknown"})
                 if eligible and green:
                     last_green = max(b, time_records.when(at))
-    if "/" in key:
+    if "/" in key or pr.get("headRefName", "").startswith("story/"):
         approval_path = repo.state_path(key.split("/")[0])
         approved = repo.git("log", "-1", "--format=%H%x00%cI%x00%aN%x00%aE", "-F",
                             "--grep=Approve the plan: ", head, "--", approval_path, cwd=top)
