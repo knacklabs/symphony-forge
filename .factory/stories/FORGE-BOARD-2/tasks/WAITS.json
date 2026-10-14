@@ -211,8 +211,8 @@
       "gain": 4,
       "harm": 3,
       "line": 102,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose 'Ship, follow-up' on 2026-10-14: a teammate's open worker question skipped by a second machine's new round becomes one follow-up fix",
       "round": 7,
       "security": false,
       "title": "Unanswered shared worker question can be bypassed on another machine",
@@ -224,7 +224,13 @@
     "branch_diff": "ad3a4904aaf96f1b63d7486b11fe09beb2a83a22ea002d87c75181248a221184",
     "changed": "7118f7da88f67d814faceccd65da06f28143ef85802ecec51521038d9e4a43cd",
     "commit": "91e834b5e559830fd0b2d96ef9456510cf93d75e",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose 'Ship, follow-up' on 2026-10-14: a teammate's open worker question skipped by a second machine's new round becomes one follow-up fix",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. If machine B asks a question on an existing pull request while machine A has the item's worktree but no local question, `asking` is false here. A's `forge work` skips the pull request record and starts a worker round without an answer. That later `run start` also makes `wait_records.answered` treat B's question as answered, so A's Needs you view drops an open wait. The new test asks its second question on A and does not cover this handoff.",
@@ -238,12 +244,13 @@
       }
     ],
     "id": "8c34409b-9d51-4d7d-abdb-ec90122ce59c",
-    "status": "blocked"
+    "status": "clean"
   },
   "settled_areas": [
-    "_work() in src/forge/worker.py"
+    "_work() in src/forge/worker.py",
+    "src/forge/worker.py"
   ],
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T16:05:33.429096+00:00",
@@ -280,7 +287,11 @@
   ],
   "stop": {
     "at": "2026-10-14T06:12:43.913793+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/worker.py",
-    "wait_id": "8db8eb4f-6980-405d-a299-0a068acc1fd6"
+    "reason": "Owner chose 'Ship, follow-up' on 2026-10-14: a teammate's open worker question skipped by a second machine's new round becomes one follow-up fix",
+    "wait_id": "8db8eb4f-6980-405d-a299-0a068acc1fd6",
+    "worker_round": null
   }
 }
