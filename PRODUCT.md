@@ -55,8 +55,11 @@ shows the wait instead of hiding it.
 - Unknown shows as unknown, never as zero or a guess.
 - Facts to show: stage and next step per item, needs-you, blocked or slow with the reason, live
   runs and lanes, review findings, checks, cost and time per story, task and fix (tokens, model
-  cost, sandbox minutes, active versus waiting time), merged-but-not-live work, a go-live
-  forecast per story, and deploy history once Mainline deploys exist.
+  cost, sandbox minutes, active versus waiting time), releases (what merged since the last
+  release, whether the next one can go out, past releases), a go-live forecast per story, and
+  deploy history once Mainline deploys exist.
+- Dependencies at both levels: which stories wait on which stories, and which parts wait on
+  which parts, across stories too.
 - Terms: a story is a planned change written as one short doc (its plan); a part is one piece
   of a story's plan; a fix is a small change on its own.
 
