@@ -109,6 +109,11 @@ if args and args[0] == "api" and any("/check-runs" in arg for arg in args):
         if (here / "history-checks-unreachable").exists():
             sys.exit("GitHub check history is unreachable")
         runs = checks[head]
+        # GitHub defaults to the latest run of each check name. Historic
+        # attempts are returned only when the caller requests all runs.
+        if not any("filter=all" in arg for arg in args):
+            latest = {run["name"]: run for run in runs}
+            runs = list(latest.values())
         if "--jq" in args:
             with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
                 calls.write(json.dumps(args) + "\\n")
@@ -238,6 +243,14 @@ class History:
                 tests = self.checks[head].pop(0)
                 self.checks[head].extend([{**tests, "name": "tests (linux)"},
                                           {**tests, "name": "tests (windows)"}])
+            if number == 13 and outcome == "clean":
+                # One pushed head failed its checks, waited, then passed on
+                # rerun. The full wait starts with that earlier attempt.
+                failed = [{**run, "conclusion": "failure", "started_at": at.isoformat(),
+                           "completed_at": (at + timedelta(minutes=1)).isoformat()} for run in GREEN]
+                retried = [{**run, "started_at": (at + timedelta(minutes=4)).isoformat(),
+                            "completed_at": (at + timedelta(minutes=6)).isoformat()} for run in GREEN]
+                self.checks[head] = failed + retried
             self.repo.git("push", "-q", "origin", branch)
             if outcome == "blocked":
                 self.commit(where, name + ".py", f"print('hello reader {round_}')\n", "Repair the greeting",
@@ -381,6 +394,8 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     assert local_timing in history.record(11)["timings"], "Backfill publishes measured local time too"
     assert sum(timing["seconds"] for timing in history.record(11)["timings"]
                if timing["step"] == "CI wait") == 720, "Both work-head and review-head checks bound CI waits"
+    assert sum(timing["seconds"] for timing in history.record(13)["timings"]
+               if timing["step"] == "CI wait") == 480, "A rerun includes the first failed attempt and the gap before retry"
     for number in (10, 11, 12, 13, 14, 16, 18):
         record = history.record(number)
         assert record and record["rebuilt"] is True
@@ -425,7 +440,8 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
         assert row["time_breakdown"]["building"] is None
         assert row["time_breakdown"]["reviewing"] is None
         assert [(r["new_findings"], r["repeat_findings"]) for r in row["rounds"]] == [(1, 0), (0, 0)]
-        assert row["time_breakdown"]["waiting_for_ci"] == (720 if item == "deleted" else 240)
+        assert row["time_breakdown"]["waiting_for_ci"] == {
+            "deleted": 720, "fast-forward": 480}.get(item, 240)
         assert row["time_breakdown"]["waiting_for_owner"] > 0
     assert visible["SHOP/T1"]["approved_by"] == "Plan Approver"
     assert not visible["outside-cut"].get("rebuilt")

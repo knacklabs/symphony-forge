@@ -30,8 +30,10 @@ def _identity(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]] |
 
 def _checks(top: Path, head: str) -> list[dict[str, Any]]:
     # ponytail: one check-runs request per pushed head in the six-week window; batch through GraphQL if a repo has hundreds.
-    done = repo.run("gh", "api", "--paginate", "--jq", ".check_runs[]",
-                    f"repos/{{owner}}/{{repo}}/commits/{head}/check-runs?per_page=100", cwd=top)
+    # History needs failed attempts too; live readiness reads only the latest attempts.
+    done = repo.run("gh", "api", "--paginate", "--method", "GET", "--raw-field", "filter=all",
+                    "--raw-field", "per_page=100", "--jq", ".check_runs[]",
+                    f"repos/{{owner}}/{{repo}}/commits/{head}/check-runs", cwd=top)
     done.check_returncode()
     text = done.stdout.strip()
     runs = json.loads(text) if text.startswith("[") else [json.loads(line) for line in text.splitlines()]

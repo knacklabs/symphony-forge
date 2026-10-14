@@ -695,7 +695,8 @@ def story_full_runway(env, monkeypatch, done=False):
     (top / "timings.jsonl").write_text("", "utf-8")
     clock(864040)
     current = row(env.repo, "SHOP")
-    assert [child["id"] for child in current["children"]] == ["SHOP/T2"]
+    # Older merged parts remain visible in the six-week history; their time still counts once.
+    assert [child["id"] for child in current["children"]] == ["SHOP/T1", "SHOP/T2"]
     assert current["intervals"][0] == {"start": at(0), "end": at(10), "kind": "unknown"}
     assert current["total_seconds"] == 864040
     assert current["time_breakdown"] == {"working": 50, "waiting": 10, "unknown": 863980}

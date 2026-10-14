@@ -158,6 +158,8 @@ class Forge:
         # gh api --paginate --jq '<field>[]' prints one object per line across every page.
         lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
         self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
+        # Historical all-attempt reads have independent snapshots, not live polling queues.
+        self.gh.respond("api", "--paginate", "--method", "GET", "--raw-field", "filter=all", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
         # No old queued workflow unless the case supplies one explicitly.
         self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
