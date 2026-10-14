@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-BOARD-3.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-14T19:06:29.116233+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "The board's data knows who owns what, what shipped when, and what was left",
+  "touches": 0
+}
