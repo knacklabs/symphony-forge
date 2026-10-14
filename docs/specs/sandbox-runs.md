@@ -77,6 +77,17 @@ The owner chose each of these on 14 October 2026:
    tokens, and Anthropic may enforce this without notice. The owner asks Anthropic for agreement.
    If a token is missing, refused or stops working, the Claude round runs on the laptop instead, or
    waits in its line when the laptop is full.
+   **Model credentials stay apart from repository commands.** The relay starts the Claude Code CLI
+   with a clean environment that holds only the developer's `CLAUDE_CODE_OAUTH_TOKEN`: no
+   `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or provider-selection variable, so the subscription is
+   always the credential in use. It also sets `CLAUDE_CODE_SCRUB_SUBPROC_ENV=1`, so Bash and hook
+   subprocesses (the tests and every repository command) do not inherit the token. The repo's sandbox
+   secrets reach only those commands, through `forge test` and the worker's command runner, never the
+   Claude process itself, so an app secret named `ANTHROPIC_API_KEY` cannot replace the developer's
+   subscription. The Codex login file is readable only by the Codex process's own user, not by the
+   user that runs repository commands. Residual risk, accepted by the owner: with Docker available, a
+   repository command can still reach the machine as root; the egress allowlist keeps it from sending
+   a token to any host outside the list, and each machine is thrown away after its run.
    **No API keys for build work.** Sandbox rounds use plan logins only. LLM API keys serve the apps
    and agents a team runs (through Mainline's token router), not Symphony's build rounds.
    **Codex:** the developer signs in once with `codex login --device-auth` into Mainline's vault. This
