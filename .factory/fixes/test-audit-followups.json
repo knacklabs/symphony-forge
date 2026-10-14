@@ -62,7 +62,7 @@
       "gain": null,
       "harm": null,
       "line": 37,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -72,27 +72,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ba0beffdac25ae0bf37530cfa1857eba1c1f48d4f44d953ecc53c9f045bab959",
+    "branch_diff": "a12734a6cddd175256413b656d4e8b694c95d180ebc63a56441d29b0d5a5da1a",
     "changed": "7f8320168b657889a487f3c01d817492cd1410d918ec43a614e4b9d596619519",
-    "commit": "6efde3fba6f02e359c0bfb5e5a7b6c4091e15cc7",
+    "commit": "4323a09dd9baa05d49e69358228a4e8068fd9aba",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate. The supplied proof list says \u201cno test changes in this commit,\u201d although this branch changes tests for all four Done-when details. It maps none of the guide, retry, upgrade-version, or net-lines checks to those details, so the required proof list is still missing.",
-        "file": "tests/test_mod_guide.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 37,
-        "priority": "P1",
-        "title": "Not done: proof list",
-        "work": 1
-      }
-    ],
-    "id": "5b61fb3d-cffa-4ad0-accc-6d1fb30f9b20",
-    "status": "blocked"
+    "findings": [],
+    "id": "749daf97-b1a2-4c2e-832c-9663517a82e9",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-12T15:44:42.456146+00:00",
@@ -104,6 +93,10 @@
     },
     {
       "at": "2026-10-14T18:54:57.400473+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T19:02:11.998412+00:00",
       "step": "review"
     }
   ],
