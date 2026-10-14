@@ -65,10 +65,15 @@ The owner chose each of these on 14 October 2026:
    on in `forge.toml`, set by the agent in a fix after the owner agrees. Forge's own repo uses it
    first, then client repos on upgrade.
 
-**Any provider.** Forge talks to one small interface: start a sandbox from an image, copy in the
-branch, run the worker command, stream its output, copy out a bundle, stop. Each provider (Agent37,
-or another later) is one adapter behind that interface. Forge reads only the fields it uses from the
-provider's replies (principle 7).
+**Any provider, through Forge's own relay.** Forge puts its own small relay process in each sandbox,
+and the laptop connects to it over the sandbox's web address. The relay starts the worker, streams its
+output, passes notes and questions both ways, stops it, keeps it running when the laptop disconnects,
+and lets the laptop reattach later. So a provider needs only five plain operations: create or resume a
+sandbox, copy files in and out, start one process, give that process a web address, and delete the
+sandbox. Each provider is one small adapter for those five; Forge reads only the fields it uses from
+the provider's replies (principle 7). Agent37 is the first provider (the lowest price; its own command
+call waits for the command to end and streams nothing, which the relay covers). E2B is the second.
+The relay accepts only the laptop that started the sandbox, with a secret made for that sandbox.
 
 **What goes up and what stays.** The sandbox gets the item's working folder, including files git
 ignores, such as `.env`, so tests that need local settings work there too. Three things never go up:
@@ -83,8 +88,8 @@ credential. `forge doctor` reports a provider key that is missing or found in a 
 
 **Forge relays every message.** The coordinator never talks to the sandbox agent directly; it runs
 `forge work` as it does today. Inside the sandbox the worker runs under the same driver Forge uses
-locally (the Claude Agent SDK or the Codex app server). Forge on the laptop connects to it through the
-provider's command stream, so `forge work --note`, a worker's question, the live steps in the pane and
+locally (the Claude Agent SDK or the Codex app server). Forge on the laptop connects to it through its
+relay, so `forge work --note`, a worker's question, the live steps in the pane and
 `forge stop` work exactly as for a local round, for Claude and Codex alike. Claude Remote Control is
 not used.
 
