@@ -46,8 +46,8 @@
       "gain": 4,
       "harm": 4,
       "line": 89,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner confirmed the spec after the last review finding was fixed in it: managed settings force the Claude login and user settings are read-only during a round",
       "round": 3,
       "security": true,
       "title": "Writable user settings can switch Claude from the developer\u2019s token to an API key",
@@ -59,7 +59,13 @@
     "branch_diff": "f8472e128c2884e77059832158c98a086f881a121b928bdbb9ac20c3a004e1f8",
     "changed": "a48233bd54eff995f4f05316b38b9562651451f52115d4219e9e4ed0c43176d4",
     "commit": "8763a36c92d8c1c286134e147c23aab7128b9394",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner confirmed the spec after the last review finding was fixed in it: managed settings force the Claude login and user settings are read-only during a round",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 4\nRaise: Security. The spec disables project settings but still loads Forge-written user settings, without isolating them from repository commands. A command running as Claude\u2019s user can write an `apiKeyHelper` into that file; the command runner can also supply it an app API key from the sandbox vault. [Anthropic says Claude reloads credential helpers during a session](https://code.claude.com/docs/en/settings) and [API keys override subscription billing in headless mode](https://code.claude.com/docs/en/env-vars). `allowedProviders` limited to Anthropic does not prevent using an Anthropic API key. This is a separate path from the earlier project-settings finding and breaks the promised plan-login boundary without Docker root access.",
@@ -73,9 +79,12 @@
       }
     ],
     "id": "9ccc833b-6fa6-4afc-9877-155841f4d567",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "docs/specs/sandbox-runs.md"
+  ],
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T13:40:09.856221+00:00",
@@ -97,9 +106,13 @@
   "stop": {
     "area": "docs/specs/sandbox-runs.md",
     "at": "2026-10-14T14:14:54.830209+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "docs/specs/sandbox-runs.md",
     "proposed": "make it fail closed; or cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item",
-    "wait_id": "50734f61-0049-4ac4-a482-369d307b1890"
+    "reason": "Owner confirmed the spec after the last review finding was fixed in it: managed settings force the Claude login and user settings are read-only during a round",
+    "wait_id": "50734f61-0049-4ac4-a482-369d307b1890",
+    "worker_round": null
   },
   "why": "Claude rounds in Mainline sandboxes must use the developer's own Claude subscription, as the owner decided, with the team's API key only as the fallback"
 }
