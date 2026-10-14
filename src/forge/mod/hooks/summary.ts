@@ -1,9 +1,13 @@
 import type { Data, Item, Stage } from './forge.ts'
 import { TOO_OLD } from './forge.ts'
 
+// Python's round(): halves go to the even number, as time_records.plain rounds.
+const half = (x: number) => { const r = Math.round(x); return r - x === 0.5 && r % 2 ? r - 1 : r }
+
+// Rounds like time_records.plain, in short units: 2m, never 1m 30s.
 export function seconds(value: number): string {
-  const n = Math.max(0, Math.round(value))
-  return n < 60 ? `${n}s` : n < 3600 ? `${Math.floor(n / 60)}m ${n % 60}s` : `${Math.floor(n / 3600)}h ${Math.floor(n % 3600 / 60)}m`
+  const n = Math.max(0, half(value)), minutes = half(n / 60)
+  return n < 60 ? `${n}s` : minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ''}` : `${half(n / 86400)}d`
 }
 
 export function elapsed(start: string, now: number): number {
@@ -80,8 +84,8 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 // Rounds like time_records.plain, in the pane's short words.
 export function ago(value: number): string {
-  const n = Math.max(0, Math.round(value)), minutes = Math.round(n / 60)
-  return n < 60 ? 'under a minute' : minutes < 60 ? `${minutes} min` : minutes < 1440 ? `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ''}` : plural(Math.round(n / 86400), 'day')
+  const n = Math.max(0, half(value)), minutes = half(n / 60)
+  return n < 60 ? 'under a minute' : minutes < 60 ? `${minutes} min` : minutes < 1440 ? `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ''}` : plural(half(n / 86400), 'day')
 }
 
 export type Row = { title: string; key?: string; state?: string; next?: string; item: Item }
@@ -96,8 +100,12 @@ const LIMIT = 5
 // The owner's Board tab: summary, then Needs you, Stuck, Moving, Ready to merge, then waiting.
 export function board(data: Data, now: number): View {
   const team = record(record(data.board).team), counts = record(team.counts)
+  // When the board gives its team facts, Needs you and Stuck are exactly those lists; an older
+  // Forge (null facts) falls back to each row's own flags.
+  const facts = { needs: Array.isArray(team.needs_you), blocked: Array.isArray(team.blocked) }
   const asked = new Map(list(team.needs_you).map(e => [e.id, e]))
   const blocked = new Set(list(team.blocked).map(e => e.id))
+  const steps = new Map<unknown, string | undefined>(), keys = new Map<unknown, string | undefined>()
   const groups: Record<string, Row[]> = { 'NEEDS YOU': [], STUCK: [], MOVING: [], 'READY TO MERGE': [] }
   const waiting: Row[] = []
   const walk = (i: Item, key?: string) => {
@@ -107,8 +115,9 @@ export function board(data: Data, now: number): View {
     // `step` is forge next's Next text even when it is not one runnable command; older Forge lacks it.
     const step = typeof next.step === 'string' ? next.step : command ?? undefined
     const approval = i.state === 'waiting for approval' || i.stage === 'waiting for approval'
-    const ask = asked.get(i.id) ?? (approval ? { reason: 'approval' } : i.needs_person === true ? { reason: '' } : undefined)
+    const ask = asked.get(i.id) ?? (facts.needs ? undefined : approval ? { reason: 'approval' } : i.needs_person === true ? { reason: '' } : undefined)
     const row: Row = { title: i.title, key: own, item: i }
+    steps.set(i.id, step); keys.set(i.id, own)
     if (i.state === 'done' || i.stage === 'done') return
     if (ask) {
       const found = i.findings?.count ? `Review found ${plural(i.findings.count, 'problem')}. ` : ''
@@ -117,7 +126,8 @@ export function board(data: Data, now: number): View {
       row.next = step && (step.startsWith('forge ') ? `decide: ${step}` : step)
       groups['NEEDS YOU']!.push(row)
     } else if (i.children?.length) return // its parts show the work
-    else if (i.stalled === true || blocked.has(i.id)) {
+    else if (facts.blocked && blocked.has(i.id)) return // drawn from the board's list below
+    else if (!facts.blocked && i.stalled === true) {
       const stage = typeof i.stage === 'string' ? `${i.stage.charAt(0).toUpperCase()}${i.stage.slice(1)}` : ''
       row.state = [stage, i.idle_since ? `last activity ${day(String(i.idle_since))}` : ''].filter(Boolean).join(' · ')
       row.next = step
@@ -141,6 +151,11 @@ export function board(data: Data, now: number): View {
     }
   }
   for (const i of data.board?.items ?? []) walk(i)
+  // One row per entry, as the board's page lists them; a part not started yet has no item row.
+  for (const e of list(team.blocked)) {
+    const key = keys.get(e.id) ?? (typeof e.id === 'string' && e.id.includes('/') ? e.id.split('/')[0] : undefined)
+    groups.STUCK!.push({ title: String(e.title), key, state: typeof e.detail === 'string' ? e.detail : undefined, next: steps.get(e.id), item: { id: String(e.id), title: String(e.title) } as Item })
+  }
   const count = (kind: string) => Number(record(counts[kind])['in progress'] ?? 0)
   const live = record(team.go_live), when = (v: unknown) => typeof v === 'string' && Number.isFinite(Date.parse(v)) ? day(v) : null
   const golive = live.status === 'range' && when(live.earliest) && when(live.latest) ? `go-live ${when(live.earliest)} – ${when(live.latest)}` : live.status === 'about' && when(live.earliest) ? `go-live about ${when(live.earliest)}` : ''
@@ -156,7 +171,8 @@ export function board(data: Data, now: number): View {
     groups['READY TO MERGE']!.length ? `${groups['READY TO MERGE']!.length} ready to merge` : '',
     waiting.length ? `${waiting.length} waiting` : '',
   ].filter(Boolean).join(' · ') || null : null
-  const idle = Math.max(0, ...groups.STUCK!.flatMap(r => r.item.idle_since ? [elapsed(String(r.item.idle_since), now)] : []))
+  const idle = facts.blocked ? Math.max(0, ...list(team.blocked).flatMap(e => e.reason === 'stalled' && typeof e.seconds === 'number' ? [e.seconds] : []))
+    : Math.max(0, ...groups.STUCK!.flatMap(r => r.item.idle_since ? [elapsed(String(r.item.idle_since), now)] : []))
   return {
     summary,
     groups: Object.entries(groups).filter(([, rows]) => rows.length).map(([name, rows]) => ({

@@ -547,8 +547,10 @@ with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-li
 Each part shows only when the board's `team` fact behind it is known and not zero; when
 none of them applies, the line counts the rows the tab shows in its own group words instead,
 such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Groups follow in this order, each only
-when it has items: NEEDS YOU (rows whose `needs_person` is true),
-STUCK (no activity past the board's stall threshold, with the longest wait in days),
+when it has items: NEEDS YOU (one row per `team.needs_you` entry, the same items as the board's
+Needs you), STUCK (one row per `team.blocked` entry with its reason in words, such as
+`No activity for 2 days`, and the longest stall in days; an older Forge without these lists
+uses each row's `needs_person` and stalled flags),
 MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
 READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge
 step; an item merged from another machine shows `forge next`'s line naming who merges it), then a
@@ -557,7 +559,7 @@ beside it, one line of state in words and, where there is something to do, its n
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
 The pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
-relative (`12 min`, `8 days`). Stage chains, round lines and the time breakdown stay on
+relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
 the board page. An empty board says `Nothing in progress.` `/forge` always returns the
 same lines as text, as well as opening the pane. Where mods draw nothing (the VS Code
 chat panel, `claude -p` and Remote Control from a phone or claude.ai), that text is the
