@@ -17,19 +17,15 @@ def _json(top: Path, ref: str, path: str) -> dict[str, Any]:
     return story.json_of(story.show(top, ref, path))
 
 
-def _identity(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
-    if branch.startswith(("fix/", "story/")):
-        key = branch.split("/", 1)[1]
-        state = _json(top, head, repo.state_path(key))
-        if state:
-            return key, state
-    for path in repo.git("ls-tree", "-r", "--name-only", head, "--", ".factory", cwd=top).splitlines():
-        match = re.fullmatch(r".factory/stories/([^/]+)/tasks/([^/]+)\.json", path)
-        if match and branch == f"task/{match[1]}-{match[2]}":
-            state = _json(top, head, path)
-            if state:
-                return f"{match[1]}/{match[2]}", state
-    raise ValueError("The pull request's item state could not be read")
+def _identity(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]] | None:
+    paths = repo.git("ls-tree", "-r", "--name-only", head, "--", ".factory", cwd=top).splitlines()
+    key = board_facts.item_key(branch, paths)
+    if key is None:
+        return None  # A manually opened PR can use a Forge-looking branch without using Forge.
+    state = _json(top, head, repo.state_path(key))
+    if not state:
+        raise ValueError("The pull request's item state could not be read")
+    return key, state
 
 
 def _checks(top: Path, head: str) -> list[dict[str, Any]]:
@@ -44,7 +40,7 @@ def _checks(top: Path, head: str) -> list[dict[str, Any]]:
     return runs
 
 
-def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[str, dict[str, Any], dict[str, Any]]:
+def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[str, dict[str, Any], dict[str, Any]] | None:
     """Fetch the original branch into FETCH_HEAD, even after a squash and branch deletion."""
     if pushed_head:
         head = pushed_head  # First publication just pushed this original history from this checkout.
@@ -52,7 +48,10 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
         fetched = repo.run("git", "fetch", "-q", "--no-tags", "origin", f"refs/pull/{pr['number']}/head", cwd=top)
         fetched.check_returncode()
         head = repo.git("rev-parse", "FETCH_HEAD", cwd=top)
-    key, state = _identity(top, head, pr["headRefName"])
+    identity = _identity(top, head, pr["headRefName"])
+    if identity is None:
+        return None
+    key, state = identity
     path = repo.state_path(key)
     starts = repo.git("log", "--reverse", "--diff-filter=A", "--format=%H", head, "--", path,
                       cwd=top).splitlines()
@@ -60,16 +59,20 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
         raise ValueError("The item's start commit could not be read")
     start = starts[0]
     commits = [start, *repo.git("rev-list", "--reverse", "--ancestry-path", f"{start}..{head}", cwd=top).splitlines()]
+    history = [(commit, repo.git("show", "-s", "--format=%cI%x00%s%x00%aN%x00%aE", commit,
+                                cwd=top).split("\0"), _json(top, commit, path)) for commit in commits]
+    review_subject = re.compile(rf"^Review of {re.escape(key)}: (blocked|clean)\b")
+    reviews = [one for _, (_, subject, _, _), one in history if review_subject.match(subject)]
+    # Close pushes each reviewed work head before the review and its result commit afterwards.
+    work_heads = {(one.get("review") or {}).get("commit"): number
+                  for number, one in enumerate(reviews, 1)}
     events, timings, clean = [], [], []
     number, last_green = 0, None
-    for commit in commits:
-        at, subject, author, email = repo.git("show", "-s", "--format=%cI%x00%s%x00%aN%x00%aE", commit,
-                                               cwd=top).split("\0")
+    for commit, (at, subject, author, email), one in history:
         if commit == start:
             events.append({"id": f"rebuilt-start-{commit}", "item": key, "event": "item started",
                            "at": at, "by": author, "email": email})
-        one = _json(top, commit, path)
-        reviewed = re.match(rf"^Review of {re.escape(key)}: (blocked|clean)\b", subject)
+        reviewed = review_subject.match(subject)
         if reviewed:
             last_green = None
             number += 1
@@ -85,7 +88,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
                     and one.get("status") in ("waiting for checks", "ready"))
         if eligible:
             clean.append({"commit": commit, "at": at, "outcome": "clean"})
-        if not reviewed and not (commit == head and eligible):
+        if not reviewed and commit not in work_heads and commit != head:
             continue
         required = tomllib.loads(story.show(top, commit, "forge.toml") or "").get("checks", [])
         runs = _checks(top, commit)
@@ -103,7 +106,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
                 for run in sorted(named, key=lambda run: run.get("completed_at") or ""):
                     latest[run.get("name")] = run
                 green = all(run.get("conclusion") == "success" for run in latest.values())
-                timings.append({"item": key, "step": "CI wait", "round": number,
+                timings.append({"item": key, "step": "CI wait", "round": work_heads.get(commit, number),
                                 "start": a.isoformat(), "seconds": (b - a).total_seconds(),
                                 "outcome": "passed" if green else "unknown"})
                 if eligible and green:
@@ -166,7 +169,10 @@ def run(top: Path) -> None:
         for pr in {pr["number"]: pr for pr in prs}.values():
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or time_records.from_body(pr.get("body") or ""):
                 continue
-            key, state, record = rebuild(top, pr)
+            rebuilt = rebuild(top, pr)
+            if rebuilt is None:
+                continue
+            key, state, record = rebuilt
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
         pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):

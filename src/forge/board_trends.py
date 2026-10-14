@@ -22,7 +22,9 @@ def _person(pr: Item) -> str:
 
 
 def _through(pr: Item) -> bool:
-    return str(pr.get("headRefName") or "").startswith(("story/", "task/", "fix/"))
+    from forge import board_facts
+
+    return board_facts.through_forge(pr)
 
 
 def _split(prs: list[Item]) -> Item:

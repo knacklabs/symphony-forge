@@ -855,7 +855,8 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         head = repo.git("rev-parse", "HEAD", cwd=top)
         def reconstruct():
             try:
-                return backfill.rebuild(top, {**(pr or {}), "headRefName": branch}, pushed_head=head)[2]
+                rebuilt = backfill.rebuild(top, {**(pr or {}), "headRefName": branch}, pushed_head=head)
+                return rebuilt[2] if rebuilt else None
             except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
                 backfill.failed(top)
                 return None

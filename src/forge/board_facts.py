@@ -20,7 +20,33 @@ Item = dict[str, Any]
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
 IN_PROGRESS_STATES = ("building", "in progress", "ready to merge")  # the board page's In progress group
 WORK_STATES = ("done", "ready to merge", "in progress", "to do")
-FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft"
+FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft,files"
+
+
+def item_key(branch: str, paths: list[str]) -> str | None:
+    """An item's own state identifies a Forge branch; its prefix alone does not."""
+    for path in paths:
+        fix = re.fullmatch(r"\.factory/fixes/([^/]+)\.json", path)
+        plan = re.fullmatch(r"\.factory/stories/([^/]+)/story\.json", path)
+        part = re.fullmatch(r"\.factory/stories/([^/]+)/tasks/([^/]+)\.json", path)
+        if fix and branch == f"fix/{fix[1]}":
+            return fix[1]
+        if plan and branch == f"story/{plan[1]}":
+            return plan[1]
+        if part and branch == f"task/{part[1]}-{part[2]}":
+            return f"{part[1]}/{part[2]}"
+    return None
+
+
+def through_forge(pr: Item) -> bool:
+    branch = str(pr.get("headRefName") or "")
+    if not branch.startswith(("story/", "task/", "fix/")):
+        return False
+    files = pr.get("files")
+    if time_records.from_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
+        return True  # Missing or capped file evidence cannot establish that the state is absent.
+    return item_key(branch, [file["path"] for file in files if isinstance(file, dict)
+                             and isinstance(file.get("path"), str)]) is not None
 
 
 def full_weeks(now: datetime, count: int) -> list[datetime]:
@@ -75,6 +101,10 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
         if opened is None:
             return None  # GitHub is unreachable: one call, not eight
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
+        if fresh:
+            # Backfill's windows start at the exact cutoff day, independent of the board's Mondays.
+            cutoff = datetime(now.year, now.month, now.day, tzinfo=timezone.utc) - timedelta(days=42)
+            starts = [cutoff + timedelta(weeks=n) for n in range(7)]
         with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
             lists = list(pool.map(lambda start: _listing(
                 top, "merged", "--search", f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"), starts))

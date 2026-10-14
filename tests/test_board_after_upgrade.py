@@ -4,6 +4,9 @@ Audit: previous time-history coverage starts with local logs. A squash and
 deleted branch leave no such logs, and weekly searches extend past the exact
 42-day window. Only uv, GitHub and the reviewer are third-party fakes; no
 production seam or prebuilt time record supplies the asserted result.
+The fixture independently filters GitHub's date search, includes required
+checks on pushed work heads, and puts a manual fix-prefixed PR before Forge
+items. These protect the cutoff, complete CI waits, and retry completion.
 """
 import json
 import re
@@ -162,6 +165,13 @@ class History:
         for round_, outcome in enumerate(("blocked", "clean"), 1):
             at = begin + timedelta(days=round_)
             reviewed = self.repo.git("rev-parse", "HEAD", cwd=where)
+            if number == 11:
+                # Close pushes this work before reviewing it. Its required
+                # checks have their own span, distinct from the review head.
+                self.repo.git("push", "-q", "origin", branch)
+                self.checks[reviewed] = [{**run, "started_at": (at - timedelta(minutes=10)).isoformat(),
+                                         "completed_at": (at - timedelta(minutes=6)).isoformat()}
+                                        for run in GREEN]
             findings = ([{"priority": "P1", "title": "Greeting misses the reader", "file": name + ".py", "line": 1,
                           "body": "Gain 3, Work 2, Harm 3\nThe greeting is missing."}] if round_ == 1 else [])
             state.update(status="fixing" if findings else "waiting for checks", round=round_,
@@ -183,6 +193,7 @@ class History:
                 self.commit(where, name + ".py", "print('hello reader')\n", "Repair the greeting",
                             at + timedelta(hours=1))
         head = heads[-1]
+        files = [{"path": path} for path in self.repo.git("diff", "--name-only", state["base"], head).splitlines()]
         if not no_pr:
             self.repo.git("push", "-q", "origin", f"{head}:refs/pull/{number}/head")
         if merged:
@@ -197,6 +208,7 @@ class History:
             self.repo.git("branch", "-D", branch)
             self.repo.git("push", "-q", "origin", "--delete", branch)
         pr = {"number": number, "headRefName": branch, "headRefOid": head,
+                        "files": files,
                         "baseRefName": "main", "state": "MERGED" if merged else "OPEN",
                         "title": "Readers see " + name, "body": "Owner notes remain.\n", "isDraft": False,
                         "mergedAt": merged.isoformat() if merged else None,
@@ -208,6 +220,31 @@ class History:
         if not no_pr:
             self.prs.append(pr)
         return item, where
+
+    def around_forge(self):
+        # GitHub keeps pull refs for manually opened PRs too. This branch has
+        # no corresponding Forge state, despite looking like a Forge fix.
+        branch = "fix/manual-heading"
+        where = self.up.tmp / "manual-heading"
+        base = self.repo.git("rev-parse", "main")
+        self.repo.git("worktree", "add", "-q", "-b", branch, where.as_posix(), "main")
+        head = self.commit(where, "manual-heading.txt", "Welcome readers\n", "Add a heading",
+                           NOW - timedelta(days=2), "Manual Writer")
+        files = [{"path": path} for path in self.repo.git("diff", "--name-only", base, head).splitlines()]
+        self.repo.git("push", "-q", "origin", head + ":refs/pull/19/head")
+        self.at(NOW - timedelta(days=1))
+        self.repo.git("merge", "-q", "--squash", branch)
+        self.repo.git("commit", "-qm", "Add a heading")
+        self.repo.git("push", "-q", "origin", "main")
+        self.repo.git("worktree", "remove", where.as_posix())
+        self.repo.git("branch", "-D", branch)
+        self.prs.append({"number": 19, "headRefName": branch, "headRefOid": head, "files": files,
+                        "baseRefName": "main", "state": "MERGED", "isDraft": False,
+                        "title": "A heading changed outside Forge", "body": "Manual owner notes.\n",
+                        "mergedAt": (NOW - timedelta(days=1)).isoformat(),
+                        "mergedBy": {"login": "merger", "name": "Human Merger"},
+                        "author": {"login": "manual", "name": "Manual Writer"},
+                        "url": "https://github.com/acme/shop/pull/19"})
 
     def publish(self):
         (self.repo.bin / "historical-prs.json").write_text(json.dumps(self.prs), "utf-8")
@@ -234,6 +271,7 @@ class History:
 def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsynced_up, monkeypatch, failure):
     history = History(unsynced_up, monkeypatch)
     up, repo = history.up, history.repo
+    history.around_forge()
     history.story()
     history.item("saved-basket", 10, 24, task="T1")
     history.item("deleted", 11, 21)
@@ -267,6 +305,11 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
         assert retried.returncode == 0, retried.stdout + retried.stderr
     assert history.record(11), "Upgrade must write the deleted branch's original history into its PR"
     assert not marker.exists()
+    assert history.record(19) is None, "A manual fix-prefixed PR has no Forge time story to rebuild"
+    assert history.stored()[19]["body"] == "Manual owner notes.\n"
+    assert history.record(18), "A Sunday run includes a merge exactly 42 days earlier"
+    assert sum(timing["seconds"] for timing in history.record(11)["timings"]
+               if timing["step"] == "CI wait") == 720, "Both work-head and review-head checks bound CI waits"
     for number in (10, 11, 12, 13, 14, 16, 18):
         record = history.record(number)
         assert record and record["rebuilt"] is True
@@ -288,6 +331,7 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     history.clear_caches()
     before_board = repo.git("rev-parse", "HEAD")
     data = board(repo)
+    assert any(pr["title"] == "A heading changed outside Forge" for pr in data["team"]["around_forge"])
     visible = rows(data)
     for item in ("SHOP/T1", "deleted", "ordinary-merge", "fast-forward", "inside-cut", "exact-cut"):
         row = visible[item]
@@ -303,7 +347,7 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
         assert row["time_breakdown"]["building"] is None
         assert row["time_breakdown"]["reviewing"] is None
         assert [(r["new_findings"], r["repeat_findings"]) for r in row["rounds"]] == [(1, 0), (0, 0)]
-        assert row["time_breakdown"]["waiting_for_ci"] == 240
+        assert row["time_breakdown"]["waiting_for_ci"] == (720 if item == "deleted" else 240)
         assert row["time_breakdown"]["waiting_for_owner"] > 0
     assert visible["SHOP/T1"]["approved_by"] == "Plan Approver"
     assert not visible["outside-cut"].get("rebuilt")
