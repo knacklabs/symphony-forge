@@ -10,6 +10,7 @@ none of those. Without gh the page shows the state and its dates only.
 from __future__ import annotations
 
 import functools
+import io
 import json
 import os
 import re
@@ -267,6 +268,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     completed.update({STATE.fullmatch(rel)["key"]: state for rel, (state, _) in best.items()
                       if rel.endswith("/story.json") and state.get("status") == "done"})
     recorded, by_item = _event_history(top)
+    story_event_dates: dict[str, list[Any]] = {}
+    for event in recorded:
+        key, separator, _ = str(event.get("item", "")).partition("/")
+        if separator:
+            story_event_dates.setdefault(key, []).append(event.get("at"))
     timings = time_records.read(top, "timings")
 
     branch_dates = dict(line.split("\0", 1) for line in repo.git(
@@ -396,7 +402,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                  + timing_dates.get(item, [])
                  + [branch_dates.get(branch), branch_dates.get("origin/" + branch)])
         if kind == "story":
-            dates.extend(e.get("at") for e in recorded if str(e.get("item", "")).startswith(item + "/"))
+            dates.extend(story_event_dates.get(item, []))
             prefix = f".factory/stories/{item}/tasks/"
             dates.extend(s.get("at") for rel, (part, _) in best.items() if rel.startswith(prefix)
                          for s in _steps(part))
@@ -457,7 +463,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             else:
                 lines = [f"A reader is reading {title}.", "Next: wait for the reader to finish"]
         stage = stage or "unknown"
-        pending = codex.record(top, item).get("question_id")
+        pending = (codex.record(top, item).get("question_id")
+                   if any(e.get("event") == "worker question" for e in activity) else None)
         latest_review = next((e for e in reversed(activity) if e.get("event") == "review result"), {})
         for event in activity:
             event_kind = event.get("event")
@@ -502,9 +509,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             if tests.get("elapsed") is not None:
                 status += " for " + board_visuals.duration(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
+        people = board_facts.people((pr or {}).get("body") or "")
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
-                "started_by": board_facts.people((pr or {}).get("body") or "")["started_by"] or starters.get(repo.state_path(item)),
-                "approved_by": (board_facts.people((pr or {}).get("body") or "")["approved_by"]
+                "started_by": people["started_by"] or starters.get(repo.state_path(item)),
+                "approved_by": (people["approved_by"]
                                 or (_approver(top, read_key) if read_key else None)),
                 "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
@@ -759,6 +767,19 @@ def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> d
     if not specs:
         return {}
     pending, seen, texts = list(dict.fromkeys(specs)), set(specs), {}
+    if not follow_notes:
+        done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                              input="".join(spec + "\n" for spec in pending).encode("utf-8"),
+                              capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
+        output = io.BytesIO(done.stdout)
+        for spec in pending:
+            header = output.readline()
+            if header.endswith(b" missing\n"):
+                continue
+            text = output.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
+            output.read(1)
+        return texts
     with subprocess.Popen([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                           env={**os.environ, "FORGE_WORKER": "1"}) as process:
@@ -826,18 +847,10 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     found: list[tuple[str, Item, Path | str]] = []
     trees = story.worktrees(top)
     parsed: dict[str, Item] = {}  # most copies match; a shared state is never changed in place
-    for branch, path in trees.items():
-        if branch.startswith(PREFIXES):
-            for file in sorted(path.glob(".factory/**/*.json")):
-                rel = file.relative_to(path).as_posix()
-                if STATE.fullmatch(rel):
-                    text = file.read_text(encoding="utf-8")
-                    if text not in parsed:
-                        parsed[text] = story.json_of(text)
-                    found.append((rel, parsed[text], path))
     listing = repo.git("for-each-ref", "--format=%(refname) %(tree) %(objectname)",
                        *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES),
-                       *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()), cwd=top)
+                       *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()),
+                       *(f"refs/heads/{branch}" for branch in trees if branch.startswith(PREFIXES)), cwd=top)
     refs = {line.split()[0]: line.split()[1] for line in listing.splitlines()}
     if history is not None:
         history["tips"] = {line.split()[0]: line.split()[2] for line in listing.splitlines()}
@@ -864,6 +877,25 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 tree = line.split()[1]
     texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
     blobs = {blob: story.json_of(text) for blob, text in texts.items()}
+    # Clean working files already have bytes in the bulk Git read. Only changed or
+    # untracked state needs a separate disk read, even with many linked worktrees.
+    for branch, path in trees.items():
+        if not branch.startswith(PREFIXES):
+            continue
+        saved = snapshots.get(refs.get(f"refs/heads/{branch}"), {})
+        changed = set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
+                               "--", ".factory", cwd=path).split("\0"))
+        for file in sorted(path.glob(".factory/**/*.json")):
+            rel = file.relative_to(path).as_posix()
+            if STATE.fullmatch(rel):
+                if rel in saved and rel not in changed:
+                    state = blobs[saved[rel]]
+                else:
+                    text = file.read_text(encoding="utf-8")
+                    if text not in parsed:
+                        parsed[text] = story.json_of(text)
+                    state = parsed[text]
+                found.append((rel, state, path))
     for ref, tree in refs.items():
         if ref == landed or ref.startswith("refs/remotes/"):
             found.extend((rel, blobs[blob], ref) for rel, blob in snapshots[tree].items() if STATE.fullmatch(rel))
@@ -991,13 +1023,15 @@ def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) 
     """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
     if display_names is None:
         display_names = _display_names(top)
-    log = repo.command_fact("board approvers", top, lambda: repo.git(
-        "log", "--all", "--format=%x00%aN%x00%aE%x00", "-F", "--grep=Approve the plan: ", "--name-only",
-        "--", ".factory/stories", cwd=top)).split("\0")[1:]
-    newest = {}
-    for found, address, paths in zip(log[::3], log[1::3], log[2::3]):
-        for rel in paths.splitlines():
-            newest.setdefault(rel, (found, address))
+    def read():
+        log = repo.git("log", "--all", "--format=%x00%aN%x00%aE%x00", "-F",
+                       "--grep=Approve the plan: ", "--name-only", "--", ".factory/stories", cwd=top).split("\0")[1:]
+        newest = {}
+        for found, address, paths in zip(log[::3], log[1::3], log[2::3]):
+            for rel in paths.splitlines():
+                newest.setdefault(rel, (found, address))
+        return newest
+    newest = repo.command_fact("board approvers", top, read)
     name, email = newest.get(repo.state_path(key), ("", ""))
     name = display_names.get(email.casefold(), name)
     return name or None
