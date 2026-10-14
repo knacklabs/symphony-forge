@@ -6421,8 +6421,8 @@
       "text": "Not done: browser proof that \u201cand N more\u201d reveals the remaining rows",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RUNWAY",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_board_runway.py\tNot done: test needs-you and blocked row ordering\tFORGE-BOARD-2/PAGE",
