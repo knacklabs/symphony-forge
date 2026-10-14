@@ -139,7 +139,7 @@
     "id": "d6898456-8e4d-47f7-827c-4705fedf2515",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -156,15 +156,14 @@
     }
   ],
   "stuck": {
-    "close": "fe4c7ece-b5cc-4867-8c67-99eee19d1e87",
-    "head": "c82abcda3f615b6f58e0882a01b4565342d6bd50",
+    "close": "05b4f8a5-58d0-4d95-81bd-0bac4736e573",
+    "head": "fe8ec61dad94661f29d15d981e3c287268e047f9",
     "keys": {
-      "the review finding \"Not done: 9. The pane's first screen matches the board\" in plans/FORGE-BOARD-2.md": 1,
-      "the review finding \"Not done: functional check\" in tests/test_board_pane_lines.py": 1,
-      "the review finding \"Not done: seconds() rounding matches time_records.plain\" in plans/FORGE-BOARD-2.md": 1,
-      "the review finding \"Not done: the pane first-screen parity test\" in tests/test_board_pane_lines.py": 1
+      "the review finding \"Not done: 9's sentence, totals and In progress lines\" in src/forge/mod/hooks/summary.ts": 1,
+      "the review finding \"Not done: Needs you follows the board's oldest-first order\" in src/forge/mod/hooks/summary.ts": 1,
+      "the review finding \"Not done: test the first-screen facts and overflow parity\" in tests/test_board_pane_lines.py": 1
     },
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }
