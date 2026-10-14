@@ -166,7 +166,7 @@ has no socket, so a note to it goes into the next round's brief, and Forge says 
 
 ## Roadmap
 
-- FORGE-LIVE-1: A coordinator's note reaches a running worker at once
+- FORGE-NOTES-1: A coordinator's note reaches a running worker at once
 
 ## Success measure
 
