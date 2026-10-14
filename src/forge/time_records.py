@@ -422,12 +422,15 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
                       for category, label in zip(CATEGORIES, LABELS))
     times = "; ".join(f"{kind}: {duration(view[f'{kind}_seconds'])}"
                       for kind in ("working", "waiting", "unknown")) + "\n\n" + times
-    current = times + "\n\n" + "\n".join(r["line"] for r in view["rounds"])
+    # A rebuild also sees reviews already rendered by releases without a shared record.
+    retained_rounds = set(re.findall(r"^Round (\d+):", retained, re.M)) if data.get("rebuilt") else set()
+    current = times + "\n\n" + "\n".join(r["line"] for r in view["rounds"]
+                                            if str(r["round"]) not in retained_rounds)
     if retained:
         current = (retained + "\n\n" + RESUMED + "\n\n"
                    "Observed after resuming in this checkout (totals are separate from the "
                    "published measurements above):\n\n" + current)
-    if data.get("rebuilt"):
+    if data.get("rebuilt") and not retained.startswith("Rebuilt from history."):
         current = "Rebuilt from history.\n\n" + current
     if data.get("truncated"):
         current = "Older time detail was shortened to fit GitHub; missing time is unknown.\n\n" + current
@@ -616,10 +619,11 @@ def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:
     if not published:
         return {**local, "source": "local"}
     # A reconstructed review and its original local observation are the same review.
-    observed = {(e.get("commit"), e.get("outcome")) for e in local.get("events", [])
+    # Accepting findings can commit a clean snapshot of the same blocked review.
+    observed = {e.get("commit") for e in local.get("events", [])
                 if e.get("event") == "review result" and e.get("commit")}
     replaced = {e["rebuilt_commit"] for e in published.get("events", [])
-                if e.get("rebuilt_commit") and (e.get("commit"), e.get("outcome")) in observed}
+                if e.get("rebuilt_commit") and e.get("commit") in observed}
     rows = {}
     for name in ("events", "timings"):
         unique = {}

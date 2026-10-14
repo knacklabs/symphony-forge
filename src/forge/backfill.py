@@ -136,6 +136,11 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
 
 def seed(body: str, record: dict[str, Any]) -> str:
     """Add evidence inside Forge's section; the usual history writer renders and bounds it."""
+    managed = re.search(r"<!-- forge:begin -->.*?<!-- forge:end -->", body, re.S)
+    previous = time_records.HISTORY_SECTION.search(managed[0]) if managed else None
+    if previous and not time_records.from_body(body):
+        record = {**record, "legacy_text": record.get("legacy_text") or
+                  previous[0].removeprefix("## How it went\n").strip()}
     marker = "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->\n"
     if "<!-- forge:begin -->" not in body:
         body = body.rstrip() + "\n\n<!-- forge:begin -->\n<!-- forge:end -->\n"
