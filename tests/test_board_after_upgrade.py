@@ -158,7 +158,7 @@ class History:
                       "Plan Approver <approver@example.test>", cwd=where)
         path = f".factory/stories/{key}/story.json"
         state = json.loads((where / path).read_text("utf-8"))
-        state.update(status="done", finished=merged.isoformat(), outcome=title)
+        state.update(title=title, status="done", finished=merged.isoformat(), outcome=title)
         head = self.commit(where, path, json.dumps(state), "Record the completed archive", merged)
         files = [{"path": name} for name in self.repo.git("diff", "--name-only", "main", head).splitlines()]
         self.repo.git("push", "-q", "origin", "--delete", branch)
