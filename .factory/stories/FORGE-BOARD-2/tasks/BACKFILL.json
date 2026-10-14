@@ -145,7 +145,7 @@
     "id": "42e0cf75-07f5-4bb9-9a4a-52779e765903",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -162,14 +162,13 @@
     }
   ],
   "stuck": {
-    "close": "589b8070-9834-455d-8588-62401777926a",
-    "head": "cb48cda469b4ed9842802ae40c534471e060997c",
+    "close": "a81b3039-6260-43ce-89f3-58da0057988e",
+    "head": "828817ee631322324aed69196236423f41b21668",
     "keys": {
-      "the review finding \"An unrelated fix-prefixed PR prevents the backfill from finishing\" in src/forge/backfill.py": 1,
-      "the review finding \"Not done: CI waits for every pushed head\" in src/forge/backfill.py": 1,
-      "the review finding \"Not done: the exact 42-day cut\" in src/forge/backfill.py": 1
+      "the review finding \"Not done: rebuilt story history reaches the board\" in src/forge/backfill.py": 1,
+      "the review finding \"Not done: the exact-cut item's rebuilt time is visible on the board\" in src/forge/board.py": 1
     },
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
