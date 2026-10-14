@@ -29,11 +29,13 @@ def _without_github_cli(env, monkeypatch, previous):
     env.repo.git("config", "user.email", "local-dev@users.noreply.github.com")
     started = env.repo.forge("fix", "start", "Keep local work", "--done", "Local work shows", "--slug", "local-work")
     assert started.returncode == 0, started.stdout + started.stderr
-    git = shutil.which("git")
     isolated = env.tmp / "without-gh"
     isolated.mkdir()
-    _install(isolated, "git", f"#!{sys.executable}\nimport subprocess, sys\n"
-             f"sys.exit(subprocess.run([{git!r}, *sys.argv[1:]]).returncode)\n")
+    for command in ("git", "sysctl", "vm_stat"):
+        executable = shutil.which(command)
+        if executable:
+            _install(isolated, command, f"#!{sys.executable}\nimport subprocess, sys\n"
+                     f"sys.exit(subprocess.run([{executable!r}, *sys.argv[1:]]).returncode)\n")
     monkeypatch.setenv("PATH", isolated.as_posix())
     assert shutil.which("gh") is None
     data = board(env.repo)
