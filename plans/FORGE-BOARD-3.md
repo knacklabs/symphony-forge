@@ -53,43 +53,61 @@ derived facts that the next upgrade can rebuild.
 
 ### Done-when details
 
-1. `forge board --json` gives every person field (`started_by`, `approved_by`, `merged_by`,
-   `developer`, trends people) as `{login, name}`; `viewer` is the caller's GitHub login
-   (`task.github_login`). Trends key people by login. When only a git name exists, `login` is
-   null and the name stays. Tests: one board read in a new repo and one in the adopted fixture.
-2. `forge assign <KEY|KEY/TASK> <login>` writes the Developer column of `plans/<KEY>.md` on the
-   story branch (a whole story fills its unassigned parts; a story with no plan is refused and
-   says to plan it first). The board JSON carries `owner` per story and part. `forge next` for
-   that login offers those parts first. skill.md, both synced copies and docs/commands.md say how
-   to assign. Tests: assign a story, assign a part, refuse a story with no plan, next order for
-   the assignee.
-3. `rounds[]` gains `seconds` {work, in_line, waiting_for_person, waiting_for_checks} from the
-   intervals `time_records` already computes before it writes the sentence. Older rounds keep
-   `line` with `seconds: null`. Tests: a two-round fix shows both rounds' seconds; an adopted
-   older item shows null.
-4. `forge board --json` gains `known_issues`: item, file, line, title, gain, work, harm,
-   `kept` (lived with or follow-up) and reason, read from each item's review history on the
-   default branch, not limited to 7 days. Findings from before scores show null scores. Tests:
-   a Gain 3 follow-up and a lived-with finding appear; a dismissed finding with no keep does not.
-5. `releases` [{tag, date, items}] from git tags reachable from the default branch, oldest first;
-   each finished item gets `released_in`; a story's plan-to-release time comes from its approval
-   date and its release tag date. No tags: `releases: []` and `release_note: "no releases
-   tagged"`. Tests: a repo with two tags, a repo with none.
+Story owner: a story's owner is the `Owner: <login>` line written directly under
+`## For the builders` in its plan. A part's Developer cell overrides the owner for that part; a
+part with an empty cell belongs to the owner.
+
+1. People stay strings for today's readers. `forge board --json` adds a login beside each person
+   field, without changing the existing ones: `started_by_login`, `approved_by_login`,
+   `developer_login`, `merged_by.login` (already an object) and `login` on each trends person;
+   `viewer` is the caller's GitHub login (`task.github_login`). Trends key people by login and keep
+   the name. When only a git name exists, the login is null. The current HTML board keeps working
+   unchanged. Tests: one board read in a new repo and one in the adopted fixture; the HTML board
+   still renders.
+2. `forge assign <KEY> <login>` writes the story's `Owner:` line; `forge assign <KEY/TASK> <login>`
+   writes that part's Developer cell. A story with no plan is refused and says to plan it first.
+   The command commits on the story branch and pushes it, so every checkout sees it after a fetch.
+   `forge next` reads the owner and Developer cells from the story branch on the remote, and for
+   that login offers its parts first. The board JSON carries `owner` per story and per part.
+   skill.md, both synced copies and docs/commands.md say how to assign. Tests: assign a story,
+   assign a part, refuse a story with no plan, and a second clone that fetches and sees the new
+   order for the assignee.
+3. `rounds[]` gains `seconds` {work, in_line, waiting_for_person, waiting_for_checks}. Round
+   seconds are numbers kept outside the text budget: compaction may fold old round sentences,
+   but it keeps every round's four numbers. Older rounds recorded before this release keep `line`
+   with `seconds: null`. Tests: a two-round fix shows both rounds; a long history past the
+   compaction budget still shows every round's seconds; an adopted older item shows null.
+4. `known_issues` lists item, file, line, title, gain, work, harm, `kept` (lived with or
+   follow-up) and reason. Source: the item's persisted known list on the default branch; for
+   items merged before that list existed, the review history on the pull request's original head
+   (`refs/pull/<n>/head`, the same source backfill.py already reads). Findings from before scores
+   show null scores. Tests: a Gain 3 follow-up and a lived-with finding appear; a squash-merged
+   item from before the list shows its kept findings from the pull request head; a dismissed
+   finding with no keep does not appear.
+5. A release is a tag reachable from the default branch whose name looks like a version
+   (`v1.2.3` or `1.2.3`, with an optional suffix); Forge's own `forge-start/` and `forge-plan/`
+   tags and any other names are never releases. A release's date is its GitHub release's
+   publish date, else its annotated tag date, else unknown; a commit date is never used. Each
+   finished item gets `released_in`; plan-to-release time needs a known date and is otherwise
+   unknown. No release tags: `releases: []` and `release_note: "no releases tagged"`. Tests: a
+   repo with two version tags plus Forge's bookkeeping tags; a lightweight tag with and without a
+   GitHub release; a repo with no tags.
 6. The upgrade's last step (beside today's time-history rebuild in backfill.py) fills logins from
-   pull request authors and mergers, owners from the Developer column, known issues from review
-   history and releases from tags. It is idempotent and quiet without GitHub; the next close
-   retries. Tests: upgrade the adopted fixture and read the board; run it twice.
+   pull request authors and mergers, owners from the Developer column, known issues from the
+   sources in item 4, and releases by the rule in item 5. It is idempotent and quiet without
+   GitHub; the next close retries. Tests: upgrade the adopted fixture and read the board; run it
+   twice.
 
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| OWNERS | GitHub usernames everywhere | `{login, name}` on every person field, `viewer`, trends by login; pins the board JSON wiring the other parts add to | 1 | src/forge/board_facts.py, src/forge/board.py, src/forge/board_trends.py | tests/test_board_logins.py | | no | |
-| ASSIGN | Give a story to a developer | `forge assign`, `owner` in the JSON, next-step order for the assignee, guide and command docs | 2 | src/forge/story.py, src/forge/cli.py, src/forge/nextstep.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md | tests/test_assign.py | OWNERS | no | |
-| ROUNDS | Time per round | `rounds[].seconds` from the intervals | 3 | src/forge/time_records.py | tests/test_round_seconds.py | | no | |
-| KNOWN | Known issues list | `known_issues` from review history | 4 | src/forge/known_issues.py | tests/test_known_issues.py | OWNERS | no | |
-| RELEASES | Releases from tags | `releases`, `released_in`, plan-to-release time | 5 | src/forge/releases.py | tests/test_releases.py | OWNERS | no | |
-| BACKFILL | Past work filled in on upgrade | the upgrade fills owners, known issues and releases | 6 | src/forge/backfill.py | tests/test_board_backfill_people.py | ASSIGN, KNOWN, RELEASES | no | |
+| OWNERS | GitHub usernames everywhere | login fields beside every person field, `viewer`, trends by login | 1 | src/forge/board_facts.py, src/forge/board_trends.py | tests/test_board_logins.py | | no | |
+| ASSIGN | Give a story to a developer | `forge assign`, the `Owner:` line, publication to the story branch, next-step order, guide and command docs | 2 | src/forge/story.py, src/forge/task.py, src/forge/cli.py, src/forge/nextstep.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md | tests/test_assign.py | | no | |
+| ROUNDS | Time per round | `rounds[].seconds`, kept through compaction | 3 | src/forge/time_records.py | tests/test_round_seconds.py | | no | |
+| KNOWN | Known issues list | `known_issues.collect(top) -> list` from the persisted list and pull request heads | 4 | src/forge/known_issues.py | tests/test_known_issues.py | | no | |
+| RELEASES | Releases from tags | `releases.collect(top) -> dict` with `releases`, `released_in`, `release_note` | 5 | src/forge/releases.py | tests/test_releases.py | | no | |
+| WIRING | Board JSON and upgrade backfill | `owner`, `known_issues`, `releases` in `forge board --json`; the upgrade backfill of owners, known issues and releases | 1, 2, 6 | src/forge/board.py, src/forge/backfill.py | tests/test_board_backfill_people.py | OWNERS, ASSIGN, KNOWN, RELEASES | no | |
 
 New moving parts: none
 
