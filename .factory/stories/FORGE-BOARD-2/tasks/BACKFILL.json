@@ -161,7 +161,7 @@
     "id": "8f275166-4512-4ef6-8bf5-85f6814c5810",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -182,13 +182,12 @@
     }
   ],
   "stuck": {
-    "close": "a81b3039-6260-43ce-89f3-58da0057988e",
-    "head": "828817ee631322324aed69196236423f41b21668",
+    "close": "7c0a7e3d-5a28-4e74-a914-3999d6590a28",
+    "head": "5034c68b48cfb2d1a542bbde9afbe7d6d9c8091a",
     "keys": {
-      "the review finding \"Not done: rebuilt story history reaches the board\" in src/forge/backfill.py": 1,
-      "the review finding \"Not done: the exact-cut item's rebuilt time is visible on the board\" in src/forge/board.py": 1
+      "the review finding \"Not done: backfill shares the merged history on PR bodies without a history section\" in src/forge/backfill.py": 1
     },
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
