@@ -1376,6 +1376,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: known logins disappear when past work is compacted\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 172,
+      "text": "Not done: known logins disappear when past work is compacted",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -1405,6 +1416,17 @@
       "text": "Older merged parts cause unbounded GitHub requests",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tSerial commit lookups make board reads slow as the team grows\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 138,
+      "text": "Serial commit lookups make board reads slow as the team grows",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
       "status": "open",
       "closed_by": null
     },
