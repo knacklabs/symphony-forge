@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-14T20:11:48.815827+00:00",
+      "because": "A scheduled run on main can only happen after the merge, so close could never prove the old wording",
+      "done_when": "The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real cause, not by skipping it"
+    }
+  ],
   "base": "30983d7a6bfcb5ac51a62f73a6ac8a8c2844a8d3",
   "branch": "fix/windows-nightly-red",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "87845e9a853f0fdb4e0c6b4c948ea9731d897b87"
   },
-  "done_when": "The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real cause, not by skipping it",
+  "done_when": "Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real cause, not by skipping it; after merge, the next all-platform run on main confirms it",
   "flagged": [
     "tests/test_queue_land_all.py"
   ],
