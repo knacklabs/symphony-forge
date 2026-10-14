@@ -144,9 +144,10 @@ so `forge work --note`, Needs you and close work the same for local and remote r
 take back with two minutes' notice. On that notice the relay commits the worker's changes as one
 "left over from round N" commit (or a patch, as above), uploads the result and ends the round as
 interrupted; the next round starts from those commits, on the laptop or in another sandbox. The relay
-also uploads a checkpoint bundle after every commit the worker makes and every 5 minutes, so a
-sandbox that stops with no notice loses at most 5 minutes of changes; Forge collects the latest
-checkpoint and the next round starts from it. An interrupted close holds no code and simply runs
+also uploads a checkpoint after every commit the worker makes and every 5 minutes: the commit bundle
+plus a patch of every change not yet committed, new files included. So a sandbox that stops with no
+notice loses at most 5 minutes of changes; Forge collects the latest checkpoint, applies its patch to
+the worktree as uncommitted changes, and the next round starts from there. An interrupted close holds no code and simply runs
 again. A sandbox that stops with no result or checkpoint counts as a failed round with the reason.
 
 ## The experience

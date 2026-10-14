@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T08:23:50.234149+00:00
-seconds: 71.019
-read_hash: e40cc42749cc3aec9cd717d963e86720303804ef
-round: 22
-passed: yes
-doc_seen: e40cc42749cc3aec9cd717d963e86720303804ef
+read_at: 2026-10-14T08:27:05.740823+00:00
+seconds: 101.346
+read_hash: c48934e4119c7bfc07079ec261aa35c2fe07e3c9
+round: 23
+passed: no
+doc_seen: c48934e4119c7bfc07079ec261aa35c2fe07e3c9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: f8f9b707d46ad19eb58d18de7f61499924633363
+notes_seen: e994ce20a4ca2e11572db9f353be911f78c7c58c
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -210,3 +210,10 @@ No findings.
 ## Round 22
 
 No findings.
+
+## Round 23
+
+25. Blocking: Periodic commit bundles do not preserve uncommitted work within the promised five-minute loss bound.
+    Raise: Data loss. [The new checkpoint rule](/docs/specs/sandbox-runs.md:147) uploads a bundle every five minutes but snapshots uncommitted changes only on reclamation notice. Workers normally [test before committing at round end](/src/forge/templates/brief.md:48). If a worker edits for fifteen minutes without committing and the sandbox disappears without notice, every uploaded bundle still contains the old HEAD and all fifteen minutes are lost. Periodic checkpoints must preserve tracked edits and new files too, as local continuation already does in [worker.py](/src/forge/worker.py:418).
+    Gain 5, Work 2, Harm 4
+    Disposition: cut
