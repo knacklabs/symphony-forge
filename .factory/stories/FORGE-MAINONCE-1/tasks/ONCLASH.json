@@ -8,6 +8,7 @@
     "start": "ebb780706982c44908e5a3a6ddc832b84297e662"
   },
   "flagged": [
+    "plans/spotted.json",
     "src/forge/checks.py",
     "src/forge/close.py"
   ],
@@ -18,7 +19,7 @@
       "gain": 3,
       "harm": 2,
       "line": 655,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,43 +32,69 @@
       "gain": 3,
       "harm": 2,
       "line": 73,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "A failed mergeability lookup can let green checks reach Ready",
       "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 412,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: bring main in when a pull request becomes BEHIND during close",
+      "work": 2
+    },
+    {
+      "area": "plans/spotted.json",
+      "file": "plans/spotted.json",
+      "gain": 4,
+      "harm": 3,
+      "line": 9486,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "The unrelated spotted-record rewrite is outside ONCLASH scope",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "50fa2ea023ac2038e39fe52f8c0921b7d703f0f409a23597994262b6a819bbdf",
-    "changed": "95e1311672bf1099d0b321c9954833dd6707423cc12d17105f0e35f612dbb02b",
-    "commit": "8188452afaa0fac49759d812c7c1a254b5b2c78a",
+    "branch_diff": "89906989885f9a778d839e285b75bdf27db7f61d94b828afaf2cbb2951a50011",
+    "changed": "1a32b85488485d592915fa31a9450aa4edb93e98e1ecc20829625ae0189b0216",
+    "commit": "72d76a534f132f98e678ce9a63b159640f419b91",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Functional. When a blocked review leaves the pull request as a draft and main advances on unrelated files, GitHub can report its documented `DRAFT` merge state. The trial merge is clean and this condition skips bringing main in. Close later marks the pull request ready after the check wait (`src/forge/close.py:395-402`) without reading its merge state again. On a repo that requires an up-to-date branch, it can therefore announce Ready while the owner cannot merge until close runs again.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The only merge-state refresh after the check wait is guarded by `pr.get(\"isDraft\")`. For an already ready pull request, main can advance during review or CI; GitHub can then report `BEHIND` while `mergeable` remains `MERGEABLE`, because those fields describe different conditions. The wait reads only `mergeable`, so close writes a Ready receipt for a head that a strict up-to-date rule will refuse to merge. The new tests provide `BEHIND` before close's first PR lookup or immediately after making a draft ready, missing this normal interval. GitHub documents the two fields separately: [pull request states](https://docs.github.com/en/graphql/reference/pulls).",
         "file": "src/forge/close.py",
         "gain": 3,
-        "harm": 2,
-        "line": 655,
+        "harm": 3,
+        "line": 412,
         "priority": "P1",
-        "title": "A draft pull request can reach Ready while still behind a required base",
+        "title": "Not done: bring main in when a pull request becomes BEHIND during close",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. If `gh pr view` fails or returns unreadable JSON while the check API reports green, this code turns the lookup into `{}`. `_pending` then finds no reason to wait, so `_wait` returns success without learning whether GitHub reports a clash. This contradicts the existing check-wait contract at `src/forge/checks.py:6`, which treats a GitHub API error as not green yet, and can mark a conflicting pull request Ready during a transient lookup failure.",
-        "file": "src/forge/checks.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 73,
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Gate. This branch moves more than a thousand existing spotted records, including unrelated PRODUCT.md findings, in `plans/spotted.json`. That file is outside ONCLASH's Scope, and Done-when items 1\u20133 require no change to its records. The large shared-file rewrite creates avoidable conflicts with concurrent changes that record spotted problems\u2014the clash this story is meant to remove.",
+        "file": "plans/spotted.json",
+        "gain": 4,
+        "harm": 3,
+        "line": 9486,
         "priority": "P1",
-        "title": "A failed mergeability lookup can let green checks reach Ready",
+        "title": "The unrelated spotted-record rewrite is outside ONCLASH scope",
         "work": 1
       }
     ],
-    "id": "ea76f7f5-2096-4dd4-b9f2-6e2d7f8ec2fd",
+    "id": "3ce7ebad-f127-4676-9202-0152cb0ec821",
     "status": "blocked"
   },
   "round": 2,
@@ -79,6 +106,10 @@
     },
     {
       "at": "2026-10-14T18:51:13.476242+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T20:00:15.398856+00:00",
       "step": "review"
     }
   ],
