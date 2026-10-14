@@ -606,6 +606,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: backfill shares the merged history on PR bodies without a history section\tFORGE-BOARD-2/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 141,
+      "text": "Not done: backfill shares the merged history on PR bodies without a history section",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/backfill.py\tNot done: rebuilt story history reaches the board\tFORGE-BOARD-2/BACKFILL",
       "kind": "bug",
       "path": "src/forge/backfill.py",
