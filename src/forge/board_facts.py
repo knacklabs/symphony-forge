@@ -18,6 +18,7 @@ from forge import board_trends, repo, story, time_records
 
 Item = dict[str, Any]
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
+IN_PROGRESS_STATES = ("building", "in progress", "ready to merge")  # the board page's In progress group
 WORK_STATES = ("done", "ready to merge", "in progress", "to do")
 FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft"
 
@@ -224,5 +225,7 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     building = counts["stories"]["building"]
     sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "
                 f"in progress, {sum(work[2:])} ready to merge; {clause[0].lower()}{clause[1:]}")
-    return {"sentence": sentence, "counts": counts, "needs_you": None, "in_progress": None, "blocked": None,
+    return {"sentence": sentence, "counts": counts, "needs_you": None,
+            "in_progress": [{key: row[key] for key in ("id", "title", "kind", "state")}
+                            for row in items.values() if row.get("state") in IN_PROGRESS_STATES], "blocked": None,
             **later}
