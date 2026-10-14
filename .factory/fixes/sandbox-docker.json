@@ -9,12 +9,28 @@
   "base": "b033aee150a239b6d20d16c38954df7b2e83c6a2",
   "branch": "fix/sandbox-docker",
   "done_when": "docs/specs/sandbox-runs.md says each sandbox run gets its own machine with Docker and that a repo's extra outside hosts are listed in forge.toml; it passes a cold read and is confirmed again",
+  "flagged": [],
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c6a03eccab5b05d2b76d63347298c82c81177d72097247c3b350bf1984a699fa",
+    "changed": "aade12a8d6b7d1493916886414a93a9b39306fc7df73f6106af2a647342e3e99",
+    "commit": "2ccdeef2e491278c4e9a40291e7ec07e65d7a68e",
+    "dismissals": [],
+    "findings": [],
+    "id": "2da4a486-9005-4e60-a6dc-d6964d56a472",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T12:02:42.086519+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T12:10:08.687611+00:00",
+      "step": "review"
     }
   ],
   "why": "Integration and end-to-end tests need Docker, so repos whose tests need Docker must run in sandboxes too, not stay on the laptop"
