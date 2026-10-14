@@ -354,7 +354,7 @@ def _needs_demo_address(top: Path) -> bool:
 
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
     try:
-        return repo.config(path)
+        return repo.command_fact(("report config", path.resolve()), path, lambda: repo.config(path))
     except repo.Refused as refusal:
         refusals[path] = str(refusal).splitlines()[0]
         return repo.DEFAULTS
@@ -703,7 +703,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     status, branch = state.get("status"), state.get("branch")
     # A finished item is never ready, so its review ref would go unread.
     ref = review_ref(top, branch, pr) if branch and status not in ("merged", "done", "hotspot") else ""
-    record = time_records.from_body((pr or {}).get("body") or "")
+    record = time_records.from_body((pr or {}).get("body") or "") if ref else {}
     evidence = {}
     if ref and receipt.get("review") == "clean" and receipt.get("commit") == ref:
         evidence = receipt
@@ -745,7 +745,16 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
 
 
 def _commit(top: Path, ref: str) -> str:
-    return repo.run("git", "rev-parse", "-q", "--verify", f"{ref}^{{commit}}", cwd=top).stdout.strip()
+    tips = repo.command_fact(("commits", "ref tips"), top, lambda: dict(
+        line.split("\0", 1) for line in repo.git(
+            "for-each-ref", "--format=%(refname)%00%(objectname)",
+            "refs/heads", "refs/remotes", cwd=top).splitlines()))
+    if ref.startswith(("refs/heads/", "refs/remotes/")):
+        return tips.get(ref, "")
+    if ref in tips.values():
+        return ref
+    return repo.command_fact(("commits", "resolve", ref), top, lambda: repo.run(
+        "git", "rev-parse", "-q", "--verify", f"{ref}^{{commit}}", cwd=top).stdout.strip())
 
 
 def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
@@ -803,8 +812,9 @@ def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
     ended = {e.get("wait_id") for e in events.values() if e.get("event") == "owner wait end"}
     rounds = [at for e in events.values() if e.get("event") == "run start" and e.get("kind") in ("work", "worker")
               and (at := time_records.when(e.get("at")))]
-    cleared = codex.record(top, item).get("question", "") is None
     asked_here = {e.get("id") for e in local}
+    cleared = (any(e.get("event") == "worker question" and e.get("id") in asked_here for e in events.values())
+               and codex.record(top, item).get("question", "") is None)
 
     def answered(e: dict[str, Any]) -> bool:
         at = time_records.when(e.get("at"))

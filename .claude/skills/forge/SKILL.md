@@ -546,18 +546,24 @@ The pane's Board tab, on the terminal and the Desktop app's Code tab alike, open
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
 Each part shows only when the board's `team` fact behind it is known and not zero; when
 none of them applies, the line counts the rows the tab shows in its own group words instead,
-such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Groups follow in this order, each only
-when it has items: NEEDS YOU (rows whose `needs_person` is true),
-STUCK (no activity past the board's stall threshold, with the longest wait in days),
-MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
-READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board page's
+own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
+`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, word for word as the page shows
+them. Groups follow in this order, each only when it has items, and each in the board's own
+order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
+such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
+age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
+a running item shows its current stage and how long, such as `Review running · 12 min`),
+READY TO MERGE (the rest of `team.in_progress`, each saying Ready to merge, with the checks in words when known, and its merge
 step; an item merged from another machine shows `forge next`'s line naming who merges it), then a
-folded count of the work waiting or not started, opened with a native button to the same rows. Each item shows its plain title, the story key small
+folded count of the work waiting or not started (planned stories and fixes not started), opened with a native button to the same rows. Each item shows its plain title, the story key small
 beside it, one line of state in words and, where there is something to do, its next step
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
-The pane never shows zero counts, unknown times, raw timestamps, priority codes or
+An older Forge without the `team` lists draws the same groups from each row's `needs_person`,
+stalled, running and ready flags, and shows no sentence or totals.
+Outside the totals copied from the page, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
-relative (`12 min`, `8 days`). Stage chains, round lines and the time breakdown stay on
+relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
 the board page. An empty board says `Nothing in progress.` `/forge` always returns the
 same lines as text, as well as opening the pane. Where mods draw nothing (the VS Code
 chat panel, `claude -p` and Remote Control from a phone or claude.ai), that text is the
