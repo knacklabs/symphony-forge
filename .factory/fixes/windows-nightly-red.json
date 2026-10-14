@@ -1,0 +1,14 @@
+{
+  "base": "30983d7a6bfcb5ac51a62f73a6ac8a8c2844a8d3",
+  "branch": "fix/windows-nightly-red",
+  "done_when": "The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real cause, not by skipping it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T14:50:18.085042+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The nightly full test run fails on Windows in 7 of 8 groups: the blocked-read choice test quotes a Windows path the POSIX way, the land queue test leaves a change busy, and the machine-views speed test counts the wrong number of GitHub calls"
+}
