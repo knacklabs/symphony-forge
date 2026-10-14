@@ -204,22 +204,46 @@
       "security": false,
       "title": "Later: NAV and PANE complete item 12",
       "work": 4
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 102,
+      "outcome": "open",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Unanswered shared worker question can be bypassed on another machine",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "111b916eed43814d079cd5f14579902cef5545a0b29cd70ead0dbea48fadf149",
-    "changed": "5ccb7ce65d26f3ae9bab925fd237270b2e3e8638d6fb897eb5e3947c85522e6b",
-    "commit": "a2b703a6da80a827bad26fca5ba3046670e440f2",
+    "branch_diff": "ad3a4904aaf96f1b63d7486b11fe09beb2a83a22ea002d87c75181248a221184",
+    "changed": "7118f7da88f67d814faceccd65da06f28143ef85802ecec51521038d9e4a43cd",
+    "commit": "91e834b5e559830fd0b2d96ef9456510cf93d75e",
     "dismissals": [],
-    "findings": [],
-    "id": "3725f836-8f44-4208-a763-40c50de8022d",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. If machine B asks a question on an existing pull request while machine A has the item's worktree but no local question, `asking` is false here. A's `forge work` skips the pull request record and starts a worker round without an answer. That later `run start` also makes `wait_records.answered` treat B's question as answered, so A's Needs you view drops an open wait. The new test asks its second question on A and does not cover this handoff.",
+        "file": "src/forge/worker.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 102,
+        "priority": "P1",
+        "title": "Unanswered shared worker question can be bypassed on another machine",
+        "work": 2
+      }
+    ],
+    "id": "8c34409b-9d51-4d7d-abdb-ec90122ce59c",
+    "status": "blocked"
   },
   "settled_areas": [
     "_work() in src/forge/worker.py"
   ],
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-13T16:05:33.429096+00:00",
@@ -248,17 +272,15 @@
     {
       "at": "2026-10-14T05:22:41.209851+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-14T06:12:43.901052+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "area": "_work() in src/forge/worker.py",
-    "at": "2026-10-13T20:28:17.868826+00:00",
-    "by": "owner",
-    "choice": "accept",
-    "file": "_work() in src/forge/worker.py",
-    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "reason": "Coordinator's call (Harm 1, reversible): ship the shared waits now; a size choice before any pull request, close on the asking machine after a teammate's answer (forge work clears it), and the question text in the worker brief on a fresh clone become one follow-up fix",
-    "wait_id": "8b08cd3b-1919-49be-88a1-77707976cb36",
-    "worker_round": null
+    "at": "2026-10-14T06:12:43.913793+00:00",
+    "file": "src/forge/worker.py",
+    "wait_id": "8db8eb4f-6980-405d-a299-0a068acc1fd6"
   }
 }

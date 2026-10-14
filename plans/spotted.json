@@ -628,6 +628,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tBoard crashes whenever a fix is present\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 683,
+      "text": "Board crashes whenever a fix is present",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tBoard launches Git once for every historical plan read\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -881,6 +892,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: no-plan box for a newly started story\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 651,
+      "text": "Not done: no-plan box for a newly started story",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: plan_read from the story's current read record\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -888,6 +910,17 @@
       "text": "Not done: plan_read from the story's current read record",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: planned stories in roadmap order\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 650,
+      "text": "Not done: planned stories in roadmap order",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
       "status": "open",
       "closed_by": null
     },
@@ -1185,6 +1218,39 @@
       "text": "Older merged parts cause unbounded GitHub requests",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: finished planned stories remain in roadmap order\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 71,
+      "text": "Not done: finished planned stories remain in roadmap order",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: functional check\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 67,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_graph.py\tNot done: stacked fixes lose the part name in their visible label\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "src/forge/board_graph.py",
+      "line": 104,
+      "text": "Not done: stacked fixes lose the part name in their visible label",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
       "status": "open",
       "closed_by": null
     },
@@ -3726,6 +3792,28 @@
       "text": "Not done: Review stops and worker questions are missing from Needs you",
       "from": "blocking",
       "item": "pane-grouped-board",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 156,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
+      "from": "blocking",
+      "item": "pane-summary-always",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 152,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+      "from": "blocking",
+      "item": "pane-summary-always",
       "status": "open",
       "closed_by": null
     },
@@ -6502,6 +6590,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tUnanswered shared worker question can be bypassed on another machine\tFORGE-BOARD-2/WAITS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 102,
+      "text": "Unanswered shared worker question can be bypassed on another machine",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -6678,6 +6777,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_graph.py\tNot done: missing-reference graph test\tFORGE-BOARD-2/GRAPH",
+      "kind": "bug",
+      "path": "tests/test_board_graph.py",
+      "line": 65,
+      "text": "Not done: missing-reference graph test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/GRAPH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_board_needs_you.py\tNot done: test_board_needs_you.py\tFORGE-BOARD-2/WAITS",
       "kind": "bug",
       "path": "tests/test_board_needs_you.py",
@@ -6685,6 +6795,17 @@
       "text": "Not done: test_board_needs_you.py",
       "from": "blocking",
       "item": "FORGE-BOARD-2/WAITS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_pace.py\tNot done: proof list\tteam-sentence-short",
+      "kind": "bug",
+      "path": "tests/test_board_pace.py",
+      "line": 109,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "team-sentence-short",
       "status": "open",
       "closed_by": null
     },
@@ -6729,6 +6850,17 @@
       "text": "Not done: test needs-you and blocked row ordering",
       "from": "blocking",
       "item": "FORGE-BOARD-2/PAGE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tNot done: tests/test_board_runway.py::test_8_below_the_fold\tteam-sentence-short",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 96,
+      "text": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
+      "from": "blocking",
+      "item": "team-sentence-short",
       "status": "open",
       "closed_by": null
     },
@@ -10216,127 +10348,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tBoard crashes whenever a fix is present\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 683,
-      "text": "Board crashes whenever a fix is present",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: no-plan box for a newly started story\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 651,
-      "text": "Not done: no-plan box for a newly started story",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: planned stories in roadmap order\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 650,
-      "text": "Not done: planned stories in roadmap order",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_graph.py\tNot done: finished planned stories remain in roadmap order\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board_graph.py",
-      "line": 71,
-      "text": "Not done: finished planned stories remain in roadmap order",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/board_graph.py\tNot done: functional check\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board_graph.py",
-      "line": 67,
-      "text": "Not done: functional check",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board_graph.py\tNot done: stacked fixes lose the part name in their visible label\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "src/forge/board_graph.py",
-      "line": 104,
-      "text": "Not done: stacked fixes lose the part name in their visible label",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_graph.py\tNot done: missing-reference graph test\tFORGE-BOARD-2/GRAPH",
-      "kind": "bug",
-      "path": "tests/test_board_graph.py",
-      "line": 65,
-      "text": "Not done: missing-reference graph test",
-      "from": "blocking",
-      "item": "FORGE-BOARD-2/GRAPH",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_pace.py\tNot done: proof list\tteam-sentence-short",
-      "kind": "bug",
-      "path": "tests/test_board_pace.py",
-      "line": 109,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "team-sentence-short",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_runway.py\tNot done: tests/test_board_runway.py::test_8_below_the_fold\tteam-sentence-short",
-      "kind": "bug",
-      "path": "tests/test_board_runway.py",
-      "line": 96,
-      "text": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
-      "from": "blocking",
-      "item": "team-sentence-short",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2\tpane-summary-always",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 156,
-      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
-      "from": "blocking",
-      "item": "pane-summary-always",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn\tpane-summary-always",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 152,
-      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
-      "from": "blocking",
-      "item": "pane-summary-always",
       "status": "open",
       "closed_by": null
     }
