@@ -83,7 +83,7 @@
     "id": "720c569a-a51f-4ecc-afad-25eb8133b844",
     "status": "blocked"
   },
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
@@ -104,12 +104,13 @@
     }
   ],
   "stuck": {
-    "close": "b3217060-d038-433a-893e-f46d7725b1df",
-    "head": "6ee96f8acc45dcc52b56fa0953759056c875f7a0",
+    "close": "0d07e7a2-103b-4829-8db5-f6213aa4f518",
+    "head": "66278b6594ee134a5a9f02c1b4ba637f2917f4c4",
     "keys": {
-      "close's tests failing": 1
+      "the review finding \"Not done: proof list\" in tests/test_mainonce_spotted.py": 1,
+      "the review finding \"Repair command can execute code from a spotted filename\" in src/forge/spotted.py": 1
     },
-    "round": 2
+    "round": 4
   },
   "worker": "codex"
 }
