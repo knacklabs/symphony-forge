@@ -5,9 +5,12 @@ Existing board coverage only asserts names. Only GitHub is faked; no seam is add
 """
 from datetime import datetime, timedelta, timezone
 import json
+import shutil
+import sys
 
 import pytest
 
+from conftest import _install
 from test_board_counts import board, github, rows
 from test_board_trends import pr
 from test_board_after_upgrade import History
@@ -16,6 +19,32 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
 STORY = "FORGE-BOARD-3"
+
+
+def _without_github_cli(env, monkeypatch, previous):
+    # Keep real Git available while removing every directory that could supply gh.
+    # An uninstalled CLI differs from the existing unreachable-service cases.
+    client(env, previous)
+    env.repo.git("config", "user.name", "Local Builder")
+    env.repo.git("config", "user.email", "local-dev@users.noreply.github.com")
+    started = env.repo.forge("fix", "start", "Keep local work", "--done", "Local work shows", "--slug", "local-work")
+    assert started.returncode == 0, started.stdout + started.stderr
+    git = shutil.which("git")
+    isolated = env.tmp / "without-gh"
+    isolated.mkdir()
+    _install(isolated, "git", f"#!{sys.executable}\nimport subprocess, sys\n"
+             f"sys.exit(subprocess.run([{git!r}, *sys.argv[1:]]).returncode)\n")
+    monkeypatch.setenv("PATH", isolated.as_posix())
+    assert shutil.which("gh") is None
+    data = board(env.repo)
+    assert data["viewer"] is None
+    item = rows(data)["local-work"]
+    assert (item["started_by"], item["started_by_login"]) == ("Local Builder", "local-dev")
+    assert item["stage"] == "working" and item["intervals"]
+    out = env.tmp / "offline.html"
+    rendered = env.repo.forge("board", "--out", out.as_posix())
+    assert rendered.returncode == 0, rendered.stdout + rendered.stderr
+    assert "Keep local work" in out.read_text("utf-8")
 
 
 def _github_actors(env, logins):
@@ -94,9 +123,13 @@ def _compacted_past_work(unsynced_up, monkeypatch):
     assert (shared["approved_by"], shared["approved_by_login"]) == ("Plan Approver", "approver-dev")
 
 
-@pytest.mark.parametrize("previous", [False, True, "compacted", "team"],
-                         ids=["new-client", "earlier-adoption", "compacted-past-work", "team-actors"])
+@pytest.mark.parametrize("previous", [False, True, "compacted", "team", "offline-new", "offline-adopted"],
+                         ids=["new-client", "earlier-adoption", "compacted-past-work", "team-actors",
+                              "offline-new", "offline-adopted"])
 def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, previous, unsynced_up):
+    if previous in ("offline-new", "offline-adopted"):
+        _without_github_cli(env, monkeypatch, previous == "offline-adopted")
+        return
     if previous == "team":
         _team_actor_reads(env, monkeypatch)
         return

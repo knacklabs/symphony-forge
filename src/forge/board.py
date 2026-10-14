@@ -724,7 +724,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
-    return {"version": __version__, "repo_root": repo_root(top), "viewer": task.github_login(top),
+    return {"version": __version__, "repo_root": repo_root(top),
+            "viewer": task.github_login(top) if shutil.which("gh") else None,
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
