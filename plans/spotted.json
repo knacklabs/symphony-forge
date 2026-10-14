@@ -10317,6 +10317,28 @@
       "item": "team-sentence-short",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 156,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
+      "from": "blocking",
+      "item": "pane-summary-always",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn\tpane-summary-always",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 152,
+      "text": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or inn",
+      "from": "blocking",
+      "item": "pane-summary-always",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

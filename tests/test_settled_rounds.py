@@ -64,7 +64,7 @@ def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
     env.commit(where, "basket.py", "print('saved again')\n")
     repeated = [finding("P1", dismissed), finding("P1", fixed)]
     for entry in repeated:
-        entry["body"] = "Gain 3, Work 2, Harm 1\nDifferent evidence for the same settled issue."
+        entry["body"] = "Gain 4, Work 2, Harm 1\nDifferent evidence for the same settled issue."
     env.reviews(blocked(*repeated))
     done = env.close(item)
     assert done.returncode == 0, done.stdout + done.stderr
