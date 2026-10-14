@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T13:42:17.148684+00:00
-seconds: 99.806
-read_hash: 2fbbedd948470348bae768a014441e6eb9d84854
-round: 36
-passed: yes
-doc_seen: 2fbbedd948470348bae768a014441e6eb9d84854
+read_at: 2026-10-14T13:44:22.170203+00:00
+seconds: 87.891
+read_hash: 6da0a45774f0733f0885ba1284490298ad9010a5
+round: 37
+passed: no
+doc_seen: 6da0a45774f0733f0885ba1284490298ad9010a5
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 5b9d54921595e442f71f9cff65f3e21e80e91417
+notes_seen: ce77681002c53a8f0029e09595929fe2207b924c
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -299,3 +299,10 @@ No findings.
 ## Round 36
 
 No findings.
+
+## Round 37
+
+34. Blocking: Criterion 5 still permits the API-key fallback that the new rule forbids.
+    Raise: Plan gap. [The new model-access rule](/docs/specs/sandbox-runs.md:78) requires sandbox rounds to use plan logins only, with local execution or waiting when none is free. But [criterion 5](/docs/specs/sandbox-runs.md:265) still permits using the team’s API key. A second Codex round with the first login occupied therefore has conflicting acceptance outcomes. Remove the stale API-key fallback from the criterion.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut
