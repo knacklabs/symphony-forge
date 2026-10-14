@@ -55,7 +55,7 @@
     "id": "2b5a058a-d3d1-415c-9ed8-1616aa03bb60",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -68,10 +68,15 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "a07b70541f72e3382368988cce1d7358d1532b17",
-    "keys": {},
-    "round": null
+    "close": "97f4aec5-3b2c-48ff-a402-e67a00f5229f",
+    "head": "68dc6e3e121812af37fd4ad38ad57674f13069a9",
+    "keys": {
+      "the review finding \"Gate: retain current coordinator commands in generated guidance\" in docs/commands.md": 1,
+      "the review finding \"Not done: proof list\" in tests/test_mod_guide.py": 1,
+      "the review finding \"Restore explicit deployment authorization in both checked-in guides\" in .codex/skills/forge/SKILL.md": 1,
+      "the review finding \"Restore the Forge v1.2.12 pin\" in forge.toml": 1
+    },
+    "round": 3
   },
   "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job",
   "worker": "codex"
