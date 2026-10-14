@@ -1,8 +1,10 @@
 ---
 slug: item-cost
 title: Each story, task and fix shows what it cost in tokens and time
-status: draft
+status: confirmed
 saved: 2026-10-14T10:44:00.399204+00:00
+confirmed_by: "Ravi"
+confirmed_hash: 8285427576ade5926bc5167e342f99228fb96f607195c9d800cc1f56772b594d
 ---
 
 # Each story, task and fix shows what it cost in tokens and time
