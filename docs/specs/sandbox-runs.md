@@ -1,11 +1,11 @@
 ---
 slug: sandbox-runs
-title: Build rounds overflow to a remote sandbox when the laptop is full
+title: Close and build rounds overflow to a remote sandbox when the laptop is full
 status: draft
 saved: 2026-10-14T05:18:47.231672+00:00
 ---
 
-# Build rounds overflow to a remote sandbox when the laptop is full
+# Close and build rounds overflow to a remote sandbox when the laptop is full
 
 ## Why
 
@@ -47,9 +47,12 @@ The owner chose to build it in full now (14 October 2026).
 
 The owner chose each of these on 14 October 2026:
 
-1. **What moves: the whole worker.** Claude Code or Codex runs the full build round in the sandbox:
-   it gets the item's whole working folder, edits, runs the worker's tests and commits. The coordinator, the cold reads
-   and close stay on the laptop.
+1. **What moves: close first, then the whole worker.** Close's local test run and its review run in
+   the sandbox first: they are the largest movable share of item time (local tests 10.7% and waits
+   for the test lane 11.2%, against 7.8% for build rounds). Then Claude Code or Codex runs the full
+   build round there too: it checks out the item's branch, edits, runs the worker's tests and commits.
+   The coordinator and the cold reads stay on the laptop, and the laptop posts close's results to the
+   pull request.
 2. **GitHub access: the laptop pushes.** The sandbox holds no GitHub credential. It returns its
    commits as a git bundle, and the laptop checks the bundle (the right branch, only new commits on
    top of the round's start) and pushes it.
@@ -75,14 +78,23 @@ the provider's replies (principle 7). Agent37 is the first provider (the lowest 
 call waits for the command to end and streams nothing, which the relay covers). E2B is the second.
 The relay accepts only the laptop that started the sandbox, with a secret made for that sandbox.
 
-**What goes up and what stays.** The sandbox gets the item's working folder, including files git
-ignores, such as `.env`, so tests that need local settings work there too. Three things never go up:
-the laptop's `.git` folder (its remotes, hooks and settings); instead the sandbox gets a fresh git history made from a bundle of the item's branch and the default branch, with no remote, so the worker can commit and `forge test` finds where the branch left the default branch, and its new commits come back in a bundle, any file setup finds holding a GitHub
-credential or a model login, and any path the team lists in `forge.toml` to never send. Setup lists
-every ignored file it will send and every file it leaves out, with the reason, before the team says
-yes; other real keys in ignored files do reach the provider, and setup says so. `forge.toml` holds
-only the provider's name, the sandbox cap, the never-send paths and the name of the place the
-provider key lives (an environment variable or the system keychain entry), never a key. The provider
+**What goes up: committed code only.** The sandbox gets a git bundle of the item's branch and the
+default branch and checks it out in a fresh history with no remote, so the worker can commit and
+`forge test` finds where the branch left the default branch; its new commits come back in a bundle.
+Files git ignores, such as `.env`, never go up, and neither does the laptop's `.git` folder (its
+remotes, hooks and settings).
+
+**Secrets come from a vault.** Each repo's secrets live in a vault on the laptop, kept in the system
+keychain: `forge secrets set NAME` adds one, and `forge secrets list` shows the names, never the
+values. Each run gets them as environment variables only for that run. At setup Forge reads the names
+in the repo's `.env` and offers to move each value into the vault. `forge.toml` holds only the
+provider's name, the sandbox cap, the secret names a run needs and the name of the place the provider
+key lives (an environment variable or the system keychain entry), never a value.
+
+**Ready images and test services.** The repo's sandbox image is built once from its lockfiles and
+the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
+version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
+check in a sandbox and reports what the repo still needs before rounds can move there. The provider
 key stays on the laptop: the laptop starts and stops sandboxes. The sandbox never gets a GitHub
 credential. `forge doctor` reports a provider key that is missing or found in a tracked file.
 
@@ -106,8 +118,8 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
 
 - **Meeting it.** When work waits for a free place on the laptop, `forge next` says how many runs are
   waiting and that sandbox runs could start them now, and the agent offers it once. On yes it walks
-  the developer through choosing a provider, adding the key to the keychain, the list of ignored
-  files that will go up, and one test run; then a fix turns it on.
+  the developer through choosing a provider, adding the key to the keychain, moving the `.env` values
+  into the vault, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
 - **Teammates.** Nothing changes for a teammate until their laptop is full. Then the agent says the
   repo uses sandbox runs and asks for the team's provider key, which it keeps in that laptop's
   keychain. Without a key their work stays local.
@@ -130,22 +142,22 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
   rounds it collected.
 - **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
   lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
-  it delete the repo's sandboxes and their disks at the provider (the code copy and any `.env`), and it
+  it delete the repo's sandboxes and their disks at the provider (the code copy), and it
   says what it removed. No commit is lost.
 
 ## Out of scope
 
-- Running the coordinator, cold reads or close's review in a sandbox.
+- Running the coordinator or the cold reads in a sandbox.
 - Pushing while the laptop is asleep; results wait at the provider until it wakes.
 - One shared Forge account for all repos.
 
 ## Acceptance criteria
 
 1. With sandbox runs off (the default), nothing changes for new or existing repos.
-2. With them on and the agent line full, and the provider reachable, the next build round runs in the sandbox, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when the provider fails or its limit is reached, the round returns to the laptop's line and says why.
-3. The sandbox never holds a GitHub credential or the laptop's `.git` folder (it commits in a fresh history made from a bundle of the item's branch and the default branch, with no remote, and `forge test` runs there), setup leaves out files holding a GitHub credential or a model login and says which, and a bundle with commits outside the round's branch is refused with the reason.
+2. With them on and the laptop's line full, and the provider reachable, close's test run and review, and the next build round, run in the sandbox, with close's results posted to the pull request by the laptop, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when the provider fails or its limit is reached, the round returns to the laptop's line and says why.
+3. The sandbox gets only committed code (a bundle of the item's branch and the default branch, in a fresh history with no remote, where `forge test` runs), never an ignored file, the laptop's `.git` folder or a GitHub credential; secrets reach it only from the vault, as environment variables for that run; a bundle with commits outside the round's branch is refused with the reason.
 4. A sandbox run shows in the machine view with its provider, time and output, and `forge stop` ends it.
-5. The agent offers it when work waits for the laptop and sets it up with the developer (provider, key in the keychain, the ignored files that will go up, a test run); `forge.toml` names where the key lives and never holds a key; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback.
+5. The agent offers it when work waits for the laptop and sets it up with the developer (provider, key in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` names where the key lives and never holds a key or secret value; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
 7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes and disks at the provider and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
 8. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
