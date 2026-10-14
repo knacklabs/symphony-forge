@@ -16,43 +16,79 @@
     "tests/test_mod_guide.py"
   ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": null,
+      "harm": null,
+      "line": 2,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Restore the Forge v1.2.12 pin",
+      "work": null
+    },
+    {
+      "area": ".codex/skills/forge/SKILL.md",
+      "file": ".codex/skills/forge/SKILL.md",
+      "gain": null,
+      "harm": null,
+      "line": 11,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Restore explicit deployment authorization in both checked-in guides",
+      "work": null
+    },
+    {
+      "area": "docs/commands.md",
+      "file": "docs/commands.md",
+      "gain": null,
+      "harm": null,
+      "line": 27,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: retain current coordinator commands in generated guidance",
+      "work": null
+    },
+    {
+      "area": "test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections() in tests/test_mod_guide.py",
+      "file": "tests/test_mod_guide.py",
+      "gain": null,
+      "harm": null,
+      "line": 37,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": null
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "020309bef73c24fd04a82186fb777cdc63ecf113461822f7ef2d88f309da905a",
-    "changed": "7b395b1bd3ca689b59760e08bc54ba45b48e0f731b7f12749438eda4f7751318",
-    "commit": "a2972b37727e208ccbac57c2890a5d21b6a28b33",
+    "branch_diff": "ba0beffdac25ae0bf37530cfa1857eba1c1f48d4f44d953ecc53c9f045bab959",
+    "changed": "7f8320168b657889a487f3c01d817492cd1410d918ec43a614e4b9d596619519",
+    "commit": "6efde3fba6f02e359c0bfb5e5a7b6c4091e15cc7",
     "dismissals": [],
     "findings": [
       {
-        "body": "Raise: Functional. This test-only fix changes the repository pin from v1.2.12 to v1.2.10. `check_pin` in `src/forge/repo.py:724-782` routes normal Forge commands to the pinned release, so commands in this checkout run older behavior. `tests/test_release_version.py:16` also requires v1.2.12. The hook and workflow headers were downgraded alongside the pin.",
-        "file": "forge.toml",
-        "line": 2,
-        "priority": "P1",
-        "title": "Restore the Forge v1.2.12 pin"
-      },
-      {
-        "body": "Raise: Security. Both changed Forge guides remove the instruction to deploy only after an explicit request and to verify authentication first. The changed demo guidance also calls a merged version \u201clive\u201d before deployment is verified. `src/forge/templates/skill.md:11-21` still contains the authorization rule, and `tests/test_deployment_requires_an_explicit_request.py:79-89` requires it in both host guides. Agents using this checkout now receive conflicting deployment instructions.",
-        "file": ".codex/skills/forge/SKILL.md",
-        "line": 11,
-        "priority": "P1",
-        "title": "Restore explicit deployment authorization in both checked-in guides"
-      },
-      {
-        "body": "Raise: Gate. The generated guide and command page drop `forge land --all` even though the current template still documents it at `src/forge/templates/skill.md:41` and the command remains covered by `tests/test_queue_land_all.py`. The guides also drop the `always_test` instruction required by `tests/test_close_always_tests.py:100-104`. These unrelated generated-file rollbacks leave agents with incomplete instructions for supported commands and settings.",
-        "file": "docs/commands.md",
-        "line": 27,
-        "priority": "P1",
-        "title": "Gate: retain current coordinator commands in generated guidance"
-      },
-      {
-        "body": "Raise: Gate. The supplied latest-commit proof list says only \u201cgenerated files only.\u201d It names no proof for any Done-when detail: guide sections in new and previously adopted repos, command-boundary retry behavior, command-boundary upgrade-version behavior, or the net-lines test name. The changed tests are present, but none is mapped to its claimed item in the required proof list.",
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate. The supplied proof list says \u201cno test changes in this commit,\u201d although this branch changes tests for all four Done-when details. It maps none of the guide, retry, upgrade-version, or net-lines checks to those details, so the required proof list is still missing.",
         "file": "tests/test_mod_guide.py",
+        "gain": 4,
+        "harm": 1,
         "line": 37,
         "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: proof list",
+        "work": 1
       }
     ],
-    "id": "2b5a058a-d3d1-415c-9ed8-1616aa03bb60",
+    "id": "5b61fb3d-cffa-4ad0-accc-6d1fb30f9b20",
     "status": "blocked"
   },
   "round": 5,
@@ -64,6 +100,10 @@
     },
     {
       "at": "2026-10-14T18:34:17.739733+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T18:54:57.400473+00:00",
       "step": "review"
     }
   ],
