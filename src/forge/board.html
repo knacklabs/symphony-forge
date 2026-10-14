@@ -32,7 +32,7 @@
   header p { font-size: .85rem; }
   h2 { font-size: 1.05rem; font-weight: 600; margin: 2.25rem 0 .5rem; }
   h3 { font-size: .9rem; font-weight: 600; margin: 1.5rem 0 .25rem; }
-  .sentence { font-size: 1.15rem; margin-top: 1rem; max-width: 70ch; }
+  .sentence { font-size: 1.1rem; line-height: 1.4; margin-top: 1rem; max-width: 100ch; }
   .totals { margin-top: .4rem; font-size: .9rem; }
   .note { margin-top: 1rem; }
   .key { font-size: .85rem; margin-bottom: .5rem; white-space: nowrap; overflow-x: auto; }
@@ -50,7 +50,7 @@
   .row { border-top: 1px solid var(--rule); padding: .2rem 0; }
   .row:last-child { border-bottom: 1px solid var(--rule); }
   summary { cursor: pointer; padding: .4rem 0; }
-  summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .lane > summary:focus-visible, summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .row > details > summary, .parts summary {
     display: grid; grid-template-columns: 1rem minmax(0, 3fr) 3rem 11rem minmax(0, 2fr);
     gap: .25rem 1rem; align-items: baseline; list-style: none; }
@@ -78,7 +78,64 @@
   .arrow { fill: var(--muted); }
   .recorded-time { fill: var(--ink); }
   .unknown-time { stroke: var(--muted); stroke-dasharray: 3 3; }
+  /* The Runway: one time axis for the first screen; --today places the today line. */
+  .totals span + span::before { content: "·"; margin: 0 .5rem; color: var(--rule); }
+  .totals span { white-space: nowrap; } .totals b { font-weight: 600; color: var(--ink); }
+  .runway-axis { margin-top: .4rem; }
+  .lanes h2 { font-size: .9rem; margin: .6rem 0 .1rem; }
+  .axis, .lane > summary, .lane.static { display: grid; gap: 0 1rem; align-items: center;
+    grid-template-columns: minmax(0, 22rem) minmax(0, 21rem) minmax(8rem, 1fr); }
+  .axis { font-size: .75rem; color: var(--muted); height: 1.1rem; }
+  .axis .track > span { top: 0; transform: none; white-space: nowrap; line-height: 1rem; }
+  .axis .track > .today { transform: translateX(-50%); color: var(--ink); font-weight: 600; }
+  .axis .track > .end { transform: translateX(-100%); }
+  .lane { border-top: 1px solid var(--rule); }
+  .lane > summary, .lane.static { list-style: none; padding: .1rem 0; font-size: .875rem; line-height: 1.35; }
+  .lane > summary::-webkit-details-marker { display: none; }
+  .lane[open] > summary { background: var(--surface-2); }
+  .lane .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .lane .what { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #needs-you .what { color: var(--wait); }
+  .lane.static .what { white-space: normal; }
+  .track { position: relative; height: 1.25rem; }
+  .track::after { content: ""; position: absolute; left: var(--today); top: -.3rem; bottom: -.3rem;
+                  border-left: 1px solid var(--ink); }
+  .axis .track::after { display: none; }
+  .track > span { position: absolute; top: 50%; transform: translateY(-50%); }
+  .wait { height: .5rem; background: var(--wait); }
+  .runway { height: 0; border-top: 1px dotted var(--muted); }
+  .work { height: .5rem; background: var(--ink); }
+  .track.fix .work { height: .3rem; }
+  .idle { height: 2px; background: var(--wait); }
+  .since { height: 2px; background: var(--muted); }
+  .band { height: .9rem; background: var(--rule); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+  .tick { height: .9rem; border-left: 2px solid var(--ink); }
+  .lanes .empty { font-size: .875rem; padding: .2rem 0; }
+  .rest > summary { font-size: .8rem; color: var(--muted); padding: .1rem 0; }
+  .round { font-size: .8rem; }
+  .pace { font-size: .8rem; color: var(--muted); padding-top: .2rem; }
+  .trends-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr); gap: 1rem 2.5rem; }
+  .scroll { overflow-x: auto; }
+  .scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .trends { border-collapse: collapse; width: 100%; font-size: .8rem; }
+  .trends th, .trends td { text-align: left; padding: .35rem .75rem .35rem 0; border-top: 1px solid var(--rule);
+                           font-weight: 400; white-space: nowrap; vertical-align: top; }
+  .trends thead th, .trends .team th { font-weight: 600; }
+  .trends td { color: var(--muted); }
+  .through { color: var(--ink); }
+  .mark { display: flex; height: .4rem; width: 6rem; margin-bottom: .2rem; }
+  .mark .t { background: var(--ink); }
+  .mark .a { background: var(--muted); opacity: .45; }
+  .around h3 { margin-top: 0; }
+  .around ul { list-style: none; padding: 0; font-size: .85rem; }
+  .around li { border-top: 1px solid var(--rule); padding: .35rem 0; display: grid; grid-template-columns: 1fr auto; }
+  .around li span { color: var(--muted); font-size: .8rem; }
+  .around li span:last-child { grid-column: 2; grid-row: 1; }
   @media (max-width: 720px) {
+    .axis, .lane > summary, .lane.static, .trends-grid { grid-template-columns: minmax(0, 1fr); }
+    .axis { height: 2.2rem; } .axis > span:not(.track) { display: none; }
+    .axis .track { height: 2.2rem; } .axis .track > .start, .axis .track > .end { top: 1.1rem; }
+    .lane .name, .lane .what, .totals span { white-space: normal; }
     .row > details > summary, .parts summary { grid-template-columns: 1rem minmax(0, 1fr); }
     .row > details > summary > span, .parts summary > span { grid-column: 2; }
     .more { padding-left: 1.25rem; }
@@ -95,11 +152,16 @@
     $sentence
     <p class="totals">$totals</p>
     $note
+    $lanes
   </section>
   <section id="roadmap" aria-labelledby="roadmap-heading">
     <h2 id="roadmap-heading">Roadmap</h2>
     <p class="key" tabindex="0" aria-label="Key to the map">$key</p>
     <div class="graph">$graph</div>
+  </section>
+  <section id="trends" aria-labelledby="trends-heading">
+    <h2 id="trends-heading">Merged pull requests per week</h2>
+    $trends
   </section>
   <section id="work" aria-labelledby="work-heading">
     <h2 id="work-heading">Stories and fixes</h2>

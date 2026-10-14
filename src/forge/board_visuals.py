@@ -1,7 +1,7 @@
 """Inline, accessible pictures of the board's machine data."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from html import escape
 from pathlib import Path
 from string import Template
@@ -70,6 +70,175 @@ def timeline(item: dict) -> str:
                    max(1, len(stages)) * 78, ''.join(drawing)))
 
 
+def people(row: dict) -> str:
+    said = " ".join(f"{label} {row[field]}." for field, label in (
+        ("started_by", "Started by"), ("approved_by", "Approved by"), ("developer", "Assigned to"),
+        ("merged_by", "Merged by")) if row.get(field))
+    return f'<p class="people">{escape(said)}</p>' if said else ""
+
+
+def times(row: dict) -> str:
+    seconds = [row.get(f"{kind}_seconds") for kind in ("working", "waiting", "unknown")]
+    if seconds == [None] * 3:
+        return '<p class="times">No time recorded yet</p>'
+    return '<p class="times">Working {} · waiting {} · unknown {}</p>'.format(*map(duration, seconds))
+
+
+def _day(at: datetime) -> str:
+    return f"{at.day} {at:%B}"
+
+
+def _lanes(name: str, heading: str, rows: list[str] | None, empty: str) -> str:
+    """One first-screen list: five rows, then the rest behind "and N more", opening in place."""
+    if rows is None:
+        body = '<p class="empty">Not worked out by this release of Forge.</p>'
+    elif not rows:
+        body = f'<p class="empty">{empty}</p>'
+    else:
+        body = "".join(rows[:5]) + (f'<details class="rest"><summary>and {len(rows) - 5} more</summary>'
+                                    + "".join(rows[5:]) + "</details>" if len(rows) > 5 else "")
+    return f'<div class="lanes" id="{name}"><h2>{heading}</h2>{body}<!-- end {name} --></div>'
+
+
+def first_screen(view: dict, now: datetime, group) -> str:
+    """Needs you, In progress, Blocked or slow and go-live on one time axis with a today line."""
+    from forge.time_records import plain, when
+    team = view["team"]
+    found = {row["id"]: row for parent in view["items"] for row in [parent, *parent["children"]]}
+    plans = {entry["id"]: entry["parts"] for entry in view["dependency_maps"]}
+    going = [row for row in view["items"] if group(row) == "in progress"]
+    needs = [(row, when(row.get("since"))) for row in team.get("needs_you") or []]
+    stuck = [(row, now - timedelta(seconds=row["seconds"]) if row.get("seconds") is not None else None)
+             for row in team.get("blocked") or []]
+    first = {row["id"]: when(row["intervals"][0]["start"]) for row in going if row.get("intervals")}
+    floor = now - timedelta(weeks=6)
+    start = max(min([at for at in [*first.values(), *(at for _, at in needs + stuck)] if at],
+                    default=now - timedelta(days=1)), floor)
+    start = min(start, now - timedelta(hours=1))
+    go = team.get("go_live") or {}
+    soon, late = (when(go[key] + "T12:00:00+00:00") if go.get(key) else None for key in ("earliest", "latest"))
+    end = max(now + (now - start) / 4, late + (late - now) / 10 if late else now)
+    span = (end - start).total_seconds()
+
+    def x(at: datetime) -> float:
+        return 100 * (min(max(at, start), end) - start).total_seconds() / span
+
+    def bar(kind: str, a: datetime, b: datetime) -> str:
+        return f'<span class="{kind}" style="left:{x(a):.2f}%;width:{max(x(b) - x(a), .25):.2f}%"></span>'
+
+    def lane(title: str, words: str, track: str, row: dict | None) -> str:
+        # A story's review rounds sit on its parts, so its detail lists each part's rounds.
+        rounds = [line for owner in ([row, *row.get("children", [])] if row else [])
+                  for line in ((owner is not row and f"{owner['title']}: " or "") + r["line"]
+                               for r in owner.get("rounds") or [])]
+        more = (times(row) + "".join(f'<p class="round">{escape(line)}</p>' for line in rounds)
+                + people(row)) if row else f'<p class="times">{escape(words)}</p>'
+        return (f'<details class="lane"><summary><span class="name" title="{escape(title, quote=True)}">'
+                f'{escape(title)}</span><span class="what">{escape(words)}</span>'
+                f'<span class="track" aria-hidden="true">{track}</span></summary>'
+                f'<div class="more">{more}</div></details>')
+
+    def waiting(row: dict, since: datetime | None) -> str:
+        words = (f"{row.get('reason') or 'Waiting'}, waiting {plain(row.get('waited_seconds'))}"
+                 if since else f"{row.get('reason') or 'Waiting'}, waiting, since unknown")
+        return lane(row["title"], words, bar("wait", since, now) if since else "", found.get(row["id"]))
+
+    def runway(row: dict) -> str:
+        spans, track = [], ""
+        for span in row.get("intervals") or []:
+            a, b = when(span["start"]), when(span["end"])
+            if spans and spans[-1][0] == span["kind"] and spans[-1][2] == a:
+                spans[-1][2] = b
+            else:
+                spans.append([span["kind"], a, b])
+        if spans:
+            track = bar("runway", spans[0][1], now) + "".join(
+                bar({"working": "work", "waiting": "idle"}[kind], a, b) for kind, a, b in spans if kind != "unknown")
+        words = [row["state"].capitalize()]
+        if row["kind"] == "story":
+            parts = plans.get(row["id"], [])
+            words.append(f"{sum(p['status'] == 'Merged' for p in parts)} of {len(parts)} parts done")
+        if row.get("started_by"):
+            words.append(f"started by {row['started_by']}")
+        if spans and spans[0][1] < floor:
+            words.append(f"started {(now - spans[0][1]).days // 7} weeks ago")
+        return lane(row["title"], " · ".join(words), track, row).replace(
+            'class="track"', f'class="track {row["kind"]}"', 1)
+
+    def blocked(row: dict, since: datetime | None) -> str:
+        words = " · ".join(str(part) for part in (row.get("reason", "").capitalize(), row.get("detail"),
+                                                   plain(row.get("seconds"))) if part)
+        return lane(row["title"], words, bar("since", since, now) if since else "", found.get(row["id"]))
+
+    labels = [("start", 0, f"{(now - start).days // 7} weeks ago" if start == floor else _day(start)),
+              ("today", x(now), "Today"), ("end", 100, _day(end))]
+    axis = ('<div class="axis" aria-hidden="true"><span></span><span></span><span class="track">'
+            + "".join(f'<span class="{kind}" style="left:{at:.2f}%">{text}</span>' for kind, at, text in labels)
+            + "</span></div>")
+    status = go.get("status")
+    said = {"range": f"Between {_day(soon)} and {_day(late)}" if soon and late else "",
+            "about": f"About {_day(soon)}; the two pace estimates agree" if soon else "",
+            "done": "Planned work is done"}.get(status, "Not enough history to estimate go-live")
+    if go.get("remaining_parts"):
+        said += f" · {go['remaining_parts']} parts to go"
+    if (go.get("no_plan") or {}).get("count"):
+        said += f" · {go['no_plan']['count']} with no plan yet, unknown"
+    band = (bar("band", soon, late) if status == "range" else bar("tick", soon, soon) if status == "about" else "")
+    pace = team.get("pace") or {}
+    weekly = " · ".join(f"{kind}: " + ", ".join(str(week[kind]) for week in pace.get("weeks", []))
+                        for kind in ("parts", "fixes")) if pace.get("weeks") else ""
+    goal = (f'<div class="lanes" id="go-live"><h2>Pace and go-live</h2><div class="lane static">'
+            f'<span class="name">Go-live</span><span class="what">{escape(said)}</span>'
+            f'<span class="track" aria-hidden="true">{band}</span></div>'
+            + (f'<p class="pace">Merged per week, last six full weeks — {weekly}</p>' if weekly else "")
+            + "<!-- end go-live --></div>")
+    return (f'<div class="runway-axis" style="--today:{x(now):.2f}%">' + axis
+            + _lanes("needs-you", "Needs you", [waiting(*pair) for pair in needs] if team.get("needs_you") is not None
+                     else None, "Nothing needs a person.")
+            + _lanes("in-progress", "In progress", [runway(row) for row in going], "Nothing in progress.")
+            + _lanes("blocked", "Blocked or slow", [blocked(*pair) for pair in stuck]
+                     if team.get("blocked") is not None else None, "Nothing is blocked or slow.")
+            + goal + "</div>")
+
+
+def trends(team: dict) -> str:
+    """Merged pull requests per week for the team and each person, through and around Forge, in
+    the JSON's alphabetical order, beside this week's pull requests that went around Forge."""
+    from forge.time_records import when
+    data, around = team.get("trends"), team.get("around_forge")
+    if data:
+        top = max((w["through"] + w["around"] for row in [data["team"], *(p["weeks"] for p in data["people"])]
+                   for w in row if w), default=0) or 1
+
+        def cells(weeks: list) -> str:
+            return "".join(
+                '<td class="unknown">unknown</td>' if week is None else
+                f'<td><span class="mark" aria-hidden="true"><span class="t" style="width:{100 * week["through"] / top:.1f}%">'
+                f'</span><span class="a" style="width:{100 * week["around"] / top:.1f}%"></span></span>'
+                f'<span class="through">{week["through"]}</span> through, <span class="around">{week["around"]}</span>'
+                " around</td>" for week in weeks)
+        heads = "".join(f'<th scope="col">{_day(when(day + "T00:00:00+00:00"))}</th>' for day in data["weeks"])
+        table = (f'<div class="scroll" tabindex="0" role="region" aria-label="Merged pull requests per week">'
+                 f'<table class="trends"><thead><tr><th scope="col">Week of</th>{heads}</tr>'
+                 f'</thead><tbody><tr class="team"><th scope="row">Team</th>{cells(data["team"])}</tr>'
+                 + "".join(f'<tr class="person"><th scope="row">{escape(p["name"])}</th>{cells(p["weeks"])}</tr>'
+                           for p in data["people"]) + "</tbody></table></div>")
+    else:
+        table = '<p class="empty">GitHub couldn\'t be reached, so the weekly trends aren\'t available.</p>'
+    if around is None:
+        listed = '<p class="empty">Not known: GitHub couldn\'t list every pull request for the last 7 days.</p>'
+    elif not around:
+        listed = '<p class="empty">No pull requests merged around Forge this week.</p>'
+    else:
+        listed = "<ul>" + "".join(
+            f'<li><a href="{escape(pr["url"] or "", quote=True)}">{escape(pr["title"] or "Untitled")}</a> '
+            f'<span>{escape(pr["author"])}</span> <span>{_day(when(pr["merged_at"]))}</span></li>'
+            for pr in around) + "</ul>"
+    return (f'<div class="trends-grid"><div><p class="detail">Dark ink went through Forge, light ink went '
+            f'around it. People are in alphabetical order.</p>{table}</div>'
+            f'<div class="around"><h3>Merged around Forge in the last 7 days</h3>{listed}</div></div>')
+
+
 def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
     """The whole board page, from `machine_board(..., trim=False)` only."""
     from forge import board_graph
@@ -83,24 +252,12 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
                 state if state in ("done", "no plan yet") else
                 "in progress" if state in ("building", "in progress", "ready to merge") else "planned")
 
-    def people(row: dict) -> str:
-        said = " ".join(f"{label} {row[field]}." for field, label in (
-            ("started_by", "Started by"), ("approved_by", "Approved by"), ("developer", "Assigned to"),
-            ("merged_by", "Merged by")) if row.get(field))
-        return f'<p class="people">{escape(said)}</p>' if said else ""
-
     def waits(row: dict) -> str:
         """What a stalled item waits on in forge next's words, its pull request and a story's outcome."""
         url = (row.get("pr") or {}).get("url")
         return ((f'<p class="waits">{escape(row["waits_on"])}</p>' if row.get("stalled") and row.get("waits_on") else "")
                 + (f'<p>Pull request: <a href="{escape(url, quote=True)}">{escape(row["title"])}</a></p>' if url else "")
                 + (f'<p>The story was finished. {escape(row["outcome"])}</p>' if row.get("outcome") else ""))
-
-    def times(row: dict) -> str:
-        seconds = [row.get(f"{kind}_seconds") for kind in ("working", "waiting", "unknown")]
-        if seconds == [None] * 3:
-            return '<p class="times">No time recorded yet</p>'
-        return '<p class="times">Working {} · waiting {} · unknown {}</p>'.format(*map(duration, seconds))
 
     def line(row: dict, name: str) -> str:
         state = (row.get("state") or "unknown").capitalize()
@@ -136,13 +293,15 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
         shown.append(f'<details class="done"><summary>Done ({len(done)})</summary>'
                      + "".join(entry(row) for row in done) + "</details>")
     labels = {"finished_last_7_days": "Finished in the last 7 days"}
-    totals = " · ".join(labels.get(kind, kind.capitalize()) + " — " + "; ".join(
-        f"{name.capitalize()}: {count}" for name, count in counts.items())
+    totals = " ".join(f'<span><b>{labels.get(kind, kind.capitalize())}</b> — ' + escape("; ".join(
+        f"{name.capitalize()}: {count}" for name, count in counts.items())) + "</span>"
         for kind, counts in team["counts"].items())
     return Template((Path(__file__).parent / "board.html").read_text(encoding="utf-8")).substitute(
         updated=f"{now.day} {now:%B %Y} at {now:%H:%M} UTC",
         sentence=f'<p class="sentence">{escape(team["sentence"])}</p>' if team.get("sentence") else "",
-        totals=escape(totals),
+        totals=totals,
+        lanes=first_screen(view, now, group),
+        trends=trends(team),
         note="" if github else ('<p class="note">GitHub couldn\'t be reached, so the list of finished '
                                 "work isn't available. This page shows the saved dates only.</p>"),
         graph=board_graph.dependencies(view["dependency_maps"]),
