@@ -1,6 +1,13 @@
 {
   "base": "225dfa0835a9d03d9a9a59503d961021657194ad",
   "branch": "fix/dead-run-wait-ends",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a138b0-95f2-7380-bee3-108392557790",
+    "head": null,
+    "start": "bb69fca00f43005b7b92c045f9fc88d11c29a6af"
+  },
   "done_when": "A line wait with no admit or leave ends when its process is gone (or at the item's next recorded event), so item times and the board show only real waiting, for new and earlier-adopted repos",
   "kind": "fix",
   "round": 1,
