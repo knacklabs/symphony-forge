@@ -5805,8 +5805,8 @@
       "text": "Folding an open owner wait loses its remaining waiting time",
       "from": "blocking",
       "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tFolding intervals makes recorded story work appear as unknown time\tpr-time-record-summaries",
@@ -5871,8 +5871,8 @@
       "text": "Not done: Legacy Unicode history can exceed the pull request body limit",
       "from": "blocking",
       "item": "pr-time-record-summaries",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/time_records.py\tNot done: The pull request keeps per-round time summaries rather than every event, so a long item never reaches the body limit and keeps its\tpr-time-record-summaries",
