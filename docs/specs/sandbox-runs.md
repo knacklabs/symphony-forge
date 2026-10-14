@@ -70,10 +70,13 @@ branch, run the worker command, stream its output, copy out a bundle, stop. Each
 or another later) is one adapter behind that interface. Forge reads only the fields it uses from the
 provider's replies (principle 7).
 
-**What goes up and what stays.** The sandbox gets the item's whole working folder, including files
-git ignores, such as `.env`, so tests that need local settings work there too. Real keys in those
-files therefore reach the provider; setup lists every ignored file it will send before the team says
-yes. `forge.toml` holds only the provider's name, the sandbox cap and the name of the place the
+**What goes up and what stays.** The sandbox gets the item's working folder, including files git
+ignores, such as `.env`, so tests that need local settings work there too. Three things never go up:
+the `.git` folder (commits travel only in the bundle), any file setup finds holding a GitHub
+credential or a model login, and any path the team lists in `forge.toml` to never send. Setup lists
+every ignored file it will send and every file it leaves out, with the reason, before the team says
+yes; other real keys in ignored files do reach the provider, and setup says so. `forge.toml` holds
+only the provider's name, the sandbox cap, the never-send paths and the name of the place the
 provider key lives (an environment variable or the system keychain entry), never a key. The provider
 key stays on the laptop: the laptop starts and stops sandboxes. The sandbox never gets a GitHub
 credential. `forge doctor` reports a provider key that is missing or found in a tracked file.
@@ -109,14 +112,19 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
 - **Starting fast.** The first run installs what the repo needs from its lockfiles and the test
   setup in `forge.toml`; the provider keeps that sandbox's disk, so later rounds start in seconds.
 - **Cost.** Forge shows the minutes used; spending limits live in the provider's own dashboard.
-- **When something fails.** If the provider is down, its spending limit is reached, or a sandbox
-  stops mid-round, the round goes back to the laptop's line by itself, and its pane row says why in
-  one line. Work never stops.
+- **When something fails.** If the provider is down or its spending limit is reached before a round
+  starts, the round goes to the laptop's line by itself, and its pane row says why in one line. If a
+  sandbox stops mid-round, Forge collects what it left and the next round runs on the laptop. If the
+  laptop loses touch with a running sandbox, that item waits, with the reason in its row, until Forge
+  has stopped the remote round or collected its result; one item never runs two rounds at once.
+  Other items keep using the laptop, so work never stops.
 - **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait at the
   provider. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
   rounds it collected.
-- **Turning it off.** A fix turns it off, and Forge deletes the repo's sandboxes and their disks at
-  the provider (the code copy and any `.env`) and says what it removed.
+- **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
+  lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
+  it delete the repo's sandboxes and their disks at the provider (the code copy and any `.env`), and it
+  says what it removed. No commit is lost.
 
 ## Out of scope
 
@@ -128,11 +136,11 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
 
 1. With sandbox runs off (the default), nothing changes for new or existing repos.
 2. With them on and the agent line full, and the provider reachable, the next build round runs in the sandbox, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when the provider fails or its limit is reached, the round returns to the laptop's line and says why.
-3. The sandbox never holds a GitHub credential, and a bundle with commits outside the round's branch is refused with the reason.
+3. The sandbox never holds a GitHub credential or the `.git` folder, setup leaves out files holding a GitHub credential or a model login and says which, and a bundle with commits outside the round's branch is refused with the reason.
 4. A sandbox run shows in the machine view with its provider, time and output, and `forge stop` ends it.
 5. The agent offers it when work waits for the laptop and sets it up with the developer (provider, key in the keychain, the ignored files that will go up, a test run); `forge.toml` names where the key lives and never holds a key; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
-7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off deletes the repo's sandboxes and disks at the provider and says what it removed.
+7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then deletes the repo's sandboxes and disks at the provider and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
 8. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Success measure

@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T05:26:10.478333+00:00
-seconds: 27.76
-read_hash: 635e33e81bfd2f2643c55c7dc999129d523a3019
-round: 3
-passed: yes
-doc_seen: 635e33e81bfd2f2643c55c7dc999129d523a3019
+read_at: 2026-10-14T06:15:10.420507+00:00
+seconds: 359.24
+read_hash: 3879e64d779e0f421710aab4318bb83b42685ff3
+round: 4
+passed: no
+doc_seen: 3879e64d779e0f421710aab4318bb83b42685ff3
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: f71b890272ee2de83a21c0eacd0f7de9f1828f92
+notes_seen: d0a23923752398a7798a2718550a4f94a9db7dda
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -58,3 +58,25 @@ Only a genuine trade-off goes to the human, as a question with options.
 ## Round 3
 
 No findings.
+
+## Round 4
+
+5. Blocking: Uploading the whole ignored working folder contradicts the credential exclusions.
+   Raise: Security. [Lines 73–79](/docs/specs/sandbox-runs.md:73) require copying `.env` and its real keys while keeping provider and GitHub credentials off the sandbox. A developer can normally keep either credential alongside test settings in `.env`; [`.gitignore`](/.gitignore:2) permits that file locally. Approving its filename does not resolve which contents must be excluded or when transfer must refuse.
+   Gain 5, Work 2, Harm 4
+   Disposition: cut
+
+6. Blocking: Automatic local fallback can start a second worker while the disconnected remote worker still runs.
+   Raise: Plan gap. [Lines 112–117](/docs/specs/sandbox-runs.md:112) require local retry when the provider is unreachable and separately allow remote execution to survive a disconnected laptop. Losing connectivity therefore does not establish that the remote round stopped. The spec supplies neither confirmed termination before retry nor a rule rejecting its later result. Current [worker.py](/src/forge/worker.py:145) explicitly permits only one round per item.
+   Gain 4, Work 2, Harm 3
+   Disposition: cut
+
+7. Blocking: Turning sandbox runs off can delete the only copy of outstanding worker commits.
+   Raise: Data loss. [Lines 115–119](/docs/specs/sandbox-runs.md:115) retain uncollected results at the provider but require deleting all repo sandboxes and disks when disabled. Disabling while a round is running or awaiting collection is normal use. No rule requires collecting completed commits before deletion or settling what happens to active rounds. Unlike this deletion, local [stop](/src/forge/machine.py:388) terminates processes without erasing their working folders.
+   Gain 5, Work 2, Harm 4
+   Disposition: cut
+
+8. Advisory: Simpler: Claude Agent SDK → the existing headless Claude Code command.
+   Raise: Plan gap. [Lines 82–83](/docs/specs/sandbox-runs.md:82) describe the Claude Agent SDK as the driver Forge already uses locally. Current [worker.py](/src/forge/worker.py:628) invokes `claude -p` with streamed JSON. The SDK introduces a separate integration where the existing command already provides the stated worker and output behaviour.
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
