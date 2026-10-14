@@ -1,6 +1,13 @@
 {
   "base": "30983d7a6bfcb5ac51a62f73a6ac8a8c2844a8d3",
   "branch": "fix/board-json-under-5s",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13aed-0e28-7840-a62a-973ab00602cf",
+    "head": null,
+    "start": "d0533b1a4409f3d87b7da54cc7abd53853e2bcb7"
+  },
   "done_when": "forge board --json finishes in under 5 seconds on Forge's own repo once GitHub's answers are cached, with the same output as before",
   "kind": "fix",
   "round": 1,
