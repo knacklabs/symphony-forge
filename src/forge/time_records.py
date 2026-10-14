@@ -465,6 +465,7 @@ def from_body(body: str) -> dict[str, Any]:
                         for kind in ("working", "waiting", "unknown"))):
             summary["folded"] = None
         merged({}, data)
+        "".join((data.get("summary") or {}).get(field) or "" for field in ("started_by", "approved_by"))
         (data.get("ready") or {}).get("commit")
         "".join([data.get("legacy_text") or ""])
         return data
@@ -589,7 +590,11 @@ def _summarised(data: dict[str, Any], summary: dict[str, Any] | None, rows: dict
     part["rounds"] = [_short(entry) for entry in part["rounds"]]
     whole = _summed(summary, part) if summary else part
     kept = {name: whole[name] for name in ("time_breakdown", *SUMMED, "rounds", "intervals", "seen", "known")}
-    return ({**kept, "until": until.isoformat(), "round": number, "folded": (summary or {}).get("folded")},
+    # The summary replaces these events, including actors whose original commits may be gone.
+    people = {field: (summary or {}).get(field) or next(
+        (event.get("by") for event in past["events"] if event.get("event") == name), None)
+        for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
+    return ({**kept, **people, "until": until.isoformat(), "round": number, "folded": (summary or {}).get("folded")},
             {name: [r for r in rows[name] if not _settled(r, number, until)] for name in rows})
 
 

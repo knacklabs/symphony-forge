@@ -120,8 +120,9 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
 
 def people(body: str) -> Item:
     """Original actors survive a deleted squash branch in the item's shared evidence."""
-    events = time_records.from_body(body).get("events", [])
-    return {field: next((event.get("by") for event in events if event.get("event") == name), None)
+    record = time_records.from_body(body)
+    events, summary = record.get("events", []), record.get("summary") or {}
+    return {field: summary.get(field) or next((event.get("by") for event in events if event.get("event") == name), None)
             for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
 
 

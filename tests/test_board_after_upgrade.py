@@ -9,6 +9,9 @@ checks on pushed work heads, and puts a manual fix-prefixed PR before Forge
 items. These protect the cutoff, complete CI waits, and retry completion.
 A second story's squashed approval survives only in its pull ref; the board
 must show that actor and the story's own rebuilt history, even without parts.
+Local observations must join that shared history even when the older body has
+no history section. A long squashed item's genuine review commits force the
+shared record to shorten its older detail without losing the original starter.
 """
 import json
 import re
@@ -187,7 +190,7 @@ class History:
         self.repo.git("config", "user.email", author.lower().replace(" ", "-") + "@example.test")
         return self.env.commit(where, path, value, message)
 
-    def item(self, name, number, days, merge="squash", task=None, no_pr=False):
+    def item(self, name, number, days, merge="squash", task=None, no_pr=False, long_history=False):
         item = "SHOP/" + task if task else name
         branch = "task/SHOP-" + task if task else "fix/" + name
         path = f".factory/stories/SHOP/tasks/{task}.json" if task else f".factory/fixes/{name}.json"
@@ -202,8 +205,9 @@ class History:
         self.commit(where, path, json.dumps(state), "Start the fix: " + name, begin)
         self.commit(where, name + ".py", "print('first')\n", "Write the greeting", begin + timedelta(hours=1))
         heads = []
-        for round_, outcome in enumerate(("blocked", "clean"), 1):
-            at = begin + timedelta(days=round_)
+        outcomes = ["blocked"] * 7 + ["clean"] if long_history else ["blocked", "clean"]
+        for round_, outcome in enumerate(outcomes, 1):
+            at = begin + (timedelta(hours=round_ * 8) if long_history else timedelta(days=round_))
             reviewed = self.repo.git("rev-parse", "HEAD", cwd=where)
             if number == 11:
                 # Close pushes this work before reviewing it. Its required
@@ -214,6 +218,12 @@ class History:
                                         for run in GREEN]
             findings = ([{"priority": "P1", "title": "Greeting misses the reader", "file": name + ".py", "line": 1,
                           "body": "Gain 3, Work 2, Harm 3\nThe greeting is missing."}] if round_ == 1 else [])
+            if long_history and outcome == "blocked":
+                findings = [{"priority": "P1", "title": f"Round {round_} greeting omits example {index}",
+                             "file": name + ".py", "line": index + 1,
+                             "body": "Gain 3, Work 2, Harm 3\n" +
+                             "The greeting must describe how readers recover their saved text. " * 4}
+                            for index in range(12)]
             state.update(status="fixing" if findings else "waiting for checks", round=round_,
                          review={"commit": reviewed, "status": outcome, "findings": findings,
                                  "blocking_level": "P1", "dismissals": []})
@@ -229,8 +239,8 @@ class History:
                 self.checks[head].extend([{**tests, "name": "tests (linux)"},
                                           {**tests, "name": "tests (windows)"}])
             self.repo.git("push", "-q", "origin", branch)
-            if round_ == 1:
-                self.commit(where, name + ".py", "print('hello reader')\n", "Repair the greeting",
+            if outcome == "blocked":
+                self.commit(where, name + ".py", f"print('hello reader {round_}')\n", "Repair the greeting",
                             at + timedelta(hours=1))
         head = heads[-1]
         files = [{"path": path} for path in self.repo.git("diff", "--name-only", state["base"], head).splitlines()]
@@ -247,10 +257,12 @@ class History:
             self.repo.git("worktree", "remove", str(where))
             self.repo.git("branch", "-D", branch)
             self.repo.git("push", "-q", "origin", "--delete", branch)
+        old_body = ("Owner notes remain.\n<!-- forge:begin -->\n## How it went\n\n"
+                    "Older measurements are unknown.\n<!-- forge:end -->\n") if long_history else "Owner notes remain.\n"
         pr = {"number": number, "headRefName": branch, "headRefOid": head,
                         "files": files,
                         "baseRefName": "main", "state": "MERGED" if merged else "OPEN",
-                        "title": "Readers see " + name, "body": "Owner notes remain.\n", "isDraft": False,
+                        "title": "Readers see " + name, "body": old_body, "isDraft": False,
                         "mergedAt": merged.isoformat() if merged else None,
                         "mergedBy": {"login": "merger", "name": "Human Merger"} if merged else None,
                         "author": {"login": "starter", "name": "Original Starter"},
@@ -321,8 +333,21 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     history.item("inside-cut", 14, 41)
     history.item("exact-cut", 18, 42)
     history.item("outside-cut", 15, 43)
+    history.item("long-history", 21, 10, long_history=True)
     opened, _ = history.item("ready-before-upgrade", 16, None)
     history.item("open-part", 17, None, task="T2", no_pr=True)
+    # Historical local logs are evidence to merge, never a prebuilt PR record.
+    # Neither this observation nor its 90 seconds can be reconstructed from Git.
+    local_at = (NOW - timedelta(days=25, hours=12)).isoformat()
+    logs = history.main / ".git/forge"
+    logs.mkdir(parents=True, exist_ok=True)
+    local_event = {"id": "deleted-local-test", "item": "deleted", "round": 1,
+                   "event": "run end", "kind": "test", "at": local_at, "outcome": "passed"}
+    local_timing = {"item": "deleted", "round": 1, "step": "test run", "start": local_at,
+                    "seconds": 90, "outcome": "passed"}
+    for filename, observation in (("events.jsonl", local_event), ("timings.jsonl", local_timing)):
+        with (logs / filename).open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(observation) + "\n")
     history.publish()
     marker = history.main / ".git/forge/backfill-pending"
     failing = repo.bin / ("history-unreachable" if failure == "read" else "history-reject-edit")
@@ -349,6 +374,11 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     assert history.record(19) is None, "A manual fix-prefixed PR has no Forge time story to rebuild"
     assert history.stored()[19]["body"] == "Manual owner notes.\n"
     assert history.record(18), "A Sunday run includes a merge exactly 42 days earlier"
+    assert history.record(21)["summary"], "The long history must exercise actual record shortening"
+    assert rows(board(repo))["long-history"]["started_by"] == "Original Starter", \
+        "Shortening preserves the original starter after squash and branch deletion"
+    assert local_event in history.record(11)["events"], "Backfill publishes local events in the readable record"
+    assert local_timing in history.record(11)["timings"], "Backfill publishes measured local time too"
     assert sum(timing["seconds"] for timing in history.record(11)["timings"]
                if timing["step"] == "CI wait") == 720, "Both work-head and review-head checks bound CI waits"
     for number in (10, 11, 12, 13, 14, 16, 18):
@@ -390,7 +420,7 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
         assert row["merged_at"] == pr["mergedAt"]
         assert row["gates"]["review"]["status"] == "clean"
         assert row["rebuilt"] is True
-        assert row["working_seconds"] == 0
+        assert row["working_seconds"] == (90 if item == "deleted" else 0)
         assert row["unknown_seconds"] > 0
         assert row["time_breakdown"]["building"] is None
         assert row["time_breakdown"]["reviewing"] is None
@@ -421,6 +451,10 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     repo.path = clone
     fresh = rows(board(repo))[opened]
     assert fresh["stage"] == "ready"
+    shared = rows(board(repo))
+    assert shared["deleted"]["time_breakdown"]["own_tests"] == 90, "A teammate sees merged local measurements"
+    assert shared["long-history"]["started_by"] == "Original Starter", "Shortening preserves the original starter"
+    assert shared["long-history"]["rebuilt"] is True
     assert not (clone / ".git/forge/events.jsonl").exists()
     assert not (clone / ".git/forge/timings.jsonl").exists()
     assert not (clone / ".git/forge/ready" / (opened + ".json")).exists()

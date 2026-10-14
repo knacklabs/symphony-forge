@@ -141,7 +141,9 @@ def seed(body: str, record: dict[str, Any]) -> str:
         body = body.rstrip() + "\n\n<!-- forge:begin -->\n<!-- forge:end -->\n"
     def replace(block: re.Match[str]) -> str:
         text = re.sub(r"<!-- forge:time-record \{.*?\} -->\n?", "", block[0], flags=re.S)
-        return text.replace("<!-- forge:end -->", marker + "<!-- forge:end -->", 1)
+        text, count = time_records.HISTORY_SECTION.subn(
+            lambda section: section[0].rstrip() + "\n\n" + marker, text, count=1)
+        return text if count else text.replace("<!-- forge:end -->", "## How it went\n\n" + marker + "<!-- forge:end -->", 1)
     return re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", replace, body, count=1, flags=re.S)
 
 
