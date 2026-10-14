@@ -529,6 +529,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/item-cost.md\tNot done: measured run coverage mixes rounds, attempts and items\titem-cost-spec",
+      "kind": "bug",
+      "path": "docs/specs/item-cost.md",
+      "line": 41,
+      "text": "Not done: measured run coverage mixes rounds, attempts and items",
+      "from": "blocking",
+      "item": "item-cost-spec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/specs/sandbox-runs.md\tNot done: proof list\tsandbox-runs-spec",
       "kind": "bug",
       "path": "docs/specs/sandbox-runs.md",
