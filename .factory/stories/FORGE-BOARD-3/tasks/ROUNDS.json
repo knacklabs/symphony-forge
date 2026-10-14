@@ -70,7 +70,7 @@
     "id": "0dbad534-57f6-440d-8c5b-1118e5cb651a",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -83,10 +83,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "de7d78d72d3263889f1e691d992083c43dda0029",
-    "keys": {},
-    "round": null
+    "close": "8d35f82d-c3c2-4e56-887b-76a0b37dbbc9",
+    "head": "f79839a5fc29cab07109c2d5ce2796ca05962e9c",
+    "keys": {
+      "the review finding \"Compacted rounds expose aggregate findings as individual round data\" in src/forge/time_records.py": 1,
+      "the review finding \"Unneeded board runway test edit is outside this part's scope\" in tests/test_board_runway.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
