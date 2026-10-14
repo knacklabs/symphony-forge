@@ -48,13 +48,13 @@ The owner chose to build it in full now (14 October 2026).
 The owner chose each of these on 14 October 2026:
 
 1. **What moves: the whole worker.** Claude Code or Codex runs the full build round in the sandbox:
-   it clones the branch, edits, runs the worker's tests and commits. The coordinator, the cold reads
+   it gets the item's whole working folder, edits, runs the worker's tests and commits. The coordinator, the cold reads
    and close stay on the laptop.
 2. **GitHub access: the laptop pushes.** The sandbox holds no GitHub credential. It returns its
    commits as a git bundle, and the laptop checks the bundle (the right branch, only new commits on
    top of the round's start) and pushes it.
-3. **Model access: the owner's plan login.** The sandbox uses the Claude or ChatGPT plan login from
-   the laptop. Before Forge relies on it, the first part of the work checks each plan's terms for use
+3. **Model access: the owner's plan login.** Forge carries the laptop's current Claude or ChatGPT
+   plan login into each run and wipes it when the run ends, so nobody signs in again. Before Forge relies on it, the first part of the work checks each plan's terms for use
    on a remote machine. Where the terms forbid it, the repo's own API keys are the fallback.
 4. **When remote: only when the laptop is full.** A build round runs locally while the agent line has
    a free place. When the line is full, the next round goes to the sandbox instead of waiting. The
@@ -70,12 +70,20 @@ branch, run the worker command, stream its output, copy out a bundle, stop. Each
 or another later) is one adapter behind that interface. Forge reads only the fields it uses from the
 provider's replies (principle 7).
 
-**Secrets stay out of git and off the sandbox where they can.** `forge.toml` holds only the
-provider's name, the sandbox cap and the name of the place the key lives (an environment variable or
-the system keychain entry), never a key. The provider key stays on the laptop: the laptop calls the
-provider to start and stop sandboxes. The sandbox receives only the model login for its run, removed
-when the run ends, and never a GitHub credential. `forge doctor` reports a key that is missing or
-found in a tracked file.
+**What goes up and what stays.** The sandbox gets the item's whole working folder, including files
+git ignores, such as `.env`, so tests that need local settings work there too. Real keys in those
+files therefore reach the provider; setup lists every ignored file it will send before the team says
+yes. `forge.toml` holds only the provider's name, the sandbox cap and the name of the place the
+provider key lives (an environment variable or the system keychain entry), never a key. The provider
+key stays on the laptop: the laptop starts and stops sandboxes. The sandbox never gets a GitHub
+credential. `forge doctor` reports a provider key that is missing or found in a tracked file.
+
+**Forge relays every message.** The coordinator never talks to the sandbox agent directly; it runs
+`forge work` as it does today. Inside the sandbox the worker runs under the same driver Forge uses
+locally (the Claude Agent SDK or the Codex app server). Forge on the laptop connects to it through the
+provider's command stream, so `forge work --note`, a worker's question, the live steps in the pane and
+`forge stop` work exactly as for a local round, for Claude and Codex alike. Claude Remote Control is
+not used.
 
 **The round's result comes back whole.** At the end of a round the sandbox returns two things: the
 git bundle and the worker's result, which is the same record a local round writes (done, a question
@@ -83,25 +91,49 @@ for the owner, or stuck, with its text). The laptop records that result exactly 
 so `forge work --note`, Needs you and close work the same for local and remote rounds. A sandbox that
 stops without a result counts as a failed round with the reason, and the next round can run.
 
-**What the team sees.** The board's machine view and `forge lanes --json` show a sandbox run in its
-own lane, with its provider, its elapsed time and its output. `forge stop` stops a sandbox run like a
-local one. The item's "How it went" records the round as a sandbox round, with its minutes.
+## The experience
+
+Two people live with this: a developer, who runs Forge through Claude Code and wants her stories to
+finish sooner without extra steps, and her team lead, who owns the provider account and the bill.
+
+- **Meeting it.** When work waits for a free place on the laptop, `forge next` says how many runs are
+  waiting and that sandbox runs could start them now, and the agent offers it once. On yes it walks
+  the developer through choosing a provider, adding the key to the keychain, the list of ignored
+  files that will go up, and one test run; then a fix turns it on.
+- **Teammates.** Nothing changes for a teammate until their laptop is full. Then the agent says the
+  repo uses sandbox runs and asks for the team's provider key, which it keeps in that laptop's
+  keychain. Without a key their work stays local.
+- **While a round runs.** The Forge pane's Machine tab shows a sandbox round as an ordinary row (live
+  steps, `o` for output, `s` to stop) with an "in sandbox" tag and its minutes. Nothing new to learn.
+  The item's "How it went" records the round as a sandbox round, with its minutes.
+- **Starting fast.** The first run installs what the repo needs from its lockfiles and the test
+  setup in `forge.toml`; the provider keeps that sandbox's disk, so later rounds start in seconds.
+- **Cost.** Forge shows the minutes used; spending limits live in the provider's own dashboard.
+- **When something fails.** If the provider is down, its spending limit is reached, or a sandbox
+  stops mid-round, the round goes back to the laptop's line by itself, and its pane row says why in
+  one line. Work never stops.
+- **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait at the
+  provider. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
+  rounds it collected.
+- **Turning it off.** A fix turns it off, and Forge deletes the repo's sandboxes and their disks at
+  the provider (the code copy and any `.env`) and says what it removed.
 
 ## Out of scope
 
 - Running the coordinator, cold reads or close's review in a sandbox.
-- Runs that continue while the laptop is off; the laptop pushes every round.
+- Pushing while the laptop is asleep; results wait at the provider until it wakes.
 - One shared Forge account for all repos.
 
 ## Acceptance criteria
 
 1. With sandbox runs off (the default), nothing changes for new or existing repos.
-2. With them on and the agent line full, the next build round runs in the sandbox, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place.
+2. With them on and the agent line full, and the provider reachable, the next build round runs in the sandbox, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when the provider fails or its limit is reached, the round returns to the laptop's line and says why.
 3. The sandbox never holds a GitHub credential, and a bundle with commits outside the round's branch is refused with the reason.
 4. A sandbox run shows in the machine view with its provider, time and output, and `forge stop` ends it.
-5. The repo turns it on and off in `forge.toml`, which names where the key lives and never holds a key; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback.
+5. The agent offers it when work waits for the laptop and sets it up with the developer (provider, key in the keychain, the ignored files that will go up, a test run); `forge.toml` names where the key lives and never holds a key; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.
-7. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
+7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off deletes the repo's sandboxes and disks at the provider and says what it removed.
+8. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Success measure
 
