@@ -606,6 +606,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/backfill.py\tNot done: rebuilt story history reaches the board\tFORGE-BOARD-2/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 114,
+      "text": "Not done: rebuilt story history reaches the board",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/backfill.py\tNot done: the exact 42-day cut\tFORGE-BOARD-2/BACKFILL",
       "kind": "bug",
       "path": "src/forge/backfill.py",
@@ -1053,6 +1064,17 @@
       "text": "Not done: teammates see the current PR time record",
       "from": "blocking",
       "item": "FORGE-BOARD-2/RECORD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: the exact-cut item's rebuilt time is visible on the board\tFORGE-BOARD-2/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 255,
+      "text": "Not done: the exact-cut item's rebuilt time is visible on the board",
+      "from": "blocking",
+      "item": "FORGE-BOARD-2/BACKFILL",
       "status": "open",
       "closed_by": null
     },
