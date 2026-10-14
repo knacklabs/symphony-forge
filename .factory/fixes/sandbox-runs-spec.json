@@ -20,8 +20,8 @@
       "gain": 4,
       "harm": 3,
       "line": 4,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
       "round": 1,
       "security": false,
       "title": "Not done: sandbox-runs.md is confirmed instead of draft",
@@ -33,8 +33,8 @@
       "gain": 4,
       "harm": 2,
       "line": 237,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
       "round": 1,
       "security": false,
       "title": "Not done: proof list",
@@ -46,8 +46,8 @@
       "gain": 4,
       "harm": 3,
       "line": 44,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
       "round": 1,
       "security": false,
       "title": "Overload payback contradicts the stated build effort",
@@ -59,7 +59,23 @@
     "branch_diff": "718d4312418c011e64d63426e14917278a5b13b444c17896cd071a7fda16c84c",
     "changed": "5cb97cba984076aec90c299fa6ea097080b6f0db6d9f8596ca0e4d15f45cbabe",
     "commit": "c0d3def0227360a47800b5d16c6b7510dcb57fe6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 1, Harm 3\nRaise: Not done. The required deliverable is a draft viability spec, but `status: confirmed` records it as an approved decision. The text also says the owner chose to build it in full now, so the branch does not deliver the requested draft before the build decision.",
@@ -93,9 +109,12 @@
       }
     ],
     "id": "7611fa87-bb7c-49a3-8a3d-d1823a7628d6",
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "docs/specs/sandbox-runs.md"
+  ],
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T05:18:07.998852+00:00",
@@ -109,9 +128,13 @@
   "stop": {
     "area": "docs/specs/sandbox-runs.md",
     "at": "2026-10-14T09:01:13.344755+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "docs/specs/sandbox-runs.md",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "7b903314-bc21-4399-a388-728427ccff0d"
+    "reason": "Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+    "wait_id": "7b903314-bc21-4399-a388-728427ccff0d",
+    "worker_round": null
   },
   "why": "Owner wants Forge to run build rounds in remote sandboxes so one laptop is not the limit; before any build, a measured viability spec must say how much it helps and how it would work"
 }
