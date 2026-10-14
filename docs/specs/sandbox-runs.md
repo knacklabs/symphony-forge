@@ -166,8 +166,9 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   steps, `o` for output, `s` to stop) with an "in sandbox" tag and its minutes. Nothing new to learn.
   The item's "How it went" records the round as a sandbox round, with its minutes.
 - **Starting.** Each run gets a fresh sandbox, used once and then removed, from the repo's ready
-  image, which already has the tools and packages installed; with shared package caches, a run starts
-  in about a minute and never installs dependencies again.
+  image, which already has the tools and packages installed, so a run starts in about a minute. A test
+  command that installs packages itself still runs as written; it finds them in the shared package
+  cache, so nothing is downloaded again.
 - **Cost.** Forge shows the minutes and credits used; buying credits, the balance and limits live on
   Mainline's dashboard, and the lead gets an email at 80% used and at zero.
 - **Credits run out.** No new remote run starts at zero. Running rounds may go on for at most one more
