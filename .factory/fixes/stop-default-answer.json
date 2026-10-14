@@ -1,0 +1,83 @@
+{
+  "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
+  "branch": "fix/stop-default-answer",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12ab4-c616-7be1-b502-6c42549052c8",
+    "head": null,
+    "start": "0ff299b630d1cb7108919b975b38c3a61108f501"
+  },
+  "done_when": "When a three-rounds stop gets no answer in 30 minutes, Forge records the repo's default choice (narrow to the Done-when lines and file each open finding as a follow-up fix, set once in forge.toml and on by default for new and upgraded repos), carries on, and the owner can reverse it later",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/nextstep.py",
+    "src/forge/templates/skill.md",
+    "src/forge/worker.py",
+    "tests/test_stop_default_answer.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a2574785e425400f2bb41af75fd26336b30e513150d0aa321a63986c2ab49fff",
+    "changed": "828c297f9bbfa8d51bd0af3a74bac657890ede149fa1411390e07ddd0ce11526",
+    "commit": "6407f63e0090b9066e4a8af71fcd6c37980d0662",
+    "dismissals": [],
+    "findings": [],
+    "id": "d7d63d69-aea5-405b-bbfd-3dce5c7b96f5",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:30:55.492924+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T10:52:52.020882+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:13:54.386843+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:41:44.269070+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:22:38.950401+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:54:08.931913+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:49:32.085187+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:46:47.665015+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T23:47:42.124049+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T00:05:05.523520+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-11T19:49:32.094934+00:00",
+    "choice": "accept",
+    "file": "src/forge/worker.py",
+    "reason": "Coordinator decision under the owner's bar (Gain 2, Work 2, Harm 2): an owner choice made during the running narrowed round is not heard by that round; the result is reversible by design; recorded as lived-with with a follow-up to apply a choice recorded during a running round before land merges",
+    "wait_id": "cb94eaca-7336-44f8-a384-c9e87d4243c5"
+  },
+  "why": "A three-rounds stop waits for the owner overnight, 6 to 8 hours each time, while nothing moves",
+  "worker": "codex"
+}

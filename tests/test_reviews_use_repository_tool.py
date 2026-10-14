@@ -28,7 +28,7 @@ def test_6_close_uses_repository_tool_without_model_or_effort_overrides(env, fam
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == family
-    assert options["--max-priority"] == ("P0" if light else "P3")
+    assert options["--max-priority"] == "P3"  # the light review's level applies after scoring
     assert "--model" not in options and "--thinking" not in options
 
 

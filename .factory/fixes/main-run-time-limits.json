@@ -1,0 +1,29 @@
+{
+  "base": "85531bb0524852ddf4ac994ed6fbe3ab592a56cb",
+  "branch": "fix/main-run-time-limits",
+  "done_when": "Main's full test run gives Linux and macOS groups 20 minutes and Windows groups 35, so each group finishes within its limit, and the job-budget test checks those limits",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "30ffa1f19353231d8344a21d4260b34a9c922d45ce3d6f50e462064a5a47f635",
+    "changed": "08c483eb2211793e64ffdffbbef9ff85f3823bf396b687491ee1ea63da18d677",
+    "commit": "df6f86dc383caa235d74edd4386fff78bc89643e",
+    "dismissals": [],
+    "findings": [],
+    "id": "c9fd3232-e85f-4077-9805-bda8a2089d21",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T06:40:33.127775+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T06:42:15.043953+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Main's full test run never finishes: every platform's groups hit their time limit (Linux and macOS 10 minutes, Windows 20), which GitHub reports as cancelled, so main has had no complete run for a day"
+}

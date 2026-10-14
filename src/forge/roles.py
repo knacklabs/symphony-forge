@@ -33,7 +33,8 @@ ROLES = {
     "worker": ("build", "Builds a bounded Forge task or fix end to end.", BUILD),
     "coder": ("build", "Builds server-side APIs, data and business logic for a bounded task.",
               BUILD + " Trace every caller of what you change and keep validation and error handling."),
-    "frontend": ("build", "Builds frontend screens and interaction for a bounded task.",
+    "fixer": ("lite", "Builds a bounded Forge fix end to end.", BUILD),
+    "frontend": ("design", "Builds frontend screens and interaction for a bounded task.",
                  BUILD + " Keep keyboard access, labels and contrast, and handle loading, error and "
                          "empty states."),
     "tester": ("build", "Writes and fixes automated tests for a bounded task.",
@@ -44,6 +45,10 @@ ROLES = {
                            "must pass unchanged."),
     "explorer": ("explore", "Explores the codebase and traces dependencies without changing files.",
                  "Answer the question you were handed by reading the repo. " + READ_ONLY),
+    "reader": ("grill", "Cold reads a plan for blocking defects without changing files.",
+               "Cold read the plan you were handed against the repo rules and standards. Report "
+               "only blocking defects with distinct text and new evidence; do not repeat settled "
+               "findings. If there are none, return exactly No findings. " + READ_ONLY),
     "planner": ("design", "Turns an approved story into bounded tasks with their tests.",
                 "Split the approved story into the fewest tasks that each prove Done-when items end "
                 "to end, naming each task's Scope and tests. Plan in plain English. " + READ_ONLY),
@@ -67,14 +72,17 @@ def _family(model: str) -> str:
     return "claude" if re.match(r"claude|opus|sonnet|haiku|fable", model) else "codex"
 
 
-def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
+def _chosen(cfg: dict[str, Any], kind: str, family: str, building: bool = False) -> tuple[str, str]:
     """(model, effort) for a role on this host; "" leaves it out so the session's own applies."""
     models = cfg.get("models", {})
+    if building and kind == "design":  # the frontend role builds on the design model
+        entry = repo.design_models(cfg, family)
+        return entry["model"], "max" if family == "claude" and entry["effort"] == "ultra" else entry["effort"]
     if kind == "explore" and kind not in models:
         kind = "lite"
     if family == "claude":
         entry = (repo.CLAUDE_GRILL_DEFAULT if kind == "review" else
-                 repo.models(cfg, "grill", family) if kind == "design" else
+                 repo.models(cfg, "grill", family) if kind in ("design", "grill") else
                  repo.worker_models(cfg, kind, family))
         effort = entry.get("effort", "")
         return entry.get("model", ""), "max" if effort == "ultra" else effort
@@ -94,13 +102,16 @@ def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     wanted = {}
     for name, (kind, description, instructions) in ROLES.items():
-        model, effort = _chosen(cfg, kind, "codex")
+        building = instructions.startswith(BUILD)
+        model, effort = _chosen(cfg, kind, "codex", building)
+        if name in ("worker", "fixer") and not model:  # the built-in model forge work names
+            model, effort = repo.worker_models(cfg, kind, "codex").values()
         wanted[f".codex/agents/{name}.toml"] = "".join([
             f"# {MARK}\n", f"name = {json.dumps(name)}\n", f"description = {json.dumps(description)}\n",
             f"model = {json.dumps(model)}\n" * bool(model),
             f"model_reasoning_effort = {json.dumps(effort)}\n" * bool(effort),
             f"developer_instructions = {json.dumps(instructions)}\n"])
-        model, effort = _chosen(cfg, kind, "claude")
+        model, effort = _chosen(cfg, kind, "claude", building)
         wanted[f".claude/agents/{name}.md"] = "".join([
             f"---\n# {MARK}\n", f"name: {name}\n", f"description: {json.dumps(description)}\n",
             # Quoted, so no value from forge.toml can add a line such as tools to the frontmatter.

@@ -26,7 +26,7 @@ ROUTES = {
     "migrate": "migrate", "upgrade": "upgrade", "next": "nextstep", "board": "board", "lanes": "machine", "stop": "machine",
     "story new": "story", "story done": "story", "read": "story",
     "task start": "task", "fix start": "task", "fix allow-large": "task", "fix amend": "task",
-    "work": "worker", "ask": "ask", "close": "close", "merge": "merge", "land": "land",
+    "work": "worker", "handback": "native", "close": "close", "merge": "merge", "land": "land",
     "spec save": "records", "spec confirm": "records", "spec measure": "records",
     "spec payback": "payback", "decision new": "records", "decision accept": "records",
     "roadmap add": "records", "roadmap retire": "records",

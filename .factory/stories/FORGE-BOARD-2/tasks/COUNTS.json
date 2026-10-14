@@ -1,0 +1,105 @@
+{
+  "branch": "task/FORGE-BOARD-2-COUNTS",
+  "flagged": [
+    "docs/specs/agent-merge.read.md",
+    "src/forge/board.py",
+    "src/forge/board_facts.py",
+    "src/forge/nextstep.py",
+    "tests/test_board_counts.py",
+    "tests/test_board_github_once.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98c7f1cec29e8789566c5875bb126d0afce9c4a1ca99585588dfecef71de8907",
+    "changed": "4e45e8c7e341831ab2d13cee76d861f67fa11da1705b16ea248dcabdcd5693ad",
+    "commit": "44d2745a2685326ed5bd2bd379a4e5a338769131",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (both Harm 1, reversible; round 9): (1) readiness from a shared clean review whose checks pass later is a follow-up; until then such an item shows in progress and a fresh close makes it ready. (2) Joining the go-live clause to the team sentence moves to the TRENDS part, whose scope gains that one line in board_facts.py when it starts; WAITS writes the sentence.",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator (both Harm 1, reversible; round 9): (1) readiness from a shared clean review whose checks pass later is a follow-up; until then such an item shows in progress and a fresh close makes it ready. (2) Joining the go-live clause to the team sentence moves to the TRENDS part, whose scope gains that one line in board_facts.py when it starts; WAITS writes the sentence.",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. This checks the published `ready` field but never checks `clean_reviews`. A clean review can be published before `checks.wait` finishes; if the check fails, close publishes that review without writing a receipt. When the same commit's checks later pass, both board and next still show it as in progress, although the shared record contains its clean review.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 632,
+        "priority": "P1",
+        "title": "Not done: shared clean reviews grant readiness",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Not done. `board_trends.facts` returns a go-live clause, but this line discards it and the result always hardcodes `sentence` to null. The TRENDS task is scoped to `board_trends.py`, so filling its clause cannot make the promised summary sentence include go-live.",
+        "file": "src/forge/board_facts.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 179,
+        "priority": "P1",
+        "title": "Not done: connect the go-live clause to the team sentence",
+        "work": 1
+      }
+    ],
+    "id": "6f267635-8ef8-43f2-8002-988ce7e6af90",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T12:45:31.934037+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T15:03:23.641141+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T15:46:31.759560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:40:11.329583+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T18:14:57.435419+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T20:43:37.381073+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T21:34:26.761179+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:19:01.915787+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:58:11.730237+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T23:31:18.620899+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T23:31:18.639646+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/nextstep.py",
+    "reason": "Coordinator (both Harm 1, reversible; round 9): (1) readiness from a shared clean review whose checks pass later is a follow-up; until then such an item shows in progress and a fresh close makes it ready. (2) Joining the go-live clause to the team sentence moves to the TRENDS part, whose scope gains that one line in board_facts.py when it starts; WAITS writes the sentence.",
+    "wait_id": "375d56b3-3751-4e0e-99dc-02a421830afe",
+    "worker_round": null
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/fast-mode-visible",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12aa3-f1dd-7900-b8ba-3b4d91203966",
+    "head": "7257154286226c7a394e8a22253cc585a11cac50",
+    "start": "00ef47e605a0073f55f0afa35786aafe01081aa5"
+  },
+  "done_when": "Each Codex turn records the speed tier it asked for and got, forge doctor and the run's first line say plainly when Fast was wanted but the model does not offer it, and Fast is used whenever the model offers it",
+  "flagged": [
+    "src/forge/codex.py",
+    "src/forge/codex_turn.py",
+    "src/forge/doctor.py",
+    "src/forge/worker.py",
+    "tests/test_codex_turn_speed_receipts.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99958a11c2573a95c3cd52e159f0a41e50b2850d7c0e5186741b3632b53c0048",
+    "changed": "dbe6c947dca2dc090b4c2d3ce4a011d250bc5a64ecc0866e9a08624e7857c6e2",
+    "commit": "1795d5831d15e74b70ff14c9f6518a819f74a64a",
+    "dismissals": [],
+    "findings": [],
+    "id": "5ee4de7c-8f03-4919-9ad0-a8b8d8ecf1f0",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:55.850092+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T10:36:17.667267+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:05:10.073585+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:17:39.995486+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:28:49.741726+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:23:44.635283+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:23:03.054421+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T21:32:50.017640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T23:27:37.024152+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "accept",
+    "file": "tests/test_codex_turn_speed_receipts.py",
+    "reason": "Coordinator decision under the owner's low-risk rule (risk 1): the only open finding is a missing proof-list entry, now added in the last commit",
+    "round": 4,
+    "wait_id": "bfe603d6-fbbb-4344-ba55-e9b6f479845f"
+  },
+  "why": "Codex Fast was added but every Codex turn still runs at normal speed and nothing shows which speed a turn used",
+  "worker": "codex"
+}

@@ -353,7 +353,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         closed = env.close(env.start_fix()[0])
         assert closed.returncode == 0, closed.stdout + closed.stderr
         [create] = env.gh_calls("pr", "create")
-        assert "- Finding 1 (P2): Simpler: drop the cache (app.py:1): advisory" in body(create)
+        assert "- Finding 1 (P2): Simpler: drop the cache (app.py:1): Gain 2, Work 1, Harm 1" in body(create)
         # Its version is pinned: forge doctor reports a helper at any other version.
         assert "Autoreview" not in repo.forge("doctor").stdout
         helper = Path(os.environ["AUTOREVIEW"])
@@ -371,7 +371,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         closed = env.close(env.start_fix()[0])
         assert closed.returncode == 0, closed.stdout + closed.stderr
         assert env.gh_calls("pr", "edit") and not env.gh_calls("pr", "create")
-        env.gh.respond("pr", "list", "--state", "all", stdout=json.dumps([{
+        env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([{
             "headRefName": "fix/tidy-readme", "state": "MERGED",
             "title": "Readme greets new readers", "body": "The readme opens with a greeting.\n",
             "mergedAt": "2026-09-24T10:00:00Z",
@@ -381,8 +381,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
                                    **EXTRA}], **EXTRA}]))
         page = env.tmp / "board.html"
         assert repo.forge("board", "--out", str(page)).returncode == 0
-        assert ("Readme greets new readers : Finished on 24 September 2026. The readme opens with a "
-                "greeting.") in page_text(page)
+        assert "Readme greets new readers Fix Done Finished on 24 September 2026" in page_text(page)
     else:
         # The host's hook payloads, with fields Forge doesn't use at every level.
         setup(repo, keys=("WISH",))  # SHOP is the close fixture's story, already on main
@@ -515,7 +514,7 @@ def test_8_plain_english(env):
     assert 'question "Approve this plan?", header "Approve plan"' in repo.forge("next").stdout
 
     # The board, once both pull requests merged.
-    gh.respond("pr", "list", "--state", "all", stdout=json.dumps([
+    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([
         {"headRefName": call[call.index("--head") + 1], "state": "MERGED",
          "title": call[call.index("--title") + 1], "body": body(call),
          "mergedAt": "2026-09-25T10:00:00Z", "files": [], "statusCheckRollup": []}
@@ -523,10 +522,13 @@ def test_8_plain_english(env):
     page = env.tmp / "board.html"
     assert repo.forge("board", "--out", str(page)).returncode == 0
     text = page_text(page)
-    for line in ("Save a basket", "Shoppers can share a cart", "Readme greets new readers : "
-                 "Finished on 25 September 2026. The readme opens with a greeting"):
+    for line in ("Save a basket", "Shoppers can share a cart CART",
+                 "Readme greets new readers Fix Done Finished on 25 September 2026"):
         assert line in text, text
-    assert not _not_plain(text), (_not_plain(text), text)
+    # The one ID the board shows is a story's own key, small beside its title.
+    unkeyed = env.tmp / "board-unkeyed.html"
+    unkeyed.write_text(re.sub(r'<span class="key">[^<]*</span>', "", page.read_text("utf-8")), "utf-8")
+    assert not _not_plain(page_text(unkeyed)), (_not_plain(page_text(unkeyed)), text)
     # Inline SVG geometry also preserves the page's no-hash contract.
     assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
 
@@ -605,6 +607,7 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
                  ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
+                 ("handback", "tidy-the-readme", "--subagent", "reader", "--text", "No findings."),
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),

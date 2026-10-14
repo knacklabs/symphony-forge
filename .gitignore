@@ -20,3 +20,4 @@ dist/
 # Logs and local worktrees
 *.log
 .worktrees/
+forge.local.toml

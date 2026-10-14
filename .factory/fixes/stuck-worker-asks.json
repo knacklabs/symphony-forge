@@ -1,0 +1,110 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T01:54:23.837535+00:00",
+      "because": "Narrowed under the owner's Harm 1-2 rule: fixes already stop hard at the commit hook, and keying id-less Jest or Vitest failures by test name is a follow-up; both scored Gain 2, Harm 1",
+      "done_when": "When two rounds in a row leave the same failing test or finding, or the change grows past its size limit, Forge stops the item and prints a ready-to-ask question naming the item, what is stuck and what the worker tried, with the choices: switch this item to the other tool, keep the same tool for one more round, or narrow or split; the owner's choice is recorded and the next round follows it"
+    },
+    {
+      "at": "2026-10-12T03:03:16.927599+00:00",
+      "because": "Simplified under the owner's Harm 1-2 rule: matching the same failing test across test runners drew seven review angles (truncated output, mixed runners, id-less lines); two failing rounds in a row is a blunt rule with nothing to parse (Gain 2, Harm 1)",
+      "done_when": "When two rounds in a row leave the same failing test (by its test id; for runners without ids, by its failure lines) or the same finding, or a story part grows past its size limit, Forge stops the item and prints a ready-to-ask question naming the item, what is stuck and what the worker tried, with the choices: switch this item to the other tool, keep the same tool for one more round, or narrow or split; the owner's choice is recorded and the next round follows it. A fix past its five-code-file limit keeps the commit hook's existing refusal."
+    }
+  ],
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/stuck-worker-asks",
+  "done_when": "When two rounds in a row leave close's tests failing or the same review finding open, or a story part grows past its size limit, Forge stops the item and prints a ready-to-ask question naming the item, what is stuck and what the worker tried, with the choices: switch this item to the other tool, keep the same tool for one more round, or narrow or split; the owner's choice is recorded and the next round follows it. A fix past its five-code-file limit keeps the commit hook's existing refusal.",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/worker.py",
+    "tests/test_stuck_worker_asks.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3750b1825d32bb149bfb326be90402eb3ee6589c23d41c2aebab9ca56d7c39c9",
+    "changed": "86841afea98ed6909953760e5435ef0109fd21a0639c1aba8fed909ad8acb9b8",
+    "commit": "0ba13d00191eefc2d12bc4220441e75b2618d8f0",
+    "dismissals": [],
+    "findings": [],
+    "id": "410053a5-6ea6-40f8-a198-7a1a14d19d1c",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T13:05:11.609053+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T15:14:35.829188+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:01:46.601662+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:56:59.259363+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T21:42:28.218666+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T23:49:04.332746+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:02:21.792464+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:52:46.254959+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:59:57.664861+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:13:29.448845+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:46:12.414294+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:02:52.790497+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:20:32.593436+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:52:12.993608+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T04:01:34.628498+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T04:30:19.082115+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T03:20:32.603378+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/close.py",
+    "reason": "Owner rule for Harm 1-2: the round-12 finding is fixed in commit 68ba7bf9d (an answered size stop is not re-asked until a worker round has run), with a test that fails without it",
+    "wait_id": "f7ee1cd2-3b3e-4e0e-8367-66674166d17a",
+    "worker_round": null
+  },
+  "why": "When a worker can't fix a problem or keeps making the change bigger, Forge sends it back round after round and nobody is told"
+}

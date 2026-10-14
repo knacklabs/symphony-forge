@@ -1,0 +1,49 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-13T04:20:36.790462+00:00",
+      "because": "The cache is the provable fix for the npm timeouts; the longer test timeout and the vanished-file skip are small test-support changes with no rule of their own",
+      "done_when": "The Node client tests keep npm's download cache between CI runs and give a cold download enough time, and the leftover-process scan skips files that disappear while it runs"
+    }
+  ],
+  "base": "8911ac1f23f12a3818b451c7d855fd8d5eeb2efe",
+  "branch": "fix/ci-npm-and-scan-flakes",
+  "done_when": "Forge's own pull request checks keep npm's download cache between runs",
+  "flagged": [
+    ".github/workflows/forge.yml",
+    "tests/conftest.py",
+    "tests/test_close_keeps_full_tests_in_ci.py",
+    "tests/test_fix_gate_on_split_checks.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d2a41082a69cb353e417e014232de873b713a45b812859855d027b63ffcc3446",
+    "changed": "59af64412c1233212010434d2572af6022b1b2cce88bdc0af51c92a9880e84a0",
+    "commit": "21d8ebd4cfd313e1cabe3875704058d7f76d95e2",
+    "dismissals": [],
+    "findings": [],
+    "id": "24e03443-41ea-4c29-a546-d4a6fc15f2c6",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T04:09:21.479871+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T04:20:16.710058+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:23:49.370646+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:27:36.489159+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Pull request test groups time out while npm downloads jest or vitest, and a leftover-process scan fails when a git folder vanishes mid-scan"
+}

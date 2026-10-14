@@ -88,22 +88,6 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     assert "gpt-6-nova" not in args
 
 
-def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, sdk_data):
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-
-    def ask(lite: str):
-        _write(folder, "codex", lite)
-        asked = repo.forge("ask", "Where is the parser?", cwd=folder)
-        assert asked.returncode == 0, asked.stdout + asked.stderr
-        return _sent(calls, "thread/start")[-1].get("config")
-
-    assert ask(f"[models.lite.codex]\n{NOVA}\n[models.lite.claude]\n{OPUS}") == {
-        **QUIET, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
-    # No Codex model entry still means no model override, but output is always quiet.
-    assert ask(f"[models.lite.claude]\n{OPUS}") == QUIET
-    assert ask(f"[models.lite]\n{OPUS}") == QUIET
-
-
 def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")

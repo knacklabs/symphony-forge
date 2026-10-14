@@ -1,0 +1,74 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/test-gap-warning",
+  "done_when": "Close names each changed source file that no test mentions, saying GitHub's checks will cover it, and the worker brief tells workers that when they change text the program prints they search the tests for that text and run those tests",
+  "flagged": [
+    "src/forge/fasttest.py",
+    "src/forge/review.py",
+    "tests/test_close_names_untested_source_files.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf38046c8808a13a5786bf7defe467c85328cfa32ec509de08ca21732762359d",
+    "changed": "f7e61766c95480bbeffd497f51fa895bcc64a06c937ae20837a31f5e20f891ee",
+    "commit": "0f288a06c4ed0d2a786730c16878267169b0fa93",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2 and 1, Work 1, Harm 1): the report cap only drops warnings for changes with dozens of untested files, already past the size limit; recorded as lived-with with a follow-up to exempt gap lines from the cap",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar (Gain 2 and 1, Work 1, Harm 1): the report cap only drops warnings for changes with dozens of untested files, already past the size limit; recorded as lived-with with a follow-up to exempt gap lines from the cap",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Raise: Not done. Close can omit changed source files from the warning. The picker prints one warning per unmentioned Python file (`src/forge/fasttest.py:310`), but this report keeps only the first 50 and last 30 selected lines when it exceeds 80. With 61 such files and 40 lines from a later test runner, 11 warnings fall between those retained sections, so Close never names those files or says GitHub's checks will cover them.",
+        "file": "src/forge/review.py",
+        "line": 371,
+        "priority": "P1",
+        "title": "Not done: Close names each changed source file that no test mentions, saying GitHub's checks will cover it"
+      },
+      {
+        "body": "Raise: Test. The named Close proof checks only two unmentioned source files. It passes when the bounded report drops warnings for later files: 61 unmentioned files followed by 40 runner output lines exceed the 80-line cap in `src/forge/review.py:373-374`. The test therefore does not fail when the Done-when requirement to name each file breaks.",
+        "file": "tests/test_close_names_untested_source_files.py",
+        "line": 50,
+        "priority": "P1",
+        "title": "Not done: test that Close preserves every warning past the report cap"
+      }
+    ],
+    "id": "d5888ffa-0eec-4b2e-81aa-982410f89bcf",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T13:08:04.276798+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T15:04:38.865339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:54:08.600337+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:50:24.125011+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "accept",
+    "file": "src/forge/review.py",
+    "reason": "Coordinator decision under the owner's bar (Gain 2 and 1, Work 1, Harm 1): the report cap only drops warnings for changes with dozens of untested files, already past the size limit; recorded as lived-with with a follow-up to exempt gap lines from the cap",
+    "round": 4,
+    "wait_id": "f078c28e-f4a7-468e-a6e2-ee44aa695b4a"
+  },
+  "why": "Close picks local tests only when they name or import a changed file, so tests that check a program's output from outside are missed and fail only on GitHub"
+}

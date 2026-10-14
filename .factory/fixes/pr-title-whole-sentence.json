@@ -1,0 +1,81 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T15:54:51.220729+00:00",
+      "because": "An earlier owner-facing output fix set titles to at most 70 characters; only the cut at the first comma was wrong",
+      "done_when": "A pull request's title is the whole first sentence of the item's why, shortened at a word boundary only when it passes GitHub's title length"
+    }
+  ],
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/pr-title-whole-sentence",
+  "done_when": "A pull request's title is the first sentence of the item's why, never cut at a comma or inside a version number, and shortened at a word boundary to at most 70 characters",
+  "flagged": [
+    "src/forge/close.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a8be110ee9141918f8d11d197a5212e2f12d0900dfca15f0b1268a340587805d",
+    "changed": "b0d3d687495245744528f3169989868926907675e2824ac5c925a4adfedc5604",
+    "commit": "c1af1ebfcb737e9329addda7f9c5b30232df67d1",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both open findings are below the bar as the reviewer scored them: abbreviations and curly quotes (Gain 2, Work 2, Harm 1) and a punctuation-at-cut test (Gain 1); the main bug, titles cut at the first comma, is fixed",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: both open findings are below the bar as the reviewer scored them: abbreviations and curly quotes (Gain 2, Work 2, Harm 1) and a punctuation-at-cut test (Gain 1); the main bug, titles cut at the first comma, is fixed",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 2, Work 2, Harm 1\nRaise: Not done. The split at line 964 treats an abbreviation as a sentence ending: `Dr. Smith cannot sign in. Reset the session.` produces `Dr`. It also misses a sentence ending in a curly closing quote: `The command prints \u201cFailed.\u201d Retry it.` retains both sentences. The named command test covers a straight closing quote, but neither of these cases.",
+        "file": "src/forge/close.py",
+        "line": 964,
+        "priority": "P1",
+        "title": "Not done: A pull request's title is the first sentence of the item's why"
+      },
+      {
+        "body": "Gain 1, Work 1, Harm 1\nThe proof list claims shortened titles have no trailing punctuation, but the long-why cases in this test and `test_1_fix_title_is_the_whole_first_sentence` cut after an ordinary word. They would still pass if the punctuation removal on close.py line 967 were removed. A why with a comma immediately before the shortening boundary exercises the claimed behavior.",
+        "file": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
+        "line": 23,
+        "priority": "P2",
+        "title": "Follow-up: prove punctuation is removed at a shortening boundary"
+      }
+    ],
+    "id": "535ad168-3d8c-4592-8376-bf327ae060df",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:28.924353+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T16:11:43.194194+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:35:21.273002+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T17:00:16.595874+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T17:00:16.623617+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/close.py",
+    "reason": "Owner rule for Harm 1-2: both open findings are below the bar as the reviewer scored them: abbreviations and curly quotes (Gain 2, Work 2, Harm 1) and a punctuation-at-cut test (Gain 1); the main bug, titles cut at the first comma, is fixed",
+    "wait_id": "1c722679-ec6d-49e2-b870-a6e75da8b664",
+    "worker_round": null
+  },
+  "why": "Pull request titles stop at the first comma of the fix's why, so titles read 'On Windows' or 'Clients and this repo need v1'"
+}

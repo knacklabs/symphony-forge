@@ -2,6 +2,9 @@
 import re
 from pathlib import Path
 
+# The suite job gives Windows runners longer limits (test_ci_job_budgets checks them); others keep these.
+OTHER_OS = (r"\$\{\{ matrix.os == '[^']+' && \d+ \|\| (\d+) \}\}", r"\1")
+
 STORY = "CI-HANG"
 WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 
@@ -9,31 +12,33 @@ WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 def test_1_every_ci_pytest_dumps_stacks_after_two_minutes():
     seen = 0
     for name in ("forge-next.yml", "forge.yml"):
-        text = (WORKFLOWS / name).read_text(encoding="utf-8")
+        text = re.sub(*OTHER_OS, (WORKFLOWS / name).read_text(encoding="utf-8"))
         for command in re.findall(r"pytest tests[^\n\"]*", text):
             seen += 1
             assert "-o faulthandler_timeout=120" in command, f"{name}: {command}"
-    # Plugin and Windows installer jobs join the two suite jobs.
-    assert seen == 4
+    # Plugin, Windows installer and empty-group collection join the two suite jobs.
+    assert seen == 5
 
 
 def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
     seen = 0
     for name in ("forge-next.yml", "forge.yml"):
-        text = (WORKFLOWS / name).read_text(encoding="utf-8")
+        text = re.sub(*OTHER_OS, (WORKFLOWS / name).read_text(encoding="utf-8"))
         for command in re.findall(r"uv run [^\"]*?pytest tests[^\n\"]*", text, re.S):
             seen += 1
             # CI used to add pytest-timeout at run time; the default dev group now supplies it.
             uv_args = command.split("pytest tests", 1)[0]
             assert "--group" not in uv_args and "--with" not in uv_args, f"{name}: {command}"
             assert "--timeout=150 --timeout-method=thread" in command, f"{name}: {command}"
-    assert seen == 4
+    assert seen == 5  # The split workflow also collects the full suite for empty groups.
 
 
 def test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow(repo):
     top = Path(__file__).resolve().parents[1]
     repo.write("forge.toml", (top / "forge.toml").read_text(encoding="utf-8"))
-    repo.git("add", "forge.toml")
+    # Forge's pyproject lists pytest-split, so its suite runs in groups.
+    repo.write("pyproject.toml", (top / "pyproject.toml").read_text(encoding="utf-8"))
+    repo.git("add", "forge.toml", "pyproject.toml")
     repo.git("commit", "-q", "-m", "Set Forge's test command")
     repo.git("checkout", "-q", "-b", "fix/test-timeout")
     result = repo.forge("sync")

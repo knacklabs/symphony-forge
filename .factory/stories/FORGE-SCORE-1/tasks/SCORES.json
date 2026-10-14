@@ -1,0 +1,40 @@
+{
+  "branch": "task/FORGE-SCORE-1-SCORES",
+  "flagged": [
+    "src/forge/score.py",
+    "tests/test_score_notes.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "473c0215ae980fa17073d86907c39b1b04e0c557df4aa851c0b9c12f59e74aad",
+    "changed": "6881c4cb1c785a66a83205883da8499d5296f51151a5768e962c250ea35e600c",
+    "commit": "9b46d57b7c3a410d616e9013a8d70fad7d5d8c64",
+    "dismissals": [],
+    "findings": [],
+    "id": "681e5218-797a-4a57-bf64-5a8fcecac57a",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T12:36:15.355532+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T14:52:50.886140+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T15:26:30.128237+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T15:39:03.719331+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T16:29:13.302235+00:00",
+      "step": "review"
+    }
+  ]
+}

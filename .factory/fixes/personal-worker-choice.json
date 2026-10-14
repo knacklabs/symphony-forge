@@ -1,0 +1,93 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T02:05:17.422729+00:00",
+      "because": "Narrowed under the owner's Harm 1-2 rule: three review rounds each found a new combination where doctor's per-kind source guess differs from the run; doctor now lists the local overrides and forge next plus the run's Building line name the effective source (Gain 2, Harm 1)",
+      "done_when": "A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it, overrides only which tools run work, the worker split and the model and effort per kind of work; Forge refuses any other key in it; new and upgraded repos ignore the file in git; forge next and forge doctor show which file each of those settings came from"
+    }
+  ],
+  "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
+  "branch": "fix/personal-worker-choice",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12af0-96e9-74a2-8c1c-8316c0a126ba",
+    "head": null,
+    "start": "0ea3006cc64e865884c0740fb95776aef9eab262"
+  },
+  "done_when": "A git-ignored forge.local.toml beside forge.toml, read from the main checkout so every task and fix worktree of that clone uses it, overrides only which tools run work, the worker split and the model and effort per kind of work; Forge refuses any other key in it; new and upgraded repos ignore the file in git; forge next shows which file the next run's tools, worker and model came from, and forge doctor lists the settings forge.local.toml overrides",
+  "flagged": [
+    "src/forge/doctor.py",
+    "src/forge/nextstep.py",
+    "src/forge/repo.py",
+    "tests/test_personal_worker_choice.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fe2fd2262137b6850ce2c5b646a5da1b13b0fa49567cdc658117e169d84af3c4",
+    "changed": "eefb49cc9d92e6b995229990663f541a0c20e7e2d9f11af39b5ad4a1aa0b7e06",
+    "commit": "32ec957328d5a2c8501200c7a757b5d43ffb373f",
+    "dismissals": [],
+    "findings": [],
+    "id": "0d573867-0a1c-4170-bbd0-04e74d042fd5",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T09:41:53.088023+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T13:32:52.443885+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:26:54.710571+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:11:31.543348+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:34:05.564465+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T00:49:36.100950+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:16:48.094339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:49:46.336674+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:04:53.517770+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:10:26.973376+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:19:52.737091+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T01:49:46.353893+00:00",
+    "choice": "accept",
+    "file": "src/forge/doctor.py",
+    "reason": "Owner rule for Harm 1-2: doctor's note covers the local file's settings and the built-in defaults for the kinds it overrides; a shared kind with no entry for a locally switched worker is shown on forge next's line and the run's Building line. Lived with (Gain 2, Work 1, Harm 1); round 7, each round a new angle on the same note",
+    "wait_id": "dc01dcc0-f6d6-422b-aab5-48fb11800839"
+  },
+  "why": "Developers on one team have different agent access, but who builds and which models live in the committed forge.toml, so one developer's switch to Codex lands in pull requests and flips teammates' settings",
+  "worker": "codex"
+}

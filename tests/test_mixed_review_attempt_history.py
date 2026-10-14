@@ -42,13 +42,14 @@ def test_23_timing_only_review_and_modern_result_in_one_worker_turn_keep_both_at
     assert len(current["rounds"]) == 2, current["rounds"]
     old, new = current["rounds"]
     assert old["round"] is None and old["worker_round"] == 1
-    assert "review clean (10s)" in old["line"]
+    assert "review clean (10 seconds)" in old["line"]
     assert old["findings"] is None
     assert new["worker_round"] == 1
     assert "review blocked" in new["line"] and "review clean" not in new["line"]
     assert new["findings"] == [{"priority": "P1", "title": "Greeting disappears", "file": "app.py"}]
     timing = [t for t in records(env.repo, "timings.jsonl") if t["step"] == "review"][-1]
-    seconds = float(re.search(r"review blocked \(([\d.]+)s\)", new["line"])[1])
+    # Rounded prose cannot recover the measured duration; JSON keeps its precision.
+    seconds = current["time_breakdown"]["reviewing"] - legacy["seconds"]
     queued = current["time_breakdown"]["waiting_in_line"] or 0
     assert round(seconds + queued, 3) == round(timing["seconds"], 3)
     published = body(env.gh_calls("pr", "edit")[-1])
@@ -112,12 +113,13 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
                     and e.get("lane_id") == joined["lane_id"])
     seconds = round((datetime.fromisoformat(admitted["at"]) -
                      datetime.fromisoformat(joined["at"])).total_seconds(), 3)
-    assert f"in line {seconds:g}s" in turn["line"], current["rounds"]
+    assert re.search(r"in line \d+ (?:seconds?|minutes?|hours?|days?)", turn["line"]), current["rounds"]
     assert current["time_breakdown"]["waiting_in_line"] == seconds
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
-    reviewed_turn = next(r for r in row(env.repo, item)["rounds"] if r["worker_round"] == saved["round"])
+    after = row(env.repo, item)
+    reviewed_turn = next(r for r in after["rounds"] if r["worker_round"] == saved["round"])
     assert reviewed_turn["line"] in published
     observed = records(env.repo, "events.jsonl")
     queue_seconds = 0
@@ -128,4 +130,5 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
                           datetime.fromisoformat(queued["at"])).total_seconds()
     queue_seconds = round(queue_seconds, 3)
     assert queue_seconds >= seconds
-    assert f"in line {queue_seconds:g}s" in reviewed_turn["line"]
+    assert after["time_breakdown"]["waiting_in_line"] == queue_seconds
+    assert re.search(r"in line \d+ (?:seconds?|minutes?|hours?|days?)", reviewed_turn["line"])

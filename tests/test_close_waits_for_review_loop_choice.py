@@ -13,19 +13,26 @@ from test_hotspot_stop import rounds, saved, seed
 from test_setup import _fresh_client
 
 GUIDANCE = (
-    "Ask the human to narrow the part, split it, or accept the remaining findings. "
-    "Never re-run close or land past this stop until their choice is recorded."
+    "To ask, ask the human to narrow the part, split it, or accept the remaining findings. "
+    "Run `forge land <item>` in the background after a close stop, or keep the current land running."
 )
 
 
 def stopped(env, kind="fix"):
     seed(env, "src/a.py")
-    item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
+    # A task's plan row may hold markdown and paths; its question names it in plain words.
+    doc = STORY_DOC.replace("Shoppers can save their basket with one click",
+                            "Shoppers can **save** their basket at `app.py:3` with one click")
+    item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
     result = rounds(env, item, where, ["src/a.py"] * 3)
-    assert result.stderr.splitlines()[-2:] == [
+    lines = result.stderr.splitlines()
+    if kind == "task":
+        assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
+                             "Shoppers can save their basket with one click")
+    assert [lines[-11], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
-        "round flagged too, so Forge stops sending the worker back. Ask the human "
-        "to narrow the part, split it, or accept the remaining findings.",
+        "round flagged too, so Forge stops sending the worker back. Every open note has Harm 1 or 2: "
+        "settle it yourself (accept or narrow with a reason) and tell the owner after.",
         f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
     ]
     return item, where
@@ -33,6 +40,10 @@ def stopped(env, kind="fix"):
 
 @pytest.mark.parametrize("kind", ["fix", "task", "fix-claude"])
 def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, kind):
+    # Human-only waiting is now opt-in; the default keeps land alive for a timed answer.
+    toml = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
+    env.repo.git("push", "-q", "origin", "main")
     if kind == "fix-claude":
         _claude_only(tmp_path, monkeypatch, env.repo.bin,
                      (ROOT / "tests/stubs/autoreview").read_text())
@@ -48,11 +59,11 @@ def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, 
     for command in ("close", "land", "close", "land"):
         result = env.repo.forge(command, item)
         assert result.returncode == 1, result.stdout + result.stderr
-        assert "narrow the part, split it, or accept the remaining findings" in result.stderr
+        assert "settle it yourself (accept or narrow with a reason)" in result.stderr
         assert len(env.review_calls()) == before
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == head
     result = env.repo.forge("next")
-    assert "narrow the part, split it, or accept the remaining findings" in result.stdout
+    assert "settle it yourself (accept or narrow with a reason)" in result.stdout
     assert "--resolve" in result.stdout
 
 
@@ -81,13 +92,13 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         checked = env.repo.forge("hook", "pr-check", "--base", "origin/main",
                                  "--head", "HEAD", "--branch", "fix/tidy-readme", cwd=where)
         assert checked.returncode == 0, checked.stderr
-        # An upstream edit to a reviewed file also ends acceptance, even if our diff is identical.
+        # An upstream edit to a reviewed file needs a new review, but the accepted finding stays
+        # settled: a plain repeat of it no longer holds the work.
         env.commit(env.repo.path, "src/a.py", "print('upstream change')\n")
         env.repo.git("push", "-q", "origin", "main")
         env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py")))
         changed_base = env.close(item)
-        assert changed_base.returncode == 1, changed_base.stdout + changed_base.stderr
-        assert "Round 3 defect" in changed_base.stderr
+        assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
         assert len(env.review_calls()) == before + 1
         before += 1
     else:
@@ -95,16 +106,17 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert resumed.returncode == 1
         assert "The review left serious findings open" in resumed.stderr
     env.commit(where, "app.py", "print('human choice implemented')\n")
-    # Even the same finding must be reconsidered after an accepted version changes.
-    title = "Round 3 defect" if choice == "accept" else "A new defect"
-    env.reviews(blocked(finding("P1", title, "src/a.py")))
+    # An accepted finding comes back only as a disputed keep with new evidence of harm.
+    title = "Disputed keep 1: Round 3 defect loses saved baskets" if choice == "accept" else "A new defect"
+    # The choice settled src/a.py's area, where only Harm 3 or more at the bar still holds work.
+    env.reviews(blocked({**finding("P1", title, "src/a.py"), "body": "Gain 3, Work 2, Harm 3\nEvidence"}))
     resumed = env.close(item)
     assert resumed.returncode == 1
     assert title in resumed.stderr
     assert len(env.review_calls()) == before + 1
 
 
-def test_5_later_review_instructions_expire_acceptance_but_keep_evidence_dismissals(env):
+def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env):
     # Inspect the instructions delivered to the reviewer, not whether a canned response obeys them.
     seed(env, "src/a.py")
     item, where = env.start_fix()
@@ -130,10 +142,11 @@ def test_5_later_review_instructions_expire_acceptance_but_keep_evidence_dismiss
     assert reviewed.returncode == 0, reviewed.stderr
     assert len(env.review_calls()) == before + 1
     prompt = env.prompt()
-    assert "Unfixed defect (src/a.py:1): Evidence for: Unfixed defect" in prompt
-    assert reason not in prompt  # Neither previous findings nor historical rulings bind acceptance.
-    assert "Human accepted the remaining finding" not in prompt
-    assert f"Proven safe (src/a.py:1): Evidence for: Proven safe; dismissed because {evidence}" in prompt
+    assert "Unfixed defect (src/a.py:1): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
+    # The owner's acceptance reaches the reviewer as known and accepted, not as a ruling.
+    known = prompt.split("## Known and accepted", 1)[1].split("##", 1)[0]
+    assert f"Unfixed defect (src/a.py): accepted by the owner: Human accepted the remaining finding: {reason}" in known
+    assert f"Proven safe (src/a.py:1): Gain 4, Work 2, Harm 1\nEvidence for: Proven safe; dismissed because {evidence}" in prompt
     assert f"Proven safe (src/a.py): dismissed because {evidence}" in prompt
 
 
@@ -143,7 +156,7 @@ def test_5_later_review_instructions_expire_acceptance_but_keep_evidence_dismiss
     ("`tests/test_app.py`", "`tests/test_basket.py`"),
     ("A shopper can save a basket.", "A shopper can save two baskets."),
 ])
-def test_6_live_story_changes_allow_owner_accept_but_expire_earlier_acceptance(env, phase, old, new):
+def test_6_live_story_changes_allow_owner_accept_and_keep_earlier_acceptance(env, phase, old, new):
     # The reviewer reads the story branch, even when the task's own commit stays unchanged.
     item, where = stopped(env, "task")
     reason = "Human accepts this version"
@@ -173,8 +186,8 @@ def test_6_live_story_changes_allow_owner_accept_but_expire_earlier_acceptance(e
         assert len(env.review_calls()) == before + 1
         for value in new.split(", "):
             assert value.replace("`", "") in env.prompt().replace("`", "")
-        assert reason not in env.prompt()
-        assert "Human accepted the remaining finding" not in env.prompt()
+        # The earlier acceptance stays settled and reaches the new review as known.
+        assert f"Human accepted the remaining finding: {reason}" in env.prompt()
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-sync"])

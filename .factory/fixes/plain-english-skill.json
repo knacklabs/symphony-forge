@@ -1,0 +1,86 @@
+{
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/plain-english-skill",
+  "done_when": "forge init and forge sync install a bundled Simplified Technical English skill for Claude and Codex (its MIT instructions, writing rules, substitutions and check tool, with its license and notice, and without the standard's word list), and the guide and worker brief tell agents to write plans' top sections, pull request summaries, questions and board or next lines with it, for new and upgraded repos",
+  "flagged": [
+    "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+    "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+    "tests/test_fix_plain_english_skill.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "55c7f49c9f3cda27bf0ee99cdc5e7a9a8069e84995204fbceb748ca2c903f707",
+    "changed": "517a1d724ad2df2eb4e638af902591fb4980dccc19a445838b178d6b511984ee",
+    "commit": "6ff2c35bf3346ec68356a5df658a69522efcd8bd",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: findings 1 and 2 are already fixed at the current head (repo-root check command; notice and license say the word list is left out); finding 3 is test variation (Gain 2, Work 1, Harm 1), recorded as lived-with",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: findings 1 and 2 are already fixed at the current head (repo-root check command; notice and license say the word list is left out); finding 3 is test variation (Gain 2, Work 1, Harm 1), recorded as lived-with",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator decision under the owner's bar: findings 1 and 2 are already fixed at the current head (repo-root check command; notice and license say the word list is left out); finding 3 is test variation (Gain 2, Work 1, Harm 1), recorded as lived-with",
+        "finding": 3
+      }
+    ],
+    "findings": [
+      {
+        "body": "Raise: Functional \u2014 The skill tells agents to run `python3 scripts/ste_check.py`, but init and sync install that script only under `.claude/skills/simplified-technical-english/` and `.codex/skills/simplified-technical-english/`. An agent working from the client repository root gets a file-not-found error instead of the required text check. The proof test uses the script's full installed path, so it does not exercise the documented command.",
+        "file": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+        "line": 94,
+        "priority": "P1",
+        "title": "The installed skill's check command fails from the client repository root"
+      },
+      {
+        "body": "Raise: Not done \u2014 NOTICE.md says that `references/word-list.md` contains the ASD-STE100 words, and LICENSE repeats the claim on lines 26\u201328. Their opening notes say Forge omits that file, as the shipping list does. The installed documents therefore contradict themselves and direct readers to a file they cannot open. The proof test checks only the opening notes.",
+        "file": "src/forge/templates/skills/simplified-technical-english/NOTICE.md",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: the bundled license and notice describe a word list that is absent"
+      },
+      {
+        "body": "Raise: Test \u2014 The proof list names checker failure on text with both a contraction and a semicolon. The test puts both defects in one draft and asserts only a nonzero exit and an `ERROR` line. If the checker stopped detecting semicolons, the contraction would still make this test pass. Thus the named proof does not protect the checker\u2019s semicolon rule.",
+        "file": "tests/test_fix_plain_english_skill.py",
+        "line": 67,
+        "priority": "P1",
+        "title": "Not done: the checker test cannot detect a lost semicolon rule"
+      }
+    ],
+    "id": "b3988984-d1cc-4ace-bb9b-402c7ec60e15",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T12:28:11.381196+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T15:03:06.018178+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:05:55.255694+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:42:53.193705+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "accept",
+    "file": "src/forge/templates/skills/simplified-technical-english/SKILL.md",
+    "reason": "Coordinator decision under the owner's bar: findings 1 and 2 are already fixed at the current head (repo-root check command; notice and license say the word list is left out); finding 3 is test variation (Gain 2, Work 1, Harm 1), recorded as lived-with",
+    "round": 4,
+    "wait_id": "691f46c2-ba08-477f-b41f-685e254c77bf"
+  },
+  "why": "People reading Forge's plans, pull request summaries, questions and board get long, uneven English; a controlled-language skill (Simplified Technical English) makes that text short and clear"
+}

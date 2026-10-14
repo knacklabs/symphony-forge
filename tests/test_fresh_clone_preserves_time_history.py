@@ -49,7 +49,7 @@ def test_28_fresh_clone_preserves_published_rounds_findings_and_durations(env, p
     assert "Round 2:" in published
     if not checkpoint:
         # Already published histories from before provenance was recorded remain evidence.
-        published = re.sub(r"\n<!-- forge:history \{.*\} -->", "", published)
+        published = re.sub(r"\n<!-- forge:(?:history|time-record) \{.*\} -->", "", published)
     before = "## How it went\n\nThe owner checked the basket with Ana.\n\n"
     after = "\n\n## Owner notes\n\nCheck again next Tuesday.\n"
     published = before + published + after
@@ -90,8 +90,17 @@ def test_28_fresh_clone_preserves_published_rounds_findings_and_durations(env, p
         assert before in committed and after.strip() in committed
     assert refreshed.startswith(before) and refreshed.endswith(after)
     managed = refreshed.split("<!-- forge:begin -->", 1)[1].split("<!-- forge:end -->", 1)[0]
+    # Count the rendered history, excluding the shared machine record carried beside it.
+    managed = re.sub(r"<!--.*?-->", "", managed, flags=re.S)
     assert earlier_round in managed
     assert managed.count("Round 1:") == managed.count("Round 2:") == 1
     assert managed.count("## How it went") == 1
     assert "Keep the basket label clear" in managed
-    assert earlier_times in managed
+    if checkpoint:
+        # Shared intervals retain earlier work; later CI and idle time update the single total.
+        for category in ("building", "own tests", "reviewing", "fixing findings"):
+            fragment = re.search(rf"(?:^|; )({category}: [^;]+)", earlier_times)[1]
+            assert fragment in managed
+    else:
+        # Without interval evidence, legacy snapshots remain separate and unchanged.
+        assert earlier_times in managed

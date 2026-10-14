@@ -52,6 +52,15 @@ def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
     assert "+Coordinator change" in prompt
     assert _sent(calls, "thread/resume")
 
+    def new_finding(title):  # a new finding each round, so no round is stuck on the same one
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+        state["review"]["findings"][0]["title"] = title
+        state_file.write_text(json.dumps(state), encoding="utf-8")
+        repo.git("commit", "-qam", "New finding", cwd=fix)
+
+    gh.respond("pr", "checks", state["branch"], stdout="[]")
+    new_finding("Greeting too long")
+
     # Lost Forge metadata keeps the conversation and its short follow-up instructions.
     record.unlink()
     resumed = repo.forge("work", "show-a-greeting")
@@ -61,6 +70,7 @@ def test_1_continued_fix_round_is_short_and_fresh_conversation_has_full_brief(
     assert "earlier brief" in _text(calls)
     assert "## The fix" not in _text(calls) and "## Tests first" not in _text(calls)
 
+    new_finding("Greeting too short")
     # Only the provider losing the conversation now requires the whole brief in a fresh chat.
     store = repo.bin / "threads.json"
     threads = json.loads(store.read_text("utf-8"))

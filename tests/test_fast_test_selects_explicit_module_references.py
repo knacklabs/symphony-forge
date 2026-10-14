@@ -31,7 +31,9 @@ def run_fast_test(repo, *, collect_only=False):
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Change review module")
     return subprocess.run([sys.executable, str(repo.bin / "forge"), "test", "--pytest", base], cwd=repo.path,
-                          env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+                          # Close's own results hook must not reach this repo's pytest, whose path it replaces.
+                          env={**{k: v for k, v in os.environ.items() if k != "PYTEST_PLUGINS"},
+                               "PYTHONPATH": str(ROOT / "src")},
                           capture_output=True, text=True, timeout=120)
 
 

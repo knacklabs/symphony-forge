@@ -56,15 +56,15 @@ def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
     reason = "app.py:1 the owner chose account-only saving"
     assert env.close(item, "--dismiss", "1", "--because", reason).returncode == 1
 
-    env.commit(where, "app.py", "print('saved')\n", "Keep saved baskets\n\n"
+    env.commit(where, "basket.py", "print('saved')\n", "Keep saved baskets\n\n"
                "Coordinator note:\nCan guests save?\nAnswer: Saving requires an account.\n")
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0
 
-    env.commit(where, "app.py", "print('saved again')\n")
+    env.commit(where, "basket.py", "print('saved again')\n")
     repeated = [finding("P1", dismissed), finding("P1", fixed)]
     for entry in repeated:
-        entry["body"] = "Different evidence for the same settled issue."
+        entry["body"] = "Gain 4, Work 2, Harm 1\nDifferent evidence for the same settled issue."
     env.reviews(blocked(*repeated))
     done = env.close(item)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -75,7 +75,7 @@ def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
     for settled in (dismissed, fixed, reason, "Can guests save?", "Saving requires an account."):
         assert settled in env.prompt(), settled
 
-    env.commit(where, "app.py", "print('saved with delivery')\n")
+    env.commit(where, "basket.py", "print('saved with delivery')\n")
     env.reviews(blocked(finding("P1", "Delivery loses the basket")))
     done = env.close(item)
     assert done.returncode == 1 and "Delivery loses the basket" in done.stderr
@@ -90,6 +90,7 @@ def test_3_init_and_upgrade_sync_deliver_settled_guidance(unsynced_up, adopted):
         for host in (".codex", ".claude"):
             skill = (top / host / "skills/forge/SKILL.md").read_text("utf-8")
             assert "Settled findings stay settled" in skill
+            assert "a repeat of it blocks again" in skill
 
     if adopted:
         shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client",
@@ -116,7 +117,7 @@ def test_3_init_and_upgrade_sync_deliver_settled_guidance(unsynced_up, adopted):
     check(where)
 
 
-def test_4_work_notes_and_answers_are_kept_for_review(repo, monkeypatch, sdk_data):
+def test_4_work_notes_and_answers_are_kept_for_review(repo, monkeypatch, sdk_data, claude_session):
     folder, _, _, _, question = _resumable_question(repo, monkeypatch, sdk_data)
     first = repo.forge("work", "BOARD/PAGE", "--note", "Yes, use the existing parser.")
     assert first.returncode == 0, first.stdout + first.stderr

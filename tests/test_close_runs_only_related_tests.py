@@ -1,4 +1,4 @@
-"""Forge's own close uses related pytest files; shared test inputs require the full suite."""
+"""Close uses small related selections; workers run shared inputs' full suite."""
 from __future__ import annotations
 
 import json
@@ -44,6 +44,10 @@ def record_run(request):
                    "def test_related():\n    assert VALUE >= 1\n")
     env.repo.write("tests/test_changed.py", "def test_changed():\n    assert 2 + 2 == 4\n")
     env.repo.write("tests/test_unrelated.py", "def test_unrelated():\n    assert 3 + 3 == 6\n")
+    # Two related files stay at exactly a third, so close still exercises selection.
+    for number in range(3):
+        env.repo.write(f"tests/test_other_{number}.py",
+                       f"def test_other_{number}():\n    assert 3 + 3 == 6\n")
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Use Forge's own test settings")
     env.repo.git("push", "-q", "origin", "main")
@@ -58,7 +62,7 @@ def record_run(request):
         if shared_input == "pyproject.toml":
             changes[shared_input] += '[tool.pytest.ini_options]\naddopts = "-q"\n'
         assert changes[shared_input] != original
-    item, _ = env.start_fix(changes)
+    item, where = env.start_fix(changes)
     settings = tomllib.loads((env.repo.path / "forge.toml").read_text("utf-8"))
     env.checks([run(name) for name in settings["checks"]])
 
@@ -67,7 +71,12 @@ def record_run(request):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     expected = {"test_changed", "test_related"}
     if shared_input:
-        expected.add("test_unrelated")
+        # The new close contract defers this full selection to required CI;
+        # the explicit worker command must still run it with the core cap.
+        assert not list(log.iterdir())
+        tested = env.repo.forge("test", cwd=where)
+        assert tested.returncode == 0, tested.stdout + tested.stderr
+        expected.update({"test_unrelated", *(f"test_other_{number}" for number in range(3))})
     assert {path.name for path in log.iterdir()} == expected
     assert {json.loads(path.read_text()) for path in log.iterdir()} == {
         max(1, (os.cpu_count() or 1) // 2)}

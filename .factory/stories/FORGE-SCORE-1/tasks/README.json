@@ -1,0 +1,47 @@
+{
+  "branch": "task/FORGE-SCORE-1-README",
+  "flagged": [
+    "tests/test_score_upgrade.py"
+  ],
+  "known": [
+    {
+      "area": "test_6_saved_unscored_notes_hold_until_scored_and_the_readme_explains_the_bar() in tests/test_score_upgrade.py",
+      "file": "tests/test_score_upgrade.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: prove saved unscored notes hold work after upgrade",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "255619e3ee3b5e33aae6be8b14155035be43882461b35463321b9c7c7f120af7",
+    "changed": "0cfad9ef97155998775245cc801e409bdbfe02db8a2749e5fdabed9fbfe52bf6",
+    "commit": "c657bca4eb34e8508ff71ae64e3ed6ee524e35a4",
+    "dismissals": [],
+    "findings": [],
+    "id": "c256ee87-0986-414b-b883-a8a06c33c058",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T07:25:28.933000+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T07:37:45.382705+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T07:53:02.015153+00:00",
+      "step": "review"
+    }
+  ]
+}

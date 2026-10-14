@@ -1,0 +1,64 @@
+{
+  "base": "4e000433f9853203b81b80b2891dad4471976e5f",
+  "branch": "fix/next-no-self-wait",
+  "done_when": "forge next never lists an item as waiting for itself; a part waits only for other items",
+  "flagged": [
+    "src/forge/nextstep.py",
+    "tests/test_next_never_waits_for_itself.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_story() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 522,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge next never lists an item as waiting for itself; a part waits only for other items",
+      "work": 2
+    },
+    {
+      "area": "test_1_a_part_started_here_and_not_pushed_waits_for_nothing() in tests/test_next_never_waits_for_itself.py",
+      "file": "tests/test_next_never_waits_for_itself.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 25,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test_1_a_part_started_here_and_not_pushed_waits_for_nothing",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6d55fac6f0fa7d01d2a618f5dcd38ec3785525234dad433ae748f67c70cc2861",
+    "changed": "90ffdf27ce8d87bae3d30b3126367b6ba8f9944d16936ec52d48fb644e1ce1ff",
+    "commit": "bb82741999c077e70818a73147ff02902e4ec7e2",
+    "dismissals": [],
+    "findings": [],
+    "id": "0c601013-690d-4339-a83a-63398c954718",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T08:31:33.799036+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T09:26:31.675833+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T09:57:42.430252+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge next can say a story part waits for itself to merge first"
+}

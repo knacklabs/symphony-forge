@@ -1,0 +1,72 @@
+{
+  "base": "10f925fffaf4b60dc66510727d7a55f1fbe9eebf",
+  "branch": "fix/plan-reads-capped",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12a7d-566c-7c30-8b1a-7c4bd1b8c903",
+    "head": null,
+    "start": "f33e39f427233930a62dc778eac03efdb0b35b13"
+  },
+  "done_when": "A story's plan read stops after two rounds that have no blocking notes on new text, and an edit only below For the builders never asks for another read",
+  "flagged": [
+    "src/forge/story.py",
+    "src/forge/templates/cold-read.md",
+    "tests/test_fix_plan_reads_capped.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ee0b3234a5ea0f4baa9a7890f2ee0f34a274cf66b5bc0ed5aa386fe1b2823f1c",
+    "changed": "c172370134d25d8d676f76f15c887ea7e7010052f2f44e29c76bdf36cfb65b0a",
+    "commit": "4607dfe7de3a1e6c0f1f713eaf8cb3f8423ed420",
+    "dismissals": [],
+    "findings": [],
+    "id": "0c89d742-4eae-4cfe-9659-fce7508cf030",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:32:02.888915+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T09:30:30.643611+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:08:05.522025+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:14:31.658043+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:11:29.391244+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:40:14.793938+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:25:30.172466+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:23:19.956459+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/templates/cold-read.md",
+    "reason": "Coordinator decision under the owner's low-risk rule (risk 2): from round three, a change to the linked spec or the brief's Answers since the last round also counts as changed text that can block",
+    "wait_id": "52ffb420-a392-4541-ad10-8ee600ede74b"
+  },
+  "why": "Plan reads loop for many rounds (21 on one story), each round an exchange with the owner",
+  "worker": "codex"
+}

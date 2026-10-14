@@ -139,7 +139,7 @@ def test_4_doctor_fix_batches_separately_landed_hand_edits(
     current = {path.relative_to(synced).as_posix(): path.read_text(encoding="utf-8")
                for directory in (".codex", ".claude", ".github", ".forge")
                for path in (synced / directory).rglob("*") if path.is_file()}
-    for name in ("AGENTS.md", "CLAUDE.md", ".gitattributes"):
+    for name in ("AGENTS.md", "CLAUDE.md", ".gitattributes", ".gitignore"):
         if (synced / name).exists():
             current[name] = (synced / name).read_text(encoding="utf-8")
     current["forge.toml"] = (synced / "forge.toml").read_text(encoding="utf-8") + "\n# Client guidance: café\n"

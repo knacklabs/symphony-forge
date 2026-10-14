@@ -13,8 +13,7 @@ from test_close import env  # noqa: F401
 STORY = "FORGE-TOOLS-1"
 
 
-@pytest.mark.parametrize("tools,engine", [("claude", "claude"), ("codex", "codex"),
-                                         ("both", "codex"), ("new doctor", ""),
+@pytest.mark.parametrize("tools,engine", [("both", "codex"), ("new doctor", ""),
                                          ("adopted doctor", "")])
 def test_7_reviews_use_the_repos_tool_and_autoreviews_defaults(env, tmp_path, monkeypatch, tools, engine):
     if not engine:

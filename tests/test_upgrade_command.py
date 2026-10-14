@@ -501,6 +501,8 @@ def _repo_adopted_on_the_previous_release(up):
         install(), release_run(RELEASE, "sync"), release_run(RELEASE, "close", NAME)]
     assert up.show("forge.toml") == original.replace('"v1.2.2"', f'"{RELEASE}"').strip()
     assert up.toml() == original
+    # The upgrade's own sync ignores each developer's forge.local.toml.
+    assert "forge.local.toml" in up.show(".gitignore").splitlines()
     for host in (".claude", ".codex"):
         skill = up.show(f"{host}/skills/forge/SKILL.md")
         assert f"<!-- {MARK} {RELEASE} -->" in skill

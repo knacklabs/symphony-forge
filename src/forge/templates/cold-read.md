@@ -22,11 +22,13 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-A note blocks only when the plan is wrong, contradicts itself, or a builder could not act on it.
-Start each blocking finding with `Blocking:` after its number. Wording, style and optional
-improvements do not block: if you record one, start it with `Advisory:` after its number.
-Advisory notes are recorded but need no disposition or another round. A read passes when none
-of its notes is blocking. Unmarked findings are treated as blocking.
+Your scores (see Scores below) decide: Harm 4 or 5, or Gain 5 holds the plan. Otherwise, Gain 4,
+or Gain 3 with Harm 3, holds the plan only with Work 1 or 2. Every other Gain 3 or 4 note is a
+follow-up, even a Gain 3 note with Harm 1 or 2 and Work 1 or 2. Gain 1 or 2 is lived with.
+Forge writes each below-bar note's disposition. A read passes when no note is at the bar.
+Score a note at the bar only when
+the plan is wrong, contradicts itself, or a builder could not act on it. Still start each note with
+`Blocking:` or `Advisory:`; Forge reads that label only for a note without scores.
 
 ## What counts
 Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
@@ -121,9 +123,40 @@ If the doc is a spec (it has no Tasks table), skip the checks about tasks and `N
 Instead, check that the Why or the success measure needs every behaviour line, variant, role,
 setting and integration, and write `Cut or defer: <item>` for any that nothing needs.
 
+## Scores
+Score every note on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
+judgement, not measurement. Write them as one line, exactly `Gain <g>, Work <w>, Harm <h>`,
+as the last line of each note, after its evidence.
+
+| Score | Gain (how much fixing helps) | Work (effort to fix) | Harm (what breaks if it goes wrong) |
+|---|---|---|---|
+| 1 | wording, a rare edge nobody named | a line, no new test | nothing; a revert undoes it |
+| 3 | a Done-when item partly unmet for a named case; a test that passes with the code broken | one file and one command-level test, under an hour | client-visible behaviour change, reversible by a revert |
+| 5 | security, data loss, the main case of a Done-when item not done | a new module, a second platform or language, a migration | one-way: data, a migration, a release clients upgrade to |
+
+Harm floor: a note raised under Security or Data loss, or one that names a migration, scores
+Harm 4 or more. Forge raises a lower Harm to 4 and marks the line `(floor: <why>)`.
+
+Examples: "Close's default test selection breaks Go repos" Gain 3, Work 4, Harm 2. "Close skips
+Jest `__tests__` folders" Gain 2, Work 2, Harm 1. "A blocked review is shown as waiting for checks
+when tests pass on retry" Gain 3, Work 2, Harm 1. "Promotion accepts an uncommitted roadmap entry"
+Gain 4, Work 2, Harm 2. "A stuck stop's narrow or split answer never reaches the worker" Gain 4,
+Work 1, Harm 1. "Land shows a generic waiting line instead of the stop question" Gain 3, Work 1,
+Harm 1. "Doctor credits a model to the wrong file in a rare mix of local settings" Gain 2, Work 1,
+Harm 1. "Upgrade pull requests are checked by the previous release" Gain 2, Work 4, Harm 1. "A
+proof test checks only the question's first lines" Gain 2, Work 1, Harm 1.
+
+- Raise a note only after you check it against the code at the current commit, and name the
+  file and line.
+- A `Not done` note scores Gain by how much of the Done-when stays unmet: the main case unmet is
+  Gain 4 or 5; one more rare combination on a clause whose main case works is Gain 1 or 2. When
+  earlier rounds already raised that clause, say so and propose to narrow the clause.
+- Only you score. The coordinator and the worker never change a score, and notes in a proof list
+  do not lower one.
+
 Write only your findings, as a numbered list: each finding starts a line with its number (`1. `,
 `2. `, ...), states the finding in one line, then gives brief evidence on indented lines, starting
-with `Raise: <line>`, and no speculative suggestions. Use no other numbered lines. If there is
+with `Raise: <line>`, then ends with its score line, and no speculative suggestions. Use no other numbered lines. If there is
 nothing to report, write exactly `No findings.` and nothing else. Do not number it or add a note
 about tests you did not run.
 
@@ -136,11 +169,12 @@ whole doc again yourself. Its diff since your last round:
 
 $diff
 
-All earlier rounds' blocking findings and their answers, each with its disposition:
+All earlier rounds' settled notes, each with its scores and its disposition:
 
 $dispositions
 
-Previous advisory notes are recorded only; do not reassess or close them.
+These are known and accepted. A settled note comes back only with new evidence of harm, as
+`Disputed keep <n>: <the new harm>`, where `<n>` is its number.
 
 For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
 
@@ -148,6 +182,9 @@ $spec_diff
 
 When that diff is not empty, check the plan still matches the changed spec. Re-read the
 `## Answers` section of `docs/product/BRIEF.md` from the checkout: it can change between rounds.
+Its diff since your last round, empty when it is unchanged:
+
+$answers_diff
 
 Check:
 
@@ -159,14 +196,8 @@ Check:
    - Raise a kept finding again only with new evidence of a distinct defect, as
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
-2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
-   and What counts: each "Done when" item's rules and the test that proves each, shared
-   names no earlier task pins, task size, and Forge's general traps and this repository's own
-   known traps:
-
-$traps
-
-Write only your new findings, as a numbered list starting at $next, in your first round's format.
+${look}Write only your new findings, as a numbered list starting at $next, in your first round's format.
+End each finding with its score line, scored as in your first round.
 Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
 Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
 advisory notes need no disposition or another round.
@@ -186,17 +217,45 @@ For a story, the confirmed spec's diff since your last round, empty when it is u
 
 $spec_diff
 
-Check only this diff and the sections it touches, not the rest of the doc, which passed: apply
-your first round's checks and What counts to them, including Forge's general traps and
-this repository's own known traps:
+For a story, the diff of the `## Answers` section of `docs/product/BRIEF.md` since your last
+round, empty when it is unchanged:
+
+$answers_diff
+
+Check only this diff and the sections it touches, not the rest of the doc, which passed, plus
+any spec or Answers diff above: apply your first round's checks and What counts to them,
+including Forge's general traps and this repository's own known traps:
 
 $traps
 
+For a story from round 3 on, block only on changed text in the diff, the spec's diff or the
+Answers diff, or on an earlier blocking finding that remains open. Other gaps in unchanged text are `Advisory:`, even inside a touched
+section.
+
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
+End each finding with its score line, scored as in your first round.
 Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
 Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
 advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
+
+<!-- forge:look -->
+2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
+   and What counts: each "Done when" item's rules and the test that proves each, shared
+   names no earlier task pins, task size, and Forge's general traps and this repository's own
+   known traps:
+
+$traps
+
+<!-- forge:cap -->
+2. This is round $round: the text the diff does not touch has had its two rounds of notes.
+   Block only on changed text in the diff, the spec's diff or the Answers diff, or on one of
+   those findings that is not closed.
+   Any other note on unchanged text is `Advisory:`, even inside a touched section. Apply your first
+   round's checks and What counts to the diff, including Forge's general traps and this
+   repository's own known traps:
+
+$traps
 
 <!-- forge:notes -->
 # Cold read notes

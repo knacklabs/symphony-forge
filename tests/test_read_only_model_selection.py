@@ -9,7 +9,7 @@ import pytest
 
 from conftest import ROOT, _install
 from test_close import env  # noqa: F401
-from test_codex_worker import QUIET, _codex_repo, _sent, sdk_data  # noqa: F401
+from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_setup import _fresh_client
 from test_subagent_roles import _settings, _synced
 from test_upgrade_command import (  # noqa: F401
@@ -75,19 +75,8 @@ def test_2_sync_writes_explorer_from_explore_for_both_hosts(repo):
     assert _settings(repo.path, "explorer") == (("gpt-6.1-sol", "high"), ("haiku", "high"))
 
 
-def test_3_forge_ask_selects_explore_instead_of_lite(repo, monkeypatch, sdk_data):
-    folder, log = _codex_repo(repo, monkeypatch, sdk_data)
-    toml = folder / "forge.toml"
-    toml.write_text(toml.read_text("utf-8").split("\n[", 1)[0] + "\n" + MODELS,
-                    encoding="utf-8")
-    asked = repo.forge("ask", "Where is the parser?", cwd=folder)
-    assert asked.returncode == 0, asked.stdout + asked.stderr
-    assert _sent(log, "thread/start")[-1]["config"] == {
-        **QUIET, "model": "gpt-6-luna", "model_reasoning_effort": "high"}
-
-
 def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
-        unsynced_up, monkeypatch, sdk_data):
+        unsynced_up):
     # Upgrade starts from the text fixture's actual earlier-adoption files, rather than a
     # current sync given an old version string. Codex keeps lite; Claude gets its default.
     up = unsynced_up
@@ -101,13 +90,6 @@ def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
     assert toml.read_bytes() == before
     assert _settings(up.folder, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "xhigh"))
-    log = _sdk(up.repo, monkeypatch, sdk_data, up.folder)
-    asked = up.repo.forge("ask", "Where is the parser?", cwd=up.folder)
-    assert asked.returncode == 0, asked.stdout + asked.stderr
-    assert _sent(log, "thread/start")[-1]["config"] == {
-        **QUIET, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium",
-        "agents.default_subagent_model": "gpt-6-luna",
-        "agents.default_subagent_reasoning_effort": "max"}
 
 
 @pytest.mark.parametrize("host", ["codex", "claude"])

@@ -24,6 +24,10 @@ def test_6_sync_explains_when_the_agent_may_merge(repo):
         assert "`forge merge <item>`" in guidance
         assert "Never run `gh pr merge`" in words
         assert "the agent merges only through `forge merge" in words.lower()
+        if path != "AGENTS.md":
+            assert ("When another program holds the worktree open, the merge still finishes and "
+                    "keeps the local branch; close that program, then delete the folder the merge "
+                    "names.") in words
 
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
     guide_words = " ".join(guide.split())

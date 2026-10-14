@@ -1,0 +1,73 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T09:25:28.767449+00:00",
+      "because": "Forge cannot see a session subagent's token use: the coordinating app runs it, and the hand-back carries only the result",
+      "done_when": "Every review and plan read records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do"
+    }
+  ],
+  "base": "c16682dda88fd25acb9c69ca5de4bb64c10b4046",
+  "branch": "fix/record-review-usage",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12aed-08f3-74e0-a55d-1349141a7037",
+    "head": null,
+    "start": "93e3211e03539c404ef810f605fd57973b697c84"
+  },
+  "done_when": "Every review and every plan read Forge runs through Codex or the Claude SDK records its model, effort, chat id and token use in Forge's run records, the same way worker rounds do; a plan read handed to the coordinating session's own subagent records no token use, because Forge cannot see it",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/story.py",
+    "tests/test_fix_reviews_and_reads_record_their_cost.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3062c6c29e56d544d35775f4fa411b05b79e0cd8dcf531f98600c8130b17ffab",
+    "changed": "2b4b2b150f1b5777a0aacf90eaf616717a07ebd91dd21f38676ad61b42fefaaa",
+    "commit": "ef731e27bbea5ccad90847b93c07ebf3d815a989",
+    "dismissals": [],
+    "findings": [],
+    "id": "ebad3696-3eeb-46d5-8bc0-7188ed7b3c25",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T09:13:38.849775+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T10:57:01.280193+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T13:27:14.915466+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:09:44.607723+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:40:37.977923+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:32:44.724452+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T17:19:01.307634+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:57:05.209369+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Reviews and plan reads record no model, effort, chat or token use, so nobody can tell what they cost or whether a lighter setting would do",
+  "worker": "codex"
+}

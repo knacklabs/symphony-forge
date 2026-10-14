@@ -19,7 +19,8 @@ from conftest import FORGE_SHIM, ROOT, _install
 from test_codex_resume import RESUMING, _resuming
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_fix_claude_workers_start_a_fresh_session_eve import _session
-from test_readloop_rounds import CODEX, FIRST, _no_claude, _no_codex, _setup
+from test_readloop_rounds import CODEX, FIRST, _native_round, _no_claude, _no_codex, _setup
+from test_readloop_rounds import reader_sessions  # noqa: F401 (shared host cleanup fixture)
 from test_records import SPEC
 from test_setup import _fresh_client
 from test_story import worktree
@@ -39,6 +40,9 @@ def _adopted(repo):
 
 
 def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
+    # No coordinating app, so either tool's worker runs through its kit, also after a switch.
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     if adopted:
         _adopted(repo)
     folder, codex, turns = _resuming(repo, monkeypatch, sdk_data, client=True, start_task=kind == "task")
@@ -215,11 +219,10 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
         if app == "claude" and change == "record-missing":
             reader.dispose(FIRST, "cut")
             dirty = reader.text()
-            other, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
-            assert refused.returncode != 0
-            assert (f"The chat record at {reader.shop / 'plans/SHOP.read.md'} has uncommitted changes, "
-                    "so sync left it alone.") in refused.stderr
-            assert "Next: commit or undo those changes, then forge sync" in refused.stderr
+            other, warned = _sync_elsewhere(repo, tmp_path)
+            assert (f"Warning: The chat record at {reader.shop / 'plans/SHOP.read.md'} has uncommitted "
+                    "changes, so sync left it alone.") in warned.stdout
+            assert "Next: commit or undo those changes, then forge sync" in warned.stdout
             assert reader.text() == dirty
             repo.git("add", "--", "plans/SHOP.read.md", cwd=reader.shop)
             repo.git("commit", "-qm", "Keep the reader disposition", "--", "plans/SHOP.read.md", cwd=reader.shop)
@@ -337,9 +340,10 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
                 "Other resume errors stop the round and keep its chat.",
                 "Upgrade's sync commits earlier-release chat bindings in their owning work branches",
-                "without guessing the owner",
+                "Sync writes every generated file first, then keeps chats.",
+                "before you remove `.git/forge`.",
                 "Keep `.git/forge` until the upgrade finishes.",
-                "uncommitted edits, sync leaves them alone and asks you to commit or undo them before retrying."):
+                "its record has uncommitted edits"):
             assert sentence in " ".join(guide.split()), sentence
 
 
@@ -355,8 +359,8 @@ def _accepted_read(text):
     fields = {}
     for line in header.splitlines():
         name, _, value = line.partition(":")
-        if name in ("blocked_rounds", "loop_choice", "loop_reason") and not value.strip():
-            continue  # Older notes omit unset loop fields; sync can write their empty defaults.
+        if name in ("seconds", "blocked_rounds", "loop_choice", "loop_reason") and not value.strip():
+            continue  # Older notes omit unknown duration and unset loop fields.
         if name not in ("conversation", "session"):
             fields[name] = value
     return fields, findings
@@ -384,18 +388,28 @@ def test_6_reader_starts_fresh_only_when_chat_or_tool_is_gone(repo, monkeypatch,
         reader.app = "claude" if app == "codex" else "codex"
         reader.log = repo.bin / ("claude-calls.jsonl" if reader.app == "claude" else
                                 "codex-app-server.jsonl")
+    if reason == "tool-switch":
+        # A missing external reader is replaced by this session's native reader.
+        native = _native_round(reader)
+        name = "Codex" if app == "codex" else "Claude Code"
+        assert native["reason"] == f"its reader, {name}, is no longer installed"
+        assert native["subagent"] is None
+        assert "You are doing the one cold read" in native["fresh_prompt"]
+        assert reader.doc.read_text("utf-8") in native["fresh_prompt"]
+        assert "Disposition: cut" in native["fresh_prompt"]
+        assert reader.calls() == 0
+        resumed = _native_round(reader)
+        assert resumed["subagent"] == "readloop-reader"
+        assert reader.calls() == 0
+        return
     said = reader.ok()
     reasons = [line for line in said.splitlines() if line.startswith("Starting a new")]
     assert len(reasons) == 1, said
     assert not reader.continued()
     fresh = _reader_chat(reader)
-    if reason == "tool-gone":
-        assert fresh != first
-        assert first in reasons[0]
-        assert ("no rollout found" if app == "codex" else "couldn't continue session") in reasons[0]
-    else:
-        name = "Codex" if app == "codex" else "Claude Code"
-        assert f"its reader, {name}, is no longer installed" in reasons[0]
+    assert fresh != first
+    assert first in reasons[0]
+    assert ("no rollout found" if app == "codex" else "couldn't continue session") in reasons[0]
     prompt = reader.prompt()
     assert "You are doing the one cold read" in prompt
     assert reader.doc.read_text("utf-8") in prompt
@@ -458,11 +472,12 @@ def test_9_reader_keeps_chat_with_routing_record_missing(repo, monkeypatch, tmp_
     reader.dispose(FIRST, "cut")
     reader.notes.write_text(re.sub(r"^reader:.*\n", "", reader.text(), flags=re.M),
                             encoding="utf-8")
-    # Changing coordinators cannot silently replace a reader whose routing label was lost.
+    # Losing the routing label still selects the same tool, now natively in its session.
     reader.coordinate(app)
-    refused = reader.read()
-    assert refused.returncode != 0, refused.stdout + refused.stderr
-    assert "is the cold reader" in refused.stderr
+    native = _native_round(reader)
+    assert native["subagent"] is None
+    assert "Disposition: cut" in native["fresh_prompt"]
+    assert _reader_chat(reader) == first  # no external replacement conversation
 
     reader.coordinate("claude" if app == "codex" else "codex")
     said = reader.ok()
@@ -477,11 +492,12 @@ def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok(f"1. {FIRST}\n")
     reader.dispose(FIRST, "cut")
-    if app == "codex":
-        _no_codex(monkeypatch, tmp_path)
-    else:
-        _no_claude(repo, monkeypatch, tmp_path)
+    # An explicit tool change under the other coordinator retains the kit recovery contract.
     reader.app = "claude" if app == "codex" else "codex"
+    config = reader.shop / "forge.toml"
+    config.write_text(f'tools = "{reader.app}"\n' + config.read_text("utf-8"), encoding="utf-8")
+    repo.git("commit", "-qam", "Choose replacement reader", cwd=reader.shop)
+    reader.coordinate(app)
     reader.log = repo.bin / ("claude-calls.jsonl" if reader.app == "claude" else
                             "codex-app-server.jsonl")
     reader.fail(True)
@@ -789,11 +805,8 @@ def test_18_upgrade_preserves_unmerged_spec_reader_after_owner_moves(
     if change == "ambiguous":
         copied = tmp_path / "copied spec owner"
         repo.git("worktree", "add", "-qb", "fix/copied-spec", str(copied), branch)
-        upgrade, refused = _sync_elsewhere(repo, tmp_path, expect_success=False)
-        assert refused.returncode == 1
-        assert refused.stderr.endswith(
-            "More than one worktree contains docs/specs/invoices.md, so sync cannot locate its earlier reader chat.\n"
-            "Next: run forge read invoices in its owning checkout, then forge sync\n")
+        upgrade, left = _sync_elsewhere(repo, tmp_path)
+        assert "The earlier reader conversation for invoices stays on this machine only" in left.stdout
         selected = repo.forge("read", "invoices", cwd=relocated)
         assert selected.returncode == 0, selected.stdout + selected.stderr
         assert _reader_chat(reader, resumed=True) == first
@@ -835,7 +848,6 @@ def test_20_returning_reader_tool_starts_fresh_then_resumes_its_replacement(
         repo, monkeypatch, tmp_path, sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok()
-    original = _reader_chat(reader)
     claude = (repo.bin / "claude").read_text("utf-8")
     other = "claude" if app == "codex" else "codex"
     for unavailable, selected in ((app, other), (other, app)):
@@ -847,18 +859,15 @@ def test_20_returning_reader_tool_starts_fresh_then_resumes_its_replacement(
             reader.app = selected
             reader.log = repo.bin / ("codex-app-server.jsonl" if selected == "codex" else
                                     "claude-calls.jsonl")
-            said = reader.ok()
-            reasons = [line for line in said.splitlines() if line.startswith("Starting a new")]
-            assert len(reasons) == 1, said
+            reader.coordinate(selected)
+            before = reader.calls()
+            native = _native_round(reader)
             name = "Codex" if unavailable == "codex" else "Claude Code"
-            assert f"its reader, {name}, is no longer installed" in reasons[0]
-            assert not reader.continued()
-            replacement = _reader_chat(reader)
-            if selected == app:
-                assert replacement != original
-            assert "You are doing the one cold read" in reader.prompt()
-            reader.ok()
-            assert reader.continued()
-            assert _reader_chat(reader, resumed=True) == replacement
+            assert native["reason"] == f"its reader, {name}, is no longer installed"
+            assert native["subagent"] is None
+            assert "You are doing the one cold read" in native["fresh_prompt"]
+            resumed = _native_round(reader)
+            assert resumed["subagent"] == "readloop-reader"
+            assert reader.calls() == before
         if unavailable == "claude":
             _install(repo.bin, "claude", claude)

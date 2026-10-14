@@ -7,7 +7,7 @@ import { registerApproval } from './approval.ts'
 import { registerMachine } from './machine.ts'
 
 const REFRESH_INTERVAL_MS = 10000
-const REFRESH_TIMEOUT_MS = 20000
+const REFRESH_TIMEOUT_MS = 60000
 
 async function refresh($: CoreEngineInterface, core: ReturnType<typeof createCore>) {
   const cwd = await $.session.cwd()

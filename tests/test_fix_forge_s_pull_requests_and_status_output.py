@@ -1,5 +1,6 @@
 """Owner-facing output from Forge's pull requests, board, and next command."""
 import json
+import re
 import pytest
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401 - command-level fixture
 from test_story import setup
@@ -19,11 +20,12 @@ def test_1_pr_title_and_labeled_body(env):
 @pytest.mark.parametrize("why, expected", [
     ("The owner cannot tell which action to take from this very long pull request title "
      "when the first clause runs beyond the stated limit, with more details afterward",
-     "The owner cannot tell which action to take from this very long pull re"),
+     "The owner cannot tell which action to take from this very long pull"),
     ("Readers cannot tell what to do, because the title buries the action",
-     "Readers cannot tell what to do"),
+     "Readers cannot tell what to do, because the title buries the action"),
+    ("x" * 80, "x" * 70),
 ])
-def test_2_fix_title_uses_first_clause_and_seventy_characters(env, why, expected):
+def test_2_fix_title_is_at_most_seventy_characters(env, why, expected):
     item, _ = env.start_fix(why=why)
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0
@@ -40,6 +42,7 @@ def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review
     env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
     assert env.close(item).returncode == (1 if blocked_review else 0)
     review = body(env.gh_calls("pr", "create")[-1]).split("<!-- forge:begin -->\n", 1)[1]
+    review = re.sub(r"<!--.*?-->", "", review, flags=re.S)
     # A clean review now opens with one count line instead of "The review found no serious problems."
     verdict = ("The review found serious problems." if blocked_review
                else "Review: clean, 0 dismissed, 0 advice.")
@@ -76,20 +79,23 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     state.parent.mkdir(parents=True)
     state.write_text(json.dumps({"branch": "fix/tidy-up", "why": "Tidy up",
                                  "status": "waiting for checks"}))
-    gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
-               "headRefName,state,title,body,mergedAt,url", stdout=json.dumps([{
+    head = repo.git("rev-parse", "HEAD", cwd=fix)
+    gh.respond("pr", "list", "--state", "merged", "--limit", "1000", stdout="[]")
+    gh.respond("pr", "list", "--state", "open", "--limit", "1000", stdout=json.dumps([{
                    "headRefName": "fix/tidy-up", "state": "OPEN", "title": "Tidy up",
+                   "headRefOid": head,
                    "url": "https://github.com/acme/shop/pull/7"}]))
     # Open checks now come from the cached GraphQL query (FORGE-MOD-1), rather than
     # the old latest-25-of-all-states request. Links and ready-to-merge remain required.
     gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
-        "pullRequests": {"nodes": [{"headRefName": "fix/tidy-up", "commits": {
-            "nodes": [{"commit": {"statusCheckRollup": {"contexts": {"nodes": [
+        "pullRequests": {"nodes": [{"headRefName": "fix/tidy-up", "headRefOid": head,
+            "title": "Tidy up", "url": "https://github.com/acme/shop/pull/7", "commits": {
+            "nodes": [{"commit": {"oid": head, "statusCheckRollup": {"contexts": {"nodes": [
                 {"__typename": "CheckRun", "databaseId": 7, "name": "tests",
                  "status": "COMPLETED", "conclusion": "SUCCESS",
                  "completedAt": "2026-09-27T10:00:00Z"}]}}}}]}}]}}}}))
-    gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
-               "headRefName,state,title,body,mergedAt,files,statusCheckRollup", exit=1,
+    gh.respond("pr", "list", "--state", "merged", "--limit", "25", "--json",
+               "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", exit=1,
                stderr="GitHub timed out on the detailed bulk request")
     out = tmp_path / "board.html"
     result = repo.forge("board", "--out", str(out))
@@ -98,8 +104,8 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in page
     assert "Ready to merge" in page
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
-    # SVG and text share the board snapshot; neither doubles the bulk requests.
-    assert len(calls) == 2
+    # SVG and text share the board snapshot: one open list, seven weekly searches, one detail list.
+    assert len(calls) == 9
     assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
 
 
@@ -176,8 +182,12 @@ def test_9_board_puts_active_work_first_and_folds_finished_fixes(repo, gh, tmp_p
     result = repo.forge("board", "--out", str(out))
     assert result.returncode == 0, result.stderr
     page = out.read_text()
-    assert page.index("A current story") < page.index("An earlier story")
-    assert "<summary>1 finished fix</summary>" in page
-    assert page.index("An active fix") < page.index("<summary>1 finished fix</summary>")
+    # The item list, not the roadmap graph above it, puts active work first.
+    stories = page[page.index('<section id="stories"'):page.index('<section id="fixes"')]
+    fixes = page[page.index('<section id="fixes"'):]
+    fold = '<details class="done"><summary>Done (1)</summary>'
+    assert stories.index("A current story") < stories.index(fold) < stories.index("An earlier story")
+    assert fixes.index("An active fix") < fixes.index(fold) < fixes.index("A finished fix")
     assert '<a href="https://github.com/acme/shop/pull/8">A finished fix</a>' in page
-    assert "An active fix</b>: <span class=\"status\">In progress." in page
+    assert ('<span class="title">An active fix</span><span class="kind">Fix</span>'
+            '<span class="state">In progress</span>') in page

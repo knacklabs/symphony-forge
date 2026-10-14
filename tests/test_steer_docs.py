@@ -29,7 +29,5 @@ def test_5_sync_and_guide_explain_coordinator_steering(repo):
         assert "From the coordinator" in prose and "round" in prose and "Scope" in prose
         assert 'Question:' in prose and 'forge work <item> --note "<answer>"' in prose
         assert 'forge close <item>' in prose and "conversation" in prose
-        assert 'forge ask "<question>"' in prose and "read-only" in prose
-        assert "[models.lite]" in prose and "--model" in prose and "--effort" in prose
-        assert ".git/forge/" in prose and "temporary" in prose
-        assert "tracked or untracked" in prose and "discards the answer" in prose
+        assert "`explorer`" in prose and "read-only" in prose
+        assert "forge ask" not in prose

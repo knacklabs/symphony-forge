@@ -2,7 +2,7 @@
 New review settings are left to Autoreview; existing repository settings remain unchanged.
 
 Sign-off defaults, the light prototype review and the SDK install are proven by their own tests:
-test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py, test_aha_review.py and test_codex_setup.py.
+test_reviews_use_repository_tool.py, test_aha_review.py and test_codex_setup.py.
 """
 import tomllib
 

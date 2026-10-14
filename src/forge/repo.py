@@ -6,9 +6,11 @@ templates and raises its entries with refuse(). The CLI prints the problem, then
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -32,11 +34,18 @@ CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),
+    "no_session": ("Forge runs this repo's work inside a Claude Code or Codex session, and none is "
+                   "open here, so nothing ran.",
+                   "open one in this repo and run forge {command} {item} there"),
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
+    "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
+    "local_key": ("forge.local.toml can't set {key}: it holds only tools, workers and [models] tables, "
+                  "so settings the team shares stay in forge.toml.",
+                  "move {key} to forge.toml in a fix, or take it out of forge.local.toml"),
     "pin": (
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
@@ -88,14 +97,21 @@ def command_cache():
 
 def _common_path(cwd: str | os.PathLike[str] | None) -> Path:
     """Identify linked worktrees without another git process."""
-    top = Path(cwd or Path.cwd()).resolve()
+    top = Path(cwd or Path.cwd()).absolute()
+    key = ("common path", top)
+    if _command_cache is not None and key in _command_cache:
+        return _command_cache[key]
+    top = top.resolve()
     for folder in (top, *top.parents):
         dot = folder / ".git"
         if dot.is_file():
             dot = (folder / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
         if dot.is_dir():
             common = dot / "commondir"
-            return (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            found = (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            if _command_cache is not None:
+                _command_cache[key] = found
+            return found
     return top
 
 
@@ -108,6 +124,20 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
     return _command_cache[key]
 
 
+def blob_hash(text: str) -> str:
+    """What `git hash-object --stdin` prints for text, without a git process."""
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def read_blob(top: Path, name: str) -> str | None:
+    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    def read() -> str | None:
+        done = run("git", "cat-file", "blob", name, cwd=top)
+        return done.stdout if done.returncode == 0 else None
+    return command_fact(("read blob", name), top, read)
+
+
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         input: str | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
@@ -115,22 +145,37 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
+    # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
+    # bounded pull request body past GitHub's limit and changes messages and hashes.
     def execute():
-        return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                              text=True, encoding="utf-8", errors="replace",
+        done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
+                              capture_output=True,
                               # Git hooks need the caller's worker identity.
                               env=(os.environ if env is None else env) if args[0] == "git"
                               else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
+        # Text mode's universal newlines, the same on every OS.
+        done.stdout, done.stderr = (data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+                                    for data in (done.stdout, done.stderr))
+        return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
+    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
+        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+        (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
+        if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
+                "+refs/heads/*:refs/remotes/origin/*"):
+            command_fact("fetched origin", cwd, dict)["all"] = True
         key = ("landed ref", _common_path(cwd))
         if key in _command_cache and not _command_cache[key].startswith("origin/"):
             del _command_cache[key]  # A first fetch can create the previously absent remote ref.
     if _command_cache is not None and done.returncode == 0 and args[:3] == ("git", "remote", "set-head"):
         for kind in ("default branch", "landed ref"):
             _command_cache.pop((kind, _common_path(cwd)), None)
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and (args[1] in ("switch", "checkout", "worktree", "branch"))):
+        _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
@@ -191,6 +236,12 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
             return subprocess.CompletedProcess(done.args, 1, "",
                                                REFUSALS["no_github"][0] + "\n")
         time.sleep(pause)
+
+
+def quote(argument: object) -> str:
+    """One path or argument quoted for the user's shell, so a printed command runs as shown."""
+    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None,
@@ -338,14 +389,22 @@ def worker_step(name: str, inputs: dict[str, Any]) -> str:
     return ("editing " if name in ("Edit", "Write", "fileChange") else "reading ") + " ".join(str(path).split()) if path else "using " + name
 
 
-def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> str:
-    """Read the same tool actions and result diagnostics for Claude workers and readers."""
+def claude_output(top: Path, item: str, ran: dict[str, Any], event: dict[str, Any]) -> str:
+    """Read the same tool actions and result diagnostics for Claude workers and readers, and keep
+    the model, effort, session and token use for the run's end."""
+    run_id = ran["run_id"]
     if event.get("type") == "system" and event.get("subtype") == "init":
-        record_progress(top, item, run_id, **{key: event[key] for key in ("model", "effort") if key in event})
+        chosen = {key: event[key] for key in ("model", "effort") if key in event}
+        record_progress(top, item, run_id, **chosen)
+        ran.update(chosen)
     response = event.get("response") or {}
     if event.get("type") == "control_response" and response.get("request_id") == "forge-live-settings":
         applied = (response.get("response") or {}).get("applied") or {}
-        record_progress(top, item, run_id, **{key: applied[key] for key in ("model", "effort") if key in applied})
+        chosen = {key: applied[key] for key in ("model", "effort") if key in applied}
+        record_progress(top, item, run_id, **chosen)
+        ran.update(chosen)
+    if event.get("type") == "result":
+        ran.update(chat=event.get("session_id"), **claude_tokens(event.get("usage") or {}))
     content = (event.get("message") or {}).get("content", [])
     for tool in content:
         if isinstance(tool, dict) and tool.get("type") == "tool_use":
@@ -358,11 +417,23 @@ def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> s
                    if isinstance(c, dict) and c.get("type") == "text")
 
 
+def claude_tokens(usage: dict[str, Any]) -> dict[str, Any]:
+    """Claude's token use in Codex's terms: input counts cached input too; Claude has no
+    reasoning count."""
+    if not isinstance(usage.get("input_tokens"), int):
+        return {}
+    return {"input_tokens": sum(usage.get(key) or 0 for key in (
+                "input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")),
+            "cached_input_tokens": usage.get("cache_read_input_tokens") or 0,
+            "output_tokens": usage.get("output_tokens"), "reasoning_output_tokens": None}
+
+
 @contextmanager
 def record_run(top: Path, item: str, kind: str, **fields: Any):
     """Keep starts and ends even for a run entirely between two board refreshes."""
     identity = record_event(top, item, "run start", kind=kind, **fields)
-    result = {"outcome": "failed", "run_id": identity}
+    result = {"outcome": "failed", "run_id": identity,
+              **{key: fields[key] for key in ("model", "effort") if fields.get(key)}}
     if "round" in fields:
         result["round"] = fields["round"]
     try:
@@ -374,15 +445,16 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
-        "signoff": str, "runner": str, "codex_fast": str,
-        "merge": str, "checks": list, "interfaces": list, "models": dict}
+        "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
+        "merge": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
-            "merge": "human", "checks": [], "interfaces": [], "models": {}}
+            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "always_test": [],
+            "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
-           "codex_fast": ("needed", "off", "always")}
+           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -409,15 +481,40 @@ def config(top: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
         refuse(REFUSALS["no_config"])
     try:
-        return _config_text(path.read_text(encoding="utf-8"))
+        return _config_text(path.read_text(encoding="utf-8"), path.parent)
     except UnicodeDecodeError as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+
+
+LOCAL = "forge.local.toml"
+
+
+def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
+    """forge.toml's settings with this clone's forge.local.toml laid over them. The file sits in the
+    main checkout, so every worktree of the clone shares it, and sets only tools, workers and
+    [models] kinds. "local" holds what it set; "shared" is forge.toml alone, for committed files."""
+    path = _common_path(top).parent / LOCAL
+    if not path.is_file():
+        return cfg
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
+        refuse(REFUSALS["bad_local"], problem=exc)
+    for key in data:
+        if key not in ("tools", "workers", "models"):
+            refuse(REFUSALS["local_key"], key=key)
+    problem = (_config_problem({"version": cfg["version"], **{k: v for k, v in data.items() if k != "models"}})
+               or _models_problem(data.get("models", {})))
+    if problem:
+        refuse(REFUSALS["bad_local"], problem=problem)
+    return {**cfg, **data, "models": {**cfg["models"], **data.get("models", {})}, "local": data, "shared": cfg}
 
 
 def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
-    git("fetch", "-q", "origin", default, cwd=top)
+    if not command_fact("fetched origin", top, dict).get("all"):
+        git("fetch", "-q", "origin", default, cwd=top)
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
@@ -455,7 +552,8 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
                    for text in texts if text.startswith("---"))
 
 
-def _config_text(text: str) -> dict[str, Any]:
+def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
+    """forge.toml's text, checked; given its checkout, with that clone's forge.local.toml over it."""
     try:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
@@ -466,7 +564,7 @@ def _config_text(text: str) -> dict[str, Any]:
     problem = _models_problem(data.get("models", {}))
     if problem:
         refuse(REFUSALS["models"], problem=problem)
-    return {**DEFAULTS, **data}
+    return _with_local({**DEFAULTS, **data}, top) if top else {**DEFAULTS, **data}
 
 
 def ready_path(item: str, top: Path) -> Path:
@@ -501,18 +599,48 @@ def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]
     return models(cfg, kind, family) or WORKER_DEFAULTS[family]
 
 
-def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
-    """One tool overrides workers; both keeps workers' tool or split's design routing.
-    Design work uses the family's design model. forge work and forge next both ask this."""
-    family = (cfg["tools"] if cfg["tools"] != "both" else
-              cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
+def worker(cfg: dict[str, Any], kind: str, design: bool,
+           tool: str | None = None) -> tuple[str, dict[str, str], str]:
+    """One tool overrides workers; both keeps workers' tool or split's design routing, unless the
+    owner chose a tool for this item. Design work uses the family's design model. forge work and
+    forge next both ask this."""
+    family = tool or worker_family(cfg, design)
     chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
-    why = (f"tools = {family}" + (", with the design model as it is user-facing" if design else "")
+    why = ("the owner chose it for this item" if tool else f"tools = {family}"
+           + (", with the design model as it is user-facing" if design else "")
            if cfg["tools"] != "both" else
            ("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
            if cfg["workers"] == "split" else f"workers = {family}"
            + (", with the design model as it is user-facing" if design else ""))
-    return family, chosen, why
+    return family, chosen, why + (f"; {sources}" if (sources := setting_sources(cfg, kind, design)) else "")
+
+
+def worker_family(cfg: dict[str, Any], design: bool) -> str:
+    """Which tool runs work: one tool overrides workers; split sends design work to Claude."""
+    return (cfg["tools"] if cfg["tools"] != "both" else
+            cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex")
+
+
+def setting_sources(cfg: dict[str, Any], kind: str, design: bool) -> str:
+    """With a forge.local.toml, which file set tools, workers and this work's models, such as
+    "forge.local.toml: tools = both; forge.toml: workers = codex, models.build"; else ""."""
+    local = cfg.get("local")
+    if local is None:
+        return ""  # ponytail: no local file means forge.toml set them all, so output stays as it was
+    kind = "design" if design else "lite" if kind == "explore" and "explore" not in cfg["models"] else kind
+    files: dict[str, list[str]] = {LOCAL: [], "forge.toml": [], "built-in default": []}
+    for key in ("tools", "workers"):
+        files[LOCAL if key in local else "forge.toml"].append(f"{key} = {cfg[key]}")
+    files[model_source(cfg, kind, worker_family(cfg, design))].append(f"models.{kind}")
+    return "; ".join(f"{name}: {', '.join(keys)}" for name, keys in files.items() if keys)
+
+
+def model_source(cfg: dict[str, Any], kind: str, family: str) -> str:
+    """Where a worker's models for this kind come from. A local [models.<kind>] replaces the whole
+    kind, so without an entry for this worker Forge's built-in default applies, as forge work does."""
+    if not models(cfg, kind, family):
+        return "built-in default"
+    return LOCAL if kind in cfg.get("local", {}).get("models", {}) else "forge.toml"
 
 
 def coordinator() -> str | None:
@@ -522,14 +650,17 @@ def coordinator() -> str | None:
     return apps[0] if len(apps) == 1 else None
 
 
-def route(cfg: dict[str, Any], tool: str) -> str:
+def route(cfg: dict[str, Any], tool: str, *, command: str, item: str) -> str:
     """A round runs natively in its coordinating app, otherwise through the tool's kit."""
-    return "native" if tool == coordinator() else "kit"
+    here = coordinator()
+    if cfg["tools"] != "both" and here is None:
+        refuse(REFUSALS["no_session"], command=command, item=item)
+    return "native" if tool == here else "kit"
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
     """The design model for a family, including the default in older repos."""
-    return cfg["models"].get("design", {}).get(family, DESIGN_DEFAULTS[family])
+    return cfg.get("models", {}).get("design", {}).get(family, DESIGN_DEFAULTS[family])
 
 
 def _models_problem(table: Any) -> str:
@@ -578,6 +709,10 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "version" and not VERSION.fullmatch(value):
             return "version must be a Forge release, such as v1.2.1"
+        flag = next((entry for entry in value if entry.startswith("-")), None) if key == "always_test" else None
+        if flag:
+            return (f"always_test lists {flag}, which is not a test path or node ID; "
+                    "list only tests, such as tests/test_rules.py")
         if key == "runner" and not value.strip():
             return "runner must name a GitHub Actions runner label"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
@@ -600,7 +735,16 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
         return
-    pinned = config(top)["version"].removeprefix("v")
+    pinned = ""
+    if words == "handback" and ITEM.fullmatch(item):
+        from forge import codex
+        # A build round's hand-back runs on the release its checkout pinned when it was handed out,
+        # before reading a forge.toml the round may have broken, which the hand-back restores.
+        pending = codex._json(codex._item_file(top, item, ".json", "Build")).get("pending") or {}
+        if pending.get("head"):
+            handed = run("git", "show", f"{pending['head']}:forge.toml", cwd=pending["checkout"])
+            pinned = _pin(handed.stdout)
+    pinned = pinned or config(top)["version"].removeprefix("v")
     if pinned == __version__:
         return
     from forge import story

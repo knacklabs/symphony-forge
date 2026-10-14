@@ -1,0 +1,44 @@
+{
+  "allow_large": "A version bump touches the version, the pin, the install scripts, the plugin manifests, the tests that pin them, and all sync output close requires when the version changes, including generated skill copies sync writes",
+  "amendments": [
+    {
+      "at": "2026-10-12T04:48:37.666298+00:00",
+      "because": "The repo's review rules say a release's version bump changes no behaviour and needs no new upgrade test; close requires the generated files to match sync when the version changes",
+      "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and new and upgraded clients install v1.2.10"
+    }
+  ],
+  "base": "434fdfd3871e63bb011136515f6e803128106b84",
+  "branch": "fix/release-1210",
+  "done_when": "Forge's version is 1.2.10 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "flagged": [
+    ".claude/skills/simplified-technical-english/SKILL.md",
+    "tests/test_release_version.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fd4614f79bb7763711f21b58757293f537b53a1e92b6ee88cdeb9391185b591c",
+    "changed": "97f3cbb45282f607cc92f94ada463e3cbd97843b239e79c7dfa8879030ed5421",
+    "commit": "ade0bca03b736e86b5584034f1e94c0ea926d5d3",
+    "dismissals": [],
+    "findings": [],
+    "id": "ea4f2d65-f022-4b02-a7dc-57e38c4dac34",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T03:29:04.774471+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T04:48:16.031085+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T04:51:10.396999+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.10 for the speed fixes merged since v1.2.9: tests run once, reviews run alongside tests, stops ask plain questions and wait 30 minutes, personal worker choice"
+}

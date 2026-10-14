@@ -1,0 +1,29 @@
+{
+  "base": "23bb1db61aaf907943e1ca73b05a063722d65bca",
+  "branch": "fix/test-audit-superseded",
+  "done_when": "Each removed test's contract is still asserted by a named stronger test, and the suite is smaller",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e1e2179903abd746c4362a2ebc02a93c2d936c154f78be1f0f28899de406b2d",
+    "changed": "f66c124dba4be57ca18715a8cf5e0f064b2b6ea549d045b38cde14beeef1e380",
+    "commit": "7193b0306297bc660c89ed48129cb9bd750262d8",
+    "dismissals": [],
+    "findings": [],
+    "id": "57265a24-268f-47ab-baec-5cef64ddd50e",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T11:05:55.523101+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T11:57:19.483401+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Older tests are superseded by stronger ones: a test of another test, fake-Husky and CLAUDE.md move tests, duplicate review-tool cases, a Windows soak, copied-fixture and brief-string checks, and old read-loop and chat-recovery tests"
+}

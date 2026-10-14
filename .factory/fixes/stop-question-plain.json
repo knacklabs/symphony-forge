@@ -1,0 +1,141 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T02:02:06.328796+00:00",
+      "because": "Narrowed under the owner's Harm 1-2 rule: a finding's title plus who is affected needs two sentences; one sentence would drop who is affected (Gain 1, Harm 1)",
+      "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding as one plain sentence saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that"
+    },
+    {
+      "at": "2026-10-12T02:55:42.541733+00:00",
+      "because": "Narrowed under the owner's Harm 1-2 rule: the item's name and delivery come from text people and agents wrote; Forge removes paths and markdown but cannot rewrite command flags into plain words. Third review angle on this clause (Gain 2, Harm 1)",
+      "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item in plain words and what it delivers, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that"
+    },
+    {
+      "at": "2026-10-12T03:12:59.529190+00:00",
+      "because": "My earlier wording named Done-when for every item; a story's owner-facing delivery is its What changes for you section, which the question already uses",
+      "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item and what it delivers from its own title and Done-when (or plan row) with paths and markdown removed, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that"
+    }
+  ],
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/stop-question-plain",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12b1e-e9e0-7821-a429-753366dc296f",
+    "head": null,
+    "start": "66d0f4a9cc659b278d227b57f9574a532a336a3e"
+  },
+  "done_when": "When a cold read or review loop stops, forge read, forge close, forge land and forge next print a ready-to-ask question that names the item and what it delivers from its own text (a story's title and What changes for you, a spec's title, a fix's why and Done-when, a task's plan row) with paths and markdown removed, lists each open blocking note or finding in plain words, at most two sentences, saying what goes wrong for whom, and says what accept, narrow and split would each concretely do for this item, and the guide tells the coordinator to ask exactly that",
+  "flagged": [
+    "src/forge/land.py",
+    "src/forge/nextstep.py",
+    "src/forge/review.py",
+    "src/forge/story.py",
+    "tests/test_close_holds_after_three_blocked_reviews.py",
+    "tests/test_land.py",
+    "tests/test_reads_wait_for_a_loop_choice.py",
+    "tests/test_spec_reads_keep_full_scope.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9cd19a99ad9157ae7f51da46c3faacc01459b60cd58ccbfd4512050cc879a5bb",
+    "changed": "8044687477859de0f341c9c1d6136f70c1eaafc8098ccc0873ca0b624d4b49f2",
+    "commit": "9479f8c26320185a1da10a26fc01a088357a67b7",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is settled by the corrected Done-when (a story's delivery is its What changes for you); finding 2 is fixed in commit 03cc9dc01 (titles go through plain())",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: finding 1 is settled by the corrected Done-when (a story's delivery is its What changes for you); finding 2 is fixed in commit 03cc9dc01 (titles go through plain())",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Raise: Not done. `read_question` takes a story's delivery from `What changes for you` and never reads `Done when`. Those sections can differ: the story fixture promises a saved-time display in its second Done-when item, but the named read test accepts a question that mentions only saving and returning to a basket. The owner can therefore be asked to choose without seeing what the item delivers.",
+        "file": "src/forge/story.py",
+        "line": 1014,
+        "priority": "P1",
+        "title": "Not done: stopped story questions omit Done-when delivery"
+      },
+      {
+        "body": "Raise: Not done. This line passes a story or spec title directly into the question, without removing paths or Markdown. The task path also appends the plan's raw story title at `src/forge/review.py:256`. A title containing a Markdown link or source path is printed unchanged by forge read and forge next, or by a stopped task's close, land and next output. The named proofs use plain titles, so they do not catch this Done-when gap.",
+        "file": "src/forge/story.py",
+        "line": 1015,
+        "priority": "P1",
+        "title": "Not done: stopped questions can retain paths and Markdown in item names"
+      }
+    ],
+    "id": "ba93810a-6d2d-4163-b818-5bf778c2361d",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T10:40:39.914201+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T13:03:06.972700+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:35:25.513987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:32:45.020859+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T18:37:04.967061+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T19:30:00.154580+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T20:29:18.017242+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T00:37:20.263915+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T01:30:17.303777+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:23:47.583721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:38:09.011636+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T02:55:21.552978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T03:12:38.479758+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T03:12:38.495130+00:00",
+    "choice": "accept",
+    "file": "src/forge/story.py",
+    "reason": "Owner rule for Harm 1-2: finding 1 is settled by the corrected Done-when (a story's delivery is its What changes for you); finding 2 is fixed in commit 03cc9dc01 (titles go through plain())",
+    "wait_id": "d6a39f6f-7dd6-4afe-ade3-1f9463c29bac"
+  },
+  "why": "When a cold read or review loop stops, the owner is asked to accept, narrow or split with no context; with many items in parallel they can't tell what the item is or what was flagged",
+  "worker": "codex"
+}

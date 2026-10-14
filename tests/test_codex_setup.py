@@ -162,13 +162,24 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert started.returncode == 0, started.stderr
     worktree = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     _workers(worktree, "codex")  # forge init wrote the [models] table
+    head = repo.git("rev-parse", "HEAD", cwd=worktree)
+    refused = "Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts no Codex turn here.\nNext: "
+    # Only a parent folder trusted: work refuses and names the main checkout's entry to add.
+    (codex_home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(client.parent))}]\ntrust_level = "trusted"\n', encoding="utf-8")
+    parent_only = repo.forge("work", "SHOP/CART", cwd=worktree)
+    assert parent_only.returncode == 1 and parent_only.stderr.startswith(
+        refused + 'open Codex here and trust the project, or add trust_level = "trusted" '
+        f'under [projects.{json.dumps(str(client))}] in {codex_home / "config.toml"}, the main checkout'), parent_only.stderr
+    assert "a parent folder's entry does not count" in parent_only.stderr
+    assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
+    # An untrusted entry blocks: the Next line names it.
     trust("untrusted")
     untrusted = repo.forge("doctor", cwd=client)
     assert untrusted.returncode == 1 and UNTRUSTED in untrusted.stdout, untrusted.stdout
-    head = repo.git("rev-parse", "HEAD", cwd=worktree)
-    refused = repo.forge("work", "SHOP/CART", cwd=worktree)
-    assert refused.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
-                              "Forge starts no Codex turn here.\nNext: forge doctor\n")
+    blocked = repo.forge("work", "SHOP/CART", cwd=worktree)
+    assert blocked.stderr == (refused + f'set trust_level = "trusted" under [projects.{json.dumps(str(client))}] '
+                              f'in {codex_home / "config.toml"}; a parent folder\'s entry does not count\n'), blocked.stderr
     assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
     trust("trusted")
     in_worktree = repo.forge("doctor", cwd=worktree)

@@ -33,6 +33,25 @@ BLOCKED = {
     "git commit --no-verify -m 'Fix it'": HOOKS,
     "git push --no-verify origin fix/a": HOOKS,
     "git add -A && git commit -nm 'Fix it'": HOOKS,
+    "uv run pytest -n 2 && git commit -m 'Fix it' -n": HOOKS,
+    "bash <<'EOF'\ngit commit -n -m 'Fix it'\nEOF": HOOKS,
+    "cat <<'EOF' | bash\ngit commit -n\nEOF": HOOKS,
+    "cat <<EOF | bash\ngit commit --no-verify\nEOF": HOOKS,
+    "git commit -F - <<EOF\n$(git commit -n)\nEOF": HOOKS,
+    "git commit -m --no-verify -n": HOOKS,
+    "git commit -m x --no-verify": HOOKS,
+    "echo '<<EOF'\ngit commit -n": HOOKS,
+    "# don't\necho '<<EOF'\ngit commit -n": HOOKS,
+    "echo a#b; git commit -n": HOOKS,
+    "echo $((1 << 2))\ngit commit -n\n2": HOOKS,
+    "cat <<E\"OF\"\nx\nEOF\ngit commit -n\nE": HOOKS,
+    "bash -c \"$(cat <<'EOF'\ngit commit -n\nEOF\n)\"": HOOKS,
+    "cat > script.sh <<'EOF'\ngit commit -n\nEOF\nbash script.sh": HOOKS,
+    "echo x\\ #note; git commit -n": HOOKS,
+    "echo x\\\n#note; git commit -n": HOOKS,
+    # An unquoted heredoc message is scanned in full: it fails closed.
+    "git commit -F - <<EOF\nProof list: git commit -n --no-verify\nEOF": HOOKS,
+    "git commit -F - <<EOF\nFix it\nE\\\nOF\ngit commit -n\nEOF": HOOKS,
     "git -c core.hooksPath=/dev/null push origin HEAD:main": HOOKS,
     "git -c core.hooksPath=/tmp commit -m 'Fix it'": HOOKS,
     "gh pr merge 12 --squash": MERGE,
@@ -40,7 +59,17 @@ BLOCKED = {
 ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
            "git commit -m 'Turn off -n mode'", "git push origin fix/a", "git push -u origin fix/a",
            "git add -f notes.txt", "gh pr view 12", "rm build/old.txt", "rm -r build",
-           "grep -rf patterns.txt src", "echo 'git push -f is refused'", "pytest -q"]
+           "grep -rf patterns.txt src", "echo 'git push -f is refused'", "pytest -q",
+           # Only git commit's own options count: not another command's, a message, or a heredoc.
+           "uv run pytest -n 2 tests/x.py && git commit -m 'Fix it'",
+           'uv run pytest -n 2 && git commit -m "-n 2 runs two workers"', "git commit -uno -m x",
+           "pytest -n 2 && git commit -F - <<'EOF'\nTests don't need git commit -n\nEOF",
+           "git commit -m --no-verify", "git commit --message --no-verify",
+           "git commit -F- <<\\EOF\nProof list: git commit -n --no-verify\nEOF",
+           "git commit --file - <<\"EOF\"\nNo git commit -n here\nEOF",
+           "bash -c true && git commit -F - <<'EOF'\nNo git commit -n here\nEOF",
+           "git -C web commit --file=- <<'EOF'\nNo git commit -n here\nEOF",
+           "env GIT_EDITOR=: git commit --file=- <<'EOF'\nNo git commit -n here\nEOF"]
 
 
 def test_23_deny_hook(repo, claude_payload, codex_payload):

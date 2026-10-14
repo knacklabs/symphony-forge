@@ -1,0 +1,47 @@
+{
+  "branch": "task/FORGE-BOARD-2-TRENDS",
+  "flagged": [
+    "src/forge/board_facts.py",
+    "src/forge/board_trends.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f8ebf77223b3ffb9bec52e4c1bf72f25c5d2e7482e3fdd54b185f58c0e0a1abc",
+    "changed": "0d8a9908258b0bca019736c435a1a87b423e697b41472cd85312329a3481ab94",
+    "commit": "7705c6b8a9cc0c2b1cfc4befd239a813cc51190e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 4, Harm 2\nThe branch produces trends and the around-Forge list as JSON, but the page does not yet draw the six weekly marks, per-person rows, or adjacent pull request list. The story's Tasks table assigns that page and its browser proof to RUNWAY.",
+        "file": "src/forge/board_trends.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 90,
+        "priority": "P2",
+        "title": "Later: RUNWAY renders the trends and around-Forge list",
+        "work": 4
+      }
+    ],
+    "id": "92ab82bb-f0f0-4eb7-a794-8fd01c83ff33",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T23:45:05.261255+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T00:04:31.562426+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T00:11:00.273227+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:07:10.577232+00:00",
+      "step": "review"
+    }
+  ]
+}

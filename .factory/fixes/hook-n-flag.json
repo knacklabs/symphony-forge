@@ -1,0 +1,115 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T10:02:44.837769+00:00",
+      "because": "Each review round found a new shell trick in unquoted heredocs (escaped substitutions, line-continued delimiters), one of them a hook bypass; scanning unquoted heredoc bodies in full closes the bypass, and a quoted delimiter is the documented way to write a message that mentions -n",
+      "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line"
+    }
+  ],
+  "base": "1ce35517c8f1749740cccad8f680dccbaa0dfdd9",
+  "branch": "fix/hook-n-flag",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a12b19-4d17-7a90-bb2b-81b678b20f96",
+    "head": null,
+    "start": "60e93db45b593bb0de6dfebf2bc94b289a115b49"
+  },
+  "done_when": "The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on the same line or that sits in a quoted heredoc message (<<'EOF') given to git commit -F -; an unquoted heredoc message is scanned in full, so it fails closed",
+  "flagged": [
+    "src/forge/deny.py",
+    "tests/test_deny.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aab246cc7024d3e4f1b8675602c9c691a5fac3a6e574efe7d07fc31755b1ba48",
+    "changed": "ab18748c60d96b9b98dcb9d20975866244cd64e6f53dcc02e19cf89552c8b22b",
+    "commit": "7edd13341c1cacf6cd0541731313912ca9447c04",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+        "finding": 3
+      }
+    ],
+    "findings": [
+      {
+        "body": "chunk 1/2:\n\nRaise: Not done. For `git commit -F - <<EOF` with a message line `\\$(git commit -n)` before `EOF`, the backslash makes the substitution literal, so the invoked commit has no prohibited option and no second commit runs. Line 229 nevertheless retains that message line because it contains `$(`. The command scanner then parses `git commit -n` from the message and refuses the harmless commit. The named unquoted-heredoc test covers an executable substitution, but not this literal one.",
+        "file": "src/forge/deny.py",
+        "line": 229,
+        "priority": "P1",
+        "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command on"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Security. In an unquoted `git commit -F - <<EOF` heredoc, Bash joins a line ending `E\\` with the next line `OF` before checking the delimiter. A following `git commit -n -m x` therefore runs as a shell command. At line 227, the scanner checks the original lines separately, continues discarding text until a later literal `EOF`, and lets the skipped-hooks commit through. The [Bash manual](https://www.gnu.org/software/bash/manual/bash.pdf) confirms that backslash-newline joining precedes delimiter matching.",
+        "file": "src/forge/deny.py",
+        "line": 227,
+        "priority": "P1",
+        "title": "Heredoc line continuation hides a skipped-hooks commit"
+      },
+      {
+        "body": "chunk 2/2:\n\nRaise: Not done. Lines 220\u2013221 recognize stdin commit messages with `-F -`, `--file -`, or `--file=-`, but miss the valid attached form `-F-`. For `git commit -F- <<'EOF'` with a message mentioning `git commit -n`, the scanner retains the message and refuses the commit although it has no skip flag. Line 229 also retains an escaped literal `\\$(git commit -n)` in an unquoted stdin message and refuses it as though the substitution ran. The allowed tests cover neither message form. [Git documents `-F` with `-` as stdin](https://git-scm.com/docs/git-commit).",
+        "file": "src/forge/deny.py",
+        "line": 220,
+        "priority": "P1",
+        "title": "Not done: The commit hook refuses only when git commit itself is given -n or --no-verify, never for an -n that belongs to another command"
+      }
+    ],
+    "id": "cd210d29-cb2f-44ea-8393-b72a764d8b1d",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T10:29:43.068718+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T12:57:38.343891+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:08:58.544421+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T15:40:59.630113+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-11T16:36:01.870476+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:32:22.850556+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:02:09.932026+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T10:02:09.943656+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/deny.py",
+    "reason": "Owner rule for Harm 1-2: the round-6 findings are settled in commit 997169a8e by failing closed: only a quoted heredoc message given to git commit is skipped, every unquoted body is scanned in full, so the line-continued delimiter bypass and the escaped substitution are both refused, and -F- is recognized",
+    "wait_id": "f77f4cea-44b5-4349-acc9-07f00886280b",
+    "worker_round": 1
+  },
+  "why": "The commit hook treats pytest -n 2 on the same command line as git commit as skipping the hooks and refuses the commit",
+  "worker": "codex"
+}

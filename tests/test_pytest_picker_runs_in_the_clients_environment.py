@@ -131,6 +131,11 @@ def _client_tests(client, python):
             "utf-8")
     (client / "tests/test_unrelated.py").write_text(
         "def test_unrelated():\n    assert False, 'The picker must exclude this test'\n", "utf-8")
+    # Keep the two selected files at a third so close still proves client execution;
+    # larger selections now intentionally run only in required CI.
+    for number in range(3):
+        (client / "tests" / f"test_other_{number}.py").write_text(
+            "def test_other():\n    assert False, 'The picker must exclude this test'\n", "utf-8")
     return f'"{python.as_posix()}" -m pytest tests -q'
 
 
@@ -217,7 +222,7 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     assert broken.returncode != 0 and "No module named 'forge'" in broken.stderr
     upgraded = up.run(RELEASE)
     assert upgraded.returncode == 1, upgraded.stdout + upgraded.stderr
-    assert "close stopped before the review" in upgraded.stderr
+    assert "failed on this machine; the next worker round gets its output." in upgraded.stderr
     assert not receipt.exists()
     assert config.read_text("utf-8") == settings
     upgraded_config = up.folder / "forge.toml"

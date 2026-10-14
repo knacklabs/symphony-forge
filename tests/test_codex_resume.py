@@ -271,7 +271,10 @@ def _continued_context(repo, monkeypatch, sdk_data):
     assert _lines(turns)[-3] == {  # before the commit nudge's start and end lines
         "conversation": "thr-stub-1", "turn": "turn-stub-2", "kind": "Fix", "continued": True,
         "fresh_start": None, "status": "completed", "started": NOW, "ended": NOW,
-        "input_tokens": None, "cached_input_tokens": None, "output_tokens": None}
+        "input_tokens": None, "cached_input_tokens": None, "output_tokens": None,
+        # A repair round wants Fast; this stub reports no tier back.
+        "model": "gpt-6-sol", "effort": "high", "fast_wanted": True, "requested_tier": "priority",
+        "tier": None}
     repo.git("add", "-A", cwd=folder)
     repo.git("commit", "-qm", "Keep the edits", cwd=folder)
 

@@ -1,0 +1,38 @@
+{
+  "base": "5e67b58716110c721f3a79524f1a12a4049174b5",
+  "branch": "fix/worker-tests-once",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a129d5-71be-79a1-8daa-4b030d3f7bae",
+    "head": null,
+    "start": "b3e442929e0afd5077eb9d779185ac10d29e7864"
+  },
+  "done_when": "The worker brief tells workers to run the related tests once at the end of their turn, rerunning only what failed, and never to poll the machine lines",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eee0a07cbe78d605e19d26236dc5f6502416992a02dcdcaa0d2a4cb8df25aea2",
+    "changed": "4a27c60fb60e89f4a6650a786257a7daa4788aa96cb137a8cc86160424ec7c66",
+    "commit": "236e59444b136da93a34b2324ca3519ea1adb803",
+    "dismissals": [],
+    "findings": [],
+    "id": "ef9ceab6-624c-4974-a8e0-c5301d508ef8",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-11T07:11:46.584899+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T08:31:27.440200+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers run their tests about three times per turn and watch the test line while waiting",
+  "worker": "codex"
+}

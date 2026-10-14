@@ -38,13 +38,21 @@ def _forge_hooks(text: str) -> list[tuple[str, str]]:
         return [(event, hook["command"]) for event, groups in hooks.items() for group in groups
                 for hook in group.get("hooks", []) if sync.FORGE_COMMAND.search(hook.get("command", ""))]
     except (ValueError, AttributeError, TypeError, KeyError): return []
-def _codex_trusts(top: Path, config: Path) -> bool:
+def _codex_trust(top: Path, config: Path) -> tuple[bool, str]:
+    """Trusted only on an exact trusted [projects] entry for the checkout or its main checkout (each
+    as given or as its real path); a missing, untrusted or unreadable entry fails closed, and a
+    parent folder's entry never counts. Returns the verdict and the fix: the entry that blocks, or
+    the main checkout's entry to add."""
     common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
-    roots = {top.resolve(), common.resolve().parent}
-    try:
-        projects = tomllib.loads(sync.read(config)).get("projects", {})
-        return any(Path(path).resolve() in roots and project.get("trust_level") == "trusted" for path, project in projects.items())
-    except (tomllib.TOMLDecodeError, AttributeError): return False
+    keys = {str(folder) for folder in (top, common.parent)} | {os.path.realpath(f) for f in (top, common.parent)}
+    try: levels = {key: project.get("trust_level") for key, project in tomllib.loads(sync.read(config)).get("projects", {}).items() if key in keys}
+    except (tomllib.TOMLDecodeError, AttributeError): levels = {}
+    blocking = next((key for key, level in sorted(levels.items()) if level != "trusted"), None)
+    if blocking: return False, (f'set trust_level = "trusted" under [projects.{json.dumps(blocking)}] in {config}; '
+                                "a parent folder's entry does not count")
+    return bool(levels), ("open Codex here and trust the project, or add trust_level = \"trusted\" under "
+                          f"[projects.{json.dumps(os.path.realpath(common.parent))}] in {config}, the main checkout, which "
+                          "covers every worktree Forge makes; a parent folder's entry does not count")
 def _last(done: subprocess.CompletedProcess[str] | Exception) -> str:
     if not isinstance(done, (subprocess.CompletedProcess, subprocess.CalledProcessError)): return str(done).partition("\nNext: ")[0]
     return ((done.stderr or "").strip() or (done.stdout or "").strip() or f"exit code {done.returncode}").splitlines()[-1]
@@ -406,11 +414,12 @@ def doctor(args: argparse.Namespace) -> int:
         add("fast_test still runs python -m forge.fasttest in the client's environment.",
             'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
-    elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read( top / sync.WORKFLOW_PATH):
+    # Test groups append their split options to the command.
+    elif "tests" in cfg["checks"] and not any(f"run: {json.dumps(cfg['test'])[:-1]}{end}" in sync.read(top / sync.WORKFLOW_PATH)
+                                              for end in ('"', " --splits ")):
         add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    trusted = _codex_trusts(top, codex_config)
-    trust = ("open Codex here and trust the project, or add " f'[projects."{top}"] with trust_level = "trusted" to {codex_config}')
+    trusted, trust = _codex_trust(top, codex_config)
     if on_codex and not trusted: add("Codex doesn't trust this project, so it would skip Forge's hooks and the "
                      "project's Codex settings.", trust)
     skills = {"claude": [Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"), top / ".claude"],
@@ -428,6 +437,14 @@ def doctor(args: argparse.Namespace) -> int:
                     add(f"{skill} is required for UI work but isn't installed where the " f"{host} worker reads skills.", INSTALL[skill])
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
+    if local := cfg.get("local"):
+        entries = [(kind, table) if "model" in table else (f"{kind}.{tool}", entry)
+                   for kind, table in local.get("models", {}).items()
+                   for tool, entry in ([("", table)] if "model" in table else table.items())]
+        print(f"- Note: {repo.LOCAL} overrides " + ", ".join(
+            [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
+            + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
+               for name, entry in entries]) + ".")
     if "review" in cfg.get("models", {}):
         print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
@@ -448,7 +465,20 @@ def doctor(args: argparse.Namespace) -> int:
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    print(f"- Codex Fast: {fast}; models without Fast run normally.")
+    events = repo.forge_dir(top) / "events.jsonl"
+    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
+    said = ("" if last is None else " The last Codex turn ran with Fast."
+            if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else
+            " Codex reported a different speed from the one Forge requested."
+            if last["tier"] not in (None, "default") else
+            " Codex did not report the last turn's speed." if last["tier"] is None else
+            " The last Codex turn wanted Fast, but Codex reported normal speed."
+            if last.get("fast_wanted") and last["requested_tier"] != "default" else
+            " The last Codex turn ran at normal speed.")
+    if last and last.get("fast_wanted") and last["requested_tier"] == "default":
+        said = f" The last Codex turn wanted Fast, but {last['model']} doesn't offer it." + said
+    print(f"- Codex Fast: {fast}; models without Fast run normally.{said}")
     claude = shutil.which("claude")
     version = None
     if claude:

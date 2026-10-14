@@ -73,20 +73,24 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 
 <!-- proof-list -->
 ## Proof list
-The worker's latest commit supplies this list, which Forge copies into the pull request:
+Forge builds this list from the worker's mapping of Done-when items to tests. A pytest name
+the branch has shows it is in the branch; close's test run, alongside this review, gives its
+result in the pull request. Any other name is marked `not run` or `not checked` and may not
+exist: `not run` means close ran no such test, and `not checked` means close could not match the
+line to its run, so judge it by reading it:
 
 $proof_list
 
 On every round, check the whole list, not a sample. Check every entry against the code and its
 named proof, including every Done-when detail; compare it with the covered items above so an
 omitted item or detail cannot hide a gap. Report every missing case you find in this round, even
-when another finding already blocks; a case the Done-when doesn't name counts only inside What
-counts below. A missing list or entry is a P1 `Not done: proof list`; judge missing or hollow
+when another finding already blocks; a case the Done-when doesn't name is a P2 `Follow-up:`
+(What blocks the merge, below). A missing list or entry is a P1 `Not done: proof list`; judge missing or hollow
 proof by the test-audit rules below.
 
 <!-- rules -->
 ## Tests on the close run
-forge close ran the repo's test command before this review, outside your sandbox:
+forge close runs the repo's test command alongside this review, outside your sandbox:
 $test_run
 
 A test skipped in your sandbox that the close run passed is not a missing test. For a pure
@@ -133,15 +137,26 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 ## What blocks the merge
-Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only the advice
-forms this page names (`Simpler:`, `Later:`, `Simpler (existing):`), which need no Raise line
-and never block the merge or start another round. Report nothing else.
+Your scores decide, whatever the priority: Harm 4 or 5, or Gain 5 blocks the merge. Otherwise,
+Gain 4, or Gain 3 with Harm 3, blocks the merge only with Work 1 or 2. Every other Gain 3 or 4
+finding is a follow-up fix, even a Gain 3 finding with Harm 1 or 2 and Work 1 or 2.
+Gain 1 or 2 is lived with. Findings below the bar let the merge go on.
+Every finding under a Raise line is P0 or P1. P2 and P3 are only the advice
+forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
+`Simpler (existing):`), which need no Raise line
+and, scored Gain 1 or 2, never block the merge or start another round. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
   naming that task;
 - when the story's Tasks table assigns a test or check to another task, report it as a
   P2 `Later:` finding naming that task, not `Not done`.
+
+A `Not done` finding blocks only when it names a Done-when item the change misses as
+written. A case the Done-when does not name, such as another language, platform, shell,
+tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
+doesn't wait for, even when realistic (score it Gain 1 or 2); a functional, security or data-loss defect
+on the changed code still blocks under its own Raise line.
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
@@ -209,6 +224,43 @@ same code that people or agents are likely to hit, not every rare combination.
 Write each finding as one line naming the defect and its impact, then brief evidence: the line you
 read and, for an edge case, the realistic scenario. No speculative suggestions: report what breaks,
 not what might be nicer.
+
+## Known and accepted
+The owner, the coordinator or Forge settled these notes; Forge ignores a repeat with the same title and file.
+Raise one again only with new evidence of harm, titled `Disputed keep <the note>: <the new harm>`.
+$accepted
+
+## Scores
+Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
+judgement, not measurement. Write them as one line, exactly `Gain <g>, Work <w>, Harm <h>`,
+as the first line of each finding's body, before its evidence.
+
+| Score | Gain (how much fixing helps) | Work (effort to fix) | Harm (what breaks if it goes wrong) |
+|---|---|---|---|
+| 1 | wording, a rare edge nobody named | a line, no new test | nothing; a revert undoes it |
+| 3 | a Done-when item partly unmet for a named case; a test that passes with the code broken | one file and one command-level test, under an hour | client-visible behaviour change, reversible by a revert |
+| 5 | security, data loss, the main case of a Done-when item not done | a new module, a second platform or language, a migration | one-way: data, a migration, a release clients upgrade to |
+
+Harm floor: a note raised under Security or Data loss, or one that names a migration, scores
+Harm 4 or more. Forge raises a lower Harm to 4 and marks the line `(floor: <why>)`.
+
+Examples: "Close's default test selection breaks Go repos" Gain 3, Work 4, Harm 2. "Close skips
+Jest `__tests__` folders" Gain 2, Work 2, Harm 1. "A blocked review is shown as waiting for checks
+when tests pass on retry" Gain 3, Work 2, Harm 1. "Promotion accepts an uncommitted roadmap entry"
+Gain 4, Work 2, Harm 2. "A stuck stop's narrow or split answer never reaches the worker" Gain 4,
+Work 1, Harm 1. "Land shows a generic waiting line instead of the stop question" Gain 3, Work 1,
+Harm 1. "Doctor credits a model to the wrong file in a rare mix of local settings" Gain 2, Work 1,
+Harm 1. "Upgrade pull requests are checked by the previous release" Gain 2, Work 4, Harm 1. "A
+proof test checks only the question's first lines" Gain 2, Work 1, Harm 1.
+
+- Raise a finding only after you check it against the code at the current commit, and name the
+  file and line.
+- A `Not done` finding scores Gain by how much of the Done-when stays unmet: the main case unmet is
+  Gain 4 or 5; one more rare combination on a clause whose main case works is Gain 1 or 2. When
+  earlier rounds already raised that clause, say so and propose to narrow the clause.
+- Only you score. The coordinator and the worker never change a score, and notes in a proof list
+  do not lower one.
+
 Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the story's doc and its
 read notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
 All earlier reviews' findings and dismissals are below, including findings fixed in later
@@ -220,7 +272,7 @@ $rulings
 Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
 weigh, and name that evidence in the finding's body and a distinct title. Settled findings stay
 settled: Forge ignores a finding with the same title and file as a fixed or dismissed finding,
-even if its line or evidence changes. Human acceptance covers only the accepted version.
+even if its line or evidence changes, and so does a finding the human accepted.
 
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
@@ -250,6 +302,37 @@ working prototype as a whole: the demo workflow, data handling, sign-in, integra
 security, accessibility, and whether the implementation matches the answers. Report every
 blocking mismatch or missing working path as a P0 or P1 finding. Do not accept a sign-off on
 the strength of a template or a test stub alone. Give concrete file and line evidence.
+
+## Scores
+Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
+judgement, not measurement. Write them as one line, exactly `Gain <g>, Work <w>, Harm <h>`,
+as the first line of each finding's body, before its evidence.
+
+| Score | Gain (how much fixing helps) | Work (effort to fix) | Harm (what breaks if it goes wrong) |
+|---|---|---|---|
+| 1 | wording, a rare edge nobody named | a line, no new test | nothing; a revert undoes it |
+| 3 | a Done-when item partly unmet for a named case; a test that passes with the code broken | one file and one command-level test, under an hour | client-visible behaviour change, reversible by a revert |
+| 5 | security, data loss, the main case of a Done-when item not done | a new module, a second platform or language, a migration | one-way: data, a migration, a release clients upgrade to |
+
+Harm floor: a note raised under Security or Data loss, or one that names a migration, scores
+Harm 4 or more. Forge raises a lower Harm to 4 and marks the line `(floor: <why>)`.
+
+Examples: "Close's default test selection breaks Go repos" Gain 3, Work 4, Harm 2. "Close skips
+Jest `__tests__` folders" Gain 2, Work 2, Harm 1. "A blocked review is shown as waiting for checks
+when tests pass on retry" Gain 3, Work 2, Harm 1. "Promotion accepts an uncommitted roadmap entry"
+Gain 4, Work 2, Harm 2. "A stuck stop's narrow or split answer never reaches the worker" Gain 4,
+Work 1, Harm 1. "Land shows a generic waiting line instead of the stop question" Gain 3, Work 1,
+Harm 1. "Doctor credits a model to the wrong file in a rare mix of local settings" Gain 2, Work 1,
+Harm 1. "Upgrade pull requests are checked by the previous release" Gain 2, Work 4, Harm 1. "A
+proof test checks only the question's first lines" Gain 2, Work 1, Harm 1.
+
+- Raise a finding only after you check it against the code at the current commit, and name the
+  file and line.
+- A `Not done` finding scores Gain by how much of the Done-when stays unmet: the main case unmet is
+  Gain 4 or 5; one more rare combination on a clause whose main case works is Gain 1 or 2. When
+  earlier rounds already raised that clause, say so and propose to narrow the clause.
+- Only you score. The coordinator and the worker never change a score, and notes in a proof list
+  do not lower one.
 
 The exact docs/product/BRIEF.md answers page section reviewed and quoted by the sign-off decision:
 

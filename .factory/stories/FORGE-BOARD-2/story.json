@@ -1,0 +1,69 @@
+{
+  "approval": {
+    "at": "2026-10-10T12:01:21+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01StZ6ikECbZx4jPmGAByzXa",
+    "hash": "afe350ad99410ee306565a2d2d6e32293a40f2bfe29ab313810ddb6d7e9d246e",
+    "round": 11,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-BOARD-2.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-09T21:03:36+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T21:28:53+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-09T21:57:24+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-09T22:36:17+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-09T22:47:06+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-09T22:58:21+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-09T23:00:32+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-09T23:03:49+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-10T01:45:41+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-10T11:30:07.101199+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-10T11:38:39.700972+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-10T11:59:29.536088+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-10T12:01:21+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "The board tells a team what's happening, what needs them and when it goes live",
+  "touches": 1
+}

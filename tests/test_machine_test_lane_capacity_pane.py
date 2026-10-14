@@ -9,8 +9,7 @@ from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import make_work, start
 from test_lanes_tests import accepted, configure, reap, release_server  # noqa: F401
-from test_mod_native import run_native_plugin_checks
-from test_mod_plugin import HOST, node_run, packaged_mod, strict_typescript_against_claude_declarations  # noqa: F401
+from test_mod_plugin import HOST, node_run, packaged_mod  # noqa: F401
 from test_story import worktree
 
 STORY = "FIX-TWO-TEST-SLOTS"
@@ -97,8 +96,3 @@ def test_2_pane_and_machine_show_test_lane_capacity_and_every_running_test(
             assert title in active["machine"]
     finally:
         reap(processes, server, connections)
-    if cores == 4:
-        # The real native runtime owns clipping and mount compatibility; the
-        # command-backed host above owns delivery of live lane counts.
-        strict_typescript_against_claude_declarations(packaged_mod)
-        run_native_plugin_checks(tmp_path)

@@ -1,0 +1,35 @@
+{
+  "base": "3545316f0af3c8b1125007b1ac394e5437d61b0d",
+  "branch": "fix/pid-reuse-keeps-run",
+  "done_when": "When a recorded agent's process id now belongs to a different process, the lane keeps the run while its Forge process is alive, so the next agent start for that item goes ahead",
+  "flagged": [
+    "tests/test_pid_reuse_keeps_run.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8530c11081ee05cc7de0a3adb8913fe71c43b1234a47c9c0ff58317ab6025e3d",
+    "changed": "e6b3585dfc88a3c6f83bc72415840b526003cb993a54d5212fa0064cd2228938",
+    "commit": "68a3d182ad3e61a4333e8fb5a10d1ea600500279",
+    "dismissals": [],
+    "findings": [],
+    "id": "9c5a8603-084f-4ea3-baa8-b85cb3d97e55",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T14:35:44.769656+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T14:52:22.415640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T14:58:33.681240+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A run can be dropped from the machine line when its agent's process id is reused by another process, so the next agent start for that item is refused with 'This run was stopped'"
+}

@@ -41,15 +41,16 @@ def section(guide, heading):
 def test_1_guide_explains_core_and_pane_on_every_surface(guide):
     core = section(guide, "Claude Code plugin core")
     for instruction in ("forge board --json", "forge next --json", "forge lanes --json",
-                        "every 10 seconds", "skipped", "20 seconds", "last good rows",
+                        "every 10 seconds", "skipped", "60 seconds", "last good rows",
                         "Couldn't refresh:", "next tick", "never edits repo files",
                         "This repo's Forge is too old for the pane: upgrade Forge here."):
         assert instruction in core, instruction
     pane = section(guide, "The pane and strip")
     for instruction in ("`/forge`", "144", "110", "80", "focus", "Desktop",
-                        "timeline", "hover", "native buttons", "VS Code", "Remote Control",
-                        "claude -p", "two lines per item", "Nothing in progress.",
-                        "model", "findings", "unknown"):
+                        "native button", "VS Code", "Remote Control", "claude -p",
+                        "NEEDS YOU", "STUCK", "MOVING", "READY TO MERGE", "waiting or not started",
+                        "`→`", "Review found 3 problems", "and N more", "Nothing in progress.",
+                        "Loading Forge…"):
         assert instruction in pane, instruction
 
 

@@ -1,0 +1,67 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T08:08:07.147456+00:00",
+      "because": "A permanent test that every collected test has a timing entry would fail each new test until the file is refreshed; the refresh is a one-time change proven by the file itself",
+      "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand; and the test timing file covers today's suite so each platform's groups take about the same time"
+    },
+    {
+      "at": "2026-10-12T10:04:27.663261+00:00",
+      "because": "Each test merged after the refresh would make 'covers today's suite' false again; the refresh is a point-in-time change, repeated at releases",
+      "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand, and those full runs never reuse a Linux-only parent's results; and the test timing file is refreshed to cover today's suite"
+    }
+  ],
+  "base": "9fa543c6d8fbbe8608d17f948bc1954ccaa8d02d",
+  "branch": "fix/main-run-faster",
+  "done_when": "A merge to main runs only the Linux groups and cancels the main run it supersedes; macOS and Windows run nightly, on release tags and on demand, and those full runs never reuse a Linux-only parent's results; and the test timing file is refreshed with the suite as of this change, so tests added later use pytest-split's average until the next refresh",
+  "flagged": [
+    ".github/workflows/forge-next.yml",
+    ".test_durations",
+    "tests/test_ci_job_budgets.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "18d3e511d425e67e423c4cbb8137b2508f8c835d8d5b508c8d3a66547464f34f",
+    "changed": "f3bb329aafeb68626d08ffe8e5e844562e4d0b22e42609e177d3f895860877f2",
+    "commit": "a0963090cd1528a0f06ff57b7fb1685258997979",
+    "dismissals": [],
+    "findings": [],
+    "id": "e180ef03-8056-4d3e-9168-acff6a9c26b3",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T06:54:36.261499+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T08:07:39.268216+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T09:24:48.833560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T10:04:03.986295+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T12:25:42.086827+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T11:51:44.439298+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": ".test_durations",
+    "reason": "Owner rule for Harm 1-2: the Done-when was narrowed to a timing file refreshed with the suite as of this change; tests merged after the refresh use pytest-split's average until the next refresh at release",
+    "round": 4,
+    "wait_id": "bda6b9be-df46-4f53-a1b5-1ce95e453697",
+    "worker_round": null
+  },
+  "why": "Main's full run takes 20 to 35 minutes on every merge and fills the shared runners that pull requests wait for: all three platforms run on each merge, superseded runs are not cancelled, and the test timing file is a week old so groups are uneven"
+}

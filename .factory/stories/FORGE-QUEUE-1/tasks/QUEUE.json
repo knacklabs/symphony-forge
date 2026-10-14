@@ -1,0 +1,80 @@
+{
+  "branch": "task/FORGE-QUEUE-1-QUEUE",
+  "flagged": [
+    "docs/commands.md",
+    "src/forge/land.py",
+    "tests/test_queue_land_all.py"
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f227233cbb7a20a9c0172ad4c83e2a007025a80ce2d03b2cd34231253b51baf",
+    "changed": "1f80022ace8cedd7a6541d6778b75a5bb13d408cc22786b297d0283c0840f74b",
+    "commit": "b92c6eeae7e40eac51bf0669963ceccdad19f10e",
+    "dismissals": [
+      {
+        "because": "src/forge/land.py:256 Accepted under the approved bar (Harm 2, area stop answered); follow-up filed: land --all moves to the main checkout before the pin check",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Moving to the main checkout here happens after `cli._run` calls `repo.check_pin` (`src/forge/cli.py:137-138`). When an existing repo has upgraded its main branch but a selected fix worktree still pins the earlier release, invoking `forge land --all` from that worktree is forwarded to the earlier Forge release (`src/forge/repo.py:713-743`), which does not recognize `--all`. The command never reaches this line. The adopted-repo test merges the upgrade into main before creating its fixes (`tests/test_queue_land_all.py:151-172`), so it does not cover the promised in-flight upgrade case.",
+        "file": "src/forge/land.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 256,
+        "priority": "P1",
+        "title": "Not done: land --all starts from an in-flight older-release worktree",
+        "work": 2
+      }
+    ],
+    "id": "dcdb58a1-177f-4bbe-8852-a22a0f6494b5",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T23:45:15.681956+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T03:01:19.898761+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T03:54:22.642389+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:12:06.203850+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T04:46:02.195045+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:01:45.714290+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T05:29:44.457851+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T06:28:22.773280+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-13T05:29:44.472188+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/land.py",
+    "reason": "Accepted under the approved bar (both Harm 2, area stop already answered); follow-ups filed: merge-time re-close failures get the queue's land step; read checks for pull requests beyond the newest 25.",
+    "wait_id": "d5943e91-7a15-42b8-826a-ab0fa184afdf",
+    "worker_round": null
+  }
+}

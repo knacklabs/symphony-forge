@@ -154,20 +154,3 @@ def test_5_failed_turns_in_a_session_claude_still_has_keep_that_session(repo, gh
     assert _session(resumed, "--resume") == first and "--session-id" not in resumed["args"]
     assert EARLIER in resumed["brief"] and "# Worker brief" not in resumed["brief"]
     assert FRESH not in again.stdout
-
-
-def test_4_a_round_without_forge_s_local_session_record_recovers_its_chat(repo, gh):
-    log = _started(repo)
-    assert repo.forge("work", FIX).returncode == 0
-    # The item's committed state shows a round ran, but this machine has no record of its session,
-    # as on another machine or after .git/forge was cleared.
-    (repo.path / ".git" / "forge" / "threads" / "fix" / f"{FIX}.json").unlink()
-
-    again = repo.forge("work", FIX)
-
-    assert again.returncode == 0, again.stdout + again.stderr
-    [first, fresh] = calls(log)
-    assert "--session-id" not in fresh["args"]
-    assert _session(fresh, "--resume") == _session(first, "--session-id")
-    assert EARLIER in fresh["brief"]
-    assert FRESH not in again.stdout

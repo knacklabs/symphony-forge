@@ -120,6 +120,8 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     clean = repo.forge("work", "BOARD/PAGE")
     assert clean.returncode == 0, clean.stdout + clean.stderr
     assert "fell back to Codex" in clean.stdout and "exit code 3" in clean.stdout
+    assert any(line.startswith("Building BOARD/PAGE with Codex (gpt-6-nova, xhigh) because Claude ")
+               for line in clean.stdout.splitlines()), clean.stdout
     [claude_call] = calls(claude_log)
     [first] = _sent(codex_log, "thread/start")
     assert first["config"] == {**QUIET, "features.multi_agent": True, "model": "gpt-6-nova",
