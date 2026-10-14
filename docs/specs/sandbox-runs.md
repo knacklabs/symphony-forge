@@ -84,7 +84,12 @@ The owner chose each of these on 14 October 2026:
    subprocesses (the tests and every repository command) do not inherit the token. The repo's sandbox
    secrets reach only those commands, through `forge test` and the worker's command runner, never the
    Claude process itself, so an app secret named `ANTHROPIC_API_KEY` cannot replace the developer's
-   subscription. The Codex login file is readable only by the Codex process's own user, not by the
+   subscription. Settings the repo ships cannot change this either: the relay starts Claude Code with
+   `--setting-sources user`, so the repo's own `.claude/settings.json` and local settings (their
+   `env`, `apiKeyHelper` and gateway addresses) do not load, and Forge writes the user settings the
+   round needs, such as its hooks. The sandbox image also carries a managed settings file with
+   `allowedProviders` set to Anthropic only, so a session that tries any other provider or gateway is
+   refused at start. The Codex login file is readable only by the Codex process's own user, not by the
    user that runs repository commands. Residual risk, accepted by the owner: with Docker available, a
    repository command can still reach the machine as root; the egress allowlist keeps it from sending
    a token to any host outside the list, and each machine is thrown away after its run.
