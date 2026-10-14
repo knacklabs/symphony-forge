@@ -57,26 +57,38 @@ The owner chose each of these on 14 October 2026:
    retry and each commit nudge, Codex helper agents' threads, Codex and Claude reviews and cold
    reads, and headless Claude runs. Each receipt keeps the model, the activity (build, read or
    review), uncached input, cached input (cache read), cache write, output and reasoning tokens where
-   the tool reports them, the billing basis (plan login or API key), the item and the person who
+   the tool reports them, with cache writes split by cache duration where the tool reports it
+   (Claude's 5-minute and 1-hour writes), the billing basis (plan login or API key), the item and the person who
    started the run. Each count is a delta for that attempt. Forge never adds a cumulative total or a
    total that includes the parent twice.
 2. **Native agents report their own counts.** A native Claude agent reports through Claude Code's
    agent-stop hook. A native Codex run in a Codex-only repo reports through the Codex app server's
    thread usage. When Forge cannot read a count, the item shows "unknown" for that run. Forge never
    guesses a count and never uses the parent session's total.
-3. **Receipts survive a new laptop.** The pull request's time record keeps token totals per model
-   and activity. Compaction keeps those totals when it folds old rounds.
-4. **Cost and plan limits.** Forge ships a price table per model: the price per million tokens for
-   input, cached input, cache write and output, with the date of the rates. A run on an API key
-   shows an estimated cost. A run on a plan login shows its tokens and "on plan". Where the tool
-   reports plan limits (the Codex app server's rate-limit reports, and Claude Code where it gives
-   them), the board shows how close each developer is to the plan's 5-hour and weekly limits.
+3. **Receipts survive a new laptop.** The pull request's time record keeps token totals per model,
+   activity and billing basis (plan login or API key), plus the number of runs and the number of
+   runs with unknown counts. Compaction keeps these totals when it folds old rounds, so a fresh clone
+   still shows the estimated cost and the unknown share.
+4. **Cost.** Forge ships a price table per model: the price per million tokens for input, cached
+   input, 5-minute cache write, 1-hour cache write and output, with the date of the rates. A run on
+   an API key shows an estimated cost. When the tool does not report the cache duration, Forge uses
+   the 5-minute rate and marks the cost as an estimate. A run on a plan login shows its tokens and
+   "on plan".
 5. **The board shows cost and time per item.** The local board and `forge board --json` show, for
    each story, task and fix: elapsed time, waiting time, automation time (never called effort),
    rounds, tokens by model and activity, estimated cost, and the share of runs with unknown counts.
-   A story's totals add each of its parts once, plus the story's own planning and reads.
+   A story's token counts and run durations are the sum of its parts' receipts plus the receipts
+   recorded under the story's own key (its cold reads). A story's elapsed and waiting time are the
+   union of its parts' intervals, so parts that overlap count once, as Forge's time records do
+   today. Forge does not count the coordinator's session (for example, story planning), because it
+   cannot assign that session's use to one item.
 6. **No Mainline needed.** All of this works on the laptop and in the pull request. The export to
    Mainline, with an allowlisted list of fields, is a separate story.
+
+**Plan limits (FORGE-COST-2).** A developer on a plan login can hit the 5-hour or weekly limit in
+the middle of a round with no warning, and the round stops. Where the tool reports plan limits (the
+Codex app server's rate-limit reports, and Claude Code where it gives them), the board shows how
+close each developer is to the plan's 5-hour and weekly limits.
 
 **New and existing repos.** A new repo (`forge init`) gets receipts, the price table and the board
 columns from its first run. An existing repo gets the same on upgrade and `forge sync`, and so does
@@ -90,11 +102,13 @@ Two people live with this: a developer who runs Forge through Claude Code or Cod
 engineering manager who answers for the team's model spend.
 
 - **The manager.** She opens the board and sees each story's elapsed time, waiting time, automation
-  time, rounds, tokens by model and activity, and estimated cost. A story row adds its tasks once.
+  time, rounds, tokens by model and activity, and estimated cost. A story row adds its tasks'
+  tokens once, and parts that run at the same time count once in its elapsed time.
   When some runs have no counts, the row says what share is unknown, so she knows how far to trust
   the total.
-- **The developer.** Nothing new to do. Each run writes its receipt by itself. On the board he sees
-  how close he is to his plan's 5-hour and weekly limits, where his tool reports them.
+- **The developer.** Nothing new to do. Each run writes its receipt by itself. After FORGE-COST-2,
+  the board also shows how close he is to his plan's 5-hour and weekly limits, where his tool
+  reports them.
 - **After a laptop change.** A fresh clone shows the same totals for merged items, because the pull
   request's time record holds them.
 - **Plan logins.** A run on a ChatGPT or Claude plan shows its tokens and "on plan", not a price.
@@ -109,24 +123,28 @@ engineering manager who answers for the team's model spend.
 ## Acceptance criteria
 
 1. Every run attempt (a Codex build turn, each capacity retry, each commit nudge, a helper agent's
-   thread, a review, a cold read and a headless Claude run) writes one receipt with the model,
-   activity, uncached input, cached input, cache write, output and reasoning tokens where reported,
-   billing basis, item and starter; the item's total equals the sum of its receipts, with no count
-   added twice.
-2. A native Claude agent's counts arrive through the agent-stop hook, and a native Codex run's
-   through the app server's thread usage; a run whose count cannot be read shows "unknown", never a
-   guess or the parent session's total.
-3. A pull request's time record keeps token totals per model and activity, also after compaction,
-   and a fresh clone shows the same totals for a merged item.
-4. With the shipped price table, an API-key run shows an estimated cost and a plan-login run shows
-   its tokens and "on plan"; where the tool reports plan limits, the board shows each developer's
-   use of the 5-hour and weekly limits (FORGE-COST-2).
-5. The local board and `forge board --json` show, per story, task and fix, elapsed time, waiting
+   thread, a review, a cold read, a headless Claude run and a native agent) writes one receipt with
+   the model, activity, uncached input, cached input, cache write by duration where reported, output
+   and reasoning tokens where reported, billing basis, item and starter; native Claude counts arrive
+   through the agent-stop hook and native Codex counts through the app server's thread usage; a run
+   whose count cannot be read shows "unknown", never a guess or the parent session's total; the
+   item's total equals the sum of its receipts, with no count added twice.
+2. A pull request's time record keeps token totals per model, activity and billing basis, the number
+   of runs and the number with unknown counts, also after compaction; a fresh clone shows the same
+   totals, estimated cost and unknown share for a merged item.
+3. With the shipped price table, an API-key run shows an estimated cost, priced by cache duration
+   where reported and at the 5-minute rate, marked as an estimate, where not; a plan-login run shows
+   its tokens and "on plan".
+4. The local board and `forge board --json` show, per story, task and fix, elapsed time, waiting
    time, automation time, rounds, tokens by model and activity, estimated cost and the share of runs
-   with unknown counts; a story adds each part once, plus its own planning and reads.
-6. A new repo gets all of this at init; an existing repo, including one adopted on an earlier
+   with unknown counts; a story's tokens and run durations are its parts' receipts plus its own cold
+   reads, and its elapsed and waiting time count overlapping parts once; the coordinator's session is
+   not counted.
+5. A new repo gets all of this at init; an existing repo, including one adopted on an earlier
    release, gets it on upgrade and sync, and its older items show "unknown" for counts never
    recorded.
+6. (FORGE-COST-2) Where the tool reports plan limits, the board shows each developer's use of the
+   5-hour and weekly limits.
 
 ## Roadmap
 
