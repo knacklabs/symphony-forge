@@ -109,8 +109,8 @@
       "gain": 4,
       "harm": 3,
       "line": 141,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts both notes; they become one follow-up fix: shared history on older pull requests without a history section, and the starter kept through compaction",
       "round": 3,
       "security": false,
       "title": "Not done: backfill shares the merged history on PR bodies without a history section",
@@ -122,8 +122,8 @@
       "gain": 3,
       "harm": 2,
       "line": 123,
-      "outcome": "follow-up",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts both notes; they become one follow-up fix: shared history on older pull requests without a history section, and the starter kept through compaction",
       "round": 3,
       "security": false,
       "title": "Not done: compacted rebuilt histories retain the original starter",
@@ -135,7 +135,18 @@
     "branch_diff": "4a81a5f0d9d5daad4a53fcb6c27e245b1a9a0c55e1190c7982313e45c9673139",
     "changed": "bb08a7c2f096c2b56a13f29488d2aac38d9a142732805cae4c4b7a5f9c00735f",
     "commit": "741e9ecdbc2b56c5a7c6bc892dd515839345701f",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts both notes; they become one follow-up fix: shared history on older pull requests without a history section, and the starter kept through compaction",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts both notes; they become one follow-up fix: shared history on older pull requests without a history section, and the starter kept through compaction",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. `seed` places a raw time record before `forge:end`. When an older PR has no `## How it went` section, `close._refresh_record` inserts a new history section after that marker (`time_records.py:658-663`), leaving two records. `time_records.from_body` reads only the first (`time_records.py:451-455`), so teammates cannot see local events and timings merged into the second. Backfill still clears the retry marker. The upgrade test uses bodies of this shape but gives those items no local logs.",
@@ -159,10 +170,13 @@
       }
     ],
     "id": "8f275166-4512-4ef6-8bf5-85f6814c5810",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 4,
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/backfill.py"
+  ],
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T07:11:28.611471+00:00",
@@ -183,9 +197,13 @@
   ],
   "stop": {
     "at": "2026-10-14T09:43:43.502680+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/backfill.py",
+    "reason": "Owner accepts both notes; they become one follow-up fix: shared history on older pull requests without a history section, and the starter kept through compaction",
     "round": 4,
-    "wait_id": "86740f59-44e9-4831-aae1-c46881d4816a"
+    "wait_id": "86740f59-44e9-4831-aae1-c46881d4816a",
+    "worker_round": 4
   },
   "stuck": {
     "close": "7c0a7e3d-5a28-4e74-a914-3999d6590a28",
