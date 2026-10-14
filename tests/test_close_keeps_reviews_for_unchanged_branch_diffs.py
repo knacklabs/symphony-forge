@@ -129,6 +129,8 @@ def test_3_default_branch_checker_accepts_new_and_reused_reviews(env, review_bef
     fixture = ROOT / "tests/fixtures/pr-check-before-branch-diff"
     for name in ("close.py", "checks.py", "review.py", "prcheck.py", "templates/review.md"):
         shutil.copy(fixture / name, source / "forge" / name)
+    # This earlier close commits the shared list, so it also needs its earlier writer.
+    shutil.copy(ROOT / "tests/fixtures/spotted-before-per-change.txt", source / "forge/spotted.py")
     command = env.tmp / "base-forge"
     command.write_text(FORGE_SHIM.format(python=sys.executable, src=str(source)), encoding="utf-8")
 

@@ -273,7 +273,7 @@ human, and board and `forge next` lines. Briefs, guides and code stay as they ar
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
-widen this change for one, and never edit `plans/spotted.json`; Forge keeps it. The one
+widen this change for one, and never edit the spotted records; Forge keeps them. The one
 exception is a bug that stops your item from working: fix it and name it in your handoff.
 
 <!-- if standards -->
