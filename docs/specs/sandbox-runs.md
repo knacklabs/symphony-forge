@@ -2,9 +2,9 @@
 slug: sandbox-runs
 title: Close and build rounds overflow to a remote sandbox when the laptop is full
 status: confirmed
-saved: 2026-10-14T09:25:10.152351+00:00
+saved: 2026-10-14T12:18:32.028839+00:00
 confirmed_by: "Ravi"
-confirmed_hash: 8fedd79f919fda769464b0f681b094716a6d6cc2b2b56d0031898615d357b0b8
+confirmed_hash: aa57e07e5302384c81b075ba82adabb77b4537e3e2802a79f639061a3389d54f
 ---
 
 # Close and build rounds overflow to a remote sandbox when the laptop is full
@@ -55,9 +55,18 @@ The owner chose each of these on 14 October 2026:
    build round there too: it checks out the item's branch, edits, runs the worker's tests and commits.
    The coordinator and the cold reads stay on the laptop, and the laptop posts close's results to the
    pull request.
-2. **GitHub access: the laptop pushes.** The sandbox holds no GitHub credential. It returns its
-   commits as a git bundle, and the laptop checks the bundle (the right branch, only new commits on
-   top of the round's start) and pushes it.
+2. **GitHub access: Mainline pushes, with the team's GitHub App.** The sandbox holds no GitHub
+   write credential. With Docker, the agent is in effect root on its machine, so it can read any
+   token there. The sandbox gets the code without a write credential: the bundle Forge uploads, or a
+   read-only clone through the App. At the end of a round the sandbox uploads its commits to Mainline
+   as a git bundle. Mainline's worker checks the bundle: the item's own branch, only new commits on
+   top of the round's start, and no changes to workflow files under `.github/workflows`. Then it
+   pushes the bundle with a GitHub App installation token for that one repo, with contents and
+   pull-request permissions and no workflows permission. The token never enters the sandbox. Mainline
+   keeps a round's result until its push succeeds and Forge has fetched it; then it deletes it. If the
+   checks refuse a bundle, Mainline pushes nothing and the item shows the reason in Needs you. Forge
+   then collects the refused bundle into a local branch, where the developer reviews it and pushes it
+   with their own GitHub access, or discards it; either choice clears the result.
 3. **Model access: each tool's own sign-in.** A Codex round carries the developer's current ChatGPT
    login into the run and wipes it when the run ends; OpenAI supports that login on remote machines.
    A Claude round uses the team's Anthropic API key from Mainline's vault, because Anthropic does not
@@ -86,8 +95,9 @@ and lets the laptop reattach later. So Mainline's API needs only five plain oper
 sandbox, copy files in and out, start one process, give that process an address on the relay gateway, and
 delete the sandbox. Inside Mainline each backend is one small adapter for those five, so Mainline can
 change backends without any change to Forge; Forge reads only the fields it uses from Mainline's
-replies (principle 7).
-Who may act on a run is one rule: any team member can watch it and collect its result; only the
+replies (principle 7). Pushing a finished round (item 2) is Mainline's own step, the same on every
+backend.
+Who may act on a run is one rule: any team member can watch it; only the
 developer who started it sends it notes; the starter or an Owner can stop it. The relay forwards the
 run's output to Mainline for the board and every pane. Each run has its own token, valid for that run
 and its reconnects; removing a person from the team closes their sessions within a minute, while the
@@ -112,11 +122,13 @@ by the repo's team, the same store its deployed apps use: `forge secrets set NAM
 Mainline's API, and `forge secrets list` shows the names, never the values. Any team member sets `sandbox` secrets; only an Owner sets `dev` and `production` ones. Mainline injects them as
 environment variables only for a run, so a teammate's remote run gets them too; the laptop keychain
 holds only the Mainline token. The vault keeps each environment apart: sandbox runs read only the
-repo's `sandbox` environment, never `staging` or `production`, and a deploy reads only its own
+repo's `sandbox` environment, never `dev`, `staging` or `production` values, and a deploy reads only its own
 environment, so an agent's run can never see a production secret. At setup Forge reads the names
 in the repo's `.env` and offers to move each value into the vault. `forge.toml` holds only the
-on/off switch, the sandbox cap and size, the secret names a run needs and the Mainline team the repo
-belongs to, never a value; Mainline's dashboard shows them read-only.
+on/off switch, the sandbox cap and size, the secret names a run needs, any extra outside hosts the
+repo's tests call (sandboxes reach only allowed hosts, so each addition goes through a reviewed pull
+request) and the Mainline team the repo belongs to, never a value; Mainline's dashboard shows them
+read-only. `forge doctor` names any key the sandbox environment still lacks.
 Setup links the repo to one Mainline team, and every run of that repo spends that team's credits. Each
 laptop signs in to Mainline once through a short browser code, and the token lives in the system
 keychain; a person who is not a member of the repo's team cannot start its sandbox runs.
@@ -124,15 +136,17 @@ keychain; a person who is not a member of the repo's team cannot start its sandb
 **Ready images and test services.** The repo's sandbox image is built once from its lockfiles and
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
 version, named in `forge.toml`) start inside the sandbox before the tests run. `forge doctor` runs one
-check in a sandbox and reports what the repo still needs before rounds can move there. A repo whose
-tests need Docker keeps its close and its build rounds on the laptop, and `forge doctor` says so. Each image is
+check in a sandbox and reports what the repo still needs before rounds can move there. Each run gets
+its own machine with Docker, used once and then removed, so integration and end-to-end tests that
+start containers (for example with Docker Compose or Testcontainers) run in the sandbox as they do on
+the laptop. Each image is
 named by a hash of the repo's lockfiles, its test setup, its services in `forge.toml` and the repo's
 pinned Forge release; when any of
 them changes on the branch, the next remote run builds a new image, and the old one stays in use for
 other branches until no run needs it. Forge sends the image's hash when it asks for a place; when
 Mainline has no image for that hash, it says so, and Forge asks Mainline to build it from the bundle
 first. The Mainline token stays on the laptop: the laptop starts and stops sandboxes; each run's relay
-gets only a token for that run's own result upload. The sandbox never gets a GitHub credential. `forge doctor` reports a missing or
+gets only a token for that run's own result upload. The sandbox never gets a GitHub write credential. `forge doctor` reports a missing or
 expired Mainline sign-in and a token found in a tracked file.
 
 **Forge relays every message.** The coordinator never talks to the sandbox agent directly; it runs
@@ -142,10 +156,10 @@ relay, so `forge work --note`, a worker's question, the live steps in the pane a
 `forge stop` work exactly as for a local round, for Claude and Codex alike. Claude Remote Control is
 not used.
 
-**The round's result comes back whole.** At the end of a round the sandbox returns two things: the
-git bundle and the worker's result, which is the same record a local round writes (done, a question
-for the owner, or stuck, with its text). The laptop records that result exactly as for a local round,
-so `forge work --note`, Needs you and close work the same for local and remote rounds.
+**The round's result comes back whole.** At the end of a round the sandbox uploads two things to
+Mainline: the git bundle and the worker's result, which is the same record a local round writes (done,
+a question for the owner, or stuck, with its text). Mainline pushes the bundle (item 2). Forge on the
+laptop fetches the branch and records the result exactly as for a local round, so `forge work --note`, Needs you and close work the same for local and remote rounds.
 
 **No work is lost when a sandbox is reclaimed.** Mainline may run sandboxes on capacity that AWS can
 take back with two minutes' notice. On that notice the relay commits the worker's changes as one
@@ -166,15 +180,14 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   waiting and that sandbox runs could start them now, and the agent offers it once. On yes it walks
   the developer through signing in to Mainline (a short browser code; the team's $5 starter credits arrive once an Owner adds a card or UPI mandate),
   moving the `.env` values
-  into the vault, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
+  into the vault, installing the team's GitHub App on the repo, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
 - **A team on one app.** Several developers' laptops share one Mainline team: its fair-share places,
   its result store and one live team board that Mainline hosts. The board shows Symphony's team view
   (in progress, needs whom, blocked, go-live) with every run on every laptop and sandbox, by person,
   and each developer's pane reads the same feed. A teammate's laptop runs appear there once that
   teammate signs in to Mainline; until then the board shows their work from git and GitHub only, the
-  way Symphony's board does today, and marks them "not signed in". A finished round waits in the result store, and any
-  team member's Forge can collect it and push it with their own GitHub access, so a laptop that is
-  asleep never blocks the team.
+  way Symphony's board does today, and marks them "not signed in". Mainline pushes each finished round at once, so a
+  laptop that is asleep never blocks the team.
 - **Teammates.** Nothing changes for a teammate until their laptop is full. Then the agent says the
   repo uses sandbox runs and asks them to sign in to Mainline and join the team, which keeps the token in
   that laptop's keychain. Without a sign-in their work stays local.
@@ -182,7 +195,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   steps, `o` for output, `s` to stop) with an "in sandbox" tag and its minutes. Nothing new to learn.
   The item's "How it went" records the round as a sandbox round, with its minutes.
 - **Starting.** Each run gets a fresh sandbox, used once and then removed, from the repo's ready
-  image, which already has the tools and packages installed, so a run starts in about a minute. A test
+  image, which already has the tools and packages installed, on its own machine with Docker. A test
   command that installs packages itself still runs as written; it downloads them again until the team's
   package cache arrives in a later phase.
 - **Cost.** Forge shows the minutes and credits used; buying credits, the balance and limits live on
@@ -195,15 +208,19 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   starts, the round goes to the laptop's line by itself, and its pane row says why in one line. If a
   sandbox stops mid-round, Forge collects what it left and the next round runs on the laptop. If the
   laptop loses touch with a running sandbox, that item waits, with the reason in its row, until Forge
-  has stopped the remote round or collected its result; one item never runs two rounds at once.
+  has stopped the remote round or fetched its result; one item never runs two rounds at once.
   Other items keep using the laptop, so work never stops.
-- **Laptop lid closed.** Rounds already running finish in the sandbox, and their results wait in
-  Mainline: the relay uploads each result (its bundle and record, or a patch) to Mainline's result
-  store before the round ends, and Mainline then removes the sandbox. Collecting a result can be
-  repeated safely; a result stays until Forge acknowledges that it has pushed the commits. Nothing is deleted before then: after 14 days uncollected, `forge next` names the waiting rounds so someone collects them, and only the team's own choice deletes one. When the laptop wakes, Forge collects, checks and pushes them, and the pane says how many
-  rounds it collected.
-- **Turning it off.** A fix turns it off. Forge first collects and pushes every finished round, and
-  lets running rounds finish (or stops them when the team asks) and collects them too. Only then does
+- **Laptop lid closed.** Rounds already running finish in the sandbox. The relay uploads each result
+  (its bundle and record, or a patch) to Mainline's result store before the round ends, and Mainline
+  then removes the sandbox. Mainline checks each bundle and pushes it at once. When the laptop wakes,
+  Forge fetches the pushed branches and updates its records, and the pane says how many rounds
+  finished. Fetching can be repeated safely. A patch, or the checkpoint a stopped sandbox left, waits
+  until Forge collects it and applies it before the next round. A result stays until its push succeeds
+  and Forge has fetched or collected it. Nothing is deleted before then: after 14 days, `forge next`
+  names the waiting results, and only the team's own choice deletes one.
+- **Turning it off.** A fix turns it off. Forge first lets running rounds finish (or stops them when
+  the team asks). It waits until Mainline has pushed every finished round and Forge has fetched it, and
+  it collects what stopped sandboxes left and every refused bundle into local branches. Only then does
   it delete the repo's sandboxes, images, caches and stored results in Mainline (the code copies), and it
   says what it removed. No commit is lost. The delete needs an Owner's Mainline sign-in; when a
   Developer turns it off, new runs stop and the delete waits for an Owner on Mainline's dashboard.
@@ -211,19 +228,18 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 ## Out of scope
 
 - Running the coordinator or the cold reads in a sandbox.
-- Pushing while the laptop is asleep; results wait in Mainline until it wakes.
 - One shared Forge account for all repos.
 
 ## Acceptance criteria
 
 1. With sandbox runs off (the default), nothing changes for new or existing repos.
-2. With them on and the laptop's line full, and Mainline reachable with credits left, close's test run and review, and the next build round, run in the sandbox, with close's results posted to the pull request by the laptop, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when Mainline is down or the team's credits are used up, new runs return to the laptop's line and say why; when credits are used up, running rounds may go on for at most one more hour each, then stop and are collected.
-3. The sandbox gets only committed code (a bundle of the item's branch and the default branch, in a fresh history with no remote, where `forge test` runs), never an ignored file, the laptop's `.git` folder or a GitHub credential; secrets reach it only from the vault, as environment variables for that run; a bundle with commits outside the round's branch is refused with the reason.
+2. With them on and the laptop's line full, and Mainline reachable with credits left, close's test run and review, and the next build round, run in the sandbox, with close's results posted to the pull request by the laptop, and Mainline pushes its commits with the team's GitHub App after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when Mainline is down or the team's credits are used up, new runs return to the laptop's line and say why; when credits are used up, running rounds may go on for at most one more hour each, then stop and are collected.
+3. The sandbox gets only committed code (a bundle of the item's branch and the default branch, in a fresh history with no remote, where `forge test` runs), never an ignored file, the laptop's `.git` folder or a GitHub write credential; secrets reach it only from the repo's `sandbox` environment in the vault, never `dev` or `production` values, as environment variables for that run; Mainline refuses a bundle with commits outside the item's branch, commits that are not new on top of the round's start, or changes under `.github/workflows`, pushes nothing and shows the reason in Needs you; the App token that pushes covers that one repo, with contents and pull-request permissions and no workflows permission, and never enters the sandbox.
 4. A sandbox run shows in the machine view with its minutes, credits used and output, and `forge stop` ends it.
-5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` reports a missing key or one in a tracked file; a Codex round carries the developer's ChatGPT login and a Claude round uses the team's Anthropic API key from the vault; credits, balance alerts and top-ups live on Mainline's dashboard (FORGE-SANDBOX-3).
-6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does; a reclaimed sandbox loses at most 5 minutes of a round's changes, and the next round starts from the last saved commits.
-7. With the laptop asleep, running rounds finish and their results wait; on wake Forge collects, checks and pushes them; turning it off first collects every round, then, with an Owner's sign-in, deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
-8. (FORGE-SANDBOX-3) On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; any member's Forge can collect and push another member's finished round; every member can watch any run's output, while only the starter can send notes, and the starter or an Owner can stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
+5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in by browser code with the token in the keychain, `.env` values moved into the vault, the team's GitHub App installed on the repo, test services, one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` names any key the sandbox environment still lacks and any token in a tracked file; a Codex round carries the developer's ChatGPT login and a Claude round uses the team's Anthropic API key from the vault; credits, balance alerts and top-ups live on Mainline's dashboard (FORGE-SANDBOX-3).
+6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does; a reclaimed sandbox loses at most 5 minutes of a round's changes; Forge collects the checkpoint bundle and patch a stopped or reclaimed sandbox left and applies them before the next round, which starts from the last saved commits.
+7. With the laptop asleep, running rounds finish and Mainline pushes them at once; on wake Forge fetches them and updates its records; Mainline deletes a result only after its push succeeds and Forge has fetched it, or after Forge has collected a refused result into a local branch or the developer discarded it; turning it off first waits until every round is pushed and fetched, and collects what stopped sandboxes left and every refused result, then, with an Owner's sign-in, deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
+8. (FORGE-SANDBOX-3) On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; every member can watch any run's output, while only the starter can send notes, and the starter or an Owner can stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.
 9. New repos start with it off at init; on upgrade and sync an existing repo keeps whatever its `forge.toml` says, so a repo that never set it stays off and an opted-in repo stays on, with nothing to migrate.
 
 ## Roadmap

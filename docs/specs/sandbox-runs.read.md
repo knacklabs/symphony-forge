@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T09:26:28.788179+00:00
-seconds: 73.531
-read_hash: 0d25caee4ca6f73614f9d1f7f18f7e60153320cd
-round: 28
+read_at: 2026-10-14T12:25:00.717234+00:00
+seconds: 62.653
+read_hash: da4ea9f782b312ee4a00de91e79878cdb8bc272c
+round: 33
 passed: yes
-doc_seen: 0d25caee4ca6f73614f9d1f7f18f7e60153320cd
+doc_seen: da4ea9f782b312ee4a00de91e79878cdb8bc272c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: d788f627ecd40f19cda12d8a1a67bb407e4a5604
+notes_seen: 2c8b14dc79a46047475774d42e2c179486b87238
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
@@ -246,5 +246,31 @@ No findings.
     Disposition: cut
 
 ## Round 28
+
+No findings.
+
+## Round 29
+
+No findings.
+
+## Round 30
+
+No findings.
+
+## Round 31
+
+29. Blocking: Turning sandbox runs off cannot complete after Mainline refuses a bundle.
+    Raise: Plan gap. [The new bundle rule](/docs/specs/sandbox-runs.md:64) retains refused results without pushing them—for example, a round changing `.github/workflows`. But [turning it off](/docs/specs/sandbox-runs.md:219) now waits until Mainline has pushed every finished round. That refusal can never satisfy the cleanup condition. The spec needs a recovery path for refused results that also permits shutdown.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut
+
+## Round 32
+
+30. Blocking: Criterion 7 forbids the new discard path for refused results.
+    Raise: Plan gap. [The new recovery rule](/docs/specs/sandbox-runs.md:65) lets the developer discard a refused bundle and clear its result. But [criterion 7](/docs/specs/sandbox-runs.md:239) permits deletion only after a successful push and fetch. Discarding a refused round therefore has conflicting acceptance outcomes. The criterion needs the new refused-result exception.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut
+
+## Round 33
 
 No findings.
