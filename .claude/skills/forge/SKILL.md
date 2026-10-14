@@ -550,9 +550,9 @@ such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `N
 own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
 `Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, word for word as the page shows
 them. Groups follow in this order, each only when it has items, and each in the board's own
-order: NEEDS YOU (one row per `team.needs_you` entry, oldest first), STUCK (one row per
-`team.blocked` entry with its reason in words, such as `No activity for 2 days`, and the longest
-stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
+order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
+such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
+age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
 a running item shows its current stage and how long, such as `Review running · 12 min`),
 READY TO MERGE (the rest of `team.in_progress`, each saying Ready to merge, with the checks in words when known, and its merge
 step; an item merged from another machine shows `forge next`'s line naming who merges it), then a

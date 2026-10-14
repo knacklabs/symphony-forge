@@ -6,6 +6,7 @@ shipped hooks' mounted Board tab with only the host's drawing table stubbed.
 """
 import copy
 import json
+import re
 import sys
 
 import pytest
@@ -194,7 +195,9 @@ def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
     step = next(line for line in repo.forge("next").stdout.splitlines() if line.startswith("Next: "))
     assert step == f'Next: forge work {item} --note "<answer>"'
     shown = board_tab(tmp_path, repo)
-    assert f"NEEDS YOU\nReadme greets new readers\nThe builder asked a question.\n→ decide: {step.removeprefix('Next: ')}" in shown, shown
+    # The row carries how long the question has waited, as the board's Needs you does.
+    assert re.search("NEEDS YOU\nReadme greets new readers\nThe builder asked a question. · waiting \\d+s\n"
+                     + re.escape(f"→ decide: {step.removeprefix('Next: ')}"), shown), shown
 
 
 def opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step(_request, tmp_path):

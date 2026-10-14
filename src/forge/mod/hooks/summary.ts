@@ -163,11 +163,14 @@ export function board(data: Data, now: number): View {
       const key = known?.key ?? (typeof e.id === 'string' && e.id.includes('/') ? e.id.split('/')[0] : undefined)
       return { title: String(e.title), key, state, next: known?.next, item: known?.item ?? { id: String(e.id), title: String(e.title) } as Item }
     }
+    // Each wait and block carries the age the page shows, in the pane's short units; unknown stays out.
+    const aged = (state: string | undefined, age: unknown, words = '') => [state, typeof age === 'number' ? `${words}${seconds(age)}` : ''].filter(Boolean).join(' · ') || undefined
     for (const e of list(team.needs_you)) {
       const known = found.get(e.id)
-      groups['NEEDS YOU']!.push(known?.group === 'NEEDS YOU' ? known.row : entry(e, ASKS[String(e.reason)] ?? (e.reason ? `${upper(String(e.reason))}.` : undefined)))
+      const row = known?.group === 'NEEDS YOU' ? { ...known.row } : entry(e, ASKS[String(e.reason)] ?? (e.reason ? `${upper(String(e.reason))}.` : undefined))
+      groups['NEEDS YOU']!.push({ ...row, state: aged(row.state, e.waited_seconds, 'waiting ') })
     }
-    for (const e of list(team.blocked)) groups.STUCK!.push(entry(e, typeof e.detail === 'string' ? e.detail : undefined))
+    for (const e of list(team.blocked)) groups.STUCK!.push(entry(e, aged(typeof e.detail === 'string' ? e.detail : undefined, e.seconds)))
     for (const e of list(team.in_progress)) {
       const known = found.get(e.id)
       groups[e.state === 'ready to merge' ? 'READY TO MERGE' : 'MOVING']!.push(known?.row ?? entry(e, typeof e.state === 'string' ? upper(e.state) : undefined))

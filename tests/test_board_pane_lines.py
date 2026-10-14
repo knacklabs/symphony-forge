@@ -8,6 +8,7 @@ mounted Board tab, and time rounding.
 """
 import copy
 import json
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -23,8 +24,10 @@ from test_fix_pane_grouped_board import FIXTURE, PREVIOUS, board_tab, lines, row
 from test_mod_plugin import node_run
 from test_story import READER
 
+STORY = "FORGE-BOARD-2"
 
-def seven_items_need_you_shows_five_and_n_more(tmp_path):
+
+def seven_items_need_you_shows_five_and_n_more(_request, tmp_path):
     board = copy.deepcopy(FIXTURE["board"])
     ready = board["items"][0]
     asks = [row(ready, id=f"fix-{n}", title=f"Fix number {n}", stage="building", state="in progress",
@@ -41,23 +44,17 @@ def seven_items_need_you_shows_five_and_n_more(tmp_path):
     assert shown[-1] == "  and 2 more · forge board for all"
 
 
-def an_older_forge_board_draws_rows_and_no_team_line(tmp_path):
+def an_older_forge_board_draws_rows_and_no_team_line(_request, tmp_path):
     shown = lines(tmp_path, PREVIOUS["board"])
     assert shown.startswith("READY TO MERGE\n  Polish the guide\n"), shown
     assert "in progress" not in shown and "needs you" not in shown
 
 
-@pytest.mark.parametrize("case", [seven_items_need_you_shows_five_and_n_more,
-                                  an_older_forge_board_draws_rows_and_no_team_line])
-def test_9_the_pane_opens_with_the_boards_first_screen_lines(tmp_path, case):
-    case(tmp_path)
-
-
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-def test_9_the_board_tab_shows_the_boards_team_facts(env, monkeypatch, tmp_path, previous):
+def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
     """Real forge commands build a repo with six plans waiting for approval, read newest-first by key,
     six stalled fixes, a part other parts wait on, six fixes in progress and enough pace for
-    go-live; the mounted Board tab shows the same facts as `forge board --json`."""
+    go-live; the mounted Board tab shows the same facts as `forge board --json` and its page."""
+    env, monkeypatch = request.getfixturevalue("env"), request.getfixturevalue("monkeypatch")
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
     configure(env, "agent")
@@ -121,13 +118,26 @@ def test_9_the_board_tab_shows_the_boards_team_facts(env, monkeypatch, tmp_path,
         assert rows == [shown_as(e) for e in entries][:5], (name, lines)
         return lines
 
-    group("NEEDS YOU", team["needs_you"])
+    # Each wait and block shows the age the page shows, in short units (3 hours reads 3h).
+    page = tmp_path / "board.html"
+    assert env.repo.forge("board", "--out", str(page)).returncode == 0
+    html = page.read_text("utf-8")
+
+    def ages(lane):
+        what = re.findall(r'class="what">(.*?)</span>', html[html.index(f'id="{lane}"'):html.index(f"<!-- end {lane} -->")])
+        return [re.sub(r"(\d+) ([smhd])\w*", r"\1\2", text.rsplit(" · ", 1)[-1].rsplit("waiting ", 1)[-1])
+                for text in what]
+
+    needs = group("NEEDS YOU", team["needs_you"])
+    assert [age for age in ages("needs-you")[:5] if any(f"waiting {age}" in line for line in needs)] \
+        == ages("needs-you")[:5], (ages("needs-you"), needs)
     stuck = group("STUCK", team["blocked"])
     assert all(any(e["detail"] in line for line in stuck) for e in team["blocked"][:5]), stuck
+    assert all(any(line.endswith(f" · {age}") for line in stuck) for age in ages("blocked")[:5]), (ages("blocked"), stuck)
     group("MOVING", [e for e in team["in_progress"] if e["state"] != "ready to merge"])
 
 
-def test_9_pane_times_round_like_the_board(tmp_path):
+def pane_times_round_like_the_board(_request, tmp_path):
     """A 150-second review reads 2m, as the board's 2 minutes, not 2m 30s or 3m."""
     item = row(FIXTURE["board"]["items"][0], stages=[{"name": "Review", "status": "pass", "seconds": 150},
                                                      {"name": "CI", "status": "running",
@@ -138,3 +148,18 @@ const data = {{ board: {json.dumps({**FIXTURE["board"], "items": [item]})}, next
 console.log(JSON.stringify(summary(data, Date.parse("2026-10-13T12:00:00Z")).join("\\n")));
 """)
     assert "Review ✓ 2m →" in shown and "CI ● 1m" in shown, shown
+
+
+def new_client_board_tab_matches(request, tmp_path):
+    the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous=False)
+
+
+def adopted_client_board_tab_matches(request, tmp_path):
+    the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous=True)
+
+
+@pytest.mark.parametrize("case", [seven_items_need_you_shows_five_and_n_more,
+                                  an_older_forge_board_draws_rows_and_no_team_line, pane_times_round_like_the_board,
+                                  new_client_board_tab_matches, adopted_client_board_tab_matches])
+def test_9_the_pane_opens_with_the_boards_first_screen_lines(request, tmp_path, case):
+    case(request, tmp_path)
