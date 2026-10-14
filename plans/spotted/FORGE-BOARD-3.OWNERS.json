@@ -10,6 +10,17 @@
       "item": "FORGE-BOARD-3/OWNERS",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tBoard still fails without GitHub CLI for ordinary git authors\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 140,
+      "text": "Board still fails without GitHub CLI for ordinary git authors",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

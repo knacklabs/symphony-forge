@@ -57,38 +57,51 @@
       "gain": 4,
       "harm": 3,
       "line": 727,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
       "title": "Board fails when GitHub CLI is not installed",
+      "work": 1
+    },
+    {
+      "area": "actor_logins.batch.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 140,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Board still fails without GitHub CLI for ordinary git authors",
       "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0cb0a926bcbbad0b309fa51ecacb8689c24a084c3052e6d174534b9793b87a4d",
-    "changed": "476868fa5ce6287cd58deaeb069cebf18f9235537777179e5deff16198ce4e4c",
-    "commit": "8cf0ba807e21675c55c338a54a25afc7ab384c3d",
+    "branch_diff": "adff69dfc8a8870c2e0d275f1805496481e358379ad8dd5aa06e8673f87d714a",
+    "changed": "d84ae959ac9504736952e3596d2050479175b52b3599d43608642c943e9e5e08",
+    "commit": "3d9359a4eb086624cfb5045e670f50732c1a01f1",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. The new `viewer` lookup calls `task.github_login` unconditionally. That function calls `repo.run(\"gh\", ...)`, which refuses when the executable is absent. The board's other GitHub reads handle a missing `gh`, and its existing offline behavior still promises local state and dates. Both `forge board --json` and the HTML board now exit instead of showing that local view.",
-        "file": "src/forge/board.py",
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. `machine_board` calls `actor_logins` before its guarded `viewer` lookup. For a visible item whose author uses an ordinary git email, this line invokes `repo.run(\"gh\", ...)`; `repo.run` refuses when `gh` is absent. Both JSON and HTML board reads therefore exit instead of showing local data with a null login. The offline tests use a GitHub noreply email, which bypasses this lookup and leaves the failure undetected.",
+        "file": "src/forge/board_facts.py",
         "gain": 4,
         "harm": 3,
-        "line": 727,
+        "line": 140,
         "priority": "P1",
-        "title": "Board fails when GitHub CLI is not installed",
+        "title": "Board still fails without GitHub CLI for ordinary git authors",
         "work": 1
       }
     ],
-    "id": "55c3b7dc-2521-41dc-8cba-bf3229141cf9",
+    "id": "8be44af3-b5d7-4ed4-aa95-8091a3260f0b",
     "status": "blocked"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -101,8 +114,17 @@
     {
       "at": "2026-10-14T22:16:03.600317+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-14T22:27:03.323139+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-14T22:27:03.332912+00:00",
+    "file": "src/forge/board_facts.py",
+    "wait_id": "e1233261-6724-43ae-aa94-8d2b5a014aef"
+  },
   "stuck": {
     "close": "2e6c3db6-f262-4013-9add-38796357f51f",
     "head": "c04fe6d702fe9be2df809fe3e1d243ff91463bbb",
