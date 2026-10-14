@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-MAINONCE-1-SPOTTED",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-14T16:46:44.598114+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d93ffa42f72671dea8fc04db767b3e9f28127afe",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
