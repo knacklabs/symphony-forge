@@ -16,6 +16,9 @@ from test_close import CLEAN, GREEN, STORY_DOC, approve_story, body, blocked, en
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
 from test_board import seen
+from test_board_keys_rule import agents_md_allows_story_keys
+from test_board_sections import pinned_bar_and_folding_sections
+from test_board_story_history import story_history_lists_read_rounds
 from test_last_task_records_story_outcome import github_merge
 from test_worker import install_claude
 
@@ -732,7 +735,26 @@ def story_runway(env, monkeypatch):
     assert current["intervals"]
 
 
-def test_12_plain_times_round_review_times_in_board_and_pull_request(env):
+@pytest.mark.parametrize("case", ["plain-times", *(f"{part}-{history}" for part in ("sections", "history", "keys")
+                                                   for history in ("new", "adopted-v1.2.2"))])
+def test_12_getting_around_the_board_and_telling_items_apart(request, case):
+    """Plain times; the pinned bar and folding sections; story histories with their cold-read
+    rounds; the shipped line allowing story keys. Each case gets the fixtures it needs."""
+    if case == "plain-times":
+        plain_times(request.getfixturevalue("env"))
+        return
+    part, history = case.split("-", 1)
+    repo, gh, tmp_path = (request.getfixturevalue(name) for name in ("repo", "gh", "tmp_path"))
+    if part == "sections":
+        pinned_bar_and_folding_sections(repo, gh, tmp_path, history)
+    elif part == "history":
+        story_history_lists_read_rounds(repo, gh, tmp_path, request.getfixturevalue("claude_payload"), history)
+    else:
+        agents_md_allows_story_keys(repo, gh, tmp_path, history)
+
+
+def plain_times(env):
+    """15.001-second review times read in rounded plain units in the board and pull request."""
     item, _ = env.start_fix(round=1)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr

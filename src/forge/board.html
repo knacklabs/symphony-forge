@@ -24,15 +24,31 @@
          font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   a { color: var(--ink); text-underline-offset: .15em; }
   ::selection { background: var(--ink); color: var(--paper); }
-  main { padding: 1.5rem clamp(1rem, 3vw, 3rem) 3rem; }
-  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1rem;
-           padding-bottom: .75rem; border-bottom: 1px solid var(--rule); }
-  h1 { font-size: 1.35rem; font-weight: 600; letter-spacing: -.01em; }
-  header p, .totals, .key, .numbers, .note, .empty, .people, .times, .status, .kind { color: var(--muted); }
-  header p { font-size: .85rem; }
+  main { padding: 0 clamp(1rem, 3vw, 3rem) 3rem; }
+  /* The section bar stays pinned; each section folds under its own heading. */
+  .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: baseline;
+         gap: .25rem 1.25rem; padding: .6rem clamp(1rem, 3vw, 3rem); background: var(--paper);
+         border-bottom: 1px solid var(--rule); }
+  .bar .links { display: flex; gap: 1.25rem; }
+  .bar a { font-size: .9rem; font-weight: 500; text-decoration: none; padding: .1rem 0; }
+  .bar a:hover { text-decoration: underline; }
+  .bar a:focus-visible, .scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .bar p { margin-left: auto; font-size: .8rem; }
+  main > section { scroll-margin-top: 3.25rem; }
+  .fold > summary { list-style: none; cursor: pointer; margin-top: 1.75rem; }
+  #overview .fold > summary { margin-top: .5rem; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary h2 { display: inline; margin: 0; font-size: 1.25rem; letter-spacing: -.01em; }
+  .fold > summary::after { content: " +"; color: var(--muted); }
+  .fold[open] > summary::after { content: " \2212"; }
+  span.key { font-size: .75rem; color: var(--muted); margin: 0 0 0 .3rem; white-space: nowrap; font-weight: 400; }
+  .history { font-size: .85rem; padding-left: 1.25rem; display: grid; gap: .35rem; max-width: 110ch; }
+  .history ul { padding-left: 1rem; color: var(--muted); }
+  h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; margin-right: .5rem; }
+  .bar p, .totals, .key, .numbers, .note, .empty, .people, .times, .status, .kind { color: var(--muted); }
   h2 { font-size: 1.05rem; font-weight: 600; margin: 2.25rem 0 .5rem; }
   h3 { font-size: .9rem; font-weight: 600; margin: 1.5rem 0 .25rem; }
-  .sentence { font-size: 1.1rem; line-height: 1.4; margin-top: 1rem; max-width: 100ch; }
+  .sentence { font-size: 1.1rem; line-height: 1.4; margin-top: .4rem; max-width: 100ch; }
   .totals { margin-top: .4rem; font-size: .9rem; }
   .note { margin-top: 1rem; }
   .key { font-size: .85rem; margin-bottom: .5rem; white-space: nowrap; overflow-x: auto; }
@@ -124,7 +140,6 @@
   .pace { font-size: .8rem; color: var(--muted); padding-top: .2rem; }
   .trends-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr); gap: 1rem 2.5rem; }
   .scroll { overflow-x: auto; }
-  .scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .trends { border-collapse: collapse; width: 100%; font-size: .8rem; }
   .trends th, .trends td { text-align: left; padding: .35rem .75rem .35rem 0; border-top: 1px solid var(--rule);
                            font-weight: 400; white-space: nowrap; vertical-align: top; }
@@ -140,6 +155,9 @@
   .around li span { color: var(--muted); font-size: .8rem; }
   .around li span:last-child { grid-column: 2; grid-row: 1; }
   @media (max-width: 720px) {
+    main > section { scroll-margin-top: 7rem; }
+    .bar .links { order: 2; width: 100%; justify-content: space-between; }
+    .bar { gap: .25rem .75rem; } .bar h1 { font-size: 1rem; margin-right: 0; } .bar p { font-size: .75rem; }
     .axis, .lane > summary, .lane.static, .trends-grid { grid-template-columns: minmax(0, 1fr); }
     .axis { height: 2.2rem; } .axis > span:not(.track) { display: none; }
     .axis .track { height: 2.2rem; } .axis .track > .start, .axis .track > .end { top: 1.1rem; }
@@ -151,30 +169,38 @@
 </style>
 </head>
 <body>
+<nav class="bar" aria-label="Board sections">
+  <h1>Forge board</h1>
+  <span class="links"><a href="#overview">Overview</a><a href="#roadmap">Roadmap</a><a href="#stories">Stories</a><a href="#fixes">Fixes</a></span>
+  <p>Updated $updated</p>
+</nav>
 <main>
-  <header>
-    <h1>Forge board</h1>
-    <p>Updated $updated</p>
-  </header>
-  <section id="first-screen" aria-label="Where things stand">
-    $sentence
-    <p class="totals">$totals</p>
-    $note
-    $lanes
-  </section>
-  <section id="roadmap" aria-labelledby="roadmap-heading">
-    <h2 id="roadmap-heading">Roadmap</h2>
+  <section id="overview" aria-labelledby="overview-heading"><details class="fold" open>
+    <summary><h2 id="overview-heading">Overview</h2></summary>
+    <section id="first-screen" aria-label="Where things stand">
+      $sentence
+      <p class="totals">$totals</p>
+      $note
+      $lanes
+    </section>
+    <section id="trends" aria-labelledby="trends-heading">
+      <h2 id="trends-heading">Merged pull requests per week</h2>
+      $trends
+    </section>
+  </details></section>
+  <section id="roadmap" aria-labelledby="roadmap-heading"><details class="fold" open>
+    <summary><h2 id="roadmap-heading">Roadmap</h2></summary>
     <p class="key" tabindex="0" aria-label="Key to the map">$key</p>
     <div class="graph">$graph</div>
-  </section>
-  <section id="trends" aria-labelledby="trends-heading">
-    <h2 id="trends-heading">Merged pull requests per week</h2>
-    $trends
-  </section>
-  <section id="work" aria-labelledby="work-heading">
-    <h2 id="work-heading">Stories and fixes</h2>
-    $rows
-  </section>
+  </details></section>
+  <section id="stories" aria-labelledby="stories-heading"><details class="fold"$stories_open>
+    <summary><h2 id="stories-heading">Stories</h2></summary>
+    $stories
+  </details></section>
+  <section id="fixes" aria-labelledby="fixes-heading"><details class="fold"$fixes_open>
+    <summary><h2 id="fixes-heading">Fixes</h2></summary>
+    $fixes
+  </details></section>
   <p class="numbers">$numbers</p>
 </main>
 </body>
