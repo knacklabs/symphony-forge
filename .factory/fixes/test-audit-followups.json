@@ -9,13 +9,62 @@
     "start": "df4c1075a9b16e01eff42336c00ee378bb27473d"
   },
   "done_when": "The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards",
+  "flagged": [
+    ".codex/skills/forge/SKILL.md",
+    "docs/commands.md",
+    "forge.toml",
+    "tests/test_mod_guide.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "020309bef73c24fd04a82186fb777cdc63ecf113461822f7ef2d88f309da905a",
+    "changed": "7b395b1bd3ca689b59760e08bc54ba45b48e0f731b7f12749438eda4f7751318",
+    "commit": "a2972b37727e208ccbac57c2890a5d21b6a28b33",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Functional. This test-only fix changes the repository pin from v1.2.12 to v1.2.10. `check_pin` in `src/forge/repo.py:724-782` routes normal Forge commands to the pinned release, so commands in this checkout run older behavior. `tests/test_release_version.py:16` also requires v1.2.12. The hook and workflow headers were downgraded alongside the pin.",
+        "file": "forge.toml",
+        "line": 2,
+        "priority": "P1",
+        "title": "Restore the Forge v1.2.12 pin"
+      },
+      {
+        "body": "Raise: Security. Both changed Forge guides remove the instruction to deploy only after an explicit request and to verify authentication first. The changed demo guidance also calls a merged version \u201clive\u201d before deployment is verified. `src/forge/templates/skill.md:11-21` still contains the authorization rule, and `tests/test_deployment_requires_an_explicit_request.py:79-89` requires it in both host guides. Agents using this checkout now receive conflicting deployment instructions.",
+        "file": ".codex/skills/forge/SKILL.md",
+        "line": 11,
+        "priority": "P1",
+        "title": "Restore explicit deployment authorization in both checked-in guides"
+      },
+      {
+        "body": "Raise: Gate. The generated guide and command page drop `forge land --all` even though the current template still documents it at `src/forge/templates/skill.md:41` and the command remains covered by `tests/test_queue_land_all.py`. The guides also drop the `always_test` instruction required by `tests/test_close_always_tests.py:100-104`. These unrelated generated-file rollbacks leave agents with incomplete instructions for supported commands and settings.",
+        "file": "docs/commands.md",
+        "line": 27,
+        "priority": "P1",
+        "title": "Gate: retain current coordinator commands in generated guidance"
+      },
+      {
+        "body": "Raise: Gate. The supplied latest-commit proof list says only \u201cgenerated files only.\u201d It names no proof for any Done-when detail: guide sections in new and previously adopted repos, command-boundary retry behavior, command-boundary upgrade-version behavior, or the net-lines test name. The changed tests are present, but none is mapped to its claimed item in the required proof list.",
+        "file": "tests/test_mod_guide.py",
+        "line": 37,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "2b5a058a-d3d1-415c-9ed8-1616aa03bb60",
+    "status": "blocked"
+  },
   "round": 3,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-12T15:44:42.456146+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-14T18:34:17.739733+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

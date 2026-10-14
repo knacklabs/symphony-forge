@@ -89,6 +89,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.codex/skills/forge/SKILL.md\tRestore explicit deployment authorization in both checked-in guides\ttest-audit-followups",
+      "kind": "bug",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 11,
+      "text": "Restore explicit deployment authorization in both checked-in guides",
+      "from": "blocking",
+      "item": "test-audit-followups",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
       "kind": "bug",
       "path": ".factory/fixes/board-spec.json",
@@ -419,6 +430,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/commands.md\tGate: retain current coordinator commands in generated guidance\ttest-audit-followups",
+      "kind": "bug",
+      "path": "docs/commands.md",
+      "line": 27,
+      "text": "Gate: retain current coordinator commands in generated guidance",
+      "from": "blocking",
+      "item": "test-audit-followups",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/commands.md\tNot done: guide's land row and paragraph\tFORGE-QUEUE-1/QUEUE",
       "kind": "bug",
       "path": "docs/commands.md",
@@ -637,6 +659,17 @@
       "item": "workers-split",
       "status": "done",
       "closed_by": "worker-no-settings"
+    },
+    {
+      "key": "bug\tforge.toml\tRestore the Forge v1.2.12 pin\ttest-audit-followups",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 2,
+      "text": "Restore the Forge v1.2.12 pin",
+      "from": "blocking",
+      "item": "test-audit-followups",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
@@ -8414,6 +8447,17 @@
       "item": "pin-switch-leaves-worktree",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_mod_guide.py\tNot done: proof list\ttest-audit-followups",
+      "kind": "bug",
+      "path": "tests/test_mod_guide.py",
+      "line": 37,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "test-audit-followups",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
