@@ -10438,6 +10438,39 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tNot done: proof list\tsandbox-runs-spec",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 237,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "sandbox-runs-spec",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tNot done: sandbox-runs.md is confirmed instead of draft\tsandbox-runs-spec",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 4,
+      "text": "Not done: sandbox-runs.md is confirmed instead of draft",
+      "from": "blocking",
+      "item": "sandbox-runs-spec",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tOverload payback contradicts the stated build effort\tsandbox-runs-spec",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 44,
+      "text": "Overload payback contradicts the stated build effort",
+      "from": "blocking",
+      "item": "sandbox-runs-spec",
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }

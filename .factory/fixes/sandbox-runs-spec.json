@@ -1,0 +1,140 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-14T09:02:39.101741+00:00",
+      "because": "The owner chose a full build and confirmed the spec on 14 October 2026, so the goal is a confirmed spec on the roadmap, not a draft",
+      "done_when": "docs/specs/sandbox-runs.md is saved as a draft spec with the measured numbers, the payback for today and for an overload month, the five owner choices, the risks and when to build"
+    }
+  ],
+  "base": "56747770778d0130faea34ba812abae4b6428090",
+  "branch": "fix/sandbox-runs-spec",
+  "done_when": "docs/specs/sandbox-runs.md is a confirmed spec with the measured numbers, the payback for today and for an overload month from forge spec payback, the owner's choices, the risks, and its two roadmap items on plans/roadmap.json",
+  "flagged": [
+    "docs/specs/sandbox-runs.md"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 4,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+      "round": 1,
+      "security": false,
+      "title": "Not done: sandbox-runs.md is confirmed instead of draft",
+      "work": 1
+    },
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 237,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
+    },
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 44,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+      "round": 1,
+      "security": false,
+      "title": "Overload payback contradicts the stated build effort",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "69105cf4cdfe6f1a7ffcf9d838ba412aff0b4ed5eac5bb871f1b15e66282703c",
+    "changed": "513e2a829d37c173626398ebb14413c37cb65f43eb6af7c301e635173acaef56",
+    "commit": "c0d3def0227360a47800b5d16c6b7510dcb57fe6",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+        "finding": 3
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done. The required deliverable is a draft viability spec, but `status: confirmed` records it as an approved decision. The text also says the owner chose to build it in full now, so the branch does not deliver the requested draft before the build decision.",
+        "file": "docs/specs/sandbox-runs.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: sandbox-runs.md is confirmed instead of draft",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate. The supplied proof list is `missing`. No entry maps the documentation Done-when details to a check, so the required claims, commands, and links have no named proof.",
+        "file": "docs/specs/sandbox-runs.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 237,
+        "priority": "P1",
+        "title": "Not done: proof list",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done. Eight build days and the stated 4 hours saved per month yield the table's 16-month payback, implying 64 hours of effort. At the stated overload saving of 40 hours per month, that same effort pays back in 1.6 months, not 3.2. This makes a number used for the build decision internally inconsistent.",
+        "file": "docs/specs/sandbox-runs.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 44,
+        "priority": "P1",
+        "title": "Overload payback contradicts the stated build effort",
+        "work": 1
+      }
+    ],
+    "id": "7611fa87-bb7c-49a3-8a3d-d1823a7628d6",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "docs/specs/sandbox-runs.md"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T05:18:07.998852+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T09:01:13.312545+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "docs/specs/sandbox-runs.md",
+    "at": "2026-10-14T09:01:13.344755+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "docs/specs/sandbox-runs.md",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner accepts: goal and proof list are updated, and the 3.2-month payback comes from forge spec payback, which weighs an estimate at one half",
+    "wait_id": "7b903314-bc21-4399-a388-728427ccff0d",
+    "worker_round": null
+  },
+  "why": "Owner wants Forge to run build rounds in remote sandboxes so one laptop is not the limit; before any build, a measured viability spec must say how much it helps and how it would work"
+}
