@@ -39,7 +39,7 @@
       "gain": 3,
       "harm": 3,
       "line": 156,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -49,29 +49,18 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "41fcea56af08acccaa467d2d34ebde96e31bf75cba6b8ea92b85a793117a471c",
-    "changed": "d49cd17ff614a2abc6f8b4227dafa8d7cae66f35b9ac98aec629b32e4520585d",
-    "commit": "613b07b5452e196965a8905d13caef4708de1a1c",
+    "branch_diff": "2627b15961fb3b4eed07a1ebd60d2dd47784e218b07e64bafb37ee099b5a75c0",
+    "changed": "2415818aeba00d4f58c00d89ebc4e515c726fe67f2dae8cd182adb5b5e388927",
+    "commit": "a7e00d1025176a206ebd703324778292a3ff5c87",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. A newly approved story can be `building` while all its parts are `to do` (`src/forge/board_facts.py:181-210`). With no go-live estimate yet (`src/forge/board_trends.py:66-68`), the Board tab has waiting rows, but this fallback counts only ready-to-merge parts and planning stories, so it returns no summary. The mounted test covers ready-only and planning-only boards but misses this normal active-work state.",
-        "file": "src/forge/mod/hooks/summary.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 156,
-        "priority": "P1",
-        "title": "Not done: The Board tab shows its summary line for every board that has active work, including one where every item is ready to merge or in2",
-        "work": 2
-      }
-    ],
-    "id": "6d6e1516-9a7d-4386-96e0-63201e33bcb2",
-    "status": "blocked"
+    "findings": [],
+    "id": "abef8b03-4880-47f3-bf5a-036fb1c4070c",
+    "status": "clean"
   },
   "settled_areas": [
     "src/forge/mod/hooks/summary.ts"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T19:01:26.423992+00:00",
@@ -87,6 +76,10 @@
     },
     {
       "at": "2026-10-14T04:21:38.856987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:29:09.148496+00:00",
       "step": "review"
     }
   ],
