@@ -365,7 +365,7 @@ def close(args: argparse.Namespace) -> int:
             stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
             state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
-    noted = (spotted.PATH,) if not switch and spotted.record(
+    noted = (spotted.own_path(item),) if not switch and spotted.record(
         top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
