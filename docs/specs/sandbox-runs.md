@@ -72,7 +72,7 @@ provider's replies (principle 7).
 
 **What goes up and what stays.** The sandbox gets the item's working folder, including files git
 ignores, such as `.env`, so tests that need local settings work there too. Three things never go up:
-the laptop's `.git` folder (its remotes, hooks and settings); instead the sandbox gets a fresh git history made from a bundle of the item's branch, with no remote, so the worker can commit, and its new commits come back in a bundle, any file setup finds holding a GitHub
+the laptop's `.git` folder (its remotes, hooks and settings); instead the sandbox gets a fresh git history made from a bundle of the item's branch and the default branch, with no remote, so the worker can commit and `forge test` finds where the branch left the default branch, and its new commits come back in a bundle, any file setup finds holding a GitHub
 credential or a model login, and any path the team lists in `forge.toml` to never send. Setup lists
 every ignored file it will send and every file it leaves out, with the reason, before the team says
 yes; other real keys in ignored files do reach the provider, and setup says so. `forge.toml` holds
@@ -136,7 +136,7 @@ finish sooner without extra steps, and her team lead, who owns the provider acco
 
 1. With sandbox runs off (the default), nothing changes for new or existing repos.
 2. With them on and the agent line full, and the provider reachable, the next build round runs in the sandbox, and the laptop pushes its commits after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when the provider fails or its limit is reached, the round returns to the laptop's line and says why.
-3. The sandbox never holds a GitHub credential or the laptop's `.git` folder (it commits in a fresh history made from a bundle of the item's branch, with no remote), setup leaves out files holding a GitHub credential or a model login and says which, and a bundle with commits outside the round's branch is refused with the reason.
+3. The sandbox never holds a GitHub credential or the laptop's `.git` folder (it commits in a fresh history made from a bundle of the item's branch and the default branch, with no remote, and `forge test` runs there), setup leaves out files holding a GitHub credential or a model login and says which, and a bundle with commits outside the round's branch is refused with the reason.
 4. A sandbox run shows in the machine view with its provider, time and output, and `forge stop` ends it.
 5. The agent offers it when work waits for the laptop and sets it up with the developer (provider, key in the keychain, the ignored files that will go up, a test run); `forge.toml` names where the key lives and never holds a key; `forge doctor` reports a missing key or one in a tracked file; the plan-login terms check is recorded, with API keys as the fallback.
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does.

@@ -1,19 +1,19 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T06:24:39.848032+00:00
-seconds: 118.359
-read_hash: b054aa658e15a94362e979bfd5443f8793e52bc7
-round: 5
+read_at: 2026-10-14T06:27:29.367595+00:00
+seconds: 150.02
+read_hash: 77dee5cfc33e7ec8c192d8aab6c9bb1c7959c48c
+round: 6
 passed: no
-doc_seen: b054aa658e15a94362e979bfd5443f8793e52bc7
+doc_seen: 77dee5cfc33e7ec8c192d8aab6c9bb1c7959c48c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 210384748ac257d99f2b8ba291981b4aba5323f1
+notes_seen: 5bb74d8fbf2fdade03a001f1a0d6ea8e8e214e64
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 2
-loop_choice:
-loop_reason:
+blocked_rounds: 3
+loop_choice: narrow
+loop_reason: Owner chose 'Add main, read again' on 2026-10-14: the bundle carries the item's branch and the default branch so forge test works in the sandbox
 ---
 # Cold read notes
 
@@ -87,3 +87,9 @@ No findings.
    Raise: Plan gap. [Criterion 3](/docs/specs/sandbox-runs.md:139) says the sandbox never holds a `.git` folder, while behaviour item 1 requires the remote worker to commit and return a bundle. The reused [Codex driver](/src/forge/codex.py:546) also requires a working Git repository. Excluding the laptop’s `.git` from uploads is compatible with this; forbidding a fresh remote `.git` is not. The criterion must distinguish those two.
    Gain 4, Work 1, Harm 3
    Disposition: cut
+
+## Round 6
+
+10. Blocking: The branch-only bundle leaves the remote worker unable to run `forge test`.
+    Raise: Plan gap. [The new bootstrap rule](/docs/specs/sandbox-runs.md:75) supplies only the item’s branch history, with no remote. [fasttest.py](/src/forge/fasttest.py:262) requires `origin/<default branch>` and otherwise refuses with “Fetch … first: run git fetch origin, then forge test.” This affects the required worker tests, including Forge’s own first rollout. The bootstrap contract must also supply the pinned default-branch reference and its history locally, without adding credentials or a remote connection.
+    Gain 4, Work 2, Harm 3
