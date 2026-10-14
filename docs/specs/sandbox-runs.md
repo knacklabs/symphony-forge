@@ -113,8 +113,10 @@ holds only the Mainline token. The vault keeps each environment apart: sandbox r
 repo's `sandbox` environment, never `staging` or `production`, and a deploy reads only its own
 environment, so an agent's run can never see a production secret. At setup Forge reads the names
 in the repo's `.env` and offers to move each value into the vault. `forge.toml` holds only the
-on/off switch, the sandbox cap and size, the secret names a run needs and the Mainline team the repo
-belongs to, never a value; Mainline's dashboard shows them read-only.
+on/off switch, the sandbox cap and size, the secret names a run needs, any extra outside hosts the
+repo's tests call (sandboxes reach only allowed hosts, so each addition goes through a reviewed pull
+request) and the Mainline team the repo belongs to, never a value; Mainline's dashboard shows them
+read-only.
 Setup links the repo to one Mainline team, and every run of that repo spends that team's credits. Each
 laptop signs in to Mainline once through a short browser code, and the token lives in the system
 keychain; a person who is not a member of the repo's team cannot start its sandbox runs.
