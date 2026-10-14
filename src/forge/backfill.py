@@ -17,19 +17,17 @@ def _json(top: Path, ref: str, path: str) -> dict[str, Any]:
 
 
 def _identity(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
+    if branch.startswith(("fix/", "story/")):
+        key = branch.split("/", 1)[1]
+        state = _json(top, head, repo.state_path(key))
+        if state:
+            return key, state
     for path in repo.git("ls-tree", "-r", "--name-only", head, "--", ".factory", cwd=top).splitlines():
-        if not path.endswith(".json"):
-            continue
-        state = _json(top, head, path)
-        if state.get("branch") == branch:
-            if path.startswith(".factory/fixes/"):
-                return path.removeprefix(".factory/fixes/").removesuffix(".json"), state
-            match = re.fullmatch(r".factory/stories/([^/]+)/tasks/([^/]+).json", path)
-            if match:
+        match = re.fullmatch(r".factory/stories/([^/]+)/tasks/([^/]+)\.json", path)
+        if match and branch == f"task/{match[1]}-{match[2]}":
+            state = _json(top, head, path)
+            if state:
                 return f"{match[1]}/{match[2]}", state
-            match = re.fullmatch(r".factory/stories/([^/]+)/story.json", path)
-            if match:
-                return match[1], state
     raise ValueError("The pull request's item state could not be read")
 
 
@@ -83,22 +81,27 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
             # A review commit gives an outcome, never the time spent on the review.
             timings.append({"item": key, "step": "review", "round": number,
                             "start": at, "outcome": reviewed[1], "rebuilt_commit": commit})
-        eligible = (one.get("review", {}).get("status") == "clean"
+        eligible = ((one.get("review") or {}).get("status") == "clean"
                     and one.get("status") in ("waiting for checks", "ready"))
         if eligible:
             clean.append({"commit": commit, "at": at, "outcome": "clean"})
         if not reviewed and not (commit == head and eligible):
             continue
         runs = _checks(top, commit)
-        named = [run for run in runs if run.get("name") in required]
+        named = [run for run in runs if any(run.get("name") == want
+                 or str(run.get("name") or "").startswith(want + " (") for want in required)]
         began = [time_records.when(run.get("started_at")) for run in named]
         ended = [time_records.when(run.get("completed_at")) for run in named]
-        complete = (set(required) <= {run.get("name") for run in named} and named
+        complete = (all(any(run.get("name") == want or str(run.get("name") or "").startswith(want + " (")
+                            for run in named) for want in required) and named
                     and all(began) and all(ended))
         if complete:
             a, b = min(began), max(ended)
             if b >= a:
-                green = all(run.get("conclusion") == "success" for run in named)
+                latest = {}
+                for run in sorted(named, key=lambda run: run.get("completed_at") or ""):
+                    latest[run.get("name")] = run
+                green = all(run.get("conclusion") == "success" for run in latest.values())
                 timings.append({"item": key, "step": "CI wait", "round": number,
                                 "start": a.isoformat(), "seconds": (b - a).total_seconds(),
                                 "outcome": "passed" if green else "unknown"})
@@ -139,8 +142,11 @@ def seed(body: str, record: dict[str, Any]) -> str:
 
 
 def failed(top: Path) -> None:
-    (repo.forge_dir(top) / "backfill-pending").touch()
-    print(UNREACHABLE)
+    try:
+        (repo.forge_dir(top) / "backfill-pending").touch()
+    except OSError:
+        pass
+    repo.command_fact("backfill warning", top, lambda: print(UNREACHABLE))
 
 
 def run(top: Path) -> None:
@@ -148,8 +154,8 @@ def run(top: Path) -> None:
     from forge import close
 
     pending = repo.forge_dir(top) / "backfill-pending"
-    pending.touch()
     try:
+        pending.touch()
         github = board_facts.prs(top, fresh=True)
         if github is None or not github["open_complete"] or not all(week["complete"] for week in github["weeks"]):
             raise ValueError("The pull requests could not all be read")
@@ -161,10 +167,9 @@ def run(top: Path) -> None:
                 continue
             key, state, record = rebuild(top, pr)
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
+        pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
         failed(top)
-        return
-    pending.unlink(missing_ok=True)
 
 
 def upgrade_fix(top: Path, item: str, state: dict[str, Any]) -> bool:
@@ -172,5 +177,9 @@ def upgrade_fix(top: Path, item: str, state: dict[str, Any]) -> bool:
         return False
     starts = repo.git("log", "--reverse", "--diff-filter=A", "--format=%H", "HEAD", "--",
                       repo.state_path(item), cwd=top).splitlines()
-    return bool(starts and repo._pin(story.show(top, f"{starts[0]}^", "forge.toml") or "")
-                != repo._pin(story.show(top, "HEAD", "forge.toml") or ""))
+    if not starts:
+        return False
+    commits = repo.git("log", "--first-parent", "--no-merges", "--format=%H",
+                       f"{starts[0]}..HEAD", "--", "forge.toml", cwd=top).splitlines()
+    return any(repo._pin(story.show(top, f"{commit}^", "forge.toml") or "")
+               != repo._pin(story.show(top, commit, "forge.toml") or "") for commit in commits)
