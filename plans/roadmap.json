@@ -243,6 +243,20 @@
       "spec": "docs/specs/sandbox-runs.md",
       "status": "pending",
       "order": 80
+    },
+    {
+      "key": "FORGE-COST-1",
+      "title": "Every run keeps its token count, and the board shows cost and time per item",
+      "spec": "docs/specs/item-cost.md",
+      "status": "pending",
+      "order": 81
+    },
+    {
+      "key": "FORGE-COST-2",
+      "title": "The board shows how close each developer is to their plan limits",
+      "spec": "docs/specs/item-cost.md",
+      "status": "pending",
+      "order": 82
     }
   ],
   "epics": [
