@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T19:17:29.676425+00:00
-seconds: 477.832
-read_hash: 21dbf89cec624d15ff6a173f69117e90c18388f0
-round: 1
+read_at: 2026-10-14T19:23:02.008569+00:00
+seconds: 226.209
+read_hash: 1ad6582a9eea543d5caaf805c870c7e79c729774
+round: 2
 passed: no
-doc_seen: 21dbf89cec624d15ff6a173f69117e90c18388f0
+doc_seen: 1ad6582a9eea543d5caaf805c870c7e79c729774
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 9988a9da6f1abb35f2f5848cc0cde4673bffc1d2
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13bd1-e3cc-7d53-b2b7-3bb59797c0fe
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -108,3 +108,26 @@ Only a genuine trade-off goes to the human, as a question with options.
     Gain 3, Work 2, Harm 2
 
    Disposition: cut
+
+## Round 2
+
+16. Blocking: The newly required visual comparison has no runnable reference.
+    Raise: Plan gap. `plans/FORGE-BOARD-4.md:57-62` requires screenshots beside the approved artboards. Those files require `./support.js` (`docs/board-design/Manager.dc.html:6`), which is absent from the checkout. Their repeated content uses custom elements and non-executable `text/x-dc` scripts (`:41,146-147`). Opening these files produces unresolved templates rather than the approved screens, so builders cannot perform the specified comparison.
+    Gain 4, Work 2, Harm 2
+
+    Disposition: cut
+17. Blocking: The new overflow counts leave hidden items without a defined way to open them.
+    Raise: Functional. `plans/FORGE-BOARD-4.md:83-84` caps stages and stories but specifies only “and N more,” with no expansion or full-list behavior. The existing fixture already has ten working fixes (`tests/board_fixture.py:92-101`), so some disappear behind the cap. The new overflow-count test (`plans/FORGE-BOARD-4.md:89-91`) passes even when those items’ details are unreachable. The existing board makes overflow expandable (`src/forge/board_visuals.py:101-102`).
+    Gain 4, Work 2, Harm 3
+
+    Disposition: cut
+18. Blocking: Returning assignment refusal messages verbatim conflicts with the command-text prohibition.
+    Raise: Not done. `plans/FORGE-BOARD-4.md:99-100` requires returning and displaying the command’s refusal message, while `:108-111` prohibits commands everywhere outside the plan. Forge’s refusal text includes a `Next:` command (`src/forge/repo.py:65-71`), printed directly by the CLI (`src/forge/cli.py:167-169`). For example, the missing-tool refusal includes `forge doctor` (`src/forge/repo.py:36`). No rule defines a command-free presentation of that response.
+    Gain 3, Work 1, Harm 2
+
+    Disposition: cut
+19. Blocking: Unproven: item 2: the newly specified figures have no numerical acceptance check.
+    Raise: Test. `plans/FORGE-BOARD-4.md:85-91` introduces a recent-item median and waiting-for-person percentage, but its tests check layout, overflow, a startable card and word count. Existing timing facts expose several different quantities (`src/forge/time_records.py:355-360`); they do not prove these new aggregates. A page showing the arithmetic mean for durations of one, two and nine hours would pass every named check while displaying four hours instead of the two-hour median.
+    Gain 3, Work 2, Harm 2
+
+    Disposition: cut

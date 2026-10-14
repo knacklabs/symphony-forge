@@ -56,7 +56,9 @@ branch. Every part reverts with its pull request.
 
 Design: the approved artboards are in `docs/board-design/` (Main = design language, Manager =
 Now team view, Developer = Now me view, Drawer, Item = full page with the Plan tab, Insights,
-Releases). They are the source of truth: tokens, type scale, spacing, components and layout come
+Releases). Each has a 1440 by 900 reference image beside it (`<name>.png`); `support.js` there
+renders the `.dc.html` sources in any browser, so the images can be regenerated with headless
+Chrome. They are the source of truth: tokens, type scale, spacing, components and layout come
 from them. Acceptance for items 2, 3 and 5: screenshots at 1440 by 900 of each screen on the
 client-sized fixture, set beside the matching artboard in the pull request, with every
 difference listed. Sample data in the artboards is not a requirement; Forge's facts are.
@@ -81,14 +83,19 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
    stages: Planned = unstarted, started, Not started, Waiting, Can start now (tagged "can
    start"); Building = working, fixing, checks failed; Review = reviewing, waiting for checks,
    hotspot; Ready = ready; Merged = a count plus the last five. A stage shows at most six cards,
-   then "and N more"; the stories rail shows at most five stories, then "and N more". Fixes share
+   then "and N more"; the stories rail shows at most five stories, then "and N more". Each
+   "and N more" is a button that opens the full list of that stage or of the stories in the
+   drawer area, from mouse and keyboard, so every item stays reachable. Fixes share
    the pipeline; an All, Story parts, Fixes switch filters it. Four figures: merged in the last 7
    days (`counts.finished_last_7_days`), median time of items merged in the last 7 days, the
    share of their time spent waiting for a person, and items with failing checks. Cost stays
    hidden until token records exist. Me = items whose owner or developer login is the viewer, plus
    items the viewer started. Tests: a browser check at 1440 by 900 on the client-sized fixture
-   with no vertical scroll, the overflow counts, a "can start" card, and a word count of about
-   120 excluding numbers.
+   with no vertical scroll, the overflow counts, opening an "and N more" list and reaching its
+   last item, a "can start" card, and a word count of about 120 excluding numbers. Figures are
+   checked against a fixture with known values: three items merged in the last 7 days taking
+   1, 2 and 9 hours show a median of 2 h, and their waiting-for-person seconds give the exact
+   share shown.
 3. The drawer (480 px) and the full item page (tabs Overview, Plan, Rounds, Known issues). Plan
    shows `/plan/<KEY>`: the doc from its title to "## For the builders", that section folded,
    read from the same ref Forge's story commands read. Markdown renders through an inert
@@ -96,10 +103,11 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
    nothing in the doc runs. Tests: open a part, a fix and a story; the plan renders headings and
    lists; a plan holding an `<img onerror>` and a `javascript:` link renders them as inert text.
 4. The Assign control on a story and in its drawer calls `Board.api.assign`, which posts to
-   `/assign`; the server runs `forge assign` and returns its message. A refusal (for example a
-   story with no plan) shows that message beside the control and changes nothing. Tests: assign
+   `/assign`; the server runs `forge assign` and returns its reason: the refusal's first sentence, with any
+   `Next:` line and any command text removed. A refusal (for example a story with no plan)
+   shows that reason beside the control and changes nothing. Tests: assign
    from the page in a test repo and read the owner; assign a story with no plan and see the
-   refusal; a second clone sees the owner after it fetches.
+   refusal with no command text in it; a second clone sees the owner after it fetches.
 5. Releases: next release (items merged since the last release, from the untrimmed derivation
    so older unreleased items are included), readiness from Forge's facts only, past releases, and
    known issues by file. Insights: merged per week stacked by person in alphabetical order, and a
