@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-BOARD-3-OWNERS",
+  "chat": {
+    "approval": "f0f8c5ede5017c1ad136b34a1d026cbd5c838a2ecc5cf27167cf92f8aa07bd50",
+    "claude": null,
+    "conversation": "01a13be8-8652-72d0-8c39-206d0c67fa15",
+    "head": null,
+    "start": "55e0babd5e41120aa700ce27c2b5fa7916b4d3b7"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
