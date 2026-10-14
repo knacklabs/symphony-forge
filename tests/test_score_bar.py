@@ -125,7 +125,7 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
     assert ready.returncode == 0, ready.stdout + ready.stderr
     assert "Ready:" in ready.stdout
     text = body(env.gh_calls("pr", "edit")[-1])
-    follow_text, live_text = text.split("Follow-ups:", 1)[1].split("Lived with:", 1)
+    follow_text, live_text = text.split("Follow-ups:", 1)[1].split("</details>", 1)[0].split("Lived with:", 1)
     for title, gain, work, harm in followed:
         assert title in follow_text and f"Gain {gain}, Work {work}, Harm {harm}" in follow_text
         assert title not in live_text
