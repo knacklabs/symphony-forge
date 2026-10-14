@@ -551,6 +551,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/specs/sandbox-runs.md\tClaude project settings can override the personal-token boundary\tsandbox-claude-plan",
+      "kind": "bug",
+      "path": "docs/specs/sandbox-runs.md",
+      "line": 80,
+      "text": "Claude project settings can override the personal-token boundary",
+      "from": "blocking",
+      "item": "sandbox-claude-plan",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/specs/sandbox-runs.md\tIsolate the developer\u2019s Claude token from sandbox commands and app API keys\tsandbox-claude-plan",
       "kind": "bug",
       "path": "docs/specs/sandbox-runs.md",

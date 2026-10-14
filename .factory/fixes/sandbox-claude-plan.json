@@ -20,33 +20,46 @@
       "gain": 5,
       "harm": 4,
       "line": 72,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": true,
       "title": "Isolate the developer\u2019s Claude token from sandbox commands and app API keys",
       "work": 2
+    },
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 80,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": true,
+      "title": "Claude project settings can override the personal-token boundary",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "862da70549247f57b276f39ed24ebfa77e455deee92f75de4944f59c60cbe3ca",
-    "changed": "e80c3d79ddd9f8925f4edfc4942d792c2df104e8fa2f646398f1df460b393fa6",
-    "commit": "bc935052b6a9ad964e915b0b1fd75ad7ed752056",
+    "branch_diff": "3329015109aa9d5979f887f2ee242bdb7f34caf120b4461b4f79e91338b32c4e",
+    "changed": "fd79ebeddcd5e0f9b5d57285b01865272eee8ed228412ce10f0fb21e3e3d4edd",
+    "commit": "66a4db858739b79826b318676a00b3d29545cd77",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Security. The new rule gives a sandbox run the developer\u2019s `CLAUDE_CODE_OAUTH_TOKEN`, while the spec also runs repository code and injects sandbox secrets as environment variables for the run. Without a credential boundary, a repository test or Claude shell command can read and expose that personal token. Anthropic\u2019s [environment documentation](https://code.claude.com/docs/en/env-vars) says subprocess credential scrubbing requires an explicit setting. It also says `ANTHROPIC_API_KEY` takes precedence in headless Claude runs: an app test that needs that key in the sandbox environment would silently bill the team\u2019s key instead of using the developer\u2019s subscription. The plan needs to define how model credentials are isolated from repository commands and app credentials.",
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Security. The clean launch environment excludes provider credentials and endpoints, but the spec does not address settings that Claude Code loads after launch. A client repo can have a shared `.claude/settings.json` with `env.ANTHROPIC_BASE_URL`; [Anthropic documents](https://code.claude.com/docs/en/settings) that shared project settings apply to sessions in the repo, and [its gateway guide](https://code.claude.com/docs/en/llm-gateway) says a base URL alone routes requests through that gateway while the developer\u2019s subscription remains the active credential. The developer\u2019s token can therefore reach a repo-configured gateway despite the promised credential boundary. Settings-provided gateway credentials or an `apiKeyHelper` can also replace subscription billing. The launch-environment rule does not establish that the developer\u2019s token is used only with Anthropic.",
         "file": "docs/specs/sandbox-runs.md",
-        "gain": 5,
+        "gain": 4,
         "harm": 4,
-        "line": 72,
+        "line": 80,
         "priority": "P1",
-        "title": "Isolate the developer\u2019s Claude token from sandbox commands and app API keys",
+        "title": "Claude project settings can override the personal-token boundary",
         "work": 2
       }
     ],
-    "id": "fa3b8a6d-7835-4615-8f34-c5ecc439e460",
+    "id": "c8ec5b63-5061-415a-8883-3176c1c721f7",
     "status": "blocked"
   },
   "status": "fixing",
@@ -57,6 +70,10 @@
     },
     {
       "at": "2026-10-14T13:52:57.642304+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T14:04:39.252812+00:00",
       "step": "review"
     }
   ],
