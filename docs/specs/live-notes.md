@@ -86,7 +86,9 @@ The owner chose each of these on 14 October 2026:
      arrives while Forge waits to send the turn again goes into the new attempt's input.
    - **Claude** queues the note into the running session, through streaming input. The worker
      takes it as soon as its current turn ends, in the same Forge round, with no new brief. Forge
-     ends a Claude round only when a turn ends and no note waits. Forge prints that the note is
+     ends a Claude round only when a turn ends and no note waits, or when that turn ended with a
+     worker's question: then the question boundary wins, the round ends, and the waiting note goes
+     into the next round with the answer. Forge prints that the note is
      queued and that the worker takes it when its current turn ends.
 2. **Stop ends the turn cleanly.** `forge stop <item>` on a Codex or headless Claude round asks the
    tool to interrupt the turn (Codex `turn/interrupt`, the Claude interrupt). The round is recorded
@@ -168,5 +170,5 @@ has no socket, so a note to it goes into the next round's brief, and Forge says 
 
 - Metric: in Forge's own repo, the share of notes given while a Codex or headless Claude round runs that reach that round without a new round, and for Codex the time from the note to the running turn receiving it
 - Baseline: from 26 September to 14 October 2026, 0 notes reached a running turn; a note waited for the round to end (a median 14 minutes per round) and for a new round to start
-- Target: at least 95% of notes given while such a round runs reach that round without a new round; on Codex, each reaches the running turn within 5 seconds
+- Target: at least 95% of notes given while such a round runs reach that round without a new round; on Codex, each reaches the running turn within 5 seconds, except a note that arrives during a capacity retry wait, which reaches the next attempt when it starts
 - Check date: 2026-12-15
