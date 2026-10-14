@@ -20,33 +20,46 @@
       "gain": 3,
       "harm": 3,
       "line": 59,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
       "work": 1
+    },
+    {
+      "area": "PRODUCT.md",
+      "file": "PRODUCT.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 59,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8f85a4053beff1e05295660fbc9a007c5148bbbacf087a4d9c2482da343daf2b",
-    "changed": "4f847dfca7c18ce77ce9ca01051a1d940bc60d7b25df8b039a020786d30f8dff",
-    "commit": "573365d31e4649357c7e1fd34a666dea68d79bee",
+    "branch_diff": "bc1464383801ffa6ea4b1e9041f108b67f43f6913f15d25c3e973c682421330f",
+    "changed": "debe2a1fd0ff989f899e8fd137ad049c08d930eb8c0448429b60ecd1260c56a3",
+    "commit": "d3525bc0ec8b42328eddcb8eb8964930fbf5ab91",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. PRODUCT.md requires merged-but-not-live work, a go-live forecast, and deploy history only once Mainline deploys exist, but it does not require the board to show releases. A builder could follow this record without showing which work shipped in a release.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. The revised Done-when explicitly requires releases, but PRODUCT.md:56\u201359 lists merged-but-not-live work, go-live forecasts, and deploy history only after Mainline deploys exist. It never requires the board to show releases or which work shipped in each release, so a later builder could satisfy this record while omitting that owner requirement.",
         "file": "PRODUCT.md",
         "gain": 3,
         "harm": 3,
         "line": 59,
         "priority": "P1",
-        "title": "Not done: PRODUCT.md records the owner's answers: the board serves the engineering manager and the developer, forge board serves a live\u5c40e\u5c40e\u5c40",
+        "title": "Not done: PRODUCT.md omits releases from the owner's 14 October board requirements",
         "work": 1
       }
     ],
-    "id": "1f4c3684-1de4-427b-8d68-a3433c0cab4f",
+    "id": "3043ad91-d980-42b4-a161-73ca894bf4fa",
     "status": "blocked"
   },
   "status": "fixing",
@@ -57,6 +70,10 @@
     },
     {
       "at": "2026-10-14T18:16:03.377241+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T18:20:51.323575+00:00",
       "step": "review"
     }
   ],
