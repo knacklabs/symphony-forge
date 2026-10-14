@@ -164,6 +164,33 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
+@pytest.mark.parametrize("problem,next_action", [
+    ("GraphQL: API rate limit exceeded", "wait for GitHub's rate limit to reset"),
+    ("GraphQL: Resource not accessible by integration", "fix the GitHub problem"),
+], ids=["rate-limit", "other-refusal"])
+def test_3_close_stops_after_github_refuses_one_pull_request_body_update(env, previous, problem, next_action):
+    client(env, previous)
+    _green_pull_request(env)
+    item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
+    initial = env.close(item)
+    assert initial.returncode == 0, initial.stdout + initial.stderr
+    assert "Ready:" in initial.stdout
+    _open_pr(env, body(env.gh_calls("pr", "create")[-1]))
+    env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
+    before = len(env.gh_calls("pr", "edit"))
+    env.gh.respond("pr", "edit", "7", "--body-file", stderr=problem + "\n", exit=1)
+
+    stopped = env.close(item)
+
+    assert stopped.returncode != 0, stopped.stdout + stopped.stderr
+    assert "Ready:" not in stopped.stdout
+    assert len(env.gh_calls("pr", "edit")) - before == 1
+    assert "GitHub refused to update this pull request, so close stopped." in stopped.stderr
+    assert problem in stopped.stderr
+    assert f"Next: {next_action}, then retry this command" in stopped.stderr
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
 @pytest.mark.parametrize("clash", ["trial", "CONFLICTING", "BEHIND", "DRAFT", "DRAFT-clean",
                                    "LATE-BEHIND", "LATE-clean"])
 def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, previous, clash):

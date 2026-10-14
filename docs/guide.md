@@ -268,6 +268,9 @@ Close checks GitHub's clash state at every look, even when all checks are green.
 clashes, close stops and says to run close again to bring the default branch in. It waits when
 GitHub has not yet determined whether this head can merge.
 
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
+
 Close runs `forge.toml`'s `test` command before the review, and the pull request's `tests` check
 runs it again. When that check runs the full suite, ask your agent to set `fast_test` too: a
 command close runs instead of `test`, with `{base}` replaced by the merge base with the default

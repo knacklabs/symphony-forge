@@ -1257,6 +1257,8 @@ any other file stops close for the worker to resolve. While waiting for checks, 
 if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
 in the default branch. Land retries close once itself, including a conflict during its merge check
 wait; if the merge needs a person, it stops with close's existing conflict next step.
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
 test command fails, close keeps the output for the worker: run

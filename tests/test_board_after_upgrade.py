@@ -91,6 +91,8 @@ if args[:2] == ["pr", "edit"]:
     found = next((pr for pr in prs if str(pr["number"]) == args[2] or pr["headRefName"] == args[2]), None)
     if found and "--body-file" in args:
         if (here / "history-reject-edit").exists() and found["number"] == 11:
+            with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
+                calls.write(json.dumps(args) + "\\n")
             sys.exit("GitHub refused this body edit")
         path = args[args.index("--body-file") + 1]
         found["body"] = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
@@ -366,12 +368,29 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     failing = repo.bin / ("history-unreachable" if failure == "read" else "history-reject-edit")
     if failure:
         failing.touch()
+    def rejected_edits():
+        return [call for call in up.env.gh.calls()
+                if call[:3] == ["pr", "edit", "11"] and "--body-file" in call]
+
+    def assert_publication_stopped(result):
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "GitHub refused this body edit" in result.stdout + result.stderr
+        assert "GitHub refused to update this pull request, so close stopped." in result.stderr
+        assert result.stderr.splitlines()[-1] == "Next: fix the GitHub problem, then retry this command"
+
+    attempts = len(rejected_edits())
     upgraded = up.run(RELEASE)
-    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    if failure == "edit":
+        # A refused body write is now fatal: close stops after one attempt rather than
+        # retrying publication or continuing its own close as if it had only failed to read.
+        assert_publication_stopped(upgraded)
+        assert len(rejected_edits()) == attempts + 1
+    else:
+        assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     if failure:
-        assert UNREACHABLE in upgraded.stdout + upgraded.stderr
+        if failure == "read":
+            assert UNREACHABLE in upgraded.stdout + upgraded.stderr
         assert marker.is_file()
-        failing.unlink()
         # A different fix started from the upgraded checkout provides the next
         # close, without depending on an upgrade rerun remaining available.
         repo.path = up.folder
@@ -380,6 +399,15 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
             {"kind": "fix", "why": "Readers see a heading", "done_when": "The heading is clear",
              "base": repo.git("rev-parse", "HEAD")}, {"heading.txt": "Welcome readers\n"})
         repo.path = history.main
+        if failure == "edit":
+            attempts = len(rejected_edits())
+            held = repo.forge("close", retry_item, cwd=retry_where)
+            assert_publication_stopped(held)
+            assert len(rejected_edits()) == attempts + 1
+            assert marker.is_file()
+            assert not [call for call in up.env.gh.calls()
+                        if call[:2] == ["pr", "create"] and "fix/retry-history" in call]
+        failing.unlink()
         retried = repo.forge("close", retry_item, cwd=retry_where)
         assert retried.returncode == 0, retried.stdout + retried.stderr
     assert history.record(11), "Upgrade must write the deleted branch's original history into its PR"

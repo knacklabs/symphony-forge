@@ -26,6 +26,8 @@ from forge import __version__, checks, codex, githooks, init, repo, review, scor
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
+    "publish": ("GitHub refused to update this pull request, so close stopped.\n{problem}",
+                "{action}, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
@@ -820,6 +822,12 @@ def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str
 def _gh(top: Path, *args: str) -> str:
     done = repo.run("gh", *args, cwd=top)
     if done.returncode:
+        if args[:2] == ("pr", "edit") and "--body-file" in args:
+            problem = (done.stderr or done.stdout or f"exit code {done.returncode}").strip()
+            action = ("wait for GitHub's rate limit to reset"
+                      if re.search(r"rate[ -]?limit|HTTP\s+429", problem, re.I)
+                      else "fix the GitHub problem")
+            repo.refuse(REFUSALS["publish"], problem=problem, action=action)
         if done.stderr.strip() == repo.REFUSALS["no_github"][0]:
             repo.refuse(repo.REFUSALS["no_github"])
         raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
