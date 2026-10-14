@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board, item drawer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; position: relative; overflow: hidden">
+
+  <header style="height: 48px; flex: none; background: #15171A; color: #ECEDEA; display: flex; align-items: center; gap: 24px; padding: 0 32px">
+    <span style="font-size: 14px; font-weight: 600">Forge <span style="font-weight: 400; color: #B4B8BC">symphony-forge</span></span>
+    <span style="font-size: 14px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 6px; padding: 6px 12px">Now</span>
+    <span style="font-size: 14px; color: #B4B8BC">Releases</span>
+  </header>
+
+  <div aria-hidden="true" style="flex: 1; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; opacity: 0.35">
+    <div style="display: flex; gap: 16px"><div style="width: 96px"></div><div style="width: 300px; height: 92px; background: #FFFFFF; border-radius: 6px"></div><div style="width: 300px; height: 92px; background: #FFFFFF; border-radius: 6px"></div></div>
+    <div style="flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; width: 1032px">
+      <sc-for list="{{ghost}}" as="g" hint-placeholder-count="5"><div style="background: #EEEFEC; border-radius: 6px"></div></sc-for>
+    </div>
+  </div>
+
+  <aside aria-label="Spotted per change" style="position: absolute; right: 0; top: 48px; bottom: 0; width: 520px; background: #FFFFFF; border-left: 1px solid #E2E4E0; box-shadow: -12px 0 32px rgba(21,23,26,0.10); padding: 24px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="font-size: 12px; font-weight: 600; color: #FFFFFF; background: #B54708; border-radius: 3px; padding: 2px 8px">Decide</span>
+        <span style="font-size: 12px; color: #6B717A">Part of FORGE-MAINONCE-1</span>
+        <a href="Manager.dc.html" aria-label="Close" style="margin-left: auto; font-size: 20px; color: #4A4F57; line-height: 20px">×</a>
+      </div>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 600">Spotted per change</h1>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4A4F57">
+        <span style="width: 20px; height: 20px; border-radius: 999px; background: #4A4F57; color: #FFFFFF; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center">RV</span>
+        <span>@vrknetha</span>
+        <button type="button" style="border: 1px solid #C9CCC6; background: #FFFFFF; font: inherit; font-size: 12px; border-radius: 6px; padding: 2px 8px; color: #15171A">Assign ▾</button>
+        <a href="Item.dc.html" style="margin-left: auto; color: #1D4ED8; font-weight: 600">Full history →</a>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4A4F57">Review blocked three rounds on the same missing client test. Your call: accept it as is, narrow the part, or split it.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; color: #4A4F57">Time · 2 h 08 m</span>
+      <div style="display: flex; height: 10px; border-radius: 3px; overflow: hidden">
+        <span style="flex: 38; background: #1D4ED8" title="work 48 m"></span>
+        <span style="flex: 13; background: repeating-linear-gradient(135deg, #C9CCC6 0 4px, #F4F5F2 4px 8px)" title="in line 17 m"></span>
+        <span style="flex: 22; background: #1D4ED8" title="work 28 m"></span>
+        <span style="flex: 27; background: repeating-linear-gradient(135deg, #F0A35C 0 4px, #FDF0E6 4px 8px)" title="waits for you 35 m"></span>
+      </div>
+      <div style="display: flex; gap: 20px; font-size: 12px; color: #4A4F57"><span>work 1 h 16 m</span><span>in line 17 m</span><span style="color: #B54708">waits for you 35 m</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; color: #4A4F57">Rounds</span>
+      <sc-for list="{{rounds}}" as="r" hint-placeholder-count="3">
+        <div style="display: grid; grid-template-columns: 24px 1fr 72px; gap: 10px; font-size: 14px; align-items: center">
+          <span style="width: 10px; height: 10px; border-radius: 999px; background: {{r.color}}"></span>
+          <span>{{r.what}}</span>
+          <span style="font-size: 12px; color: #6B717A; text-align: right">{{r.time}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; color: #4A4F57">Its story · parts that wait</span>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="border: 1px solid #E2E4E0; border-left: 3px solid #1D4ED8; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600">Main only on a clash</span>
+        <span style="color: #8A9096" aria-hidden="true">→</span>
+        <span style="border: 1px solid #E2E4E0; border-left: 3px solid #8A9096; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600">Close takes in main once</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="border: 1px solid #9F1239; border-left: 3px solid #9F1239; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600; background: #FCE8EE">Spotted per change</span>
+        <span style="font-size: 12px; color: #4A4F57">nothing waits on it</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="border: 1px solid #E2E4E0; border-left: 3px solid #1D4ED8; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600">Main only on a clash</span>
+        <span style="color: #8A9096" aria-hidden="true">⇢</span>
+        <span style="border: 1px dashed #8A9096; border-radius: 6px; padding: 6px 10px; font-size: 13px">Close a stacked part <span style="color: #6B717A">· STACK</span></span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border-top: 1px solid #E2E4E0; padding-top: 16px">
+      <div style="display: flex; flex-direction: column"><span style="font-size: 20px; font-weight: 600">3</span><span style="font-size: 12px; color: #4A4F57">review rounds</span></div>
+      <div style="display: flex; flex-direction: column"><span style="font-size: 20px; font-weight: 600">2</span><span style="font-size: 12px; color: #4A4F57">known issues kept</span></div>
+      <div style="display: flex; flex-direction: column"><span style="font-size: 20px; font-weight: 600">1</span><span style="font-size: 12px; color: #4A4F57">open finding</span></div>
+    </div>
+    <span style="margin-top: auto; font-size: 12px; color: #8A9096">Sample data</span>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      ghost: [1, 2, 3, 4, 5],
+      rounds: [
+        { color: '#1D4ED8', what: 'Built; review found 1 missing test', time: '42 m' },
+        { color: '#9F1239', what: 'Fixed; same test still missing', time: '31 m' },
+        { color: '#9F1239', what: 'Fixed; review blocked again', time: '20 m' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
