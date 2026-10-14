@@ -91,13 +91,18 @@ remotes, hooks and settings).
 changes; otherwise it waits for a laptop place and says why. A remote build round that ends with
 changes it did not commit (for example when it is stopped or stuck) has them committed by the relay as
 one "left over from round N" commit in its bundle, so the next round, local or remote, starts from them.
+If the repo's own commit checks refuse that commit, the relay returns the changes as a patch instead;
+the laptop applies the patch to the worktree as uncommitted changes, so the next round runs locally and
+the worker sees why the commit was refused.
 
 **Secrets come from a vault.** Each repo's secrets live in a vault on the laptop, kept in the system
 keychain: `forge secrets set NAME` adds one, and `forge secrets list` shows the names, never the
 values. Each run gets them as environment variables only for that run. At setup Forge reads the names
 in the repo's `.env` and offers to move each value into the vault. `forge.toml` holds only the
-sandbox cap and the secret names a run needs, never a value. Each laptop signs in to Mainline once
-through a short browser code; the sign-in token lives in the system keychain.
+sandbox cap, the secret names a run needs and the Mainline team the repo belongs to, never a value.
+Setup links the repo to one Mainline team, and every run of that repo spends that team's credits. Each
+laptop signs in to Mainline once through a short browser code, and the token lives in the system
+keychain; a person who is not a member of the repo's team cannot start its sandbox runs.
 
 **Ready images and test services.** The repo's sandbox image is built once from its lockfiles and
 the test setup in `forge.toml`, and the services its tests need (for example a Postgres or Redis
@@ -142,8 +147,10 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   setup in `forge.toml`; Mainline keeps that sandbox's disk, so later rounds start in seconds.
 - **Cost.** Forge shows the minutes and credits used; buying credits, the balance and limits live on
   Mainline's dashboard, and the lead gets an email at 80% used and at zero.
-- **Credits run out.** Running rounds finish (a small overdraft, billed at the next top-up); new runs go
-  back to the laptop's line, and the pane row says "Mainline credits used up" with where to top up.
+- **Credits run out.** No new remote run starts at zero. Running rounds may go on for at most one more
+  hour each; then Mainline stops them and Forge collects what they left. That overdraft is billed at the
+  next top-up. New runs go back to the laptop's line, and the pane row says "Mainline credits used up"
+  with where to top up.
 - **When something fails.** If Mainline is down before a round
   starts, the round goes to the laptop's line by itself, and its pane row says why in one line. If a
   sandbox stops mid-round, Forge collects what it left and the next round runs on the laptop. If the

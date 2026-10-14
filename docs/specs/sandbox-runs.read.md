@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T07:00:27.537904+00:00
-seconds: 612.604
-read_hash: 9c332429c3750eb359430f1ebc11989665012b9f
-round: 11
+read_at: 2026-10-14T07:10:29.830430+00:00
+seconds: 290.601
+read_hash: f7783af32af3f05e95bc647dc6b7d01d8104e7d3
+round: 12
 passed: no
-doc_seen: 9c332429c3750eb359430f1ebc11989665012b9f
+doc_seen: f7783af32af3f05e95bc647dc6b7d01d8104e7d3
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 6f374d1de6b182136ab35a8a323b7262adfdee30
+notes_seen: dc2ad3276f59377f8dfc9ad6989ed1d647533d9c
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -131,5 +131,22 @@ No findings.
 
 15. Blocking: Ready images have no refresh rule when dependencies or test setup change.
     Raise: Plan gap. [Lines 94–96](/docs/specs/sandbox-runs.md:94) say the image is built once from lockfiles and test setup. After a local worker commits a dependency upgrade, remote close can receive the new code with the old installed dependencies. A valid client command such as `npm test` performs no installation; [review.py](/src/forge/review.py:454) executes the configured command directly. The image needs a refresh or dependency reconciliation rule before checking changed inputs.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+## Round 12
+
+16. Blocking: The relay’s unconditional leftover commit has no rule for a refused commit.
+    Raise: Plan gap. [The new rule](/docs/specs/sandbox-runs.md:90) promises to commit stopped or stuck work. A fix can be stuck because its edits exceed the five-file limit or touch an interface; [the hooks](/src/forge/githooks.py:189) refuse those changes at commit and push. The spec does not establish how that work reaches the next round without bypassing the refusal.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut
+
+17. Blocking: Mainline setup does not bind a repository to the team that pays for its runs.
+    Raise: Plan gap. [Setup](/docs/specs/sandbox-runs.md:130) signs in a laptop and asks teammates to join “the team,” while [configuration](/docs/specs/sandbox-runs.md:99) names only capacity and secrets. A developer working for two client teams needs a persistent rule selecting which team owns each repo’s sandboxes and receives its charges. Current [configuration](/src/forge/repo.py:437) supplies no existing account binding to reuse.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+18. Blocking: The promised small overdraft has no spending bound.
+    Raise: Scale. [The credit rule](/docs/specs/sandbox-runs.md:145) lets running rounds finish after credits reach zero, but specifies neither a maximum charge nor runtime limit. Four active workers continuing overnight can keep accruing charges despite the dashboard’s spending limit. The reused [Claude runner](/src/forge/worker.py:635) waits for completion without an overall deadline. Admission and overdraft limits need a rule consistent with allowing those rounds to finish.
     Gain 4, Work 2, Harm 3
     Disposition: cut
