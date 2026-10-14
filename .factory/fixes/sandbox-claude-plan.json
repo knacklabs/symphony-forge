@@ -1,0 +1,118 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-14T13:49:26.168215+00:00",
+      "because": "The owner decided on 14 October 2026 that LLM API keys serve only runtime apps and agents",
+      "done_when": "docs/specs/sandbox-runs.md says Claude rounds use the developer's claude setup-token token from the vault, names the terms risk the owner accepted and the API key fallback, passes a cold read and is confirmed again"
+    }
+  ],
+  "base": "ab3992272b5b33feb0c6a9f89df480b607894e20",
+  "branch": "fix/sandbox-claude-plan",
+  "done_when": "docs/specs/sandbox-runs.md says Claude rounds use the developer's claude setup-token token from the vault, names the terms risk the owner accepted, uses no API keys for build work, passes a cold read and is confirmed again",
+  "flagged": [
+    "docs/specs/sandbox-runs.md"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 5,
+      "harm": 4,
+      "line": 72,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Isolate the developer\u2019s Claude token from sandbox commands and app API keys",
+      "work": 2
+    },
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 80,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": true,
+      "title": "Claude project settings can override the personal-token boundary",
+      "work": 2
+    },
+    {
+      "area": "docs/specs/sandbox-runs.md",
+      "file": "docs/specs/sandbox-runs.md",
+      "gain": 4,
+      "harm": 4,
+      "line": 89,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner confirmed the spec after the last review finding was fixed in it: managed settings force the Claude login and user settings are read-only during a round",
+      "round": 3,
+      "security": true,
+      "title": "Writable user settings can switch Claude from the developer\u2019s token to an API key",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "49017fe80a3f3f0c6f08b3efdd15a69e58cfd183e23018c4a36f77609fa329a4",
+    "changed": "bece1ac3c7ccfd1bd31de139411df075812e3d0de4b1c3de2290df8e48fc4267",
+    "commit": "8763a36c92d8c1c286134e147c23aab7128b9394",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner confirmed the spec after the last review finding was fixed in it: managed settings force the Claude login and user settings are read-only during a round",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Security. The spec disables project settings but still loads Forge-written user settings, without isolating them from repository commands. A command running as Claude\u2019s user can write an `apiKeyHelper` into that file; the command runner can also supply it an app API key from the sandbox vault. [Anthropic says Claude reloads credential helpers during a session](https://code.claude.com/docs/en/settings) and [API keys override subscription billing in headless mode](https://code.claude.com/docs/en/env-vars). `allowedProviders` limited to Anthropic does not prevent using an Anthropic API key. This is a separate path from the earlier project-settings finding and breaks the promised plan-login boundary without Docker root access.",
+        "file": "docs/specs/sandbox-runs.md",
+        "gain": 4,
+        "harm": 4,
+        "line": 89,
+        "priority": "P1",
+        "title": "Writable user settings can switch Claude from the developer\u2019s token to an API key",
+        "work": 2
+      }
+    ],
+    "id": "9ccc833b-6fa6-4afc-9877-155841f4d567",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "docs/specs/sandbox-runs.md"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T13:40:09.856221+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T13:52:57.642304+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T14:04:39.252812+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T14:14:54.830101+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "docs/specs/sandbox-runs.md",
+    "at": "2026-10-14T14:14:54.830209+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "docs/specs/sandbox-runs.md",
+    "proposed": "make it fail closed; or cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item",
+    "reason": "Owner confirmed the spec after the last review finding was fixed in it: managed settings force the Claude login and user settings are read-only during a round",
+    "wait_id": "50734f61-0049-4ac4-a482-369d307b1890",
+    "worker_round": null
+  },
+  "why": "Claude rounds in Mainline sandboxes must use the developer's own Claude subscription, as the owner decided, with the team's API key only as the fallback"
+}

@@ -271,8 +271,10 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         elif case.startswith("ci"):
             stub = repo.bin / "gh"
             source = stub.read_text("utf-8")
+            # History rebuilds also read check runs. Hold the live wait's commit-status
+            # request, after its run starts, rather than an earlier historical lookup.
             stub.write_text(source.replace('responses = here / "gh-responses.json"',
-                'if args and "check-runs?" in args[-1] and not (here / "ci-held").exists():\n'
+                'if args and "/status?" in args[-1] and not (here / "ci-held").exists():\n'
                 '    (here / "ci-held").touch()\n    ' + gate.replace("\n", "\n    ") +
                 '\nresponses = here / "gh-responses.json"'), "utf-8")
             pr = pull(7, f"fix/{item}", None)

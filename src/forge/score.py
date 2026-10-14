@@ -67,8 +67,10 @@ def bar(scores: Scores | None) -> str | None:
     gain, work, harm = scores
     if harm >= 4 or gain == 5:
         return "block"
-    if gain >= 3:
+    if gain == 4 or (gain == 3 and harm == 3):
         return "fix now" if work <= 2 else "follow-up"
+    if gain == 3:
+        return "follow-up"
     return "live with"
 
 

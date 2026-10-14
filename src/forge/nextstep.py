@@ -154,7 +154,8 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
         command = shlex.join(words) if "#" in command else command
     return {"command": command if runnable else None,
             "line": next((text for text in lines if not text.startswith("Next: ")),
-                         "Nothing in progress.")}
+                         "Nothing in progress."),
+            "step": line.removeprefix("Next: ") if line else None}
 
 
 def context_hook(args: Any) -> int:
@@ -197,14 +198,30 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         key = next((key for key in alerts if key in str(state.get("why") or "")), None)
         return alerts.pop(key) if key else None
     trees = story.worktrees(top)
-    merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
-    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
-           if isinstance(pr.get("url"), str)}
+    # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
+    github = board_facts.prs(top) if history is not None else None
+    if github is None and history is not None:  # the board's one try failed: unknown, no live call per item
+        merged_prs, opened = set(), []
+    elif github is None:
+        merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
+        opened = _prs(top, "open", "headRefName,headRefOid,body,url,isDraft")
+    else:
+        merged_prs = {pr["headRefName"] for pr in board_facts.merged_prs(github)} if trees else set()
+        opened = [pr for pr in github["open"] if isinstance(pr.get("headRefName"), str)]
+    prs = {pr["headRefName"]: pr for pr in opened if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
                     for pr in board._machine_prs(top)
                     if isinstance(pr.get("headRefName"), str)})
-    for key, (path, state, text) in sorted(_stories(top, history).items()):
+    stories = _stories(top, history)
+    if history is not None and any(
+            rel in history["expired"] and (match := board.STATE.fullmatch(rel))["task"]
+            and match["key"] in stories and stories[match["key"]][1].get("status") != "done"
+            and (branch := state.get("branch") or f"task/{match['key']}-{match['task']}") not in merged_prs
+            and branch not in prs
+            for rel, state in history["states"].items()):
+        merged_prs.update(board_facts.merged_before_weeks(top))
+    for key, (path, state, text) in sorted(stories.items()):
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
@@ -236,7 +253,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if (branch in trees or branch in merged_prs or kind not in ("fix", "forge")
                 or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name)
                 or history is not None and repo.state_path(name) in history["expired"]
-                or story.show(top, landed, repo.state_path(name)) is not None):  # merged
+                or (repo.state_path(name) in history["states"] if history is not None  # merged
+                    else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
@@ -336,7 +354,7 @@ def _needs_demo_address(top: Path) -> bool:
 
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
     try:
-        return repo.config(path)
+        return repo.command_fact(("report config", path.resolve()), path, lambda: repo.config(path))
     except repo.Refused as refusal:
         refusals[path] = str(refusal).splitlines()[0]
         return repo.DEFAULTS
@@ -429,8 +447,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         states = {key: state for key, state in history["stories"].items()
                   if repo.state_path(key) not in history["expired"]}
     for key, state in states.items():
-        found[key] = (None, state,
-                      story.show(top, ref, f"plans/{key}.md") or "")
+        found[key] = (None, state, (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None
+                                    else story.show(top, ref, f"plans/{key}.md") or ""))
     for key, path in story.stories_here(top).items():
         if history is not None and repo.state_path(key) in history["expired"]:
             continue
@@ -445,10 +463,22 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         if found.get(key, (None, {}, ""))[1].get("status") == "done":
             continue
         ref = story.plan_ref(top, key, history)
-        state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        if history is None:
+            state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        else:  # the board's one read of every ref
+            full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+            state = history["ref_states"].get(full, {}).get(repo.state_path(key), {})
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
     return found
+
+
+def _blocker(top: Path, key: str, ref: str, problem: str, readiness: dict[str, Any] | None) -> None:
+    """A problem forge next reports that blocks the story's plan, for the board's Needs you, with
+    the date of the plan's last change on the ref read."""
+    if readiness is not None:
+        since = repo.run("git", "log", "-1", "--format=%cI", ref, "--", f"plans/{key}.md", cwd=top).stdout.strip()
+        readiness["blocker"] = {"problem": problem, "since": since or None}
 
 
 def _story(top: Path, key: str, path: Path | None, text: str,
@@ -466,17 +496,23 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ref = story.plan_ref(top, key, history)
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
-    notes = story.show(top, ref, f"plans/{key}.read.md") or ""
-    required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+    if history is None:
+        notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
+    else:  # the board's one read of every ref
+        notes = history["docs"].get(f"{ref}:plans/{key}.read.md", "")
+        full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+        saved = json.dumps(history["ref_states"].get(full, {}).get(repo.state_path(key), {}))
+    required = story.rounds(notes, saved)
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
-    doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+    doc_hash = repo.blob_hash(text)
     try:
         doc = story.parse(text, top, history=history, key=key)
     except ValueError as exc:
-        return [f"The story doc of {title} is malformed: {exc}.",
-                f"Next: edit plans/{key}.md, then run forge next"], []
+        lines = [f"The story doc of {title} is malformed: {exc}.", f"Next: edit plans/{key}.md, then run forge next"]
+        _blocker(top, key, ref, lines[0], readiness)
+        return lines, []
     digest = approval.waiting_digest(key, path) if path else None
     if readiness is not None:
         readiness["parts"] = {task["id"]: "Not started" for task in doc["tasks"]}
@@ -492,7 +528,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top)) if ref != story.landed_ref(top) else ""
+    behind = story.plan_behind(top, key, story.landed_ref(top), history) if ref != story.landed_ref(top) else ""
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -507,6 +543,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals,
                            part_statuses if readiness is not None else None)
     if behind:
+        _blocker(top, key, ref, behind, readiness)
         if readiness is not None:
             readiness["stage"] = "planning"
         return lines + [behind], list(states.values())
@@ -549,7 +586,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         builds = {}
         for name in ready:
             # A task takes forge.toml from the branch forge task start branches it from.
-            settings = story.show(top, start_base(landed, key, rows[name]), "forge.toml")
+            base = start_base(landed, key, rows[name], history, top)
+            settings = (story.show(top, base, "forge.toml") if history is None
+                        else history["docs"].get(f"{base}:forge.toml"))
             try:
                 cfg = (repo._config_text(settings, top) if settings  # pyright: ignore[reportPrivateUsage]
                        else _report_config(top, refusals))
@@ -662,12 +701,15 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     if not isinstance(receipt, dict):
         receipt = {}
     status, branch = state.get("status"), state.get("branch")
-    ref = review_ref(top, branch, pr) if branch else ""
-    record = time_records.from_body((pr or {}).get("body") or "")
+    # A finished item is never ready, so its review ref would go unread.
+    ref = review_ref(top, branch, pr) if branch and status not in ("merged", "done", "hotspot") else ""
+    record = time_records.from_body((pr or {}).get("body") or "") if ref else {}
     evidence = {}
     if ref and receipt.get("review") == "clean" and receipt.get("commit") == ref:
         evidence = receipt
     elif ref and (record.get("ready") or {}).get("commit") == ref:
+        evidence = {"commit": ref, "review": "clean", "shared": True}
+    elif ref and checks == "pass" and any(r.get("commit") == ref for r in record.get("clean_reviews", [])):
         evidence = {"commit": ref, "review": "clean", "shared": True}
     elif ref and not receipt and not record and checks == "pass":
         # An older release's pull request: its state file at the head says it was closed clean.
@@ -703,12 +745,27 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
 
 
 def _commit(top: Path, ref: str) -> str:
-    return repo.run("git", "rev-parse", "-q", "--verify", f"{ref}^{{commit}}", cwd=top).stdout.strip()
+    tips = repo.command_fact(("commits", "ref tips"), top, lambda: dict(
+        line.split("\0", 1) for line in repo.git(
+            "for-each-ref", "--format=%(refname)%00%(objectname)",
+            "refs/heads", "refs/remotes", cwd=top).splitlines()))
+    if ref.startswith(("refs/heads/", "refs/remotes/")):
+        return tips.get(ref, "")
+    if ref in tips.values():
+        return ref
+    return repo.command_fact(("commits", "resolve", ref), top, lambda: repo.run(
+        "git", "rev-parse", "-q", "--verify", f"{ref}^{{commit}}", cwd=top).stdout.strip())
 
 
 def review_ref(top: Path, branch: str, pr: dict[str, Any] | None = None) -> str:
     """The commit an item's review history and readiness are read at: the pull request's head
-    (GitHub's head, else origin's branch), unless the local branch contains it."""
+    (GitHub's head, else origin's branch), unless the local branch contains it. Read once per
+    command, like the commit log: a fetch, merge, switch or checkout forgets it."""
+    return repo.command_fact(("commits", "review ref", branch, (pr or {}).get("headRefOid")), top,
+                             lambda: _review_ref(top, branch, pr))
+
+
+def _review_ref(top: Path, branch: str, pr: dict[str, Any] | None) -> str:
     local = _commit(top, f"refs/heads/{branch}")
     head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
     if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it
@@ -742,6 +799,71 @@ def default_due(top: Path, state: dict[str, Any]) -> bool:
     since = time_records.when(stop.get("at") or next(
         (e.get("at") for e in time_records.read(top, "events") if e.get("id") == stop.get("wait_id")), None))
     return bool(since) and time_records.when(repo.now()) - since >= timedelta(minutes=30)
+
+
+def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
+    """The item's waits on a person, oldest first, from this machine's log and its pull request's
+    record together, each marked `open` while nothing has ended it. Earlier workers answered
+    questions without recording an end: a question with a later worker round, or one this
+    machine asked whose record it has since cleared, counts as answered."""
+    local = board._event_history(top)[1].get(item, [])  # the log is read once per command
+    events = {e.get("id"): e for e in [*time_records.from_body(body).get("events", []), *local]
+              if e.get("item") == item}
+    ended = {e.get("wait_id") for e in events.values() if e.get("event") == "owner wait end"}
+    rounds = [at for e in events.values() if e.get("event") == "run start" and e.get("kind") in ("work", "worker")
+              and (at := time_records.when(e.get("at")))]
+    asked_here = {e.get("id") for e in local}
+    cleared = (any(e.get("event") == "worker question" and e.get("id") in asked_here for e in events.values())
+               and codex.record(top, item).get("question", "") is None)
+
+    def answered(e: dict[str, Any]) -> bool:
+        at = time_records.when(e.get("at"))
+        return e.get("event") == "worker question" and (
+            bool(at and any(start > at for start in rounds)) or cleared and e.get("id") in asked_here)
+    return sorted(({**e, "open": e.get("id") not in ended and not answered(e)} for e in events.values()
+                   if e.get("event") in ("owner wait start", "worker question")), key=lambda e: str(e.get("at")))
+
+
+def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, pr: dict[str, Any] | None = None,
+                 blocker: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """What the item waits on a person for, each {reason, since, detail}: a plan waiting for
+    approval, a stop no one has answered (unless close will record its default), a worker
+    question, a merge conflict close stopped on, a ready pull request a human merges, or a story
+    plan blocked by a problem forge next reports (`blocker`, from its story readiness). The one
+    decision behind the board's Needs you; `bool()` of it is whether the item needs a person."""
+    if blocker:
+        return [{"reason": "blocked plan", "since": blocker["since"], "detail": blocker["problem"]},
+                *person_waits(top, item, state, stage, pr)]
+    if stage == "waiting for approval":
+        notes = story.show(top, story.plan_ref(top, item), f"plans/{item}.read.md") or ""
+        return [{"reason": "approval", "since": story._record(notes)[0].get("read_at"),
+                 "detail": None}]
+    recorded, waits = wait_records(top, item, (pr or {}).get("body") or ""), []
+    opened = [e for e in recorded if e["open"]]
+
+    def since(reason: str) -> str | None:
+        return next((e.get("at") for e in reversed(opened) if e.get("reason") == reason), None)
+    stop = state.get("stop") or {}
+    ended = {e.get("id") for e in recorded if not e["open"]}
+    # A choice recorded on another machine ends the stop's wait in the pull request's record. A
+    # stop the repo's default will answer still waits until that choice is committed.
+    if stop and not stop.get("choice") and stop.get("wait_id") not in ended:
+        waits.append({"reason": "review loop",  # a review loop or stuck worker's choice
+                      "since": stop.get("at") or since("stuck" if "question" in stop else "review loop"),
+                      "detail": stop.get("question")})
+    # The newest open question wins over an older one this machine still remembers.
+    asked = [e for e in opened if e.get("event") == "worker question"]
+    if asked:
+        waits.append({"reason": "worker question", "since": asked[-1].get("at"), "detail": asked[-1].get("question")})
+    if conflict := since("merge conflict"):
+        waits.append({"reason": "conflict", "since": conflict, "detail": None})
+    # An older open pull request, ready before merge waits were recorded, still waits on its human
+    # merge. This checkout's forge.toml, so the board needs no fetch.
+    if stage == "ready" and (since("merge") or pr and pr.get("state", "OPEN") == "OPEN"
+                             and repo.config(top)["merge"] == "human"
+                             and not any(e.get("reason") == "merge" for e in recorded)):
+        waits.append({"reason": "merge", "since": since("merge"), "detail": None})
+    return waits
 
 
 def _native_round(top: Path, item: str, label: str, kind: str) -> list[str]:
@@ -781,6 +903,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         return [f"Close stopped {label}: {stop['file']} keeps breaking.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
+    if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
+        return [f"The worker on {label} asked a question. Ask the human:", question,
+                "Next: " + close.REFUSALS["question"][1].format(item=item)]
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":

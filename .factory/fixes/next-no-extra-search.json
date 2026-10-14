@@ -1,0 +1,45 @@
+{
+  "base": "e4bf532175ba8dd40f400424d228cc4fe3b93984",
+  "branch": "fix/next-no-extra-search",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a136a4-7900-7522-8a43-9a5297dd10f7",
+    "head": null,
+    "start": "9f1294a7bc0f9619e4fca15ab1d5b86a91eda791"
+  },
+  "done_when": "forge next --json searches for older merged parts only when an unfinished story has parts merged before the weekly searches, as the board already does, and the speed test counts that search",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e0cea3f077813f7ec02088b6d0c94b6fa45ab91b993245b45bdfa61818982317",
+    "changed": "32e1fad4e0c0ddcc2379195c8fc6581fbc863fd683cb322ae6d981e39f4bd8d3",
+    "commit": "8c2aacc92057b0cabb8ed93cc3137f673abff68e",
+    "dismissals": [],
+    "findings": [],
+    "id": "ee593aca-d59a-4827-b721-227068e13a88",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T19:01:31.451945+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T19:43:23.891937+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "da4e4db28a3ac53e81e884d0cc1b7dfa95f0d663",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge next --json makes an extra GitHub search for older merged parts even when no story has unfinished older parts, which brings back the slow first refresh in the pane",
+  "worker": "codex"
+}

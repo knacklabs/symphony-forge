@@ -67,7 +67,7 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         assert unreadable.returncode == 1
         assert "it wrote findings Forge cannot read" in unreadable.stderr
         queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1\nDemo cannot finish")]}}]))
+            _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert refused.returncode == 1
         assert "found a blocking issue: Prototype fails" in refused.stderr
@@ -81,7 +81,7 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         rounds(env, item, where, ["src/a.py"] * 2)
         env.commit(where, "app.py", "print(3)\n")
         env.reviews(blocked(_scored("P1", "Round 3 defect",
-                                    "Gain 3, Work 2, Harm 1\nSaving drops the basket.", "src/a.py")))
+                                    "Gain 4, Work 2, Harm 1\nSaving drops the basket.", "src/a.py")))
         env.close(item)
         later(monkeypatch, 31)
         env.close(item)
