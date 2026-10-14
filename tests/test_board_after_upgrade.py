@@ -1,5 +1,7 @@
 """An upgrade rebuilds older item histories from real Git and GitHub evidence.
 
+Exercises src/forge/backfill.py through upgrade and close commands.
+
 Audit: previous time-history coverage starts with local logs. A squash and
 deleted branch leave no such logs, and weekly searches extend past the exact
 42-day window. Only uv, GitHub and the reviewer are third-party fakes; no
@@ -375,7 +377,7 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     def assert_publication_stopped(result):
         assert result.returncode != 0, result.stdout + result.stderr
         assert "GitHub refused this body edit" in result.stdout + result.stderr
-        assert "GitHub refused to update this pull request, so close stopped." in result.stderr
+        assert "GitHub refused to update this pull request, so this command stopped." in result.stderr
         assert result.stderr.splitlines()[-1] == "Next: fix the GitHub problem, then retry this command"
 
     attempts = len(rejected_edits())

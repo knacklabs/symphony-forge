@@ -26,7 +26,7 @@ from forge import __version__, checks, codex, githooks, init, repo, review, scor
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
-    "publish": ("GitHub refused to update this pull request, so close stopped.\n{problem}",
+    "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
                 "{action}, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
