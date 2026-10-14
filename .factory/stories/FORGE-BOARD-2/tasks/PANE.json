@@ -109,7 +109,7 @@
     "id": "cdbd2274-0940-4f40-9ef3-a2731e133b33",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -122,10 +122,15 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ac976a862ea0a3879dcab9f9976fe5d561bee84b",
-    "keys": {},
-    "round": null
+    "close": "fe4c7ece-b5cc-4867-8c67-99eee19d1e87",
+    "head": "c82abcda3f615b6f58e0882a01b4565342d6bd50",
+    "keys": {
+      "the review finding \"Not done: 9. The pane's first screen matches the board\" in plans/FORGE-BOARD-2.md": 1,
+      "the review finding \"Not done: functional check\" in tests/test_board_pane_lines.py": 1,
+      "the review finding \"Not done: seconds() rounding matches time_records.plain\" in plans/FORGE-BOARD-2.md": 1,
+      "the review finding \"Not done: the pane first-screen parity test\" in tests/test_board_pane_lines.py": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
