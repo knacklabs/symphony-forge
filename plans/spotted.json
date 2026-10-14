@@ -613,8 +613,8 @@
       "text": "Writable user settings can switch Claude from the developer\u2019s token to an API key",
       "from": "blocking",
       "item": "sandbox-claude-plan",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
