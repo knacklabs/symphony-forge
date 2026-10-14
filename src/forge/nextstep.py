@@ -158,10 +158,10 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
             "step": line.removeprefix("Next: ") if line else None}
 
 
-def needs_person(top: Path, item: str, state: dict[str, Any], stage: str, body: str = "",
+def needs_person(top: Path, item: str, state: dict[str, Any], stage: str, pr: dict[str, Any] | None = None,
                  blocker: dict[str, Any] | None = None) -> bool:
     """The item waits on a person, as the board's Needs you decides it (`person_waits`)."""
-    return bool(person_waits(top, item, state, stage, body, blocker))
+    return bool(person_waits(top, item, state, stage, pr, blocker))
 
 
 def context_hook(args: Any) -> int:
@@ -801,7 +801,7 @@ def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
     record together, each marked `open` while nothing has ended it. Earlier workers answered
     questions without recording an end: a question with a later worker round, or one this
     machine asked whose record it has since cleared, counts as answered."""
-    local = [e for e in time_records.read(top, "events") if e.get("item") == item]
+    local = board._event_history(top)[1].get(item, [])  # the log is read once per command
     events = {e.get("id"): e for e in [*time_records.from_body(body).get("events", []), *local]
               if e.get("item") == item}
     ended = {e.get("wait_id") for e in events.values() if e.get("event") == "owner wait end"}
@@ -818,7 +818,7 @@ def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
                    if e.get("event") in ("owner wait start", "worker question")), key=lambda e: str(e.get("at")))
 
 
-def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, body: str = "",
+def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, pr: dict[str, Any] | None = None,
                  blocker: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """What the item waits on a person for, each {reason, since, detail}: a plan waiting for
     approval, a stop no one has answered (unless close will record its default), a worker
@@ -827,12 +827,12 @@ def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, body: 
     decision behind the board's Needs you; `bool()` of it is whether the item needs a person."""
     if blocker:
         return [{"reason": "blocked plan", "since": blocker["since"], "detail": blocker["problem"]},
-                *person_waits(top, item, state, stage, body)]
+                *person_waits(top, item, state, stage, pr)]
     if stage == "waiting for approval":
         notes = story.show(top, story.plan_ref(top, item), f"plans/{item}.read.md") or ""
         return [{"reason": "approval", "since": story._record(notes)[0].get("read_at"),
                  "detail": None}]
-    recorded, waits = wait_records(top, item, body), []
+    recorded, waits = wait_records(top, item, (pr or {}).get("body") or ""), []
     opened = [e for e in recorded if e["open"]]
 
     def since(reason: str) -> str | None:
@@ -851,9 +851,10 @@ def person_waits(top: Path, item: str, state: dict[str, Any], stage: str, body: 
         waits.append({"reason": "worker question", "since": asked[-1].get("at"), "detail": asked[-1].get("question")})
     if conflict := since("merge conflict"):
         waits.append({"reason": "conflict", "since": conflict, "detail": None})
-    # An older pull request, ready before merge waits were recorded, still waits on its human merge.
-    # This checkout's forge.toml, so the board needs no fetch.
-    if stage == "ready" and (since("merge") or repo.config(top)["merge"] == "human"
+    # An older open pull request, ready before merge waits were recorded, still waits on its human
+    # merge. This checkout's forge.toml, so the board needs no fetch.
+    if stage == "ready" and (since("merge") or pr and pr.get("state", "OPEN") == "OPEN"
+                             and repo.config(top)["merge"] == "human"
                              and not any(e.get("reason") == "merge" for e in recorded)):
         waits.append({"reason": "merge", "since": since("merge"), "detail": None})
     return waits

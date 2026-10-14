@@ -18,6 +18,7 @@ from forge import board_trends, repo, story, time_records
 
 Item = dict[str, Any]
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
+IN_PROGRESS_STATES = ("building", "in progress", "ready to merge")  # the board page's In progress group
 WORK_STATES = ("done", "ready to merge", "in progress", "to do")
 FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft"
 
@@ -170,7 +171,6 @@ def needs_you(top: Path, rows: list[Item], best: dict[str, Any], github: Item | 
     each story plan a problem forge next reports blocks."""
     from forge import nextstep  # nextstep imports this module
 
-    # ponytail: each waiting item reads this machine's event log once; share one read if boards get slow.
     opened = {pr.get("headRefName"): pr for pr in (github or {}).get("open", [])}
     found = []
     for row in rows:
@@ -184,7 +184,7 @@ def needs_you(top: Path, rows: list[Item], best: dict[str, Any], github: Item | 
             branch = _branch(row, state)
             # The state at the pull request's head when this checkout is behind it, as the row reads it.
             state = nextstep.at_ref(top, row["id"], {**state, "branch": branch}, opened.get(branch))
-            waits = nextstep.person_waits(top, row["id"], state, row["stage"], (opened.get(branch) or {}).get("body") or "")
+            waits = nextstep.person_waits(top, row["id"], state, row["stage"], opened.get(branch))
         found += [_entry(row, wait["reason"], wait["detail"], wait["since"], now) for wait in waits]
     for entry in found:
         entry["waited_seconds"] = entry.pop("seconds")
@@ -311,5 +311,9 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
     sentence = (f"{building} {'story' if building == 1 else 'stories'} building, {sum(work[:2])} parts and fixes "
                 f"in progress, {sum(work[2:])} ready to merge, {len(waiting)} need{'s' if len(waiting) == 1 else ''} "
                 f"you, {len(slow)} blocked or slow; {clause[0].lower()}{clause[1:]}")
-    return {"sentence": sentence, "counts": counts, "needs_you": waiting, "in_progress": None, "blocked": slow,
+    return {"sentence": sentence, "counts": counts, "needs_you": waiting,
+            # The page's In progress group: an item that needs you or is blocked sits in that group instead.
+            "in_progress": [{key: row[key] for key in ("id", "title", "kind", "state")}
+                            for row in items.values() if row.get("state") in IN_PROGRESS_STATES
+                            and row["id"] not in {entry["id"] for entry in [*waiting, *slow]}], "blocked": slow,
             **later}

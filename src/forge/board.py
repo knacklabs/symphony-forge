@@ -510,7 +510,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "idle_since": idle_since, "idle_seconds": idle_seconds,
                 "waits_on": lines[0] if not finished and not active and not worker and lines else None,
                 "needs_person": not finished and nextstep.needs_person(
-                    top, item, state, stage, (pr or {}).get("body") or "", readiness.get(item, {}).get("blocker")),
+                    top, item, state, stage, pr, readiness.get(item, {}).get("blocker")),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
                           "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else

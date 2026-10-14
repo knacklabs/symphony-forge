@@ -10295,6 +10295,28 @@
       "item": "FORGE-BOARD-2/GRAPH",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_pace.py\tNot done: proof list\tteam-sentence-short",
+      "kind": "bug",
+      "path": "tests/test_board_pace.py",
+      "line": 109,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "team-sentence-short",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_runway.py\tNot done: tests/test_board_runway.py::test_8_below_the_fold\tteam-sentence-short",
+      "kind": "bug",
+      "path": "tests/test_board_runway.py",
+      "line": 96,
+      "text": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
+      "from": "blocking",
+      "item": "team-sentence-short",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

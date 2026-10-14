@@ -319,8 +319,9 @@ week for the last six full weeks and this one.
 UTC) for six weeks. `team.go_live` gives a date range for the parts of approved stories still to
 merge, from the last three and six weeks' pace: `range`, `about` when the two agree, `not enough
 history` when the oldest merged part is under three weeks old or the last three weeks merged none,
-or `done`; it names the stories with no plan yet as the unknown, and `team.sentence` says the
-same. `team.trends` counts merged pull requests per week for the team and each person
+or `done`; it counts the stories with no plan yet as the unknown, and `team.sentence` says the
+same in a count, not names. `team.in_progress` lists the stories and fixes the page shows under In
+progress (`id`, `title`, `kind`, `state`). `team.trends` counts merged pull requests per week for the team and each person
 (alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
 branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
 Both are null without GitHub, and a week capped at 1,000 results is null.

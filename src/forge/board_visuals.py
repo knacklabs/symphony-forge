@@ -7,6 +7,8 @@ from pathlib import Path
 from string import Template
 from textwrap import wrap
 
+from forge.board_facts import IN_PROGRESS_STATES
+
 ORDER = ("needs you", "blocked", "in progress", "planned", "no plan yet", "done")
 # One line: the map's shapes, then the three words. Shapes are CSS, hidden from screen readers.
 KEY = (" ".join(f'<span class="shape s-{name}" aria-hidden="true"></span>{word}' for name, word in (
@@ -250,7 +252,7 @@ def page(view: dict, numbers: str, github: bool, now: datetime) -> str:
         state = row.get("state")
         return ("needs you" if row["id"] in needs else "blocked" if row["id"] in blocked else
                 state if state in ("done", "no plan yet") else
-                "in progress" if state in ("building", "in progress", "ready to merge") else "planned")
+                "in progress" if state in IN_PROGRESS_STATES else "planned")
 
     def waits(row: dict) -> str:
         """What a stalled item waits on in forge next's words, its pull request and a story's outcome."""

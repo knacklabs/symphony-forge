@@ -80,6 +80,13 @@ def test_8_below_the_fold(repo, gh, tmp_path, claude_payload, monkeypatch, histo
     fixed = repo.forge("fix", "start", "Readme greets new readers", "--done", "Readers see a greeting",
                        "--slug", "readme-greets")
     assert fixed.returncode == 0, fixed.stderr
+    # A fix whose review came back clean: ready to merge.
+    ready_fix = repo.forge("fix", "start", "Shelf shows prices", "--done", "Prices show", "--slug", "shelf-prices")
+    assert ready_fix.returncode == 0, ready_fix.stderr
+    receipts = repo.path / ".git/forge/ready"
+    receipts.mkdir(parents=True, exist_ok=True)
+    (receipts / "shelf-prices.json").write_text(json.dumps({
+        "review": "clean", "commit": repo.git("rev-parse", "fix/shelf-prices")}), "utf-8")
 
     machine = repo.forge("board", "--json")
     assert machine.returncode == 0, machine.stderr
@@ -99,6 +106,11 @@ def test_8_below_the_fold(repo, gh, tmp_path, claude_payload, monkeypatch, histo
     assert by_title["Plan the next improvement"][0] == "planned"
     assert by_title["A story with no title yet"][0] == "no plan yet"
     assert by_title["Greet returning shoppers"][0] == "done"
+
+    # The JSON's in-progress list is the page's In progress group, with the states the page shows.
+    assert by_title["Shelf shows prices"][:2] == ("in progress", "Ready to merge")
+    assert sorted((row["title"], row["state"].capitalize()) for row in data["team"]["in_progress"]) == sorted(
+        (title, state) for group, title, state, _ in rows if group == "in progress")
 
     # Every top-level item the JSON lists under Needs you or Blocked or slow sits in that group;
     # Needs you wins when an item is in both. Both lists stay null until their part lands.
