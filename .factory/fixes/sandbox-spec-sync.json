@@ -1,0 +1,30 @@
+{
+  "base": "623796d6253dddc87d6e8672cbf55debecb153c6",
+  "branch": "fix/sandbox-spec-sync",
+  "done_when": "docs/specs/sandbox-runs.md matches the Mainline V1 decisions of 14 October 2026, passes a cold read, is confirmed again, and its third roadmap item for team places, board and credits is on plans/roadmap.json",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5c8488019722cf2cead3ea1617f617782e3790089751642b978fddf3da944d22",
+    "changed": "8d471bf61bb4cf67dc7be51d1947dbff5fcad0e9491e3d0a4ce03bcff0ff4598",
+    "commit": "4a69708071bd35936f887ddaec690369498fe569",
+    "dismissals": [],
+    "findings": [],
+    "id": "712db2dd-5231-4853-866f-a1b0c0ccafb0",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T09:18:08.101592+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T09:30:39.959984+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The sandbox spec still carries rules the owner changed today: model sign-in, starter credits, sizes, who sets secrets and who deletes, the package cache, and the team work that belongs to a later story"
+}

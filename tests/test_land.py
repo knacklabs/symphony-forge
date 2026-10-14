@@ -446,7 +446,7 @@ time.sleep = advance
     assert shown[0] == "Readme greets new readers: The readme opens with a greeting"
     assert shown[1].startswith("Findings keep coming in app.py; proposed: cut the code")
     assert shown[2:] == ["| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
-                         "| 1 | Saving drops the greeting: evidence for: Saving drops the greeting | 3 | 2 | 1 | fix this round |"]
+                         "| 1 | Saving drops the greeting: evidence for: Saving drops the greeting | 4 | 2 | 1 | fix this round |"]
     assert sum("It still has these problems:" in line for line in lines) == 1
 
 
@@ -455,7 +455,7 @@ def _findings_after_three_rounds_ask_a_question(env):
     # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
     env.reviews(blocked(BLOCKER), CLEAN, blocked(BLOCKER),
                 blocked({**finding("P1", "Saving loses the reader name"),
-                         "body": "Gain 3, Work 2, Harm 1\nA returning reader at `src/save.py:9` sees no name. More."}))
+                         "body": "Gain 4, Work 2, Harm 1\nA returning reader at `src/save.py:9` sees no name. More."}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     done = _land(env)
@@ -468,7 +468,7 @@ def _findings_after_three_rounds_ask_a_question(env):
         "Readme greets new readers: The readme opens with a greeting",
         "It still has these problems:",
         "| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
-        "| 1 | Saving loses the reader name: a returning reader sees no name. More. | 3 | 2 | 1 | fix this round |",
+        "| 1 | Saving loses the reader name: a returning reader sees no name. More. | 4 | 2 | 1 | fix this round |",
         "Accept, narrow or split?",
         question[6], question[7], question[8]]
     assert [line.split(":")[0] for line in question[6:]] == ["- Accept", "- Narrow", "- Split"]

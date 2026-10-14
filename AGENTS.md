@@ -59,7 +59,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 - No running commentary. Speak only when something lands, when a failure or finding needs the
   human, or when a decision is theirs, in a line or two.
 - Write for humans in plain English: no IDs, hashes or jargon in questions, pull request
-  summaries or the board.
+  summaries or the board, except story keys shown small beside titles on the board.
 - A story is approved through Plan Mode: exit Plan Mode with the text of the story doc that
   `forge next` names, unchanged, as the plan: from its title down to `## For the builders`, or the
   whole doc when it has no such heading. The approval matches its "What changes for you" and

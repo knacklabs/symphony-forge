@@ -22,7 +22,7 @@ def test_1_clean_review_opens_with_one_line_and_folds_the_rest(env):
     # Each finding names its --dismiss number in text, never as an ordered list GitHub renumbers.
     assert folded.split("</summary>\n\n", 1)[1] == (
         "- Finding 1 (P1): Greeting is missing (app.py:1): dismissed because app.py:1 the greeting is here; "
-        "Gain 3, Work 2, Harm 1\n"
+        "Gain 4, Work 2, Harm 1\n"
         "\nLived with:\n"
         "- Finding 2 (P2): Simpler: drop the cache (app.py:1): Gain 2, Work 1, Harm 1\n"
         "- Finding 3 (P3): Simpler (existing): one helper (app.py:1): Gain 2, Work 1, Harm 1\n\n")

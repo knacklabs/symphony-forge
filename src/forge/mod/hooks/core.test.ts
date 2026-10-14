@@ -32,22 +32,16 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
   })
   await $.session.start(started)
   const first = await $.command.run(command)
-  expect(first.text?.split('\n')[0]).toBe('1: forge close guide')
-  expect(first.text).toContain('Polish the guide · building')
-  expect(first.text).toContain('build opus 0s')
-  expect(first.text).toContain('PR #7: pass')
-  expect(first.text).toContain('Clarify setup')
+  expect(first.text).toBe('MOVING\n  Polish the guide · Building · under a minute')
   expect(calls.length).toBe(3)
   await clock.advance(5000)
   expect(calls.length).toBe(3)
-  expect((await $.command.run(command)).text).toContain('build opus 5s')
   await clock.advance(5000)
   expect(calls.length).toBe(6)
-  expect((await $.command.run(command)).text).toContain('build opus 10s')
   expect(opened[0]).toEqual({ id: 'forge', title: 'Forge', focus: true })
 })
 
-test('1: /forge accepts unknown worker starts and preserves next commands and stage outcomes', async ($, on) => {
+test('1: /forge accepts unknown worker starts and names only the current stage', async ($, on) => {
   const clock = mock.clock(on)
   let runnable = true
   on('session.cwd', () => ({ value: '/repo' }))
@@ -71,15 +65,10 @@ test('1: /forge accepts unknown worker starts and preserves next commands and st
   await $.session.start(started)
   const reply = (await $.command.run(command)).text
   expect(reply).not.toContain("Couldn't refresh:")
-  expect(reply).toContain('build opus unknown')
-  expect(reply).toContain('1: forge close guide')
-  expect(reply).toContain('Build ✓ 4s')
-  expect(reply).toContain('Tests ✗ 5s')
-  expect(reply).toContain('Review ● 0s')
-  expect(reply).toContain('CI → Merge –')
+  expect(reply).toBe('MOVING\n  Polish the guide · Review running · under a minute')
   runnable = false
   await clock.advance(10000)
-  expect((await $.command.run(command)).text).toContain('Close the guide.')
+  expect((await $.command.run(command)).text).not.toContain('unknown')
 })
 
 test('1: failed and malformed refreshes preserve rows and retry on the next tick', async ($, on) => {
@@ -110,7 +99,7 @@ test('1: failed and malformed refreshes preserve rows and retry on the next tick
   expect(text).toContain("Couldn't refresh:")
   await clock.advance(10000)
   text = (await $.command.run(command)).text
-  expect(text).toContain('PR #7: fail')
+  expect(text).toContain('Polish the guide')
   expect(text).not.toContain("Couldn't refresh:")
 })
 
@@ -132,13 +121,13 @@ test('1: empty and missing state stay readable; old Forge asks for an upgrade', 
   expect((await $.command.run(command)).text).toContain('Nothing in progress.')
   mode = 'missing'
   await clock.advance(10000)
-  expect((await $.command.run(command)).text).toContain('Lost state · unknown')
+  expect((await $.command.run(command)).text).toBe('WAITING OR NOT STARTED (1) · forge board for all')
   mode = 'old'
   await clock.advance(10000)
   expect((await $.command.run(command)).text).toContain("This repo's Forge is too old for the pane: upgrade Forge here.")
 })
 
-test('1, 6: one refresh at a time; the whole refresh expires after twenty seconds', async ($, on) => {
+test('1, 6: one refresh at a time; the whole refresh expires after sixty seconds', async ($, on) => {
   const clock = mock.clock(on)
   let slow = false
   let boards = 0
@@ -154,7 +143,7 @@ test('1, 6: one refresh at a time; the whole refresh expires after twenty second
       // Expire just after the deadline, avoiding an unspecified ordering
       // between a timeout and the refresh tick at exactly the same instant.
       await clock.sleep((e.init?.timeoutMs ?? 30000) + 1)
-      return { deny: 'Refresh took over 20 seconds' }
+      return { deny: 'Refresh took over 60 seconds' }
     }
     const value = e.argv[1] === 'board' ? board : e.argv[1] === 'next' ? following : { version: '1.2.5', agents: [], tests: [] }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
@@ -166,13 +155,13 @@ test('1, 6: one refresh at a time; the whole refresh expires after twenty second
   await clock.advance(10000)
   expect(boards).toBe(2)
   const expired = new Promise<void>(resolve => { published = resolve })
-  await clock.advance(10001)
+  await clock.advance(50001)
   await clock.settle()
   await expired
   // The host prefixes rejected calls with the plugin and API name.
   const timedOut = (await $.command.run(command)).text
   expect(timedOut).toContain("Couldn't refresh:")
-  expect(timedOut).toContain('Refresh took over 20 seconds')
+  expect(timedOut).toContain('Refresh took over 60 seconds')
   expect(timedOut).toContain('Polish the guide')
   slow = false
   const repaired = new Promise<void>(resolve => { published = resolve })
@@ -181,4 +170,27 @@ test('1, 6: one refresh at a time; the whole refresh expires after twenty second
   await repaired
   expect(boards).toBe(3)
   expect((await $.command.run(command)).text).not.toContain("Couldn't refresh:")
+})
+
+test('1, 6: a first refresh that times out says why instead of loading', async ($, on) => {
+  const clock = mock.clock(on)
+  on('session.cwd', () => ({ value: '/repo' }))
+  on('session.start', () => ({ cwd: '/repo' }))
+  on('command.register', () => ({ value: { command: 'forge' } }))
+  on('ui.invalidate', () => ({ value: undefined }))
+  on('ui.open', () => ({ value: undefined }))
+  on('process.run', async (_$, e) => {
+    await clock.sleep((e.init?.timeoutMs ?? 0) + 1)
+    return { deny: 'Refresh took over 60 seconds' }
+  })
+  const starting = $.session.start(started)
+  await clock.advance(59000)
+  expect((await $.command.run(command)).text).toBe('Loading Forge…')
+  await clock.advance(1001)
+  await clock.settle()
+  await starting
+  const reply = (await $.command.run(command)).text
+  expect(reply).toContain("Couldn't refresh:")
+  expect(reply).toContain('Refresh took over 60 seconds')
+  expect(reply).not.toContain('Loading Forge…')
 })

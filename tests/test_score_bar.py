@@ -52,7 +52,7 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         fix, answers, queue = _client(repo, tmp_path / "sign-off", monkeypatch)
         _decision(fix, answers)
         queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P2", "The demo loses its basket", "Gain 3, Work 1, Harm 1\nRaise: Functional")]}}]))
+            _scored("P2", "The demo loses its basket", "Gain 5, Work 1, Harm 1\nRaise: Functional")]}}]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert refused.returncode == 1
         assert "found a blocking issue: The demo loses its basket" in refused.stderr
@@ -63,8 +63,10 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         return
     _client_on_this_release(env, tmp_path, case)
 
-    # A read whose only note is below the bar passes, with its disposition written by Forge.
-    _says(repo, "1. Blocking: The title could be shorter.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 1\n")
+    # Gain 3 with low Harm used to hold even cheap work; it now passes as a follow-up.
+    _says(repo, "1. Blocking: The title could be shorter.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 1\n"
+                "2. Blocking: A rare path lacks a test.\n   Raise: Plan gap\n   Gain 3, Work 1, Harm 1\n"
+                "3. Blocking: Another rare path lacks a test.\n   Raise: Plan gap\n   Gain 3, Work 2, Harm 2\n")
     shop = new_story(repo, "SHOP")
     (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
     read = repo.forge("read", "SHOP")
@@ -72,6 +74,7 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
     notes = (shop / "plans/SHOP.read.md").read_text("utf-8")
     assert "passed: yes\n" in notes
     assert "   Gain 2, Work 1, Harm 1\n   Disposition: keep - below the bar (live with)\n" in notes
+    assert notes.count("Disposition: keep - below the bar (follow-up)") == 2
 
     # A finding saved before scores still holds work by its priority, until its next round.
     old = {"commit": "0" * 40, "status": "blocked", "dismissals": [], "blocking_level": "P1",
@@ -86,28 +89,49 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         brief = _findings_in(calls(log)[-1]["brief"])
         assert "Saved serious finding" in brief and "Saved advice" not in brief
 
-    # A P2 at the bar blocks close and goes to the worker; a P1 below the bar does neither.
-    env.reviews(blocked(_scored("P2", "Saving loses the note", "Gain 3, Work 1, Harm 1\nRaise: Functional"),
+    # Stop and fix-this-round scores hold, regardless of the reviewer's priority.
+    held = [("Saving loses the note", 3, 2, 3),
+            ("The main path cannot finish", 5, 5, 1),
+            ("A release cannot be reverted", 1, 5, 4),
+            ("A saved change cannot be reverted", 2, 5, 5),
+            ("The checkout total is wrong", 4, 1, 1),
+            ("The checkout misses a coupon", 4, 2, 2),
+            ("The receipt cannot be read", 3, 1, 3)]
+    env.reviews(blocked(*[
+        _scored("P2", title, f"Gain {gain}, Work {work}, Harm {harm}\nRaise: Functional", f"docs/held-{n}.md")
+        for n, (title, gain, work, harm) in enumerate(held)],
                         _scored("P1", "The button label is long", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
     closed = env.close(item)
     assert closed.returncode == 1, closed.stdout + closed.stderr
-    assert "The review left serious findings open: finding 1 (Saving loses the note)." in closed.stderr
+    assert "The review left serious findings open" in closed.stderr
     assert repo.forge("work", item).returncode == 0
     brief = _findings_in(calls(log)[-1]["brief"])
-    assert "Saving loses the note" in brief and "The button label is long" not in brief
+    assert all(title in brief for title, *_ in held)
+    assert "The button label is long" not in brief
 
-    # Below the bar only: Ready, and the pull request lists both with their scores.
+    # Low-Harm Gain 3 is always a follow-up; Gain 3/Harm 3 and Gain 4 follow up at Work 3.
+    followed = [("The rare path lacks a test", 3, 1, 1),
+                ("Another rare path lacks a test", 3, 2, 2),
+                ("The uncommon shell needs support", 3, 3, 3),
+                ("Go repos need their own test picker", 4, 3, 2)]
+    lived = [("Old baskets show a stale total", 2, 1, 1),
+             ("The heading is long", 1, 1, 3),
+             ("The title is long", 2, 2, 3)]
     env.commit(where, "app.py", "print('saved the note')\n")
-    env.reviews(blocked(_scored("P1", "Old baskets show a stale total", "Gain 2, Work 1, Harm 1\nRaise: Functional"),
-                        _scored("P2", "Go repos need their own test picker", "Gain 4, Work 4, Harm 2\nRaise: Functional")))
+    env.reviews(blocked(*[
+        _scored("P1", title, f"Gain {gain}, Work {work}, Harm {harm}\nRaise: Functional", f"docs/below-{n}.md")
+        for n, (title, gain, work, harm) in enumerate([*followed, *lived])]))
     ready = env.close(item)
     assert ready.returncode == 0, ready.stdout + ready.stderr
     assert "Ready:" in ready.stdout
     text = body(env.gh_calls("pr", "edit")[-1])
-    assert ("Follow-ups:\n- Finding 2 (P2): Go repos need their own test picker (app.py:1): "
-            "Gain 4, Work 4, Harm 2") in text
-    assert ("Lived with:\n- Finding 1 (P1): Old baskets show a stale total (app.py:1): "
-            "Gain 2, Work 1, Harm 1") in text
+    follow_text, live_text = text.split("Follow-ups:", 1)[1].split("</details>", 1)[0].split("Lived with:", 1)
+    for title, gain, work, harm in followed:
+        assert title in follow_text and f"Gain {gain}, Work {work}, Harm {harm}" in follow_text
+        assert title not in live_text
+    for title, gain, work, harm in lived:
+        assert title in live_text and f"Gain {gain}, Work {work}, Harm {harm}" in live_text
+        assert title not in follow_text
 
 
 def _approve(env, doc: str, no_hooks: str) -> Path:
@@ -134,7 +158,8 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     repo.git("add", "-A")
     repo.git("-c", no_hooks, "commit", "-qm", "Sign-off")
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")
-    _says(repo, "1. Blocking: Sign-in is out of scope.\n   Raise: Plan gap\n   Gain 3, Work 1, Harm 1\n"
+    # Gain 4 keeps these settled-note cases at the bar now that low-Harm Gain 3 follows up.
+    _says(repo, "1. Blocking: Sign-in is out of scope.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n"
                 "2. Blocking: The title could be shorter.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 1\n")
     shop = new_story(repo, "SHOP")
     (shop / "plans/SHOP.md").write_text(STORY_DOC, encoding="utf-8")
@@ -146,7 +171,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
                      encoding="utf-8")
     # Round 2 raises one more note at the bar; round 3 still gets every settled note, unchanged ones too.
     (repo.bin / "claude-says.md").write_text(
-        "3. Blocking: Saving needs a button.\n   Raise: Plan gap\n   Gain 3, Work 1, Harm 1\n", encoding="utf-8")
+        "3. Blocking: Saving needs a button.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n", encoding="utf-8")
     assert repo.forge("read", "SHOP").returncode == 0
     notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - the button is in the doc\n",
                      encoding="utf-8")
@@ -168,7 +193,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
 
     # Three findings at the bar in one area stop the part; the owner accepts them.
     env.commit(where, "app.py", "print('saved twice')\n")
-    env.reviews(blocked(*[_scored("P1", title, "Gain 3, Work 2, Harm 1\nRaise: Functional")
+    env.reviews(blocked(*[_scored("P1", title, "Gain 4, Work 2, Harm 1\nRaise: Functional")
                           for title in ("Saving drops the basket", "Saving skips the coupon",
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
@@ -186,7 +211,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
 
     env.commit(where, "app.py", "print('saved again')\n")
-    env.reviews(blocked(_scored("P1", "Saving drops the basket", "Gain 3, Work 2, Harm 1\nRaise: Functional")))
+    env.reviews(blocked(_scored("P1", "Saving drops the basket", "Gain 4, Work 2, Harm 1\nRaise: Functional")))
     again = env.close("SHOP/T1")
     assert again.returncode == 0, again.stdout + again.stderr
     assert "Ready:" in again.stdout
@@ -227,8 +252,9 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
     _client_on_this_release(env, tmp_path, case)
     item, where = env.start_fix()
     before = follow_ups(env)
+    # Loop findings must still hold work under the new bar; low-Harm Gain 3 no longer does.
     at_bar = lambda title, file, harm=1, line=1: {  # noqa: E731
-        **_scored("P1", title, f"Gain 3, Work 2, Harm {harm}\nRaise: Functional", file),
+        **_scored("P1", title, f"Gain 4, Work 2, Harm {harm}\nRaise: Functional", file),
         "code_location": {"file_path": file, "line": line}}
     if loop == "new-harm-1":  # three blocked rounds of new Harm 1 findings: a fourth review runs
         for number in (1, 2, 3):
@@ -269,7 +295,7 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         shop = new_story(env.repo, "SHOP")
         (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
         for number in (1, 2, 3):
-            _says(env.repo, f"1. Blocking: Gap {number}.\n   Raise: Plan gap\n   Gain 3, Work 1, Harm 1\n"
+            _says(env.repo, f"1. Blocking: Gap {number}.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n"
                   + ("2. Advisory: Wording.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 3\n" if number == 3 else ""))
             read = env.repo.forge("read", "SHOP")
             assert read.returncode == 0 and "Three consecutive" not in read.stderr, read.stdout + read.stderr

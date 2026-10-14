@@ -1,0 +1,72 @@
+{
+  "base": "67bf8d627a22b201a5bf0f32f9514c295fa699fc",
+  "branch": "fix/team-sentence-short",
+  "done_when": "The team sentence counts stories with no plan instead of naming them, and forge board --json fills the team's in-progress list from the same row states the page uses",
+  "flagged": [
+    "tests/test_board_pace.py",
+    "tests/test_board_runway.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_8_below_the_fold() in tests/test_board_runway.py",
+      "file": "tests/test_board_runway.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 96,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_board_runway.py::test_8_below_the_fold",
+      "work": 1
+    },
+    {
+      "area": "test_13_team_sentence_counts_unplanned_stories_instead_of_naming_them() in tests/test_board_pace.py",
+      "file": "tests/test_board_pace.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 109,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5620091e0de2bd5c61b1352b01aca31a8305d3dee917daf5acc05d3d3c5f9a29",
+    "changed": "8ef1a7e147907aba82d5e3d3077429283e02a8e621efb65302cbceb2f895383c",
+    "commit": "490ad2e31b87a00473dcf5f97dc1d4e220729222",
+    "dismissals": [],
+    "findings": [],
+    "id": "90bd5ed4-e5b9-4aaf-a82a-725bae47ecb1",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T17:21:36.588894+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T17:59:33.344834+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:50:27.632595+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:26:53.649821+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T04:06:55.864010+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The board's team sentence names every story that has no plan, so on a larger team it runs to eight lines, and the board data leaves its in-progress list empty"
+}

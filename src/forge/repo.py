@@ -6,6 +6,7 @@ templates and raises its entries with refuse(). The CLI prints the problem, then
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -96,14 +97,21 @@ def command_cache():
 
 def _common_path(cwd: str | os.PathLike[str] | None) -> Path:
     """Identify linked worktrees without another git process."""
-    top = Path(cwd or Path.cwd()).resolve()
+    top = Path(cwd or Path.cwd()).absolute()
+    key = ("common path", top)
+    if _command_cache is not None and key in _command_cache:
+        return _command_cache[key]
+    top = top.resolve()
     for folder in (top, *top.parents):
         dot = folder / ".git"
         if dot.is_file():
             dot = (folder / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
         if dot.is_dir():
             common = dot / "commondir"
-            return (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            found = (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            if _command_cache is not None:
+                _command_cache[key] = found
+            return found
     return top
 
 
@@ -114,6 +122,20 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
     if key not in _command_cache:
         _command_cache[key] = read()
     return _command_cache[key]
+
+
+def blob_hash(text: str) -> str:
+    """What `git hash-object --stdin` prints for text, without a git process."""
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def read_blob(top: Path, name: str) -> str | None:
+    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    def read() -> str | None:
+        done = run("git", "cat-file", "blob", name, cwd=top)
+        return done.stdout if done.returncode == 0 else None
+    return command_fact(("read blob", name), top, read)
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
@@ -138,13 +160,22 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
+    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
+        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+        (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
+        if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
+                "+refs/heads/*:refs/remotes/origin/*"):
+            command_fact("fetched origin", cwd, dict)["all"] = True
         key = ("landed ref", _common_path(cwd))
         if key in _command_cache and not _command_cache[key].startswith("origin/"):
             del _command_cache[key]  # A first fetch can create the previously absent remote ref.
     if _command_cache is not None and done.returncode == 0 and args[:3] == ("git", "remote", "set-head"):
         for kind in ("default branch", "landed ref"):
             _command_cache.pop((kind, _common_path(cwd)), None)
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and (args[1] in ("switch", "checkout", "worktree", "branch"))):
+        _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
@@ -482,7 +513,8 @@ def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
 def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
-    git("fetch", "-q", "origin", default, cwd=top)
+    if not command_fact("fetched origin", top, dict).get("all"):
+        git("fetch", "-q", "origin", default, cwd=top)
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])

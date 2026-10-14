@@ -219,6 +219,21 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
             (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
 
 
+def blocked_rounds(top: Path, item: str, ref: str = "HEAD") -> tuple[int, str | None]:
+    """The latest consecutive blocked review results at ref, counted once per reviewed commit,
+    and the commit date of the first of them. Committed results include older releases and
+    later dismissals."""
+    seen, since, path = set(), None, repo.state_path(item)
+    for line in repo.git("log", "--first-parent", "--format=%H %cI", ref, "--", path, cwd=top).splitlines():
+        commit, date = line.split()
+        result = json.loads(repo.git("show", f"{commit}:{path}", cwd=top)).get("review") or {}
+        if not result or not blocking(result):
+            break
+        seen.add(result["commit"])
+        since = date
+    return len(seen), since
+
+
 def area(top: Path, commit: str, file: str, line: Any) -> str:
     """A finding's area: the qualified name of the innermost Python def holding its line at the
     commit, else (another language, no parse, a line outside every def) the file."""

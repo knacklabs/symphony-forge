@@ -1,0 +1,45 @@
+{
+  "base": "225dfa0835a9d03d9a9a59503d961021657194ad",
+  "branch": "fix/dead-run-wait-ends",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a138b0-95f2-7380-bee3-108392557790",
+    "head": null,
+    "start": "bb69fca00f43005b7b92c045f9fc88d11c29a6af"
+  },
+  "done_when": "A line wait with no admit or leave ends when its process is gone (or at the item's next recorded event), so item times and the board show only real waiting, for new and earlier-adopted repos",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "728a5f9d44d57bec24f9f80a5b6d00a72894b1685300be41010c0f1120a5357f",
+    "changed": "d242e16b3d84cc129e62e66406e0bb92c5ea1e360a54ad159245489d147ebe3c",
+    "commit": "bf2d97288cb4a02e338aecd4c2e59f748f28338d",
+    "dismissals": [],
+    "findings": [],
+    "id": "f9fecbf8-b9de-4387-a911-935d3e693dcb",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T04:33:42.213483+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T04:44:30.985359+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "60ba29a841d1d8b815fa8dc50f4c675b628bf4fb",
+    "keys": {},
+    "round": null
+  },
+  "why": "When a run's process dies after it joins the machine's line, Forge counts it as waiting in line until the item ends, so five items showed 47 hours of waiting that never happened",
+  "worker": "codex"
+}

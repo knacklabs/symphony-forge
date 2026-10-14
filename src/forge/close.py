@@ -83,10 +83,14 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
+    from forge import backfill
     from forge.merge import ENABLE
 
     item = args.item
     top = _worktree(item)
+    retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
+    if retried_history:
+        backfill.run(top)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
@@ -126,6 +130,8 @@ def close(args: argparse.Namespace) -> int:
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
+                _push(top, repo.current_branch(top))  # every machine's board sees the wait end
+                _refresh_record(top, item, state)
         if choice in ("switch", "same"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
@@ -151,7 +157,10 @@ def close(args: argparse.Namespace) -> int:
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
         _attach(top, item, branch)
-        return _merged(top, item)
+        done = _merged(top, item)
+        if not retried_history and backfill.upgrade_fix(top, item, state):
+            backfill.run(top)
+        return done
 
     previous = state.get("review") or {}
     legacy_diff = None
@@ -245,12 +254,14 @@ def close(args: argparse.Namespace) -> int:
         at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
         choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
     if (not switch and not fresh and round_number - choice_round >= 3 and
-            _three_blocked_reviews(top, item) and
+            review.blocked_rounds(top, item)[0] >= 3 and
             score.loop_stops(previous, _known(top, item, state, f"origin/{default}", previous), round_number)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1, "at": repo.now()}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
+        _push(top, branch)  # every machine's board sees the stop
+        _refresh_record(top, item, state, pr)
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.proof_list(top, f"origin/{default}"))
@@ -426,24 +437,9 @@ def close(args: argparse.Namespace) -> int:
         print(f"Next: forge merge {item}")
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+    if not retried_history and backfill.upgrade_fix(top, item, state):
+        backfill.run(top)
     return 0
-
-
-def _three_blocked_reviews(top: Path, item: str) -> bool:
-    """Use committed review results, including older releases and later dismissals."""
-    seen = set()
-    path = repo.state_path(item)
-    for commit in repo.git("log", "--first-parent", "--format=%H", "--", path,
-                           cwd=top).split():
-        result = json.loads(repo.git("show", f"{commit}:{path}", cwd=top)).get("review") or {}
-        if not result or not review.blocking(result):
-            return False
-        if result["commit"] in seen:
-            continue
-        seen.add(result["commit"])
-        if len(seen) == 3:
-            return True
-    return False
 
 
 def _settled_areas(state: dict[str, Any]) -> list[str]:
@@ -568,7 +564,30 @@ def stuck_stop(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  status="hotspot")
     state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="stuck")
     _save(top, item, state, f"{item} is stuck; Forge asks the owner")
+    share_wait(top, item, state, push=True)
     repo.refuse(REFUSALS["stuck"], item=item, question=question)
+
+
+def branch_pr(top: Path, state: dict[str, Any]) -> dict[str, Any] | None:
+    """The item's open pull request, found on GitHub by its branch; None without one, without
+    GitHub or when the branch was never pushed."""
+    branch = state.get("branch") or repo.current_branch(top)
+    if repo.run("git", "rev-parse", "-q", "--verify", f"refs/remotes/origin/{branch}", cwd=top).returncode:
+        return None
+    with contextlib.suppress(repo.Refused, subprocess.CalledProcessError, ValueError):
+        pr = _pull_request(top, branch)
+        return pr if pr and pr.get("state") == "OPEN" else None
+    return None
+
+
+def share_wait(top: Path, item: str, state: dict[str, Any], push: bool = False) -> None:
+    """Forge just recorded a wait on a person: when the branch has a pull request, publish the
+    record (pushing first when the wait lives in the committed state), so every machine's board
+    sees the wait."""
+    if pr := branch_pr(top, state):
+        if push:
+            _push(top, state.get("branch") or repo.current_branch(top))
+        _refresh_record(top, item, state, pr)
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
@@ -831,6 +850,8 @@ def _refresh_record(top: Path, item: str, state: dict[str, Any], pr: dict[str, A
     pr = pr or _pull_request(top, state.get("branch") or repo.current_branch(top))
     if not pr:
         return ""
+    if (repo.forge_dir(top) / "backfill-pending").exists() and not time_records.from_body(pr.get("body") or ""):
+        return pr.get("body") or ""  # A partial local record would make the retry skip older evidence.
     body = _bounded_body(time_records.refresh_record(top, item, state, pr.get("body") or ""))
     if body != (pr.get("body") or ""):
         path = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -845,7 +866,26 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     """Open the pull request, or refresh its contract and Forge's block. While the review is
     blocked or the local tests failed, the pull request is a draft."""
     check, proof = evidence
-    history = time_records.how_it_went(top, item, state, (pr or {}).get("body") or "")
+    published = (pr or {}).get("body") or ""
+    rebuilding = not time_records.from_body(published)
+    rebuilt = None
+    if rebuilding:
+        from forge import backfill
+        head = repo.git("rev-parse", "HEAD", cwd=top)
+        def reconstruct():
+            try:
+                rebuilt = backfill.rebuild(top, {**(pr or {}), "headRefName": branch}, pushed_head=head)
+                return rebuilt[2] if rebuilt else None
+            except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
+                backfill.failed(top)
+                return None
+        rebuilt = repo.command_fact(("first publish history", branch, head), top, reconstruct)
+        if rebuilt:
+            published = backfill.seed(published, rebuilt)
+    history = time_records.how_it_went(top, item, state, published)
+    if rebuilding and rebuilt is None:
+        # Keep rendered local observations, but no record that would retire the missing-history retry.
+        history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = (result["status"] == "blocked" or bool(state.get("tests")) or
              (pr is None and result["status"] == "reviewing"))
@@ -954,7 +994,7 @@ def _bounded_body(body: str) -> str:
         record = time_records.from_body(body)
         before, after = body[:marker.start()], body[marker.end():]
         if record:
-            record = {k: record.get(k) for k in ("events", "timings", "state", "ready", "rebuilt", "clean_reviews")}
+            record = {k: record.get(k) for k in ("events", "timings", "summary", "state", "ready", "rebuilt", "clean_reviews")}
             record["truncated"] = True
             while True:
                 body = before + "<!-- forge:time-record " + json.dumps(record, separators=(",", ":")) + " -->" + after

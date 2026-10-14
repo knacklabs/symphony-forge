@@ -527,7 +527,16 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
 
 
 def plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
-    """The published story unless the local story already includes it."""
+    """The published story unless the local story already includes it; once per story for a snapshot."""
+    if history is None:
+        return _plan_ref(top, key)
+    found = history.setdefault("plan refs", {})
+    if key not in found:
+        found[key] = _plan_ref(top, key, history)
+    return found[key]
+
+
+def _plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
     local, remote = f"story/{key}", f"origin/story/{key}"
     landed = landed_ref(top)
     rel = f"plans/{key}.md"
@@ -535,7 +544,9 @@ def plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
     remote_doc = history["docs"].get(f"{remote}:{rel}") if history is not None else show(top, remote, rel)
     source = local if local_doc is not None else landed
     if remote_doc is not None:
-        if local_doc is None or repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
+        tips = history["tips"] if history is not None else {}
+        same = tips.get(f"refs/heads/{local}") is not None and tips.get(f"refs/heads/{local}") == tips.get(f"refs/remotes/{remote}")
+        if local_doc is None or (not same and repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode):
             source = remote
     def state_at(ref: str) -> dict[str, Any]:
         if history is None:
@@ -690,8 +701,8 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
     else only one above `## For the builders`, which needs no new approval and so no new round."""
     if doc_hash == read_hash or text is None:
         return doc_hash != read_hash
-    old = repo.run("git", "cat-file", "blob", read_hash or "-", cwd=top)
-    return old.returncode != 0 or above_builders(old.stdout) != above_builders(text)
+    old = repo.read_blob(top, read_hash or "-")
+    return old is None or above_builders(old) != above_builders(text)
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
@@ -721,8 +732,7 @@ def _streak(top: Path, record: dict[str, str], findings: str) -> int:
         if record.get("blocked_rounds"):
             return min(3, count + int(record["blocked_rounds"]))
         count += 1
-        previous = repo.run("git", "cat-file", "blob", record.get("notes_seen") or "-", cwd=top)
-        record, findings = _record(previous.stdout)
+        record, findings = _record(repo.read_blob(top, record.get("notes_seen") or "-") or "")
     return count
 
 
@@ -780,14 +790,16 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
 
 def worktrees(top: Path) -> dict[str, Path]:
     """Every checked-out branch and its worktree folder."""
-    found: dict[str, Path] = {}
-    path = top
-    for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines():
-        if line.startswith("worktree "):
-            path = Path(line[len("worktree "):])
-        elif line.startswith("branch refs/heads/"):
-            found[line[len("branch refs/heads/"):]] = path
-    return found
+    def read() -> dict[str, Path]:
+        found: dict[str, Path] = {}
+        path = top
+        for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines():
+            if line.startswith("worktree "):
+                path = Path(line[len("worktree "):])
+            elif line.startswith("branch refs/heads/"):
+                found[line[len("branch refs/heads/"):]] = path
+        return found
+    return dict(repo.command_fact("worktrees", top, read))
 
 
 def stories_here(top: Path) -> dict[str, Path]:
@@ -823,12 +835,14 @@ def landed_ref(top: Path) -> str:
     return repo.command_fact("landed ref", top, read)
 
 
-def plan_behind(top: Path, key: str, ref: str) -> str:
+def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = None) -> str:
     """One line with the command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs
     from the story branch's content history, as when a fix edits the plan; else ""."""
     branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
-    theirs = show(top, ref, doc)
-    if theirs is None or show(top, branch, doc) in (None, theirs):
+    def read(one: str) -> str | None:
+        return history["docs"].get(f"{one}:{doc}") if history is not None else show(top, one, doc)
+    theirs = read(ref)
+    if theirs is None or read(branch) in (None, theirs):
         return ""
     blob = repo.git("rev-parse", f"{ref}:{doc}", cwd=top)
     history = repo.git("rev-list", "--objects", branch, "--", doc, cwd=top)

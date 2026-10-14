@@ -24,15 +24,31 @@
          font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   a { color: var(--ink); text-underline-offset: .15em; }
   ::selection { background: var(--ink); color: var(--paper); }
-  main { padding: 1.5rem clamp(1rem, 3vw, 3rem) 3rem; }
-  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1rem;
-           padding-bottom: .75rem; border-bottom: 1px solid var(--rule); }
-  h1 { font-size: 1.35rem; font-weight: 600; letter-spacing: -.01em; }
-  header p, .totals, .key, .numbers, .note, .empty, .people, .times, .status, .kind { color: var(--muted); }
-  header p { font-size: .85rem; }
+  main { padding: 0 clamp(1rem, 3vw, 3rem) 3rem; }
+  /* The section bar stays pinned; each section folds under its own heading. */
+  .bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: baseline;
+         gap: .25rem 1.25rem; padding: .6rem clamp(1rem, 3vw, 3rem); background: var(--paper);
+         border-bottom: 1px solid var(--rule); }
+  .bar .links { display: flex; gap: 1.25rem; }
+  .bar a { font-size: .9rem; font-weight: 500; text-decoration: none; padding: .1rem 0; }
+  .bar a:hover { text-decoration: underline; }
+  .bar a:focus-visible, .scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .bar p { margin-left: auto; font-size: .8rem; }
+  main > section { scroll-margin-top: 3.25rem; }
+  .fold > summary { list-style: none; cursor: pointer; margin-top: 1.75rem; }
+  #overview .fold > summary { margin-top: .5rem; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary h2 { display: inline; margin: 0; font-size: 1.25rem; letter-spacing: -.01em; }
+  .fold > summary::after { content: " +"; color: var(--muted); }
+  .fold[open] > summary::after { content: " \2212"; }
+  span.key { font-size: .75rem; color: var(--muted); margin: 0 0 0 .3rem; white-space: nowrap; font-weight: 400; }
+  .history { font-size: .85rem; padding-left: 1.25rem; display: grid; gap: .35rem; max-width: 110ch; }
+  .history ul { padding-left: 1rem; color: var(--muted); }
+  h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; margin-right: .5rem; }
+  .bar p, .totals, .key, .numbers, .note, .empty, .people, .times, .status, .kind { color: var(--muted); }
   h2 { font-size: 1.05rem; font-weight: 600; margin: 2.25rem 0 .5rem; }
   h3 { font-size: .9rem; font-weight: 600; margin: 1.5rem 0 .25rem; }
-  .sentence { font-size: 1.15rem; margin-top: 1rem; max-width: 70ch; }
+  .sentence { font-size: 1.1rem; line-height: 1.4; margin-top: .4rem; max-width: 100ch; }
   .totals { margin-top: .4rem; font-size: .9rem; }
   .note { margin-top: 1rem; }
   .key { font-size: .85rem; margin-bottom: .5rem; white-space: nowrap; overflow-x: auto; }
@@ -40,7 +56,8 @@
   .shape { display: inline-block; width: .75em; height: .75em; margin: 0 .3em 0 .5em; vertical-align: -.05em;
            border: 1.5px solid var(--ink); background: var(--surface-2); }
   .s-done { border-radius: 50%; }
-  .s-running { border-radius: 2px; }
+  .s-running { background: var(--ink); }
+  .s-plan { width: 1.4em; }
   .s-waiting { border: 0; background: var(--muted);
                clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
   .s-start { transform: rotate(45deg) scale(.8); }
@@ -50,7 +67,7 @@
   .row { border-top: 1px solid var(--rule); padding: .2rem 0; }
   .row:last-child { border-bottom: 1px solid var(--rule); }
   summary { cursor: pointer; padding: .4rem 0; }
-  summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .lane > summary:focus-visible, summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .row > details > summary, .parts summary {
     display: grid; grid-template-columns: 1rem minmax(0, 3fr) 3rem 11rem minmax(0, 2fr);
     gap: .25rem 1rem; align-items: baseline; list-style: none; }
@@ -67,18 +84,84 @@
   .done > summary { font-weight: 600; font-size: .9rem; }
   .numbers { margin-top: 2.25rem; padding-top: .75rem; border-top: 1px solid var(--rule); font-size: .85rem; }
   .board-picture { display: block; max-width: 100%; height: auto; margin: .5rem 0;
-                   color: var(--ink); font: 15px var(--sans); }
+                   color: var(--ink); font: 15px/1.5 var(--sans); }
   .board-picture text { fill: currentColor; }
   .board-picture .picture-detail { fill: var(--muted); font-size: 14px; }
-  .dependency-node circle, .dependency-node rect, .dependency-node polygon,
-  .dependency-node ellipse, .dependency-node path { fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5;
-                             vector-effect: non-scaling-stroke; }
-  .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5;
-                     vector-effect: non-scaling-stroke; }
+  /* The graph keeps its own size: wide enough to fill a laptop window, scrolling in its box when narrow. */
+  .graph-scroll { overflow-x: auto; }
+  .graph-scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .graph-picture { max-width: none; margin: 1rem 0 0; }
+  .graph-picture .row-title { font-weight: 600; }
+  .row-rule { stroke: var(--rule); }
+  .dependency-node rect, .dependency-node polygon, .dependency-node path, .no-plan rect, .finished rect, .graph-picture .done {
+    fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5; }
+  .graph-picture .ink { fill: currentColor; }
+  .no-plan rect { stroke: var(--muted); stroke-dasharray: 4 3; }
+  .finished rect { fill: none; stroke: var(--rule); }
+  .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5; }
   .arrow { fill: var(--muted); }
   .recorded-time { fill: var(--ink); }
   .unknown-time { stroke: var(--muted); stroke-dasharray: 3 3; }
+  /* The Runway: one time axis for the first screen; --today places the today line. */
+  .totals span + span::before { content: "·"; margin: 0 .5rem; color: var(--rule); }
+  .totals span { white-space: nowrap; } .totals b { font-weight: 600; color: var(--ink); }
+  .runway-axis { margin-top: .4rem; }
+  .lanes h2 { font-size: .9rem; margin: .6rem 0 .1rem; }
+  .axis, .lane > summary, .lane.static { display: grid; gap: 0 1rem; align-items: center;
+    grid-template-columns: minmax(0, 22rem) minmax(0, 21rem) minmax(8rem, 1fr); }
+  .axis { font-size: .75rem; color: var(--muted); height: 1.1rem; }
+  .axis .track > span { top: 0; transform: none; white-space: nowrap; line-height: 1rem; }
+  .axis .track > .today { transform: translateX(-50%); color: var(--ink); font-weight: 600; }
+  .axis .track > .end { transform: translateX(-100%); }
+  .lane { border-top: 1px solid var(--rule); }
+  .lane > summary, .lane.static { list-style: none; padding: .1rem 0; font-size: .875rem; line-height: 1.35; }
+  .lane > summary::-webkit-details-marker { display: none; }
+  .lane[open] > summary { background: var(--surface-2); }
+  .lane .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .lane .what { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #needs-you .what { color: var(--wait); }
+  .lane.static .what { white-space: normal; }
+  .track { position: relative; height: 1.25rem; }
+  .track::after { content: ""; position: absolute; left: var(--today); top: -.3rem; bottom: -.3rem;
+                  border-left: 1px solid var(--ink); }
+  .axis .track::after { display: none; }
+  .track > span { position: absolute; top: 50%; transform: translateY(-50%); }
+  .wait { height: .5rem; background: var(--wait); }
+  .runway { height: 0; border-top: 1px dotted var(--muted); }
+  .work { height: .5rem; background: var(--ink); }
+  .track.fix .work { height: .3rem; }
+  .idle { height: 2px; background: var(--wait); }
+  .since { height: 2px; background: var(--muted); }
+  .band { height: .9rem; background: var(--rule); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+  .tick { height: .9rem; border-left: 2px solid var(--ink); }
+  .lanes .empty { font-size: .875rem; padding: .2rem 0; }
+  .rest > summary { font-size: .8rem; color: var(--muted); padding: .1rem 0; }
+  .round { font-size: .8rem; }
+  .pace { font-size: .8rem; color: var(--muted); padding-top: .2rem; }
+  .trends-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr); gap: 1rem 2.5rem; }
+  .scroll { overflow-x: auto; }
+  .trends { border-collapse: collapse; width: 100%; font-size: .8rem; }
+  .trends th, .trends td { text-align: left; padding: .35rem .75rem .35rem 0; border-top: 1px solid var(--rule);
+                           font-weight: 400; white-space: nowrap; vertical-align: top; }
+  .trends thead th, .trends .team th { font-weight: 600; }
+  .trends td { color: var(--muted); }
+  .through { color: var(--ink); }
+  .mark { display: flex; height: .4rem; width: 6rem; margin-bottom: .2rem; }
+  .mark .t { background: var(--ink); }
+  .mark .a { background: var(--muted); opacity: .45; }
+  .around h3 { margin-top: 0; }
+  .around ul { list-style: none; padding: 0; font-size: .85rem; }
+  .around li { border-top: 1px solid var(--rule); padding: .35rem 0; display: grid; grid-template-columns: 1fr auto; }
+  .around li span { color: var(--muted); font-size: .8rem; }
+  .around li span:last-child { grid-column: 2; grid-row: 1; }
   @media (max-width: 720px) {
+    main > section { scroll-margin-top: 7rem; }
+    .bar .links { order: 2; width: 100%; justify-content: space-between; }
+    .bar { gap: .25rem .75rem; } .bar h1 { font-size: 1rem; margin-right: 0; } .bar p { font-size: .75rem; }
+    .axis, .lane > summary, .lane.static, .trends-grid { grid-template-columns: minmax(0, 1fr); }
+    .axis { height: 2.2rem; } .axis > span:not(.track) { display: none; }
+    .axis .track { height: 2.2rem; } .axis .track > .start, .axis .track > .end { top: 1.1rem; }
+    .lane .name, .lane .what, .totals span { white-space: normal; }
     .row > details > summary, .parts summary { grid-template-columns: 1rem minmax(0, 1fr); }
     .row > details > summary > span, .parts summary > span { grid-column: 2; }
     .more { padding-left: 1.25rem; }
@@ -86,25 +169,38 @@
 </style>
 </head>
 <body>
+<nav class="bar" aria-label="Board sections">
+  <h1>Forge board</h1>
+  <span class="links"><a href="#overview">Overview</a><a href="#roadmap">Roadmap</a><a href="#stories">Stories</a><a href="#fixes">Fixes</a></span>
+  <p>Updated $updated</p>
+</nav>
 <main>
-  <header>
-    <h1>Forge board</h1>
-    <p>Updated $updated</p>
-  </header>
-  <section id="first-screen" aria-label="Where things stand">
-    $sentence
-    <p class="totals">$totals</p>
-    $note
-  </section>
-  <section id="roadmap" aria-labelledby="roadmap-heading">
-    <h2 id="roadmap-heading">Roadmap</h2>
+  <section id="overview" aria-labelledby="overview-heading"><details class="fold" open>
+    <summary><h2 id="overview-heading">Overview</h2></summary>
+    <section id="first-screen" aria-label="Where things stand">
+      $sentence
+      <p class="totals">$totals</p>
+      $note
+      $lanes
+    </section>
+    <section id="trends" aria-labelledby="trends-heading">
+      <h2 id="trends-heading">Merged pull requests per week</h2>
+      $trends
+    </section>
+  </details></section>
+  <section id="roadmap" aria-labelledby="roadmap-heading"><details class="fold" open>
+    <summary><h2 id="roadmap-heading">Roadmap</h2></summary>
     <p class="key" tabindex="0" aria-label="Key to the map">$key</p>
     <div class="graph">$graph</div>
-  </section>
-  <section id="work" aria-labelledby="work-heading">
-    <h2 id="work-heading">Stories and fixes</h2>
-    $rows
-  </section>
+  </details></section>
+  <section id="stories" aria-labelledby="stories-heading"><details class="fold"$stories_open>
+    <summary><h2 id="stories-heading">Stories</h2></summary>
+    $stories
+  </details></section>
+  <section id="fixes" aria-labelledby="fixes-heading"><details class="fold"$fixes_open>
+    <summary><h2 id="fixes-heading">Fixes</h2></summary>
+    $fixes
+  </details></section>
   <p class="numbers">$numbers</p>
 </main>
 </body>

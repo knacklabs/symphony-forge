@@ -293,15 +293,17 @@ def start(args: argparse.Namespace) -> None:
     print(f"Next: forge work {item}")
 
 
-def start_base(main: str, key: str, row: dict[str, str]) -> str:
+def start_base(main: str, key: str, row: dict[str, str], history: dict[str, Any] | None = None,
+               top: Path | None = None) -> str:
     """Where forge task start branches a task, so the task takes that branch's forge.toml: the
     default branch once the story doc is there, or when the task comes after another story's
     task, whose merged code is only there; else the story branch."""
     if (any("/" in dep for dep in cell_list(row.get("After", "")))
-            or show(main, f"plans/{key}.md") is not None):
+            or (history["docs"].get(f"{main}:plans/{key}.md") is not None if history is not None
+                else show(main, f"plans/{key}.md") is not None)):
         return main
     from forge import story
-    return story.plan_ref(repo.root(), key)
+    return story.plan_ref(top or repo.root(), key, history)
 
 
 def _merged(main: str, item: str, top: Path | None = None) -> bool:

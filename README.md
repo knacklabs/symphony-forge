@@ -90,13 +90,16 @@ floor if the reader gave a lower Harm. Forge shows the reason, for example
 | When | What occurs |
 |---|---|
 | Harm 4 or 5, or Gain 5 | The note stops the work. The worker fixes it now. |
-| Gain 3 or 4, and Work 1 or 2 | The worker fixes it in this round. |
-| Gain 3 or 4, and Work 3 or more | The note becomes a follow-up fix. The work continues. |
+| Gain 4, or Gain 3 with Harm 3, and Work 1 or 2 | The worker fixes it in this round. |
+| Gain 4, or Gain 3 with Harm 3, and Work 3 or more | The note becomes a follow-up fix. The work continues. |
+| Other Gain 3 notes | The note becomes a follow-up fix, even at Work 1 or 2. The work continues. |
 | Gain 1 or 2 | Forge keeps the note in its record and does not fix it. |
 | Harm 3, and the note adds new scope or reverses your decision | The agent asks you. |
 
 A Gain 1 or 2 note never stops the work. This is true also when the reader calls the note
 serious. Only Harm 4 or more can stop the work for such a note.
+The Harm 4 or 5 and Gain 5 stop rule comes first. Below that rule, Gain 3 holds work only at
+Harm 3 with Work 1 or 2.
 
 ### Who decides
 

@@ -1,0 +1,295 @@
+{
+  "allow_large": "The pane's grouped Board tab: adds needs_person and next.step to the board and next JSON, and raises the pane's refresh wait from 20 to 60 seconds",
+  "base": "55795ad11d303ff78266d78ba09f5e77f96fa7fe",
+  "branch": "fix/pane-grouped-board",
+  "done_when": "The pane's Board tab opens with one summary line, then Needs you, Stuck, Moving and Ready to merge groups, each item with its state in plain words and its next step, and it shows a refresh error instead of loading forever",
+  "flagged": [
+    "src/forge/mod/hooks/pane.test.ts",
+    "src/forge/mod/hooks/pane.ts",
+    "src/forge/mod/hooks/summary.ts",
+    "src/forge/nextstep.py",
+    "tests/test_fix_pane_grouped_board.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 5,
+      "harm": 3,
+      "line": 108,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Review stops and worker questions are missing from Needs you",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 106,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Board rows do not show the actual next step",
+      "work": 2
+    },
+    {
+      "area": "lines() in tests/test_fix_pane_grouped_board.py",
+      "file": "tests/test_fix_pane_grouped_board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 25,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: End-to-end proof for grouped pane and first refresh error",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 131,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Ready-to-merge rows can omit their state and next step",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 117,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Needs you gives worker questions a command that refuses the answerless call",
+      "work": 2
+    },
+    {
+      "area": "a_review_stop_needs_you_with_the_step_forge_next_prints() in tests/test_fix_pane_grouped_board.py",
+      "file": "tests/test_fix_pane_grouped_board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 119,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Test the worker-question and ready-row paths through the Board tab",
+      "work": 2
+    },
+    {
+      "area": "machine_next() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 158,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Recorded allowance does not match the interface and timeout changes",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.ts",
+      "file": "src/forge/mod/hooks/pane.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: Expanded waiting rows omit their state and next step",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 133,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Ready rows on another machine suggest the wrong merge action",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 81,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: Test expanded waiting rows through the Board tab",
+      "work": 1
+    },
+    {
+      "area": "machine_next() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 158,
+      "outcome": "accepted",
+      "reason": "src/forge/nextstep.py:158 The owner explicitly allowed this scope as one large fix on 2026-10-13: the pane's groups need needs_person and next.step in the board and next JSON, and a 60-second refresh wait; the allowance text lists all three",
+      "round": 3,
+      "security": false,
+      "title": "Recorded allowance covers multiple problems and interface changes",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 129,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: Moving Board rows omit their next step",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 306,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: Test Moving rows' next steps through the Board tab",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 147,
+      "outcome": "lived with",
+      "reason": "settled area: src/forge/mod/hooks/summary.ts",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Board tab omits its summary when only ready or waiting items remain",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/pane.test.ts",
+      "file": "src/forge/mod/hooks/pane.test.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 303,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the grouped pane now; the missing summary line on a ready-only or planning-only board, and its test, become one follow-up fix started right after this merges",
+      "round": 5,
+      "security": false,
+      "title": "Not done: Test the Board summary when only ready or waiting items remain",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1cf07bb4a9effc755ed20ddbb7c267b829590ab20ae012daa591860a539a634f",
+    "changed": "d2cab74c19143cfcfbb380720d5ead5c383f44673e86c24adfe22fd5c76af097",
+    "commit": "5c202356e941c5018dbb8700afa0ec210d681790",
+    "dismissals": [
+      {
+        "because": "settled area: src/forge/mod/hooks/summary.ts",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): ship the grouped pane now; the missing summary line on a ready-only or planning-only board, and its test, become one follow-up fix started right after this merges",
+        "finding": 2
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Not done. The summary uses only in-progress, Needs you, Stuck and go-live values, then becomes null when they are all absent. A normal board with one ready-to-merge fix and no other active work has a known `team` but opens directly at READY TO MERGE, without the Done-when summary line. The changed `tests/fixtures/board.json` contains this ready-only count pattern; a planning-only board has the same gap.",
+        "file": "src/forge/mod/hooks/summary.ts",
+        "gain": 3,
+        "harm": 2,
+        "line": 147,
+        "priority": "P1",
+        "title": "Not done: Board tab omits its summary when only ready or waiting items remain",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. The mounted Board-tab summary test supplies an in-progress count, a Needs you row and a Stuck row, so it passes while the tab opens without a summary for a ready-only or planning-only board. Those are normal board states, and the current fixture already includes the ready-only counts; the named proof does not detect the gap above.",
+        "file": "src/forge/mod/hooks/pane.test.ts",
+        "gain": 3,
+        "harm": 2,
+        "line": 303,
+        "priority": "P1",
+        "title": "Not done: Test the Board summary when only ready or waiting items remain",
+        "work": 1
+      }
+    ],
+    "id": "ce8ef6cb-6c73-4590-9f45-91db5befb233",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "src/forge/mod/hooks/pane.test.ts",
+    "src/forge/mod/hooks/summary.ts"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T12:38:35.000433+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T14:05:20.119611+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T15:32:21.639903+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T16:49:07.945050+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T17:32:32.085054+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:27:14.696444+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "src/forge/mod/hooks/pane.test.ts",
+    "at": "2026-10-13T18:27:14.696575+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/mod/hooks/pane.test.ts",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Coordinator's call (Harm 2, reversible): ship the grouped pane now; the missing summary line on a ready-only or planning-only board, and its test, become one follow-up fix started right after this merges",
+    "wait_id": "72fa6f9f-c153-4686-be23-920e191cdf1c",
+    "worker_round": null
+  },
+  "why": "The pane's Board tab is hard to read: raw timestamps, unknown rounds, zero times, a stage chain that does not mark where an item is, and priority codes"
+}
