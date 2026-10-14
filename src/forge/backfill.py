@@ -2,6 +2,7 @@
 import json
 import re
 import subprocess
+import tomllib
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -48,7 +49,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     if pushed_head:
         head = pushed_head  # First publication just pushed this original history from this checkout.
     else:
-        fetched = repo.run("git", "fetch", "-q", "origin", f"refs/pull/{pr['number']}/head", cwd=top)
+        fetched = repo.run("git", "fetch", "-q", "--no-tags", "origin", f"refs/pull/{pr['number']}/head", cwd=top)
         fetched.check_returncode()
         head = repo.git("rev-parse", "FETCH_HEAD", cwd=top)
     key, state = _identity(top, head, pr["headRefName"])
@@ -61,7 +62,6 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
     commits = [start, *repo.git("rev-list", "--reverse", "--ancestry-path", f"{start}..{head}", cwd=top).splitlines()]
     events, timings, clean = [], [], []
     number, last_green = 0, None
-    required = repo.config(top)["checks"]
     for commit in commits:
         at, subject, author, email = repo.git("show", "-s", "--format=%cI%x00%s%x00%aN%x00%aE", commit,
                                                cwd=top).split("\0")
@@ -87,6 +87,7 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
             clean.append({"commit": commit, "at": at, "outcome": "clean"})
         if not reviewed and not (commit == head and eligible):
             continue
+        required = tomllib.loads(story.show(top, commit, "forge.toml") or "").get("checks", [])
         runs = _checks(top, commit)
         named = [run for run in runs if any(run.get("name") == want
                  or str(run.get("name") or "").startswith(want + " (") for want in required)]
