@@ -6,7 +6,7 @@ from conftest import ROOT
 STORY = "FORGE-BOARD-2"
 
 
-def test_13_synced_guides_explain_upgrade_time_backfill(repo):
+def test_14_synced_guides_explain_upgrade_time_backfill(repo):
     # The installed prompt is the public contract. A stale or incomplete upgrade
     # paragraph leaves the coordinator unaware of retries and the board check.
     repo.git("checkout", "-q", "-b", "fix/upgrade-board-guide")

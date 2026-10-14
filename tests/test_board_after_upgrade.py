@@ -34,6 +34,16 @@ def output(value):
         calls.write(json.dumps(args) + "\\n")
     print(json.dumps(value))
     sys.exit(0)
+if args[:2] == ["api", "graphql"]:
+    # GitHub independently reports successful required checks at the PR's actual
+    # head. The board must combine those checks with Forge's rebuilt clean review.
+    nodes = [{**pr, "commits": {"nodes": [{"commit": {
+        "oid": pr["headRefOid"], "statusCheckRollup": {"contexts": {
+            "pageInfo": {"hasNextPage": False}, "nodes": [
+                {"name": "tests", "status": "COMPLETED", "conclusion": "SUCCESS"},
+                {"name": "forge-pr-check", "status": "COMPLETED", "conclusion": "SUCCESS"}]}}}}]}}
+             for pr in prs if pr["state"] == "OPEN"]
+    output({"data": {"repository": {"pullRequests": {"nodes": nodes}}}})
 if args[:2] == ["pr", "list"] and "--state" in args:
     if "--head" not in args and (here / "history-unreachable").exists():
         sys.exit("GitHub is unreachable")
@@ -64,6 +74,7 @@ if args[:2] == ["pr", "create"] and args[args.index("--head") + 1] == "task/SHOP
                 "title": "Show a saved basket", "body": body, "mergedAt": None, "mergedBy": None,
                 "author": {"login": "starter", "name": "Original Starter"},
                 "url": "https://github.com/acme/shop/pull/17"})
+    subprocess.run(["git", "push", "-q", "origin", head + ":refs/pull/17/head"], check=True)
     store.write_text(json.dumps(prs), "utf-8")
     print("https://github.com/acme/shop/pull/17")
     sys.exit(0)
@@ -74,6 +85,11 @@ if args[:2] == ["pr", "edit"]:
             sys.exit("GitHub refused this body edit")
         path = args[args.index("--body-file") + 1]
         found["body"] = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
+        if found["number"] == 17:
+            remote = subprocess.run(["git", "ls-remote", "origin", "refs/heads/task/SHOP-T2"],
+                                    capture_output=True, text=True, check=True).stdout.split()
+            found["headRefOid"] = remote[0]
+            subprocess.run(["git", "push", "-q", "origin", remote[0] + ":refs/pull/17/head"], check=True)
         store.write_text(json.dumps(prs), "utf-8")
         output({})
 if args and args[0] == "api" and any("/check-runs" in arg for arg in args):
@@ -81,6 +97,8 @@ if args and args[0] == "api" and any("/check-runs" in arg for arg in args):
     head = endpoint.split("/commits/", 1)[1].split("/", 1)[0]
     checks = json.loads((here / "historical-checks.json").read_text("utf-8"))
     if head in checks:
+        if (here / "history-checks-unreachable").exists():
+            sys.exit("GitHub check history is unreachable")
         runs = checks[head]
         if "--jq" in args:
             with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
@@ -144,7 +162,7 @@ class History:
         for round_, outcome in enumerate(("blocked", "clean"), 1):
             at = begin + timedelta(days=round_)
             reviewed = self.repo.git("rev-parse", "HEAD", cwd=where)
-            findings = ([{"priority": "P1", "title": "Greeting misses the reader", "file": name + ".py",
+            findings = ([{"priority": "P1", "title": "Greeting misses the reader", "file": name + ".py", "line": 1,
                           "body": "Gain 3, Work 2, Harm 3\nThe greeting is missing."}] if round_ == 1 else [])
             state.update(status="fixing" if findings else "waiting for checks", round=round_,
                          review={"commit": reviewed, "status": outcome, "findings": findings,
@@ -154,6 +172,12 @@ class History:
             heads.append(head)
             self.checks[head] = [{**run, "started_at": (at + timedelta(minutes=1)).isoformat(),
                                  "completed_at": (at + timedelta(minutes=3)).isoformat()} for run in GREEN]
+            if number == 12:
+                # Required checks are commonly matrix jobs; both platforms
+                # together still bound one CI wait, rather than adding spans.
+                tests = self.checks[head].pop(0)
+                self.checks[head].extend([{**tests, "name": "tests (linux)"},
+                                          {**tests, "name": "tests (windows)"}])
             self.repo.git("push", "-q", "origin", branch)
             if round_ == 1:
                 self.commit(where, name + ".py", "print('hello reader')\n", "Repair the greeting",
@@ -201,8 +225,9 @@ class History:
         return json.loads(match[1]) if match else None
 
     def clear_caches(self):
-        for cache in self.up.tmp.rglob("prs-cache.json"):
-            cache.unlink()
+        for name in ("prs-cache.json", "checks-cache.json"):
+            for cache in self.up.tmp.rglob(name):
+                cache.unlink()
 
 
 @pytest.mark.parametrize("failure", [None, "read", "edit"], ids=["reachable", "retry-read", "retry-edit"])
@@ -317,6 +342,18 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     for item, branch, number in ((opened, "fix/" + opened, 16), ("SHOP/T2", "task/SHOP-T2", 17)):
         resumed = up.tmp / ("second-" + branch.replace("/", "-"))
         repo.git("worktree", "add", "-q", "-b", branch, resumed.as_posix(), "origin/" + branch)
+        if number == 17:
+            # Losing check history at first publication must keep the PR
+            # record absent. Otherwise the retry sees a local-only record and
+            # silently loses the older rounds forever.
+            unavailable_checks = repo.bin / "history-checks-unreachable"
+            unavailable_checks.touch()
+            first = repo.forge("close", item, cwd=resumed)
+            assert first.returncode == 0, first.stdout + first.stderr
+            assert UNREACHABLE in first.stdout + first.stderr
+            assert history.record(17) is None
+            assert (clone / ".git/forge/backfill-pending").is_file()
+            unavailable_checks.unlink()
         closed = repo.forge("close", item, cwd=resumed)
         assert closed.returncode == 0, closed.stdout + closed.stderr
         record = history.record(number)
@@ -324,3 +361,4 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
         older = [e for e in record["events"] if e["event"] == "review result"
                  and e["at"] < NOW.isoformat()]
         assert len(older) == 2, "First publication must recover the older committed rounds on this machine"
+        assert not (clone / ".git/forge/backfill-pending").exists()
