@@ -68,7 +68,10 @@
     "id": "6d6e1516-9a7d-4386-96e0-63201e33bcb2",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/mod/hooks/summary.ts"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-13T19:01:26.423992+00:00",
@@ -89,8 +92,12 @@
   ],
   "stop": {
     "at": "2026-10-14T04:21:38.882384+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/mod/hooks/summary.ts",
-    "wait_id": "dcc0716b-6e0a-452b-9f60-2b0e1fc9a89a"
+    "reason": "Owner chose 'One rule from rows' on 2026-10-14: rebuild the summary's fallback line from the rows the Board tab shows (counts per group, e.g. '2 waiting \u00b7 1 ready to merge') so no board state with rows is left without a summary",
+    "wait_id": "dcc0716b-6e0a-452b-9f60-2b0e1fc9a89a",
+    "worker_round": null
   },
   "why": "The pane's Board tab opens with no summary line when the only active work is ready to merge or still in planning, so a person sees a bare list with no overview"
 }
