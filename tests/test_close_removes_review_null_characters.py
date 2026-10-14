@@ -9,7 +9,7 @@ STORY = "a-review-once-returned-a-finding-title-e"
 def test_1_close_removes_null_characters_before_saving_review_text(env):
     item, where = env.start_fix()
     answer = blocked(finding("P1", "Greeting is missing\0\0"))
-    answer["report"]["findings"][0]["body"] = "Gain 3, Work 2, Harm 1\nAdd\0 a greeting.\0"
+    answer["report"]["findings"][0]["body"] = "Gain 4, Work 2, Harm 1\nAdd\0 a greeting.\0"
     answer["report"]["findings"][0]["code_location"]["file_path"] = "app.py\0"
     answer["report"]["overall_correctness"] += "\0"
     answer["report"]["overall_explanation"] += "\0"
@@ -21,7 +21,7 @@ def test_1_close_removes_null_characters_before_saving_review_text(env):
     saved = json.loads((where / ".factory/fixes/tidy-readme.json").read_text("utf-8"))
     [saved_finding] = saved["review"]["findings"]
     assert saved_finding["title"] == "Greeting is missing"
-    assert saved_finding["body"] == "Gain 3, Work 2, Harm 1\nAdd a greeting."
+    assert saved_finding["body"] == "Gain 4, Work 2, Harm 1\nAdd a greeting."
     assert saved_finding["file"] == "app.py"
     assert "\0" not in first.stdout + first.stderr
 

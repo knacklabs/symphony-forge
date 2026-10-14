@@ -71,7 +71,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     page = _decision(fix, answers)
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
-        "priority": "P1", "title": "Prototype fails", "body": "Gain 3, Work 2, Harm 1\nDemo cannot finish",
+        "priority": "P1", "title": "Prototype fails", "body": "Gain 5, Work 2, Harm 1\nDemo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     blocked = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert blocked.returncode == 1

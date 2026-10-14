@@ -137,8 +137,10 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 ## What blocks the merge
-Your scores decide, whatever the priority: Harm 4 or 5, Gain 5, or Gain 3 or 4 with Work 1 or 2
-blocks the merge; any other finding is a follow-up fix or lived with, and the merge goes on.
+Your scores decide, whatever the priority: Harm 4 or 5, or Gain 5 blocks the merge. Otherwise,
+Gain 4, or Gain 3 with Harm 3, blocks the merge only with Work 1 or 2. Every other Gain 3 or 4
+finding is a follow-up fix, even a Gain 3 finding with Harm 1 or 2 and Work 1 or 2.
+Gain 1 or 2 is lived with. Findings below the bar let the merge go on.
 Every finding under a Raise line is P0 or P1. P2 and P3 are only the advice
 forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
 `Simpler (existing):`), which need no Raise line

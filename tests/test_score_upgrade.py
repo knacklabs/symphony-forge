@@ -112,7 +112,9 @@ def test_6_saved_unscored_notes_hold_until_scored_and_the_readme_explains_the_ba
     readme = (ROOT / "README.md").read_text("utf-8").split("## How Forge weighs a note", 1)[1]
     readme = readme.split("\n## ", 1)[0]
     for text in ("**Gain**", "**Work**", "**Harm**", "| Harm 4 or 5, or Gain 5 |",
-                 "| Gain 3 or 4, and Work 1 or 2 |", "| Gain 3 or 4, and Work 3 or more |",
+                 "| Gain 4, or Gain 3 with Harm 3, and Work 1 or 2 |",
+                 "| Gain 4, or Gain 3 with Harm 3, and Work 3 or more |",
+                 "| Other Gain 3 notes |",
                  "| Gain 1 or 2 |", "breaks Go repos", "Harm 4 (floor: migration)",
                  "This sentence in the plan is not clear"):
         assert text in readme
