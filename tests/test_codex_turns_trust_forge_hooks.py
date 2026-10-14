@@ -181,8 +181,10 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     untrusted = repo.forge("read", "SHOP")
 
     assert untrusted.returncode != 0
-    assert untrusted.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
-                                "Forge starts no Codex turn here.\nNext: forge doctor\n")
+    assert untrusted.stderr.startswith(
+        "Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts no Codex "
+        f'turn here.\nNext: open Codex here and trust the project, or add trust_level = "trusted" '
+        f'under [projects.{json.dumps(str(repo.path.resolve()))}] in {codex_home / "config.toml"}, the main checkout')
     assert not calls.exists()
     (codex_home / "config.toml").write_text(
         f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")

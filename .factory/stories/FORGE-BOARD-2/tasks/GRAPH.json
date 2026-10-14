@@ -1,0 +1,153 @@
+{
+  "branch": "task/FORGE-BOARD-2-GRAPH",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/board_graph.py",
+    "tests/test_board_graph.py"
+  ],
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 650,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: planned stories in roadmap order",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 651,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: no-plan box for a newly started story",
+      "work": 1
+    },
+    {
+      "area": "test_11_dependency_graph() in tests/test_board_graph.py",
+      "file": "tests/test_board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 65,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: missing-reference graph test",
+      "work": 1
+    },
+    {
+      "area": "dependencies() in src/forge/board_graph.py",
+      "file": "src/forge/board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 67,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: functional check",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 683,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Board crashes whenever a fix is present",
+      "work": 1
+    },
+    {
+      "area": "dependencies() in src/forge/board_graph.py",
+      "file": "src/forge/board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 104,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: stacked fixes lose the part name in their visible label",
+      "work": 1
+    },
+    {
+      "area": "dependencies() in src/forge/board_graph.py",
+      "file": "src/forge/board_graph.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 71,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): fully finished stories sit in a Finished grid below the graph instead of keeping their roadmap rows, which keeps the graph to work still moving; the owner is told and can ask for roadmap-order rows as a follow-up",
+      "round": 4,
+      "security": false,
+      "title": "Not done: finished planned stories remain in roadmap order",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "636a40fc0ef93d564bc0d8e1d36c91d8714c4561295e4e9a01afd85fb0c02b1f",
+    "changed": "18f309b3db6db9daf0fa7e145533cb089d952e3589c2e3338d7cca689af77929",
+    "commit": "9fd6173e953c8988938ee3540c01502d0e1f8664",
+    "dismissals": [],
+    "findings": [],
+    "id": "4103ded7-d3bc-40f8-b35b-a33dd0135714",
+    "status": "clean"
+  },
+  "settled_areas": [
+    "dependencies() in src/forge/board_graph.py",
+    "machine_board() in src/forge/board.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T16:06:21.297426+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T17:45:40.778616+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T18:45:54.864375+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T19:04:49.205478+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-13T20:09:37.290545+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T03:52:41.406457+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "dependencies() in src/forge/board_graph.py",
+    "at": "2026-10-13T20:09:37.290653+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "dependencies() in src/forge/board_graph.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Coordinator's call (Harm 2, reversible): fully finished stories sit in a Finished grid below the graph instead of keeping their roadmap rows, which keeps the graph to work still moving; the owner is told and can ask for roadmap-order rows as a follow-up",
+    "wait_id": "3000737e-20c4-4178-8011-55798d1941ea",
+    "worker_round": null
+  }
+}

@@ -90,6 +90,14 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
     assert SPLIT in groups
     # Only Forge's own repo runs its container tests in the gating groups.
     assert ("FORGE_CONTAINERS: '1'" in groups) == (kind == "source")
+    # Only Forge's own repo keeps npm's download cache for its Node client tests.
+    assert ("path: ~/.npm" in groups) == (kind == "source")
+    if kind == "source":
+        # A pull request restores only caches saved from main, so main's full run saves the same one.
+        cache = re.search(r"      - uses: actions/cache@\S+\n.*?\n          key: \S+\n", groups, re.S)[0]
+        cache = cache.split("        with:\n", 1)[1]
+        main = (ROOT / ".github/workflows/forge-next.yml").read_text(encoding="utf-8")
+        assert "      - uses: actions/cache@v4\n" in main and cache in main
     # Branch protection keeps waiting on the one check named tests.
     check_gate(workflow)
     if kind == "source":

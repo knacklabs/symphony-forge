@@ -7,6 +7,11 @@ passed: yes
 doc_seen: bc0464c34624d76599c6b4dd83a156689c07640c
 spec_seen: 9c543b4bb7136c37f92d34771337a9fdac3693a9
 notes_seen: f114e54ab668741b1fbb9ba78995cf3eed5cf166
+conversation: 01a12289-4b58-7ba3-8b95-db5fe7eb8477
+session:
+blocked_rounds:
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 

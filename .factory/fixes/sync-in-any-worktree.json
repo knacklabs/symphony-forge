@@ -1,0 +1,54 @@
+{
+  "base": "15768000feaf2478ee929c4f5508271dc445cd6c",
+  "branch": "fix/sync-in-any-worktree",
+  "done_when": "forge sync writes every generated file in any worktree, whatever other worktrees hold, and never refuses for another worktree's spec",
+  "flagged": [
+    "src/forge/codex.py",
+    "tests/test_sync_in_any_worktree.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c1fef16f2bf232d8a45dedaeb9cacb4e1340b8389728e07b01fdec4cb29c6676",
+    "changed": "d05a73fa701f458c49851fcb91d58d7f9559ad7ac725504a55a5f4042c3d5d48",
+    "commit": "00b4c4e581c1d36996a658eb3e20c64d19d15c81",
+    "dismissals": [],
+    "findings": [],
+    "id": "6cc64277-f4a6-44c2-b072-a79b79278893",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T16:41:23.714069+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T20:40:33.023941+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T21:22:08.841205+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T21:57:29.113749+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-12T22:37:34.076111+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-12T22:09:16.404824+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_sync_in_any_worktree.py",
+    "reason": "Coordinator (Harm 2, reversible): the repeated test finding is answered by the newest commit, which compares with a control checkout that wrote more than the two guides and keeps both spec worktrees present while sync runs; the stop fired before that commit was reviewed.",
+    "round": 4,
+    "wait_id": "5a7ecad1-b047-429a-ac13-eb7a14b066a7",
+    "worker_round": null
+  },
+  "why": "forge sync still refuses in a worktree when another worktree holds a copy of a spec, so builders copy the guide by hand into both host skill files"
+}

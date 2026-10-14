@@ -19,7 +19,7 @@ from test_close import PIN
 
 # Forge's subagent roles, including the native cold reader, which sync writes for both hosts.
 ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
-    "worker", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
+    "worker", "fixer", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
     "debugger", "security", "performance", "reader")
     for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
@@ -349,7 +349,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
-        assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
+        assert (f'add trust_level = "trusted" under [projects.{json.dumps(str(client.resolve()))}] in '
+                f'{codex_home / "config.toml"}') in done.stdout
         assert "Everything else checks out" in done.stdout
     elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr

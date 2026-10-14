@@ -6,9 +6,11 @@ templates and raises its entries with refuse(). The CLI prints the problem, then
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -95,14 +97,21 @@ def command_cache():
 
 def _common_path(cwd: str | os.PathLike[str] | None) -> Path:
     """Identify linked worktrees without another git process."""
-    top = Path(cwd or Path.cwd()).resolve()
+    top = Path(cwd or Path.cwd()).absolute()
+    key = ("common path", top)
+    if _command_cache is not None and key in _command_cache:
+        return _command_cache[key]
+    top = top.resolve()
     for folder in (top, *top.parents):
         dot = folder / ".git"
         if dot.is_file():
             dot = (folder / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
         if dot.is_dir():
             common = dot / "commondir"
-            return (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            found = (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            if _command_cache is not None:
+                _command_cache[key] = found
+            return found
     return top
 
 
@@ -115,6 +124,20 @@ def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
     return _command_cache[key]
 
 
+def blob_hash(text: str) -> str:
+    """What `git hash-object --stdin` prints for text, without a git process."""
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def read_blob(top: Path, name: str) -> str | None:
+    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    def read() -> str | None:
+        done = run("git", "cat-file", "blob", name, cwd=top)
+        return done.stdout if done.returncode == 0 else None
+    return command_fact(("read blob", name), top, read)
+
+
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         input: str | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
@@ -122,22 +145,37 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
+    # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
+    # bounded pull request body past GitHub's limit and changes messages and hashes.
     def execute():
-        return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                              text=True, encoding="utf-8", errors="replace",
+        done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
+                              capture_output=True,
                               # Git hooks need the caller's worker identity.
                               env=(os.environ if env is None else env) if args[0] == "git"
                               else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
+        # Text mode's universal newlines, the same on every OS.
+        done.stdout, done.stderr = (data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+                                    for data in (done.stdout, done.stderr))
+        return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
+    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
+        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+        (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
+        if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
+                "+refs/heads/*:refs/remotes/origin/*"):
+            command_fact("fetched origin", cwd, dict)["all"] = True
         key = ("landed ref", _common_path(cwd))
         if key in _command_cache and not _command_cache[key].startswith("origin/"):
             del _command_cache[key]  # A first fetch can create the previously absent remote ref.
     if _command_cache is not None and done.returncode == 0 and args[:3] == ("git", "remote", "set-head"):
         for kind in ("default branch", "landed ref"):
             _command_cache.pop((kind, _common_path(cwd)), None)
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and (args[1] in ("switch", "checkout", "worktree", "branch"))):
+        _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
@@ -198,6 +236,12 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
             return subprocess.CompletedProcess(done.args, 1, "",
                                                REFUSALS["no_github"][0] + "\n")
         time.sleep(pause)
+
+
+def quote(argument: object) -> str:
+    """One path or argument quoted for the user's shell, so a printed command runs as shown."""
+    text = str(argument)  # on Windows always double-quoted: cmd.exe splits an unquoted `&`
+    return '"' + text.replace('"', '""') + '"' if os.name == "nt" else shlex.quote(text)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None,
@@ -402,11 +446,12 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
-        "merge": str, "checks": list, "interfaces": list, "models": dict}
+        "merge": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
-            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "models": {}}
+            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "always_test": [],
+            "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off")}
@@ -468,7 +513,8 @@ def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
 def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
-    git("fetch", "-q", "origin", default, cwd=top)
+    if not command_fact("fetched origin", top, dict).get("all"):
+        git("fetch", "-q", "origin", default, cwd=top)
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
@@ -614,7 +660,7 @@ def route(cfg: dict[str, Any], tool: str, *, command: str, item: str) -> str:
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
     """The design model for a family, including the default in older repos."""
-    return cfg["models"].get("design", {}).get(family, DESIGN_DEFAULTS[family])
+    return cfg.get("models", {}).get("design", {}).get(family, DESIGN_DEFAULTS[family])
 
 
 def _models_problem(table: Any) -> str:
@@ -663,6 +709,10 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "version" and not VERSION.fullmatch(value):
             return "version must be a Forge release, such as v1.2.1"
+        flag = next((entry for entry in value if entry.startswith("-")), None) if key == "always_test" else None
+        if flag:
+            return (f"always_test lists {flag}, which is not a test path or node ID; "
+                    "list only tests, such as tests/test_rules.py")
         if key == "runner" and not value.strip():
             return "runner must name a GitHub Actions runner label"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
@@ -685,7 +735,16 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
         return
-    pinned = config(top)["version"].removeprefix("v")
+    pinned = ""
+    if words == "handback" and ITEM.fullmatch(item):
+        from forge import codex
+        # A build round's hand-back runs on the release its checkout pinned when it was handed out,
+        # before reading a forge.toml the round may have broken, which the hand-back restores.
+        pending = codex._json(codex._item_file(top, item, ".json", "Build")).get("pending") or {}
+        if pending.get("head"):
+            handed = run("git", "show", f"{pending['head']}:forge.toml", cwd=pending["checkout"])
+            pinned = _pin(handed.stdout)
+    pinned = pinned or config(top)["version"].removeprefix("v")
     if pinned == __version__:
         return
     from forge import story

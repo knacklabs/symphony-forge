@@ -113,7 +113,9 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         monkeypatch.delenv("FORGE_NOW", raising=False)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"
-        env.reviews(blocked(finding("P1", title, "app.py")))
+        # Harm 3 in round 3 keeps the any-file hold by the bar.
+        env.reviews(blocked({**finding("P1", title, "app.py"),
+                             **({"body": "Gain 3, Work 2, Harm 3\nEvidence"} if number == 3 else {})}))
         if number == 1:
             queued_first_close(env, item, where)
         else:

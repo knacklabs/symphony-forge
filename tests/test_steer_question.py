@@ -74,7 +74,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     assert json.loads(record.read_text("utf-8"))["question"] == question
 
-    # Initial work may consult GitHub to choose Fast; unanswered work and close must not.
+    # Initial work may consult GitHub to choose Fast; unanswered work only looks up the branch's pull
+    # request, to read the shared record before it refuses, and close does not consult GitHub.
     patient(lambda: gh.log.write_text("", encoding="utf-8"))
     head = repo.git("rev-parse", "HEAD", cwd=folder)
     blocked = repo.forge("work", "BOARD/PAGE")
@@ -84,7 +85,7 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     assert blocked.stderr == expected
     assert closed.stderr == expected
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head
-    assert not gh.calls()
+    assert all(call[:3] == ["pr", "list", "--head"] for call in gh.calls())
 
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     failed = repo.forge("work", "BOARD/PAGE", "--note", "Yes, use it.")
@@ -97,8 +98,8 @@ def test_2_question_blocks_work_and_close_until_answered(repo, monkeypatch, sdk_
     brief = _sent(calls, "turn/start")[-1]["input"][0]["text"]
     assert question in brief and "Yes, use it." in brief
     assert json.loads(record.read_text("utf-8"))["question"] is None
-    if scenario.startswith("offline-"):
-        assert not [call for call in gh.calls() if call[:2] == ["pr", "list"]]
+    if scenario.startswith("offline-"):  # only the failed lookup by branch; no publish is tried
+        assert all(call[:3] == ["pr", "list", "--head"] for call in gh.calls() if call[:2] == ["pr", "list"])
 
 
 def _answer_continues_the_same_conversation(repo, monkeypatch, sdk_data):

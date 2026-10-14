@@ -1,0 +1,30 @@
+{
+  "base": "55795ad11d303ff78266d78ba09f5e77f96fa7fe",
+  "branch": "fix/slow-tests-own-limit",
+  "done_when": "The review-loop stop-choice and live-status tests carry their own longer time limit, so a busy machine no longer fails close on them",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "39943918c9c40a9e369dfde5251604d2714fc4a7e78bf9087bf5f90914dd74c0",
+    "changed": "19fe55e71046b9d1c6fee5fd83396fbc0e2f8c86abbafbadbb2aa43c3e40217f",
+    "commit": "903d6871e3679177b25a22f79ea17d644a66f90c",
+    "dismissals": [],
+    "findings": [],
+    "id": "01f9b64d-b437-4927-a761-fa1e5072ae6d",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T12:55:13.640143+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T13:25:11.081416+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Two slow test files hit the 150-second per-test limit whenever close runs them on a busy machine, so close fails with no real test failure"
+}

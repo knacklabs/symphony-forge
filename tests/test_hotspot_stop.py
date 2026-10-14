@@ -19,9 +19,9 @@ def saved(where, item):
     return json.loads((where / path).read_text())
 
 
-def rounds(env, item, where, paths):
+def rounds(env, item, where, paths, title=""):
     for number, path in enumerate(paths, 1):
-        env.reviews(blocked(finding("P1", f"Round {number} defect", path)))
+        env.reviews(blocked(finding("P1", title or f"Round {number} defect", path)))
         env.commit(where, "app.py", f"print({number})\n")
         result = env.close(item)
         assert result.returncode == 1, result.stdout + result.stderr
@@ -37,7 +37,8 @@ def _other_blocked_reviews_keep_the_existing_refusal(env, paths, on_default):
     item, where = env.start_fix()
     if not on_default:
         env.commit(where, paths[0], "pass\n")
-    result = rounds(env, item, where, paths)
+    # One finding that keeps coming back: three distinct ones in one file would stop by area.
+    result = rounds(env, item, where, paths, "Same defect" if len(set(paths)) == 1 else "")
     assert "The review left serious findings open:" in result.stderr
     assert saved(where, item)["status"] == "fixing"
     assert "stop" not in saved(where, item)

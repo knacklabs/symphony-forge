@@ -57,7 +57,7 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def narrow_command(command: str, excluded: list[str], workers: str) -> str:
+def narrow_command(command: str, excluded: list[str], workers: str, always: list[str]) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -66,12 +66,13 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
         value = token.group().strip("\"'")
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
-    options = ["-p", "_forge_pytest_selection"] if excluded else []
+    options = ["-p", "_forge_pytest_selection"] if excluded or always else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
     if XDIST.search(configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
+    options += always  # forge.toml's always_test, whatever roots the command names
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
     found = False
@@ -310,6 +311,76 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     return selected, everything, False, missed
 
 
+# The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
+# and fail the run when an entry ran no test. xdist forwards each test's report to the controller.
+SELECTION = """import os, pathlib, pytest
+IGNORE, PICKED, ALWAYS = {}, {}, {}
+RAN, ROOT = set(), []
+def pytest_configure(config):
+    config.option.ignore = (config.option.ignore or []) + IGNORE
+    ROOT.append(pathlib.Path(str(config.rootdir)))
+def name(nodeid):  # relative to the repo, as forge.toml names it, whatever pytest's rootdir
+    file, _, rest = nodeid.partition("::")
+    return pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+def runs(nodeid, entry):
+    return nodeid == entry or nodeid.startswith((entry + "::", entry + "["))
+def pytest_collection_modifyitems(config, items):
+    if PICKED is None or not ALWAYS:
+        return
+    def kept(item):
+        nodeid = name(item.nodeid)
+        return nodeid.split("::")[0] in PICKED or any(runs(nodeid, entry) for entry in ALWAYS)
+    dropped = [item for item in items if not kept(item)]
+    if dropped:
+        config.hook.pytest_deselected(items=dropped)
+        items[:] = [item for item in items if kept(item)]
+def pytest_runtest_logreport(report):
+    if report.when == "call":
+        RAN.add(name(report.nodeid))
+def pytest_sessionfinish(session):
+    if hasattr(session.config, "workerinput"):
+        return  # the controller sees every worker's reports
+    for entry in ALWAYS:
+        if not any(runs(nodeid, entry) for nodeid in RAN):
+            print("\\nforge.toml's always_test names " + entry
+                  + ", which ran no test; fix or remove it in forge.toml.", flush=True)
+            session.exitstatus = pytest.ExitCode.TESTS_FAILED
+"""
+
+
+# Forge's pytest results hook, loaded into every close run: each test's node ID, relative to the
+# repo, and outcome (passed, failed, skipped, xfail, xpass, or error for a failed setup or
+# teardown). xdist forwards each test's report to the controller, which alone writes the file.
+RESULTS_HEADER = "# forge test results\n"
+RESULTS = """import os, pathlib
+FILE, ROOT = [], []
+def pytest_configure(config):
+    # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
+    # close's results file. xdist workers need neither; the controller records their reports.
+    plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
+                       if name.strip() not in ("", "_forge_test_results"))
+    os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
+    path = os.environ.pop("FORGE_TEST_RESULTS", None)
+    if path and not hasattr(config, "workerinput"):
+        FILE.append(pathlib.Path(path))
+        with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
+            results.write(""" + repr(RESULTS_HEADER) + """)
+    ROOT.append(pathlib.Path(str(config.rootdir)))
+def pytest_runtest_logreport(report):
+    if not FILE or report.when != "call" and report.passed:
+        return
+    if report.when == "call":
+        outcome = (("xfail" if report.skipped else "xpass") if hasattr(report, "wasxfail")
+                   else report.outcome)
+    else:
+        outcome = "skipped" if report.skipped else "error"
+    file, _, rest = report.nodeid.partition("::")
+    nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+    with FILE[0].open("a", encoding="utf-8") as results:
+        results.write(outcome + " " + nodeid + "\\n")
+"""
+
+
 def pytest_tests(base: str, command: str) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
@@ -322,33 +393,37 @@ def pytest_tests(base: str, command: str) -> int:
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     excluded = []
-    selected, tests, shared_changed, missed = related(base)
+    # Read as forge test --pytest reads test: close has already checked forge.toml.
+    always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
+    picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge.review import GAP  # imported late: review's imports lead back here
     print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
           end="", flush=True)
+    if closing and len(picked) * 3 > len(tests):
+        print(LARGE, flush=True)
+        if not always:
+            return 0
+        picked, shared_changed = [], False  # CI runs the rest; forge.toml's always_test runs here.
     if not shared_changed:
-        if not selected:
+        if not picked and not always:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        excluded = [path for path in tests if path not in selected]
-    if closing and len(selected) * 3 > len(tests):
-        print(LARGE, flush=True)
-        return 0
+        listed = {entry.split("::")[0] for entry in always}
+        excluded = [path for path in tests if path not in picked and path not in listed]
     if shared_changed:
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
-        print("Related tests: " + ", ".join(selected), flush=True)
+        print("Related tests: " + ", ".join(picked + always), flush=True)
     # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
-        if excluded:
+        if excluded or always:
             selection = Path(folder) / "_forge_pytest_selection.py"
-            selection.write_text("def pytest_configure(config):\n"
-                                 "    config.option.ignore = (config.option.ignore or []) + "
-                                 + json.dumps(excluded) + "\n", "utf-8")
+            selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
+                                                  repr(always)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        return subprocess.run(narrow_command(command, excluded, workers), shell=True,
+        return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
                               env=environment).returncode

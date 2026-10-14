@@ -1,0 +1,57 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-14T10:39:07.448939+00:00",
+      "because": "The owner confirmed the spec on 14 October 2026, so the goal is a confirmed spec on the roadmap",
+      "done_when": "docs/specs/item-cost.md is saved as a draft spec with measured token coverage from this repo, the owner's choices, acceptance criteria for Codex and Claude, payback and a roadmap; it passes a cold read"
+    }
+  ],
+  "base": "589fee3fcb05f30f695f04a80be5772495bb2729",
+  "branch": "fix/item-cost-spec",
+  "done_when": "docs/specs/item-cost.md is a confirmed spec with measured token coverage from this repo, the owner's choices, acceptance criteria for Codex and Claude, payback, and its roadmap items on plans/roadmap.json",
+  "flagged": [
+    "docs/specs/item-cost.md"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "docs/specs/item-cost.md",
+      "file": "docs/specs/item-cost.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: measured run coverage mixes rounds, attempts and items",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d2718106c3cf272cf583d1717d7d2e1d7b3ec59881142dd5e5a10af138b7e076",
+    "changed": "b0a9a63cb36a10b8670cb70d95e5d0791d02ffe1e6bca2369fce00b2c38277b3",
+    "commit": "811d2be63f43cc400e2ee1e4ff384250e3d92aa5",
+    "dismissals": [],
+    "findings": [],
+    "id": "dcb871b6-3b90-4a6e-8707-ec421fa4c5bf",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T10:22:38.537156+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T10:42:22.627636+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T10:48:23.406841+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "An engineering manager cannot see what each story, task and fix cost in tokens and time, because Forge loses Codex retry and nudge counts, drops token totals when pull request histories are compacted, and counts nothing for native Claude or Codex agents"
+}

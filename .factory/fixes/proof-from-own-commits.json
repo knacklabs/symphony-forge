@@ -1,0 +1,36 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-12T23:02:04.602727+00:00",
+      "because": "The builder showed the real cause: the proof label had extra words before its colon; commits from main never reach the lookup",
+      "done_when": "A story part's proof list and other worker paragraphs come only from the part's own commits, never from default-branch commits merged into it"
+    }
+  ],
+  "base": "841a08b10e5393ed8b59aef8f7d966c45aea77a9",
+  "branch": "fix/proof-from-own-commits",
+  "done_when": "Review finds a worker's proof list whatever words follow 'Proof list' before the colon, so a labelled proof list is never reported missing",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "40e301fc3d4029d18ec2dceb159d5d4fc6c7f1e513f058bd27823861ba583410",
+    "changed": "b0d53a5ea2977851fd9fd4b73ef7c4ad969a6eeb35856251655b035393956a31",
+    "commit": "86e0ce6ecc2f87c7062525e8d98b396c8e930056",
+    "dismissals": [],
+    "findings": [],
+    "id": "3ccaacbc-c3e1-4395-9b75-7c6f708de8a1",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T22:59:02.531279+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-12T23:08:32.461161+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A story part's proof list goes missing after close merges main into it, because Forge reads the newest commit from main as the worker's"
+}

@@ -16,6 +16,9 @@ from test_close import CLEAN, GREEN, STORY_DOC, approve_story, body, blocked, en
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
 from test_board import seen
+from test_board_keys_rule import agents_md_allows_story_keys
+from test_board_sections import pinned_bar_and_folding_sections
+from test_board_story_history import story_history_lists_read_rounds
 from test_last_task_records_story_outcome import github_merge
 from test_worker import install_claude
 
@@ -32,6 +35,9 @@ def published(env, item, *, merged_at=None):
           "mergedBy": {"login": "ana", "name": "Ana"},
           "url": "https://github.com/acme/shop/pull/7"}
     env.gh.respond("pr", "list", stdout=json.dumps([pr]))
+    # Every machine's pull request lists are cached for a minute; here that minute has passed.
+    for cache in env.tmp.rglob("prs-cache.json"):
+        cache.unlink()
     return text
 
 
@@ -388,7 +394,7 @@ def warm_checks_cache(env, monkeypatch):
     observations = {"json": current["stage"] == "ready" and
                     current["gates"]["review"]["status"] == "clean" and len(current["rounds"]) == 2,
                     "checks": current["pr"]["checks"] == "unknown",
-                    "html": "Readme greets new readers : Ready to merge." in visible,
+                    "html": "Readme greets new readers Fix Ready to merge" in visible,
                     "next": any(item in line and "is ready" in line for line in next_step.stdout.splitlines())}
     assert all(observations.values()), (observations, current["stage"], next_step.stdout, visible)
 
@@ -689,7 +695,8 @@ def story_full_runway(env, monkeypatch, done=False):
     (top / "timings.jsonl").write_text("", "utf-8")
     clock(864040)
     current = row(env.repo, "SHOP")
-    assert [child["id"] for child in current["children"]] == ["SHOP/T2"]
+    # Older merged parts remain visible in the six-week history; their time still counts once.
+    assert [child["id"] for child in current["children"]] == ["SHOP/T1", "SHOP/T2"]
     assert current["intervals"][0] == {"start": at(0), "end": at(10), "kind": "unknown"}
     assert current["total_seconds"] == 864040
     assert current["time_breakdown"] == {"working": 50, "waiting": 10, "unknown": 863980}
@@ -729,7 +736,26 @@ def story_runway(env, monkeypatch):
     assert current["intervals"]
 
 
-def test_12_plain_times_round_review_times_in_board_and_pull_request(env):
+@pytest.mark.parametrize("case", ["plain-times", *(f"{part}-{history}" for part in ("sections", "history", "keys")
+                                                   for history in ("new", "adopted-v1.2.2"))])
+def test_12_getting_around_the_board_and_telling_items_apart(request, case):
+    """Plain times; the pinned bar and folding sections; story histories with their cold-read
+    rounds; the shipped line allowing story keys. Each case gets the fixtures it needs."""
+    if case == "plain-times":
+        plain_times(request.getfixturevalue("env"))
+        return
+    part, history = case.split("-", 1)
+    repo, gh, tmp_path = (request.getfixturevalue(name) for name in ("repo", "gh", "tmp_path"))
+    if part == "sections":
+        pinned_bar_and_folding_sections(repo, gh, tmp_path, history)
+    elif part == "history":
+        story_history_lists_read_rounds(repo, gh, tmp_path, request.getfixturevalue("claude_payload"), history)
+    else:
+        agents_md_allows_story_keys(repo, gh, tmp_path, history)
+
+
+def plain_times(env):
+    """15.001-second review times read in rounded plain units in the board and pull request."""
     item, _ = env.start_fix(round=1)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
@@ -737,7 +763,8 @@ def test_12_plain_times_round_review_times_in_board_and_pull_request(env):
     timings = [json.loads(line) for line in (top / "timings.jsonl").read_text("utf-8").splitlines()]
     for timing in timings:
         if timing.get("item") == item and timing.get("step") == "review":
-            timing["seconds"] = 15.001
+            # 15.4 still rounds to whole seconds and leaves room for overlapping CI waits on slow runners.
+            timing["seconds"] = 15.4
     (top / "timings.jsonl").write_text("".join(json.dumps(t) + "\n" for t in timings), "utf-8")
     current = row(env.repo, item)
     assert "15 seconds" in current["rounds"][0]["line"]

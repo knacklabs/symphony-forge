@@ -57,9 +57,14 @@ Risks: none
 """
 
 
+# A default score line per priority that keeps each finding's outcome under today's rule.
+SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
+
+
 def finding(priority: str, title: str, file: str = "app.py", line: int = 1) -> dict:
     # confidence, category and column are fields Forge doesn't use; it must ignore them.
-    return {"title": title, "body": f"Evidence for: {title}", "priority": priority,
+    return {"title": title, "body": f"{SCORES.get(priority, 'Gain 2, Work 1, Harm 1')}\n"
+                                    f"Evidence for: {title}", "priority": priority,
             "confidence": 0.8, "category": "bug",
             "code_location": {"file_path": file, "line": line, "column": 1}}
 
@@ -153,6 +158,8 @@ class Forge:
         # gh api --paginate --jq '<field>[]' prints one object per line across every page.
         lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
         self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
+        # Historical all-attempt reads have independent snapshots, not live polling queues.
+        self.gh.respond("api", "--paginate", "--method", "GET", "--raw-field", "filter=all", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
         # No old queued workflow unless the case supplies one explicitly.
         self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
@@ -505,7 +512,7 @@ def test_18_close(env, kind):
     [create] = env.gh_calls("pr", "create")
     assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
     assert "- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
-    assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
+    assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): Gain 2, Work 1, Harm 1" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
         "rev-parse", "HEAD", cwd=where)
@@ -549,7 +556,10 @@ def test_18_close(env, kind):
     assert third.returncode == 1
     rounds = env.review_calls()
     assert len(rounds) == 2 and rounds[1]["head"] != rounds[0]["head"]
-    assert "dismissed" not in body(env.gh_calls("pr", "edit")[-1])
+    # Only the repeated advice is settled: it was known below the bar from the earlier round.
+    assert [line for line in body(env.gh_calls("pr", "edit")[-1]).splitlines() if "dismissed" in line] == [
+        "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): dismissed because known: "
+        "below the bar (live with); Gain 2, Work 1, Harm 1"]
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
 
     # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,
@@ -574,8 +584,8 @@ def test_18_close(env, kind):
 # --- criterion 19: the functional check -----------------------------------------------------
 
 MISSING_CHECK = finding("P1", "Not done: functional check", "show.py")
-HOLLOW_CHECK = {**MISSING_CHECK, "body": "The check says only 'it works'; nothing was exercised."}
-STALE_CHECK = {**MISSING_CHECK, "body": "The only check is in an older commit's message."}
+HOLLOW_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe check says only 'it works'; nothing was exercised."}
+STALE_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe only check is in an older commit's message."}
 
 
 @pytest.mark.parametrize("task, answer, refused", [

@@ -1,0 +1,46 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-14T12:07:48.395693+00:00",
+      "because": "The owner added the egress host list to the same change on 14 October 2026",
+      "done_when": "docs/specs/sandbox-runs.md says each sandbox run gets its own machine with Docker, so tests that use Docker run there, passes a cold read and is confirmed again"
+    },
+    {
+      "at": "2026-10-14T12:26:31.437783+00:00",
+      "because": "The owner added the GitHub App push and the sandbox secrets rule to the same change on 14 October 2026",
+      "done_when": "docs/specs/sandbox-runs.md says each sandbox run gets its own machine with Docker and that a repo's extra outside hosts are listed in forge.toml; it passes a cold read and is confirmed again"
+    }
+  ],
+  "base": "b033aee150a239b6d20d16c38954df7b2e83c6a2",
+  "branch": "fix/sandbox-docker",
+  "done_when": "docs/specs/sandbox-runs.md says each sandbox run gets its own machine with Docker, lists extra outside hosts in forge.toml, has Mainline push finished rounds with the team's GitHub App after checks, and takes sandbox secrets from the repo's sandbox environment in the Mainline vault; it passes a cold read and is confirmed again",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "69e2acca1911c180e9dfe84ba683cf9538c4277bd32de937d93ddd4c4605f660",
+    "changed": "6f491efc44f6f57d631a191bcb942799e43877a2b30ad5af8e63c6508f441fb4",
+    "commit": "6c35d3433cd3cde3605c1b9b3483c768134a74bd",
+    "dismissals": [],
+    "findings": [],
+    "id": "29d7d886-5964-46b5-9fed-88a700559325",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T12:02:42.086519+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T12:10:08.687611+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T12:29:22.188829+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Integration and end-to-end tests need Docker, so repos whose tests need Docker must run in sandboxes too, not stay on the laptop"
+}

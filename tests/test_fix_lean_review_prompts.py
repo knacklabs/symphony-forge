@@ -84,7 +84,8 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     assert "- Gate: a P1 this page names elsewhere" in boundary[0]
 
     # Review: only Raise lines block; advice is limited to the named forms; one-line findings.
-    assert ("Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only "
+    # The bar now decides what blocks; the Raise lines still set the priority.
+    assert ("Every finding under a Raise line is P0 or P1. P2 and P3 are only "
             "the advice forms this page names") in review
     for rule in ("Write each finding as one line naming the defect and its impact, then brief "
                  "evidence", "No speculative suggestions",
@@ -105,7 +106,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     # The coordinator guide synced into the repo holds the orchestrator to the same boundary.
     for guide in (where / ".claude/skills/forge/SKILL.md", where / ".codex/skills/forge/SKILL.md"):
         text = flat(guide.read_text("utf-8"))
-        assert ("every P0 or P1 finding inside it gets a fix round with `forge work <item>`, never "
-                "a dismissal for being unnecessary, rare or low value") in text, guide
+        assert ("every finding at the bar (Proposed \"fix now\" or \"fix this round\") gets a fix round "
+                "with `forge work <item>`, whatever its priority") in text, guide
         assert "Dismiss only a finding outside the boundary or factually wrong" in text, guide
         assert "never kept as unnecessary" in text, guide

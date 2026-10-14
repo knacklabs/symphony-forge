@@ -1,0 +1,27 @@
+{
+  "branch": "task/FORGE-QUEUE-1-HUMAN",
+  "flagged": [],
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3c5275433b299a46caaf64d353857c158bd5fd21680aed9f6efcc29b482c4a9e",
+    "changed": "d12726af4858c8756817bb58be08ef1032bab48a0f2430de39a8d00b6bf84c86",
+    "commit": "0a8e22e6064ef04a1b7bd072e3d3ca0f508d3223",
+    "dismissals": [],
+    "findings": [],
+    "id": "c6aebbf4-d66e-465c-8479-8fe9841ebb4e",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T06:39:31.790959+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-13T07:38:50.822026+00:00",
+      "step": "review"
+    }
+  ]
+}
