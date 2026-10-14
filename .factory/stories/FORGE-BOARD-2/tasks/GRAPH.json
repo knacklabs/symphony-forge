@@ -100,29 +100,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c0046663cba3350e7a693c20b4fb026814217017045b7d5671f116c15c2e3469",
-    "changed": "a223487b47f6c97ee10bdecb2203db06c016c885eb4dccca1c6485445c3c8a19",
-    "commit": "3c44abfd78b4e4348d3e2d92e77406b4aa549b22",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Coordinator's call (Harm 2, reversible): fully finished stories sit in a Finished grid below the graph instead of keeping their roadmap rows, which keeps the graph to work still moving; the owner is told and can ask for roadmap-order rows as a follow-up",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done \u2014 This removes every fully finished planned story from the roadmap rows and draws it later in a separate Finished grid. Done-when 11 requires a row for each planned story in roadmap order, with finished parts folded into an \u201cN done\u201d mark at that row\u2019s start. The supplied screenshots show the changed ordering, and the test checks JSON map order but not SVG row order.",
-        "file": "src/forge/board_graph.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 71,
-        "priority": "P1",
-        "title": "Not done: finished planned stories remain in roadmap order",
-        "work": 2
-      }
-    ],
-    "id": "d767d176-f0de-4ed8-b82e-df4466bedac9",
+    "branch_diff": "636a40fc0ef93d564bc0d8e1d36c91d8714c4561295e4e9a01afd85fb0c02b1f",
+    "changed": "18f309b3db6db9daf0fa7e145533cb089d952e3589c2e3338d7cca689af77929",
+    "commit": "9fd6173e953c8988938ee3540c01502d0e1f8664",
+    "dismissals": [],
+    "findings": [],
+    "id": "4103ded7-d3bc-40f8-b35b-a33dd0135714",
     "status": "clean"
   },
   "settled_areas": [
@@ -149,6 +132,10 @@
     },
     {
       "at": "2026-10-13T20:09:37.290545+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T03:52:41.406457+00:00",
       "step": "review"
     }
   ],
