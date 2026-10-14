@@ -1,0 +1,14 @@
+{
+  "base": "b033aee150a239b6d20d16c38954df7b2e83c6a2",
+  "branch": "fix/live-notes-spec",
+  "done_when": "docs/specs/live-notes.md is a confirmed spec where a note reaches a running worker at once and stop interrupts the turn, and docs/specs/sandbox-runs.md uses browser sign-in with a redirect and CI results as events for repos on Mainline, both confirmed",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-14T12:30:22.875697+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A coordinator's note reaches a running Codex or Claude worker only at the next round, and a sandbox round still waits on polled sign-in and CI checks"
+}
