@@ -113,27 +113,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7b69b92a7e2dd4403d78292f497f34e12cbfc98896c19e317356d74066b5b8a8",
-    "changed": "e1431b482e49c5c46b3ef76ba23775e916ef3c5f6402caeda8a61072e782c3ab",
-    "commit": "7266cb34950edf7ff2e35ae0ebc191095656e82e",
+    "branch_diff": "4ccc7d8ca363d8ccbb829be93e69985cab2718d70b5604669a2482f155b3288f",
+    "changed": "70bc6ca6798bafd9bf7c0079cd29898c0b62d20898b660d12dec893a9f218cb0",
+    "commit": "8572e66aad78a1935b8042496adec59054139932",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. The earlier rounds established sentence, totals, and row-order parity; the remaining gap is the duration on those rows. `team.needs_you` supplies `waited_seconds`, and the board page shows how long each person has waited (`board_visuals.py:144-147`), but the pane builds those rows from the reason alone. Likewise, for a looping review or a part that blocks the most work, `team.blocked` supplies `seconds` and the page displays it (`board_visuals.py:171-174`), while the pane uses only `detail` at line 170. On these normal first-screen rows, the Board tab and `/forge` omit the age the page shows.",
-        "file": "src/forge/mod/hooks/summary.ts",
-        "gain": 3,
-        "harm": 2,
-        "line": 168,
-        "priority": "P1",
-        "title": "Not done: waiting and blocked ages in the pane",
-        "work": 2
-      }
-    ],
-    "id": "cdb2f7dd-9e82-4c33-b3b3-0321a9a7d566",
+    "findings": [],
+    "id": "2b3e6c53-a33d-429d-879a-dfa4def4e585",
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-13T11:57:45.229895+00:00",
@@ -149,6 +138,10 @@
     },
     {
       "at": "2026-10-14T16:05:45.310404+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T16:33:32.293341+00:00",
       "step": "review"
     }
   ],
