@@ -20,6 +20,9 @@ RESUMED = "<!-- forge:history-resumed -->"
 
 SEEN = 300  # ponytail: a finding last seen over 300 findings ago counts as new again.
 RECORD_BUDGET = 20_000  # bytes of shared time record; older detail folds into the totals line.
+ROUND_CATEGORIES = {"work": CATEGORIES[:4], "in_line": ("waiting_in_line",),
+                    "waiting_for_person": ("waiting_for_owner",),
+                    "waiting_for_checks": ("waiting_for_ci",)}
 
 
 def _mark(finding: dict[str, Any]) -> str:
@@ -45,7 +48,9 @@ def _fold(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
             + "".join(f"{label} {duration(seconds[c])}; " for c, label in zip(CATEGORIES, LABELS) if c in seconds)
             + "findings: " + " new, ".join("unknown" if n is None else str(n) for n in counts) + " repeated")
     return {"round": None, "worker_round": None, "line": line, "findings": None, "new_findings": counts[0],
-            "repeat_findings": counts[1], "seconds": seconds, "first": first, "last": last}
+            "repeat_findings": counts[1], "seconds": seconds, "first": first, "last": last,
+            "round_times": [one for entry in (a, b) for one in entry.get("round_times", [
+                [entry["round"], entry["worker_round"], None]])]}
 
 
 def checkpoint(rows: list[dict[str, Any]]) -> list[Any]:
@@ -351,7 +356,11 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         rounds.append({"round": number, "worker_round": worker_round,
                        "line": f"Round {number if number is not None else 'unknown'}: " + "; ".join(steps),
                        "findings": findings, "new_findings": fresh, "repeat_findings": repeats,
-                       "seconds": {c: round(v, 3) for c, v in per_attempt.get(index, {}).items()}})
+                       "seconds": {c: round(v, 3) for c, v in per_attempt.get(index, {}).items()},
+                       "round_times": [[number, worker_round, [round(sum(
+                           per_attempt.get(index, {}).get(c, 0) for c in categories), 3)
+                           for categories in ROUND_CATEGORIES.values()]
+                           if complete_since and current["start"] and current["start"] >= complete_since else None]]})
     grouped = {f"{kind}_seconds": round(sum((when(span["end"]) - when(span["start"])).total_seconds()
                                            for span in intervals if span["kind"] == kind), 3)
                if intervals or (start and end) else None for kind in ("working", "waiting", "unknown")}
@@ -364,7 +373,7 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
                preserve_ready: bool = False) -> str:
     records = {name: [row for row in read(top, name) if row.get("item") == key]
                for name in ("events", "timings")}
-    data = combined(top, key, state, published, **records)
+    data = _combined(top, key, state, published, **records)
     data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
                                   for r in [*data.get("clean_reviews", []),
                                             *[e for e in data["events"] if e.get("event") == "review result"
@@ -467,7 +476,7 @@ def from_body(body: str) -> dict[str, Any]:
                 and all(type(folded.get(kind, 0)) in (int, float) and folded.get(kind, 0) >= 0
                         for kind in ("working", "waiting", "unknown"))):
             summary["folded"] = None
-        merged({}, data)
+        _board_rounds(merged({}, data))
         "".join((data.get("summary") or {}).get(field) or "" for field in ("started_by", "approved_by"))
         (data.get("ready") or {}).get("commit")
         "".join([data.get("legacy_text") or ""])
@@ -494,7 +503,12 @@ def _joined(older: list[dict[str, Any]], newer: list[dict[str, Any]]) -> list[di
                  if not step.startswith("findings: ") and step not in head.split("; ")]
         line = "; ".join([head, *steps]) + ("; findings: " + tail if tail else "")
         seconds = _fold(a, {**b, "new_findings": 0, "repeat_findings": 0})["seconds"]
-        return [*older[:-1], {**a, "line": line[:300], "seconds": seconds}, *newer[1:]]
+        round_times = json.loads(json.dumps(a.get("round_times", [[a["round"], a["worker_round"], None]])))
+        extra = b.get("round_times", [[b["round"], b["worker_round"], None]])
+        left, right = round_times[-1][2], extra[0][2]
+        round_times[-1][2] = [round(x + y, 3) for x, y in zip(left, right)] if left is not None and right is not None else None
+        return [*older[:-1], {**a, "line": line[:300], "seconds": seconds,
+                             "round_times": [*round_times, *extra[1:]]}, *newer[1:]]
     return [*older, *newer]
 
 
@@ -537,7 +551,12 @@ def _compact(data: dict[str, Any], base: dict[str, Any], clean: list[dict[str, A
     def kept() -> list[dict[str, Any]]:
         return [r for r in clean if not summary or not _settled(r, summary["round"], when(summary["until"]))]
 
-    while len(json.dumps({**base, "clean_reviews": kept(), **rows, "summary": summary}, separators=(",", ":"))) \
+    def text_summary() -> dict[str, Any] | None:
+        # Numeric round history has no text budget; only its sentences can fold.
+        return {**summary, "rounds": [{k: v for k, v in r.items() if k != "round_times"}
+                                     for r in summary["rounds"]]} if summary else None
+
+    while len(json.dumps({**base, "clean_reviews": kept(), **rows, "summary": text_summary()}, separators=(",", ":"))) \
             > RECORD_BUDGET:
         if summary and len(summary["rounds"]) > 2:  # The newest summarised line stays its own.
             summary["rounds"][:2] = [_fold(*summary["rounds"][:2])]
@@ -604,6 +623,12 @@ def _summarised(data: dict[str, Any], summary: dict[str, Any] | None, rows: dict
 def combined(top: Path, key: str, state: dict[str, Any], published: str, *,
              events: list[dict[str, Any]] | None = None, timings: list[dict[str, Any]] | None = None,
              ended_at: str | None = None) -> dict[str, Any]:
+    return _board_rounds(_combined(top, key, state, published, events=events, timings=timings, ended_at=ended_at))
+
+
+def _combined(top: Path, key: str, state: dict[str, Any], published: str, *,
+              events: list[dict[str, Any]] | None = None, timings: list[dict[str, Any]] | None = None,
+              ended_at: str | None = None) -> dict[str, Any]:
     """The item's time from local logs and its pull request, derived once; a published summary
     replaces its rounds' local rows, so long items stay quick to read."""
     record = from_body(published)
@@ -612,6 +637,22 @@ def combined(top: Path, key: str, state: dict[str, Any], published: str, *,
     rows = {name: [r for r in (read(top, name) if given is None else given) if r.get("item") == key]
             for name, given in (("events", events), ("timings", timings))}
     return merged({**rows, "state": state, "ended_at": ended_at}, record)
+
+
+def _board_rounds(data: dict[str, Any]) -> dict[str, Any]:
+    """Expand numeric history independently of the compacted round sentences."""
+    rounds = []
+    for entry in data["rounds"]:
+        for index, (number, worker_round, values) in enumerate(entry.get("round_times", [
+                [entry["round"], entry["worker_round"], None]])):
+            if values is not None and (len(values) != len(ROUND_CATEGORIES)
+                                       or any(type(v) not in (int, float) for v in values)):
+                raise ValueError("Invalid round seconds")
+            rounds.append({**{k: v for k, v in entry.items() if k != "round_times"},
+                           "round": number, "worker_round": worker_round,
+                           "line": entry["line"] if index == 0 else "",
+                           "seconds": dict(zip(ROUND_CATEGORIES, values)) if values is not None else None})
+    return {**data, "rounds": rounds}
 
 
 def merged(local: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]:

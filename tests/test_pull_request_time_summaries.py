@@ -131,7 +131,9 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     # One fixed clock, so the part and its story measure open waits to the same instant.
     monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=5)).isoformat())
     shared = row(env.repo, item)
-    lines = [r["line"] for r in shared["rounds"]]
+    # Numeric round entries now survive text compaction. Only the retained sentences
+    # belong to the prose contract this test owns.
+    lines = [r["line"] for r in shared["rounds"] if r["line"]]
     # The board's total time is the sum of its parts.
     parts = sum(shared[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown"))
     assert abs(shared["total_seconds"] - parts) < 1
