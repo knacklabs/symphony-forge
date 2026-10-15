@@ -67,19 +67,19 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ad557add07a633b15fcb4b8e287aaab339ce0283fa67e9c786b5a672c5c514f4",
-    "changed": "ecb0535bb4657099875500cb4ed0cc1bcecdf9193f9708251f3416ae023ef92c",
-    "commit": "401694d15116b9e1d355fdcad90a1c56eb3869e7",
+    "branch_diff": "2ab702a2ee3c7ccb447a99c60ac6cb9ff737d1301f71dfd804fe04d115b8a1f4",
+    "changed": "ee411f298f6c5e72abac1a17c5b92cf457916d75c12c6c52044d8a33c7391d54",
+    "commit": "b0e999495f8cb1945dc716b782346cc019a51522",
     "dismissals": [],
     "findings": [],
-    "id": "ab2b8d59-f14b-4bff-8c62-c6ae7c74428e",
+    "id": "342ee93a-54bd-4fcf-911b-6bde1546e4f0",
     "status": "clean"
   },
   "round": 5,
   "settled_areas": [
     "src/forge/time_records.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T19:31:58.599703+00:00",
@@ -99,6 +99,10 @@
     },
     {
       "at": "2026-10-15T02:50:00.252452+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T03:32:18.573060+00:00",
       "step": "review"
     }
   ],
