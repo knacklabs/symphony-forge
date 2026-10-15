@@ -1351,8 +1351,8 @@ its dismissals, including `--dismiss` given in that close command. A changed dif
 Before reusing serious findings, close also checks the reviewed files and contract against the
 current head. A repair brought in from the default branch needs a new review, even if the branch
 diff stayed the same. Land uses the same check through close.
-Close pushes and opens the pull request before a new review, so CI runs alongside it, then
-updates the pull request's review block when the review finishes. Ready still needs a clean
+Close pushes before a new review. A new pull request opens with the review result, which starts
+CI; an existing pull request gets one body update after the check wait. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
 the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
@@ -1480,10 +1480,20 @@ With the default enabled, land waits for a recorded choice and resumes after 30 
 default; it does not send the worker back while the stop is unanswered.
 Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
-Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
+For a story task, narrow writes the reason into its Done-when builder details; split also adds
+one follow-up task row. Forge commits and pushes the story plan, merges it into the task branch,
+and gives the worker the updated text next round. Fixes keep the choice in their own record.
+Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
+When no review input changed and the same serious findings remain, close goes straight to the
+owner's stop question without a push or another review, including after bookkeeping-only commits.
+A close run publishes the pull request body at most once. A new PR opens after review and starts
+CI; its next close refreshes the CI history. An existing PR publishes after the check wait.
+Sync in a task worktree keeps the Forge version pin unchanged.
+New repos get these rules at init; existing repos, including earlier adoptions, get them on upgrade
+and sync.
 A clean review clears an unanswered review-loop stop.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,

@@ -406,6 +406,8 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
+    # This cross-machine wait contract needs the final owner-wait record on its first close.
+    env.open_pr("Why: Keep the basket\nDone when: pending\n", draft=True)
     first = env.close(item)
     assert first.returncode == 0, first.stderr
     published(env, item)
@@ -552,6 +554,8 @@ def conflict_wait(env, monkeypatch):
 def malformed_record(env, case):
     """A PR author can edit the shared record; any malformed value counts as no record."""
     item, _ = env.start_fix(round=1)
+    # An existing PR receives the complete record in close's one final body publication.
+    env.open_pr("", draft=True)
     first = env.close(item)
     assert first.returncode == 0, first.stderr
     text = body(env.gh_calls("pr", "edit")[-1])
@@ -582,6 +586,8 @@ def rebuilt_history(env):
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
+    # Preserve this history contract independently of the new-PR publication boundary.
+    env.open_pr("", draft=True)
     first = env.close(item)
     assert first.returncode == 0, first.stderr
     text = body(env.gh_calls("pr", "edit")[-1])
@@ -752,6 +758,7 @@ def plain_times(env):
     item, _ = env.start_fix(round=1)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]))
     top = env.repo.path / ".git/forge"
     timings = [json.loads(line) for line in (top / "timings.jsonl").read_text("utf-8").splitlines()]
     for timing in timings:

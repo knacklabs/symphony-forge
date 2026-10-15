@@ -101,10 +101,8 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
         assert len(env.review_calls()) == before
         assert (where / "src/a.py").read_text("utf-8") == "pass\n"
-    else:
-        resumed = env.close(item)
-        assert resumed.returncode == 1
-        assert "The review left serious findings open" in resumed.stderr
+    # Narrow and split now need worker changes before another close. An unchanged retry
+    # opens a new stop question, covered by the unchanged-work regression.
     env.commit(where, "app.py", "print('human choice implemented')\n")
     # An accepted finding comes back only as a disputed keep with new evidence of harm.
     title = "Disputed keep 1: Round 3 defect loses saved baskets" if choice == "accept" else "A new defect"

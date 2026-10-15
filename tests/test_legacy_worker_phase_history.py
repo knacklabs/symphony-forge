@@ -55,7 +55,8 @@ def test_26_legacy_first_worker_phase_stays_unknown_until_recorded(
         assert "unknown completed (unknown)" in first["line"], first["line"]
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    published = body(env.gh_calls("pr", "edit")[-1])
+    # First close now publishes the observed review history in creation, without another edit.
+    published = body(env.gh_calls("pr", "create")[-1])
     assert "building: unknown" in published
     assert "fixing findings: unknown" in published
     if source == "timing":

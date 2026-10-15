@@ -1,7 +1,7 @@
 """forge close: close a task or fix by the close rule.
 
-Bring the default branch in, push and open the pull request so CI runs during review. Commit and
-publish the result, then wait for the checks forge.toml names on exactly that pushed head.
+Bring the default branch in, push, review and publish the result once. Wait for the checks
+forge.toml names on exactly that pushed head; an existing PR publishes after the check wait.
 Nothing is committed after the checks: GitHub holds when they finished. A human merges.
 """
 from __future__ import annotations
@@ -58,6 +58,9 @@ REFUSALS = {
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
                 "earlier round flagged too, so Forge stops sending the worker back. {question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
+    "unchanged": ("Nothing changed since the last review and its serious findings are still open, "
+                  "so Forge stops sending the worker back. {question}",
+                  'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
@@ -91,12 +94,11 @@ def close(args: argparse.Namespace) -> int:
     item = args.item
     top = _worktree(item)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
-    if retried_history:
-        backfill.run(top)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    plan_updated = False
     continued = (os.environ.pop("FORGE_CLOSE_ACCEPTED", "") == "1" and choice == "accept"
                  and reason and (state.get("stop") or {}).get("choice") == choice
                  and state["stop"].get("reason") == reason.strip())
@@ -110,6 +112,8 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
                         else REFUSALS["bad_choice"], item=item)
         if not continued:
+            if choice in ("narrow", "split"):
+                plan_updated = task.apply_review_choice(top, item, choice, reason.strip())
             if choice == "switch":  # the next forge work runs this item on the other tool
                 state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
             if choice == "accept":
@@ -133,11 +137,16 @@ def close(args: argparse.Namespace) -> int:
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
                 _push(top, repo.current_branch(top))  # every machine's board sees the wait end
-                _refresh_record(top, item, state)
+                if choice != "accept":
+                    _refresh_record(top, item, state)
         if choice in ("switch", "same"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
         if choice != "accept":
+            if plan_updated:
+                print(f"Recorded the human's choice. The worker gets the updated plan next round.\n"
+                      f"Next: forge work {item}")
+                return 0
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
             return 0
@@ -160,7 +169,7 @@ def close(args: argparse.Namespace) -> int:
             init.protect(top, default, cfg["checks"])
         _attach(top, item, branch)
         done = _merged(top, item)
-        if not retried_history and backfill.upgrade_fix(top, item, state):
+        if retried_history or backfill.upgrade_fix(top, item, state):
             backfill.run(top)
         return done
 
@@ -185,7 +194,6 @@ def close(args: argparse.Namespace) -> int:
         raise
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
-        _refresh_record(top, item, state, pr)
     if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
         excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
@@ -247,6 +255,12 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if fresh and review.blocking(result) and not dismissals and choice != "accept":
+        state.update(stop={"file": review.blocking(result)[0][1]["file"],
+                           "round": round_number, "at": repo.now(), "unchanged": True}, status="hotspot")
+        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
+        _save(top, item, state, "Stop an unchanged review for the owner's choice")
+        check_stop(item, state, top)
     choice_round = 0
     if (state.get("stop") or {}).get("choice"):
         # Earlier stops omitted the round or stored the attempted next review.
@@ -275,8 +289,6 @@ def close(args: argparse.Namespace) -> int:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
         _push(top, branch)
-        pr = _publish(top, item, state, branch, default, pr,
-                      {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
@@ -382,8 +394,15 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
-    pr = _publish(top, item, state, branch, default, pr, result, evidence)
-    _attach(top, item, branch)
+    def publish() -> None:
+        nonlocal pr
+        if not getattr(args, "body_published", False):
+            pr = _publish(top, item, state, branch, default, pr, result, evidence)
+            args.body_published = True
+            _attach(top, item, branch)
+            if retried_history or backfill.upgrade_fix(top, item, state):
+                backfill.run(top, exclude_branch=branch)
+
 
     print(f"Review: {result['status']}.", flush=True)
     for number, finding in serious:
@@ -396,6 +415,8 @@ def close(args: argparse.Namespace) -> int:
         for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    if failed or serious:
+        publish()
     if failed and not stopped:
         repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:
@@ -404,22 +425,25 @@ def close(args: argparse.Namespace) -> int:
                         question=review.stop_question(top, item, state), **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
+    # A new PR starts pull_request CI. A later close refreshes its CI history.
+    # Existing PRs publish after the check wait.
+    if pr is None:
+        publish()
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
     except BaseException:
-        _publish(top, item, state, branch, default, pr, result, evidence)
+        publish()
         raise
-    # Publish successful CI with Ready, or once before restarting on a refreshed head.
+    # Ready follows successful CI on the final head.
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
     pr = _pull_request(top, branch) or pr
     _merge_default(top, item, branch, default, pr)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
-        _publish(top, item, state, branch, default, pr, result, evidence)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
                         accepted=choice == "accept", before=getattr(args, "pin_before", None))
         again = argparse.Namespace(**vars(args))
@@ -435,14 +459,12 @@ def close(args: argparse.Namespace) -> int:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
-    _publish(top, item, state, branch, default, pr, result, evidence)
+    publish()
     if merge == "agent":
         print(f"Ready: {item} has a clean review and green checks.")
         print(f"Next: forge merge {item}")
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
-    if not retried_history and backfill.upgrade_fix(top, item, state):
-        backfill.run(top)
     return 0
 
 
@@ -514,7 +536,7 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
         if default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
-        repo.refuse(REFUSALS["hotspot"], item=item,
+        repo.refuse(REFUSALS["unchanged"] if state["stop"].get("unchanged") else REFUSALS["hotspot"], item=item,
                     question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
@@ -898,7 +920,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = (result["status"] == "blocked" or bool(state.get("tests")) or
-             (pr is None and result["status"] == "reviewing"))
+             pr is None)
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"

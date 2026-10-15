@@ -518,10 +518,10 @@ def test_18_close(env, kind):
         "rev-parse", "HEAD", cwd=where)
     env.open_pr(body(create), draft=True)
 
-    # Green checks alone don't promote it: the serious finding still blocks, so it stays a draft.
+    # Green checks alone don't promote it: a matching dismissal is still required. An unchanged
+    # retry now asks the owner; that separate contract is covered by the unchanged-work regression.
     env.checks(GREEN)
-    blocked_again = env.close(item)
-    assert blocked_again.returncode == 1 and not env.gh_calls("pr", "ready")
+    assert not env.gh_calls("pr", "ready")
 
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
@@ -568,10 +568,14 @@ def test_18_close(env, kind):
     env.gh.respond("pr", "create", "--draft", stderr=no_drafts, exit=1)
     env.gh.respond("pr", "ready", "7", "--undo", stderr=no_drafts, exit=1)
     env.gh.respond("pr", "list", "--head", stdout="[]")  # no pull request yet
+    # Exercise draft fallback on changed work. An unchanged blocked retry now asks the owner
+    # before sending more requests to GitHub.
+    env.commit(where, "app.py", "print('saved with draft fallback')\n")
     fourth = env.close(item)
     refused, create = env.gh_calls("pr", "create")[-2:]
     assert refused == [*create[:2], "--draft", *create[2:]]
     env.open_pr(body(create))
+    env.commit(where, "app.py", "print('saved with existing pull request')\n")
     fifth = env.close(item)
     assert env.gh_calls("pr", "ready")[-1] == ["pr", "ready", "7", "--undo"]
     for done in (fourth, fifth):
@@ -650,12 +654,12 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert env.close(item).returncode == 0
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
-    # Close now opens a draft before review, then makes it ready after both gates pass.
+    # Creation now publishes the review once, before CI; the later existing-PR close below
+    # owns the final CI and owner-wait history assertions.
     assert "--draft" in create
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
     assert body(create).splitlines()[1] == f"Done when: {summary}"
-    assert "CI passed" in body(create)
-    assert "waiting for the owner (ongoing)" in body(create)
+    assert "Review: clean" in body(create)
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
     edited = body(create) + "Checked by hand on the staging shop.\n"

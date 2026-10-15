@@ -33,7 +33,8 @@ def test_28_fresh_clone_preserves_published_rounds_findings_and_durations(env, p
     env.reviews({"exit": 0, "report": report(finding("P2", "Keep the basket label clear"))})
     first = env.close(item)
     assert first.returncode == 0, first.stdout + first.stderr
-    first_body = body(env.gh_calls("pr", "edit")[-1])
+    # A new PR now gets its review history in creation's single body publication.
+    first_body = body(env.gh_calls("pr", "create")[-1])
     env.open_pr(first_body)
     env.commit(where, "app.py", "print('clear basket label')\n")
     worked = env.repo.forge("work", item)

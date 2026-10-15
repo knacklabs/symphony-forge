@@ -30,6 +30,7 @@ def test_20_legacy_reviews_without_rounds_keep_each_observed_attempt_in_board_an
     assert "CI unknown (3 seconds)" in first["line"]
     assert "review clean (5 seconds)" in second["line"]
     assert second["round"] is None and second["findings"] is None
+    env.open_pr("", draft=True)
     closed = env.close("tidy-readme")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
@@ -41,6 +42,8 @@ def test_21_first_close_without_a_worker_round_keeps_its_real_lane_wait_in_round
     log = _with_test_command(env)
     for name in ("held", "waiting"):
         _fix(env, name)
+    # Both closes edit existing PRs after their complete lane and CI history.
+    env.open_pr("Why: Work advances\nDone when: pending\n", draft=True)
     held, waiting = Close(env, "held"), None
     try:
         _running(env, log, "start fix-held")

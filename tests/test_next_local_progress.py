@@ -31,7 +31,8 @@ def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, mer
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     pr = pull(7, f"fix/{item}")
-    pr["body"] = body(env.gh_calls("pr", "edit")[-1])
+    # Creation now carries the completed review; a first close no longer edits it again.
+    pr["body"] = body(env.gh_calls("pr", "create")[-1])
     pr["headRefOid"] = env.repo.git("rev-parse", f"fix/{item}")
     pr["commits"]["nodes"][0]["commit"]["oid"] = pr["headRefOid"]
     github(env.gh, [pr])

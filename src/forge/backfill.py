@@ -164,7 +164,7 @@ def failed(top: Path) -> None:
     repo.command_fact("backfill warning", top, lambda: print(UNREACHABLE))
 
 
-def run(top: Path) -> None:
+def run(top: Path, *, exclude_branch: str = "") -> None:
     """A best-effort whole rebuild. Keep the retry until all reads and writes succeeded."""
     from forge import close
 
@@ -177,7 +177,11 @@ def run(top: Path) -> None:
         cutoff = time_records.when(repo.now()) - timedelta(days=42)
         prs = [*github["open"], *[pr for pr in board_facts.merged_prs(github)
                                 if time_records.when(pr.get("mergedAt")) and time_records.when(pr["mergedAt"]) >= cutoff]]
+        deferred = False
         for pr in {pr["number"]: pr for pr in prs}.values():
+            if pr.get("headRefName") == exclude_branch:
+                deferred |= not bool(time_records.from_body(pr.get("body") or ""))
+                continue  # close publishes its own body once, with rebuilt history included
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or time_records.from_body(pr.get("body") or ""):
                 continue
             rebuilt = rebuild(top, pr)
@@ -185,7 +189,8 @@ def run(top: Path) -> None:
                 continue
             key, state, record = rebuilt
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
-        pending.unlink(missing_ok=True)
+        if not deferred:
+            pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
         if isinstance(error, repo.Refused) and error.entry is close.REFUSALS["publish"]:
             raise

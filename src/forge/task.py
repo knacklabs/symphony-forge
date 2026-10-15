@@ -74,6 +74,76 @@ def approval_hash(text: str) -> str:
     return hashlib.sha256(both.encode("utf-8")).hexdigest()
 
 
+def apply_review_choice(top: Path, item: str, choice: str, reason: str) -> bool:
+    """Publish a task's owner choice in its builder plan and bring it to the worker."""
+    from forge import story
+
+    match = repo.ITEM.fullmatch(item)
+    if not match or not match["task"]:
+        return False  # fixes already carry their Done-when and choice in their own record
+    key, name = match["key"], match["task"]
+    branch, rel = f"story/{key}", f"plans/{key}.md"
+    retry = f'forge close {item} --resolve {choice} --reason {repo.quote(reason)}'
+    if git("status", "--porcelain", cwd=top):
+        raise repo.Refused("Commit or stash the task's changes before updating its plan.", retry)
+    git("fetch", "-q", "origin", cwd=top)
+    source = story.plan_ref(top, key)
+    folder = story.stories_here(top).get(key)
+    if folder is None:
+        if git("branch", "--list", branch, cwd=top):
+            main = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
+            folder = main.parent / f"{main.name}-story-{key}"
+            git("worktree", "add", "-q", str(folder), branch, cwd=top)
+        else:
+            folder = story.add_worktree(top, branch, source)
+    if git("status", "--porcelain", cwd=folder):
+        raise repo.Refused("Commit or stash the story's changes before updating its plan.", retry)
+    updated = run("git", "merge", "-q", "--ff-only", source, cwd=folder)
+    if updated.returncode:
+        raise repo.Refused("The local and published story plans diverged; reconcile them first.", retry)
+    path = folder / rel
+    text = path.read_text(encoding="utf-8")
+    row = rows(sections(text))[name]
+    note = f"Owner's {choice} choice for {name}: {' '.join(reason.split())}"
+    # A failed push or task merge can be retried without creating another follow-up.
+    if note not in text:
+        if choice == "split":
+            existing = rows(sections(text))
+            followup, number = f"{name}-FOLLOWUP", 2
+            while followup in existing:
+                followup, number = f"{name}-FOLLOWUP-{number}", number + 1
+            following = {**row, "ID": followup, "Name": f"Follow-up for {row['Name']}",
+                         "What it delivers": " ".join(reason.split()).replace("|", "/"), "After": name}
+            lines = text.splitlines(keepends=True)
+            index = next(i for i, line in enumerate(lines)
+                         if line.lstrip().startswith("|") and
+                         line.strip().strip("|").split("|")[0].strip("` ") == name)
+            lines.insert(index + 1, "| " + " | ".join(following.values()) + " |\n")
+            text = "".join(lines)
+        more = story.details(text)
+        for covered in (int(n) for n in re.findall(r"\d+", row["Covers"])):
+            more[covered] = (more.get(covered, "") + "\n   " + note).strip()
+        body = "\n".join(f"{n}. {entry}" for n, entry in sorted(more.items())) + "\n\n"
+        found = story.DETAILS.search(text)
+        if found:
+            text = text[:found.start(1)] + body + text[found.end(1):]
+        else:
+            if not story.BUILDERS.search(text):
+                text = text.rstrip() + "\n\n## For the builders\n"
+            text = text.rstrip() + "\n\n### Done-when details\n\n" + body
+        story.parse(text, folder, key=key)
+        path.write_text(text, encoding="utf-8", newline="\n")
+        repo.commit_state(f"Record the owner's {choice} choice in the plan", rel, top=folder)
+    git("push", "-q", "-u", "origin", branch, cwd=folder)
+    merged = run("git", "merge", "-q", "--no-edit", branch, cwd=top)
+    if merged.returncode:
+        if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
+            git("merge", "--abort", cwd=top)
+        raise repo.Refused("The updated story plan conflicts with this task; merge the story branch first.",
+                           f"git merge {branch}, resolve and commit, then {retry}")
+    return True
+
+
 # --- branches, checkouts and the default branch ----------------------------------------
 
 

@@ -63,7 +63,9 @@ def _close(env, adopted, command, red=False, greeting=GREETING, docs_only=False)
         assert (closed.returncode != 0) == red, closed.stdout + closed.stderr
     # The body as gh received it on the last publish, before any later rewrite of its file.
     sent = (env.repo.bin / "gh-bodies.jsonl").read_text("utf-8").splitlines()
-    assert env.gh_calls("pr", "edit"), "close never refreshed the pull request after its run"
+    # The first close now creates the final review/proof body once, rather than creating
+    # a placeholder and editing it. Either publication must carry the actual test results.
+    assert env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"), "close never published its proof"
     return env.prompt(), json.loads(sent[-1])
 
 
