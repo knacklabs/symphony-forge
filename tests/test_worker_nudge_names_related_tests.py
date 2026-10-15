@@ -58,7 +58,7 @@ def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypa
     again = repo.forge("work", FIX)
     assert again.returncode == 0, again.stdout + again.stderr
     continued = calls(log)[-1]
-    assert "--resume" in continued["args"]
+    assert bool(continued["options"].get("resume"))
     assert "Run the change's related tests through `forge test`" in continued["brief"]
     _commit_test_fixes(continued["brief"])
 

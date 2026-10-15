@@ -163,4 +163,4 @@ def test_4_fresh_and_resumed_workers_wait_for_both_read_and_review_choices(env):
         result = env.repo.forge("work", item)
         assert result.returncode == 0, result.stdout + result.stderr
         assert "three blocked cold-read rounds" in " ".join(calls(log)[-1]["brief"].split())
-    assert "--resume" in calls(log)[-1]["args"]
+    assert calls(log)[-1]["options"]["resume"]

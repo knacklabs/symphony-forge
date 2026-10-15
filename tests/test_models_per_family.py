@@ -49,7 +49,7 @@ def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch,
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", build)
-    assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
+    assert (claude_calls(claude)[-1]["options"]["model"], claude_calls(claude)[-1]["options"]["effort"]) == ("opus", "low")
 
 
 def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data, claude_session):
@@ -63,7 +63,7 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data,
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{OPUS}")
-    assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
+    assert (claude_calls(claude)[-1]["options"]["model"], claude_calls(claude)[-1]["options"]["effort"]) == ("opus", "low")
 
 
 def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(repo, monkeypatch, sdk_data, claude_session):
@@ -82,10 +82,10 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.delenv("CLAUDECODE")
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
-    args = claude_calls(claude)[-1]["args"]
+    options = claude_calls(claude)[-1]["options"]
     # Omitted Claude entries now default to Sonnet at xhigh, rather than Opus at medium.
-    assert args[:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
-    assert "gpt-6-nova" not in args
+    assert (options["model"], options["effort"]) == ("claude-sonnet-5-5", "xhigh")
+    assert "gpt-6-nova" not in options.values()
 
 
 def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monkeypatch):

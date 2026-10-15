@@ -50,7 +50,8 @@ def _rounds(env, case):
     if case in ("finding", "no change"):
         env.reviews(blocked(finding("P1", "Saving drops the greeting")))
     if case == "no change":  # a worker that commits nothing, so close reuses its review
-        _install(env.repo.bin, "claude", (ROOT / "tests/stubs/claude").read_text("utf-8"))
+        (env.repo.bin / "claude_agent_sdk" / "__init__.py").write_text(
+            (ROOT / "tests/stubs/claude_agent_sdk.py").read_text("utf-8"), encoding="utf-8")
     if case == "finding then test":  # the worker fixes the finding, and a test then fails
         env.reviews(blocked(finding("P1", "Saving drops the greeting")), CLEAN)
     if case == "fail pass fail":  # a new finding each close keeps the closes failing

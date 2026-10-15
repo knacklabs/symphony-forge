@@ -261,9 +261,9 @@ def check_stop_removes_waiter_and_ends_worker_and_test(env, tmp_path, release_se
     configure(env, server)
     item, folder = env.start_fix()
     hold_agents(env)
-    provider = repo.bin / ("claude" if lane_adapter == "claude" else "codex-app-server")
-    indent = "" if lane_adapter == "claude" else "            "
-    marker = 'name = pathlib.Path.cwd().name' if lane_adapter == "claude" else 'name = pathlib.Path(cwd).name'
+    provider = repo.bin / ("claude_agent_sdk/__init__.py" if lane_adapter == "claude" else "codex-app-server")
+    indent = "    " if lane_adapter == "claude" else "            "
+    marker = 'name = Path.cwd().name' if lane_adapter == "claude" else 'name = pathlib.Path(cwd).name'
     provider.write_text(provider.read_text("utf-8").replace(marker,
         marker + f'\n{indent}(here / "model-pid").write_text(str(os.getpid()))'), "utf-8")
     worker_pid = tmp_path / "worker-pid"

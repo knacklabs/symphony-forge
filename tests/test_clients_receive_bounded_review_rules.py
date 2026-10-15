@@ -52,7 +52,7 @@ def test_1_sync_delivers_bounded_review_cold_read_and_worker_rules(env, adopted)
     env.commit(where, "docs/specs/basket.md", "# Basket\n\n## Why\n\nKeep a basket.\n")
     read = repo.forge("read", "basket", cwd=where)
     assert read.returncode == 0, read.stdout + read.stderr
-    cold_read = " ".join(calls(log)[-1]["prompt"].split())
+    cold_read = " ".join(calls(repo.bin / "claude-calls.jsonl")[-1]["prompt"].split())
     assert "Prefer one blunt fail-closed rule with one test over listing every case." in cold_read
     assert "Leave out, unless it falls under Security or Data loss" in cold_read
     assert "a window under a second" in cold_read

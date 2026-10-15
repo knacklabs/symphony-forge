@@ -411,15 +411,14 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         approved = hooked("approval", payload)
         assert approved.returncode == 0, approved.stderr
         assert "Next: forge task start WISH/SAVE" in repo.forge("next").stdout
-        if tool == "claude":  # the headless worker gets the brief on stdin; Forge reads its exit code
+        if tool == "claude":  # the SDK worker receives the brief; Forge checks its result and exit
             assert repo.forge("task", "start", "WISH/SAVE").returncode == 0
             log = install_claude(repo)
             worked = repo.forge("work", "WISH/SAVE")
             assert worked.returncode == 0 and "stub claude: built it" in worked.stdout
             # forge init's build entry is a gpt model, which is Codex's, so Claude takes Forge's
             # default (once its own settings; forge work now names the model it runs).
-            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
-                                                  "--effort", "xhigh"]
+            assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
 
 
 # --- criterion 7: the same result on both hosts ------------------------------------------------
