@@ -130,14 +130,24 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         assert "Risks: task guidance" in (where / "plans/SHOP.md").read_text("utf-8")
         with pytest.raises(subprocess.CalledProcessError):
             env.repo.git("rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=where)
-        env.commit(where, "plans/SHOP.md", plan.replace("Risks: none", "Risks: story guidance"))
+        # Reconcile the actual merge, retaining both builders' guidance. Rewriting the old
+        # file alone leaves adjacent plan additions in conflict and is not a completed merge.
+        with pytest.raises(subprocess.CalledProcessError):
+            env.repo.git("merge", "-q", "--no-edit", "story/SHOP", cwd=where)
+        resolved = env.repo.git("show", "story/SHOP:plans/SHOP.md").replace(
+            "Risks: story guidance", "Risks: story guidance; task guidance") + "\n"
+        env.commit(where, "plans/SHOP.md", resolved, "Keep both builders' guidance")
     chosen = env.close(item, "--resolve", choice, "--reason", reason)
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published = env.repo.git("show", "origin/story/SHOP:plans/SHOP.md")
     assert reason in published
-    assert (where / "plans/SHOP.md").read_text("utf-8").rstrip("\n") == published
-    assert env.repo.git("rev-parse", "HEAD:plans/SHOP.md", cwd=where) == env.repo.git(
-        "rev-parse", "origin/story/SHOP:plans/SHOP.md")
+    task_plan = (where / "plans/SHOP.md").read_text("utf-8").rstrip("\n")
+    if guarded:
+        assert task_plan == published.replace("Risks: story guidance", "Risks: story guidance; task guidance")
+    else:
+        assert task_plan == published
+        assert env.repo.git("rev-parse", "HEAD:plans/SHOP.md", cwd=where) == env.repo.git(
+            "rev-parse", "origin/story/SHOP:plans/SHOP.md")
     for heading in ("What changes for you", "Done when"):
         section = rf"(?ms)^## {heading}\n(.*?)(?=^## |\Z)"
         assert re.search(section, published)[1] == re.search(section, before)[1]
