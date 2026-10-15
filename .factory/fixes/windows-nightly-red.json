@@ -50,13 +50,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ff15f04aead6bf169ec4d12316ef9dd35873aa472c19796ee0d0a3a14cbacb7f",
+    "branch_diff": "406dce3f199bbfc6b62b90de473c0c5bc1663ce0a51c353dddfb97d6c86e8029",
     "changed": "3a3422d577065f20c72a536e547961509cf0758c8ee3063d89b3c4eceeedba0e",
-    "commit": "ec475028bebb6e327a91199ced4e92d62f8fc9aa",
+    "commit": "4e8fb957cb8d8e0da1b333657cf04c534859a33e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. The concurrent land test still appends review starts to `review-starts.jsonl` without the new lock-safe helper at line 146. Two closes can write this log concurrently on Windows, leaving `_in_close` without a review start and failing the test. The earlier review identified this gap; it remains in the current branch.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. `OWN_REVIEWS` still appends to `review-starts.jsonl` without the new lock-safe helper. The land test starts two closes concurrently, and `_in_close` requires both review-start records. Concurrent Windows append handles can overwrite a record, leaving the test intermittently failing despite the supplied green run.",
         "file": "tests/test_queue_land_all.py",
         "gain": 3,
         "harm": 3,
@@ -66,11 +66,11 @@
         "work": 1
       }
     ],
-    "id": "4d5c98a9-b55a-4905-9450-0402fdd11486",
+    "id": "8b70632f-679e-498b-b07b-6192640b0fcc",
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-14T14:50:18.085042+00:00",
@@ -83,8 +83,17 @@
     {
       "at": "2026-10-14T22:13:16.584311+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:07:35.342120+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-15T02:07:35.350524+00:00",
+    "file": "tests/test_queue_land_all.py",
+    "wait_id": "b91e9b9b-4b26-4042-9f84-f8d8a514aab8"
+  },
   "stuck": {
     "close": "6a6eb4f2-47c9-4fba-a822-a2306630ae1b",
     "head": "6e3e9b584dd0822ce2608414b6e378688a812cf2",
