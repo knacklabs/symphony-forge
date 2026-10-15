@@ -170,7 +170,7 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         done = _merged(top, item)
         if retried_history or backfill.upgrade_fix(top, item, state):
-            backfill.run(top)
+            backfill.run(top, exclude_branch=branch if getattr(args, "body_published", False) else "")
         return done
 
     previous = state.get("review") or {}
@@ -186,11 +186,12 @@ def close(args: argparse.Namespace) -> int:
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
                 repo.record_event(top, item, "owner wait start", reason="merge conflict")
             _push(top, branch)
-            if pr:  # keep its review block; only the shared time record changes
-                _refresh_record(top, item, state, pr)
-            else:
-                _publish(top, item, state, branch, default, pr,
-                         {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
+            if not getattr(args, "body_published", False):
+                if pr:  # keep its review block; only the shared time record changes
+                    _refresh_record(top, item, state, pr)
+                else:
+                    _publish(top, item, state, branch, default, pr,
+                             {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
         raise
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
@@ -277,7 +278,8 @@ def close(args: argparse.Namespace) -> int:
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         _push(top, branch)  # every machine's board sees the stop
-        _refresh_record(top, item, state, pr)
+        if not getattr(args, "body_published", False):
+            _refresh_record(top, item, state, pr)
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.proof_list(top, f"origin/{default}"))
