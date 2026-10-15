@@ -9,7 +9,11 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import new_story, ready, setup, worktree
 
 STORY = "FORGE-BOARD-3"
-PLAN = STORY_DOC.replace("| T1 | yes |", "| — | no |")
+PLAN = STORY_DOC.replace(
+    "| T2 | Show a saved basket | A saved basket shows again after sign-in | 2 | "
+    "`show.py` | `tests/test_show.py` | T1 | yes |",
+    "| T2 | Show a saved basket | A saved basket shows again after sign-in | 2 | "
+    "`show.py` | `tests/test_show.py` | — | no |")
 
 
 def _steps(repo, cwd):
@@ -21,7 +25,8 @@ def _steps(repo, cwd):
 def _assign(repo, item, login):
     result = repo.forge("assign", item, login)
     assert result.returncode == 0, result.stdout + result.stderr
-    return repo.git("show", "origin/story/SHOP:plans/SHOP.md")
+    key = item.split("/")[0]
+    return repo.git("show", f"origin/story/{key}:plans/{key}.md")
 
 
 @pytest.mark.timeout(600)
@@ -38,7 +43,7 @@ def test_2_assignments_publish_and_order_the_assignees_next_parts(env, history):
     second = env.tmp / "developer-clone"
     repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), second.as_posix())
     env.gh.respond("api", "user", stdout="alice\n")
-    assert _steps(repo, second)[0] == "IDEA/T1"
+    assert _steps(repo, second) == ["IDEA/T1", "IDEA/T2", "SHOP/T1", "SHOP/T2"]
     main = repo.git("rev-parse", "main")
 
     # An explicit part assignment must outrank both an earlier unassigned part
@@ -49,6 +54,12 @@ def test_2_assignments_publish_and_order_the_assignees_next_parts(env, history):
     repo.git("fetch", "-q", "origin", cwd=second)
     assert _steps(repo, second)[0] == "SHOP/T2"
 
+    # Both stories mix assigned and unassigned ready parts. All of Alice's
+    # parts must come first, including the one in the later story.
+    _assign(repo, "IDEA/T2", "alice")
+    repo.git("fetch", "-q", "origin", cwd=second)
+    assert _steps(repo, second) == ["IDEA/T2", "SHOP/T2", "IDEA/T1", "SHOP/T1"]
+
     # A story owner fills unassigned parts, while an explicit Developer wins.
     published = _assign(repo, "SHOP", "bob")
     assert re.search(r"^Owner: bob$", published, re.M)
@@ -56,7 +67,7 @@ def test_2_assignments_publish_and_order_the_assignees_next_parts(env, history):
     assert repo.git("rev-parse", "HEAD", cwd=story_tree) == repo.git("rev-parse", "origin/story/SHOP")
     assert repo.git("rev-parse", "main") == main
     repo.git("fetch", "-q", "origin", cwd=second)
-    assert _steps(repo, second)[0] == "SHOP/T2"
+    assert _steps(repo, second) == ["IDEA/T2", "SHOP/T2", "IDEA/T1"]
     assert "SHOP/T1" not in _steps(repo, second)
     env.gh.respond("api", "user", stdout="bob\n")
     assert _steps(repo, second)[0] == "SHOP/T1"

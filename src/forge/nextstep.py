@@ -221,7 +221,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             and branch not in prs
             for rel, state in history["states"].items()):
         merged_prs.update(board_facts.merged_before_weeks(top))
-    story_lines = []
+    story_lines, unassigned_starts = [], []
     for key, (path, state, text) in sorted(stories.items()):
         if state.get("status") == "done":
             continue
@@ -229,15 +229,20 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
         assignments = {f"{key}/{tid}": developer(row) or owner(text)
                        for tid, row in task.rows(task.sections(text)).items()}
-        assigned_ready = [assigned for item, assigned in assignments.items() if assigned
-                          and any(line.startswith(f"Next: forge task start {item} ") for line in found)]
-        login = github_login(top) if assigned_ready else None
-        mine = bool(login and any(assigned.casefold() == login.casefold() for assigned in assigned_ready))
+        ready = {line: assignments.get(match[1]) for line in found
+                 if (match := re.match(r"Next: forge task start (\S+)(?:\s|$)", line))}
+        login = github_login(top) if any(ready.values()) else None
+        mine = bool(login and any(assigned and assigned.casefold() == login.casefold()
+                                 for assigned in ready.values()))
+        if mine:
+            unassigned_starts += [line for line, assigned in ready.items() if not assigned]
+            found = [line for line in found if line not in ready or ready[line]]
         story_lines.append((not mine, found))
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
     for _, found in sorted(story_lines, key=lambda entry: entry[0]):
         lines += found
+    lines += unassigned_starts
     for branch, path in sorted(trees.items()):
         kind, _, name = branch.partition("/")  # forge/<name> is migrate's fix
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
