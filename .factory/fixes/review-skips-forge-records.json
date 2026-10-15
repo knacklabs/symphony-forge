@@ -1,6 +1,13 @@
 {
   "base": "b24f21f9ec68c04b9792c7a064b8ac758f89765f",
   "branch": "fix/review-skips-forge-records",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13d67-10e0-73d1-a13a-8af7d9265b58",
+    "head": null,
+    "start": "438aab613ec314420496df9b36b70c5ba7d9dbf0"
+  },
   "done_when": "Review never reports Forge's own record files (the spotted list and other files close writes) as a part's out-of-scope edits, in Forge's repo and in client repos, new and upgraded",
   "kind": "fix",
   "round": 1,
