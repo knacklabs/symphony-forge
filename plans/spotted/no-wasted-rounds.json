@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tA second review can leave a ready pull request showing a stale clean result\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 458,
+      "text": "A second review can leave a ready pull request showing a stale clean result",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe timed default choice immediately recreates an unanswered stop\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 260,
+      "text": "The timed default choice immediately recreates an unanswered stop",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_worker.py\tThe cached SDK interpreter can point into a deleted test folder.",
+      "kind": "bug",
+      "path": "tests/test_codex_worker.py",
+      "line": 84,
+      "text": "The cached SDK interpreter can point into a deleted test folder.",
+      "from": "worker",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

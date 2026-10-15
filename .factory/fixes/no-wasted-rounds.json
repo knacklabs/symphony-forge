@@ -9,13 +9,102 @@
     "start": "fa7c754c40f8a3d5e9221309959f4f8e51b9f499"
   },
   "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 458,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A second review can leave a ready pull request showing a stale clean result",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 260,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "The timed default choice immediately recreates an unanswered stop",
+      "work": 1
+    },
+    {
+      "area": "test_3_close_publishes_the_pull_request_body_once() in tests/test_close_avoids_repeated_review_work.py",
+      "file": "tests/test_close_avoids_repeated_review_work.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test that land publishes each close body at most once",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f1647e6a3b3afefeaf72e54e8f264b588944399bec804f64319451d6f3455c66",
+    "changed": "6936c32a1a24b68c8f6a87af188e656f576ea14d5231ceed0e65eed9b4729c6a",
+    "commit": "a3d26b34c9aa4141ea28113883026bb09ece448a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 A new pull request is published before CI, setting `body_published`. If the default branch then advances and `_merge_default` changes the task head, close recurses for another review with that flag still true. The second review can find a blocker, but `publish()` suppresses its body update, and the pull request was already marked ready. Its visible review result remains clean for the earlier head.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 458,
+        "priority": "P1",
+        "title": "A second review can leave a ready pull request showing a stale clean result",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional \u2014 With the default stop setting, `check_stop` can record the automatic narrow choice after 30 minutes. This condition checks only the command-line `choice`, which is still `None`, so an unchanged blocked review immediately overwrites the recorded choice with a new unanswered stop. A later `forge close` cannot resume the work through the configured default.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 260,
+        "priority": "P1",
+        "title": "The timed default choice immediately recreates an unanswered stop",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test \u2014 The `land-repair` case is listed as proof for separate close runs, but it checks only that blocked and clean body text appeared. It never counts publications per close run, so it would pass if either run made multiple body writes. The other parameterized cases exercise a single direct `close` call and do not cover this path.",
+        "file": "tests/test_close_avoids_repeated_review_work.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 56,
+        "priority": "P1",
+        "title": "Not done: test that land publishes each close body at most once",
+        "work": 1
+      }
+    ],
+    "id": "266d8138-4463-4ca4-b13f-05cb64ca6093",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-15T09:48:32.410768+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
