@@ -94,7 +94,7 @@ def test_13_approval_scope(repo):
 def test_16_task_start(repo):
     # This test owns the original wait-until-merge lane. Stacking's default-on
     # admission and refusal contract is covered by test_stack_start.py.
-    repo.write("forge.toml", 'stack = "off"\n')
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8") + 'stack = "off"\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-qm", "Keep tasks waiting for merges")
 

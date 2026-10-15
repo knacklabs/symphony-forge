@@ -4,10 +4,12 @@ The command boundary owns admission and ancestry. GitHub and the review engine a
 the only fakes; a real close records the review used by task start.
 """
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
+from conftest import GH_STUB, _install
 from test_close import env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_last_task_records_story_outcome import github_merge
@@ -60,6 +62,7 @@ def configured(env, previous=None, setting=None):
     env.commit(repo.path, "tests/test_work.py", "def test_value():\n    assert 1 == 1\n")
     repo.git("push", "-q", "origin", "main")
     story(repo, DOC, DOC, "STACK")
+    repo.git("push", "-q", "origin", "story/STACK")
     return repo
 
 
@@ -162,6 +165,16 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
             part, command = "D", "forge next"
             problem = "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges."
     refuses_without_start(repo, part, problem, command)
+    if case == "stacked-merged":
+        # Once close brings the Forge merge into B and records a current clean
+        # review, D can use B. START reads the actual trailer and ancestry.
+        _install(repo.bin, "gh", GH_STUB.format(python=sys.executable))
+        env.open_pr("")
+        closed = env.close("STACK/B")
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        head = repo.git("rev-parse", "origin/task/STACK-B")
+        where, _ = start(repo, "D")
+        repo.git("merge-base", "--is-ancestor", head, "HEAD", cwd=where)
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "upgraded-client"])

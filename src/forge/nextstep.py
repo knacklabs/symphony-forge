@@ -616,7 +616,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                   *(f"Next: forge task start {key}/{task}  # {builds[task]}"
                     for task in ready)]
     if waiting:
-        lines += waiting + ([] if ready else ["Next: git fetch origin, then forge next"])
+        lines += waiting + ([] if ready or stack_waits else ["Next: git fetch origin, then forge next"])
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
 
