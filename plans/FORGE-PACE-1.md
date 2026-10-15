@@ -34,12 +34,12 @@ design made first in a Claude artifact before anything user-facing is built.
 
 ## Done when
 
-1. **Every prototype and every story with user-facing parts starts with the design skill's init and an approved design, whose screens and images live in the repo and are named in the plan, so one plan approval covers both.**
-2. **Workers and reviewers on both tools receive the named design and the skill guidance their work needs, and each fix goes to the worker kind that matches what it changes, keeping that kind on every round.**
+1. **Every prototype and every story with user-facing parts starts with the design skill's init and an approved design whose screens and images live in the repo; a story names that design in the part the owner approves, so one approval covers both, and a prototype's design is approved before its first build.**
+2. **Workers and reviewers on both tools receive the named design and the skill guidance their work needs, and each fix goes to the worker kind named when it starts (screens, backend or mechanical), keeping that kind on every round.**
 3. **A prototype round proves the demo's steps and its security and data boundaries, and the full proof is required at sign-off.**
 4. **The prototype's light review checks only demo breakage, security and data loss, with a model setting of its own.**
 5. **Sign-off reviews the whole product once and reuses that review while the product and the answers stay unchanged.**
-6. **A story planned after sign-off carries the prototype's proven outcomes and tests, and its plan and cold read cover only what is new or risky for production.**
+6. **Every story planned after sign-off carries the prototype's proven outcomes and tests, and its plan and cold read cover only what is new or risky for production.**
 
 ## New and existing repos
 
@@ -61,54 +61,66 @@ runs before any sign-off, so the lighter prototype rounds never reach production
 
 ### Done-when details
 
-1. Design-first. The guide's prototype and story steps say: run the impeccable skill's `init`
-   (PRODUCT.md) when the repo has none, design the screens in a Claude artifact (Design type),
-   get the owner's approval of the design with the plan, then copy the artboards into
-   `docs/design/<KEY>/` with a renderer (as `docs/board-design/support.js` does) and a 1440 by 900
-   image per screen. The plan's builder section names that folder in a `Design:` line. `forge read`
-   and the story checks refuse a plan whose user-facing parts (User-facing = yes) have no
-   `Design:` line or whose folder has no images; backend-only plans pass. On a Codex-only host
-   with no Claude artifact tool, the guide says to make the same artboards as HTML files in the
-   folder. Tests: a story with a user-facing part and no design is refused with the next step; a
-   backend-only story passes; a story with the folder passes.
-2. Context and routing. The worker brief and the close review input both carry the plan's
-   `Design:` folder (paths and images) and short excerpts of the skills the part needs (impeccable
-   and the frontend role for user-facing parts; test-audit for test changes), the same on Codex
-   and Claude. A fix's kind follows what it changes: user-facing files go to the design worker,
-   backend files to the backend worker, documents and generated files to the mechanical (lite)
-   worker; unsigned prototype fixes stop forcing the design worker. A fix round keeps the kind its
-   first round used, on both tools. Tests: a backend prototype fix routes to the backend worker; a
-   UI fix routes to design; round 2 keeps round 1's kind on Codex and on Claude; the brief and the
-   review input name the design folder.
+1. Design-first, in this order. Story: run impeccable's `init` (PRODUCT.md) when the repo has
+   none; design the screens in a Claude artifact (Design type); copy the artboards into
+   `docs/design/<KEY>/` on the story branch with a renderer (as `docs/board-design/support.js`
+   does) and a 1440 by 900 image per screen; write `Design: docs/design/<KEY>/ (<tree id>)` in the
+   plan's `## Why` section, above `## For the builders`, where `<tree id>` is the git tree id of
+   that folder; then cold read, then the owner's approval. Because the line is in the approved
+   text, approval covers that exact design; changing the folder changes the tree id and voids the
+   approval like any other edit. `forge read` and approval refuse a plan with a user-facing part
+   (User-facing = yes) whose `Design:` line is missing, names a folder with no images, or whose tree
+   id does not match the folder. Backend-only plans pass. Prototype: before its first build fix,
+   the coordinator makes the same design folder `docs/design/prototype/` in a fix, and the owner
+   (or FDE) approves it with `forge decision new prototype-design` and `forge decision accept
+   prototype-design --by <name>`; a prototype build fix (`--prototype`) is refused until that
+   decision is accepted, and its brief names the folder. On a Codex-only host with no artifact
+   tool, the guide says to make the artboards as HTML files in the folder. Tests: a story with a
+   user-facing part and no design is refused with the next step; a changed folder voids approval;
+   a backend-only story passes; a prototype build fix before the design decision is refused.
+2. Context and routing. The worker brief and the close review input both carry the design folder
+   (paths and images) and short excerpts of the skills the part needs (impeccable and the frontend
+   role for user-facing work, test-audit for test changes), the same on Codex and Claude. A fix's
+   kind is named at start: `forge fix start ... --kind ui|backend|mechanical` (stories use the
+   task row's User-facing column); ui goes to the design worker, backend to the backend worker,
+   mechanical to the lite worker. `--kind` is required for prototype fixes, which no longer force
+   the design worker. Every round of a fix uses the kind its record holds, on both tools. Close
+   warns (does not block) when the changed files disagree with the kind. Tests: a backend
+   prototype fix routes to the backend worker; a ui fix routes to design; round 2 keeps the kind
+   on Codex and on Claude; the brief and the review input name the design folder.
 3. Prototype test contract. For an unsigned prototype fix, the brief asks for tests of the demo's
-   steps and of security and data boundaries only; the proof list need not cover every changed
-   function. At sign-off, the strict review requires the full proof for the whole product, as
-   today. Tests: a prototype round passes close with demo-step tests and no per-function proof;
-   sign-off refuses the same product without the full proof.
+   steps and of security and data boundaries only, and close's review checks those, not
+   per-function proof. Sign-off's full proof: the sign-off decision (`client-signoff`) gains a
+   `## Proof` section listing each demo workflow step with the test that proves it; the strict
+   sign-off review requires every step to name a passing test. Tests: a prototype round passes
+   close with demo-step tests and no per-function proof; sign-off refuses a product whose `## Proof`
+   leaves a demo step without a test.
 4. Light review. Unsigned prototype rounds use a narrow review prompt that checks demo breakage,
    security and data loss only, and `[models.light_review]` sets its model and effort (default:
-   the review model at medium). Tests: the light review prompt names only those three checks; the
-   setting changes the model used; a security finding still blocks.
-5. Sign-off reuse. The strict sign-off review's result is saved with the product commit, the
-   answers page and the review rules it saw. Accepting sign-off reuses it while all three are
-   unchanged and reviews again otherwise. Tests: two acceptance calls on an unchanged product run
-   one review; a change to the answers runs a second.
-6. Hand-off. The first story planned after sign-off gets a `## Proven by the prototype` section,
-   filled from the sign-off record: the demo's outcomes, the tests that prove them and the
-   decisions made. The cold read treats that section as settled and reads only the rest; the
-   plan's parts list only new or production-risk work. Tests: a story after sign-off starts with
-   the section filled; the cold read raises no note about a proven outcome.
+   the review model at medium). Tests: the light prompt names only those three checks; the setting
+   changes the model used; a security finding still blocks.
+5. Sign-off reuse. The strict sign-off review run before the customer reply saves its result with
+   the product commit, a hash of the answers page and the review rules. Accepting sign-off after
+   the reply reuses that result while all three are unchanged and reviews again otherwise. Tests:
+   review before the reply then acceptance on an unchanged product runs one review; a changed
+   answer page runs a second.
+6. Hand-off. The sign-off decision's `## Proof` section (demo outcomes and their tests) and its
+   `## Decisions` section are the evidence record; SIGNOFF pins both section names. Every story
+   created after sign-off starts with a `## Proven by the prototype` section copied from that
+   record. The cold read treats the section as settled and reads only the rest; the plan's parts
+   list only new or production-risk work. Tests: the first and the second story after sign-off
+   both start with the section filled; the cold read raises no note about a proven outcome.
 
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| DESIGN | Design first | the `Design:` line rule in read and story checks, the design folder layout and renderer | 1 | src/forge/story.py, src/forge/templates/story.md, src/forge/templates/design/support.js | tests/test_design_first.py | | no | |
+| DESIGN | Design first | the `Design:` line with tree id in read and approval checks, the prototype-design decision gate, the folder layout and renderer | 1 | src/forge/story.py, src/forge/templates/story.md, src/forge/templates/design/support.js | tests/test_design_first.py | | no | |
 | CONTEXT | Design and skills reach workers and reviewers | design folder and skill excerpts in the brief and the review input on both tools | 2 | src/forge/templates/brief.md, src/forge/templates/review.md, src/forge/review.py | tests/test_design_context.py | DESIGN | no | |
-| ROUTING | Fixes go to the right worker | kind by changed files, unsigned prototypes no longer forced to design, the same kind on every round | 2 | src/forge/worker.py, src/forge/roles.py | tests/test_fix_routing.py | | no | |
+| ROUTING | Fixes go to the right worker | `--kind` at fix start, prototypes no longer forced to design, the same kind on every round, a warning when files disagree | 2 | src/forge/worker.py, src/forge/roles.py, src/forge/task.py, src/forge/cli.py | tests/test_fix_routing.py | | no | |
 | PROTOTEST | Prototype test contract | demo-step and boundary tests for prototype rounds, full proof at sign-off | 3 | src/forge/close.py | tests/test_prototype_contract.py | CONTEXT | no | |
 | LIGHTREVIEW | Light review | narrow prompt and `[models.light_review]` | 4 | src/forge/score.py, src/forge/templates/review-light.md, src/forge/repo.py | tests/test_light_review.py | CONTEXT | no | |
-| SIGNOFF | Sign-off once | saved sign-off review and reuse | 5 | src/forge/records.py | tests/test_signoff_reuse.py | | no | |
+| SIGNOFF | Sign-off once | saved sign-off review and reuse; the sign-off decision's `## Proof` and `## Decisions` sections pinned | 3, 5 | src/forge/records.py, src/forge/review.py | tests/test_signoff_reuse.py | CONTEXT | no | |
 | HANDOFF | After sign-off | the proven section, cold read treats it as settled, and the guide's prototype, story and design steps on both synced copies | 6, 1 | src/forge/story.py, src/forge/templates/cold-read.md, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/guide.md | tests/test_signoff_handoff.py | DESIGN, PROTOTEST, LIGHTREVIEW, SIGNOFF | no | |
 
 New moving parts: none
