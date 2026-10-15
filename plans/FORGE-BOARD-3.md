@@ -58,17 +58,18 @@ Story owner: a story's owner is the `Owner: <login>` line written directly under
 `## For the builders` in its plan. A part's Developer cell overrides the owner for that part; a
 part with an empty cell belongs to the owner.
 
-1. People stay strings for today's readers, so today's page keeps working and keeps showing names. `forge board --json` adds a login beside each person
-   field, without changing the existing ones: `started_by_login`, `approved_by_login`,
-   `developer_login`, `merged_by.login` (already an object) and `login` on each trends person;
-   `viewer` is the caller's GitHub login (`task.github_login`). Trends key people by login and keep
-   the name. Owner decision 15 October (narrow): logins come only from records that already hold
-   them (pull request authors and mergers, plan Developer cells, the viewer's own login); Forge
-   never looks a plain git author up through GitHub, so the board needs no GitHub CLI. When only
-   a git name exists, the login is null and the name stays; the upgrade backfill fills what pull
-   requests show. The current HTML board keeps working
-   unchanged. Tests: one board read in a new repo and one in the adopted fixture; the HTML board
-   still renders.
+1. People stay strings for today's readers, so today's page keeps working. Owner rules, 15 October:
+   (a) a person is their GitHub login when any record the board already loads holds it, otherwise
+   their git name, never blank; the name sits beside the login when both exist. (b) Sources are
+   only the pull request authors and mergers in records the board already reads, plan owners
+   (`Owner:` line and Developer cells) and the viewer's own login (`task.github_login`); no extra
+   GitHub or git lookups and no history mining. Work older than the board's pull-request window
+   gets its logins from BACKFILL (item 6). (c) Offline or rate-limited, the board shows whatever
+   the local records hold and never erases a known login or name. One resolver applies (a) to (c)
+   in one place. `forge board --json` adds `*_login` beside each person field and `viewer`;
+   trends key people by login when known and keep the name. Tests, through `forge board --json`:
+   gh absent from PATH; GitHub unreachable with a login-only merger (shows the login, not blank);
+   the adopted fixture after upgrade.
 2. `forge assign <KEY> <login>` writes the story's `Owner:` line; `forge assign <KEY/TASK> <login>`
    writes that part's Developer cell. A story with no plan is refused and says to plan it first.
    The command commits on the story branch and pushes it, so every checkout sees it after a fetch.
