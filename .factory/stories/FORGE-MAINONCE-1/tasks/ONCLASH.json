@@ -71,8 +71,8 @@
       "gain": 4,
       "harm": 2,
       "line": 8440,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: close itself writes the spotted-problems list on the branch, so the flagged edit is Forge's own record; the fix review-skips-forge-records stops the loop",
       "round": 5,
       "security": false,
       "title": "An unrelated test-audit finding edits the shared spotted list",
@@ -84,7 +84,13 @@
     "branch_diff": "166ca4d5308b7c62f26f00ab84bed31955ac1816d9257d14492c3924418a8c94",
     "changed": "9d5f6a62a70f4faa180d1af9dc42fb50cb9c828d82170536699ac030f7bca83f",
     "commit": "b843fc00f5a3aa4197219368a78654c7c5dfe00b",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 15 October: close itself writes the spotted-problems list on the branch, so the flagged edit is Forge's own record; the fix review-skips-forge-records stops the loop",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 1, Harm 2\nRaise: Gate. This branch adds an unrelated test-audit finding at line 686 and a whole-history retry note at line 9486 to `plans/spotted.json`. Neither record is needed for ONCLASH's Done-when items, and the file is outside Scope. The proof list claims the file was restored to main, but the supplied diff shows both additions remain.",
@@ -98,10 +104,13 @@
       }
     ],
     "id": "cd958758-4dea-4cb7-be50-636c6c0d90e8",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 6,
-  "status": "hotspot",
+  "settled_areas": [
+    "plans/spotted.json"
+  ],
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T16:46:39.875996+00:00",
@@ -134,8 +143,12 @@
   ],
   "stop": {
     "at": "2026-10-15T02:33:44.196620+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "plans/spotted.json",
-    "wait_id": "8bc2ecb0-3237-47d9-9942-81770e7a8bb3"
+    "reason": "Owner accepted on 15 October: close itself writes the spotted-problems list on the branch, so the flagged edit is Forge's own record; the fix review-skips-forge-records stops the loop",
+    "wait_id": "8bc2ecb0-3237-47d9-9942-81770e7a8bb3",
+    "worker_round": 6
   },
   "stuck": {
     "close": "1a171bd0-b21c-4ddb-bdfd-d96c87737a2c",
