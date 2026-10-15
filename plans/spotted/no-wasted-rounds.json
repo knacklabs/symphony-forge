@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 118,
+      "text": "Not done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe timed default choice immediately recreates an unanswered stop\tno-wasted-rounds",
       "kind": "bug",
       "path": "src/forge/close.py",
