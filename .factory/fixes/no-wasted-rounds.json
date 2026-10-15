@@ -89,7 +89,10 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "settled_areas": [
+    "close() in src/forge/close.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
@@ -107,9 +110,13 @@
   "stop": {
     "area": "close() in src/forge/close.py",
     "at": "2026-10-15T10:37:32.148335+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "close() in src/forge/close.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "fa7fa003-7ec7-43b5-a200-4fa9fb884c2c"
+    "reason": "Owner: one focused round. The automatic default choice must update the plan's builder details the same way an explicit --resolve choice does; add a test for the default-choice path. Nothing else changes.",
+    "wait_id": "fa7fa003-7ec7-43b5-a200-4fa9fb884c2c",
+    "worker_round": 3
   },
   "stuck": {
     "close": "e2ab77f2-de83-436d-a4e5-7034c3fd8519",
