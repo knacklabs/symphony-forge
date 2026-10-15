@@ -60,7 +60,7 @@
       "gain": 4,
       "harm": 3,
       "line": 253,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -73,7 +73,7 @@
       "gain": 3,
       "harm": 3,
       "line": 340,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -83,40 +83,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fd162374e9bd098f0dec65d298a05e2d592cc5d14805e487738a3cc595164512",
-    "changed": "880245249702fe6f4d7ee9648a3a68933cf32741c8fce11f8c431bf763e7dd16",
-    "commit": "dc18999169e66940eb8a31b906572399bdf4e52a",
+    "branch_diff": "d9589ef7c4afd0c6e015fa9e71c1c8e5ec4aebea75469eaec8bf616f6f8bf7f6",
+    "changed": "1cbd7a2f4cdc684117249782a70178bb5481574fbac126e098d4ecaa7c839a57",
+    "commit": "6a210cc5b6ec601aa87a8d78fc132aab07dc643b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 After two blocked reviews, the guide tells the coordinator to record the owner's rule in the plan and send one focused round. This function clears its advice only when `stop.choice` exists, but the guide says that choice is recorded only after a later hard stop. Recording the rule therefore leaves `blocked_rounds` at two, and `nextstep._item` returns the same owner question before it can show the work step. The normal `forge next` flow keeps asking an already-answered question.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 253,
-        "priority": "P1",
-        "title": "Answered second-round question keeps replacing the next work step",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional \u2014 Starting part A creates a local task branch before its first review publishes a remote branch. `_started` includes A, so starting dependent part B reaches this remote-only check and reports that A has not started, with `Next: forge task start A`; that command instead refuses because A is already started. For the same state, `forge next` says A must publish reviewed changes but gives `Next: forge next`, which repeats the message. Neither path tells the coordinator how to advance the started base.",
-        "file": "src/forge/task.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 340,
-        "priority": "P1",
-        "title": "A locally started base gives dependent parts a circular next step",
-        "work": 1
-      }
-    ],
-    "id": "9e9288b7-04a3-475c-b381-f821624e3f6a",
-    "status": "blocked"
+    "findings": [],
+    "id": "13a5006f-f232-49c3-8bbe-bfda8f09c9dc",
+    "status": "clean"
   },
   "round": 5,
   "settled_areas": [
     "src/forge/review.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T06:19:28.735147+00:00",
@@ -132,6 +111,10 @@
     },
     {
       "at": "2026-10-15T09:23:48.407478+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T11:44:14.458457+00:00",
       "step": "review"
     }
   ],
