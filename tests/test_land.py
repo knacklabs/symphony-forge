@@ -471,9 +471,9 @@ time.sleep = advance
 
 def _findings_after_three_rounds_ask_a_question(env):
     _fix(env, "working", worked=True)
-    # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
-    env.reviews(blocked(BLOCKER), CLEAN,
-                blocked(finding("P1", "Saving omits the greeting", "work-2.txt")),
+    # Clean reviews with red checks spend the remaining repair budget without
+    # the two-consecutive-blocked owner question taking precedence over land's stop.
+    env.reviews(blocked(BLOCKER), CLEAN, CLEAN,
                 blocked({**finding("P1", "Saving loses the reader name", "work-3.txt"),
                          "body": "Gain 4, Work 2, Harm 1\nA returning reader at `src/save.py:9` sees no name. More."}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
