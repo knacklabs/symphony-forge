@@ -111,3 +111,36 @@ def test_2_close_asks_the_owner_after_two_blocked_reviews(env, tmp_path, previou
     assert focused.returncode == 0, focused.stdout + focused.stderr
     assert "Ready:" in focused.stdout
     assert len(env.review_calls()) == 3
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgraded"])
+@pytest.mark.parametrize("remote", [False, True], ids=["local", "remote"])
+def test_3_hard_stop_keeps_the_owner_question_and_resolution_step(env, tmp_path, previous, remote):
+    item, where = client_item(env, tmp_path, previous)
+    titles = (*TITLES, "Checkout loses the total")
+    for number, title in enumerate(titles, 1):
+        env.commit(where, "app.py", f"print('round {number}')\n")
+        # Three distinct low-Harm findings in one area still need the owner's choice.
+        env.reviews(blocked(finding("P1", title, "README.md")))
+        stopped = env.close(item)
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    resolution = f'forge close {item} --resolve <narrow|split|accept>'
+    assert resolution in stopped.stderr
+    assert ASK in stopped.stderr
+    assert "The coordinator asks. The owner decides. The coordinator records the choice." in stopped.stderr
+    assert "settle it yourself" not in stopped.stderr
+    assert "then send one focused round" not in stopped.stderr
+    if remote:
+        env.repo.git("worktree", "remove", str(where))
+        env.repo.git("branch", "-m", f"fix/{item}", f"worker/{item}")
+    shown = env.repo.forge("next")
+    assert shown.returncode == 0, shown.stderr
+    assert resolution in shown.stdout
+    assert "Accept, narrow or split?" in shown.stdout
+    assert "The coordinator asks. The owner decides. The coordinator records the choice." in shown.stdout
+    assert "settle it yourself" not in shown.stdout
+    assert "then send one focused round" not in shown.stdout
+    for number, title in enumerate(titles, 1):
+        assert f"| {number} | {title} |" in stopped.stderr
+        assert f"| {number} | {title} |" in shown.stdout
+    assert len(env.review_calls()) == 3

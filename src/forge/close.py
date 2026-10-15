@@ -398,7 +398,7 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     advice = review.loop_advice(top, item) if serious else []
     if advice:
-        print("\n".join(advice if stopped else advice[:-1]), file=sys.stderr)
+        print("\n".join(advice[:-1]), file=sys.stderr)
     if failed and not stopped:
         refusal = (REFUSALS["tests_failed"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["tests_failed"]
         repo.refuse(refusal, command=command, item=item)
@@ -520,7 +520,7 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
         if advice := review.loop_advice(top or _worktree(item), item):
-            print("\n".join(advice), file=sys.stderr)
+            print("\n".join(advice[:-1]), file=sys.stderr)
         repo.refuse(REFUSALS["hotspot"], item=item,
                     question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),

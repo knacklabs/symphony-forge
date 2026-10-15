@@ -268,10 +268,11 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
             if spec.is_file():
                 advice = _read_advice(path, text)
+                stopped = story._blocked_reads(path, *story._record(text)) >= 3  # pyright: ignore[reportPrivateUsage]
                 if advice:
                     title = spec.read_text(encoding="utf-8").splitlines()[0].lstrip("# ")
-                    lines += [f"Cold read of {review.plain(title)}:", *advice]
-                if story._blocked_reads(path, *story._record(text)) >= 3:  # pyright: ignore[reportPrivateUsage]
+                    lines += [f"Cold read of {review.plain(title)}:", *(advice[:-1] if stopped else advice)]
+                if stopped:
                     lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
@@ -655,7 +656,7 @@ def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, requi
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
     advice = _read_advice(top, text)
     if story._blocked_reads(top, record, findings) >= 3:  # pyright: ignore[reportPrivateUsage]
-        return advice + _read_loop(key, doc, text)
+        return advice[:-1] + _read_loop(key, doc, text)
     if advice:
         return [f"Planning {title}:", *advice]
     if not story.passed(record, findings):
@@ -907,11 +908,6 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     advice = (review.loop_advice(path or top, item, review_ref(top, state["branch"], pr) or "HEAD")
               if review.blocking(state.get("review") or {}) and status not in ("merged", "done", "ready") else [])
-    if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
-        if advice:
-            return [f"Close stopped on {label}:", *advice]
-        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
-        return [f"{label} was started by {starter} and runs on their machine."]
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         if "question" in stop:
@@ -920,11 +916,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if default_due(path or top, state):
             return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
                     "records the repo's default choice: narrow.", f"Next: forge close {item}"]
-        return advice + [f"Close stopped {label}: {stop['file']} keeps breaking.",
+        return advice[:-1] + [f"Close stopped {label}: {stop['file']} keeps breaking.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if advice:
         return [f"Close stopped on {label}:", *advice]
+    if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
+        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
+        return [f"{label} was started by {starter} and runs on their machine."]
     if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
         return [f"The worker on {label} asked a question. Ask the human:", question,
                 "Next: " + close.REFUSALS["question"][1].format(item=item)]

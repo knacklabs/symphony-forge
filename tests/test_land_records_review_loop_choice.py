@@ -24,6 +24,15 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     land.reviews(*(blocked({**finding("P1", "Greeting is missing", file=file),
                             "body": "Gain 3, Work 2, Harm 3\nEvidence"})
                    for file in ("app.py", "other.py", "show.py")))
+    asked = _land(land)
+    assert asked.returncode == 1 and "ask the owner" in asked.stderr
+    assert len(land.review_calls()) == 2
+    # The coordinator records the owner's rule, then sends the focused third round.
+    land.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    focused = land.repo.forge("work", ITEM)
+    assert focused.returncode == 0, focused.stdout + focused.stderr
+    assert land.close(ITEM).returncode == 1
+    assert land.repo.forge("work", ITEM).returncode == 0
     stopped = _land(land)
     assert stopped.returncode == 1, stopped.stdout + stopped.stderr
     assert "Ask the human" in stopped.stderr

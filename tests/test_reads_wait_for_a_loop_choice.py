@@ -98,7 +98,11 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
         notes.write_text(re.sub(r"^blocked_rounds: .*\n", "", notes.read_text("utf-8"), flags=re.M), "utf-8")
         assert "blocked_rounds" not in notes.read_text("utf-8")
         assert question in repo.forge("next", cwd=where).stdout
-    assert "A gap the owner cut" not in result.stderr + said
+    # Settled notes belong in the round history, not among the open decision cases.
+    assert "A gap the owner cut" in result.stderr + said
+    for output in (result.stderr, said):
+        open_notes = output.split("It still has these problems:", 1)[1].split("Accept, narrow or split?", 1)[0]
+        assert "A gap the owner cut" not in open_notes
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)
     assert invalid.returncode == 1

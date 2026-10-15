@@ -239,7 +239,8 @@ def owner_advice(rounds: list[tuple[Any, list[str]]]) -> list[str]:
     """Show the history that lets the owner settle the rule behind repeated blocked rounds."""
     rows = [f"| {number} | " + ("; ".join(plain(title).replace("|", r"\|") for title in titles)
                                or "No findings.") + " |" for number, titles in rounds]
-    return ["Stop sending rounds and ask the owner to settle the missing rule.",
+    return ["Stop sending rounds and ask the owner to settle the missing rule. "
+            "The coordinator asks. The owner decides. The coordinator records the choice.",
             "| Round | Finding titles |", "|---|---|", *rows,
             "Next: list the findings, name the pattern, and ask one question at a time with options "
             "and a recommendation. Write the rule into the plan's builder details, then send one focused round."]

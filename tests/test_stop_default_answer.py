@@ -36,11 +36,11 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py"),
                         finding("P2", "Follow-up: advice", "src/a.py"),
                         finding("P3", "Polish advice", "src/a.py")))
-    assert "settle it yourself" in env.close(item).stderr
+    assert "Ask the human" in env.close(item).stderr
     before = len(env.review_calls())
     later(monkeypatch, 20)
     waiting = env.close(item)
-    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
+    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
     assert follow_ups(env) == []
 
     later(monkeypatch, 31)
@@ -86,10 +86,10 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
     item, _ = stopped(env)
     later(monkeypatch, 600)
     waiting = env.close(item)
-    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
+    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
     waiting = env.repo.forge("land", item)
-    assert waiting.returncode == 1 and "settle it yourself" in waiting.stderr
-    assert "settle it yourself" in env.repo.forge("next").stdout
+    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    assert "Ask the human" in env.repo.forge("next").stdout
     assert follow_ups(env) == []
 
 
@@ -110,6 +110,17 @@ def test_3_land_carries_on_and_the_worker_narrows(land, entry):
                        for n, file in enumerate(paths, 1)), CLEAN)
     # Advance only the clock; one real land invocation must wait and resume itself.
     # Rerunning land after moving the clock missed the unattended failure.
+    if entry != "stopped":
+        for number in (1, 2):
+            land.commit(where, "app.py", f"print({number})\n")
+            assert land.close(item).returncode == 1
+        # The owner's second-round rule permits one focused round before the timer test starts.
+        land.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+        if entry == "running":
+            assert land.close(item).returncode == 1
+            # Distinct low-Harm findings do not require a recorded hard-stop choice.
+            focused = land.repo.forge("work", item)
+            assert focused.returncode == 0, focused.stdout + focused.stderr
     shim = land.repo.bin / "forge"
     clock = """import os, time
 from datetime import datetime, timedelta, timezone

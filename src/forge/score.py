@@ -74,13 +74,9 @@ def bar(scores: Scores | None) -> str | None:
     return "live with"
 
 
-SETTLE = ("Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) "
-          "and tell the owner after.")
-
-
-def who(rows: list[tuple[int, str, Scores | None]], ask: str) -> str:
-    """Who decides a stop: the coordinator when every open note is scored Harm 1 or 2, else the owner."""
-    return SETTLE if rows and all(scores and scores[2] <= 2 for *_, scores in rows) else ask
+def who(_rows: list[tuple[int, str, Scores | None]], ask: str) -> str:
+    """The owner decides a stopped loop, whatever the scores."""
+    return ask
 
 
 WORDS = {"block": "fix now", "fix now": "fix this round", "follow-up": "follow-up fix", "live with": "live with"}
