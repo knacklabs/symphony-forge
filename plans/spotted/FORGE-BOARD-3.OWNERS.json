@@ -30,8 +30,8 @@
       "text": "Not done: a parent and part can show different names for the same approver",
       "from": "blocking",
       "item": "FORGE-BOARD-3/OWNERS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/board.py\tNot done: approval identity names the actual approver\tFORGE-BOARD-3/OWNERS",
