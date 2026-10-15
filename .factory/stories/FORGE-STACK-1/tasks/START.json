@@ -93,7 +93,7 @@
     "id": "e050a2f0-caac-4175-96a8-19da2b1bc62d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -106,10 +106,15 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8daf5ad2ab735c176d5124a1fa61d64939b212a1",
-    "keys": {},
-    "round": null
+    "close": "cfb52b3b-1dc8-49f5-b31d-e80333f0f9c6",
+    "head": "31ab8cb70fca10658dd9d6902caedd2dc3f4ef4f",
+    "keys": {
+      "close's tests failing": 1,
+      "the review finding \"Not done: retain the Forge-merged trailer in bounded merge bodies\" in src/forge/merge.py": 1,
+      "the review finding \"Not done: start refusals leave branches and worktrees untouched\" in src/forge/task.py": 1,
+      "the review finding \"Not done: test an older base started before upgrade\" in tests/test_stack_start.py": 1
+    },
+    "round": 1
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest d9abeffd1b7075eef9ac082b2331e7f94e05ac6d` exited with status 1 on this machine.\n            # Once close brings the Forge merge into B and records a current clean\n            # review, D can use B. START reads the actual trailer and ancestry.\n            _install(repo.bin, \"gh\", GH_STUB.format(python=sys.executable))\n            env.open_pr(\"\")\n            closed = env.close(\"STACK/B\")\n            assert closed.returncode == 0, closed.stdout + closed.stderr\n            if case == \"stacked-human-merged\":\n                # Ancestry and a new clean review cannot replace Forge provenance.\n                refuses_without_start(repo, part, problem, command)\n                return\n            head = repo.git(\"rev-parse\", \"origin/task/STACK-B\")\n>           where, _ = start(repo, \"D\")\n                       ^^^^^^^^^^^^^^^^\n\ntests/test_stack_start.py:182:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nrepo = <conftest.Repo object at 0x10ace0a50>, part = 'D'\n\n    def start(repo, part):\n        result = repo.forge(\"task\", \"start\", f\"STACK/{part}\")\n>       assert result.returncode == 0, result.stdout + result.stderr\nE       AssertionError: STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges.\nE         Next: forge next\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-STACK-1-START/.venv/bin/python', '/private...'', stderr='STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges.\\nNext: forge next\\n').returncode\n\ntests/test_stack_start.py:73: AssertionError\n2 failed, 84 passed in 223.61s (0:03:43)",
   "worker": "codex"
