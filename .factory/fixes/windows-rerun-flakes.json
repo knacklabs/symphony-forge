@@ -1,6 +1,13 @@
 {
   "base": "241e3e8c050e58429afff4eaf379d3798323ff46",
   "branch": "fix/windows-rerun-flakes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13ead-bbc2-7dc2-a328-20c3cd9f5f03",
+    "head": null,
+    "start": "8d75fbf1733bdd15b9ffe76560526ad19e4ac9ab"
+  },
   "done_when": "The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a test that fails twice still fails the run",
   "kind": "fix",
   "round": 1,
