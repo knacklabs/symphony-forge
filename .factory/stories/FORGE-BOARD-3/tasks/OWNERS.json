@@ -149,11 +149,11 @@
     "id": "0a070b9a-ec39-4687-9a7d-6e38878c1812",
     "status": "clean"
   },
-  "round": 7,
+  "round": 8,
   "settled_areas": [
     "src/forge/board_facts.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -190,12 +190,12 @@
     "worker_round": 5
   },
   "stuck": {
-    "close": "0bea1f6a-5bac-4a02-aab6-1c01eb55fba7",
-    "head": "628845d129c5f4eb2c829da7275fce027cdb4c75",
+    "close": "de18d111-dc7a-4012-bb16-06c06cb814dc",
+    "head": "6fe09ffcc8b325b570350c5e12226a48d83ca314",
     "keys": {
-      "the review finding \"Not done: older board history loses known pull-request logins\" in src/forge/board.py": 1
+      "the review finding \"Not done: older-history login proof\" in tests/test_board_logins.py": 1
     },
-    "round": 6
+    "round": 7
   },
   "worker": "codex"
 }
