@@ -20,7 +20,7 @@
       "gain": 5,
       "harm": 4,
       "line": 980,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": true,
@@ -56,48 +56,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "57c8d75f151d61f5678ff27b7bf8fcb2367bb8535418aeb6bbe61c348f638dda",
-    "changed": "e2e014b78622e9a8566037b3efedb06b176bef90aae34a1f4032dcd209d094e9",
-    "commit": "fd44f96c01852c51470a5636aa45f9c9f1b72789",
+    "branch_diff": "0de9894a273c6f4efc626b18df8d36e9e4e57c3bfbf9991d9f114c9078da552c",
+    "changed": "9d36e5a1c78dae70b382f28d02ef5ed62de6a5069b1e33de5826f37437c2d2d2",
+    "commit": "7a013ff9653093543b5961f411123cb880ea77f4",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 4\nRaise: Security \u2014 On a later review, a finding on an unchanged line with `category: security` becomes a follow-up if its body omits the exact `Raise: Security` text. `_finding` discards the structured category, and this check reads only the body; `score.holds` then makes the finding nonblocking. The new test covers only bodies that contain the Raise text.",
-        "file": "src/forge/review.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 980,
-        "priority": "P1",
-        "title": "Security findings identified by category can become nonblocking follow-ups",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Not done \u2014 The approved Done-when requires new findings on unchanged code to become follow-ups from the second round. For a deletion-only hunk, Git reports a new-side count of zero. Coercing that count to one treats the preceding, unchanged line as changed. A worker who deletes a line to repair a finding can therefore face a new blocker cited on that unchanged line, restarting the review loop. The convergence test covers a replacement, not a deletion.",
-        "file": "src/forge/review.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 2,
-        "line": 993,
-        "priority": "P1",
-        "title": "Not done: Deleting a line can make an unchanged finding block the next review",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test \u2014 The new and previously adopted client cases call `guides()`, but it asserts only the convergence sentence. Removing the new owner-approved `Not done` guidance from either shipped guide would leave these tests green, so the named proof does not establish that new and upgraded clients receive that part of the rule.",
-        "file": "tests/test_reviews_converge_on_changed_lines.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 21,
-        "priority": "P1",
-        "title": "Gate: client guide proof does not check the Not done rule",
-        "work": 1
-      }
-    ],
-    "id": "3aa6984c-ed07-4c74-b83c-edeefe964cb3",
-    "status": "blocked"
+    "findings": [],
+    "id": "385cd2b9-4d50-4579-97b8-19558a720edf",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T06:19:28.735147+00:00",
@@ -105,6 +73,10 @@
     },
     {
       "at": "2026-10-15T07:36:24.341985+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T08:18:25.860544+00:00",
       "step": "review"
     }
   ],
