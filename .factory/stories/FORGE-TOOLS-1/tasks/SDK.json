@@ -95,13 +95,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3e36d62ad5018340814524e940b820831896c5d621030270a24fcff017b2d320",
+    "branch_diff": "d9496f25fe7793eb72f16559a2e886ac37a6fd4bcef4138741e657f1b4223b9b",
     "changed": "bbb5c39645a0cd94ddea908373241492cb7aabfe47758694d12d3f1220cb8bb1",
-    "commit": "d6101da0ec1ff6195ec0d75db6a6c9c8595caf41",
+    "commit": "0dc3429712b55c5b4c0463cddb2eeda80b45fbbd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. This condition skips the Claude SDK whenever `workers = \"codex\"`. But `forge close --choice switch` can set an item's `state[\"tool\"]` to Claude (close.py:113-114), and `forge work` then requires the SDK. In a Codex-coordinated repo with `tools = \"both\"`, work refuses with `forge doctor --fix` as its next action, while that command neither reports nor installs the missing SDK.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. This condition skips the Claude SDK when `workers = \"codex\"`. Yet `forge close --choice switch` can select Claude for an item (close.py:113-114), and `forge work` then requires the SDK. In a Codex-coordinated repo with `tools = \"both\"`, work directs the user to `forge doctor --fix`, but that command neither reports nor installs the missing SDK.",
         "file": "src/forge/doctor.py",
         "gain": 3,
         "harm": 3,
@@ -111,7 +111,7 @@
         "work": 2
       },
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. This replacement is a no-op: the new SDK stub has no `    if not int(os.environ.get(` line (tests/stubs/claude_agent_sdk.py:100-109). The land-build and land-fix cases therefore never make the worker merge the upgraded pin. Their expected pin-handoff notice cannot be produced, so the named command-level proof is broken.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. This replacement is a no-op: the new SDK stub has no `    if not int(os.environ.get(` line. The land-build and land-fix cases therefore never make the worker merge the upgraded pin, leaving the named command-level proof broken.",
         "file": "tests/test_running_commands_follow_changed_forge_pin.py",
         "gain": 3,
         "harm": 3,
@@ -121,7 +121,7 @@
         "work": 1
       },
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. This new SDK result check sends an empty answer to the `no_turn` refusal. Its next action at worker.py:58-60 still says to run `claude` once to answer the prompt. An SDK-only client, which this branch now supports, has no `claude` command on PATH and cannot follow that recovery step when a hooks prompt stops the turn.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. An empty SDK answer reaches the `no_turn` refusal here. Its next action at worker.py:58-60 tells the user to run `claude` to answer a prompt. An SDK-only client has no separate Claude command, so it cannot follow that recovery step.",
         "file": "src/forge/worker.py",
         "gain": 3,
         "harm": 3,
@@ -131,7 +131,7 @@
         "work": 1
       }
     ],
-    "id": "2a6ac75d-23c7-48a4-9afe-059f6e3ee9fa",
+    "id": "0d987af0-c920-428e-81a8-b0133bf801d6",
     "status": "blocked"
   },
   "round": 2,
@@ -150,6 +150,10 @@
     },
     {
       "at": "2026-10-15T03:37:32.713843+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T05:35:13.206360+00:00",
       "step": "review"
     }
   ],
