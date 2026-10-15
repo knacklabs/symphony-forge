@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tOffline board erases the only name for login-only mergers\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 705,
+      "text": "Offline board erases the only name for login-only mergers",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tBoard still fails without GitHub CLI for ordinary git authors\tFORGE-BOARD-3/OWNERS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
