@@ -71,7 +71,7 @@
     "id": "594a1b86-9faf-4a9f-bc65-9d0adfd57e1c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -84,10 +84,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "a1959f892ae9fb2b1763e3c766b87c0f8ca5230c",
-    "keys": {},
-    "round": null
+    "close": "bab46e90-e522-4151-996c-26360be86fc5",
+    "head": "4b339e2510927231a49602a01be7b642a43bbffe",
+    "keys": {
+      "the review finding \"Not done: assigned parts come first across stories\" in src/forge/nextstep.py": 1,
+      "the review finding \"Not done: fetched second-clone next-order test\" in tests/test_assign.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
