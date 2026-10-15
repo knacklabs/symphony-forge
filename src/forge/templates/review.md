@@ -263,6 +263,9 @@ proof test checks only the question's first lines" Gain 2, Work 1, Harm 1.
 
 Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the story's doc and its
 read notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
+The spotted lists (`plans/spotted.json` and everything under `plans/spotted/`) are also Forge's
+own records. Close writes them on this branch after a review; never report those writes as files
+outside Scope or as unrelated changes.
 All earlier reviews' findings and dismissals are below, including findings fixed in later
 rounds; recheck them against this branch for still-open gaps and report those alongside new ones:
 $previous

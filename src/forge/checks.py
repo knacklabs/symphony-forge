@@ -19,9 +19,8 @@ from forge import repo
 REFUSALS = {
     "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
-    "conflict": ("GitHub runs no checks on a conflicting pull request. "
-                 "Merge the default branch through close before waiting for checks.",
-                 "forge close {item}"),
+    "conflict": ("GitHub reports this pull request clashes with the default branch, so it runs no checks on it.",
+                 "forge close {item}, which brings the default branch in"),
 }
 PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
 
@@ -69,16 +68,22 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
+            shown = repo.run("gh", "pr", "view", branch, "--json", "mergeable,headRefOid", cwd=top)
+            try:
+                pr = json.loads(shown.stdout) if shown.returncode == 0 else None
+            except ValueError:
+                pr = None
+            if not isinstance(pr, dict):
+                said = (shown.stderr.strip() or "no readable mergeability answer").splitlines()[-1]
+                reason = said if said.startswith("GitHub did not answer.") else f"GitHub did not answer: {said}"
+                repo.refuse(REFUSALS["not_green"], item=item,
+                            reason=reason.rstrip("."))
+            mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
+            if mergeable == "CONFLICTING":
+                repo.refuse(REFUSALS["conflict"], item=item)
             reason = _pending(item, names, seen)
-            if reason:
-                shown = repo.run("gh", "pr", "view", branch, "--json", "mergeable,headRefOid", cwd=top)
-                try:
-                    pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
-                except ValueError:
-                    pr = {}
-                if (isinstance(pr, dict) and pr.get("headRefOid") == sha
-                        and pr.get("mergeable") == "CONFLICTING"):
-                    repo.refuse(REFUSALS["conflict"], item=item)
+            if mergeable == "UNKNOWN":
+                reason = reason or "GitHub has not determined whether this pull request can merge"
             queued = any(state == QUEUED for _, state in seen)
         except repo.Refused as error:
             if not progress or error.entry is not REFUSALS["not_green"]:

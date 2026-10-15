@@ -121,7 +121,7 @@ current default branch, preserving its other settings. It leaves remote work out
 alone and refuses to replace a remote branch that changes after its check. The owner still
 merges the pull request. Close checks this generated fix mechanically instead of asking a model:
 only `forge.toml`'s top-level `merge = "agent"` may change, with all other parsed settings equal
-to the current default branch. Extra changes are refused without review. Tests and CI still run;
+to the fix's merge base. Extra changes are refused without review. Tests and CI still run;
 every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
@@ -1257,6 +1257,8 @@ any other file stops close for the worker to resolve. While waiting for checks, 
 if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
 in the default branch. Land retries close once itself, including a conflict during its merge check
 wait; if the merge needs a person, it stops with close's existing conflict next step.
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
 test command fails, close keeps the output for the worker: run
@@ -1340,6 +1342,10 @@ Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
+Close fetches the default branch but merges it in only for a trial-merge clash, or when GitHub
+reports the pull request conflicting or behind under its up-to-date rule. Unrelated main changes
+add no merge. Close checks GitHub's clash state at every look, even with green checks; a clash
+stops a hand-run close and says to run close again. An UNKNOWN answer keeps it waiting.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Before reusing serious findings, close also checks the reviewed files and contract against the
@@ -1532,7 +1538,9 @@ reading again. A clean round or a recorded choice restarts the three-round count
 For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
 command as a close stop.
 
-When GitHub refuses because the branch is behind the default branch, `forge merge` and
+When GitHub reports a clash during the check wait or refuses a merge because the branch is
+behind or conflicting, `forge merge` retries close and merge once. A mergeable pull request
+keeps its current head. When the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,
 review and checks as close decides, then retry the merge. If that merge selects a different
 Forge release, close finishes under that release before the original command continues.

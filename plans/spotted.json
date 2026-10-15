@@ -10658,6 +10658,28 @@
       "item": "windows-nightly-red",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tplans/spotted.json\tAn unrelated test-audit finding edits the shared spotted list\tFORGE-MAINONCE-1/ONCLASH",
+      "kind": "bug",
+      "path": "plans/spotted.json",
+      "line": 8440,
+      "text": "An unrelated test-audit finding edits the shared spotted list",
+      "from": "blocking",
+      "item": "FORGE-MAINONCE-1/ONCLASH",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tA pending whole-history retry can spend the API budget before close reaches its own pull request.",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 93,
+      "text": "A pending whole-history retry can spend the API budget before close reaches its own pull request.",
+      "from": "worker",
+      "item": "FORGE-MAINONCE-1/ONCLASH",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

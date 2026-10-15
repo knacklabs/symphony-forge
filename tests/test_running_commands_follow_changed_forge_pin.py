@@ -136,6 +136,10 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
                    "Refresh the default branch's generated guide")
     if stage in ("close-merge", "land-merge") or guide_conflict:
         _upgrade_default(env, upgraded)
+        if not guide_conflict:
+            # Preserve the pin-handoff rule for a refresh GitHub requires.
+            env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                           '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     else:
         if stage == "land-fix":
             env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
@@ -237,6 +241,8 @@ def test_3_close_continues_the_current_human_accept_choice_under_changed_pin(
                                 f'version = "{current}"\nfast_test = ""')
     _upgrade_default(env, upgraded)
     reason = "The human accepts the remaining greeting defect for this version"
+    env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                   '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     args = ["close", item, "--resolve", "accept", "--reason", reason]
     done = env.repo.forge(*args, cwd=where)
     assert done.returncode == 0, done.stdout + done.stderr

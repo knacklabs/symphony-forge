@@ -253,7 +253,9 @@ what you measured with `forge spec measure <slug> --result "<text>"` in a fix. D
 
 ## Closing
 
-`forge close <item>` follows the close rule: it merges the default branch in, pushes and opens or
+`forge close <item>` fetches the default branch. It merges that branch in only when a trial merge
+finds a clash, or GitHub reports the pull request conflicting or behind under its up-to-date rule.
+An unrelated change on the default branch adds no merge to the pull request. Close pushes and opens or
 updates the pull request, runs the review until no serious finding is left, waits for the checks
 `forge.toml` names (`tests` and `forge-pr-check` by default), and marks the item ready. While the
 review is blocked the pull request is a draft, and close marks it ready for review once the review
@@ -261,6 +263,13 @@ is clean and the checks are green. When it stops, it prints why and the next
 command, usually `forge work <item>` for a fix round. Open the line a finding cites first: if the
 code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <reason>"`.
+
+Close checks GitHub's clash state at every look, even when all checks are green. If this head
+clashes, close stops and says to run close again to bring the default branch in. It waits when
+GitHub has not yet determined whether this head can merge.
+
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 
 Close runs `forge.toml`'s `test` command before the review, and the pull request's `tests` check
 runs it again. When that check runs the full suite, ask your agent to set `fast_test` too: a
@@ -294,6 +303,9 @@ worktree. It leaves a worktree with uncommitted changes in place and says so. Fo
 item's recorded Codex conversations; Codex can restore archived chats. The agent merges only
 through `forge merge <item>`; the hook still refuses a raw `gh pr merge` command. When agent
 merging is off, a human merges the ready pull request.
+
+If GitHub reports a clash during the check wait, or refuses the merge as behind or conflicting,
+Forge runs close and retries the merge once. A pull request that can merge keeps its current head.
 
 The story's last task records its completion in the same squash merge. Pass
 `forge merge <KEY>/<TASK> --outcome "<outcome>"` to say what it achieved, or omit the option to

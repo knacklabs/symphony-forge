@@ -1,0 +1,45 @@
+{
+  "base": "b24f21f9ec68c04b9792c7a064b8ac758f89765f",
+  "branch": "fix/review-skips-forge-records",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13d67-10e0-73d1-a13a-8af7d9265b58",
+    "head": null,
+    "start": "438aab613ec314420496df9b36b70c5ba7d9dbf0"
+  },
+  "done_when": "Review never reports Forge's own record files (the spotted list and other files close writes) as a part's out-of-scope edits, in Forge's repo and in client repos, new and upgraded",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d7403eb39b3d031b005104027212a93c384cfde12a7bb7ef5f9173379a122dee",
+    "changed": "653a0d5a3a22555b8c8595a5bf9de9eb544aca7d646b4ac5d82746502190c894",
+    "commit": "8c75e8e31600b60707f4c6f68516726044a98d01",
+    "dismissals": [],
+    "findings": [],
+    "id": "10f21bd1-b34e-4449-94f3-e5fad2aec3ed",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T02:30:51.015832+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T02:38:04.587471+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3eaf09a3cd1c9a4bd2658180b2944e038e9190a1",
+    "keys": {},
+    "round": null
+  },
+  "why": "Close writes the spotted-problems list on the item's branch, then the next review flags that write as out of the part's scope, so a part can never pass review",
+  "worker": "codex"
+}

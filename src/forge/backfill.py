@@ -186,7 +186,9 @@ def run(top: Path) -> None:
             key, state, record = rebuilt
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
         pending.unlink(missing_ok=True)
-    except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError):
+    except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
+        if isinstance(error, repo.Refused) and error.entry is close.REFUSALS["publish"]:
+            raise
         failed(top)
 
 

@@ -57,7 +57,8 @@ def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env,
     pr = body(env.gh_calls("pr", "create" if history == "unreviewed" else "edit")[-1])
     assert len(env.review_calls()) == reviews_before + (history == "unreviewed")
     if history == "legacy-review-base-merge":
-        env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
+        # Git facts and legacy review reuse still hold without an unrelated main merge.
+        assert env.repo.git("merge-base", moved, "HEAD", cwd=where) != moved
     assert "Proof list: app.py prints a greeting." in pr
     assert "Functional check: printed welcome." in pr
     assert "Ruling: Use a greeting - readers see it immediately" in env.prompt()

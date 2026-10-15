@@ -26,6 +26,8 @@ from forge import __version__, checks, codex, githooks, init, repo, review, scor
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
+    "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
+                "{action}, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
@@ -169,7 +171,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     try:
-        _merge_default(top, item, branch, default)
+        _merge_default(top, item, branch, default, pr)
     except repo.Refused as error:
         if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
@@ -205,13 +207,14 @@ def close(args: argparse.Namespace) -> int:
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:
-        files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
-                             "HEAD", cwd=top).splitlines())
+        base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top)
+        files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}...HEAD",
+                             cwd=top).splitlines())
         if (files - {"forge.toml", repo.state_path(item)} or
-                repo.git("diff", "--summary", f"origin/{default}", "HEAD", "--", "forge.toml", cwd=top)):
+                repo.git("diff", "--summary", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top)):
             repo.refuse(REFUSALS["merge_switch"], item=item)
         settings = tomllib.loads(repo.git("show", "HEAD:forge.toml", cwd=top))
-        original = tomllib.loads(repo.git("show", f"origin/{default}:forge.toml", cwd=top))
+        original = tomllib.loads(repo.git("show", f"{base}:forge.toml", cwd=top))
         if (settings.pop("merge", None) != "agent" or
                 settings != {key: value for key, value in original.items() if key != "merge"}):
             repo.refuse(REFUSALS["merge_switch"], item=item)
@@ -406,10 +409,22 @@ def close(args: argparse.Namespace) -> int:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
-    finally:
-        pr = _publish(top, item, state, branch, default, pr, result, evidence)
+    except BaseException:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        raise
+    # Publish successful CI with Ready, or once before restarting on a refreshed head.
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
+    # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
+    pr = _pull_request(top, branch) or pr
+    _merge_default(top, item, branch, default, pr)
+    if repo.git("rev-parse", "HEAD", cwd=top) != head:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
+                        accepted=choice == "accept", before=getattr(args, "pin_before", None))
+        again = argparse.Namespace(**vars(args))
+        again.dismiss = again.because = again.resolve = again.reason = None
+        return close(again)
     merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -417,7 +432,6 @@ def close(args: argparse.Namespace) -> int:
         pending = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
-        _publish(top, item, state, branch, default, pr, result, evidence)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
@@ -614,7 +628,8 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
     return from_base
 
 
-def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
+def _merge_default(top: Path, item: str, branch: str, default: str,
+                   pr: dict[str, Any] | None) -> None:
     cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     state = repo.read_state(item, top) or {}
@@ -663,6 +678,14 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
         if published.returncode:
             repo.git("reset", "--keep", original, cwd=top)
             repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
+        return
+    if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
+        return
+    trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
+    if trial.returncode not in (0, 1):
+        trial.check_returncode()
+    if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
+            and (pr or {}).get("mergeStateStatus") != "BEHIND"):
         return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
@@ -799,6 +822,12 @@ def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str
 def _gh(top: Path, *args: str) -> str:
     done = repo.run("gh", *args, cwd=top)
     if done.returncode:
+        if args[:2] == ("pr", "edit") and "--body-file" in args:
+            problem = (done.stderr or done.stdout or f"exit code {done.returncode}").strip()
+            action = ("wait for GitHub's rate limit to reset"
+                      if re.search(r"rate[ -]?limit|HTTP\s+429", problem, re.I)
+                      else "fix the GitHub problem")
+            repo.refuse(REFUSALS["publish"], problem=problem, action=action)
         if done.stderr.strip() == repo.REFUSALS["no_github"][0]:
             repo.refuse(repo.REFUSALS["no_github"])
         raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
@@ -822,7 +851,7 @@ def _draft(top: Path, *args: str) -> str:
 def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
     """The branch's open pull request, else its merged one, else None."""
     prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
-                         "--json", "number,state,body,isDraft"))
+                         "--json", "number,state,body,isDraft,mergeable,mergeStateStatus"))
     return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
                 None)
 
