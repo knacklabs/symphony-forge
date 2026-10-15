@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-STACK-1-START",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-15T03:06:27.899974+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8daf5ad2ab735c176d5124a1fa61d64939b212a1",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
