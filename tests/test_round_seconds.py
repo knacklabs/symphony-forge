@@ -187,6 +187,10 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
                                  "at": (began + timedelta(hours=201)).isoformat()}], "timings": []})
     write_history(env, earlier, append=True)
     env.commit(where, "app.py", "print('long history published')\n")
+    # Start a fresh worker round after the oversized history. Re-closing round
+    # 201 can compact its lifecycle too, so it cannot promise numeric seconds.
+    worked = env.repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
@@ -211,7 +215,8 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
     own = [one for one in rounds if one["round"] is not None]
     assert own and any(one["seconds"] is not None for one in own)
     for one in own:
-        if one["round"] <= 200:
+        if one["round"] <= 201:
             assert one["seconds"] is None
             continue
+        assert one["round"] == 202
         assert_seconds(one)
