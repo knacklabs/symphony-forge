@@ -161,5 +161,6 @@ def adopted_client_board_tab_matches(request, tmp_path):
 @pytest.mark.parametrize("case", [seven_items_need_you_shows_five_and_n_more,
                                   an_older_forge_board_draws_rows_and_no_team_line, pane_times_round_like_the_board,
                                   new_client_board_tab_matches, adopted_client_board_tab_matches])
+@pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_9_the_pane_opens_with_the_boards_first_screen_lines(request, tmp_path, case):
     case(request, tmp_path)

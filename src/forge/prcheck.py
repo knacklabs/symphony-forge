@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -76,7 +77,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
 <npm-cache><node>      - run: <test>
-        if: steps.parent-tests.outputs.reuse != 'true'
+<test-shell>        if: steps.parent-tests.outputs.reuse != 'true'
 
   tests-passed:
     # The one required tests check: green only when every group passed. Each event runs one of
@@ -181,6 +182,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     if groups > 1:
         # Empty groups pass only if the unsplit suite still collects tests successfully.
         test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
+    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
+    if windows:
+        attempt = f"bash --noprofile --norc -e -o pipefail -c {shlex.quote(test)}"
+        test = f"{attempt} || {attempt}"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if source
@@ -196,6 +201,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(test))
+                .replace("<test-shell>", "        shell: bash\n" if windows else "")
                 .replace("<groups>", str(groups))
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))

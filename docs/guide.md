@@ -282,6 +282,11 @@ six groups when `test` calls pytest directly (not through make or tox) and the r
 pytest-split, otherwise one.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
+For a client with a `windows-*` runner, the generated check runs the configured test command
+again once if it fails. A second failure fails the check. New clients get this at init; existing
+clients get it after upgrading Forge and running `forge sync`. Linux, Mac and the trusted
+`forge-pr-check` gate keep their commands. Forge's own Windows full-suite job instead reruns
+each failed pytest test once and gives the known slow tests longer timeouts on Windows.
 When the pytest selection would cover more than a third of the repo's Python test files
 (shared test inputs select them all), close skips the local run, says so in one line, and
 relies on the pull request's required checks. `forge test` still runs its tests. New repos
