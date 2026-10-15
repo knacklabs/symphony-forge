@@ -1,0 +1,14 @@
+{
+  "base": "d9abeffd1b7075eef9ac082b2331e7f94e05ac6d",
+  "branch": "fix/windows-main-red-2",
+  "done_when": "Every Windows full-suite group passes in an all-platform run of this branch, each failure fixed at its real cause, not skipped",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-15T03:33:07.016793+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's all-platform run still fails on Windows: group 1 fails one test (sync merges the Claude Code allow list) and group 8 hits the 45-minute job limit"
+}
