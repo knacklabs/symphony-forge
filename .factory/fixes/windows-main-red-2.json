@@ -16,13 +16,29 @@
     "start": "858e2781be44aef1413ac62619f8b66e43475d1a"
   },
   "done_when": "The allow-list sync test, the board timing test and the group 8 hang pass on Windows for their real causes in an all-platform run of this branch (run 38700101238: groups 3 and 8 green, the allow-list test passes); other slow Windows tests are handled by a separate rerun-once fix",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "781d017312502617dd45f245aac42404d6641222c7278e91734f8fe4aacc461f",
+    "changed": "51395ff2f49926406a851a462a7ed75aa45f1ae702050610caef7ea0d3c71786",
+    "commit": "1fc0d93aaeee858734f6a819548a7e501a00f344",
+    "dismissals": [],
+    "findings": [],
+    "id": "160e2102-c586-4b25-a5e1-188cdb41de8c",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T03:33:07.016793+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-15T08:31:04.480860+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
