@@ -62,11 +62,14 @@ def test_2_assignments_publish_and_order_the_assignees_next_parts(env, history):
     assert _steps(repo, second)[0] == "SHOP/T1"
     assert "SHOP/T2" not in _steps(repo, second)
 
-    shown = rows(board(type(repo)(second, repo.bin)))
+    snapshot = board(type(repo)(second, repo.bin))
+    shown = rows(snapshot)
     assert {item: shown[item]["owner"] for item in ("SHOP", "SHOP/T1", "SHOP/T2")} == {
         "SHOP": "bob", "SHOP/T1": "bob", "SHOP/T2": "alice"}
     assert shown["IDEA"]["owner"] is None
-    assert shown["IDEA/T1"]["owner"] is None
+    # Unassigned, unstarted parts live in the public story map, without an item row.
+    idea = next(entry for entry in snapshot["dependency_maps"] if entry["id"] == "IDEA")
+    assert next(part for part in idea["parts"] if part["id"] == "IDEA/T1")["owner"] is None
     if history != "forge-source":
         for host in (".claude", ".codex"):
             guide = (repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
