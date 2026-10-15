@@ -26,16 +26,15 @@ from test_story import worktree
 # GitHub would, and every other call answered by the stub's queued responses.
 GH = '''#!PYTHON
 import json, pathlib, subprocess, sys, tempfile, time, zlib
+from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 remote = REMOTE
 
 
 def answer(out, code=0):
-    with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as log:
-        log.write(json.dumps(args) + "\\n")
-    with open(here / "gh-timed.jsonl", "a", encoding="utf-8") as log:
-        log.write(json.dumps({"args": args, "at": time.time()}) + "\\n")
+    append_json(here / "gh-calls.jsonl", args)
+    append_json(here / "gh-timed.jsonl", {"args": args, "at": time.time()})
     sys.stdout.write(out)
     sys.exit(code)
 
@@ -303,9 +302,10 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
             if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid"] in env.gh.calls():
                 break
             time.sleep(0.2)
+        # The draft stays in place: a Windows process can hold its starting folder open.
         # Two runs started at the same moment: one works, the other refuses.
         runs = [subprocess.Popen([*forge, "land", "--all"], cwd=where, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE, encoding="utf-8") for where in (cherry, env.repo.path)]
+                                 stderr=subprocess.PIPE, encoding="utf-8") for where in (started, env.repo.path)]
         (out, err), (other, refused) = (run.communicate(timeout=600) for run in runs)
     finally:
         waiting.kill()
