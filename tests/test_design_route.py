@@ -135,7 +135,8 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert "fell back to Codex" in log and "exit code 3" in log
 
     # Delegation stays enabled and configured helpers survive the design override above.
-    # A later missing Claude command uses design defaults with no configured helpers.
+    # Without a separate Claude command the SDK still runs; a clean SDK failure uses
+    # design defaults with no configured helpers.
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
         f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
@@ -147,11 +148,11 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     monkeypatch.setenv("PATH", os.pathsep.join((str(repo.bin), git_dir, os.defpath)))
     missing = repo.forge("work", "BOARD/PAGE")
     assert missing.returncode == 0, missing.stdout + missing.stderr
-    assert "fell back to Codex" in missing.stdout and "missing" in missing.stdout
+    assert "fell back to Codex" in missing.stdout and "exit code 3" in missing.stdout
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
         **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
     install_claude(repo)
-    assert len(calls(claude_log)) == 1
+    assert len(calls(claude_log)) == 2
     # The round started on Claude after a round that ended on Codex, so its fallback starts a new
     # conversation with the whole brief (it used to resume the first fallback's).
     assert _sent(codex_log, "thread/resume") == []
@@ -171,7 +172,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert "exit code 3" in failed.stderr
     assert "fell back to Codex" not in failed.stdout
     assert (folder / "worker-change.txt").read_text("utf-8") == "changed"
-    assert len(calls(claude_log)) == 2
+    assert len(calls(claude_log)) == 3
     assert len(_sent(codex_log, "turn/start")) == 2
 
     script.write_text(original.replace('    yield ResultMessage(session_id=session',

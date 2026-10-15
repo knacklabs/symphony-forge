@@ -45,7 +45,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     repo.git("add", "-A", cwd=where)
     repo.git("commit", "-q", "-m", "Sync the client instructions", cwd=where)
 
-    log = install_claude(repo)
+    log = install_claude(repo, worker=False)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     env.commit(where, "docs/specs/basket.md", "# Basket\n\n## Why\n\nKeep a basket.\n")
     read = repo.forge("read", "basket", cwd=where)

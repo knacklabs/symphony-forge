@@ -133,8 +133,7 @@ def _work(args: argparse.Namespace) -> bool:
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
-    claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,
-                                                      native=is_native)
+    claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
     why = "Claude failed this design round" if getattr(args, "fallback", None) else why
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
@@ -270,8 +269,7 @@ def _work(args: argparse.Namespace) -> bool:
                             state.get("tool") or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
-                    reason = ("claude command missing" if shutil.which("claude") is None else
-                              str(error).split("\n", 1)[0].removeprefix("The worker "))
+                    reason = str(error).split("\n", 1)[0].removeprefix("The worker ")
                     chosen = repo.design_models(config, "codex")
                     building = (f"Building {item} with Codex ({chosen['model']}, "
                                 f"{chosen['effort']}) because Claude {reason}")
@@ -380,8 +378,9 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
             refuse(REFUSALS["sdk"], problem=problem)
         # A worker always names its models; a cold read with no entry runs on Claude's own.
-        chosen = (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
-                                                                           "claude")
+        chosen = (repo.design_models(config, "claude") if design else
+                  (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
+                                                                          "claude"))
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = None if native else codex.sdk_problem()  # native sessions need no driver SDK
     if problem:
@@ -622,8 +621,6 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
 def _run(item: str, top: Path, brief: str, models: list[str],
          *, resume: str | None = None, session_id: str | None = None) -> str:
     """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
-    if shutil.which("claude") is None:
-        refuse(repo.REFUSALS["missing_tool"], tool="claude")
     log = repo.work_log(top, item)
     if problem := claude_sdk.sdk_problem():
         refuse(REFUSALS["sdk"], problem=problem)
@@ -653,7 +650,8 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             if isinstance(event, dict):
                 line = repo.claude_output(top, item, ran, event)
                 # A result after no model turn (the prompt used up before the model ran) is no round.
-                if event.get("type") == "result" and event.get("num_turns") != 0:
+                if (event.get("type") == "result" and event.get("num_turns") != 0
+                        and (event.get("result") or event.get("errors"))):
                     final_result = line.rstrip("\n")
             if line and (not isinstance(event, dict) or event.get("type") == "result"):
                 print(line, end="", flush=True)

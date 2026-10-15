@@ -15,6 +15,7 @@ from conftest import ROOT, _install
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import alive, person  # noqa: F401 (human stop fixture)
 from test_setup import _fresh_client
+from test_task import story
 from test_tools_session_hold import Session
 from test_worker import calls, install_claude
 
@@ -24,8 +25,9 @@ PIN = "0.2.161"
 
 
 @pytest.mark.parametrize("history", ["new", "adopted"])
+@pytest.mark.parametrize("regression", ["bundled-cli", "design-preflight"])
 def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
-        repo, gh, monkeypatch, tmp_path, person, history):
+        repo, gh, monkeypatch, tmp_path, person, history, regression):
     version = repo.forge("--version").stdout.split()[-1]
     settings = (f'version = "{version}"\nrepo = "client"\n'
                 'tools = "both"\nworkers = "claude"\ntest = "git status --porcelain"\n'
@@ -100,6 +102,36 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         checked = host.forge("doctor", cwd=folder)
         assert "Claude Agent SDK" not in checked.stdout + checked.stderr
 
+        if regression == "design-preflight":
+            story(repo)
+            started_design = repo.forge("task", "start", "BOARD/PAGE")
+            assert started_design.returncode == 0, started_design.stdout + started_design.stderr
+            design = repo.path.parent / f"{repo.path.name}-BOARD-PAGE"
+            config = design / "forge.toml"
+            config.write_text(config.read_text("utf-8").replace('workers = "claude"',
+                              'workers = "split"') +
+                              '\n[models.design.claude]\nmodel = "sonnet"\neffort = "medium"\n'
+                              '\n[models.design.codex]\nmodel = "gpt-6-sol"\neffort = "high"\n',
+                              encoding="utf-8")
+            repo.git("commit", "-qam", "Choose split workers", cwd=design)
+            before = repo.git("rev-parse", "HEAD", cwd=design)
+            design_state = design / ".factory/stories/BOARD/tasks/PAGE.json"
+            state_before = design_state.read_bytes()
+            ready.unlink()
+            try:
+                missing = host.forge("work", "BOARD/PAGE")
+                assert missing.returncode == 1, missing.stdout + missing.stderr
+                assert f"The Claude Agent SDK {PIN} isn't installed" in missing.stderr
+                assert "forge doctor --fix" in missing.stderr
+                assert repo.git("rev-parse", "HEAD", cwd=design) == before
+                assert repo.git("status", "--porcelain", cwd=design) == ""
+                assert design_state.read_bytes() == state_before
+                assert calls(sdk_log) == []
+                assert not (repo.bin / "codex-app-server.jsonl").exists()
+                assert "Claude failed this design round" not in missing.stdout + missing.stderr
+            finally:
+                ready.write_text(PIN + "\n", encoding="utf-8")
+
         edge = repo.bin / "claude_agent_sdk/__init__.py"
         edge.write_text(edge.read_text("utf-8").replace(
             '"input_tokens": 10, "output_tokens": 5',
@@ -114,6 +146,16 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         monkeypatch.setenv("PYTHONIOENCODING", "ascii")
         response = "stub claude: built it — नमस्ते café"
         monkeypatch.setenv("STUB_CLAUDE_RESULT", response)
+        if regression == "bundled-cli":
+            # Only command discovery changes: the SDK and its bundled program
+            # remain installed. No separate Claude executable is required.
+            launcher = repo.bin / "forge"
+            launcher.write_text(launcher.read_text("utf-8").replace(
+                "from forge.cli import main",
+                "import shutil\n"
+                "_which = shutil.which\n"
+                "shutil.which = lambda name, *args, **kwargs: None if name == 'claude' else _which(name, *args, **kwargs)\n"
+                "from forge.cli import main"), encoding="utf-8")
         first = host.forge("work", ITEM)
         assert first.returncode == 0, first.stdout + first.stderr
         [fresh] = calls(sdk_log)

@@ -79,9 +79,10 @@ def _upgrade_default(env, upgraded):
 
 def _worker_merges_upgrade(env, upgraded):
     # The model edits and merges git; Forge decides whether and how its command continues.
-    worker = (env.repo.bin / "claude").read_text("utf-8")
+    module = env.repo.bin / "claude_agent_sdk" / "__init__.py"
+    worker = module.read_text("utf-8")
     upgrade = f'''import subprocess
-root = pathlib.Path({json.dumps(env.repo.path.as_posix())})
+root = Path({json.dumps(env.repo.path.as_posix())})
 if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
     (root / "forge.toml").write_text({json.dumps(upgraded)}, encoding="utf-8")
     for args in (["add", "forge.toml"], ["commit", "-q", "-m", "Upgrade Forge"],
@@ -90,8 +91,9 @@ if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
 subprocess.run(["git", "fetch", "-q", "origin"], check=True)
 subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 '''
-    _install(env.repo.bin, "claude", worker.replace('if not int(os.environ.get(',
-             upgrade + '\nif not int(os.environ.get(', 1))
+    upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
+    module.write_text(worker.replace('    if not int(os.environ.get(',
+                      upgrade + '    if not int(os.environ.get(', 1), "utf-8")
 
 
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])

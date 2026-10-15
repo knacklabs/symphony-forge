@@ -54,8 +54,8 @@ class ResultMessage:
     num_turns: int = 1
     is_error: bool = False
     session_id: str = ""
-    result: str = "stub claude: built it\n"
-    errors: list = dataclasses.field(default_factory=list)
+    result: str | None = None
+    errors: list[str] | None = None
     usage: dict = dataclasses.field(default_factory=lambda: {
         "input_tokens": 10, "output_tokens": 5})
 
@@ -77,7 +77,7 @@ async def query(*, prompt, options):
         missing = f"No conversation found with session ID: {session}"
         if os.environ.get("STUB_CLAUDE_LOST_ERRORS"):
             yield ResultMessage(subtype="error_during_execution", is_error=True,
-                                num_turns=0, result="Resume failed",
+                                num_turns=0, result=None,
                                 errors=["Diagnostic before the error", missing])
         else:
             options.stderr(missing)

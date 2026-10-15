@@ -11,6 +11,8 @@ from claude_agent_sdk import (
 
 
 def emit(event):
+    if event.get("type") == "result":
+        event = {**event, "errors": event.get("errors") or []}
     print(json.dumps(event, ensure_ascii=False), flush=True)
 
 
