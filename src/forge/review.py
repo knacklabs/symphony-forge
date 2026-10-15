@@ -643,11 +643,11 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
         for key in earlier - current:
             settled.setdefault(key, "fixed: absent from a later review")
         for finding in score.open_findings(result):
+            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
+                settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]),
                                    "known: follow-up outside this review's boundary")
-            if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
-                settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
         accepted = set()
         for dismissal in result.get("dismissals", []):
             finding = result["findings"][dismissal["finding"] - 1]

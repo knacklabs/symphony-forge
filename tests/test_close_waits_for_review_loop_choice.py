@@ -94,7 +94,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert checked.returncode == 0, checked.stderr
         # An upstream edit outside this branch's diff no longer gets merged by close, so its
         # accepted review stays valid until the worker changes the branch itself.
-        env.commit(env.repo.path, "src/a.py", "print('upstream change')\n")
+        env.commit(env.repo.path, "NEWS.md", "Unrelated upstream change\n")
         env.repo.git("push", "-q", "origin", "main")
         env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py")))
         changed_base = env.close(item)

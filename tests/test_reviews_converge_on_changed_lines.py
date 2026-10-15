@@ -97,7 +97,7 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
     closed = env.close(item)
     assert len(env.review_calls()) == 1, closed.stdout + closed.stderr
     if owner_item:
-        assert closed.returncode == 1 and note["title"] in closed.stderr, closed.stdout + closed.stderr
+        assert closed.returncode == 1 and note["title"].rstrip(".") in closed.stderr, closed.stdout + closed.stderr
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr
         shown = body(env.gh_calls("pr", "edit")[-1])
