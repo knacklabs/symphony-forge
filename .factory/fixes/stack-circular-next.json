@@ -3,12 +3,20 @@
   "branch": "fix/stack-circular-next",
   "done_when": "A part that waits on a base started on this machine gets a next step that moves it forward, in a new repo and in an adopted repo after upgrade",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-15T09:29:32.175238+00:00",
       "step": "start"
     }
   ],
-  "why": "A part started on top of a locally started base gets a circular next step, so forge next points back at itself"
+  "stuck": {
+    "close": null,
+    "head": "edaf1fb468f3abf0064a7bd7d6c76093388208b2",
+    "keys": {},
+    "round": null
+  },
+  "why": "A part started on top of a locally started base gets a circular next step, so forge next points back at itself",
+  "worker": "codex"
 }
