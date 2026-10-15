@@ -42,22 +42,15 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
         "    path.write_text(str(count))\n"
         f"    assert count > {2 if persistent else 1}\n", encoding="utf-8")
     options[options.index("auto")] = "2"
-    options[options.index("--durations-path") + 1] = str(ROOT / ".test_durations")
-    (tmp_path / "conftest.py").write_text(
-        "import faulthandler, os\nfrom pathlib import Path\n"
-        "trace = open(Path(__file__).with_name(f'trace-{os.getpid()}.txt'), 'w')\n"
-        "faulthandler.dump_traceback_later(5, file=trace)\n", encoding="utf-8")
+    # Keep CI's relative timing path: an external option path makes pytest's root
+    # the common ancestor of that path and the test, causing filesystem-wide collection.
+    (tmp_path / ".test_durations").write_text('{"test_sample.py::test_sample": 1.0}\n', encoding="utf-8")
     environment = {key: value for key, value in os.environ.items()
                    if not key.startswith("PYTEST_")}
-    environment["PYTHONUNBUFFERED"] = "1"
     # Own the nested run's temp root instead of racing global pytest-current cleanup.
-    try:
-        done = subprocess.run([sys.executable, "-u", "-m", "pytest", "test_sample.py", *options,
-                               "--basetemp", str(tmp_path / "nested")],
-                              cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=60)
-    except subprocess.TimeoutExpired as error:
-        traces = "\n".join(path.read_text() for path in tmp_path.glob("trace-*.txt"))
-        raise AssertionError(f"Nested pytest timed out: {traces}") from None
+    done = subprocess.run([sys.executable, "-m", "pytest", "test_sample.py", *options,
+                           "--basetemp", str(tmp_path / "nested")],
+                          cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=60)
     assert done.returncode == (0 if runner == "windows-latest" and not persistent else 1), done.stdout + done.stderr
     assert (tmp_path / "attempts.txt").read_text() == ("2" if runner == "windows-latest" else "1")
     dev = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["dependency-groups"]["dev"]
