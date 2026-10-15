@@ -19,7 +19,7 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
                    score, task, time_records, upgrade)
-from forge.task import REFUSALS as START_REFUSALS, _started, developer, github_login, stack_base, start_base, waits_for
+from forge.task import _started, developer, github_login, stack_base, start_base, waits_for
 
 COMMANDS = [
     {
@@ -572,11 +572,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 if base := stack_base(f"{key}/{name}", deps, story.landed_ref(top), top):
                     stacked[name] = base
             except repo.Refused as error:
-                if error.entry == START_REFUSALS["base_not_started"] and deps[0] in busy:
-                    stack_waits += [f"{key}/{name} waits for {deps[0]} to publish reviewed changes.",
-                                    "Next: forge next"]
-                else:
-                    stack_waits += str(error).splitlines()
+                stack_waits += str(error).splitlines()
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == [] or task["id"] in stacked]
     if any(developer(task) for task in doc["tasks"] if task["id"] in ready):
         login = github_login(top)

@@ -64,10 +64,12 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        previous = (where / path).read_text("utf-8") if (where / path).exists() else ""
+        env.commit(where, path, f"# Review round {number}\n" + previous)
         # The advice note repeats each round; from round 2 it is known below the bar, so already settled.
         env.reviews(blocked(finding("P3", "Advice only"),
-                            {**finding("P1", f"Not done: Round {number} defect", path),
-                             "body": "Gain 3, Work 2, Harm 3\nRaise: Not done \u2014 Saving at `app.py:3` drops the basket "
+                            {**finding("P1", f"Functional: Round {number} defect", path),
+                             "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 Saving at `app.py:3` drops the basket "
                                      "(a3f9c2e1b). Returning shoppers lose their saved items. "
                                      "More detail."}))
         result = env.close(item)
@@ -156,6 +158,7 @@ def test_3_only_consecutive_serious_blocked_reviews_hold_the_next_reviewer(env, 
     item, where = env.start_fix(changes={"app.py": "print('work')\n"})
     for number in range(1, 6):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        env.commit(where, f"docs/{number}.md", f"# Review round {number}\n")
         clean = number == 5 or number == 2 and interruption == "clean"
         # Harm 3 holds the loop by the bar; files of their own keep each finding in its own area.
         env.reviews(CLEAN if clean else blocked(

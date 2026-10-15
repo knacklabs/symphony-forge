@@ -1,0 +1,45 @@
+{
+  "base": "3bd12c22cceaaea5a117429fa822d1dec2ef42c3",
+  "branch": "fix/stack-circular-next",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13ee5-6e3f-7bb3-8629-d51ddb567fe9",
+    "head": null,
+    "start": "d95f17817b2bc1e7b893e160d452a5b7afba722c"
+  },
+  "done_when": "A part that waits on a base started on this machine gets a next step that moves it forward, in a new repo and in an adopted repo after upgrade",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b6dddb0d0921629b38b6c2b067906234f80176b0a9047b4bd2811359eb1b9ade",
+    "changed": "f2b6c0792f3184a29123c852bcaf55f5b6f7f1246f7e3b6356e42cc0af3d904a",
+    "commit": "0a1b653af6792ab05eb49de6435fd340810d9567",
+    "dismissals": [],
+    "findings": [],
+    "id": "339f8a63-bf85-478d-a180-cfdf5e3fe723",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T09:29:32.175238+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T09:47:44.762976+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "edaf1fb468f3abf0064a7bd7d6c76093388208b2",
+    "keys": {},
+    "round": null
+  },
+  "why": "A part started on top of a locally started base gets a circular next step, so forge next points back at itself",
+  "worker": "codex"
+}

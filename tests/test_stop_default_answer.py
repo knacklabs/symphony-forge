@@ -33,6 +33,7 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     item, where = env.start_fix()
     rounds(env, item, where, ["src/a.py"] * 2)
     env.commit(where, "app.py", "print(3)\n")
+    env.commit(where, "src/a.py", "pass  # review round 3\n")
     env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py"),
                         finding("P2", "Follow-up: advice", "src/a.py"),
                         finding("P3", "Polish advice", "src/a.py")))
@@ -112,10 +113,11 @@ def test_3_land_carries_on_and_the_worker_narrows(land, entry):
     # Rerunning land after moving the clock missed the unattended failure.
     if entry != "stopped":
         for number in (1, 2):
-            land.commit(where, "app.py", f"print({number})\n")
+            land.commit(where, paths[number - 1], f"print({number})\n")
             assert land.close(item).returncode == 1
         # The owner's second-round rule permits one focused round before the timer test starts.
         land.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+        land.commit(where, paths[2], "print('third greeting repair')\n")
         if entry == "running":
             assert land.close(item).returncode == 1
             # Distinct low-Harm findings do not require a recorded hard-stop choice.

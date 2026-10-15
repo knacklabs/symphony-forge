@@ -958,6 +958,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: a login-only pull request hides the starter's recorded name\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 535,
+      "text": "Not done: a login-only pull request hides the starter's recorded name",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: a running plan reader's actual round\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -1387,6 +1398,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: known logins disappear when past work is compacted\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 172,
+      "text": "Not done: known logins disappear when past work is compacted",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_facts.py\tNot done: older merged parts lose their shared runway\tFORGE-BOARD-2/COUNTS",
       "kind": "bug",
       "path": "src/forge/board_facts.py",
@@ -1416,6 +1438,17 @@
       "text": "Older merged parts cause unbounded GitHub requests",
       "from": "blocking",
       "item": "FORGE-BOARD-2/COUNTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tSerial commit lookups make board reads slow as the team grows\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 138,
+      "text": "Serial commit lookups make board reads slow as the team grows",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
       "status": "open",
       "closed_by": null
     },
@@ -1581,6 +1614,17 @@
       "text": "Record deliberate CI cancellation as a give-up",
       "from": "blocking",
       "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/claude_turn.py\tAn SDK result without text or errors crashes Forge's result handling\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/claude_turn.py",
+      "line": 26,
+      "text": "An SDK result without text or errors crashes Forge's result handling",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
       "status": "open",
       "closed_by": null
     },
@@ -3572,17 +3616,6 @@
       "text": "Not done: add How it went when merging a pre-upgrade pull request",
       "from": "blocking",
       "item": "where-time-went",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/merge.py\tNot done: retain the Forge-merged trailer in bounded merge bodies\tFORGE-STACK-1/START",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 106,
-      "text": "Not done: retain the Forge-merged trailer in bounded merge bodies",
-      "from": "blocking",
-      "item": "FORGE-STACK-1/START",
       "status": "open",
       "closed_by": null
     },
@@ -5831,17 +5864,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
-      "kind": "bug",
-      "path": "src/forge/task.py",
-      "line": 282,
-      "text": "Not done: start refusals leave branches and worktrees untouched",
-      "from": "blocking",
-      "item": "FORGE-STACK-1/START",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/task.py\tPreserve starter attribution through normal squash merges and branch cleanup\tstart-is-claim",
       "kind": "bug",
       "path": "src/forge/task.py",
@@ -6216,6 +6238,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tCompacted rounds expose aggregate findings as individual round data\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 660,
+      "text": "Compacted rounds expose aggregate findings as individual round data",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tDeeply nested pull request records can crash board and next\tFORGE-BOARD-2/RECORD",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -6278,6 +6311,17 @@
       "text": "Not done: Current-round progress leaves the time record unbounded",
       "from": "blocking",
       "item": "pr-time-record-summaries",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Each round records its full duration in the four time groups\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 24,
+      "text": "Not done: Each round records its full duration in the four time groups",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
       "status": "open",
       "closed_by": null
     },
@@ -6546,6 +6590,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tClaude SDK workers still require a separate claude executable\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 625,
+      "text": "Claude SDK workers still require a separate claude executable",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tCoordinator guidance omits the new Claude recovery step\twork-fails-without-worker",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -6685,6 +6740,17 @@
       "text": "Not done: forge work exits with an error and names the reason and the next step whenever it starts no worker",
       "from": "blocking",
       "item": "work-fails-without-worker",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: missing-SDK refusal before state changes\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 628,
+      "text": "Not done: missing-SDK refusal before state changes",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
       "status": "open",
       "closed_by": null
     },
@@ -10682,57 +10748,24 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/time_records.py\tCompacted rounds expose aggregate findings as individual round data\tFORGE-BOARD-3/ROUNDS",
+      "key": "bug\tsrc/forge/merge.py\tNot done: retain the Forge-merged trailer in bounded merge bodies\tFORGE-STACK-1/START",
       "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 660,
-      "text": "Compacted rounds expose aggregate findings as individual round data",
+      "path": "src/forge/merge.py",
+      "line": 106,
+      "text": "Not done: retain the Forge-merged trailer in bounded merge bodies",
       "from": "blocking",
-      "item": "FORGE-BOARD-3/ROUNDS",
+      "item": "FORGE-STACK-1/START",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/time_records.py\tNot done: Each round records its full duration in the four time groups\tFORGE-BOARD-3/ROUNDS",
+      "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
       "kind": "bug",
-      "path": "src/forge/time_records.py",
-      "line": 24,
-      "text": "Not done: Each round records its full duration in the four time groups",
+      "path": "src/forge/task.py",
+      "line": 282,
+      "text": "Not done: start refusals leave branches and worktrees untouched",
       "from": "blocking",
-      "item": "FORGE-BOARD-3/ROUNDS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/claude_turn.py\tAn SDK result without text or errors crashes Forge's result handling\tFORGE-TOOLS-1/SDK",
-      "kind": "bug",
-      "path": "src/forge/claude_turn.py",
-      "line": 26,
-      "text": "An SDK result without text or errors crashes Forge's result handling",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SDK",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tClaude SDK workers still require a separate claude executable\tFORGE-TOOLS-1/SDK",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 625,
-      "text": "Claude SDK workers still require a separate claude executable",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SDK",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: missing-SDK refusal before state changes\tFORGE-TOOLS-1/SDK",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 628,
-      "text": "Not done: missing-SDK refusal before state changes",
-      "from": "blocking",
-      "item": "FORGE-TOOLS-1/SDK",
+      "item": "FORGE-STACK-1/START",
       "status": "open",
       "closed_by": null
     }
