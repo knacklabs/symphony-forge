@@ -113,7 +113,7 @@
     "id": "18966997-d69b-4d90-89af-4476bfe5a7de",
     "status": "blocked"
   },
-  "round": 6,
+  "round": 7,
   "settled_areas": [
     "src/forge/board_facts.py"
   ],
@@ -150,12 +150,12 @@
     "worker_round": 5
   },
   "stuck": {
-    "close": "f0ce2440-1b6e-4c1a-948e-74495e8451dc",
-    "head": "5594d59c49d4b954b67b6ad9d7ebdc0bde8f34e7",
+    "close": "0bea1f6a-5bac-4a02-aab6-1c01eb55fba7",
+    "head": "628845d129c5f4eb2c829da7275fce027cdb4c75",
     "keys": {
-      "the review finding \"Board still fails without GitHub CLI for ordinary git authors\" in src/forge/board_facts.py": 1
+      "the review finding \"Not done: older board history loses known pull-request logins\" in src/forge/board.py": 1
     },
-    "round": 4
+    "round": 6
   },
   "worker": "codex"
 }
