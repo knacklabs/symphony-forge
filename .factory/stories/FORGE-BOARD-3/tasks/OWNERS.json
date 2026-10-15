@@ -152,7 +152,7 @@
     "id": "6bbd8287-cd9a-449e-b3b1-17697f36ae89",
     "status": "blocked"
   },
-  "round": 9,
+  "round": 10,
   "settled_areas": [
     "src/forge/board.py",
     "src/forge/board_facts.py"
