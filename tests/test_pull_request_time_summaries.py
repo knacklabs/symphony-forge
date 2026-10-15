@@ -131,11 +131,7 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     # One fixed clock, so the part and its story measure open waits to the same instant.
     monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=5)).isoformat())
     shared = row(env.repo, item)
-    # Numeric round entries now survive text compaction. Only the retained sentences
-    # belong to the prose contract this test owns. Other folded rounds have a
-    # readable placeholder, rather than an empty board paragraph.
-    assert all(r["line"].strip() for r in shared["rounds"])
-    lines = [r["line"] for r in shared["rounds"] if not r["line"].endswith("Earlier detail folded.")]
+    lines = [r["line"] for r in shared["rounds"]]
     # The board's total time is the sum of its parts.
     parts = sum(shared[f"{kind}_seconds"] for kind in ("working", "waiting", "unknown"))
     assert abs(shared["total_seconds"] - parts) < 1
@@ -276,6 +272,7 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     assert closed.returncode == 0, closed.stdout + closed.stderr
     # Closing again once ready publishes close's saved clean review with the record.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
+    monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=30)).isoformat())
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
@@ -289,6 +286,11 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     env.repo.path = clone
     shared = row(env.repo, item)
     assert shared["rounds"][-1]["line"].startswith("Round 1: "), shared["rounds"]
-    assert shared["rounds"][-1]["seconds"] is not None, "A later close must retain the compacted round's measurements"
+    if huge == "long-titles":
+        # Owner narrowed round seconds: after lifecycle compaction, a later close
+        # must not present partial measurements as the round's full duration.
+        assert shared["rounds"][-1]["seconds"] is None
+    else:
+        assert shared["rounds"][-1]["seconds"] is not None
     assert re.search(r"review \w+ \(\d+ seconds?\)", shared["rounds"][-1]["line"])
     assert shared["rounds"][-1]["new_findings"] == (200 if huge == "long-titles" else 20)
