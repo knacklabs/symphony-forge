@@ -12,7 +12,7 @@ import pytest
 from conftest import _install
 from test_board_counts import board, github, rows
 from test_board_trends import pr
-from test_board_after_upgrade import History
+from test_board_after_upgrade import History, NOW
 from test_close import STORY_DOC, approve_story, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
@@ -120,9 +120,37 @@ def _compacted_past_work(unsynced_up, monkeypatch):
     assert (shared["approved_by"], shared["approved_by_login"]) == ("Plan Approver", None)
 
 
-@pytest.mark.parametrize("previous", [False, True, "compacted", "team", "offline-new", "offline-adopted"],
-                         ids=["new-client", "earlier-adoption", "compacted-past-work", "team-actors",
-                              "offline-new", "offline-adopted"])
+def _older_pull_request_history(unsynced_up, monkeypatch):
+    # Older completed work must retain its recorded PR people after it leaves
+    # the JSON board's recent window, with no surviving branch or local events.
+    history = History(unsynced_up, monkeypatch)
+    history.item("older-history", 21, 10, long_history=True)
+    history.publish()
+    upgraded = unsynced_up.run(RELEASE)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    assert history.record(21)["summary"], "The upgrade must compact the actual old review history"
+    assert not history.repo.git("branch", "--list", "fix/older-history")
+    history.at(NOW + timedelta(weeks=10))
+    assert "older-history" not in rows(board(history.repo))
+    before = len(history.env.gh.calls())
+    for read in range(2):
+        out = unsynced_up.tmp / f"older-history-{read}.html"
+        rendered = history.repo.forge("board", "--out", out.as_posix())
+        assert rendered.returncode == 0, rendered.stdout + rendered.stderr
+        page = out.read_text("utf-8")
+        assert "Readers see older-history" in page
+        assert "Started by Original Starter." in page
+        assert "Human Merger" in page
+    calls = history.env.gh.calls()[before:]
+    older_lists = [call for call in calls if call[:2] == ["pr", "list"]
+                   and "--search" in call
+                   and call[call.index("--search") + 1].startswith("merged:*..")]
+    assert len(older_lists) == 1, "Full history shares one cached bulk lookup for older PR people"
+
+
+@pytest.mark.parametrize("previous", [False, True, "compacted", "older-pr-history", "team", "offline-new", "offline-adopted"],
+                         ids=["new-client", "earlier-adoption", "compacted-past-work", "older-pr-history",
+                              "team-actors", "offline-new", "offline-adopted"])
 def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, previous, unsynced_up):
     if previous in ("offline-new", "offline-adopted"):
         _without_github_cli(env, monkeypatch, previous == "offline-adopted")
@@ -132,6 +160,9 @@ def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, pre
         return
     if previous == "compacted":
         _compacted_past_work(unsynced_up, monkeypatch)
+        return
+    if previous == "older-pr-history":
+        _older_pull_request_history(unsynced_up, monkeypatch)
         return
     client(env, previous)
     env.gh.respond("api", "user", stdout="viewer-dev\n")

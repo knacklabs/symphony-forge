@@ -253,6 +253,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if isinstance(pr.get("headRefName"), str):
             by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
     finished_prs = board_facts.merged_prs(github)
+    if not trim and best:
+        finished_prs.extend(board_facts.merged_before_weeks(top).values())
     # The upgrade's six-week history is visible immediately, including older finished rows.
     history = {**history, "expired": history["expired"] - {
         rel for rel, (state, _) in best.items()

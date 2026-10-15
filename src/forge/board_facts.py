@@ -128,7 +128,7 @@ def people(body: str) -> Item:
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:
     """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
-    kept for a minute. Only asked when an unfinished story has parts merged that long ago."""
+    kept for a minute. Used by the full history page and unfinished stories' older parts."""
     # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
     def fetch(now: datetime) -> list[Item] | None:
         # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
