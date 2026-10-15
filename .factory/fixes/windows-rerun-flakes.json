@@ -1,0 +1,14 @@
+{
+  "base": "241e3e8c050e58429afff4eaf379d3798323ff46",
+  "branch": "fix/windows-rerun-flakes",
+  "done_when": "The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a test that fails twice still fails the run",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-15T08:28:44.831530+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Windows full-suite runs fail a different slow test each run (timeouts, a flaky retry), so the nightly is red even when nothing is broken"
+}
