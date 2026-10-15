@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -75,6 +76,9 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
     if os.name != "nt" and not os.path.isfile(pwsh):
         pytest.skip("Real PowerShell is required; the Windows full suite supplies it")
     assert os.path.isfile(pwsh), "Install real PowerShell to prove Windows client commands"
+    # Use the active test environment's Python before PowerShell's system directory.
+    test_path = os.pathsep.join([str(Path(sys.executable).parent),
+                                 str(Path(pwsh).parent), os.environ["PATH"]])
     windows_check = None
     for runner in ("windows-latest", "ubuntu-latest", "macos-latest"):
         settings = config.replace('runner = "windows-latest"', f'runner = "{runner}"')
@@ -93,8 +97,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
                                     run.replace("${{ matrix.group }}", "6")], cwd=client,
                                    capture_output=True, text=True, encoding="utf-8",
                                    env={**os.environ, "ATTEMPT_FILE": empty_attempts.as_posix(),
-                                        "FAILURES": "0", "PATH": str(Path(pwsh).parent) +
-                                        os.pathsep + os.environ["PATH"]}, timeout=30)
+                                        "FAILURES": "0", "PATH": test_path}, timeout=30)
             assert empty.returncode == 0, empty.stdout + empty.stderr
             assert not empty_attempts.exists(), "An empty group only collects the unsplit suite"
             run = run.replace("${{ matrix.group }}", "1")
@@ -117,7 +120,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
                          [bash, "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", run])
                 executed = subprocess.run(shell, cwd=client, capture_output=True, text=True,
                                           encoding="utf-8", env={**os.environ,
-                                          "PATH": str(Path(pwsh).parent) + os.pathsep + os.environ["PATH"],
+                                          "PATH": test_path,
                                           "ATTEMPT_FILE": attempts.as_posix(),
                                           "FAILURES": str(failures), "FAILURE_MODE": mode}, timeout=30)
                 expected_attempts = 2 if runner == "windows-latest" and failures else 1
