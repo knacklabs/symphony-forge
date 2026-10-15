@@ -200,8 +200,8 @@
       "gain": 3,
       "harm": 3,
       "line": 596,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: one display name across a story and its parts moves to the BACKFILL part (plan updated); every other usernames rule is met",
       "round": 9,
       "security": false,
       "title": "Not done: a parent and part can show different names for the same approver",
@@ -214,7 +214,13 @@
     "branch_diff": "c669bd7749c49de933258115326d0418e05504683cfa4720b67b9b84b3593c86",
     "changed": "ba0a6cce48ca57dcec35d2e8ddf1f389c5e9c0d2bc5d79c1937dcb19d559d7c9",
     "commit": "db80e7941051da8916d5ffabe4edb277298c0b05",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 15 October: one display name across a story and its parts moves to the BACKFILL part (plan updated); every other usernames rule is met",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. The shared person-name table created at line 254 is reassigned to parsed task rows at line 596. On a normal story with a part, the parent can resolve an approver's email to their latest display name, while the part resolves that same approval record through the replacement table and shows an older name. This breaks the required one-display-name rule; the existing approval-history test has no part row to catch it.",
@@ -228,15 +234,16 @@
       }
     ],
     "id": "c122a0a7-0ff5-4cbd-b1f7-0060a45fd752",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 13,
   "settled_areas": [
+    "machine_board() in src/forge/board.py",
     "machine_board.row() in src/forge/board.py",
     "src/forge/board.py",
     "src/forge/board_facts.py"
   ],
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -282,9 +289,13 @@
   "stop": {
     "area": "machine_board() in src/forge/board.py",
     "at": "2026-10-15T07:39:30.974582+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "machine_board() in src/forge/board.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "62bf7d02-9b6d-466f-90f1-0fb140ebd9c5"
+    "reason": "Owner accepted on 15 October: one display name across a story and its parts moves to the BACKFILL part (plan updated); every other usernames rule is met",
+    "wait_id": "62bf7d02-9b6d-466f-90f1-0fb140ebd9c5",
+    "worker_round": 13
   },
   "stuck": {
     "close": "bd36335f-7bae-458e-8e30-fcb72b87b5cc",
