@@ -44,7 +44,9 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
     options[options.index("auto")] = "2"
     options[options.index("--durations-path") + 1] = str(ROOT / ".test_durations")
     (tmp_path / "conftest.py").write_text(
-        "import faulthandler\nfaulthandler.dump_traceback_later(5)\n", encoding="utf-8")
+        "import faulthandler, os\nfrom pathlib import Path\n"
+        "trace = open(Path(__file__).with_name(f'trace-{os.getpid()}.txt'), 'w')\n"
+        "faulthandler.dump_traceback_later(5, file=trace)\n", encoding="utf-8")
     environment = {key: value for key, value in os.environ.items()
                    if not key.startswith("PYTEST_")}
     environment["PYTHONUNBUFFERED"] = "1"
@@ -54,7 +56,8 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
                                "--basetemp", str(tmp_path / "nested")],
                               cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=60)
     except subprocess.TimeoutExpired as error:
-        raise AssertionError(f"Nested pytest timed out: {error.stdout!r}\n{error.stderr!r}") from None
+        traces = "\n".join(path.read_text() for path in tmp_path.glob("trace-*.txt"))
+        raise AssertionError(f"Nested pytest timed out: {traces}") from None
     assert done.returncode == (0 if runner == "windows-latest" and not persistent else 1), done.stdout + done.stderr
     assert (tmp_path / "attempts.txt").read_text() == ("2" if runner == "windows-latest" else "1")
     dev = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["dependency-groups"]["dev"]

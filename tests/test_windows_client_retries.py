@@ -38,6 +38,8 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup):
         (client / "forge.toml").write_text(config, encoding="utf-8")
         result = repo.forge("sync", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
+    if setup == "init":
+        repo.git("checkout", "-qb", "fix/windows-client-retries", cwd=client)
     (client / "retry_probe.py").write_text(
         "import os\nfrom pathlib import Path\n"
         "path = Path(os.environ['ATTEMPT_FILE'])\n"
