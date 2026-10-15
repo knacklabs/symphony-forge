@@ -88,7 +88,7 @@
     "id": "41ea3907-5547-4fec-b48d-ca358fd2acd1",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "settled_areas": [
     "close() in src/forge/close.py"
   ],
@@ -119,14 +119,12 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "e2ab77f2-de83-436d-a4e5-7034c3fd8519",
-    "head": "d62c46a2a302a534c46871f67c436772eec1de3d",
+    "close": "f3dd5645-bf66-468d-8fc4-afa8fa7543ea",
+    "head": "958dd3fc972137618c45196ce782080f307473c8",
     "keys": {
-      "the review finding \"A second review can leave a ready pull request showing a stale clean result\" in src/forge/close.py": 1,
-      "the review finding \"Not done: test that land publishes each close body at most once\" in tests/test_close_avoids_repeated_review_work.py": 1,
-      "the review finding \"The timed default choice immediately recreates an unanswered stop\" in src/forge/close.py": 1
+      "the review finding \"Not done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,\" in src/forge/close.py": 1
     },
-    "round": 2
+    "round": 3
   },
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
   "worker": "codex"
