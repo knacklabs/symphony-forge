@@ -39,11 +39,11 @@ def review_round(env, item, where, number):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgraded"])
-@pytest.mark.parametrize("phase", ["review", "story-read", "spec-read"])
+@pytest.mark.parametrize("phase", ["review", "remote-review", "story-read", "spec-read"])
 def test_1_next_asks_the_owner_after_two_blocked_rounds(env, tmp_path, previous, phase):
     item, where = client_item(env, tmp_path, previous)
     client_where = where
-    if phase == "review":
+    if phase in ("review", "remote-review"):
         review_round(env, item, where, 1)
         first = env.repo.forge("next")
         assert first.returncode == 0, first.stderr
@@ -87,6 +87,14 @@ def test_1_next_asks_the_owner_after_two_blocked_rounds(env, tmp_path, previous,
                             "one question at a time", "options and a recommendation",
                             "builder details", "one focused round"):
             assert instruction in guide
+    if phase == "remote-review":
+        # Keep only the published fix branch under its original name, as on another machine.
+        env.repo.git("worktree", "remove", str(where))
+        env.repo.git("branch", "-m", f"fix/{item}", f"worker/{item}")
+        remote = env.repo.forge("next")
+        assert remote.returncode == 0, remote.stderr
+        assert_owner_question(remote.stdout)
+        assert "runs on their machine" not in remote.stdout
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgraded"])
