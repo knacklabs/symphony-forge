@@ -113,6 +113,9 @@
     "status": "blocked"
   },
   "round": 4,
+  "settled_areas": [
+    "src/forge/review.py"
+  ],
   "status": "fixing",
   "steps": [
     {
@@ -134,8 +137,12 @@
   ],
   "stop": {
     "at": "2026-10-15T09:23:48.425220+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/review.py",
-    "wait_id": "c559721d-3c09-41e0-9f05-6edbf8ed41aa"
+    "reason": "Owner: fix only the stuck next step after an answered stop question (src/forge/review.py). The circular next step for dependent parts is out of scope; the merged stack-circular-next fix on main covers it.",
+    "wait_id": "c559721d-3c09-41e0-9f05-6edbf8ed41aa",
+    "worker_round": 4
   },
   "stuck": {
     "close": "e1e7afdd-1ecb-4165-bcdd-d930188a7ada",
