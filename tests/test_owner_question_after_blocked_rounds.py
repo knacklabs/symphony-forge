@@ -31,7 +31,9 @@ def assert_owner_question(text):
 def review_round(env, item, where, number):
     # Distinct areas and findings reproduce a missing rule without the existing same-file hold.
     env.commit(where, "app.py", f"print('round {number}')\n")
-    env.reviews(blocked(finding("P1", TITLES[number - 1], f"docs/round-{number}.md")))
+    path = f"docs/round-{number}.md"
+    env.commit(where, path, f"Round {number} repair\n")
+    env.reviews(blocked(finding("P1", TITLES[number - 1], path)))
     result = env.close(item)
     assert result.returncode == 1, result.stdout + result.stderr
     assert len(env.review_calls()) == number
@@ -120,6 +122,7 @@ def test_3_hard_stop_keeps_the_owner_question_and_resolution_step(env, tmp_path,
     titles = (*TITLES, "Checkout loses the total")
     for number, title in enumerate(titles, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        env.commit(where, "README.md", f"Round {number} repair\n")
         # Three distinct low-Harm findings in one area still need the owner's choice.
         env.reviews(blocked(finding("P1", title, "README.md")))
         stopped = env.close(item)

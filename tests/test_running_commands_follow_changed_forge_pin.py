@@ -207,7 +207,7 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     upgraded = original.replace('version = "v1.2.2"',
         f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
     env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN,
-                blocked(finding("P1", "The greeting is too long")), CLEAN)
+                blocked(finding("P1", "The greeting is too long", "work-2.txt")), CLEAN)
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")

@@ -55,7 +55,11 @@ def _rounds(env, case):
     if case == "finding then test":  # the worker fixes the finding, and a test then fails
         env.reviews(blocked(finding("P1", "Saving drops the greeting")), CLEAN)
     if case == "fail pass fail":  # a new finding each close keeps the closes failing
-        env.reviews(*(blocked(finding("P1", f"Defect {n}")) for n in (1, 2, 3)))
+        # The SDK worker adds work-N.txt each round. Cite that round's new file so
+        # these distinct findings exercise progress rather than unchanged-code advice.
+        env.reviews(*(blocked(finding("P1", f"Defect {n}",
+                                     "app.py" if n == 1 else f"work-{n - 1}.txt"))
+                      for n in (1, 2, 3)))
     if case not in ("finding", "no change"):
         script = env.tmp / "suite.py"
         script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")

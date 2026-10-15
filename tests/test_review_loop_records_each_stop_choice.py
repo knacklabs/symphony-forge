@@ -51,10 +51,12 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
     for cycle, choice in enumerate((first, second)):
         # Keep the any-file case from hitting the same-file rule across cycles.
         if cycle and not same_file:
-            paths = ["README.md", ".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md"]
+            paths = ["README.md", "docs/second-check.md", "docs/third-check.md"]
         for offset, path in enumerate(paths, 1):
             number = cycle * 3 + offset
             env.commit(where, "app.py", f"print('round {number}')\n")
+            contents = (where / path).read_text("utf-8") if (where / path).exists() else ""
+            env.commit(where, path, f"# Review round {number}\n" + contents)
             # Harm 3 holds by the bar, also on the area the first choice settled.
             env.reviews(blocked({**finding("P1", f"New defect {number}", path),
                                  "body": "Gain 3, Work 2, Harm 3\nEvidence"}))

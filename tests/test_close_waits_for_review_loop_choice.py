@@ -94,16 +94,16 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert checked.returncode == 0, checked.stderr
         # An upstream edit outside this branch's diff no longer gets merged by close, so its
         # accepted review stays valid until the worker changes the branch itself.
-        env.commit(env.repo.path, "src/a.py", "print('upstream change')\n")
+        env.commit(env.repo.path, "NEWS.md", "Unrelated upstream change\n")
         env.repo.git("push", "-q", "origin", "main")
         env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py")))
         changed_base = env.close(item)
         assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
         assert len(env.review_calls()) == before
-        assert (where / "src/a.py").read_text("utf-8") == "pass\n"
+        assert (where / "src/a.py").read_text("utf-8") == "pass  # review round 3\n"
     # Narrow and split now need worker changes before another close. An unchanged retry
     # opens a new stop question, covered by the unchanged-work regression.
-    env.commit(where, "app.py", "print('human choice implemented')\n")
+    env.commit(where, "src/a.py", "pass  # human choice implemented\n")
     # An accepted finding comes back only as a disputed keep with new evidence of harm.
     title = "Disputed keep 1: Round 3 defect loses saved baskets" if choice == "accept" else "A new defect"
     # The choice settled src/a.py's area, where only Harm 3 or more at the bar still holds work.
@@ -123,9 +123,11 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert env.close(item).returncode == 1
     evidence = "src/a.py:1 Proven harmless"
     assert env.close(item, "--dismiss", "1", "--because", evidence).returncode == 0
-    defect = finding("P1", "Unfixed defect", "src/a.py")
+    defect = finding("P1", "Unfixed defect", "src/a.py", line=2)
     for number in (2, 3):
         env.commit(where, "app.py", f"print({number})\n")
+        if number == 2:
+            env.commit(where, "src/a.py", "pass\npass  # unfixed defect\n")
         env.reviews(blocked(safe, defect))
         assert env.close(item).returncode == 1
     reason = "The human accepts this risk for this version"
@@ -140,7 +142,7 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert reviewed.returncode == 0, reviewed.stderr
     assert len(env.review_calls()) == before + 1
     prompt = env.prompt()
-    assert "Unfixed defect (src/a.py:1): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
+    assert "Unfixed defect (src/a.py:2): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
     # The owner's acceptance reaches the reviewer as known and accepted, not as a ruling.
     known = prompt.split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert f"Unfixed defect (src/a.py): accepted by the owner: Human accepted the remaining finding: {reason}" in known

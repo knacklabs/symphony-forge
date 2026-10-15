@@ -7,6 +7,11 @@ including findings already fixed or dismissed. Do not reopen them with the same 
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
 
+From the second review round, close checks the previous round's findings and the lines changed
+since that review. New findings on unchanged lines become visible follow-ups, except security
+or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
+item (the fix's Done-when line); builder details are guidance and never block as `Not done`.
+
 You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
 
@@ -35,6 +40,8 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges through Forge.
+If a base exists only on this machine, finish its work and run `forge close <base>` to publish
+and review it before you start a part on top of it.
 
 $delegation
 - Edit files only inside this checkout.

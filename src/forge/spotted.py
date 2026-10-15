@@ -227,9 +227,9 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
                 add(found[1], path, int(found[3]), found[4], "worker")
     for finding in result.get("findings", []):
         title = finding["title"]
-        if finding["priority"] in ("P2", "P3") and not title.startswith("Later:"):
+        if (finding.get("follow_up") or finding["priority"] in ("P2", "P3")) and not title.startswith("Later:"):
             kind = ("simplify" if title.startswith("Simpler")
-                    else "edge" if finding["priority"] == "P2" else "improve")
+                    else "edge" if finding.get("follow_up") or finding["priority"] == "P2" else "improve")
             add(kind, finding["file"], finding["line"], title, "review")
     for _, finding in review.blocking(result):
         add("simplify" if finding["title"].startswith("Simpler") else "bug", finding["file"],

@@ -1205,6 +1205,14 @@ on the changed code still blocks under its own Raise line.
 
 ## Closing
 
+From the second review round, close checks the previous round's findings and the lines changed
+since that review. The reviewer says fixed or not fixed for each previous finding. New findings
+on unchanged lines become visible follow-ups, except security or data loss, which still block.
+`Not done` blocks only against a numbered owner-approved Done-when item (a fix uses its Done-when
+line). Builder details, Notes and implementation guidance never block as `Not done`.
+New repos get this guide on init; existing repos, including earlier adopted repos, get it on
+upgrade and sync. Close applies the same boundary in every repo.
+
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
 recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
 count, so an upgrade fix needs no allowance. You may run `forge fix allow-large "<reason>"`
@@ -1233,7 +1241,8 @@ test against its own run and writes the list with only the tests it ran and thei
 check with its result. Forge copies the list into the pull request and the review prompt. The first review checks the whole list, not a sample: Check every
 entry against the code and its named proof, including every Done-when detail. Compare it with the
 covered items so omitted entries cannot hide gaps; report every missing case in that one round,
-even when a finding already blocks. Keep the whole list current and repeat the check on later rounds.
+even when a finding already blocks. Keep the whole list current; later reviews check repairs and
+newly changed lines under the boundary above.
 When a Done-when item's named proof is a pull request check that has not finished yet, do not
 report it as `Not done` if the check is configured to run on the pull request. Close's checks
 gate holds the merge until that check passes. A failed check or a proof with no check behind
@@ -1475,6 +1484,9 @@ table from `forge next` or close: list the findings, name the pattern, and ask t
 question at a time with options and a recommendation until the missing rule is settled.
 Write that rule into the plan's builder details, then send one focused round. This owner question
 applies at every score. The coordinator asks. The owner decides. The coordinator records the choice.
+For a review's second-round question, commit the answer in the item's plan or builder guidance
+(`plans/`, `docs/`, or `README.md`) on its work branch. `forge next` then shows the work step again.
+Code-only changes and cold-read notes do not record an answer. A hard stop still needs its resolve choice.
 Keep the existing three-round hard stops below; record a resolve choice
 only after a command stops the loop.
 

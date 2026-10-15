@@ -334,8 +334,9 @@ def _three_blocked_reviews_hold_the_fourth(env):
     where = _fix(env, "working", worked=True)
     # A new Harm 3 finding each round, each in a file of its own: the same one twice would stop
     # the worker sooner, and three in one file would stop by area.
-    env.reviews(*(blocked({**finding("P1", f"Saving drops the greeting, case {n}", f"docs/{n}.md"),
-                           "body": "Gain 3, Work 2, Harm 3\nEvidence"}) for n in (1, 2, 3)))
+    env.reviews(*(blocked({**finding("P1", f"Saving drops the greeting, case {n}", file),
+                           "body": "Gain 3, Work 2, Harm 3\nEvidence"})
+                  for n, file in enumerate(("app.py", "work-1.txt", "work-2.txt"), 1)))
     asked = _land(env)
     assert asked.returncode == 1 and "ask the owner" in asked.stderr
     assert len(env.review_calls()) == 2
@@ -352,7 +353,7 @@ def _three_blocked_reviews_hold_the_fourth(env):
     assert _steps(done) == [f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     lines = done.stderr.splitlines()
     assert [lines[-11], lines[-1]] == [
-        f"Review round 4 of {ITEM} still finds serious problems in docs/3.md, which an earlier "
+        f"Review round 4 of {ITEM} still finds serious problems in work-2.txt, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
         "to narrow the part, split it, or accept the remaining findings, in these words:",
         f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"']
@@ -391,7 +392,7 @@ def _blocked_red_blocked_red(env):
     _fix(env, "working", worked=True)
     # The clean second review settles the greeting defect; round three finds a new one.
     env.reviews(blocked(BLOCKER), CLEAN,
-                blocked(finding("P1", "Saving loses the reader name")), CLEAN)
+                blocked(finding("P1", "Saving loses the reader name", "work-2.txt")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     done = _land(env)
@@ -410,7 +411,7 @@ def _session_rounds_count_across_reruns(env, monkeypatch):
     monkeypatch.setenv("CLAUDECODE", "1")
     where = _fix(env, "working", worked=True)
     env.reviews(blocked(BLOCKER), CLEAN,
-                blocked(finding("P1", "Saving loses the reader name")), CLEAN)
+                blocked(finding("P1", "Saving loses the reader name", "round-2.txt")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     host = Session(env.repo, env.tmp / "host", "claude-session")
@@ -444,6 +445,7 @@ def _default_stop_shows_the_question_while_it_waits(env):
         assert env.close(ITEM).returncode == 1
     # After the second-round ask, the owner settles the missing rule before this focused round.
     env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    env.commit(where, "app.py", "print('focused repair')\n", "Repair the greeting")
     shim = env.repo.bin / "forge"
     clock = """import os, time
 from datetime import datetime, timedelta, timezone
@@ -469,9 +471,10 @@ time.sleep = advance
 
 def _findings_after_three_rounds_ask_a_question(env):
     _fix(env, "working", worked=True)
-    # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
-    env.reviews(blocked(BLOCKER), CLEAN, blocked(BLOCKER),
-                blocked({**finding("P1", "Saving loses the reader name"),
+    # Clean reviews with red checks spend the remaining repair budget without
+    # the two-consecutive-blocked owner question taking precedence over land's stop.
+    env.reviews(blocked(BLOCKER), CLEAN, CLEAN,
+                blocked({**finding("P1", "Saving loses the reader name", "work-3.txt"),
                          "body": "Gain 4, Work 2, Harm 1\nA returning reader at `src/save.py:9` sees no name. More."}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)

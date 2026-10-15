@@ -1,7 +1,7 @@
 """One review round: Autoreview over the branch in a read-only checkout, and its committed result.
 
 Autoreview is a third-party black box. Forge reads only the fields it uses (each finding's
-priority, title, body and code_location, in findings and scope_rejected_findings, then
+priority, title, body, category and code_location, in findings and scope_rejected_findings, then
 review_status and overall_correctness) and ignores everything else it writes. The body's first
 line carries the reviewer's Gain, Work and Harm scores (see score.py).
 """
@@ -252,6 +252,14 @@ def loop_advice(top: Path, item: str, ref: str = "HEAD") -> list[str]:
     state = json.loads(repo.git("show", f"{ref}:{repo.state_path(item)}", cwd=top))
     if (state.get("stop") or {}).get("choice"):
         return []  # The recorded rule governs further work until close stops the loop again.
+    if not state.get("stop") and any(
+            path.endswith(".md") and not path.endswith(".read.md") and
+            not path.startswith("plans/spotted/")
+            for path in repo.git("diff", "--name-only", "-z", state["review"]["commit"], ref,
+                                 "--", "plans/", "docs/", "README.md", cwd=top).split("\0")):
+        # A committed plan or builder-guidance edit answers the soft question.
+        # A new review resets this comparison; an unresolved hard stop still needs a choice.
+        return []
     history = _history(top, item, f"origin/{repo.default_branch(top)}", {}, ref)
     return owner_advice([(number, [f["title"] for f in result.get("findings", [])])
                          for number, result in enumerate(history, 1)])
@@ -375,7 +383,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
             scope=_bullets(scope), tests=_bullets(tests),
             outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)),
-            covered=_bullets(story.item(parsed, n, True) for n in parsed["done"] if n in covers),
+            covered=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n in covers),
+            guidance=_bullets(parsed["details"][n] for n in covers if n in parsed["details"]),
             context=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
             moving_parts=moving_parts(doc_text))
@@ -388,7 +397,11 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
-    return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+    prompt = "\n\n".join(blocks[name].substitute(values) for name in chosen)
+    if previous.get("commit"):
+        prompt += "\n\n" + blocks["repair-review"].substitute(
+            reviewed=previous["commit"], findings=_previous(previous))
+    return prompt
 
 
 def close_test(top: Path, base: str, *, closing: bool = True) -> str:
@@ -663,6 +676,9 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
         for finding in score.open_findings(result):
             if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
+            if finding.get("follow_up"):
+                settled.setdefault(score.identity(finding["file"], finding["title"]),
+                                   "known: follow-up outside this review's boundary")
         accepted = set()
         for dismissal in result.get("dismissals", []):
             finding = result["findings"][dismissal["finding"] - 1]
@@ -899,7 +915,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         else:
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
-            review_base = repo.git("rev-parse", base, cwd=tree)
+            review_base = previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
             prompt += _hide_generated(tree, repo.git("merge-base", review_base, head, cwd=tree), head)
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
@@ -955,6 +971,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
     findings = [finding for finding in findings if not settled.get(
         score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
+    _bound_findings(top, item, state, previous, head, findings)
     dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because "), "carried": True}
                   for number, finding in enumerate(findings, 1)
                   if (reason := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
@@ -969,6 +986,51 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     return {"id": identity, "commit": head, **result,
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
+
+
+def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[str, Any],
+                    head: str, findings: list[dict[str, Any]]) -> None:
+    """Keep advice visible without letting a fresh review widen the approved work."""
+    from forge import story
+
+    def sentence(text: str) -> str:
+        text = re.sub(r"^\d+[.)]\s*", "", text.replace("**", "").replace("`", "").strip())
+        return " ".join(text.casefold().split()).rstrip(".")
+
+    if "/" in item:
+        text, _, row = task(top, item)
+        doc = story.parse(text)
+        covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
+        approved = {sentence(doc["done"][n]) for n in covers if n in doc["done"]}
+    else:
+        approved = {sentence(str(state.get("done_when", "")))}
+    old = {score.identity(f["file"], f["title"]) for f in previous.get("findings", [])}
+    diffs = {}
+    for finding in findings:
+        # Security and data loss remain in scope even on unchanged code.
+        if any(pattern.search(finding["body"]) for pattern, _ in score.FLOORS[:2]):
+            continue
+        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
+        missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        reason = ""
+        if missed and sentence(missed[1]) not in approved:
+            reason = "Not done names no owner-approved Done-when item; builder details are guidance."
+        elif previous.get("commit") and score.identity(finding["file"], finding["title"]) not in old:
+            path = finding["file"]
+            if path not in diffs:
+                diff = repo.run("git", "--literal-pathspecs", "diff", "--no-ext-diff", "--no-color",
+                                "--no-renames", "-U0", previous["commit"], head, "--", path, cwd=top)
+                diffs[path] = None if diff.returncode else [
+                    (int(start), int(count or 1)) for start, count in re.findall(
+                        r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", diff.stdout, re.M)]
+            hunks = diffs[path]
+            line = finding["line"]
+            if hunks is not None and not any(
+                    start <= int(line) < start + count for start, count in hunks
+                    if str(line).isdigit()):
+                reason = "New finding on lines unchanged since the previous review."
+        if reason:
+            finding["follow_up"] = reason
 
 
 def _hide_generated(tree: Path, start: str, head: str) -> str:
@@ -1096,7 +1158,12 @@ def _finding(raw: Any) -> dict[str, Any] | None:
     if not isinstance(where, dict) or raw.get("priority") not in PRIORITIES:
         return None
     title = str(raw.get("title", ""))
-    scores, body = score.normalise(title, str(raw.get("body", "")))
+    body = str(raw.get("body", ""))
+    category = str(raw.get("category", "")).strip().casefold().replace("_", " ").replace("-", " ")
+    if category in ("security", "data loss") and not any(
+            name == category and pattern.search(body) for pattern, name in score.FLOORS[:2]):
+        body += f"\nRaise: {category.capitalize()}"
+    scores, body = score.normalise(title, body)
     if not scores:  # a new finding must carry its score line
         return None
     return {"priority": raw["priority"], "title": title, "body": body,
