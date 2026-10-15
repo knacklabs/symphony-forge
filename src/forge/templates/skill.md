@@ -1469,6 +1469,14 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
+From the second blocked cold-read or review round on the same item, stop sending rounds and ask
+the owner to settle the missing rule, even when each round finds a new problem. Use the round
+table from `forge next` or close: list the findings, name the pattern, and ask the owner one
+question at a time with options and a recommendation until the missing rule is settled.
+Write that rule into the plan's builder details, then send one focused round. This owner question
+applies at every score. Keep the existing three-round hard stops below; record a resolve choice
+only after a command stops the loop.
+
 Close holds the fourth review after three blocked rounds only when a finding at the bar comes
 back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the
 third round.

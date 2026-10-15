@@ -396,13 +396,18 @@ def close(args: argparse.Namespace) -> int:
         for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    advice = review.loop_advice(top, item) if serious else []
+    if advice:
+        print("\n".join(advice if stopped else advice[:-1]), file=sys.stderr)
     if failed and not stopped:
-        repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
+        refusal = (REFUSALS["tests_failed"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["tests_failed"]
+        repo.refuse(refusal, command=command, item=item)
     if serious:
         if stopped:
             repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
                         question=review.stop_question(top, item, state), **stopped)
-        repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
+        refusal = (REFUSALS["blocked"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["blocked"]
+        repo.refuse(refusal, item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
@@ -514,6 +519,8 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
         if default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
+        if advice := review.loop_advice(top or _worktree(item), item):
+            print("\n".join(advice), file=sys.stderr)
         repo.refuse(REFUSALS["hotspot"], item=item,
                     question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
