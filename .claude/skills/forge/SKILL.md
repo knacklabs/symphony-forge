@@ -1484,6 +1484,9 @@ table from `forge next` or close: list the findings, name the pattern, and ask t
 question at a time with options and a recommendation until the missing rule is settled.
 Write that rule into the plan's builder details, then send one focused round. This owner question
 applies at every score. The coordinator asks. The owner decides. The coordinator records the choice.
+For a review's second-round question, commit the answer in the item's plan or builder guidance
+(`plans/`, `docs/`, or `README.md`) on its work branch. `forge next` then shows the work step again.
+Code-only changes and cold-read notes do not record an answer. A hard stop still needs its resolve choice.
 Keep the existing three-round hard stops below; record a resolve choice
 only after a command stops the loop.
 

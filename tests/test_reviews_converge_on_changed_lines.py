@@ -123,3 +123,65 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
         shown = body(env.gh_calls("pr", "edit")[-1])
         assert "Follow-ups:" in shown and note["title"] in shown
         assert "blocks the merge" not in shown
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+@pytest.mark.parametrize("kind", ["fix", "task"])
+def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, adopted, kind):
+    client(env, adopted)
+    if kind == "task":
+        item, where = env.start_approved_task(NEW)
+    else:
+        item, where = env.start_fix()
+        env.commit(where, "docs/implementation.md", "# Builder guidance\n\nSave the greeting.\n")
+    synced(env, where)
+    for number, title in enumerate(("Saving drops quantities", "Saving drops discounts"), 1):
+        env.commit(where, "app.py", f"print('saving repair {number}')\n")
+        env.reviews(blocked(finding("P1", title)))
+        closed = env.close(item)
+        assert closed.returncode == 1 and title in closed.stderr, closed.stdout + closed.stderr
+    assert len(env.review_calls()) == 2
+
+    question = "Stop sending rounds and ask the owner to settle the missing rule."
+    asked = env.repo.forge("next")
+    assert asked.returncode == 0, asked.stdout + asked.stderr
+    assert question in asked.stdout
+    assert "Saving drops quantities" in asked.stdout and "Saving drops discounts" in asked.stdout
+
+    # A code edit alone does not answer the owner's question.
+    env.commit(where, "app.py", "print('another saving repair')\n")
+    unanswered = env.repo.forge("next")
+    assert unanswered.returncode == 0, unanswered.stdout + unanswered.stderr
+    assert question in unanswered.stdout
+
+    rule = "Owner rule: Saving keeps every basket line and its quantity."
+    if kind == "task":
+        plan = "plans/SHOP.md"
+        text = (where / plan).read_text("utf-8")
+        anchor = "Tests save a two-line basket through the app."
+        assert anchor in text
+        env.commit(where, plan, text.replace(anchor, anchor + " " + rule), "Record the owner's saving rule")
+    else:
+        env.commit(where, "docs/implementation.md", "# Builder guidance\n\n" + rule + "\n",
+                   "Record the owner's saving rule")
+    answered = env.repo.forge("next")
+    assert answered.returncode == 0, answered.stdout + answered.stderr
+    assert question not in answered.stdout, answered.stdout
+    assert f"Next: forge work {item}" in answered.stdout, answered.stdout
+    assert len(env.review_calls()) == 2
+    for host in (".codex", ".claude"):
+        guide = " ".join((where / host / "skills/forge/SKILL.md").read_text("utf-8").split())
+        assert "`forge next` then shows the work step again." in guide
+        assert "A hard stop still needs its resolve choice." in guide
+
+    # The focused review may reach the genuine same-file stop. A later guidance
+    # edit cannot substitute for the owner's explicit hard-stop resolution.
+    env.reviews(blocked(finding("P1", "Saving drops names")))
+    stopped = env.close(item)
+    resolve = f"forge close {item} --resolve <narrow|split|accept>"
+    assert stopped.returncode == 1 and resolve in stopped.stderr, stopped.stdout + stopped.stderr
+    path = "plans/SHOP.md" if kind == "task" else "docs/implementation.md"
+    env.commit(where, path, (where / path).read_text("utf-8") + "\nKeep the owner's rule.\n")
+    held = env.repo.forge("next")
+    assert held.returncode == 0 and resolve in held.stdout, held.stdout + held.stderr
+    assert len(env.review_calls()) == 3
