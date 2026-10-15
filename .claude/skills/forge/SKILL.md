@@ -1499,6 +1499,8 @@ When no review input changed and the same serious findings remain, close goes st
 owner's stop question without a push or another review, including after bookkeeping-only commits.
 A close run publishes the pull request body at most once. A new PR opens after review and starts
 CI; its next close refreshes the CI history. An existing PR publishes after the check wait.
+If main changes during checks after close published the body, close returns the PR to a draft
+and asks you to run close again to review the merged changes.
 Sync in a task worktree keeps the Forge version pin unchanged.
 New repos get these rules at init; existing repos, including earlier adoptions, get them on upgrade
 and sync.

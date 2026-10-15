@@ -48,6 +48,8 @@ REFUSALS = {
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "stale_dismiss": ("The branch changed since the review those finding numbers came from.",
                       "forge close {item}"),
+    "changed_after_checks": ("The default branch changed during checks. The merged changes need a review "
+                             "before this pull request is ready.", "forge close {item}"),
     "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
                      "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "no_such_base_line": ("{where} is not a line of the base commit, so it can't prove a finding "
@@ -92,7 +94,7 @@ def close(args: argparse.Namespace) -> int:
     from forge.merge import ENABLE
 
     item = args.item
-    body_published = getattr(args, "body_published", False)
+    body_published = False
     top = _worktree(item)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
@@ -171,7 +173,7 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         done = _merged(top, item)
         if retried_history or backfill.upgrade_fix(top, item, state):
-            backfill.run(top, exclude_branch=branch if body_published else "")
+            backfill.run(top)
         return done
 
     previous = state.get("review") or {}
@@ -187,12 +189,11 @@ def close(args: argparse.Namespace) -> int:
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
                 repo.record_event(top, item, "owner wait start", reason="merge conflict")
             _push(top, branch)
-            if not body_published:
-                if pr:  # keep its review block; only the shared time record changes
-                    _refresh_record(top, item, state, pr)
-                else:
-                    _publish(top, item, state, branch, default, pr,
-                             {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
+            if pr:  # keep its review block; only the shared time record changes
+                _refresh_record(top, item, state, pr)
+            else:
+                _publish(top, item, state, branch, default, pr,
+                         {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
         raise
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
@@ -257,7 +258,9 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if fresh and review.blocking(result) and not dismissals and choice != "accept":
+    stop = state.get("stop") or {}
+    if (fresh and review.blocking(result) and not dismissals and choice != "accept"
+            and not (stop.get("choice") and stop.get("worker_round") == state.get("round"))):
         state.update(stop={"file": review.blocking(result)[0][1]["file"],
                            "round": round_number, "at": repo.now(), "unchanged": True}, status="hotspot")
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
@@ -279,8 +282,7 @@ def close(args: argparse.Namespace) -> int:
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         _push(top, branch)  # every machine's board sees the stop
-        if not body_published:
-            _refresh_record(top, item, state, pr)
+        _refresh_record(top, item, state, pr)
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.proof_list(top, f"origin/{default}"))
@@ -452,10 +454,13 @@ def close(args: argparse.Namespace) -> int:
     pr = _pull_request(top, branch) or pr
     _merge_default(top, item, branch, default, pr)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
+        if body_published:
+            _draft(top, "pr", "ready", str(pr["number"]), "--undo")
+            _push(top, branch)
+            repo.refuse(REFUSALS["changed_after_checks"], item=item)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
                         accepted=choice == "accept", before=getattr(args, "pin_before", None))
         again = argparse.Namespace(**vars(args))
-        again.body_published = body_published
         again.dismiss = again.because = again.resolve = again.reason = None
         return close(again)
     merge = merger(top, state)
