@@ -75,7 +75,7 @@
     "id": "49130adf-22a7-4ffb-b8e0-e31e96c41515",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -92,13 +92,12 @@
     }
   ],
   "stuck": {
-    "close": "bab46e90-e522-4151-996c-26360be86fc5",
-    "head": "4b339e2510927231a49602a01be7b642a43bbffe",
+    "close": "fbe362fb-c08e-42c2-9b0b-4745b3035209",
+    "head": "ad57a08fe3a394997d291f4a20a669e8aa1687ba",
     "keys": {
-      "the review finding \"Not done: assigned parts come first across stories\" in src/forge/nextstep.py": 1,
-      "the review finding \"Not done: fetched second-clone next-order test\" in tests/test_assign.py": 1
+      "the review finding \"Not done: local Owner edits take precedence after a fetch\" in src/forge/task.py": 1
     },
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
