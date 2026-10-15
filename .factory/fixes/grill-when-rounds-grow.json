@@ -34,7 +34,7 @@
       "gain": 3,
       "harm": 3,
       "line": 911,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -47,7 +47,7 @@
       "gain": 3,
       "harm": 3,
       "line": 401,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -57,37 +57,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "18b8cc84261dba41ae26bc81e70f304ed1efdea59b60e6682b0f0cc8a31802d5",
-    "changed": "a304f66713bbb4c15ac4973f4a5af9882f3c70ef75dc5929920ebf2648b223e0",
-    "commit": "3dac165cace8c4e9a373ccad843903ed7fd84fb8",
+    "branch_diff": "945c810b95dec4165bf27af9bc92107af4a9ec07d7063155cefa226770a96eb3",
+    "changed": "f02507fbeaac3d09626a17ffb9fd7aa5edc58d8400a5fdda29ec604f1574bc56",
+    "commit": "710ebd107a1ebfcd23b93474bb36d7c59e699717",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. After a third blocked review triggers a hard stop, a remote item with no local worktree returns the new owner advice here before reaching the `state.stop` branch at lines 915\u2013925. `forge next` says to send a focused round but omits the hard-stop question and the required `forge close --resolve` step. `close.check_stop` refuses that round until a choice is recorded. The new remote test covers two rounds, before this conflict occurs.",
-        "file": "src/forge/nextstep.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 911,
-        "priority": "P1",
-        "title": "Remote hard stops hide the required resolution step",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. With three distinct blocking findings in one area, all scored Harm 1 or 2, close prints the new instruction to ask the owner, then its hard-stop question says to settle the choice yourself and tell the owner afterward (`review.stop_question` uses `score.who`). The shipped guide repeats both instructions at lines 1472\u20131477 and 1510\u20131515. This reachable third-round case leaves the coordinator with opposite directions about whether to ask the owner before another round.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 401,
-        "priority": "P1",
-        "title": "Third-round output gives conflicting instructions about who decides",
-        "work": 2
-      }
-    ],
-    "id": "33e25866-54b4-4bf7-90a2-1609633d964e",
-    "status": "blocked"
+    "findings": [],
+    "id": "d3a5e93f-74dd-4da7-bc52-2251563f5a5e",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T05:40:36.668830+00:00",
@@ -99,6 +78,10 @@
     },
     {
       "at": "2026-10-15T06:36:10.417387+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T07:55:45.102125+00:00",
       "step": "review"
     }
   ],
