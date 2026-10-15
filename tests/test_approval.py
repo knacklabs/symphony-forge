@@ -39,7 +39,10 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= set(read)
     assert any(path.startswith(".factory/") for path in committed)
     shown = repo.forge("next").stdout
-    assert "Next: forge task start SHOP/SAVE" in shown and "SHOP/SHOW" not in shown
+    # Stacking names the dependent part's blocker; approval still offers only SAVE.
+    assert "Next: forge task start SHOP/SAVE" in shown
+    assert "Next: forge task start SHOP/SHOW" not in shown
+    assert "SHOP/SHOW builds on SHOP/SAVE, which hasn't started yet." in shown
 
     # Codex: a completed request_user_input that follows the contract records it the same way.
     recorded = hook(repo, codex_question(codex_payload, _digest(repo)))

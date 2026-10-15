@@ -204,6 +204,9 @@ def _fix(env, monkeypatch, slug: str, day: int, files: dict[str, str], status: s
     (env.tmp / f"reviews-fix-{slug}.json").write_text(json.dumps([answer]), "utf-8")
     for path, text in files.items():
         (where / path).write_text(text, encoding="utf-8")
+    if state.get("review"):
+        # Saved reviews name their real reviewed commit, as close's history reader requires.
+        state["review"].setdefault("commit", env.repo.git("rev-parse", "HEAD", cwd=where))
     record = where / ".factory" / "fixes" / f"{slug}.json"
     record.write_text(json.dumps({**json.loads(record.read_text("utf-8")), "status": status, **state}),
                       encoding="utf-8")

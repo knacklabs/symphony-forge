@@ -235,6 +235,28 @@ def blocked_rounds(top: Path, item: str, ref: str = "HEAD") -> tuple[int, str | 
     return len(seen), since
 
 
+def owner_advice(rounds: list[tuple[Any, list[str]]]) -> list[str]:
+    """Show the history that lets the owner settle the rule behind repeated blocked rounds."""
+    rows = [f"| {number} | " + ("; ".join(plain(title).replace("|", r"\|") for title in titles)
+                               or "No findings.") + " |" for number, titles in rounds]
+    return ["Stop sending rounds and ask the owner to settle the missing rule. "
+            "The coordinator asks. The owner decides. The coordinator records the choice.",
+            "| Round | Finding titles |", "|---|---|", *rows,
+            "Next: list the findings, name the pattern, and ask one question at a time with options "
+            "and a recommendation. Write the rule into the plan's builder details, then send one focused round."]
+
+
+def loop_advice(top: Path, item: str, ref: str = "HEAD") -> list[str]:
+    if blocked_rounds(top, item, ref)[0] < 2:
+        return []
+    state = json.loads(repo.git("show", f"{ref}:{repo.state_path(item)}", cwd=top))
+    if (state.get("stop") or {}).get("choice"):
+        return []  # The recorded rule governs further work until close stops the loop again.
+    history = _history(top, item, f"origin/{repo.default_branch(top)}", {}, ref)
+    return owner_advice([(number, [f["title"] for f in result.get("findings", [])])
+                         for number, result in enumerate(history, 1)])
+
+
 def area(top: Path, commit: str, file: str, line: Any) -> str:
     """A finding's area: the qualified name of the innermost Python def holding its line at the
     commit, else (another language, no parse, a line outside every def) the file."""
@@ -615,11 +637,12 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
     return _bullets(found)
 
 
-def _history(top: Path, item: str, base: str, previous: dict[str, Any]) -> list[dict[str, Any]]:
+def _history(top: Path, item: str, base: str, previous: dict[str, Any],
+             ref: str = "HEAD") -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = repo.state_path(item)
     rounds = {}
-    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..HEAD", "--", path,
+    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..{ref}", "--", path,
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         if result.get("commit"):  # one per round: two rounds at one commit differ in their findings

@@ -198,7 +198,8 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
     stopped = env.close("SHOP/T1")
-    assert stopped.returncode == 1 and "settle it yourself" in stopped.stderr
+    assert stopped.returncode == 1 and "Ask the human" in stopped.stderr
+    assert "settle it yourself" not in stopped.stderr
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Label wording (app.py): known: below the bar (live with); Gain 2, Work 1, Harm 1" in known
     assert "Button colour (app.py): dismissed because app.py:1 the colour is set; Gain 2, Work 1, Harm 1" in known
@@ -280,8 +281,9 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
             state = json.loads((where / path).read_text("utf-8"))
             state.pop("known")
             env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
-        assert ("Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) "
-                "and tell the owner after.") in _round(env, item, where, 4).stderr
+        stopped = _round(env, item, where, 4).stderr
+        # The owner now decides even when every open finding has low Harm.
+        assert "Ask the human" in stopped and "settle it yourself" not in stopped
         assert len(env.review_calls()) == 3
         later(monkeypatch, 31)
         narrowed = env.close(item)

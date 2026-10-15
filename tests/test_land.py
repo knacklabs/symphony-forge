@@ -336,11 +336,20 @@ def _three_blocked_reviews_hold_the_fourth(env):
     # the worker sooner, and three in one file would stop by area.
     env.reviews(*(blocked({**finding("P1", f"Saving drops the greeting, case {n}", f"docs/{n}.md"),
                            "body": "Gain 3, Work 2, Harm 3\nEvidence"}) for n in (1, 2, 3)))
+    asked = _land(env)
+    assert asked.returncode == 1 and "ask the owner" in asked.stderr
+    assert len(env.review_calls()) == 2
+    env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    focused = env.repo.forge("work", ITEM)
+    assert focused.returncode == 0, focused.stdout + focused.stderr
+    assert env.close(ITEM).returncode == 1
+    # A further proposed repair must not spend a fourth reviewer before the hard-stop choice.
+    assert env.repo.forge("work", ITEM).returncode == 0
     done = _land(env)
     assert done.returncode == 1
-    rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
-    assert _steps(done) == [step for n in rounds for step in (f"Closing {ITEM}.", n)] + [
-        f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
+    assert _steps(asked) == [f"Closing {ITEM}.", f"Fix round 1 of 3: the worker fixes {FINDINGS_ROUND}.",
+                             f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
+    assert _steps(done) == [f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     lines = done.stderr.splitlines()
     assert [lines[-11], lines[-1]] == [
         f"Review round 4 of {ITEM} still finds serious problems in docs/3.md, which an earlier "
@@ -426,10 +435,15 @@ def _session_rounds_count_across_reruns(env, monkeypatch):
 
 def _default_stop_shows_the_question_while_it_waits(env):
     # With the default stop setting, land waits for the owner; advance only its clock.
-    _fix(env, "working", worked=True)
+    where = _fix(env, "working", worked=True)
     # New findings before the last: the same one twice would stop the stuck worker first.
     env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2)),
                 blocked(BLOCKER), CLEAN)
+    for number in (1, 2):
+        env.commit(where, "app.py", f"print({number})\n")
+        assert env.close(ITEM).returncode == 1
+    # After the second-round ask, the owner settles the missing rule before this focused round.
+    env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
     shim = env.repo.bin / "forge"
     clock = """import os, time
 from datetime import datetime, timedelta, timezone

@@ -281,7 +281,10 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
                                   capture_output=True, text=True, check=True).stdout.split(None, 5)
         lock = repo.write(".git/forge/threads/task/BOARD/PAGE.lock", json.dumps(
             {"pid": os.getpid(), "started": " ".join(identity[:5]), "command": identity[5].strip()}))
-    github(gh, [pull(1, "task/BOARD-PAGE"), pull(2, "fix/polish")])
+    prs = [pull(1, "task/BOARD-PAGE"), pull(2, "fix/polish")]
+    for pr in prs:
+        pr["headRefOid"] = repo.git("rev-parse", pr["headRefName"])
+    github(gh, prs)
     result = view(repo, "board")
     assert result["version"] == repo.forge("--version").stdout.strip().split()[-1].lstrip("v")
     assert result["repo_root"] == str(repo.path.resolve())
