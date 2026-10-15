@@ -49,7 +49,7 @@
     "id": "0639df49-5cd4-401c-a535-59339c01997e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -62,10 +62,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c2936cd1456a5962913084b2ce9903f5b1e4e95c",
-    "keys": {},
-    "round": null
+    "close": "2cefe251-8e99-4a60-8db9-d3c700f5bf9a",
+    "head": "a13c94758d43c0a814c6f981f109a911c28eb2e0",
+    "keys": {
+      "the review finding \"Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,\" in src/forge/nextstep.py": 1
+    },
+    "round": 1
   },
   "why": "Coordinators keep sending workers back round after round when a cold read or review finds a new problem each time, instead of stopping to settle the missing rule with the owner",
   "worker": "codex"
