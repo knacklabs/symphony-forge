@@ -1,0 +1,15 @@
+{
+  "base": "65eb9b988d00223f955245fdd3c954f8cffc1540",
+  "branch": "fix/find-the-problem-to-solve-6",
+  "done_when": "The discovery notes hold a filled problem card and the brief names it",
+  "kind": "fix",
+  "stacked_on": "windows-rerun-flakes",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-15T08:30:23.666162+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Find the problem to solve"
+}
