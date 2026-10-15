@@ -12,12 +12,16 @@ from test_shortplan_briefs import NEW, SAVE_DETAILS
 STORY = "reviews-converge"
 CONVERGENCE = ("From the second review round, close checks the previous round's findings "
                "and the lines changed since that review.")
+OWNER_ACCEPTANCE = ("`Not done` blocks only against a numbered owner-approved Done-when item "
+                    "(a fix uses its Done-when line). Builder details, Notes and implementation "
+                    "guidance never block as `Not done`.")
 
 
 def guides(where):
     for host in (".codex", ".claude"):
         text = (where / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert CONVERGENCE in " ".join(text.split()), host
+        assert OWNER_ACCEPTANCE in " ".join(text.split()), host
 
 
 def client(env, adopted):
@@ -40,34 +44,50 @@ def synced(env, where):
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-@pytest.mark.parametrize("case", ["unchanged", "security", "data-loss", "unresolved", "changed"])
+@pytest.mark.parametrize("case", ["unchanged", "security", "data-loss", "security-category",
+                                  "data-loss-category", "deletion", "unresolved", "changed"])
 def test_1_review_convergence_keeps_repairs_and_serious_unchanged_defects(env, adopted, case):
     client(env, adopted)
-    old = finding("P1", "Saving ignores the request", line=3 if case == "unresolved" else 1)
+    old = finding("P1", "Saving ignores the request",
+                  line=3 if case == "unresolved" else 2 if case == "deletion" else 1)
     env.reviews(blocked(old))
-    item, where = env.start_fix({"app.py": "save = False\n\nlegacy = True\n"})
+    initial = ("save = False\nbad = True\nlegacy = True\n" if case == "deletion"
+               else "save = False\n\nlegacy = True\n")
+    item, where = env.start_fix({"app.py": initial})
     synced(env, where)
     reviewed = env.repo.git("rev-parse", "HEAD", cwd=where).strip()
     first = env.close(item)
     assert first.returncode == 1 and old["title"] in first.stderr, first.stdout + first.stderr
 
-    # Only line 1 changes since the prior review; line 3 was in the original patch.
-    env.commit(where, "app.py", "save = True\n\nlegacy = True\n", "Repair saving")
+    # The deletion-only hunk has no new lines; its preceding anchor remains unchanged.
+    # This guards an existing diff-boundary rule, not a claimed pre-fix deletion defect.
+    repaired = ("save = False\nlegacy = True\n" if case == "deletion"
+                else "save = True\n\nlegacy = True\n")
+    env.commit(where, "app.py", repaired, "Repair saving")
+    if case == "deletion":
+        diff = env.repo.git("diff", "--unified=0", reviewed, "HEAD", "--", "app.py", cwd=where)
+        assert "@@ -2 +1,0 @@" in diff and "-bad = True" in diff
     new = (old if case == "unresolved" else finding(
-        "P1", "Saving still ignores quantity" if case == "changed" else "Legacy output is wrong",
-        line=1 if case == "changed" else 3))
+        "P1", "Saving still ignores quantity" if case in ("changed", "deletion") else "Legacy output is wrong",
+        line=1 if case in ("changed", "deletion") else 3))
     if case in ("security", "data-loss"):
         new["body"] += "\nRaise: " + ("Security" if case == "security" else "Data loss")
+    if case in ("security-category", "data-loss-category"):
+        new["category"] = "security" if case == "security-category" else "data_loss"
+        new["body"] = "Gain 2, Work 5, Harm 1\nThe category identifies the protection gap."
+        assert "Raise:" not in new["body"]
     env.reviews(blocked(new))
     closed = env.close(item)
     assert len(env.review_calls()) == 2, closed.stdout + closed.stderr
-    if case == "unchanged":
+    if case in ("unchanged", "deletion"):
         assert closed.returncode == 0, closed.stdout + closed.stderr
         shown = body(env.gh_calls("pr", "edit")[-1])
         assert "Follow-ups:" in shown and new["title"] in shown
         assert "blocks the merge" not in shown
     else:
         assert closed.returncode == 1 and new["title"] in closed.stderr, closed.stdout + closed.stderr
+        if case in ("security-category", "data-loss-category"):
+            assert "Harm 4 (floor:" in closed.stdout
 
     prompt = env.prompt()
     assert old["title"] in prompt

@@ -62,7 +62,7 @@ SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
 
 
 def finding(priority: str, title: str, file: str = "app.py", line: int = 1) -> dict:
-    # confidence, category and column are fields Forge doesn't use; it must ignore them.
+    # confidence and column are unused; unknown categories such as bug are tolerated.
     return {"title": title, "body": f"{SCORES.get(priority, 'Gain 2, Work 1, Harm 1')}\n"
                                     f"Evidence for: {title}", "priority": priority,
             "confidence": 0.8, "category": "bug",

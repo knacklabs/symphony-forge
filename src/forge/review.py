@@ -1,7 +1,7 @@
 """One review round: Autoreview over the branch in a read-only checkout, and its committed result.
 
 Autoreview is a third-party black box. Forge reads only the fields it uses (each finding's
-priority, title, body and code_location, in findings and scope_rejected_findings, then
+priority, title, body, category and code_location, in findings and scope_rejected_findings, then
 review_status and overall_correctness) and ignores everything else it writes. The body's first
 line carries the reviewer's Gain, Work and Harm scores (see score.py).
 """
@@ -1127,7 +1127,12 @@ def _finding(raw: Any) -> dict[str, Any] | None:
     if not isinstance(where, dict) or raw.get("priority") not in PRIORITIES:
         return None
     title = str(raw.get("title", ""))
-    scores, body = score.normalise(title, str(raw.get("body", "")))
+    body = str(raw.get("body", ""))
+    category = str(raw.get("category", "")).strip().casefold().replace("_", " ").replace("-", " ")
+    if category in ("security", "data loss") and not any(
+            name == category and pattern.search(body) for pattern, name in score.FLOORS[:2]):
+        body += f"\nRaise: {category.capitalize()}"
+    scores, body = score.normalise(title, body)
     if not scores:  # a new finding must carry its score line
         return None
     return {"priority": raw["priority"], "title": title, "body": body,
