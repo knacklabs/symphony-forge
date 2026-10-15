@@ -119,7 +119,7 @@ part with an empty cell belongs to the owner.
 | ASSIGN | Give a story to a developer | `forge assign`, the `Owner:` line, publication to the story branch, next-step order, `owner` in the board JSON, guide and command docs | 2 | src/forge/story.py, src/forge/task.py, src/forge/cli.py, src/forge/nextstep.py, src/forge/board.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md | tests/test_assign.py | OWNERS | no | |
 | KNOWN | Known issues list | `known_issues` in the board JSON from the persisted list and pull request heads | 4 | src/forge/known_issues.py, src/forge/board.py | tests/test_known_issues.py | ASSIGN | no | |
 | RELEASES | Releases from tags | `releases`, `released_in`, `release_note` in the board JSON | 5 | src/forge/releases.py, src/forge/board.py | tests/test_releases.py | KNOWN | no | |
-| BACKFILL | Past work filled in on upgrade | the upgrade fills owners, known issues and releases | 6 | src/forge/backfill.py | tests/test_board_backfill_people.py | RELEASES | no | |
+| BACKFILL | Past work filled in on upgrade | the upgrade fills logins for older work, owners, known issues and releases | 1, 6 | src/forge/backfill.py | tests/test_board_backfill_people.py | RELEASES | no | |
 
 New moving parts: none
 
