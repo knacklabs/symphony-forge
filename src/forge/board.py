@@ -531,7 +531,12 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             or owners.get(read_key), names=names)
         people_pr = people_branches.get(branch) or pr or {}
         recorded_people = time_records.from_body(people_pr.get("body") or "")
-        starter = board_facts.person(people_pr.get("author"), names=names)
+        author = people_pr.get("author") or {}
+        starter_name = None
+        if author.get("login") and not author.get("name"):
+            starter_name = (board_facts.person(recorded_people, field="started_by")["name"]
+                            or _starters(top).get(repo.state_path(item)))
+        starter = board_facts.person(author, starter_name, names=names)
         if not starter["name"]:
             starter = board_facts.person(recorded_people, field="started_by", names=names)
             if not starter["name"]:

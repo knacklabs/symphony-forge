@@ -24,6 +24,23 @@ STORY = "FORGE-BOARD-3"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+def test_9_login_only_pull_request_keeps_the_recorded_starter_name(env, previous):
+    client(env, previous)
+    repo = env.repo
+    repo.git("config", "user.name", "Recorded Starter")
+    repo.git("config", "user.email", "starter@example.test")
+    item = "recorded-starter"
+    started = repo.forge("fix", "start", "Keep the starter visible", "--done", "The starter is visible", "--slug", item)
+    assert started.returncode == 0, started.stdout + started.stderr
+    env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([{
+        "number": 7, "headRefName": "fix/" + item, "state": "OPEN",
+        "author": {"login": "starter-dev"}, "body": ""}]))
+
+    shown = rows(board(repo))[item]
+    assert (shown["started_by"], shown["started_by_login"]) == ("Recorded Starter", "starter-dev")
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_7_started_item_shows_its_own_starter_before_a_pull_request(env, previous):
     client(env, previous)
     repo = env.repo
