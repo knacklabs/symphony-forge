@@ -103,6 +103,28 @@ def test_10_assign_refuses_a_story_without_a_plan(repo):
     assert repo.git("status", "--porcelain", cwd=tree) == ""
 
 
+def test_13_local_story_owner_wins_over_a_fetched_assignment(env):
+    repo = env.repo
+    setup(repo)
+    approve_story(repo, PLAN)
+    _assign(repo, "SHOP", "alice")
+    tree = worktree(repo, "story/SHOP")
+    second = env.tmp / "other-manager"
+    repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), second.as_posix())
+    other = type(repo)(second, repo.bin)
+    local = (tree / "plans/SHOP.md").read_text("utf-8").replace("Owner: alice", "Owner: bob")
+    (tree / "plans/SHOP.md").write_text(local, "utf-8")
+    _assign(other, "SHOP", "carol")
+    repo.git("fetch", "-q", "origin")
+
+    env.gh.respond("api", "user", stdout="bob\n")
+    assert _steps(repo, repo.path) == ["SHOP/T1", "SHOP/T2"]
+    shown = rows(board(repo))
+    assert {shown[item]["owner"] for item in ("SHOP", "SHOP/T1", "SHOP/T2")} == {"bob"}
+    assert (tree / "plans/SHOP.md").read_text("utf-8") == local
+    assert "Owner: carol" in repo.git("show", "origin/story/SHOP:plans/SHOP.md")
+
+
 @pytest.mark.parametrize("case", ["bad-item", "bad-login", "missing-part", "dirty-story"])
 def test_11_assign_rejects_unusable_input_and_preserves_local_edits(repo, case):
     setup(repo)
