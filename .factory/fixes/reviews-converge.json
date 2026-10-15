@@ -64,8 +64,8 @@
     "id": "385cd2b9-4d50-4579-97b8-19558a720edf",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:19:28.735147+00:00",
@@ -81,14 +81,10 @@
     }
   ],
   "stuck": {
-    "close": "b2d3ca6e-e89b-4eab-a965-79c5498c2ee2",
-    "head": "ced1474333dc18a0311da91fdf6fee9965f8e822",
-    "keys": {
-      "the review finding \"Gate: client guide proof does not check the Not done rule\" in tests/test_reviews_converge_on_changed_lines.py": 1,
-      "the review finding \"Not done: Deleting a line can make an unchanged finding block the next review\" in src/forge/review.py": 1,
-      "the review finding \"Security findings identified by category can become nonblocking follow-ups\" in src/forge/review.py": 1
-    },
-    "round": 1
+    "close": "95b3d55d-a4fe-4432-b86f-46afcb761698",
+    "head": "283a566e953a0f3cbe4993323b851ced5e6a21a7",
+    "keys": {},
+    "round": 2
   },
   "why": "Close reviews take 4 to 9 rounds on code parts because every round reviews afresh and finds new edge cases, and builder details block as Not done",
   "worker": "codex"
