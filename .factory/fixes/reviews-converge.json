@@ -83,19 +83,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d9589ef7c4afd0c6e015fa9e71c1c8e5ec4aebea75469eaec8bf616f6f8bf7f6",
-    "changed": "1cbd7a2f4cdc684117249782a70178bb5481574fbac126e098d4ecaa7c839a57",
-    "commit": "6a210cc5b6ec601aa87a8d78fc132aab07dc643b",
+    "branch_diff": "23945afcdf55d4541cb854e98ec0262afe34873fe14984e14791e8cc6e77fbde",
+    "changed": "0001203e444d442e06041873b59b8f5fcc79e2d899608b9144bca81dcaf72bb7",
+    "commit": "eee5f79deaa384b60e5502970f39b51a3b412484",
     "dismissals": [],
     "findings": [],
-    "id": "13a5006f-f232-49c3-8bbe-bfda8f09c9dc",
+    "id": "e4927f3b-c113-4c6a-a150-89bb03fc8d41",
     "status": "clean"
   },
   "round": 6,
   "settled_areas": [
     "src/forge/review.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T06:19:28.735147+00:00",
@@ -115,6 +115,10 @@
     },
     {
       "at": "2026-10-15T11:44:14.458457+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T19:27:49.150815+00:00",
       "step": "review"
     }
   ],
