@@ -75,8 +75,8 @@
     "id": "cca60d86-2496-4f1e-b205-7ba1c63ba0c3",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T03:06:27.899974+00:00",
@@ -96,12 +96,10 @@
     }
   ],
   "stuck": {
-    "close": "b7b0b9e7-a1db-49df-9cc2-b94b93004303",
-    "head": "a7a9846cedd62aeff026c0cc04fb33bea6029201",
-    "keys": {
-      "the review finding \"Approved remote story is ignored during an upgrade preview\" in src/forge/task.py": 1
-    },
-    "round": 2
+    "close": "20b4fc5d-c1cb-4c57-ade7-11bd4b208147",
+    "head": "504d187fd6975e8135421aaabb25f134ef2597c2",
+    "keys": {},
+    "round": 3
   },
   "worker": "codex"
 }
