@@ -211,12 +211,12 @@
     "id": "b07a726d-0215-4de7-93ab-83b84a8fca8a",
     "status": "blocked"
   },
-  "round": 10,
+  "round": 11,
   "settled_areas": [
     "src/forge/board.py",
     "src/forge/board_facts.py"
   ],
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -259,12 +259,14 @@
     "wait_id": "812e271d-3993-428f-b268-c357d2bc2164"
   },
   "stuck": {
-    "close": "33f675e4-9a29-4b63-8ee9-2c26eb8dbc7c",
-    "head": "f07b96902c2e2551221763e4c0d6b271eaa2ef30",
+    "close": "8e9ac51b-2cb0-4922-a4f0-9bd85078f32b",
+    "head": "cf04b6d86f876881352815a87bfa81dee8e21ce1",
     "keys": {
-      "the review finding \"Offline board erases the only name for login-only mergers\" in src/forge/board.py": 1
+      "the review finding \"Not done: approval identity names the actual approver\" in src/forge/board.py": 1,
+      "the review finding \"Not done: board login test covers approval identity\" in tests/test_board_logins.py": 1,
+      "the review finding \"Not done: new work keeps a visible starter before its pull request\" in src/forge/board.py": 1
     },
-    "round": 8
+    "round": 10
   },
   "worker": "codex"
 }
