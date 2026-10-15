@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-PACE-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-15T09:45:38.634543+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-15T09:54:23.353464+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-15T10:00:13.989134+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-15T10:10:20.083958+00:00",
+      "step": "read"
     }
   ],
   "title": "Prototypes start from an approved design and reach sign-off faster, and signed-off work ships without redoing it",

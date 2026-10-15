@@ -36,7 +36,7 @@ design made first in a Claude artifact before anything user-facing is built.
 
 ## Done when
 
-1. **Every prototype and every story with user-facing parts starts with the design skill's init and an approved design whose screens and images live in the repo; a story names that design in the part the owner approves, so one approval covers both, and a prototype's design is approved before its first build.**
+1. **Every prototype and every story with user-facing parts starts with the design skill's init and an approved design whose screens and images live in the repo; a story names that design in the part the owner approves, so one approval covers both, and a prototype's design is approved before its first user-facing build.**
 2. **Workers and reviewers on both tools receive the named design and the skill guidance their work needs, and each fix goes to the worker kind named when it starts (screens, backend or mechanical), keeping that kind on every round.**
 3. **A prototype round proves the demo's steps and its security and data boundaries, and the full proof is required at sign-off.**
 4. **The prototype's light review checks only demo breakage, security and data loss, with a model setting of its own.**
@@ -72,7 +72,7 @@ runs before any sign-off, so the lighter prototype rounds never reach production
    Because the line is in the approved text, approval covers that exact design; changing the folder changes the tree id and voids the
    approval like any other edit. `forge read` and approval refuse a plan with a user-facing part
    (User-facing = yes) whose `Design:` line is missing, names a folder with no images, or whose tree
-   id does not match the folder. Backend-only plans pass. Prototype: before its first build fix,
+   id does not match the folder. Backend-only plans pass. Prototype: before its first ui fix,
    the coordinator makes the same design folder `docs/design/prototype/` in a fix, and the owner
    (or FDE) approves it with `forge decision new prototype-design` and `forge decision accept
    prototype-design --by <name>`; while the prototype is unsigned, every fix of kind `ui`

@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-15T10:00:13.731288+00:00
-seconds: 216.904
-read_hash: 4f2f764133519e4616eea2b88fc5fc1c68b7bf38
-round: 2
+read_at: 2026-10-15T10:10:20.063400+00:00
+seconds: 69.875
+read_hash: 5e6096d05d08006e0a3394d069c59fda9fbc9dec
+round: 3
 passed: no
-doc_seen: 4f2f764133519e4616eea2b88fc5fc1c68b7bf38
+doc_seen: 5e6096d05d08006e0a3394d069c59fda9fbc9dec
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 537d62d70f2cc0ba481b96637052bcfd255e44a4
+notes_seen: 6a8d851f7ba5f91ebb78d4c89505c5c17c600c4c
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13ef6-7126-7692-8ac4-4f759a6cdc3a
 session:
-blocked_rounds: 2
+blocked_rounds: 3
 loop_choice:
 loop_reason:
 ---
@@ -95,4 +95,11 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Plan gap. `plans/FORGE-PACE-1.md:93–108` makes `## Proof` and `## Decisions` sign-off evidence, but permits reuse based only on product commit, answers and review rules. Decision files are excluded from the product snapshot (`src/forge/review.py:854–868`), and recording the customer reply edits that decision before acceptance commits it (`src/forge/records.py:255–286`, `301–302`). Changing a proof mapping during that edit leaves all three cache inputs unchanged, allowing acceptance and subsequent story hand-off to use evidence the cached review never checked.
    Gain 4, Work 2, Harm 3
 
+   Disposition: cut
+
+## Round 3
+
+13. Blocking: The new backend exemption contradicts design approval before the prototype’s first build.
+   Raise: Not done. `plans/FORGE-PACE-1.md:39` requires approval before the first prototype build, but the changed rule at lines 78–83 explicitly permits backend builds before approval and requires a test proving that exemption. An API-first prototype can therefore begin implementation before its design is approved. Backend fixes use the same prototype build lane (`src/forge/task.py:381–386`); the plan defines no separate preparation-only restriction.
+   Gain 4, Work 1, Harm 2
    Disposition: cut
