@@ -8438,6 +8438,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\ttests/test_mod_guide.py\tNot done: proof list\ttest-audit-followups",
+      "kind": "bug",
+      "path": "tests/test_mod_guide.py",
+      "line": 37,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "test-audit-followups",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "tests/test_mod_install.py",
@@ -9457,17 +9468,6 @@
       "text": "Preserve group descriptions for abbreviated help flags",
       "from": "review",
       "item": "every-forge-process-including-each-git-h",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tA pending whole-history retry can spend the API budget before close reaches its own pull request.",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 93,
-      "text": "A pending whole-history retry can spend the API budget before close reaches its own pull request.",
-      "from": "worker",
-      "item": "FORGE-MAINONCE-1/ONCLASH",
       "status": "open",
       "closed_by": null
     },

@@ -185,9 +185,10 @@ def test_3_close_stops_after_github_refuses_one_pull_request_body_update(env, pr
     assert stopped.returncode != 0, stopped.stdout + stopped.stderr
     assert "Ready:" not in stopped.stdout
     assert len(env.gh_calls("pr", "edit")) - before == 1
-    assert "GitHub refused to update this pull request, so this command stopped." in stopped.stderr
-    assert problem in stopped.stderr
-    assert f"Next: {next_action}, then retry this command" in stopped.stderr
+    assert stopped.stderr == (
+        "GitHub refused to update this pull request, so this command stopped.\n"
+        f"{problem}\nNext: {next_action}, then retry this command\n"
+    )
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
