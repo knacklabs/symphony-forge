@@ -9,13 +9,56 @@
     "start": "38e550b7364f305fc60a53bea1d583447914368d"
   },
   "done_when": "From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner, listing every round's findings, and the shipped coordinator guide says to settle the missing rule one question at a time before the next round; new repos get it at init and existing repos on upgrade",
+  "flagged": [
+    "src/forge/nextstep.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_item() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 911,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ea123a78b9182b60f844fb7c865f77253d0f96dddc2d6dcc6b96b9e2890c4e53",
+    "changed": "ec099cc4268a421d055abe3c2851cd1a271aab48e10fb3b5c2619a5c58749006",
+    "commit": "d1402866148fe36c47498ffa1957dbba585af38d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. When a worker closes an item on another machine, `forge next` loads that item's remote review state but returns the generic \u201cruns on their machine\u201d message before reaching the new owner advice. After two blocked reviews, the coordinator therefore sees neither the instruction to ask the owner nor the table of findings. The named tests use a local worktree, so they do not cover this normal remote-item path.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 911,
+        "priority": "P1",
+        "title": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
+        "work": 2
+      }
+    ],
+    "id": "0639df49-5cd4-401c-a535-59339c01997e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T05:40:36.668830+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-15T06:08:22.692719+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

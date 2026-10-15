@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,\tgrill-when-rounds-grow",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 911,
+      "text": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
+      "from": "blocking",
+      "item": "grill-when-rounds-grow",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
