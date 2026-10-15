@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: a parent and part can show different names for the same approver\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 596,
+      "text": "Not done: a parent and part can show different names for the same approver",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: approval identity names the actual approver\tFORGE-BOARD-3/OWNERS",
       "kind": "bug",
       "path": "src/forge/board.py",
