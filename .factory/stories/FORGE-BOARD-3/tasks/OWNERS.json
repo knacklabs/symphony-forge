@@ -187,8 +187,8 @@
       "gain": 4,
       "harm": 3,
       "line": 538,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/board.py:538 Owner accepted on 15 October: the old HTML page is replaced by the board page story's server, which caches each item; kept as a known issue",
       "round": 8,
       "security": false,
       "title": "Reparsing every starter commit for each historical row slows the HTML board",
@@ -201,7 +201,13 @@
     "branch_diff": "c010705a5c5f828653f8ee08fcf61c7199596c72aa82af3cae4c2c0c150c44b6",
     "changed": "d0be937adf8b3fca8f9c91c46865ab4a65493c78c813428083351f052eca12c4",
     "commit": "339aa48b10df019e4ecab562c96d6894b9ce64d7",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/board.py:538 Owner accepted on 15 October: the old HTML page is replaced by the board page story's server, which caches each item; kept as a known issue",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. When a pull request author has a login but no display name, `person()` uses the login as `starter[\"name\"]`. The fallback to the item's recorded start-commit name is then skipped. A normally started item with both a known git name and a login shows the login in both fields instead of keeping the name beside it. The command-level login test supplies an author with both fields, so it does not catch this case.",
