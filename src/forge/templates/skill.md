@@ -121,7 +121,7 @@ current default branch, preserving its other settings. It leaves remote work out
 alone and refuses to replace a remote branch that changes after its check. The owner still
 merges the pull request. Close checks this generated fix mechanically instead of asking a model:
 only `forge.toml`'s top-level `merge = "agent"` may change, with all other parsed settings equal
-to the current default branch. Extra changes are refused without review. Tests and CI still run;
+to the fix's merge base. Extra changes are refused without review. Tests and CI still run;
 every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
@@ -546,18 +546,24 @@ The pane's Board tab, on the terminal and the Desktop app's Code tab alike, open
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
 Each part shows only when the board's `team` fact behind it is known and not zero; when
 none of them applies, the line counts the rows the tab shows in its own group words instead,
-such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Groups follow in this order, each only
-when it has items: NEEDS YOU (rows whose `needs_person` is true),
-STUCK (no activity past the board's stall threshold, with the longest wait in days),
-MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
-READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board page's
+own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
+`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, word for word as the page shows
+them. Groups follow in this order, each only when it has items, and each in the board's own
+order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
+such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
+age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
+a running item shows its current stage and how long, such as `Review running · 12 min`),
+READY TO MERGE (the rest of `team.in_progress`, each saying Ready to merge, with the checks in words when known, and its merge
 step; an item merged from another machine shows `forge next`'s line naming who merges it), then a
-folded count of the work waiting or not started, opened with a native button to the same rows. Each item shows its plain title, the story key small
+folded count of the work waiting or not started (planned stories and fixes not started), opened with a native button to the same rows. Each item shows its plain title, the story key small
 beside it, one line of state in words and, where there is something to do, its next step
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
-The pane never shows zero counts, unknown times, raw timestamps, priority codes or
+An older Forge without the `team` lists draws the same groups from each row's `needs_person`,
+stalled, running and ready flags, and shows no sentence or totals.
+Outside the totals copied from the page, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
-relative (`12 min`, `8 days`). Stage chains, round lines and the time breakdown stay on
+relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
 the board page. An empty board says `Nothing in progress.` `/forge` always returns the
 same lines as text, as well as opening the pane. Where mods draw nothing (the VS Code
 chat panel, `claude -p` and Remote Control from a phone or claude.ai), that text is the
@@ -1032,7 +1038,7 @@ review rounds. For each kind of finding the plan missed that cost two or more fi
 two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
 outside Forge's block, in the last task's worktree; create the section when it is missing.
 Commit it before closing the task. Every cold read checks plans against that section.
-Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or
+Count the story's items' entries per file in the spotted records on the default branch, open or
 done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one
 trap line naming the file and the kind of problem that kept coming back.
 
@@ -1251,6 +1257,8 @@ any other file stops close for the worker to resolve. While waiting for checks, 
 if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
 in the default branch. Land retries close once itself, including a conflict during its merge check
 wait; if the merge needs a person, it stops with close's existing conflict next step.
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
 test command fails, close keeps the output for the worker: run
@@ -1334,6 +1342,10 @@ Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
+Close fetches the default branch but merges it in only for a trial-merge clash, or when GitHub
+reports the pull request conflicting or behind under its up-to-date rule. Unrelated main changes
+add no merge. Close checks GitHub's clash state at every look, even with green checks; a clash
+stops a hand-run close and says to run close again. An UNKNOWN answer keeps it waiting.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Before reusing serious findings, close also checks the reviewed files and contract against the
@@ -1450,7 +1462,7 @@ other refusals' next actions instead of repeatedly retrying them.
 ## Hotspots
 
 A worker or review notes problems outside its change as spotted items, which Forge keeps in
-`plans/spotted.json` and nobody edits by hand. A spotted item never widens the change in hand,
+spotted records and nobody edits by hand. A spotted item never widens the change in hand,
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 When `forge next` says the latest scheduled run of the default branch failed, it names the
@@ -1526,7 +1538,9 @@ reading again. A clean round or a recorded choice restarts the three-round count
 For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
 command as a close stop.
 
-When GitHub refuses because the branch is behind the default branch, `forge merge` and
+When GitHub reports a clash during the check wait or refuses a merge because the branch is
+behind or conflicting, `forge merge` retries close and merge once. A mergeable pull request
+keeps its current head. When the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,
 review and checks as close decides, then retry the merge. If that merge selects a different
 Forge release, close finishes under that release before the original command continues.

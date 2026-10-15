@@ -1,8 +1,8 @@
 """The spotted list: problems workers and reviews noticed outside the change in hand.
 
-One tracked file, plans/spotted.json, written only in close's review commits and merged by git
-with the roadmap's rule. Workers report with `Spotted:` lines in their commit messages; reviews
-report through their advice and blocking findings.
+One file per change, written only in close's review commits. The old list stays readable.
+Workers report with `Spotted:` lines in their commit messages; reviews report through their
+advice and blocking findings.
 """
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from typing import Any
 from forge import repo
 
 PATH = "plans/spotted.json"
+DIRECTORY = "plans/spotted"
 KINDS = ("bug", "simplify", "edge", "improve")
 SOURCES = ("worker", "review", "blocking")
 STATUSES = ("open", "done")
@@ -23,15 +24,20 @@ LINE = re.compile(r"Spotted: (bug|simplify|edge|improve) (\S+):([0-9]+) (\S.*)")
 FIX = re.compile(r"[a-z0-9][a-z0-9-]*")  # a fix name, "dismissed" included
 SAFE = re.compile(r"[A-Za-z0-9._/-]+")  # a recorded path never needs quoting
 REFUSALS = {
-    "bad": ("plans/spotted.json isn't a list Forge can read: {problem}.",
+    "bad": ("{path} isn't a list Forge can read: {problem}.",
             "{repair}, commit it, then forge close {item}"),
-    "link": ("plans/spotted.json or plans/ is a link, so Forge won't write the list through it.",
+    "link": ("{path} or plans/ is a link, so Forge won't write the list through it.",
              "replace the link with a real file or folder, commit it, then forge close {item}"),
 }
 
 
 class Unreadable(Exception):
     """The list isn't one Forge wrote; its message says why."""
+    path = PATH
+
+
+def own_path(item: str) -> str:
+    return f"{DIRECTORY}/{item.replace('/', '.')}.json"
 
 
 def key(kind: str, path: str, text: str, source: str, item: str) -> str:
@@ -77,12 +83,39 @@ def _parse(raw: bytes) -> list[dict[str, Any]]:
 
 
 def read(top: Path, ref: str | None = None) -> list[dict[str, Any]]:
-    """The checkout's or a commit's list; no file is empty. Anything else is Unreadable."""
+    """Join the old list and flat per-change records; a done copy wins, then its file path."""
     if ref is not None:
-        shown = subprocess.run(["git", "show", f"{ref}:{PATH}"], cwd=top, capture_output=True)
-        return _parse(shown.stdout) if shown.returncode == 0 else []
-    path = top / PATH
-    return _parse(path.read_bytes()) if path.is_file() else []
+        paths = repo.git("ls-tree", "-r", "--name-only", "-z", ref, "--", DIRECTORY + "/",
+                         cwd=top).split("\0")
+        paths = [path for path in paths if Path(path).parent.as_posix() == DIRECTORY
+                 and path.endswith(".json")]
+        old = subprocess.run(["git", "show", f"{ref}:{PATH}"], cwd=top, capture_output=True)
+        if old.returncode == 0:
+            paths.append(PATH)
+    else:
+        paths = [path.relative_to(top).as_posix() for path in (top / DIRECTORY).glob("*.json")]
+        if (top / PATH).exists():
+            paths.append(PATH)
+    entries: dict[str, dict[str, Any]] = {}
+    for path in sorted(paths):
+        try:
+            if ref is None:
+                raw = (top / path).read_bytes()
+            else:
+                shown = subprocess.run(["git", "show", f"{ref}:{path}"], cwd=top, capture_output=True)
+                if shown.returncode:
+                    raise Unreadable("it cannot be read")
+                raw = shown.stdout
+            items = _parse(raw)
+        except (Unreadable, OSError) as error:
+            problem = error if isinstance(error, Unreadable) else Unreadable("it cannot be read")
+            problem.path = path
+            raise problem from None
+        for entry in items:
+            previous = entries.get(entry["key"])
+            if previous is None or previous["status"] != "done" and entry["status"] == "done":
+                entries[entry["key"]] = entry
+    return sorted(entries.values(), key=lambda entry: entry["key"])
 
 
 def hotspots(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -120,9 +153,9 @@ def names(done_when: str, path: str) -> bool:
                      done_when) is not None
 
 
-def write(top: Path, items: list[dict[str, Any]]) -> None:
+def write(top: Path, item: str, items: list[dict[str, Any]]) -> None:
     data = {"items": sorted(items, key=lambda entry: entry["key"])}
-    path = top / PATH
+    path = top / own_path(item)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes((json.dumps(data, indent=2) + "\n").encode("utf-8"))
 
@@ -130,23 +163,29 @@ def write(top: Path, items: list[dict[str, Any]]) -> None:
 def check(top: Path, item: str) -> None:
     """Refuse a linked list, which a write would follow out of the checkout, and an unreadable
     one, naming the newest readable copy in the branch's history."""
-    if (top / "plans").is_symlink() or (top / PATH).is_symlink():
-        repo.refuse(REFUSALS["link"], item=item)
+    for path in (PATH, DIRECTORY, own_path(item)):
+        if (top / "plans").is_symlink() or (top / path).is_symlink():
+            repo.refuse(REFUSALS["link"], path=path, item=item)
     try:
         read(top)
     except Unreadable as problem:
-        repair = f"git -C {top} rm -q {PATH}"
-        for commit in repo.git("log", "--format=%H", "HEAD", "--", PATH, cwd=top).split():
+        path = problem.path
+        if not _path(path):
+            # A contributor's filename must not become shell code or another output line.
+            repo.refuse(REFUSALS["bad"], path=json.dumps(path), problem=problem,
+                        repair="remove or restore this file with your file manager", item=item)
+        repair = f"git -C {top} rm -q {path}"
+        for commit in repo.git("log", "--format=%H", "HEAD", "--", path, cwd=top).split():
             # Bytes, so a copy that isn't UTF-8 stays unreadable.
-            shown = subprocess.run(["git", "show", f"{commit}:{PATH}"], cwd=top, capture_output=True)
+            shown = subprocess.run(["git", "show", f"{commit}:{path}"], cwd=top, capture_output=True)
             try:
                 if shown.returncode == 0:
                     _parse(shown.stdout)
-                    repair = f"git -C {top} checkout {commit} -- {PATH}"
+                    repair = f"git -C {top} checkout {commit} -- {path}"
                     break
             except Unreadable:
                 continue
-        repo.refuse(REFUSALS["bad"], problem=problem, repair=repair, item=item)
+        repo.refuse(REFUSALS["bad"], path=path, problem=problem, repair=repair, item=item)
 
 
 def record(top: Path, item: str, state: dict[str, Any], base: str,
@@ -156,6 +195,8 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
 
     items = read(top)
     known = {entry["key"]: entry for entry in items}
+    path = top / own_path(item)
+    own = {entry["key"]: entry for entry in _parse(path.read_bytes())} if path.is_file() else {}
     tree = set(repo.git("ls-tree", "-r", "-z", "--name-only", "--full-tree", "HEAD",
                         cwd=top).split("\0"))
     changed = False
@@ -163,7 +204,7 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
         for entry in items:
             if (entry["status"] == "open" and entry["item"] != item
                     and names(state.get("done_when", ""), entry["path"])):
-                entry.update(status="done", closed_by=item)
+                own[entry["key"]] = {**entry, "status": "done", "closed_by": item}
                 changed = True
 
     def add(kind: str, path: str, line: Any, text: str, source: str) -> None:
@@ -176,7 +217,7 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
         known[entry_key] = {"key": entry_key, "kind": kind, "path": path, "line": line,
                             "text": text, "from": source, "item": item, "status": "open",
                             "closed_by": None}
-        items.append(known[entry_key])
+        own[entry_key] = known[entry_key]
         changed = True
 
     for _, message, _ in reversed(repo.commit_log(top, base)):
@@ -199,8 +240,8 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
         kind = "simplify" if title.startswith("Simpler") else "bug"
         entry = known.get(key(kind, finding["file"], title, "blocking", item))
         if entry and entry["status"] == "open":
-            entry.update(status="done", closed_by="dismissed")
+            own[entry["key"]] = {**entry, "status": "done", "closed_by": "dismissed"}
             changed = True
     if changed:
-        write(top, items)
+        write(top, item, list(own.values()))
     return changed

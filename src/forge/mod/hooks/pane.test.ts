@@ -199,10 +199,10 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(submissions).toEqual(['forge close guide', 'forge close guide'])
     old = false; extra = false; long = true; await clock.advance(10000)
     await ui.redraw({ ...band, bodyColumns: 80 })
-    const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('100h'))!
+    const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('4d'))!
     expect(Number(protectedTime.props.width)).toBe(protectedTime.text.length)
     expect(protectedTime.text.length < 80).toBe(true)
-    for (const fact of ['Build✓100h0m', 'Tests✗100h0m', 'Review●30s', 'CI', 'Merge–', 'round2', 'total100h0m']) expect(protectedTime.text).toContain(fact)
+    for (const fact of ['Build ✓ 4d', 'Tests ✗ 4d', 'Review ● 30s', 'CI', 'Merge –', 'round 2', 'total 4d']) expect(protectedTime.text).toContain(fact)
     // Compact rows need the same cell-budget proof, including the no-button path.
     for (const state of ['ready', 'long command', 'busy', 'null']) {
       if (state === 'long command') {
@@ -217,7 +217,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
       for (const bodyColumns of [79, 120]) {
         await ui.redraw({ ...band, bodyColumns, maxRows: bodyColumns < 80 ? band.maxRows : 1, isWorking: state === 'busy' })
         const boxes = await ui.findAll({ type: 'Box' })
-        const timing = boxes.find(b => b.props.flexShrink === 0 && b.text === ': Review ● 30s (100h 0m) · ')!
+        const timing = boxes.find(b => b.props.flexShrink === 0 && b.text === ': Review ● 30s (4d) · ')!
         expect(timing).toBeDefined()
         expect(timing.props.width).toBe(timing.text.length)
         const cells = boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== bodyColumns)

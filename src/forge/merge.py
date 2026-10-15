@@ -33,7 +33,7 @@ REFUSALS = {
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
 }
-def merge(args: argparse.Namespace) -> int:
+def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     top, item = repo.root(), args.item
     if item == "enable":
         return _enable(top)
@@ -76,8 +76,18 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
-        checks.wait(worktree, item, head, config["checks"],
-                    branch=branch, progress=getattr(args, "wait_for_progress", False))
+        try:
+            checks.wait(worktree, item, head, config["checks"],
+                        branch=branch, progress=getattr(args, "wait_for_progress", False))
+        except repo.Refused as error:
+            if error.entry is not checks.REFUSALS["conflict"] or refreshed:
+                raise
+            print("GitHub reports a clash. Forge will run close again, then retry the merge.", flush=True)
+            close.close(argparse.Namespace(item=item, dismiss=None, because=None,
+                        wait_for_progress=getattr(args, "wait_for_progress", False),
+                        land_rounds=getattr(args, "land_rounds", None),
+                        pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
+            return merge(args, refreshed=True)
         completion = ["--body-file", "-"]
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
         body = close._refresh_record(worktree, item, item_state, pr)
@@ -108,7 +118,7 @@ def merge(args: argparse.Namespace) -> int:
                     current = json.loads(shown.stdout) if shown.returncode == 0 else {}
                 except ValueError:
                     current = {}
-                if (isinstance(current, dict) and current.get("headRefOid") == head
+                if (not refreshed and isinstance(current, dict) and current.get("headRefOid") == head
                         and current.get("mergeStateStatus") in ("BEHIND", "DIRTY")):
                     repo.git("fetch", "-q", "origin", default, cwd=top)
                     if repo.run("git", "merge-base", "--is-ancestor", f"origin/{default}",
@@ -119,7 +129,7 @@ def merge(args: argparse.Namespace) -> int:
                                     wait_for_progress=getattr(args, "wait_for_progress", False),
                                     land_rounds=getattr(args, "land_rounds", None),
                                     pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
-                        return merge(args)
+                        return merge(args, refreshed=True)
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
         repo.record_event(top, item, "item finished", round=item_state.get("round"))

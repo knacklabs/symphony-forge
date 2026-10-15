@@ -92,15 +92,15 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         checked = env.repo.forge("hook", "pr-check", "--base", "origin/main",
                                  "--head", "HEAD", "--branch", "fix/tidy-readme", cwd=where)
         assert checked.returncode == 0, checked.stderr
-        # An upstream edit to a reviewed file needs a new review, but the accepted finding stays
-        # settled: a plain repeat of it no longer holds the work.
+        # An upstream edit outside this branch's diff no longer gets merged by close, so its
+        # accepted review stays valid until the worker changes the branch itself.
         env.commit(env.repo.path, "src/a.py", "print('upstream change')\n")
         env.repo.git("push", "-q", "origin", "main")
         env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py")))
         changed_base = env.close(item)
         assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
-        assert len(env.review_calls()) == before + 1
-        before += 1
+        assert len(env.review_calls()) == before
+        assert (where / "src/a.py").read_text("utf-8") == "pass\n"
     else:
         resumed = env.close(item)
         assert resumed.returncode == 1

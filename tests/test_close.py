@@ -478,10 +478,10 @@ def test_18_close(env, kind):
 
     first = env.close(item)
 
-    # The default branch is merged in first, and Autoreview reviews that head, read-only.
+    # An unrelated main move stays out of the branch; Autoreview still reads its actual head.
     assert first.returncode == 1
     [call] = env.review_calls()
-    env.repo.git("merge-base", "--is-ancestor", moved, call["head"])  # raises if main wasn't merged
+    assert env.repo.git("merge-base", moved, call["head"]) != moved
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     # The old contract passed origin/main, which a clone could resolve to stale local main.
     # The reviewer now gets the exact fetched remote commit.
