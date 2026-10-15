@@ -516,11 +516,15 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         developer = board_facts.person(
             (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
             or owners.get(read_key))
-        starter = board_facts.person((pr or {}).get("author"), next(
-            (event.get("by") for event in activity if event.get("event") == "item started"), None))
-        approver = board_facts.person(owners.get(read_key), next(
-            (event.get("by") for event in by_item.get(read_key, [])
-             if event.get("event") == "plan approved"), None))
+        recorded_people = time_records.from_body((pr or {}).get("body") or "")
+        starter = board_facts.person((pr or {}).get("author"))
+        if not starter["name"]:
+            starter = board_facts.person(recorded_people, field="started_by")
+            if not starter["name"]:
+                starter = board_facts.person(name=_starters(top).get(repo.state_path(item)))
+        approver = board_facts.person(recorded_people, field="approved_by")
+        if not approver["name"] and read_key:
+            approver = board_facts.person(name=_approver(top, read_key))
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
                 "started_by": starter["name"], "started_by_login": starter["login"],
                 "approved_by": approver["name"], "approved_by_login": approver["login"],
@@ -1012,6 +1016,19 @@ def _starters(top: Path) -> dict[str, str]:
             if rel.endswith(".json"):
                 found.setdefault(rel, names.get(email.casefold(), name))
     return found
+
+
+def _approver(top: Path, key: str) -> str | None:
+    """The approval commit's own author, independent of the plan's assignee."""
+    def read():
+        log = repo.git("log", "--all", "--format=%x00%aN%x00", "-F",
+                       "--grep=Approve the plan: ", "--name-only", "--", ".factory/stories", cwd=top).split("\0")[1:]
+        found = {}
+        for name, paths in zip(log[::2], log[1::2]):
+            for rel in paths.splitlines():
+                found.setdefault(rel, name)
+        return found
+    return repo.command_fact("board approval authors", top, read).get(repo.state_path(key))
 
 
 def _read_rounds(notes: str) -> list[Item]:

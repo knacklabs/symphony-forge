@@ -120,8 +120,16 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
     return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
 
 
-def person(record: Item | str | None = None, name: str | None = None) -> Item:
+def person(record: Item | str | None = None, name: str | None = None, *, field: str | None = None) -> Item:
     """Use a loaded login and keep its name; a login alone is also a visible name."""
+    if field:
+        actors = record if isinstance(record, dict) else {}
+        summary = actors.get("summary") or {}
+        event = next((entry for entry in actors.get("events", [])
+                      if entry.get("event") == {"started_by": "item started", "approved_by": "plan approved"}[field]), {})
+        record = ({"name": summary[field], "login": summary.get(field + "_login")}
+                  if summary.get(field) or summary.get(field + "_login")
+                  else {"name": event.get("by"), "login": event.get("by_login")})
     record = {"login": record} if isinstance(record, str) else record or {}
     login = record.get("login")
     return {"name": record.get("name") or name or login, "login": login}
