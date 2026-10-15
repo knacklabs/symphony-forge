@@ -10,7 +10,7 @@
   },
   "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
