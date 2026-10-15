@@ -247,14 +247,27 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     by_branch = {p.get("headRefName"): p for p in prs}
     # Older open PRs keep their number, but deliberately have unknown checks.
     github = board_facts.prs(top)
+    people_prs = board_facts.prs(top, people=True)
+    people_branches = {pr["headRefName"]: pr for pr in [
+        *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]
+        if isinstance(pr.get("headRefName"), str)}
+    names = {("email", email): name for email, name in _display_names(top).items()}
+    for pr in sorted(people_branches.values(), key=lambda pr: pr.get("mergedAt") or "", reverse=True):
+        for actor in (pr.get("author"), pr.get("mergedBy")):
+            if actor and actor.get("name"):
+                board_facts.person(actor, names=names)
+        actors = time_records.from_body(pr.get("body") or "")
+        for field in ("started_by", "approved_by"):
+            board_facts.person(actors, field=field, names=names)
     for pr in (github or {}).get("open", []):
         if isinstance(pr.get("headRefName"), str):
             by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
     finished_prs = board_facts.merged_prs(github)
+    remembered = {branch for branch, pr in people_branches.items() if pr.get("author") or pr.get("mergedBy")}
     # The upgrade's six-week history is visible immediately, including older finished rows.
     history = {**history, "expired": history["expired"] - {
         rel for rel, (state, _) in best.items()
-        if state.get("branch") in {pr["headRefName"] for pr in finished_prs}}}
+        if state.get("branch") in remembered | {pr["headRefName"] for pr in finished_prs}}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
@@ -515,16 +528,17 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         idle_seconds = elapsed(idle_since)
         developer = board_facts.person(
             (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
-            or owners.get(read_key))
-        recorded_people = time_records.from_body((pr or {}).get("body") or "")
-        starter = board_facts.person((pr or {}).get("author"))
+            or owners.get(read_key), names=names)
+        people_pr = people_branches.get(branch) or pr or {}
+        recorded_people = time_records.from_body(people_pr.get("body") or "")
+        starter = board_facts.person(people_pr.get("author"), names=names)
         if not starter["name"]:
-            starter = board_facts.person(recorded_people, field="started_by")
+            starter = board_facts.person(recorded_people, field="started_by", names=names)
             if not starter["name"]:
                 starter = board_facts.person(name=_starters(top).get(repo.state_path(item)))
-        approver = board_facts.person(recorded_people, field="approved_by")
+        approver = board_facts.person(recorded_people, field="approved_by", names=names)
         if not approver["name"] and read_key:
-            approver = board_facts.person(name=_approver(top, read_key))
+            approver = board_facts.person(_approver(top, read_key), names=names)
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
                 "started_by": starter["name"], "started_by_login": starter["login"],
                 "approved_by": approver["name"], "approved_by_login": approver["login"],
@@ -549,7 +563,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                        "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                "merged_by": board_facts.person(pr["mergedBy"]) if (pr or {}).get("mergedBy") else None,
+                "merged_by": board_facts.person(people_pr["mergedBy"], names=names) if people_pr.get("mergedBy") else None,
                 "merged_at": finished_at if finished else None,
                 **({k: v for k, v in time_records.combined(
                     top, item, state, (pr or {}).get("body") or "", events=activity, timings=item_timings,
@@ -707,7 +721,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits)
+    team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits, names)
     fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
@@ -724,7 +738,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
-            "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top)),
+            "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
@@ -1018,15 +1032,15 @@ def _starters(top: Path) -> dict[str, str]:
     return found
 
 
-def _approver(top: Path, key: str) -> str | None:
+def _approver(top: Path, key: str) -> Item | None:
     """The approval commit's own author, independent of the plan's assignee."""
     def read():
-        log = repo.git("log", "--all", "--format=%x00%aN%x00", "-F",
+        log = repo.git("log", "--all", "--format=%x00%aN%x00%aE%x00", "-F",
                        "--grep=Approve the plan: ", "--name-only", "--", ".factory/stories", cwd=top).split("\0")[1:]
         found = {}
-        for name, paths in zip(log[::2], log[1::2]):
+        for name, email, paths in zip(log[::3], log[1::3], log[2::3]):
             for rel in paths.splitlines():
-                found.setdefault(rel, name)
+                found.setdefault(rel, {"name": name, "email": email})
         return found
     return repo.command_fact("board approval authors", top, read).get(repo.state_path(key))
 

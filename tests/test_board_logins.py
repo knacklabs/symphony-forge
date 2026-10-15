@@ -136,12 +136,19 @@ def test_1_board_people_keep_loaded_names_and_logins(env, monkeypatch, unsynced_
         merger = merger_login = "merge-owner"
         merged = pr(21, "fix/tidy-readme", {"name": author, "login": author_login}, now)
         merged["mergedBy"] = {"login": merger_login}
-        github(env, [merged])
+        older = pr(22, "manual-change", {"name": "Previous Builder", "login": author_login},
+                   now - timedelta(days=7))
+        github(env, [merged, older])
     env.gh.respond("api", "user", stdout="viewer-dev\n")
     before = len(env.gh.calls())
-    warm = rows(board(repo))[item]  # Populate the real command's last-known records.
+    warm_board = board(repo)  # Populate the real command's last-known records.
+    warm = rows(warm_board)[item]
     assert warm["started_by_login"] == author_login
     assert warm["merged_by"]["login"] == merger_login
+    if case != "adopted-upgrade":
+        [trend_person] = [person for person in warm_board["team"]["trends"]["people"]
+                          if person["login"] == author_login]
+        assert trend_person["name"] == warm["started_by"] == author
 
     if case == "github-unreachable":
         env.gh.respond("pr", "list", exit=1, stderr="GitHub is unreachable\n")

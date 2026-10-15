@@ -32,7 +32,7 @@ def _day(at: date) -> str:
 
 
 def facts(top: Path, history: Item, counts: Item, items: list[Item],
-          github: Item | None) -> tuple[Item, str]:
+          github: Item | None, names: dict | None = None) -> tuple[Item, str]:
     """The team keys `pace`, `go_live`, `trends` and `around_forge`, and the sentence's go-live
     clause. Pace and go-live read git; trends and the around-Forge list need GitHub."""
     from forge import board_facts
@@ -82,8 +82,9 @@ def facts(top: Path, history: Item, counts: Item, items: list[Item],
                  for week in github["weeks"]]
         full = found[:6]
         # Grouped by login, which is unique; the display name is only the label.
-        person = lambda pr: board_facts.person(pr.get("author"))
-        identity = lambda pr: (person(pr)["login"], None if person(pr)["login"] else person(pr)["name"])
+        person = lambda pr: board_facts.person(pr.get("author"), names=names)
+        identity = lambda pr: ((person(pr)["login"] or "").casefold() or None, None if person(pr)["login"] else (
+            ((pr.get("author") or {}).get("email") or person(pr)["name"] or "Unknown").casefold()))
         people = {identity(pr): person(pr)["name"] or "Unknown"
                   for week in full if week["complete"] for pr in week["prs"]}
         trends = {"weeks": [week["start"][:10] for week in full],
