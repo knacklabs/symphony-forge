@@ -101,6 +101,9 @@
     "status": "blocked"
   },
   "round": 5,
+  "settled_areas": [
+    "src/forge/board_facts.py"
+  ],
   "status": "fixing",
   "steps": [
     {
@@ -122,8 +125,12 @@
   ],
   "stop": {
     "at": "2026-10-14T22:27:03.332912+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/board_facts.py",
-    "wait_id": "e1233261-6724-43ae-aa94-8d2b5a014aef"
+    "reason": "Owner chose narrow: logins only from records that hold them; no GitHub lookup for plain git authors, so the board needs no GitHub CLI",
+    "wait_id": "e1233261-6724-43ae-aa94-8d2b5a014aef",
+    "worker_round": 5
   },
   "stuck": {
     "close": "f0ce2440-1b6e-4c1a-948e-74495e8451dc",
