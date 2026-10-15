@@ -100,8 +100,8 @@
     "id": "8be44af3-b5d7-4ed4-aa95-8091a3260f0b",
     "status": "blocked"
   },
-  "round": 4,
-  "status": "hotspot",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -126,12 +126,12 @@
     "wait_id": "e1233261-6724-43ae-aa94-8d2b5a014aef"
   },
   "stuck": {
-    "close": "2e6c3db6-f262-4013-9add-38796357f51f",
-    "head": "c04fe6d702fe9be2df809fe3e1d243ff91463bbb",
+    "close": "f0ce2440-1b6e-4c1a-948e-74495e8451dc",
+    "head": "5594d59c49d4b954b67b6ad9d7ebdc0bde8f34e7",
     "keys": {
-      "the review finding \"Board fails when GitHub CLI is not installed\" in src/forge/board.py": 1
+      "the review finding \"Board still fails without GitHub CLI for ordinary git authors\" in src/forge/board_facts.py": 1
     },
-    "round": 3
+    "round": 4
   },
   "worker": "codex"
 }
