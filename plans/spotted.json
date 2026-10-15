@@ -10680,6 +10680,28 @@
       "item": "FORGE-MAINONCE-1/ONCLASH",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tCompacted rounds expose aggregate findings as individual round data\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 660,
+      "text": "Compacted rounds expose aggregate findings as individual round data",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Each round records its full duration in the four time groups\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 24,
+      "text": "Not done: Each round records its full duration in the four time groups",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
