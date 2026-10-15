@@ -154,6 +154,7 @@
   },
   "round": 9,
   "settled_areas": [
+    "src/forge/board.py",
     "src/forge/board_facts.py"
   ],
   "status": "fixing",
@@ -189,8 +190,12 @@
   ],
   "stop": {
     "at": "2026-10-15T03:37:44.849007+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/board.py",
-    "wait_id": "7321a5b2-5a31-4505-ad8f-26a58be9fd2d"
+    "reason": "Owner grilled 15 October: one rule for people (login if known else name, never blank), sources only what the board already loads, offline shows last known; simplify to one resolver",
+    "wait_id": "7321a5b2-5a31-4505-ad8f-26a58be9fd2d",
+    "worker_round": 9
   },
   "stuck": {
     "close": "33f675e4-9a29-4b63-8ee9-2c26eb8dbc7c",
