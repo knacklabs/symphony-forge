@@ -65,8 +65,8 @@
     "id": "0c131167-4e96-4fcd-8581-912fc4e8431f",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T08:28:44.831530+00:00",
@@ -86,12 +86,10 @@
     }
   ],
   "stuck": {
-    "close": "50b39c33-d924-40c3-92c9-8853416021bd",
-    "head": "bf0eb480062d9add2dd49b2341de7f10b586f7a2",
-    "keys": {
-      "the review finding \"Not done: Windows full-suite retries leave transient teardown errors red\" in pyproject.toml": 1
-    },
-    "round": 2
+    "close": "99963f9a-eeac-41b2-b79c-a79af6717c19",
+    "head": "1729d4a9ab9c5ac0c490d5539cfaf2c3461ecac0",
+    "keys": {},
+    "round": 3
   },
   "why": "Windows full-suite runs fail a different slow test each run (timeouts, a flaky retry), so the nightly is red even when nothing is broken",
   "worker": "codex"
