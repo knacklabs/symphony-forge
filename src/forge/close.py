@@ -400,11 +400,11 @@ def close(args: argparse.Namespace) -> int:
     def publish() -> None:
         nonlocal pr, body_published
         if not body_published:
+            if retried_history or backfill.upgrade_fix(top, item, state):
+                backfill.run(top, exclude_branch=branch)
             pr = _publish(top, item, state, branch, default, pr, result, evidence)
             body_published = True
             _attach(top, item, branch)
-            if retried_history or backfill.upgrade_fix(top, item, state):
-                backfill.run(top, exclude_branch=branch)
 
 
     print(f"Review: {result['status']}.", flush=True)

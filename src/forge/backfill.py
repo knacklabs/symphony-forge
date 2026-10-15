@@ -177,10 +177,8 @@ def run(top: Path, *, exclude_branch: str = "") -> None:
         cutoff = time_records.when(repo.now()) - timedelta(days=42)
         prs = [*github["open"], *[pr for pr in board_facts.merged_prs(github)
                                 if time_records.when(pr.get("mergedAt")) and time_records.when(pr["mergedAt"]) >= cutoff]]
-        deferred = False
         for pr in {pr["number"]: pr for pr in prs}.values():
             if pr.get("headRefName") == exclude_branch:
-                deferred |= not bool(time_records.from_body(pr.get("body") or ""))
                 continue  # close publishes its own body once, with rebuilt history included
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or time_records.from_body(pr.get("body") or ""):
                 continue
@@ -189,8 +187,7 @@ def run(top: Path, *, exclude_branch: str = "") -> None:
                 continue
             key, state, record = rebuilt
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
-        if not deferred:
-            pending.unlink(missing_ok=True)
+        pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
         if isinstance(error, repo.Refused) and error.entry is close.REFUSALS["publish"]:
             raise
