@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tpyproject.toml\tNot done: The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a B\twindows-rerun-flakes",
+      "kind": "bug",
+      "path": "pyproject.toml",
+      "line": 13,
+      "text": "Not done: The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a B",
+      "from": "blocking",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tGenerated Windows gate steps use Bash commands without selecting Bash.",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 99,
+      "text": "Generated Windows gate steps use Bash commands without selecting Bash.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tWindows client checks break configured PowerShell test commands\twindows-rerun-flakes",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 201,
+      "text": "Windows client checks break configured PowerShell test commands",
+      "from": "blocking",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tProcess cleanup can print secret environment values when it reports a leaked process.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 299,
+      "text": "Process cleanup can print secret environment values when it reports a leaked process.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
