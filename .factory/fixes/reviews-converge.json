@@ -112,8 +112,8 @@
     "id": "9e9288b7-04a3-475c-b381-f821624e3f6a",
     "status": "blocked"
   },
-  "round": 3,
-  "status": "hotspot",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:19:28.735147+00:00",
@@ -138,10 +138,13 @@
     "wait_id": "c559721d-3c09-41e0-9f05-6edbf8ed41aa"
   },
   "stuck": {
-    "close": "95b3d55d-a4fe-4432-b86f-46afcb761698",
-    "head": "283a566e953a0f3cbe4993323b851ced5e6a21a7",
-    "keys": {},
-    "round": 2
+    "close": "e1e7afdd-1ecb-4165-bcdd-d930188a7ada",
+    "head": "ee65c2ae7b8179eefba3e445dc050093e1235396",
+    "keys": {
+      "the review finding \"A locally started base gives dependent parts a circular next step\" in src/forge/task.py": 1,
+      "the review finding \"Answered second-round question keeps replacing the next work step\" in src/forge/review.py": 1
+    },
+    "round": 3
   },
   "why": "Close reviews take 4 to 9 rounds on code parts because every round reviews afresh and finds new edge cases, and builder details block as Not done",
   "worker": "codex"
