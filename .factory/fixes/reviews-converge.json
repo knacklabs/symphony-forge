@@ -1,6 +1,13 @@
 {
   "base": "202d0aa921373257b8d471893e8058ff51fce7ca",
   "branch": "fix/reviews-converge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13e37-4df4-7541-b2db-f2e7ae165c2e",
+    "head": null,
+    "start": "46ffdfbfbc0f0eeae9a7b497cd16626372a2cb33"
+  },
   "done_when": "From an item's second review round, review checks only the previous round's findings and the lines changed since that review; a new finding in unchanged code becomes a follow-up unless it is a security or data-loss problem; and a Not done finding blocks only against an owner-approved Done-when item, never a builder detail; in Forge's repo and in client repos, new and upgraded",
   "kind": "fix",
   "round": 1,
