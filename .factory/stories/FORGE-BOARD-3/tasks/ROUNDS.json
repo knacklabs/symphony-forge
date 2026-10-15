@@ -87,7 +87,10 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "settled_areas": [
+    "src/forge/time_records.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:58.599703+00:00",
@@ -108,8 +111,12 @@
   ],
   "stop": {
     "at": "2026-10-14T22:18:30.385409+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "src/forge/time_records.py",
-    "wait_id": "32e39691-f630-4c2c-9598-4c40b6c33637"
+    "reason": "Owner chose narrow: ship round times for rounds that are not compacted; keeping times through compaction becomes a follow-up",
+    "wait_id": "32e39691-f630-4c2c-9598-4c40b6c33637",
+    "worker_round": 3
   },
   "stuck": {
     "close": "a43e5def-04bd-4330-8418-85aad345d94e",
