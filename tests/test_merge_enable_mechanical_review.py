@@ -67,7 +67,7 @@ def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_f
 
     def check_published_change():
         ref = f"origin/fix/{FIX}"
-        assert set(client.repo.git("diff", "--name-only", "origin/main", ref).splitlines()) == {
+        assert set(client.repo.git("diff", "--name-only", f"origin/main...{ref}").splitlines()) == {
             "forge.toml", f".factory/fixes/{FIX}.json"}
         assert client.repo.git("show", f"{ref}:plans/spotted.json") == spotted
         assert (worktree(client) / "plans/spotted.json").read_text("utf-8").strip() == spotted
@@ -82,11 +82,18 @@ def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_f
     published = [call for call in client.gh_calls("pr") if "--body-file" in call]
     assert "Review: clean, 0 dismissed, 0 advice." in body(published[-1])
     check_published_change()
+    # Main adds another pull request's file after the owner's switch has started. The
+    # mechanical check must compare with the merge base, not the new main tree.
+    writer = client.tmp / "main-writer"
+    client.repo.git("clone", "-q", client.repo.git("remote", "get-url", "origin"), str(writer))
+    moved = client.commit(writer, "unrelated.txt", "Another change landed\n")
+    client.repo.git("push", "-q", "origin", "main", cwd=writer)
     client.checks(GREEN)
     client.open_pr("")
     ready = client.close(FIX)
     assert ready.returncode == 0, ready.stdout + ready.stderr
     check_published_change()
+    assert client.repo.git("merge-base", moved, f"origin/fix/{FIX}") != moved
     assert "A human merges its pull request" in ready.stdout
     assert not client.review_calls()
     assert not client.gh_calls("pr", "merge")

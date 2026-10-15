@@ -1,62 +1,97 @@
-"""forge work on Windows retries a record held open by another reader instead of crashing.
-
-Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
-"""
+"""forge work waits for locked records, or refuses without losing its conversation."""
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
+import os
 from pathlib import Path
 
-STORY = "WINDOWS-RECORD-RETRY"
+from test_codex_resume import _resuming
+from test_codex_worker import _sent, sdk_data  # noqa: F401 (a fixture)
+
+STORY = "FIX-TEST-AUDIT-FOLLOWUPS"
 
 
-def _record_in_process(tmp_path, refuse: str, seed: bool = True):
-    """Run codex._record on a record in a fresh process whose os.replace is refused as Windows
-    refuses it while another process has the file open. `refuse` is an expression of the count
-    of renames so far and the seconds since the first one; when true, the rename is refused."""
-    script = ("import os, sys, time; sys.path.insert(0, sys.argv[1])\n"
-              "from pathlib import Path\n"
-              "from forge import codex, repo\n"
-              "real, seen, first = os.replace, [], time.monotonic()\n"
-              "def replace(a, b):\n"
-              "    seen.append(a)\n"
-              f"    if {refuse}: raise PermissionError(5, 'Access is denied')\n"
-              "    real(a, b)\n"
-              "os.replace = replace\n"
-              "try:\n"
-              "    codex._record(Path(sys.argv[2]), b=2)\n"
-              "except repo.Refused as refusal:\n"
-              "    print(refusal)\n"
-              "print(len(seen))\n")
-    record = tmp_path / "PAGE.json"
-    if seed:
-        record.write_text('{"a": 1}\n')
-    src = Path(__file__).resolve().parent.parent / "src"
-    done = subprocess.run([sys.executable, "-c", script, str(src), str(record)],
-                          capture_output=True, text=True)
-    assert done.returncode == 0, done.stderr
-    return record, done.stdout
+def _locked_record(tmp_path, monkeypatch, record: Path, refusal: str):
+    """Refuse the OS rename as Windows does while a reader holds the destination.
+
+    The real command owns waiting, writing and cleanup. The marker confirms the fault
+    reached that command rather than an unrelated guard.
+    """
+    startup = tmp_path / "locked-record"
+    startup.mkdir()
+    marker = startup / "refused"
+    (startup / "sitecustomize.py").write_text(
+        "import os, time\n"
+        "from pathlib import Path\n"
+        f"target = Path({json.dumps(str(record))})\n"
+        f"marker = Path({json.dumps(str(marker))})\n"
+        "real_replace, attempts, first = os.replace, 0, None\n"
+        "def replace(source, destination, *args, **kwargs):\n"
+        "    global attempts, first\n"
+        "    if Path(destination) == target:\n"
+        "        attempts += 1\n"
+        "        if first is None: first = time.monotonic()\n"
+        f"        if {refusal}:\n"
+        "            marker.write_text('Access is denied\\n', encoding='utf-8')\n"
+        "            raise PermissionError(5, 'Access is denied')\n"
+        "    return real_replace(source, destination, *args, **kwargs)\n"
+        "os.replace = replace\n", encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", os.pathsep.join(filter(None, (
+        str(startup), os.environ.get("PYTHONPATH")))))
+    return marker
 
 
-def test_7_record_retries_while_another_reader_holds_it(tmp_path):
-    # Windows refuses the rename ("Access is denied") while another process has the file open;
-    # here the first three renames are refused.
-    record, out = _record_in_process(tmp_path, "len(seen) <= 3", seed=False)
-    assert out.strip() == "4"
-    assert json.loads(record.read_text()) == {"b": 2}
+def test_2_work_waits_for_a_reader_before_creating_its_record(
+        repo, monkeypatch, sdk_data, tmp_path, claude_session):
+    _, calls, turns = _resuming(repo, monkeypatch, sdk_data)
+    with monkeypatch.context() as locked:
+        marker = _locked_record(tmp_path, locked, turns.with_suffix(".json"), "attempts <= 3")
+        built = repo.forge("work", "BOARD/PAGE")
+    assert marker.exists()
+    assert built.returncode == 0, built.stdout + built.stderr
+    assert "Codex ended the turn: completed" in built.stdout
+
+    # A later command must find the newly saved conversation and continue it.
+    resumed = repo.forge("work", "BOARD/PAGE")
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == "thr-stub-1"
+    assert "stub codex: turn-stub-2 on thr-stub-1" in resumed.stdout
 
 
-def test_8_record_refuses_when_another_reader_never_lets_go(tmp_path):
-    # A reader that never releases the file ends in a plain refusal, not a PermissionError.
-    record, out = _record_in_process(tmp_path, "True")
-    assert out.startswith(f"Forge couldn't update {record} because another program kept it open.")
-    assert json.loads(record.read_text()) == {"a": 1} and not record.with_suffix(".tmp").exists()
+def test_3_work_refuses_a_permanent_lock_and_keeps_the_existing_conversation(
+        repo, monkeypatch, sdk_data, tmp_path, claude_session):
+    _, calls, turns = _resuming(repo, monkeypatch, sdk_data)
+    first = repo.forge("work", "BOARD/PAGE")
+    assert first.returncode == 0, first.stdout + first.stderr
+    record = turns.with_suffix(".json")
+    with monkeypatch.context() as locked:
+        marker = _locked_record(tmp_path, locked, record, "True")
+        refused = repo.forge("work", "BOARD/PAGE")
+    assert marker.exists()
+    assert refused.returncode != 0
+    assert refused.stderr == (
+        f"Forge couldn't update {record} because another program kept it open.\n"
+        f"Next: close whatever reads {record}, then run the command again\n")
+    assert not record.with_suffix(".tmp").exists()
+    assert len(_sent(calls, "turn/start")) == 1
+
+    # Once the reader closes the file, no state was lost and no second turn started early.
+    resumed = repo.forge("work", "BOARD/PAGE")
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == "thr-stub-1"
+    assert "stub codex: turn-stub-2 on thr-stub-1" in resumed.stdout
 
 
-def test_9_record_waits_for_a_reader_to_release_an_existing_record(tmp_path):
-    # The replace stays refused until a reader lets go half a second later: a loop that never
-    # waited would use up its attempts first.
-    record, out = _record_in_process(tmp_path, "time.monotonic() - first < 0.5")
-    assert json.loads(record.read_text()) == {"a": 1, "b": 2}
+def test_4_work_waits_until_a_reader_releases_an_existing_record(
+        repo, monkeypatch, sdk_data, tmp_path, claude_session):
+    _, calls, turns = _resuming(repo, monkeypatch, sdk_data)
+    first = repo.forge("work", "BOARD/PAGE")
+    assert first.returncode == 0, first.stdout + first.stderr
+    with monkeypatch.context() as locked:
+        marker = _locked_record(tmp_path, locked, turns.with_suffix(".json"),
+                                "time.monotonic() - first < 0.5")
+        resumed = repo.forge("work", "BOARD/PAGE")
+    assert marker.exists()
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == "thr-stub-1"
+    assert "stub codex: turn-stub-2 on thr-stub-1" in resumed.stdout

@@ -1,0 +1,115 @@
+{
+  "base": "4243dd51024a14d39be742c1904238be2d655429",
+  "branch": "fix/test-audit-followups",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13b84-ba66-7c70-8343-7fdb8b7b8417",
+    "head": null,
+    "start": "df4c1075a9b16e01eff42336c00ee378bb27473d"
+  },
+  "done_when": "The guide test checks the guide's sections for new and existing repos instead of copied phrases, the retry and upgrade-version tests run at the command boundary, and the net-lines limit test has a name that says what it guards",
+  "flagged": [
+    ".codex/skills/forge/SKILL.md",
+    "docs/commands.md",
+    "forge.toml",
+    "tests/test_mod_guide.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "forge.toml",
+      "file": "forge.toml",
+      "gain": null,
+      "harm": null,
+      "line": 2,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Restore the Forge v1.2.12 pin",
+      "work": null
+    },
+    {
+      "area": ".codex/skills/forge/SKILL.md",
+      "file": ".codex/skills/forge/SKILL.md",
+      "gain": null,
+      "harm": null,
+      "line": 11,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Restore explicit deployment authorization in both checked-in guides",
+      "work": null
+    },
+    {
+      "area": "docs/commands.md",
+      "file": "docs/commands.md",
+      "gain": null,
+      "harm": null,
+      "line": 27,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: retain current coordinator commands in generated guidance",
+      "work": null
+    },
+    {
+      "area": "test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections() in tests/test_mod_guide.py",
+      "file": "tests/test_mod_guide.py",
+      "gain": null,
+      "harm": null,
+      "line": 37,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b1b80cfe11cffbeffbb91938c7223d50c91178fbd87a8d06cd7e87edf5167af2",
+    "changed": "7f8320168b657889a487f3c01d817492cd1410d918ec43a614e4b9d596619519",
+    "commit": "c762e22ab27884465f89efa779d5bb9b8996048f",
+    "dismissals": [],
+    "findings": [],
+    "id": "4ae12466-c645-4b91-a247-0a521c0a9219",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-12T15:44:42.456146+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T18:34:17.739733+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T18:54:57.400473+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T19:02:11.998412+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T22:26:43.415095+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "956dd7d7-d0d1-45ba-9a74-4e8978533309",
+    "head": "7a48baf148f4d656660a3b5a9021592f3288054f",
+    "keys": {},
+    "round": 6
+  },
+  "why": "The test audit left four follow-ups: a guide test copying about 110 phrases, two tests importing Forge internals in a subprocess, and a CI test named for Windows that guards another job",
+  "worker": "codex"
+}
