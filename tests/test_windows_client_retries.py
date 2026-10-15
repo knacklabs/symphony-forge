@@ -104,13 +104,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         assert normalized_check == windows_check, "The trusted PR gate must keep the same commands"
         assert "        shell: bash\n" not in tests
         if runner != "windows-latest":
-            expected = command
-            if command_style == "split-pytest":
-                expected += (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
-                             "least_duration || { status=$?; [ \"$status\" -eq 5 ] && " +
-                             command + " --collect-only; }")
-            assert run == expected
-            run = run.replace("${{ matrix.group }}", "1")
+            assert run == command
         # Exercise the real Actions shell: PowerShell syntax and .ps1 commands survive
         # init and upgrade, including native failures, throws and script exits.
         modes = (("native", "throw", "exit") if runner == "windows-latest" and
