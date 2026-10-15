@@ -56,6 +56,7 @@ def test_3_next_names_the_unmerged_glob_overlap_instead_of_offering_start(repo, 
     repo.write("forge.toml", f'version = "{version}"\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-qm", "Configure the current release")
+    repo.git("push", "-q", "origin", "main")
     story(repo)
     assert repo.forge("task", "start", "BOARD/API").returncode == 0
     key = "OTHER" if other_story else "BOARD"
