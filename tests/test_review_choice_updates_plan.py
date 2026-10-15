@@ -154,7 +154,7 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         assert "recorded the repo's default choice: narrow" in chosen.stdout
     else:
         chosen = env.close(item, "--resolve", choice, "--reason", reason)
-    assert chosen.returncode == (1 if automatic else 0), chosen.stdout + chosen.stderr
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published = env.repo.git("show", "origin/story/SHOP:plans/SHOP.md")
     assert reason in published
     task_plan = (where / "plans/SHOP.md").read_text("utf-8").rstrip("\n")
