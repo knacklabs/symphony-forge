@@ -212,12 +212,6 @@
       "order": 75
     },
     {
-      "key": "FORGE-MAINONCE-1",
-      "title": "Pull requests take in main only on a real clash",
-      "status": "pending",
-      "order": 76
-    },
-    {
       "key": "FORGE-SCORE-1",
       "title": "Reads and reviews score each note on Gain, Work and Harm, and only notes above the bar hold work back",
       "status": "pending",
@@ -270,6 +264,18 @@
       "spec": "docs/specs/live-notes.md",
       "status": "pending",
       "order": 83
+    },
+    {
+      "key": "FORGE-BOARD-3",
+      "title": "The board's data knows who owns what, what shipped when, and what was left",
+      "status": "pending",
+      "order": 84
+    },
+    {
+      "key": "FORGE-MAINONCE-1",
+      "title": "Pull requests take in main only on a real clash",
+      "status": "pending",
+      "order": 76
     }
   ],
   "epics": [
