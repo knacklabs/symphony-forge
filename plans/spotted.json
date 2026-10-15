@@ -3620,6 +3620,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/merge.py\tNot done: retain the Forge-merged trailer in bounded merge bodies\tFORGE-STACK-1/START",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 106,
+      "text": "Not done: retain the Forge-merged trailer in bounded merge bodies",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/START",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\tPreserve handwritten sections when refreshing merge history\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/merge.py",
@@ -4617,6 +4628,17 @@
       "text": "forge next gives an unusable resolve command for a stopped spec in another worktree",
       "from": "blocking",
       "item": "stop-question-plain",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tGenerated Windows gate steps use Bash commands without selecting Bash.",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 99,
+      "text": "Generated Windows gate steps use Bash commands without selecting Bash.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
       "status": "open",
       "closed_by": null
     },
@@ -5864,6 +5886,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 282,
+      "text": "Not done: start refusals leave branches and worktrees untouched",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/START",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tPreserve starter attribution through normal squash merges and branch cleanup\tstart-is-claim",
       "kind": "bug",
       "path": "src/forge/task.py",
@@ -6927,6 +6960,17 @@
       "text": "Not done: the disappearing-file scan test",
       "from": "blocking",
       "item": "ci-npm-and-scan-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tProcess cleanup can print secret environment values when it reports a leaked process.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 299,
+      "text": "Process cleanup can print secret environment values when it reports a leaked process.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
       "status": "open",
       "closed_by": null
     },
@@ -9263,6 +9307,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_windows_client_retries.py\tThe client probe can resolve system Python without pytest in CI.",
+      "kind": "bug",
+      "path": "tests/test_windows_client_retries.py",
+      "line": 98,
+      "text": "The client probe can resolve system Python without pytest in CI.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_worker_and_reader_chats_survive_rounds.py\tNot done: Client-repo command tests for chat continuity\treuse-worker-chats",
       "kind": "bug",
       "path": "tests/test_worker_and_reader_chats_survive_rounds.py",
@@ -10744,28 +10799,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/merge.py\tNot done: retain the Forge-merged trailer in bounded merge bodies\tFORGE-STACK-1/START",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 106,
-      "text": "Not done: retain the Forge-merged trailer in bounded merge bodies",
-      "from": "blocking",
-      "item": "FORGE-STACK-1/START",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
-      "kind": "bug",
-      "path": "src/forge/task.py",
-      "line": 282,
-      "text": "Not done: start refusals leave branches and worktrees untouched",
-      "from": "blocking",
-      "item": "FORGE-STACK-1/START",
       "status": "open",
       "closed_by": null
     }
