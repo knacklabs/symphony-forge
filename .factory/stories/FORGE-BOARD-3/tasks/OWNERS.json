@@ -70,34 +70,47 @@
       "gain": 4,
       "harm": 3,
       "line": 140,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
       "title": "Board still fails without GitHub CLI for ordinary git authors",
       "work": 1
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 520,
+      "outcome": "open",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: older board history loses known pull-request logins",
+      "work": 2
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "adff69dfc8a8870c2e0d275f1805496481e358379ad8dd5aa06e8673f87d714a",
-    "changed": "d84ae959ac9504736952e3596d2050479175b52b3599d43608642c943e9e5e08",
-    "commit": "3d9359a4eb086624cfb5045e670f50732c1a01f1",
+    "branch_diff": "4d8f50f8e739f60fb4d92c7f3ae6ac1c10ef1ddcbdacae3f06a72e054b7f0a3a",
+    "changed": "7bef0e811d15e12a8b12e99458dda8c84109b710d4190aad78a2e1c2de8fc25a",
+    "commit": "6dd3bba005903551aa11ade25167d9efec5b13db",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. `machine_board` calls `actor_logins` before its guarded `viewer` lookup. For a visible item whose author uses an ordinary git email, this line invokes `repo.run(\"gh\", ...)`; `repo.run` refuses when `gh` is absent. Both JSON and HTML board reads therefore exit instead of showing local data with a null login. The offline tests use a GitHub noreply email, which bypasses this lookup and leaves the failure undetected.",
-        "file": "src/forge/board_facts.py",
-        "gain": 4,
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. The earlier compaction finding was fixed for pull requests within the six-week search; this is a different past-work gap. The HTML board reads all historical rows (`trim=False`), but `by_branch` contains merged pull requests from only the last six weeks. For a completed item merged earlier, `pr` is absent here, so its saved starter name appears with a null `started_by_login` even when its pull request has a known author login. The older-PR lookup runs only for expired parts of unfinished stories, which does not cover these rows.",
+        "file": "src/forge/board.py",
+        "gain": 3,
         "harm": 3,
-        "line": 140,
+        "line": 520,
         "priority": "P1",
-        "title": "Board still fails without GitHub CLI for ordinary git authors",
-        "work": 1
+        "title": "Not done: older board history loses known pull-request logins",
+        "work": 2
       }
     ],
-    "id": "8be44af3-b5d7-4ed4-aa95-8091a3260f0b",
+    "id": "18966997-d69b-4d90-89af-4476bfe5a7de",
     "status": "blocked"
   },
   "round": 6,
@@ -120,6 +133,10 @@
     },
     {
       "at": "2026-10-14T22:27:03.323139+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:36:44.582727+00:00",
       "step": "review"
     }
   ],
