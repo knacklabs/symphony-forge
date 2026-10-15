@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -16,14 +17,19 @@ STORY = "windows-rerun-flakes"
 
 
 @pytest.mark.parametrize("setup", ["init", "earlier-adoption"])
-def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup):
+@pytest.mark.parametrize("command_style", ["powershell", "split-pytest"])
+def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_style):
     command = 'python retry_probe.py; python -c "print(\'suite passed\')"'
+    windows_command = ("$probe = './retry probe.ps1'; & $probe\nWrite-Output 'suite passed'"
+                       if command_style == "powershell" else "python -m pytest test_retry_probe.py -q")
     current = repo.forge("--version").stdout.split()[-1]
     if setup == "init":
         config = (f'version = "{current}"\nrepo = "client"\n'
-                  f'runner = "windows-latest"\ntest = {json.dumps(command)}\n'
+                  f'runner = "windows-latest"\ntest = {json.dumps(windows_command)}\n'
                   'checks = ["tests", "forge-pr-check"]\n')
         client = _new_repo(repo, gh, tmp_path, config)
+        if command_style == "split-pytest":
+            (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
         result = repo.forge("init", "--runner", "windows-latest", cwd=client)
     else:
         client = repo.path
@@ -33,9 +39,11 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup):
         repo.git("commit", "-qm", "Adopt Forge on an earlier release")
         repo.git("checkout", "-qb", "fix/windows-client-retries")
         config = config.replace('version = "v1.2.2"', f'version = "{current}"')
-        config = re.sub(r"^test = .+$", lambda _: f"test = {json.dumps(command)}", config, flags=re.M)
+        config = re.sub(r"^test = .+$", lambda _: f"test = {json.dumps(windows_command)}", config, flags=re.M)
         config = 'runner = "windows-latest"\n' + config
         (client / "forge.toml").write_text(config, encoding="utf-8")
+        if command_style == "split-pytest":
+            (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
         result = repo.forge("sync", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     if setup == "init":
@@ -47,35 +55,78 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup):
         "path.write_text(str(attempt), encoding='utf-8')\n"
         "assert attempt > int(os.environ['FAILURES']), 'suite assertion failed'\n",
         encoding="utf-8")
+    (client / "test_retry_probe.py").write_text(
+        "def test_probe():\n" + "".join("    " + line + "\n" for line in
+        (client / "retry_probe.py").read_text(encoding="utf-8").splitlines()), encoding="utf-8")
+    (client / "retry probe.ps1").write_text(
+        "$path = $env:ATTEMPT_FILE\n"
+        "$attempt = if (Test-Path $path) { [int](Get-Content $path) + 1 } else { 1 }\n"
+        "Set-Content -Path $path -Value $attempt -NoNewline\n"
+        "if ($attempt -le [int]$env:FAILURES) {\n"
+        "  switch ($env:FAILURE_MODE) {\n"
+        "    'exit' { exit 7 }\n"
+        "    'throw' { throw 'suite assertion failed' }\n"
+        "    'native' { python -c 'import sys; sys.exit(7)' }\n"
+        "  }\n"
+        "}\n", encoding="utf-8")
     bash = shutil.which("bash")
-    assert bash, "GitHub's Windows test step needs bash, supplied by Git for Windows"
+    pwsh = shutil.which("pwsh") or str(ROOT / ".venv/powershell/pwsh")
+    assert bash, "Linux and Mac checks need Bash"
+    if os.name != "nt" and not os.path.isfile(pwsh):
+        pytest.skip("Real PowerShell is required; the Windows full suite supplies it")
+    assert os.path.isfile(pwsh), "Install real PowerShell to prove Windows client commands"
     windows_check = None
     for runner in ("windows-latest", "ubuntu-latest", "macos-latest"):
+        settings = config.replace('runner = "windows-latest"', f'runner = "{runner}"')
         if runner != "windows-latest":
-            settings = config.replace('runner = "windows-latest"', f'runner = "{runner}"')
+            settings = re.sub(r"^test = .+$", lambda _: f"test = {json.dumps(command)}",
+                              settings, flags=re.M)
             (client / "forge.toml").write_text(settings, encoding="utf-8")
             synced = repo.forge("sync", cwd=client)
             assert synced.returncode == 0, synced.stdout + synced.stderr
         workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
         tests, check = workflow.split("\n  tests:\n", 1)[1].split("\n  forge-pr-check:\n", 1)
         run = json.loads(re.findall(r"^      - run: (.+)$", tests, re.M)[-1])
+        if runner == "windows-latest" and command_style == "split-pytest":
+            empty_attempts = client / "empty-group-attempts.txt"
+            empty = subprocess.run([pwsh, "-NoProfile", "-NonInteractive", "-Command",
+                                    run.replace("${{ matrix.group }}", "6")], cwd=client,
+                                   capture_output=True, text=True, encoding="utf-8",
+                                   env={**os.environ, "ATTEMPT_FILE": empty_attempts.as_posix(),
+                                        "FAILURES": "0", "PATH": str(Path(pwsh).parent) +
+                                        os.pathsep + os.environ["PATH"]}, timeout=30)
+            assert empty.returncode == 0, empty.stdout + empty.stderr
+            assert not empty_attempts.exists(), "An empty group only collects the unsplit suite"
+            run = run.replace("${{ matrix.group }}", "1")
         normalized_check = check.replace(runner, "RUNNER")
         if windows_check is None:
             windows_check = normalized_check
         assert normalized_check == windows_check, "The trusted PR gate must keep the same commands"
-        if runner == "windows-latest":
-            assert "        shell: bash\n" in tests
-        else:
-            assert run == command
-            assert "        shell: bash\n" not in tests
-        # The shell owns the retry; the real command only counts attempts and asserts.
-        for failures in (1, 2, 0):
-            attempts = client / f"attempts-{runner}-{failures}.txt"
-            executed = subprocess.run([bash, "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", run],
-                                      cwd=client, capture_output=True, text=True, encoding="utf-8",
-                                      env={**os.environ, "ATTEMPT_FILE": attempts.as_posix(),
-                                           "FAILURES": str(failures)}, timeout=30)
-            expected_attempts = 2 if runner == "windows-latest" and failures else 1
-            assert attempts.read_text(encoding="utf-8") == str(expected_attempts), executed.stderr
-            passes = failures == 0 or (runner == "windows-latest" and failures == 1)
-            assert (executed.returncode == 0) == passes, executed.stdout + executed.stderr
+        assert "        shell: bash\n" not in tests
+        if runner != "windows-latest":
+            expected = command
+            if command_style == "split-pytest":
+                expected += (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
+                             "least_duration || { status=$?; [ \"$status\" -eq 5 ] && " +
+                             command + " --collect-only; }")
+            assert run == expected
+            run = run.replace("${{ matrix.group }}", "1")
+        # Exercise the real Actions shell: PowerShell syntax and .ps1 commands survive
+        # init and upgrade, including native failures, throws and script exits.
+        modes = (("native", "throw", "exit") if runner == "windows-latest" and
+                 command_style == "powershell" else ("native",))
+        for mode in modes:
+            for failures in (1, 2, 0):
+                attempts = client / f"attempts-{runner}-{mode}-{failures}.txt"
+                shell = ([pwsh, "-NoProfile", "-NonInteractive", "-Command", run]
+                         if runner == "windows-latest" else
+                         [bash, "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", run])
+                executed = subprocess.run(shell, cwd=client, capture_output=True, text=True,
+                                          encoding="utf-8", env={**os.environ,
+                                          "PATH": str(Path(pwsh).parent) + os.pathsep + os.environ["PATH"],
+                                          "ATTEMPT_FILE": attempts.as_posix(),
+                                          "FAILURES": str(failures), "FAILURE_MODE": mode}, timeout=30)
+                expected_attempts = 2 if runner == "windows-latest" and failures else 1
+                assert attempts.read_text(encoding="utf-8") == str(expected_attempts), executed.stderr
+                passes = failures == 0 or (runner == "windows-latest" and failures == 1)
+                assert (executed.returncode == 0) == passes, executed.stdout + executed.stderr

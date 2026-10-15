@@ -15,9 +15,10 @@ STORY = "windows-rerun-flakes"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("runner", ["windows-latest", "ubuntu-latest", "macos-latest"])
+@pytest.mark.parametrize("runner,phase", [("windows-latest", "call"), ("windows-latest", "setup"),
+                                         ("ubuntu-latest", "call"), ("macos-latest", "call")])
 @pytest.mark.parametrize("persistent", [False, True], ids=["fails-once", "fails-twice"])
-def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tmp_path, runner, persistent):
+def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tmp_path, runner, persistent, phase):
     workflow = (ROOT / ".github/workflows/forge-next.yml").read_text(encoding="utf-8")
     job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
     command = next(line.strip() for line in job.splitlines() if line.strip().startswith("uv run "))
@@ -34,13 +35,14 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
     if runner != "windows-latest":
         return
     # CI's real pytest plugins, including xdist and split, own the attempts and exit status.
+    head = "@pytest.fixture\ndef sample():\n" if phase == "setup" else "def test_sample():\n"
     (tmp_path / "test_sample.py").write_text(
-        "from pathlib import Path\n"
-        "def test_sample():\n"
-        "    path = Path(__file__).with_name('attempts.txt')\n"
+        "from pathlib import Path\nimport pytest\n"
+        + head + "    path = Path(__file__).with_name('attempts.txt')\n"
         "    count = int(path.read_text()) + 1 if path.exists() else 1\n"
         "    path.write_text(str(count))\n"
-        f"    assert count > {2 if persistent else 1}\n", encoding="utf-8")
+        f"    assert count > {2 if persistent else 1}\n"
+        + ("    yield\ndef test_sample(sample):\n    pass\n" if phase == "setup" else ""), encoding="utf-8")
     options[options.index("auto")] = "2"
     # Keep CI's relative timing path: an external option path makes pytest's root
     # the common ancestor of that path and the test, causing filesystem-wide collection.

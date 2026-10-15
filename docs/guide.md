@@ -284,7 +284,8 @@ New repos get this at init and earlier adopted repos after upgrading Forge and s
 required check keeps its `tests` name, so branch protection doesn't change.
 For a client with a `windows-*` runner, the generated check runs the configured test command
 again once if it fails. A second failure fails the check. New clients get this at init; existing
-clients get it after upgrading Forge and running `forge sync`. Linux, Mac and the trusted
+clients get it after upgrading Forge and running `forge sync`. Windows keeps PowerShell as its
+test shell, so configured PowerShell syntax and `.ps1` scripts still work. Linux, Mac and the trusted
 `forge-pr-check` gate keep their commands. Forge's own Windows full-suite job instead reruns
 each failed pytest test once and gives the known slow tests longer timeouts on Windows.
 When the pytest selection would cover more than a third of the repo's Python test files

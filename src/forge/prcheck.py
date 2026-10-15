@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import shlex
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -77,7 +76,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
 <npm-cache><node>      - run: <test>
-<test-shell>        if: steps.parent-tests.outputs.reuse != 'true'
+        if: steps.parent-tests.outputs.reuse != 'true'
 
   tests-passed:
     # The one required tests check: green only when every group passed. Each event runs one of
@@ -179,13 +178,18 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                            [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
     test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
                           "least_duration" if groups > 1 else "")
+    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
     if groups > 1:
         # Empty groups pass only if the unsplit suite still collects tests successfully.
-        test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
-    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
+        test += ("; if ($LASTEXITCODE -eq 5) { " + cfg["test"] + " --collect-only }" if windows
+                 else ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }')
     if windows:
-        attempt = f"bash --noprofile --norc -e -o pipefail -c {shlex.quote(test)}"
-        test = f"{attempt} || {attempt}"
+        # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
+        script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
+                  "\n}\nif (Test-Path variable:LASTEXITCODE) { exit $LASTEXITCODE }")
+        attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
+                   script.replace("'", "''") + "'")
+        test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if source
@@ -201,7 +205,6 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(test))
-                .replace("<test-shell>", "        shell: bash\n" if windows else "")
                 .replace("<groups>", str(groups))
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
