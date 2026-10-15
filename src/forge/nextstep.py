@@ -19,7 +19,7 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
                    score, task, time_records, upgrade)
-from forge.task import _started, developer, github_login, start_base, waits_for
+from forge.task import REFUSALS as START_REFUSALS, _started, developer, github_login, stack_base, start_base, waits_for
 
 COMMANDS = [
     {
@@ -559,14 +559,28 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             if blockers:
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
-    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []]
+    stacked: dict[str, str] = {}
+    stack_waits: list[str] = []
+    for name, deps in waits.items():
+        if deps and _report_config(top, refusals)["stack"] == "on":
+            try:
+                if base := stack_base(f"{key}/{name}", deps, story.landed_ref(top), top):
+                    stacked[name] = base
+            except repo.Refused as error:
+                if error.entry == START_REFUSALS["base_not_started"] and deps[0] in busy:
+                    stack_waits += [f"{key}/{name} waits for {deps[0]} to publish reviewed changes.",
+                                    "Next: forge next"]
+                else:
+                    stack_waits += str(error).splitlines()
+    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == [] or task["id"] in stacked]
     if any(developer(task) for task in doc["tasks"] if task["id"] in ready):
         login = github_login(top)
         if login:
             ready = [task["id"] for task in doc["tasks"] if task["id"] in ready
                      and (not (assigned := developer(task)) or assigned.casefold() == login.casefold())]
-    waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
-               if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
+    waiting = (stack_waits if _report_config(top, refusals)["stack"] == "on" else
+               [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
+                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)])
     reread = _next_round(top, key, notes, doc_hash, title, required, text)
     if readiness is not None:
         readiness["waits"] = waits
@@ -575,7 +589,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             readiness["stage"] = "planning"
         return lines + reread, list(states.values())
     if readiness is not None:
-        readiness["parts"].update({name: "Waiting" if deps else "Can start now"
+        readiness["parts"].update({name: "Waiting" if deps and name not in stacked else "Can start now"
                                    for name, deps in waits.items()})
         remaining = [f"{key}/{name}" for name in states if name not in merged]
         if remaining and all(part_statuses.get(item) == "ready" for item in remaining):
@@ -586,7 +600,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         builds = {}
         for name in ready:
             # A task takes forge.toml from the branch forge task start branches it from.
-            base = start_base(landed, key, rows[name], history, top)
+            base = stacked.get(name) or start_base(landed, key, rows[name], history, top)
             settings = (story.show(top, base, "forge.toml") if history is None
                         else history["docs"].get(f"{base}:forge.toml"))
             try:
@@ -599,12 +613,14 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             sources = repo.setting_sources(cfg, "build", design)
             builds[name] = repo.worker(cfg, "build", design)[0].title() + " builds it" + (
                 f" ({sources})" if sources else "")
+            if name in stacked:
+                builds[name] += f" on top of {waits[name][0]}"
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}  # {builds[task]}"
                     for task in ready)]
     if waiting:
-        lines += waiting + ([] if ready else ["Next: git fetch origin, then forge next"])
+        lines += waiting + ([] if ready or stack_waits else ["Next: git fetch origin, then forge next"])
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
 

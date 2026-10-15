@@ -32,6 +32,10 @@ review stops from close or land use `forge close <item> --resolve <narrow|split|
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
 
+Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
+makes new parts wait for merges. A part that builds on another part keeps that base until close
+moves its own changes onto the default branch after the base merges through Forge.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings

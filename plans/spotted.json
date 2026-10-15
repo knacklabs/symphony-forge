@@ -10746,6 +10746,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tNot done: retain the Forge-merged trailer in bounded merge bodies\tFORGE-STACK-1/START",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 106,
+      "text": "Not done: retain the Forge-merged trailer in bounded merge bodies",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/START",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 282,
+      "text": "Not done: start refusals leave branches and worktrees untouched",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/START",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

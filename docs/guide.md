@@ -287,6 +287,15 @@ When the pytest selection would cover more than a third of the repo's Python tes
 relies on the pull request's required checks. `forge test` still runs its tests. New repos
 get this from init; existing repos get it on upgrade.
 
+## Parts that build on reviewed work
+
+New and upgraded repos use `stack = "on"` by default, with no settings change. A part can start
+on one reviewed, unmerged part when its After list or Scope makes it wait for that part.
+The base must use the same Forge release and must start from the default branch.
+A part that builds on another can become a base after Forge merges the lower part and close
+moves it onto that merged code and reviews it again. Set `stack = "off"` to make new parts
+wait for merges. Parts that already started on another part keep their base.
+
 ## Merging a ready item
 
 The human merges by default: omitting `merge` from `forge.toml` is the same as

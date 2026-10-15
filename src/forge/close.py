@@ -935,13 +935,13 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     return {**pr, "body": new}
 
 
-def _bounded_body(body: str) -> str:
+def _bounded_body(body: str, *, suffix: str = "") -> str:
     """Keep every GitHub write bounded, cutting duplicated and advisory detail before the contract."""
-    limit = 65536  # UTF-8 bytes also bound GitHub's character count, including emoji.
+    limit = 65536 - len(suffix.encode("utf-8"))  # Reserve the final merge trailer.
     note = ("Some detail was shortened to fit GitHub's pull request limit. "
             "Git holds the full contract and proof; missing time evidence remains unknown.")
     if len(body.encode("utf-8")) <= limit:
-        return body
+        return body + suffix
     body = body.replace(note + "\n", "")
     body = re.sub(r"\n<!-- forge:history .*? -->", "", body)
     body = re.sub(r"(?m)^([^\n<]+)\n(?:\1\n)+", r"\1\n", body)
@@ -1018,7 +1018,7 @@ def _bounded_body(body: str) -> str:
             body = before + after
     lines = body.splitlines(keepends=True)
     body = prose(0)
-    return body.rstrip() + "\n\n" + note + "\n"
+    return body.rstrip() + "\n\n" + note + "\n" + suffix
 
 
 def _block(result: dict[str, Any], check: str) -> str:
