@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tAn ordinary documentation edit can bypass the owner's second-round question\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 255,
+      "text": "An ordinary documentation edit can bypass the owner's second-round question",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_worker.py\tThe cached SDK interpreter can point into a deleted test folder.",
       "kind": "bug",
       "path": "tests/test_codex_worker.py",

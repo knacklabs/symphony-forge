@@ -10,7 +10,8 @@
   },
   "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "flagged": [
-    "src/forge/close.py"
+    "src/forge/close.py",
+    "src/forge/review.py"
   ],
   "kind": "fix",
   "known": [
@@ -59,33 +60,46 @@
       "gain": 3,
       "harm": 3,
       "line": 118,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
       "title": "Not done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,",
       "work": 2
+    },
+    {
+      "area": "loop_advice() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 255,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "An ordinary documentation edit can bypass the owner's second-round question",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "54ed2613884acde0c3e59be952775de301fa33d4a84fa5b292b5ae2d3cac537f",
-    "changed": "92292e451af871b86d5a325c9c49a62c31990b48bc4f168df14d1d8a5bbe1b69",
-    "commit": "efb0f282169548f6374012c4695811a82411ea79",
+    "branch_diff": "d44a20f14e7209e8619303d8ec0cc82cf5b70d21c45e8c056230b8774eacb1f4",
+    "changed": "44b472c198e145a531ba9cf9cbc661f6f44b8824967c7c8d8126412138205c20",
+    "commit": "d10754e4750b386b8fbc7d152e0e93ff5c61dde6",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done \u2014 For a story task with the default stop setting enabled, an unanswered review-loop question receives an automatic narrow choice after 30 minutes. The new plan update runs only for an explicit `--resolve` choice here. `check_stop` instead calls `_answer_by_default` (close.py:550\u2013551), which records the choice and starts follow-up fixes without updating or merging the story plan. The resumed worker therefore sees the old builder details. The named plan test covers explicit choices, but not this normal default-choice path.",
-        "file": "src/forge/close.py",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 `loop_advice` treats any committed Markdown change under `plans/` or `docs/`, or to `README.md`, as an answer. For a documentation task, a worker can revise a page to address a review finding without the owner settling the missing rule. `forge next` then drops the required owner question and offers the work step. The added test checks that a code-only edit leaves the question open, but does not cover this normal documentation path.",
+        "file": "src/forge/review.py",
         "gain": 3,
         "harm": 3,
-        "line": 118,
+        "line": 255,
         "priority": "P1",
-        "title": "Not done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,",
+        "title": "An ordinary documentation edit can bypass the owner's second-round question",
         "work": 2
       }
     ],
-    "id": "41ea3907-5547-4fec-b48d-ca358fd2acd1",
+    "id": "8c7d7272-e2d2-45b3-9eb1-f8a2cf10d4a3",
     "status": "blocked"
   },
   "round": 4,
@@ -104,6 +118,10 @@
     },
     {
       "at": "2026-10-15T10:37:32.147729+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T20:46:19.256465+00:00",
       "step": "review"
     }
   ],
