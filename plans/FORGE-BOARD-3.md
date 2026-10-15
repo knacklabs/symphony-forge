@@ -73,11 +73,13 @@ part with an empty cell belongs to the owner.
    skill.md, both synced copies and docs/commands.md say how to assign. Tests: assign a story,
    assign a part, refuse a story with no plan, and a second clone that fetches and sees the new
    order for the assignee.
-3. `rounds[]` gains `seconds` {work, in_line, waiting_for_person, waiting_for_checks}. Round
-   seconds are numbers kept outside the text budget: compaction may fold old round sentences,
-   but it keeps every round's four numbers. Older rounds recorded before this release keep `line`
-   with `seconds: null`. Tests: a two-round fix shows both rounds; a long history past the
-   compaction budget still shows every round's seconds; an adopted older item shows null.
+3. `rounds[]` gains `seconds` {work, in_line, waiting_for_person, waiting_for_checks} for every
+   round that is still recorded on its own. Owner decision 15 October (narrow): rounds that
+   history compaction has already folded together keep only the folded total, and their
+   `seconds` is null; keeping per-round times through compaction is a follow-up, not this part.
+   Older rounds recorded before this release keep `line` with `seconds: null`. Tests: a
+   two-round fix shows both rounds; a compacted history shows null seconds for the folded rounds
+   and real seconds for the rest; an adopted older item shows null.
 4. `known_issues` lists item, file, line, title, gain, work, harm, `kept` (lived with or
    follow-up) and reason. Source: the item's persisted known list on the default branch; for
    items merged before that list existed, the review history on the pull request's original head
@@ -118,6 +120,8 @@ part with an empty cell belongs to the owner.
 New moving parts: none
 
 ## Notes
+
+- Follow-up (owner, 15 October): keep each round's seconds through history compaction.
 
 - Tokens and cost stay out of this story; FORGE-COST-1 owns them, and the board hides them until then.
 - Teammates' live runs stay local to each laptop; the Mainline team board shares them later.
