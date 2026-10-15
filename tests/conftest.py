@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import threading
@@ -175,7 +176,21 @@ _rm_error = _pytest.pathlib.on_rm_rf_error
 
 def _skip_locked(func: Any, path: Any, excinfo: Any, **kwargs: Any) -> Any:
     try:
+        error = excinfo if isinstance(excinfo, BaseException) else excinfo[1]
+        if isinstance(error, PermissionError) and func in (os.unlink, os.remove):
+            mode = os.lstat(path).st_mode
+            if stat.S_ISREG(mode) and not mode & stat.S_IWUSR:
+                # Windows Git objects need only their own read-only bit cleared.
+                # Pytest's fallback chmods every ancestor for each object.
+                try:
+                    os.chmod(path, mode | stat.S_IWUSR)
+                    func(path)
+                    return True
+                except PermissionError:
+                    pass  # Retain pytest's parent-permission recovery when needed.
         return _rm_error(func, path, excinfo, **kwargs)
+    except FileNotFoundError:
+        return False
     except PermissionError:
         # Pytest already retries read-only files after chmod; a persistent lock is skipped.
         return False

@@ -735,7 +735,7 @@ def test_12_getting_around_the_board_and_telling_items_apart(request, case):
     """Plain times; the pinned bar and folding sections; story histories with their cold-read
     rounds; the shipped line allowing story keys. Each case gets the fixtures it needs."""
     if case == "plain-times":
-        plain_times(request.getfixturevalue("env"))
+        plain_times(request.getfixturevalue("env"), request.getfixturevalue("monkeypatch"))
         return
     part, history = case.split("-", 1)
     repo, gh, tmp_path = (request.getfixturevalue(name) for name in ("repo", "gh", "tmp_path"))
@@ -747,18 +747,23 @@ def test_12_getting_around_the_board_and_telling_items_apart(request, case):
         agents_md_allows_story_keys(repo, gh, tmp_path, history)
 
 
-def plain_times(env):
+def plain_times(env, monkeypatch):
     """15.001-second review times read in rounded plain units in the board and pull request."""
     item, _ = env.start_fix(round=1)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
     top = env.repo.path / ".git/forge"
-    timings = [json.loads(line) for line in (top / "timings.jsonl").read_text("utf-8").splitlines()]
-    for timing in timings:
-        if timing.get("item") == item and timing.get("step") == "review":
-            # 15.4 still rounds to whole seconds and leaves room for overlapping CI waits on slow runners.
-            timing["seconds"] = 15.4
-    (top / "timings.jsonl").write_text("".join(json.dumps(t) + "\n" for t in timings), "utf-8")
+    began = datetime(2026, 10, 9, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+    # This rounding case owns a fixed recorded review, independent of how long close took.
+    timing = {"item": item, "round": 1, "step": "review", "start": at(0),
+              "seconds": 15.001, "outcome": "clean"}
+    events = [json.loads(line) for line in (top / "events.jsonl").read_text("utf-8").splitlines()]
+    result = next(event for event in events if event.get("event") == "review result")
+    result["at"] = at(15.001)
+    (top / "timings.jsonl").write_text(json.dumps(timing) + "\n", "utf-8")
+    (top / "events.jsonl").write_text(json.dumps(result) + "\n", "utf-8")
+    monkeypatch.setenv("FORGE_NOW", at(60))
     current = row(env.repo, item)
     assert "15 seconds" in current["rounds"][0]["line"]
     again = env.close(item)

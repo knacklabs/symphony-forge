@@ -24,6 +24,7 @@ REFUSALS = {
     "started": ("{item} is already started on {branch}{person}.", "forge work {item}"),
     "waiting": ("{item} waits for {deps} to merge first.", "forge next"),
     "base_not_started": ("{item} builds on {base}, which hasn't started yet.", "forge task start {base}"),
+    "base_local": ("{item} waits for {base} to publish reviewed changes.", "forge close {base}"),
     "base_not_built": ("{item} builds on {base}, whose latest changes haven't passed review.", "forge close {base}"),
     "base_stacked": ("{item} waits for {base}, which builds on {below}, so it starts once {below} merges.", "forge next"),
     "base_older": ("{item} waits for {base}, which runs an older Forge release, so it starts once {base} merges.", "forge next"),
@@ -400,6 +401,10 @@ def stack_base(item: str, blockers: list[str], main: str, top: Path | None = Non
     ref = "origin/task/" + base.replace("/", "-")
     state = json.loads(show(ref, repo.state_path(base), top) or "{}")
     if not state or state.get("branch") != ref.removeprefix("origin/"):
+        local = ref.removeprefix("origin/")
+        local_state = json.loads(show(local, repo.state_path(base), top) or "{}")
+        if local_state.get("branch") == local:
+            refuse(REFUSALS["base_local"], item=item, base=base)
         refuse(REFUSALS["base_not_started"], item=item, base=base)
     if below := state.get("stacked_on"):
         merged = forge_merged(main, below, top)
