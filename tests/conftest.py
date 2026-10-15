@@ -49,7 +49,7 @@ def machine_cores(repo, count, system_count=None):
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
-import json, pathlib, sys
+import json, pathlib, subprocess, sys
 from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
@@ -64,6 +64,13 @@ for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exist
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
+if args[:2] == ["pr", "view"] and args[-2:] == ["--json", "mergeable,headRefOid"]:
+    # Ordinary close fixtures have a mergeable pull request on the real pushed head.
+    # Explicit responses above still own API errors and conflicting/unknown states.
+    head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
+                                    "refs/heads/" + args[2]], text=True).split()[0]
+    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head}}))
+    sys.exit(0)
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)
 """
@@ -312,6 +319,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 # Time zones need no pin: Forge writes UTC times and runs `ps` with TZ=UTC itself.
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Outer test-selection flags must not change a client's own pytest command.
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):

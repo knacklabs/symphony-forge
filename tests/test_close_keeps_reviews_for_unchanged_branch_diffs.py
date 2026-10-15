@@ -73,6 +73,10 @@ def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dism
     env.repo.git("config", "diff.noprefix", "true", cwd=where)
     moved = env.commit(env.repo.path, "NEWS.md", "New news\n")
     env.repo.git("push", "-q", "origin", "main")
+    # Review invalidation still applies when GitHub requires main to be brought in. A clean
+    # unrelated main move alone no longer changes a cited file on this branch.
+    env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                   '"body":"","isDraft":false,"mergeStateStatus":"BEHIND"}]')
     closed = env.close(item, *(() if dismiss_before_merge else dismissal))
     if not dismiss_before_merge:
         # The old contract reused open findings despite changes to their cited file. Close now
@@ -113,6 +117,8 @@ def test_2_close_reviews_again_when_main_changes_the_branch_diff(env):
     # diff is smaller: the old contents-only contract reused a review that no longer covered it.
     env.commit(env.repo.path, "app.py", base.replace("old", "new"))
     env.repo.git("push", "-q", "origin", "main")
+    env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                   '"body":"","isDraft":false,"mergeStateStatus":"BEHIND"}]')
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert (where / "app.py").read_text() == changed
@@ -173,6 +179,7 @@ def test_4_diff_order_preferences_do_not_invalidate_same_command_dismissals(env)
     env.repo.git("push", "-q", "origin", "main")
     closed = env.close(item, "--dismiss", "1", "--because", "app.py:1 the greeting is here")
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
+    # Unlike the old unconditional refresh, an unrelated main move stays outside this branch.
+    assert env.repo.git("merge-base", moved, "HEAD", cwd=where) != moved
     assert len(env.review_calls()) == 1
     assert "dismissed because app.py:1 the greeting is here" in body(env.gh_calls("pr", "edit")[-1])
