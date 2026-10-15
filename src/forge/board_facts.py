@@ -6,7 +6,6 @@ its own. Keys a later part fills stay null until then.
 from __future__ import annotations
 
 import json
-import hashlib
 import os
 import re
 import shutil
@@ -57,14 +56,14 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any, *, seconds: int = 60) -> Any:
-    """`fetch()`'s answer, kept for `seconds` in .git/forge/<name>.json; None is never kept."""
+def _cached(top: Path, name: str, fetch: Any) -> Any:
+    """`fetch()`'s answer, kept for a minute in .git/forge/<name>.json; None is never kept."""
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         at = time_records.when(saved.get("fetched_at"))
-        if at and 0 <= (now - at).total_seconds() < seconds and "data" in saved:
+        if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
             return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
@@ -125,80 +124,6 @@ def people(body: str) -> Item:
     events, summary = record.get("events", []), record.get("summary") or {}
     return {field: summary.get(field) or next((event.get("by") for event in events if event.get("event") == name), None)
             for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
-
-
-def actor_logins(top: Path, commits: set[str]) -> Item:
-    """Resolve visible actors in batches. Successful answers, including unknowns, last a day."""
-    if not shutil.which("gh"):
-        return {}
-    ordered = sorted(commits)
-    batches = [ordered[start:start + 50] for start in range(0, len(ordered), 50)]
-
-    def batch(shas: list[str]) -> Item:
-        def fetch(now: datetime) -> Item | None:
-            fields = " ".join(f'c{index}:object(oid:"{sha}"){{... on Commit{{author{{user{{login}}}}}}}}'
-                              for index, sha in enumerate(shas))
-            query = 'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){' + fields + '}}'
-            result = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
-                              "-f", f"query={query}", cwd=top)
-            try:
-                response = json.loads(result.stdout) if result.returncode == 0 else {}
-                authors = response["data"]["repository"]
-                if response.get("errors") or not all(f"c{index}" in authors for index in range(len(shas))):
-                    return None
-                found = {}
-                for index, sha in enumerate(shas):
-                    user = ((authors[f"c{index}"] or {}).get("author") or {}).get("user") or {}
-                    login = user.get("login")
-                    found[sha] = login if isinstance(login, str) else None
-                return found
-            except (ValueError, KeyError, TypeError, AttributeError):
-                return None  # Service failures remain retryable.
-        name = "actors-" + hashlib.sha256("".join(shas).encode()).hexdigest()
-        return _cached(top, name, fetch, seconds=86400) or {}
-
-    if not batches:
-        return {}
-    with ThreadPoolExecutor(min(4, len(batches))) as pool:
-        return {sha: login for found in pool.map(batch, batches) for sha, login in found.items()}
-
-
-def actor_commits(top: Path) -> dict[str, Item]:
-    """Original start and latest approval commits, in one git read for all items."""
-    log = repo.git("log", "--all", "--reverse", "--diff-filter=A", "--no-renames",
-                   "--grep=^Start ", "--format=%x00%H%x00%aE%x00", "--name-only",
-                   "--", ".factory/stories", ".factory/fixes", cwd=top).split("\0")[1:]
-    found: dict[str, Item] = {}
-    for commit, email, paths in zip(log[::3], log[1::3], log[2::3]):
-        for rel in paths.splitlines():
-            if rel.endswith(".json"):
-                found.setdefault(rel, {}).setdefault("started_by", (email, commit))
-    log = repo.git("log", "--all", "-F", "--grep=Approve the plan: ",
-                   "--format=%x00%H%x00%aE%x00", "--name-only", "--", ".factory/stories",
-                   cwd=top).split("\0")[1:]
-    for commit, email, paths in zip(log[::3], log[1::3], log[2::3]):
-        for rel in paths.splitlines():
-            if rel.endswith("/story.json"):
-                found.setdefault(rel, {}).setdefault("approved_by", (email, commit))
-    return found
-
-
-def person_actor(field: str, body: str, original: Any = None) -> Item:
-    """Keep exact actor evidence until all visible commits can be resolved together."""
-    record = time_records.from_body(body)
-    summary = record.get("summary") or {}
-    event_name = {"started_by": "item started", "approved_by": "plan approved"}[field]
-    event = summary.get(field + "_actor") or next(
-        (e for e in record.get("events", []) if e.get("event") == event_name), None)
-    email, commit = original or (None, None)
-    login = summary.get(field + "_login")
-    if isinstance(event, dict):
-        identity = event.get("id")
-        match = re.fullmatch(r"rebuilt-(?:start|approval)-([0-9a-f]{40})", identity) if isinstance(identity, str) else None
-        email, commit = event.get("email"), match[1] if match else None
-        login = login or event.get("login")
-    match = re.fullmatch(r"(?:\d+\+)?([\w-]+)@users\.noreply\.github\.com", email, re.I) if isinstance(email, str) else None
-    return {"login": login if isinstance(login, str) else match[1] if match else None, "commit": commit}
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:

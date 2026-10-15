@@ -603,14 +603,6 @@ def _summarised(data: dict[str, Any], summary: dict[str, Any] | None, rows: dict
     people = {field: (summary or {}).get(field) or next(
         (event.get("by") for event in past["events"] if event.get("event") == name), None)
         for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
-    for field, name in (("started_by", "item started"), ("approved_by", "plan approved")):
-        actor = (summary or {}).get(field + "_actor") or next(
-            ({key: event[key] for key in ("id", "email", "login") if key in event}
-             for event in past["events"] if event.get("event") == name), None)
-        if actor:
-            people[field + "_actor"] = actor
-        if (summary or {}).get(field + "_login"):
-            people[field + "_login"] = summary[field + "_login"]
     return ({**kept, **people, "until": until.isoformat(), "round": number, "folded": (summary or {}).get("folded")},
             {name: [r for r in rows[name] if not _settled(r, number, until)] for name in rows})
 

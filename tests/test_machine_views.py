@@ -522,14 +522,9 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     if conclusion is not None:
         _skipped_checks_fail_only_when_required(repo, gh, conclusion, required)
         return
-    def checks_calls():
-        # Commit-author requests have their own cache; this rule covers open PR checks.
-        return [call for call in gh.calls() if call[:2] == ["api", "graphql"]
-                and any("pullRequests(" in arg for arg in call)]
-
     setup(repo, keys=())
     assert view(repo, "board")["items"] == []
-    initial_calls = len(checks_calls())
+    initial_calls = len([c for c in gh.calls() if c[:2] == ["api", "graphql"]])
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:00+00:00")
     for name in ("first", "second", "older"):
         made = repo.forge("fix", "start", name, "--done", "Reads clearly", "--slug", name)
@@ -561,7 +556,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     # The HTML board uses the same cache; it must not refresh the open checks early.
     html = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.html"))
     assert html.returncode == 0, html.stderr
-    assert len(checks_calls()) == initial_calls + 1
+    assert len([c for c in gh.calls() if c[:2] == ["api", "graphql"]]) == initial_calls + 1
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:01:00+00:00")
     rows = {r["id"]: r for r in view(repo, "board")["items"]}
     assert rows["first"]["pr"]["checks"] == "fail"
@@ -589,7 +584,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:04:00+00:00")
     events = {r["id"]: r for r in view(repo, "board")["items"]}["first"]["occurrences"]
     assert {e["id"] for e in events} == {"check-run:111371488291:2026-10-04T10:03:00Z", "status:SC_kwDNIULPAAAADOokTrg"}
-    calls = checks_calls()
+    calls = [c for c in gh.calls() if c[:2] == ["api", "graphql"]]
     assert len(calls) == initial_calls + 5
     assert "first: 25" in " ".join(calls[-1]) and "CREATED_AT" in " ".join(calls[-1])
 

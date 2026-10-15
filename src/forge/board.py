@@ -238,8 +238,6 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         history = {**history, "expired": set()}
     landed = history["landed"]
     starters = _starters(top)
-    actors = board_facts.actor_commits(top)
-    actor_sources: dict[str, Item] = {}
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
@@ -515,16 +513,12 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         body = (pr or {}).get("body") or ""
         developer = task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None
         people = board_facts.people(body)
-        actor_sources[item] = {
-            "started_by": board_facts.person_actor(
-                "started_by", body, actors.get(repo.state_path(item), {}).get("started_by")),
-            "approved_by": board_facts.person_actor(
-                "approved_by", body, actors.get(repo.state_path(read_key), {}).get("approved_by")
-                if read_key else None)}
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
                 "started_by": people["started_by"] or starters.get(repo.state_path(item)),
                 "approved_by": (people["approved_by"]
                                 or (_approver(top, read_key) if read_key else None)),
+                "started_by_login": ((pr or {}).get("author") or {}).get("login") if github_available else None,
+                "approved_by_login": None,
                 "developer": developer, "developer_login": developer,
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
@@ -703,12 +697,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    logins = board_facts.actor_logins(top, {actor["commit"] for sources in actor_sources.values()
-                                          for actor in sources.values() if actor["commit"] and not actor["login"]})
     for parent in items.values():
         for item in (parent, *parent["children"]):
-            for field, actor in actor_sources[item["id"]].items():
-                item[field + "_login"] = (actor["login"] or logins.get(actor["commit"])) if github_available else None
             if not github_available:
                 item["developer_login"] = None
                 if item["merged_by"]:

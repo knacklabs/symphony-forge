@@ -1,10 +1,9 @@
 """Real board reads retain names and add known logins, including older clients.
 
-Audit: missing login fields and name-based guesses fail at the real command.
+Audit: recorded logins survive; git names and emails never imply a login.
 Existing board coverage only asserts names. Only GitHub is faked; no seam is added.
 """
 from datetime import datetime, timedelta, timezone
-import json
 import shutil
 import sys
 
@@ -33,13 +32,10 @@ def _without_github_cli(env, monkeypatch, previous):
     env.repo.git("config", "user.email", "plain@example.test")
     started = env.repo.forge("fix", "start", "Keep plain authors", "--done", "Names stay", "--slug", "plain-author")
     assert started.returncode == 0, started.stdout + started.stderr
-    head = env.repo.git("rev-parse", "fix/plain-author")
-    # Even a previously resolved actor must become unknown when the CLI is absent.
-    _github_actors(env, {head: "plain-dev"})
     now = datetime.now(timezone.utc)
     last_week = now - timedelta(days=now.weekday() + 7)
     github(env, [pr(31, "manual-change", {"name": "Cached Author", "login": "cached-dev"}, last_week)])
-    assert rows(board(env.repo))["plain-author"]["started_by_login"] == "plain-dev"
+    assert rows(board(env.repo))["plain-author"]["started_by_login"] is None
     isolated = env.tmp / "without-gh"
     isolated.mkdir()
     for command in ("git", "sysctl", "vm_stat"):
@@ -52,8 +48,7 @@ def _without_github_cli(env, monkeypatch, previous):
     data = board(env.repo)
     assert data["viewer"] is None
     item = rows(data)["local-work"]
-    # The coordinator requires null logins for every author kind while offline;
-    # the earlier contract retained noreply and cached identities without gh.
+    # The narrowed contract keeps names with null logins for every author kind offline.
     assert (item["started_by"], item["started_by_login"]) == ("Local Builder", None)
     plain = rows(data)["plain-author"]
     assert (plain["started_by"], plain["started_by_login"]) == ("Plain Git Author", None)
@@ -69,43 +64,21 @@ def _without_github_cli(env, monkeypatch, previous):
     assert "Keep plain authors" in out.read_text("utf-8")
 
 
-def _github_actors(env, logins):
-    # GitHub resolves only commits in the query, from its independent actor data.
-    (env.repo.bin / "actor-logins.json").write_text(json.dumps(logins), "utf-8")
-    path = env.repo.bin / "gh"
-    source = path.read_text("utf-8")
-    source = source.replace('responses = here / "gh-responses.json"', '''if args[:1] == ["api"] and len(args) > 1 and args[1].startswith("repos/{owner}/{repo}/commits/"):
-    logins = json.loads((here / "actor-logins.json").read_text("utf-8"))
-    login = logins.get(args[1].rsplit("/", 1)[1])
-    print(json.dumps({"author": {"login": login} if login else None}))
-    sys.exit(0)
-if args[:2] == ["api", "graphql"] and any("object(oid:" in arg for arg in args):
-    import re
-    logins = json.loads((here / "actor-logins.json").read_text("utf-8"))
-    query = next(arg for arg in args if "object(oid:" in arg)
-    actors = {alias: {"author": {"user": {"login": logins[sha]} if logins.get(sha) else None}}
-              for alias, sha in re.findall(r'(\\w+):object\\(oid:"([0-9a-f]{40})"\\)', query)}
-    print(json.dumps({"data": {"repository": actors}}))
-    sys.exit(0)
-responses = here / "gh-responses.json"''')
-    path.write_text(source, "utf-8")
-
-
 def _team_actor_reads(env, monkeypatch):
     client(env, False)
     now = datetime.now(timezone.utc)
     monkeypatch.setenv("FORGE_NOW", now.isoformat())
-    logins, names = {}, {}
+    names = {}
     for index in range(12):
         item = f"actor-{index}"
-        name, login = f"Builder {index}", f"builder-{index}"
+        name = f"Builder {index}"
         env.repo.git("config", "user.name", name)
-        env.repo.git("config", "user.email", f"builder-{index}@example.test")
+        email = (f"builder-{index}@example.test" if index % 2 == 0
+                 else f"{index}+builder-{index}@users.noreply.github.com")
+        env.repo.git("config", "user.email", email)
         started = env.repo.forge("fix", "start", "Keep names", "--done", "Names stay", "--slug", item)
         assert started.returncode == 0, started.stdout + started.stderr
-        logins[env.repo.git("rev-parse", f"fix/{item}")] = login
-        names[item] = (name, login)
-    _github_actors(env, logins)
+        names[item] = (name, None)
     before = len(env.gh.calls())
     for seconds in (0, 121):
         monkeypatch.setenv("FORGE_NOW", (now + timedelta(seconds=seconds)).isoformat())
@@ -116,7 +89,7 @@ def _team_actor_reads(env, monkeypatch):
     actor_calls = [call for call in calls if call[:1] == ["api"] and (
         call[1:2] == ["graphql"] and any("object(oid:" in arg for arg in call)
         or len(call) > 1 and call[1].startswith("repos/{owner}/{repo}/commits/"))]
-    assert len(actor_calls) == 1, "Known commit identities must be batched and retained beyond a minute"
+    assert actor_calls == [], "Git names and emails must cause no GitHub identity requests"
 
 
 def _compacted_past_work(unsynced_up, monkeypatch):
@@ -134,15 +107,17 @@ def _compacted_past_work(unsynced_up, monkeypatch):
     assert history.record(21)["summary"], "Real publication must compact the earlier rounds"
     assert not history.repo.git("branch", "--list", "task/SHOP-T1")
     part = rows(board(history.repo))["SHOP/T1"]
-    assert (part["started_by"], part["started_by_login"]) == ("Original Starter", "starter-dev")
-    assert (part["approved_by"], part["approved_by_login"]) == ("Plan Approver", "approver-dev")
-    # Another laptop has no retained actor cache or local events to conceal lost identity.
+    assert (part["started_by"], part["started_by_login"]) == ("Original Starter", "starter")
+    assert (part["approved_by"], part["approved_by_login"]) == ("Plan Approver", None)
+    # The owner narrowed identity to records that hold a login: PR author survives
+    # compaction, but approval names and noreply emails supply no login.
+    # Another laptop has no local events to conceal lost identity.
     clone = unsynced_up.tmp / "past-work-viewer"
     history.repo.git("clone", "-q", history.remote, clone.as_posix())
     history.repo.path = clone
     shared = rows(board(history.repo))["SHOP/T1"]
-    assert (shared["started_by"], shared["started_by_login"]) == ("Original Starter", "starter-dev")
-    assert (shared["approved_by"], shared["approved_by_login"]) == ("Plan Approver", "approver-dev")
+    assert (shared["started_by"], shared["started_by_login"]) == ("Original Starter", "starter")
+    assert (shared["approved_by"], shared["approved_by_login"]) == ("Plan Approver", None)
 
 
 @pytest.mark.parametrize("previous", [False, True, "compacted", "team", "offline-new", "offline-adopted"],
@@ -172,8 +147,6 @@ def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, pre
     env.repo.git("config", "user.email", "builder@example.test")
     started = env.repo.forge("task", "start", "SHOP/T1")
     assert started.returncode == 0, started.stdout + started.stderr
-    head = env.repo.git("rev-parse", "task/SHOP-T1")
-    _github_actors(env, {head: "builder-dev"})
     env.repo.git("merge", "-q", "--no-edit", "task/SHOP-T1")
     env.repo.git("push", "-q", "origin", "main")
     where = started.stdout.splitlines()[0].rsplit(" in ", 1)[1]
@@ -199,10 +172,10 @@ def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, pre
     visible = rows(data)
     part = visible["SHOP/T1"]
     assert (part["started_by"], part["started_by_login"]) == ("Builder Name", "builder-dev")
-    assert (part["approved_by"], part["approved_by_login"]) == ("Plan Owner", "plan-owner")
+    assert (part["approved_by"], part["approved_by_login"]) == ("Plan Owner", None)
     assert (part["developer"], part["developer_login"]) == ("viewer-dev", "viewer-dev")
     assert part["merged_by"] == {"name": "Merge Owner", "login": "merge-owner"}
-    assert visible["SHOP"]["approved_by_login"] == "plan-owner"
+    assert visible["SHOP"]["approved_by_login"] is None
     assert (visible["names"]["started_by"], visible["names"]["started_by_login"]) == ("Git Only", None)
     assert visible["names"]["developer_login"] is None
     people = data["team"]["trends"]["people"]
