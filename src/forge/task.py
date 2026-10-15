@@ -205,17 +205,15 @@ def start(args: argparse.Namespace) -> None:
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     published = story.plan_ref(top, key)
-    local_story = bool(git("branch", "--list", story_branch))
-    plan = story_branch if local_story else published
-    old_pin = published != main and repo._older(repo._pin(show(plan, "forge.toml") or ""),
+    old_pin = published != main and repo._older(repo._pin(show(published, "forge.toml") or ""),
                                                  repo._pin(show(main, "forge.toml") or ""))
-    update_plan = published != main and (old_pin or (show(plan, doc_rel) is not None and
-            run("git", "diff", "--name-only", "-z", plan, main).stdout == doc_rel + "\0"))
+    update_plan = published != main and (old_pin or (show(published, doc_rel) is not None and
+            run("git", "diff", "--name-only", "-z", published, main).stdout == doc_rel + "\0"))
     # Preview the automatic update without creating a branch, checkout or commit.
     preview = None
     folder = story.stories_here(top).get(key)
     if update_plan and (folder is None or not git("status", "--porcelain", cwd=folder)):
-        merged = run("git", "merge-tree", "--write-tree", plan, main)
+        merged = run("git", "merge-tree", "--write-tree", published, main)
         if merged.returncode == 0:
             preview = merged.stdout.splitlines()[0]
     notes_rel = f"plans/{key}.read.md"
@@ -285,6 +283,8 @@ def start(args: argparse.Namespace) -> None:
                 raise repo.Refused(f"Commit or stash the changes in {folder} before updating its Forge release.", retry)
         if (not git("status", "--porcelain", cwd=folder) and
                 run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
+            if published != story_branch:
+                git("merge", "-q", "--ff-only", published, cwd=folder)
             merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
             if not merged.returncode:
                 reason = "updated its Forge release" if old_pin else "only the story doc differs"

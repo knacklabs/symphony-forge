@@ -75,7 +75,8 @@ def configured(env, previous=None, setting=None):
 def start(repo, part):
     result = repo.forge("task", "start", f"STACK/{part}")
     assert result.returncode == 0, result.stdout + result.stderr
-    return Path(result.stdout.splitlines()[0].rsplit(" in ", 1)[1]), result
+    started = next(line for line in result.stdout.splitlines() if line.startswith("Started "))
+    return Path(started.rsplit(" in ", 1)[1]), result
 
 
 def reviewed(env, part="A"):
@@ -147,9 +148,49 @@ def started_before_upgrade(env):
     assert repo.git("rev-parse", "origin/task/STACK-A") == old_head
 
 
+def published_upgrade_plan(env, stale):
+    """Publish an approved old-pin plan while this machine retains its draft."""
+    repo = env.repo
+    modern = (repo.path / "forge.toml").read_text("utf-8")
+    earlier = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', modern)
+    env.commit(repo.path, "forge.toml", earlier, "Use the earlier release")
+    repo.git("push", "-q", "origin", "main")
+    repo.git("switch", "-q", "story/STACK")
+    repo.git("merge", "-q", "--no-edit", "origin/main")
+    repo.git("switch", "-q", "main")
+    draft = DOC.replace("| A |", "| OLD |").replace("| A, E |", "| OLD, E |") if stale == "stale-rows" else DOC
+    story(repo, draft, None if stale == "stale-approval" else DOC, "STACK")
+    draft_head = repo.git("rev-parse", "story/STACK")
+    published = DOC + "\n## Notes\nUse the published approved parts.\n"
+    story(repo, published, DOC, "STACK")
+    approval = json.loads(repo.git("show", "story/STACK:.factory/stories/STACK/story.json"))["approval"]
+    repo.git("push", "-q", "origin", "story/STACK")
+    repo.git("update-ref", "refs/heads/story/STACK", draft_head)
+    assert 'version = "v1.2.2"' in repo.git("show", "origin/story/STACK:forge.toml")
+    env.commit(repo.path, "forge.toml", modern, "Upgrade the default branch")
+    env.commit(repo.path, "foundation.py", "CURRENT_VALUE = 1\n", "Land current shared work")
+    repo.git("push", "-q", "origin", "main")
+    return published, approval, modern
+
+
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "upgraded-client"])
-def test_1_parts_start_on_reviewed_remote_work(env, previous):
+@pytest.mark.parametrize("plan_source", ["current", "stale-approval", "stale-rows"])
+def test_1_parts_start_on_reviewed_remote_work(env, previous, plan_source):
     repo = configured(env, previous)
+    if plan_source != "current":
+        published, approval, modern = published_upgrade_plan(env, plan_source)
+        published_head = repo.git("rev-parse", "origin/story/STACK")
+        where, _ = start(repo, "A")
+        repo.git("merge-base", "--is-ancestor", published_head, "story/STACK")
+        repo.git("merge-base", "--is-ancestor", published_head, "HEAD", cwd=where)
+        assert (where / "plans/STACK.md").read_text("utf-8") == published
+        state = json.loads((where / ".factory/stories/STACK/story.json").read_text("utf-8"))
+        assert state["approval"] == approval
+        assert (where / "forge.toml").read_text("utf-8") == modern
+        assert (where / "foundation.py").read_text("utf-8") == "CURRENT_VALUE = 1\n"
+        assert repo.git("show", "story/STACK:plans/STACK.md") == published.strip()
+        assert repo.git("show", "story/STACK:forge.toml") == modern.strip()
+        return
     parent = reviewed(env)
     head = repo.git("rev-parse", "origin/task/STACK-A")
     # Local work is not the reviewed remote base, and a later builder-note edit
