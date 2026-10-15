@@ -23,6 +23,11 @@ REFUSALS = {
                 "so it needs a new approval.", "forge next"),
     "started": ("{item} is already started on {branch}{person}.", "forge work {item}"),
     "waiting": ("{item} waits for {deps} to merge first.", "forge next"),
+    "base_not_started": ("{item} builds on {base}, which hasn't started yet.", "forge task start {base}"),
+    "base_not_built": ("{item} builds on {base}, whose latest changes haven't passed review.", "forge close {base}"),
+    "base_stacked": ("{item} waits for {base}, which builds on {below}, so it starts once {below} merges.", "forge next"),
+    "base_older": ("{item} waits for {base}, which runs an older Forge release, so it starts once {base} merges.", "forge next"),
+    "two_bases": ("{item} waits for {deps}, so it starts once all but one of them merge.", "forge next"),
     "overlap": ("{item} would change {paths}, which {other} is changing and hasn't merged yet.",
                 "forge close {other}"),
     "fix_lines": ("A fix needs a one-line why and a one-line done-when.",
@@ -272,10 +277,14 @@ def start(args: argparse.Namespace) -> None:
         refuse(REFUSALS["started"], item=item, branch=branch, person=f" by {name}" if name else "")
     waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
     waiting = [dep for dep in waiting if not _merged(main, dep)]
-    if waiting:
-        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
     scope = cell_list(tasks[task].get("Scope", ""))
+    blockers = waits_for(item, waiting, scope, started)
+    stacked = stack_base(item, blockers, main, top)
+    if waiting and not stacked:
+        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
     for other, theirs in started.items():
+        if stacked and other == blockers[0]:
+            continue
         shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
@@ -283,14 +292,54 @@ def start(args: argparse.Namespace) -> None:
     assigned = developer(tasks[task])
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
         print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
-    base = start_base(main, key, tasks[task])
+    base = stacked or start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
              ) if source != base else None
     # Earlier approvals keep their agreed parts, including ones not started yet.
     state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    if stacked:
+        state.update(stacked_on=blockers[0], base=git("rev-parse", stacked))
     path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
-    print(f"Started {item} on {branch} in {path}")
+    on = f" on top of {blockers[0]}" if stacked else ""
+    print(f"Started {item}{on} on {branch} in {path}")
     print(f"Next: forge work {item}")
+
+
+def forge_merged(main: str, item: str, top: Path | None = None) -> str:
+    """The default branch commit where Forge merged this item, or an empty string."""
+    commit = git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%H", main,
+                 "--", repo.state_path(item), cwd=top)
+    if commit and f"Forge-merged: {item}" in git("show", "-s", "--format=%B", commit, cwd=top).splitlines():
+        return commit
+    return ""
+
+
+def stack_base(item: str, blockers: list[str], main: str, top: Path | None = None) -> str | None:
+    """The single reviewed remote base for a new part; refuse before any start mutation."""
+    top = top or repo.root()
+    if not blockers or repo.config(top)["stack"] == "off":
+        return None
+    if len(blockers) != 1:
+        refuse(REFUSALS["two_bases"], item=item, deps=", ".join(blockers))
+    base = blockers[0]
+    ref = "origin/task/" + base.replace("/", "-")
+    state = json.loads(show(ref, repo.state_path(base), top) or "{}")
+    if not state or state.get("branch") != ref.removeprefix("origin/"):
+        refuse(REFUSALS["base_not_started"], item=item, base=base)
+    if below := state.get("stacked_on"):
+        merged = forge_merged(main, below, top)
+        if not merged or run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:
+            refuse(REFUSALS["base_stacked"], item=item, base=base, below=below)
+    if repo._pin(show(ref, "forge.toml", top) or "") != repo._pin(show(main, "forge.toml", top) or ""):
+        refuse(REFUSALS["base_older"], item=item, base=base)
+    from forge import review
+    from forge.prcheck import _on_branch
+    result = state.get("review") or {}
+    if (result.get("status") != "clean" or not _on_branch(top, str(result.get("commit", "")), ref)
+            or review.blocking(result)
+            or result.get("changed") != review.fingerprint(ref, base, top, state, main)):
+        refuse(REFUSALS["base_not_built"], item=item, base=base)
+    return ref
 
 
 def start_base(main: str, key: str, row: dict[str, str], history: dict[str, Any] | None = None,
