@@ -50,15 +50,14 @@ def machine_cores(repo, count, system_count=None):
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
 import json, pathlib, sys
+from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
-with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
-    calls.write(json.dumps(args) + "\\n")
+append_json(here / "gh-calls.jsonl", args)
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
-    with open(here / "gh-bodies.jsonl", "a", encoding="utf-8") as bodies:
-        path = args[args.index("--body-file") + 1]
-        body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
-        bodies.write(json.dumps(body) + "\\n")
+    path = args[args.index("--body-file") + 1]
+    body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
+    append_json(here / "gh-bodies.jsonl", body)
 responses = here / "gh-responses.json"
 for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
     if args[:len(rule["args"])] == rule["args"]:
@@ -336,6 +335,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
+    shutil.copyfile(ROOT / "tests/stubs/json_log.py", bin_dir / "json_log.py")
     _install(bin_dir, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
     _install(bin_dir, "gh", GH_STUB.format(python=sys.executable))
     # Sync manages Claude's user-scope plugins. Never let a command test touch
