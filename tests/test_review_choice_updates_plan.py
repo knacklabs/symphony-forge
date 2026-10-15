@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -33,9 +34,16 @@ def _merge_on_github(repo, branch):
 @pytest.mark.parametrize("previous,choice,guarded", [
     (False, "narrow", False), (True, "narrow", False),
     (False, "split", False), (True, "split", False), (False, "split", True),
-], ids=["new-narrow", "adopted-narrow", "new-split", "adopted-split", "guarded-retry"])
+    (False, "default", False), (True, "default", False),
+], ids=["new-narrow", "adopted-narrow", "new-split", "adopted-split", "guarded-retry",
+        "new-default", "adopted-default"])
 def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task(
-        env, tmp_path, previous, choice, guarded):
+        env, tmp_path, monkeypatch, previous, choice, guarded):
+    automatic = choice == "default"
+    if automatic:
+        choice = "narrow"
+        began = datetime(2026, 10, 15, 10, tzinfo=timezone.utc)
+        monkeypatch.setenv("FORGE_NOW", began.isoformat())
     if previous:
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
                         env.repo.path, dirs_exist_ok=True)
@@ -86,7 +94,8 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
     for number in range(1, 4):
         env.commit(where, "app.py", f"print('basket attempt {number}')\n")
         env.reviews(blocked({**finding("P1", f"Basket defect {number}"),
-                             "body": "Gain 3, Work 2, Harm 3\nSaving loses a basket."}))
+                             "body": ("Gain 4, Work 1, Harm 2" if automatic else "Gain 3, Work 2, Harm 3")
+                                     + "\nSaving loses a basket."}))
         stopped = env.close(item)
         assert stopped.returncode == 1, stopped.stdout + stopped.stderr
     assert "Ask the human to narrow the part" in stopped.stderr
@@ -137,8 +146,15 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         resolved = env.repo.git("show", "story/SHOP:plans/SHOP.md").replace(
             "Risks: story guidance", "Risks: story guidance; task guidance") + "\n"
         env.commit(where, "plans/SHOP.md", resolved, "Keep both builders' guidance")
-    chosen = env.close(item, "--resolve", choice, "--reason", reason)
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    if automatic:
+        reason = ("Nobody answered in 30 minutes; the repo's default narrows the part "
+                  "to its Done-when lines and files each open finding as a follow-up fix")
+        monkeypatch.setenv("FORGE_NOW", (began + timedelta(minutes=31)).isoformat())
+        chosen = env.close(item)
+        assert "recorded the repo's default choice: narrow" in chosen.stdout
+    else:
+        chosen = env.close(item, "--resolve", choice, "--reason", reason)
+    assert chosen.returncode == (1 if automatic else 0), chosen.stdout + chosen.stderr
     published = env.repo.git("show", "origin/story/SHOP:plans/SHOP.md")
     assert reason in published
     task_plan = (where / "plans/SHOP.md").read_text("utf-8").rstrip("\n")
@@ -158,7 +174,8 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         assert len(rows) == 1 and reason in rows[0]
         assert "| T1 |" in rows[0]
     assert env.repo.git("merge-base", "--is-ancestor", "origin/story/SHOP", "HEAD", cwd=where) == ""
-    assert "worker gets the updated plan" in chosen.stdout
+    if not automatic:
+        assert "worker gets the updated plan" in chosen.stdout
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert calls(log)[-1]["options"].get("resume")

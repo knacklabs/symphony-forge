@@ -504,6 +504,9 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
     """Record the repo's default choice, narrow, and start a follow-up fix for each open finding."""
     from forge import task  # close imports story, which imports task
 
+    reason = ("Nobody answered in 30 minutes; the repo's default narrows the part "
+              "to its Done-when lines and files each open finding as a follow-up fix")
+    task.apply_review_choice(top, item, "narrow", reason)
     fixes = []
     result = state.get("review") or {}
     dismissed = {d["finding"] for d in result.get("dismissals", [])}
@@ -522,8 +525,7 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
             os.chdir(here)
         fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])
     state["stop"].update(choice="narrow", by="default", fixes=fixes, worker_round=state.get("round"),
-                         reason="Nobody answered in 30 minutes; the repo's default narrows the part "
-                                "to its Done-when lines and files each open finding as a follow-up fix")
+                         reason=reason)
     state["status"] = "fixing"
     _save(top, item, state, "Record the repo's default review loop choice: narrow")
     repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
