@@ -122,34 +122,93 @@
       "gain": 3,
       "harm": 3,
       "line": 705,
-      "outcome": "open",
+      "outcome": "fixed in round 7",
       "reason": "",
       "round": 6,
       "security": false,
       "title": "Offline board erases the only name for login-only mergers",
+      "work": 1
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 519,
+      "outcome": "open",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Not done: new work keeps a visible starter before its pull request",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 521,
+      "outcome": "open",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Not done: approval identity names the actual approver",
+      "work": 2
+    },
+    {
+      "area": "test_1_board_people_keep_loaded_names_and_logins() in tests/test_board_logins.py",
+      "file": "tests/test_board_logins.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 92,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Not done: board login test covers approval identity",
       "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "13fe794db67267f81b117fe0f870c89a633e545267601105297bfb7c6e97ee6c",
-    "changed": "34d3f511763831c743b24a6d85373b4196739ebc85b2832b3f14659ab5268ed3",
-    "commit": "31cdccd375aaeddc4ec4efcd692087cdc2951e57",
+    "branch_diff": "0b131f5e6c333cb01ce55ef94859ae7c3f8aaa000a98f986317d59dfc28b9994",
+    "changed": "67f8483f97eb50712f67a1669e7a98238254e6fe62c86b651262488cf65c82e6",
+    "commit": "3a58f11d12a37a7520f6b7d926c47cf616106802",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. A cached pull request can have a `mergedBy` object with a login but no display name, as the fixture in `tests/test_board_trends.py:25` does. When `gh` is absent, this line replaces that login with null, leaving no merger identity in the JSON. The HTML board then has no merger name to show either. This breaks the requirement that names stay visible offline.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. For a newly started story, part or fix without a pull request, this line supplies no author, and no production code writes an `item started` event to the local event history it checks. `started_by` therefore becomes null. The removed `_starters` path previously showed the start commit's git name, so the normal pre-PR board loses a known person.",
         "file": "src/forge/board.py",
-        "gain": 3,
+        "gain": 4,
         "harm": 3,
-        "line": 705,
+        "line": 519,
         "priority": "P1",
-        "title": "Offline board erases the only name for login-only mergers",
+        "title": "Not done: new work keeps a visible starter before its pull request",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. This line uses the plan owner as the approver's login, although the owner and approver can differ. It also shows that owner as `approved_by` before approval. Without an Owner line, it loses recorded approval names: the adopted client's backfill stores `plan approved` in the PR time record (`src/forge/backfill.py:116\u2013123`), while this lookup reads only local events. The existing adopted-history test expects `Plan Approver` on the archived story and part (`tests/test_board_after_upgrade.py:461,484`); those rows now have a null `approved_by`.",
+        "file": "src/forge/board.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 521,
+        "priority": "P1",
+        "title": "Not done: approval identity names the actual approver",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. The adopted-upgrade case checks the plan owner's `developer` fields here, but none of the three command-level cases asserts `approved_by_login`. The test would pass if the board gave the approver the owner's login, as it currently does. The required proof therefore cannot catch a broken login beside this person field.",
+        "file": "tests/test_board_logins.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 92,
+        "priority": "P1",
+        "title": "Not done: board login test covers approval identity",
         "work": 1
       }
     ],
-    "id": "6bbd8287-cd9a-449e-b3b1-17697f36ae89",
+    "id": "b07a726d-0215-4de7-93ab-83b84a8fca8a",
     "status": "blocked"
   },
   "round": 10,
@@ -157,7 +216,7 @@
     "src/forge/board.py",
     "src/forge/board_facts.py"
   ],
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -186,16 +245,18 @@
     {
       "at": "2026-10-15T03:37:44.835269+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-15T05:53:25.599559+00:00",
+      "step": "review"
     }
   ],
   "stop": {
-    "at": "2026-10-15T03:37:44.849007+00:00",
-    "by": "owner",
-    "choice": "narrow",
-    "file": "src/forge/board.py",
-    "reason": "Owner grilled 15 October: one rule for people (login if known else name, never blank), sources only what the board already loads, offline shows last known; simplify to one resolver",
-    "wait_id": "7321a5b2-5a31-4505-ad8f-26a58be9fd2d",
-    "worker_round": 9
+    "area": "machine_board.row() in src/forge/board.py",
+    "at": "2026-10-15T05:53:25.599954+00:00",
+    "file": "machine_board.row() in src/forge/board.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "wait_id": "812e271d-3993-428f-b268-c357d2bc2164"
   },
   "stuck": {
     "close": "33f675e4-9a29-4b63-8ee9-2c26eb8dbc7c",

@@ -12,6 +12,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: approval identity names the actual approver\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 521,
+      "text": "Not done: approval identity names the actual approver",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: new work keeps a visible starter before its pull request\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 519,
+      "text": "Not done: new work keeps a visible starter before its pull request",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: older board history loses known pull-request logins\tFORGE-BOARD-3/OWNERS",
       "kind": "bug",
       "path": "src/forge/board.py",
