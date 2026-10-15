@@ -21,7 +21,7 @@
       "gain": 3,
       "harm": 3,
       "line": 13,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,43 +34,46 @@
       "gain": 3,
       "harm": 3,
       "line": 201,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Windows client checks break configured PowerShell test commands",
       "work": 2
+    },
+    {
+      "area": "pyproject.toml",
+      "file": "pyproject.toml",
+      "gain": 3,
+      "harm": 3,
+      "line": 13,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Windows full-suite retries leave transient teardown errors red",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3f491216f2167c6eb0a2d63c820417bb042b1a3cb0bb003611825155e7ac82b9",
-    "changed": "c4b3b179548090bc7b5caea9c438b01256d56a4737357a923da2f9e492b7559f",
-    "commit": "ba073befd1749dbcbc2bc0000e41f1c55324434b",
+    "branch_diff": "cf18a441f8ffa3df18164ca0d937005cfad3f4094ceaa774aa2b4997bfe16049",
+    "changed": "e2c222c2622c4319bd2f2aacc50b04071a599792420c97a63b29bea3855bf819",
+    "commit": "dc33924384f849660f56388b8174128c794ba52e",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done \u2014 The Windows full suite locks pytest 9.1.1 but pins pytest-rerunfailures 16.1. When a fixture setup fails, that plugin can hit a pytest internal assertion while retrying, leaving the job red even if the second attempt would pass. The added proof exercises only failures in a test body. The plugin maintainers document the pytest 9 fixture-retry fix in [16.2](https://github.com/pytest-dev/pytest-rerunfailures/blob/master/CHANGES.rst#162-2026-05-13).",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done \u2014 The pinned pytest-rerunfailures 16.4 can rerun a test whose fixture teardown fails, but it leaves the first failure reported as an error even if the retry passes. The maintainers fixed this in [16.7](https://github.com/pytest-dev/pytest-rerunfailures/blob/master/CHANGES.rst#167-2026-09-17). This suite has an autouse teardown that can fail at `tests/conftest.py:293-300`; the new retry proof covers setup and test-body failures only (`tests/test_windows_suite_retries.py:18-45`). A transient teardown failure therefore still leaves the Windows run red after a passing retry.",
         "file": "pyproject.toml",
         "gain": 3,
         "harm": 3,
         "line": 13,
         "priority": "P1",
-        "title": "Not done: The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a B",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 Generated Windows checks now force `shell: bash` and run the configured test command inside Bash. GitHub Actions previously ran these steps in PowerShell by default on Windows; an existing client whose `test` setting invokes a `.ps1` script or uses PowerShell syntax will fail both attempts after `forge sync`, even when its tests pass. The new client proof uses a Bash-compatible Python command, so it does not cover this upgrade path. See [GitHub's shell contract](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defaultsrun).",
-        "file": "src/forge/prcheck.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 201,
-        "priority": "P1",
-        "title": "Windows client checks break configured PowerShell test commands",
+        "title": "Not done: Windows full-suite retries leave transient teardown errors red",
         "work": 2
       }
     ],
-    "id": "5b990fe0-820a-4bc5-b19f-a6ac33b15802",
+    "id": "33c5e4a5-a502-4720-be0c-994750801915",
     "status": "blocked"
   },
   "round": 2,
@@ -82,6 +85,10 @@
     },
     {
       "at": "2026-10-15T10:10:16.726807+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T10:45:03.498934+00:00",
       "step": "review"
     }
   ],

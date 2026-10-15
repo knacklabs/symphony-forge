@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tpyproject.toml\tNot done: Windows full-suite retries leave transient teardown errors red\twindows-rerun-flakes",
+      "kind": "bug",
+      "path": "pyproject.toml",
+      "line": 13,
+      "text": "Not done: Windows full-suite retries leave transient teardown errors red",
+      "from": "blocking",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tGenerated Windows gate steps use Bash commands without selecting Bash.",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
