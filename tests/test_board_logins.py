@@ -120,9 +120,9 @@ def _compacted_past_work(unsynced_up, monkeypatch):
     assert (shared["approved_by"], shared["approved_by_login"]) == ("Plan Approver", None)
 
 
-def _older_pull_request_history(unsynced_up, monkeypatch):
-    # Older completed work must retain its recorded PR people after it leaves
-    # the JSON board's recent window, with no surviving branch or local events.
+def _pull_request_window(unsynced_up, monkeypatch):
+    # Recorded PR logins belong to this part while the board reads that PR.
+    # Older work remains visible in HTML; BACKFILL owns its missing PR people.
     history = History(unsynced_up, monkeypatch)
     history.item("older-history", 21, 10, long_history=True)
     history.publish()
@@ -130,6 +130,8 @@ def _older_pull_request_history(unsynced_up, monkeypatch):
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     assert history.record(21)["summary"], "The upgrade must compact the actual old review history"
     assert not history.repo.git("branch", "--list", "fix/older-history")
+    recent = rows(board(history.repo))["older-history"]
+    assert (recent["started_by"], recent["started_by_login"]) == ("Original Starter", "starter")
     history.at(NOW + timedelta(weeks=10))
     assert "older-history" not in rows(board(history.repo))
     before = len(history.env.gh.calls())
@@ -139,17 +141,15 @@ def _older_pull_request_history(unsynced_up, monkeypatch):
         assert rendered.returncode == 0, rendered.stdout + rendered.stderr
         page = out.read_text("utf-8")
         assert "Readers see older-history" in page
-        assert "Started by Original Starter." in page
-        assert "Human Merger" in page
     calls = history.env.gh.calls()[before:]
     older_lists = [call for call in calls if call[:2] == ["pr", "list"]
                    and "--search" in call
                    and call[call.index("--search") + 1].startswith("merged:*..")]
-    assert len(older_lists) == 1, "Full history shares one cached bulk lookup for older PR people"
+    assert not older_lists, "Completed history must not extend the board's PR lookup window"
 
 
-@pytest.mark.parametrize("previous", [False, True, "compacted", "older-pr-history", "team", "offline-new", "offline-adopted"],
-                         ids=["new-client", "earlier-adoption", "compacted-past-work", "older-pr-history",
+@pytest.mark.parametrize("previous", [False, True, "compacted", "pr-window", "team", "offline-new", "offline-adopted"],
+                         ids=["new-client", "earlier-adoption", "compacted-past-work", "pr-window",
                               "team-actors", "offline-new", "offline-adopted"])
 def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, previous, unsynced_up):
     if previous in ("offline-new", "offline-adopted"):
@@ -161,8 +161,8 @@ def test_1_board_people_keep_names_and_known_github_logins(env, monkeypatch, pre
     if previous == "compacted":
         _compacted_past_work(unsynced_up, monkeypatch)
         return
-    if previous == "older-pr-history":
-        _older_pull_request_history(unsynced_up, monkeypatch)
+    if previous == "pr-window":
+        _pull_request_window(unsynced_up, monkeypatch)
         return
     client(env, previous)
     env.gh.respond("api", "user", stdout="viewer-dev\n")
