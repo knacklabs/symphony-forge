@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\tNot done: local Owner edits take precedence after a fetch\tFORGE-BOARD-3/ASSIGN",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 248,
+      "text": "Not done: local Owner edits take precedence after a fetch",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ASSIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_assign.py\tNot done: fetched second-clone next-order test\tFORGE-BOARD-3/ASSIGN",
       "kind": "bug",
       "path": "tests/test_assign.py",
