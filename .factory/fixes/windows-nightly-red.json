@@ -69,7 +69,7 @@
     "id": "4d5c98a9-b55a-4905-9450-0402fdd11486",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -86,10 +86,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "66a4e3a45269f8ec12a6bbf3d3772391c81063f8",
-    "keys": {},
-    "round": null
+    "close": "6a6eb4f2-47c9-4fba-a822-a2306630ae1b",
+    "head": "6e3e9b584dd0822ce2608414b6e378688a812cf2",
+    "keys": {
+      "the review finding \"Not done: Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real8\" in tests/test_queue_land_all.py": 1
+    },
+    "round": 2
   },
   "why": "The nightly full test run fails on Windows in 7 of 8 groups: the blocked-read choice test quotes a Windows path the POSIX way, the land queue test leaves a change busy, and the machine-views speed test counts the wrong number of GitHub calls",
   "worker": "codex"
