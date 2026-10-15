@@ -79,8 +79,9 @@ def assert_seconds(round_, expected=None):
     ("task-arithmetic", False), ("fix-arithmetic", False),
     ("compacted-history", False), ("compacted-history", True),
     ("old-published-summary", True),
+    ("incomplete-lifecycle", False),
 ], ids=["new-client", "earlier-adoption", "task-arithmetic", "fix-arithmetic",
-        "new-client-compaction", "earlier-adoption-compaction", "old-published-summary"])
+        "new-client-compaction", "earlier-adoption-compaction", "old-published-summary", "incomplete-lifecycle"])
 def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
         env, scenario, previous, monkeypatch):
     if scenario.endswith("arithmetic"):
@@ -96,6 +97,25 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
                                  "waiting_for_person": 21 - one["round"],
                                  "waiting_for_checks": 11 + one["round"]})
             assert sum(one["seconds"].values()) == 60
+        return
+
+    if scenario == "incomplete-lifecycle":
+        item, _ = env.start_fix(round=1)
+        began = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=5)
+        at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+        monkeypatch.setenv("FORGE_NOW", at(30))
+        write_history(env, [{"events": [
+            {"item": item, "round": 1, "id": "phase", "event": "work phase", "phase": "building", "at": at(0)},
+            {"item": item, "round": 1, "id": "lost", "event": "run start", "kind": "worker", "at": at(0)},
+            {"item": item, "round": 1, "id": "left", "event": "lane left", "kind": "work",
+             "end_known": False, "at": at(10)},
+            {"item": item, "round": 1, "id": "review", "event": "review result", "review_round": 1,
+             "outcome": "clean", "findings": [], "at": at(20)},
+        ], "timings": [{"item": item, "round": 1, "step": "review", "start": at(15),
+                        "seconds": 5, "outcome": "clean"}]}])
+        rounds = row(env.repo, item)["rounds"]
+        assert len(rounds) == 1 and "review clean (5 seconds)" in rounds[0]["line"]
+        assert rounds[0]["seconds"] is None, "An unknown run end cannot yield a complete round duration"
         return
 
     configured_client(env, previous)

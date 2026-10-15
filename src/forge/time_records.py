@@ -263,6 +263,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         end = max(end, recorded_end)  # Completed monotonic durations are more precise than now's whole seconds.
     bound = end or recorded_end
     intervals = []
+    unknown_rounds: set[int] = set()
     if start and bound:
         points = sorted({start, bound, *[max(start, min(bound, p)) for a, b, _, _ in spans for p in (a, b)],
                          *([max(start, min(bound, complete_since))] if complete_since else []),
@@ -277,6 +278,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                               "kind": "working" if category in CATEGORIES[:4] else
                                       "waiting" if category in CATEGORIES[4:7] else "unknown"})
             if category == "unknown":
+                if (index := attempt(number, a)) is not None:
+                    unknown_rounds.add(index)
                 continue
             seconds = (b - a).total_seconds()
             totals[category] = (totals[category] or 0) + seconds
@@ -358,7 +361,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                        "findings": findings, "new_findings": fresh, "repeat_findings": repeats,
                        "seconds": {c: round(v, 3) for c, v in per_attempt.get(index, {}).items()},
                        "seconds_known": bool(complete_since and current["start"]
-                                             and current["start"] >= complete_since)})
+                                             and current["start"] >= complete_since
+                                             and index not in unknown_rounds)})
     grouped = {f"{kind}_seconds": round(sum((when(span["end"]) - when(span["start"])).total_seconds()
                                            for span in intervals if span["kind"] == kind), 3)
                if intervals or (start and end) else None for kind in ("working", "waiting", "unknown")}
