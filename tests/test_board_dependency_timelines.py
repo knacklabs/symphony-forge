@@ -170,7 +170,8 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
     assert "Next: forge task start SHOP/EXTRA" in next_steps.stdout
     assert "Next: forge task start PACK/SAVE" not in next_steps.stdout
     assert "Next: forge task start SHOP/BUSY" not in next_steps.stdout
-    assert "SHOP/BUSY waits for SHOP/SHOW to merge first" in next_steps.stdout
+    # The synthetic local part has no published branch for the default-on stack rule.
+    assert "SHOP/BUSY builds on SHOP/SHOW, which hasn't started yet." in next_steps.stdout
 
     out = tmp_path / "board.html"
     rendered = repo.forge("board", "--out", str(out))
