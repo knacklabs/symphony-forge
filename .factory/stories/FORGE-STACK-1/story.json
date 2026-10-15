@@ -1,0 +1,45 @@
+{
+  "approval": {
+    "at": "2026-10-11T12:55:00+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_011VUwo5LW52oVym3BiTMjpq",
+    "hash": "163c341206a7b61eb1165174f54268020096e3131854660f47f52ab7d21c8127",
+    "round": 5,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-STACK-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-11T07:35:39.399949+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T08:27:35.388993+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T09:26:58.212580+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T10:30:13.519290+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T11:23:58.248169+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T12:53:43.353347+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T12:55:00+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "A story's parts build on each other instead of clashing through main",
+  "touches": 1
+}

@@ -36,6 +36,10 @@ def test_1_a_part_started_here_and_not_pushed_waits_for_nothing(
     board = repo.forge("next", "--json").stdout
     assert "SHOP/SAVE waits for SHOP/SAVE" not in shown + board, shown + board
     assert "SHOP/SAVE was started by" in shown, shown
+    # A dependent part needs published, reviewed changes. Its advice must not
+    # tell this machine to start the already claimed base again.
+    assert "SHOP/SHOW waits for SHOP/SAVE to publish reviewed changes." in shown
+    assert "SHOP/SHARE waits for SHOP/SAVE to publish reviewed changes." in shown
     assert "Next: forge task start SHOP/SAVE" not in shown + board, shown + board
     assert "SHOP/SAVE" not in _waits(repo)["SHOP/SAVE"]
 

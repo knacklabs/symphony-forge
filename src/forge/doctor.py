@@ -11,11 +11,11 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, close, codex, init, machine, quicktest, repo, review, story, sync, task
+from forge import __version__, checks, claude_sdk, close, codex, init, machine, quicktest, repo, review, story, sync, task
 
 COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks", "args": [(('--fix',), {"action": "store_true", "help":
-              "repair what doctor safely can: the pinned Forge, the Codex SDK, the git hooks, "
+              "repair what doctor safely can: the pinned Forge, the agent SDKs, the git hooks, "
               "the folders of finished work and the files forge sync writes"})], "position": 30,
     "listing": "| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |",
 }]
@@ -322,6 +322,12 @@ def doctor(args: argparse.Namespace) -> int:
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
     if needs_sdk and (problem := sdk_failed or codex.sdk_problem()): add(problem)
+    needs_claude_sdk = workers != "codex" and not os.environ.get("CLAUDECODE")
+    claude_failed = ""
+    if args.fix and needs_claude_sdk and shutil.which("uv") and claude_sdk.sdk_problem():
+        try: claude_sdk.install()
+        except repo.Refused as refused: claude_failed = str(refused).partition("\nNext: ")[0]
+    if needs_claude_sdk and (problem := claude_failed or claude_sdk.sdk_problem()): add(problem)
     try:  # the reviewer close runs, at the version Forge pins
         review.helper()
     except repo.Refused as refused: add(str(refused).partition("\nNext: ")[0], INSTALL["autoreview"])

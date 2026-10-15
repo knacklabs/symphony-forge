@@ -48,17 +48,17 @@ def test_6_weekly_trends_through_and_around_forge_and_this_weeks_around_list(env
         "team": [{"through": 1, "around": 1}, {"through": 1, "around": 0}, zero, {"through": 1, "around": 0},
                  {"through": 1, "around": 0}, {"through": 1, "around": 1}],
         # Alphabetical ignoring case, by name or login without one; no totals or ranks.
-        "people": [{"name": "ana Silva", "weeks": [zero, {"through": 1, "around": 0}, zero, zero, zero,
+        "people": [{"name": "ana Silva", "login": "ana", "weeks": [zero, {"through": 1, "around": 0}, zero, zero, zero,
                                                   {"through": 1, "around": 0}]},
                    # Two people sharing a name stay apart, told apart by their login.
-                   {"name": "Ben Ode", "weeks": [{"through": 1, "around": 1}, zero, zero, zero, zero, zero]},
-                   {"name": "Ben Ode", "weeks": [zero, zero, zero, zero, {"through": 1, "around": 0}, zero]},
-                   {"name": "cara-dev", "weeks": [zero, zero, zero, {"through": 1, "around": 0}, zero,
+                   {"name": "Ben Ode", "login": "ben", "weeks": [{"through": 1, "around": 1}, zero, zero, zero, zero, zero]},
+                   {"name": "Ben Ode", "login": "ben-o", "weeks": [zero, zero, zero, zero, {"through": 1, "around": 0}, zero]},
+                   {"name": "cara-dev", "login": "cara-dev", "weeks": [zero, zero, zero, {"through": 1, "around": 0}, zero,
                                                  {"through": 0, "around": 1}]}]}
-    expected = [{"title": "Patch the login page", "author": "ana Silva", "merged_at": recent.isoformat(),
+    expected = [{"title": "Patch the login page", "author": "ana Silva", "author_login": "ana", "merged_at": recent.isoformat(),
                  "url": "https://github.com/acme/shop/pull/7"}]
     if now - day(5) <= timedelta(weeks=1):
-        expected.append({"title": "A change", "author": "cara-dev", "merged_at": day(5).isoformat(),
+        expected.append({"title": "A change", "author": "cara-dev", "author_login": "cara-dev", "merged_at": day(5).isoformat(),
                          "url": "https://github.com/acme/shop/pull/5"})
     assert team["around_forge"] == expected
 

@@ -33,9 +33,9 @@ def native_host(repo, monkeypatch, tmp_path, tool):
 def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, tmp_path,
                                                        tool, model, native_host):
     setup(repo, keys=("SHOP", "WISH"))
-    # An empty SDK home proves native Codex reads do not require the driver SDK.
+    # This home has no Codex SDK, so native Codex reads need no driver SDK.
     data = tmp_path / "data"
-    data.mkdir()
+    data.mkdir(exist_ok=True)
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
     _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / (

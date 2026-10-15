@@ -430,11 +430,8 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
     if missing:
         # A's successful publication event remains; only its obsolete local receipt is absent.
         (machine_a / ".git/forge/ready" / f"{item}.json").unlink()
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
     if not wait_first:
-        stub.write_text(source.replace('print("stub claude: built it")',
-                                       'print("\\n\\nQuestion: May I reuse the existing basket parser?")'), "utf-8")
+        monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the existing basket parser?")
     monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=30)).isoformat())
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
@@ -457,7 +454,7 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
         assert row(env.repo, item)["waiting_seconds"] == refreshed["waiting_seconds"]
         return
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse the existing parser")
     assert answered.returncode == 0, answered.stdout + answered.stderr
     published(env, item)
@@ -472,16 +469,12 @@ def question_wait(env, monkeypatch):
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
-    asking = source.replace('print("stub claude: built it")',
-                            'print("\\n\\nQuestion: May I reuse the basket parser?")')
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     assert "Question: May I reuse the basket parser?" in asked.stdout
     assert not env.gh_calls("pr", "create") and not env.gh_calls("pr", "edit")
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse it")
     assert answered.returncode == 0, answered.stderr
     closed = env.close(item)
@@ -489,7 +482,7 @@ def question_wait(env, monkeypatch):
     published(env, item)
     at = datetime.now(timezone.utc) + timedelta(seconds=60)
     monkeypatch.setenv("FORGE_NOW", at.isoformat())
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     published(env, item)
@@ -503,7 +496,7 @@ def question_wait(env, monkeypatch):
                and datetime.fromisoformat(interval["start"]) >= at
                for interval in waiting["intervals"])
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, keep the existing parser")
     assert answered.returncode == 0, answered.stderr
     published(env, item)

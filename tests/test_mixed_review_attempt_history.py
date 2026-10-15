@@ -14,9 +14,9 @@ from datetime import datetime, timedelta, timezone
 
 from conftest import FORGE_SHIM, ROOT, _install, machine_cores
 from test_close import blocked, body, env, finding  # noqa: F401
-from test_fix_agent_runs_wait_in_line import HOLDING_CLAUDE, _until
+from test_fix_agent_runs_wait_in_line import _until
 from test_item_time_history import records, row
-from test_lanes_agents import finish, start
+from test_lanes_agents import finish, hold_agents, start
 from test_story import worktree
 from test_worker import install_claude
 
@@ -90,9 +90,7 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
     held, held_where = env.start("held-worker", "fix/held-worker", ".factory/fixes/held-worker.json",
         {"kind": "fix", "why": "Hold the agent", "done_when": "The agent finishes"}, {})
     env.commit(held_where, "forge.toml", modern, "Use current worker")
-    _install(env.repo.bin, "claude", HOLDING_CLAUDE.format(python=sys.executable).replace(
-        'while not (here / f"go-{name}").exists():',
-        'while not (here / f"go-{name}").exists() and not (here / "go-all").exists():'))
+    hold_agents(env)
     processes = []
     try:
         holding, _ = start(env.repo.path, env.tmp / "holding", env.repo, "work", held)

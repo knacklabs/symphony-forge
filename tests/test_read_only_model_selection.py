@@ -112,4 +112,5 @@ def test_5_a_fix_first_build_keeps_lite_with_explore_configured(
         settings = _sent(log, "thread/start")[0]["config"]
         assert (settings["model"], settings["model_reasoning_effort"]) == ("gpt-6-sol", "low")
     else:
-        assert calls(log)[0]["args"][:5] == ["-p", "--model", "sonnet", "--effort", "medium"]
+        options = calls(log)[0]["options"]
+        assert (options["model"], options["effort"]) == ("sonnet", "medium")
