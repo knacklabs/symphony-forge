@@ -233,7 +233,7 @@
     "id": "43acec77-2c79-4729-8cee-6b121334bb17",
     "status": "blocked"
   },
-  "round": 12,
+  "round": 13,
   "settled_areas": [
     "machine_board.row() in src/forge/board.py",
     "src/forge/board.py",
@@ -290,10 +290,12 @@
     "worker_round": 11
   },
   "stuck": {
-    "close": "391e7284-15e8-4255-8713-232fc5b0c4cd",
-    "head": "6c3b529e762f361606177d10333b553691841dfe",
-    "keys": {},
-    "round": 11
+    "close": "bd36335f-7bae-458e-8e30-fcb72b87b5cc",
+    "head": "3e8f2eecf096af715eeed2e8620d05c28df95bc3",
+    "keys": {
+      "the review finding \"Not done: a login-only pull request hides the starter's recorded name\" in src/forge/board.py": 1
+    },
+    "round": 12
   },
   "worker": "codex"
 }
