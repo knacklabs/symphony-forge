@@ -10,6 +10,7 @@
   },
   "done_when": "From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner, listing every round's findings, and the shipped coordinator guide says to settle the missing rule one question at a time before the next round; new repos get it at init and existing repos on upgrade",
   "flagged": [
+    "src/forge/close.py",
     "src/forge/nextstep.py"
   ],
   "kind": "fix",
@@ -20,33 +21,69 @@
       "gain": 4,
       "harm": 3,
       "line": 911,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
       "work": 2
+    },
+    {
+      "area": "_item() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 911,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Remote hard stops hide the required resolution step",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 401,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Third-round output gives conflicting instructions about who decides",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ea123a78b9182b60f844fb7c865f77253d0f96dddc2d6dcc6b96b9e2890c4e53",
-    "changed": "ec099cc4268a421d055abe3c2851cd1a271aab48e10fb3b5c2619a5c58749006",
-    "commit": "d1402866148fe36c47498ffa1957dbba585af38d",
+    "branch_diff": "18b8cc84261dba41ae26bc81e70f304ed1efdea59b60e6682b0f0cc8a31802d5",
+    "changed": "a304f66713bbb4c15ac4973f4a5af9882f3c70ef75dc5929920ebf2648b223e0",
+    "commit": "3dac165cace8c4e9a373ccad843903ed7fd84fb8",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. When a worker closes an item on another machine, `forge next` loads that item's remote review state but returns the generic \u201cruns on their machine\u201d message before reaching the new owner advice. After two blocked reviews, the coordinator therefore sees neither the instruction to ask the owner nor the table of findings. The named tests use a local worktree, so they do not cover this normal remote-item path.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. After a third blocked review triggers a hard stop, a remote item with no local worktree returns the new owner advice here before reaching the `state.stop` branch at lines 915\u2013925. `forge next` says to send a focused round but omits the hard-stop question and the required `forge close --resolve` step. `close.check_stop` refuses that round until a choice is recorded. The new remote test covers two rounds, before this conflict occurs.",
         "file": "src/forge/nextstep.py",
-        "gain": 4,
+        "gain": 3,
         "harm": 3,
         "line": 911,
         "priority": "P1",
-        "title": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
+        "title": "Remote hard stops hide the required resolution step",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. With three distinct blocking findings in one area, all scored Harm 1 or 2, close prints the new instruction to ask the owner, then its hard-stop question says to settle the choice yourself and tell the owner afterward (`review.stop_question` uses `score.who`). The shipped guide repeats both instructions at lines 1472\u20131477 and 1510\u20131515. This reachable third-round case leaves the coordinator with opposite directions about whether to ask the owner before another round.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 401,
+        "priority": "P1",
+        "title": "Third-round output gives conflicting instructions about who decides",
         "work": 2
       }
     ],
-    "id": "0639df49-5cd4-401c-a535-59339c01997e",
+    "id": "33e25866-54b4-4bf7-90a2-1609633d964e",
     "status": "blocked"
   },
   "round": 2,
@@ -58,6 +95,10 @@
     },
     {
       "at": "2026-10-15T06:08:22.692719+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T06:36:10.417387+00:00",
       "step": "review"
     }
   ],
