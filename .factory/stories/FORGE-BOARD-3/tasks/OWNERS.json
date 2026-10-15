@@ -152,11 +152,11 @@
     "id": "6bbd8287-cd9a-449e-b3b1-17697f36ae89",
     "status": "blocked"
   },
-  "round": 8,
+  "round": 9,
   "settled_areas": [
     "src/forge/board_facts.py"
   ],
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -193,12 +193,12 @@
     "wait_id": "7321a5b2-5a31-4505-ad8f-26a58be9fd2d"
   },
   "stuck": {
-    "close": "de18d111-dc7a-4012-bb16-06c06cb814dc",
-    "head": "6fe09ffcc8b325b570350c5e12226a48d83ca314",
+    "close": "33f675e4-9a29-4b63-8ee9-2c26eb8dbc7c",
+    "head": "f07b96902c2e2551221763e4c0d6b271eaa2ef30",
     "keys": {
-      "the review finding \"Not done: older-history login proof\" in tests/test_board_logins.py": 1
+      "the review finding \"Offline board erases the only name for login-only mergers\" in src/forge/board.py": 1
     },
-    "round": 7
+    "round": 8
   },
   "worker": "codex"
 }
