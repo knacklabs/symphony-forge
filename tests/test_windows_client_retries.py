@@ -21,7 +21,8 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup):
     current = repo.forge("--version").stdout.split()[-1]
     if setup == "init":
         config = (f'version = "{current}"\nrepo = "client"\n'
-                  f'runner = "windows-latest"\ntest = {json.dumps(command)}\n')
+                  f'runner = "windows-latest"\ntest = {json.dumps(command)}\n'
+                  'checks = ["tests", "forge-pr-check"]\n')
         client = _new_repo(repo, gh, tmp_path, config)
         result = repo.forge("init", "--runner", "windows-latest", cwd=client)
     else:

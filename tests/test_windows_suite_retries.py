@@ -45,10 +45,15 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
     options[options.index("--durations-path") + 1] = str(ROOT / ".test_durations")
     environment = {key: value for key, value in os.environ.items()
                    if not key.startswith("PYTEST_")}
+    environment["PYTHONUNBUFFERED"] = "1"
+    environment["EXECNET_DEBUG"] = "2"
     # Own the nested run's temp root instead of racing global pytest-current cleanup.
-    done = subprocess.run([sys.executable, "-m", "pytest", "test_sample.py", *options,
-                           "--basetemp", str(tmp_path / "nested")],
-                          cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=60)
+    try:
+        done = subprocess.run([sys.executable, "-u", "-m", "pytest", "test_sample.py", *options,
+                               "--basetemp", str(tmp_path / "nested")],
+                              cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired as error:
+        raise AssertionError(f"Nested pytest timed out: {error.stdout!r}\n{error.stderr!r}") from error
     assert done.returncode == (0 if runner == "windows-latest" and not persistent else 1), done.stdout + done.stderr
     assert (tmp_path / "attempts.txt").read_text() == ("2" if runner == "windows-latest" else "1")
     dev = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["dependency-groups"]["dev"]
