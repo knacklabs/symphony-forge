@@ -86,7 +86,7 @@
     "id": "cdbaaf20-5214-457e-9144-1151dc60b648",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "settled_areas": [
     "src/forge/time_records.py"
   ],
@@ -119,12 +119,12 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "a43e5def-04bd-4330-8418-85aad345d94e",
-    "head": "e5aa435d38ffda873838727573c90fee678dfb78",
+    "close": "49ab1fc7-c874-4f5b-8cb9-57b1ca522241",
+    "head": "7e21a967edced22606510d82330a20d20a0c9c34",
     "keys": {
-      "the review finding \"Not done: Each round records its full duration in the four time groups\" in src/forge/time_records.py": 1
+      "the review finding \"Not done: Each round keeps its full duration after compaction\" in src/forge/time_records.py": 1
     },
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
