@@ -54,6 +54,17 @@
       "item": "windows-rerun-flakes",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_windows_client_retries.py\tThe client probe can resolve system Python without pytest in CI.",
+      "kind": "bug",
+      "path": "tests/test_windows_client_retries.py",
+      "line": 98,
+      "text": "The client probe can resolve system Python without pytest in CI.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
