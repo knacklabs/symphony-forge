@@ -62,7 +62,11 @@ part with an empty cell belongs to the owner.
    field, without changing the existing ones: `started_by_login`, `approved_by_login`,
    `developer_login`, `merged_by.login` (already an object) and `login` on each trends person;
    `viewer` is the caller's GitHub login (`task.github_login`). Trends key people by login and keep
-   the name. When only a git name exists, the login is null. The current HTML board keeps working
+   the name. Owner decision 15 October (narrow): logins come only from records that already hold
+   them (pull request authors and mergers, plan Developer cells, the viewer's own login); Forge
+   never looks a plain git author up through GitHub, so the board needs no GitHub CLI. When only
+   a git name exists, the login is null and the name stays; the upgrade backfill fills what pull
+   requests show. The current HTML board keeps working
    unchanged. Tests: one board read in a new repo and one in the adopted fixture; the HTML board
    still renders.
 2. `forge assign <KEY> <login>` writes the story's `Owner:` line; `forge assign <KEY/TASK> <login>`
