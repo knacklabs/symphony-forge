@@ -135,8 +135,8 @@
       "gain": 4,
       "harm": 3,
       "line": 519,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
       "round": 7,
       "security": false,
       "title": "Not done: new work keeps a visible starter before its pull request",
@@ -148,8 +148,8 @@
       "gain": 4,
       "harm": 3,
       "line": 521,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
       "round": 7,
       "security": false,
       "title": "Not done: approval identity names the actual approver",
@@ -161,8 +161,8 @@
       "gain": 3,
       "harm": 2,
       "line": 92,
-      "outcome": "follow-up",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
       "round": 7,
       "security": false,
       "title": "Not done: board login test covers approval identity",
@@ -175,7 +175,23 @@
     "branch_diff": "0b131f5e6c333cb01ce55ef94859ae7c3f8aaa000a98f986317d59dfc28b9994",
     "changed": "67f8483f97eb50712f67a1669e7a98238254e6fe62c86b651262488cf65c82e6",
     "commit": "3a58f11d12a37a7520f6b7d926c47cf616106802",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. For a newly started story, part or fix without a pull request, this line supplies no author, and no production code writes an `item started` event to the local event history it checks. `started_by` therefore becomes null. The removed `_starters` path previously showed the start commit's git name, so the normal pre-PR board loses a known person.",
@@ -209,14 +225,15 @@
       }
     ],
     "id": "b07a726d-0215-4de7-93ab-83b84a8fca8a",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 11,
   "settled_areas": [
+    "machine_board.row() in src/forge/board.py",
     "src/forge/board.py",
     "src/forge/board_facts.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -254,9 +271,13 @@
   "stop": {
     "area": "machine_board.row() in src/forge/board.py",
     "at": "2026-10-15T05:53:25.599954+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "machine_board.row() in src/forge/board.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "812e271d-3993-428f-b268-c357d2bc2164"
+    "reason": "Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+    "wait_id": "812e271d-3993-428f-b268-c357d2bc2164",
+    "worker_round": 11
   },
   "stuck": {
     "close": "8e9ac51b-2cb0-4922-a4f0-9bd85078f32b",
