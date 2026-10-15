@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: a login-only pull request hides the starter's recorded name\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 535,
+      "text": "Not done: a login-only pull request hides the starter's recorded name",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: approval identity names the actual approver\tFORGE-BOARD-3/OWNERS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -50,6 +61,17 @@
       "path": "src/forge/board.py",
       "line": 705,
       "text": "Offline board erases the only name for login-only mergers",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tReparsing every starter commit for each historical row slows the HTML board\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 538,
+      "text": "Reparsing every starter commit for each historical row slows the HTML board",
       "from": "blocking",
       "item": "FORGE-BOARD-3/OWNERS",
       "status": "open",

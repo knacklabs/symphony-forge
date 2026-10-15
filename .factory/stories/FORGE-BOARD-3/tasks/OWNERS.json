@@ -167,65 +167,65 @@
       "security": false,
       "title": "Not done: board login test covers approval identity",
       "work": 1
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 535,
+      "outcome": "open",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "Not done: a login-only pull request hides the starter's recorded name",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 538,
+      "outcome": "open",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "Reparsing every starter commit for each historical row slows the HTML board",
+      "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f066c068df3b9a51fe34cb0c8a1fa970f3d7904d1727601e93c5fcd13b9753a8",
-    "changed": "b1bc9deeffb0a8f80c61e696a4f7fd3c9f74611b200954dcbeb8a9cb414cdbaa",
-    "commit": "3a58f11d12a37a7520f6b7d926c47cf616106802",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
-        "finding": 2
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
-        "finding": 3
-      }
-    ],
+    "branch_diff": "c010705a5c5f828653f8ee08fcf61c7199596c72aa82af3cae4c2c0c150c44b6",
+    "changed": "d0be937adf8b3fca8f9c91c46865ab4a65493c78c813428083351f052eca12c4",
+    "commit": "339aa48b10df019e4ecab562c96d6894b9ce64d7",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. For a newly started story, part or fix without a pull request, this line supplies no author, and no production code writes an `item started` event to the local event history it checks. `started_by` therefore becomes null. The removed `_starters` path previously showed the start commit's git name, so the normal pre-PR board loses a known person.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. When a pull request author has a login but no display name, `person()` uses the login as `starter[\"name\"]`. The fallback to the item's recorded start-commit name is then skipped. A normally started item with both a known git name and a login shows the login in both fields instead of keeping the name beside it. The command-level login test supplies an author with both fields, so it does not catch this case.",
         "file": "src/forge/board.py",
         "gain": 4,
         "harm": 3,
-        "line": 519,
+        "line": 535,
         "priority": "P1",
-        "title": "Not done: new work keeps a visible starter before its pull request",
+        "title": "Not done: a login-only pull request hides the starter's recorded name",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. This line uses the plan owner as the approver's login, although the owner and approver can differ. It also shows that owner as `approved_by` before approval. Without an Owner line, it loses recorded approval names: the adopted client's backfill stores `plan approved` in the PR time record (`src/forge/backfill.py:116\u2013123`), while this lookup reads only local events. The existing adopted-history test expects `Plan Approver` on the archived story and part (`tests/test_board_after_upgrade.py:461,484`); those rows now have a null `approved_by`.",
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Scale. This fallback calls `_starters(top)` separately for every row without a loaded pull request author. Although `repo.command_fact` caches the git log text, `_starters` splits and rebuilds the complete starter map on each call. The HTML board uses `trim=False`, so a repo with hundreds of older items outside the pull-request window repeatedly parses its full starter history; the previous code built that map once per board read.",
         "file": "src/forge/board.py",
         "gain": 4,
         "harm": 3,
-        "line": 521,
+        "line": 538,
         "priority": "P1",
-        "title": "Not done: approval identity names the actual approver",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. The adopted-upgrade case checks the plan owner's `developer` fields here, but none of the three command-level cases asserts `approved_by_login`. The test would pass if the board gave the approver the owner's login, as it currently does. The required proof therefore cannot catch a broken login beside this person field.",
-        "file": "tests/test_board_logins.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 92,
-        "priority": "P1",
-        "title": "Not done: board login test covers approval identity",
+        "title": "Reparsing every starter commit for each historical row slows the HTML board",
         "work": 1
       }
     ],
-    "id": "b07a726d-0215-4de7-93ab-83b84a8fca8a",
-    "status": "clean"
+    "id": "43acec77-2c79-4729-8cee-6b121334bb17",
+    "status": "blocked"
   },
   "round": 12,
   "settled_areas": [
@@ -265,6 +265,10 @@
     },
     {
       "at": "2026-10-15T05:53:25.599559+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T06:56:20.794679+00:00",
       "step": "review"
     }
   ],
