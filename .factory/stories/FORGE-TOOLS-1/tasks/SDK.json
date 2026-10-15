@@ -135,7 +135,10 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "settled_areas": [
+    "_run() in src/forge/worker.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T16:46:51.827799+00:00",
@@ -153,9 +156,13 @@
   "stop": {
     "area": "_run() in src/forge/worker.py",
     "at": "2026-10-15T03:37:32.714111+00:00",
+    "by": "owner",
+    "choice": "split",
     "file": "_run() in src/forge/worker.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "6f349f20-76dc-43f0-a45b-034222885267"
+    "reason": "Owner chose split: merge the SDK runner as reviewed; the doctor install after a switch to Claude, the changed-pin test and the refusal message become a follow-up part",
+    "wait_id": "6f349f20-76dc-43f0-a45b-034222885267",
+    "worker_round": 2
   },
   "stuck": {
     "close": "2edaf550-32f2-49f4-a82b-4ceb60491363",
