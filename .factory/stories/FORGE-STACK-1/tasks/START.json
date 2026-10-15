@@ -86,7 +86,7 @@
     "id": "15fed5ac-d78b-4335-8591-4600f5e5d5cc",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -103,15 +103,12 @@
     }
   ],
   "stuck": {
-    "close": "cfb52b3b-1dc8-49f5-b31d-e80333f0f9c6",
-    "head": "31ab8cb70fca10658dd9d6902caedd2dc3f4ef4f",
+    "close": "b7b0b9e7-a1db-49df-9cc2-b94b93004303",
+    "head": "a7a9846cedd62aeff026c0cc04fb33bea6029201",
     "keys": {
-      "close's tests failing": 1,
-      "the review finding \"Not done: retain the Forge-merged trailer in bounded merge bodies\" in src/forge/merge.py": 1,
-      "the review finding \"Not done: start refusals leave branches and worktrees untouched\" in src/forge/task.py": 1,
-      "the review finding \"Not done: test an older base started before upgrade\" in tests/test_stack_start.py": 1
+      "the review finding \"Approved remote story is ignored during an upgrade preview\" in src/forge/task.py": 1
     },
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
