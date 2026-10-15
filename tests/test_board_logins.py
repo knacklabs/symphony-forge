@@ -29,6 +29,17 @@ def _without_github_cli(env, monkeypatch, previous):
     env.repo.git("config", "user.email", "local-dev@users.noreply.github.com")
     started = env.repo.forge("fix", "start", "Keep local work", "--done", "Local work shows", "--slug", "local-work")
     assert started.returncode == 0, started.stdout + started.stderr
+    env.repo.git("config", "user.name", "Plain Git Author")
+    env.repo.git("config", "user.email", "plain@example.test")
+    started = env.repo.forge("fix", "start", "Keep plain authors", "--done", "Names stay", "--slug", "plain-author")
+    assert started.returncode == 0, started.stdout + started.stderr
+    head = env.repo.git("rev-parse", "fix/plain-author")
+    # Even a previously resolved actor must become unknown when the CLI is absent.
+    _github_actors(env, {head: "plain-dev"})
+    now = datetime.now(timezone.utc)
+    last_week = now - timedelta(days=now.weekday() + 7)
+    github(env, [pr(31, "manual-change", {"name": "Cached Author", "login": "cached-dev"}, last_week)])
+    assert rows(board(env.repo))["plain-author"]["started_by_login"] == "plain-dev"
     isolated = env.tmp / "without-gh"
     isolated.mkdir()
     for command in ("git", "sysctl", "vm_stat"):
@@ -41,12 +52,21 @@ def _without_github_cli(env, monkeypatch, previous):
     data = board(env.repo)
     assert data["viewer"] is None
     item = rows(data)["local-work"]
-    assert (item["started_by"], item["started_by_login"]) == ("Local Builder", "local-dev")
+    # The coordinator requires null logins for every author kind while offline;
+    # the earlier contract retained noreply and cached identities without gh.
+    assert (item["started_by"], item["started_by_login"]) == ("Local Builder", None)
+    plain = rows(data)["plain-author"]
+    assert (plain["started_by"], plain["started_by_login"]) == ("Plain Git Author", None)
+    people = data["team"]["trends"]["people"]
+    assert any(person["name"] == "Cached Author" for person in people)
+    assert all(person["login"] is None for person in people)
+    assert all(pr["author_login"] is None for pr in data["team"]["around_forge"])
     assert item["stage"] == "started" and item["intervals"]
     out = env.tmp / "offline.html"
     rendered = env.repo.forge("board", "--out", out.as_posix())
     assert rendered.returncode == 0, rendered.stdout + rendered.stderr
     assert "Keep local work" in out.read_text("utf-8")
+    assert "Keep plain authors" in out.read_text("utf-8")
 
 
 def _github_actors(env, logins):

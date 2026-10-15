@@ -231,6 +231,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     `trim` leaves out work finished more than seven days ago; the page keeps it."""
     from forge import nextstep, time_records
 
+    github_available = bool(shutil.which("gh"))
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
     if not trim:
@@ -707,8 +708,17 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for parent in items.values():
         for item in (parent, *parent["children"]):
             for field, actor in actor_sources[item["id"]].items():
-                item[field + "_login"] = actor["login"] or logins.get(actor["commit"])
+                item[field + "_login"] = (actor["login"] or logins.get(actor["commit"])) if github_available else None
+            if not github_available:
+                item["developer_login"] = None
+                if item["merged_by"]:
+                    item["merged_by"] = {**item["merged_by"], "login": None}
     team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits)
+    if not github_available:
+        for person in (team["trends"] or {}).get("people", []):
+            person["login"] = None
+        for pr in team["around_forge"] or []:
+            pr["author_login"] = None
     fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
@@ -725,7 +735,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
-            "viewer": task.github_login(top) if shutil.which("gh") else None,
+            "viewer": task.github_login(top) if github_available else None,
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}

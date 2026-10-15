@@ -348,6 +348,11 @@ def read_history_batching(env, monkeypatch):
 
 
 def warm_checks_cache(env, monkeypatch):
+    def checks_calls():
+        # Commit-author requests have their own cache; this rule covers open PR checks.
+        return [call for call in env.gh_calls("api", "graphql")
+                if any("pullRequests(" in arg for arg in call)]
+
     github_list_fields(env)
     item, where = env.start_fix(round=1)
     env.reviews(blocked(finding("P1", "Basket disappears")))
@@ -373,7 +378,7 @@ def warm_checks_cache(env, monkeypatch):
     env.repo.git("worktree", "add", "-q", "-b", f"fix/{item}",
                  str(env.tmp / "cached-checks-worktree"), f"origin/fix/{item}")
     assert row(env.repo, item)["gates"]["review"]["status"] == "blocked"
-    calls = len(env.gh_calls("api", "graphql"))
+    calls = len(checks_calls())
     env.repo.path = machine
     env.commit(where, "app.py", "print('basket retained')\n")
     env.reviews(CLEAN)
@@ -389,7 +394,7 @@ def warm_checks_cache(env, monkeypatch):
     next_step = env.repo.forge("next")
     assert rendered.returncode == 0, rendered.stdout + rendered.stderr
     assert next_step.returncode == 0, next_step.stdout + next_step.stderr
-    assert len(env.gh_calls("api", "graphql")) == calls, "Checks remain cached inside the same minute"
+    assert len(checks_calls()) == calls, "Checks remain cached inside the same minute"
     visible = seen(page)
     observations = {"json": current["stage"] == "ready" and
                     current["gates"]["review"]["status"] == "clean" and len(current["rounds"]) == 2,

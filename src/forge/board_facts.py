@@ -129,6 +129,8 @@ def people(body: str) -> Item:
 
 def actor_logins(top: Path, commits: set[str]) -> Item:
     """Resolve visible actors in batches. Successful answers, including unknowns, last a day."""
+    if not shutil.which("gh"):
+        return {}
     ordered = sorted(commits)
     batches = [ordered[start:start + 50] for start in range(0, len(ordered), 50)]
 
