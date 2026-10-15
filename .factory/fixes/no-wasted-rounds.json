@@ -3,12 +3,20 @@
   "branch": "fix/no-wasted-rounds",
   "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
       "step": "start"
     }
   ],
-  "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls"
+  "stuck": {
+    "close": null,
+    "head": "f26be962cc3f8d9e98cb4f39d8b76d6c0170fc9a",
+    "keys": {},
+    "round": null
+  },
+  "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
+  "worker": "codex"
 }
