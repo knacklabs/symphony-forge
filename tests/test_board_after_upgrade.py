@@ -191,9 +191,14 @@ class History:
 
     def commit(self, where, path, value, message, at, author="Original Starter"):
         self.at(at)
-        self.repo.git("config", "user.name", author)
-        self.repo.git("config", "user.email", author.lower().replace(" ", "-") + "@example.test")
-        return self.env.commit(where, path, value, message)
+        # Keep every real historical commit and actor without two Git launches
+        # per commit: this fixture creates 64 commits in each parameter case.
+        with self.monkeypatch.context() as actor:
+            email = author.lower().replace(" ", "-") + "@example.test"
+            for role in ("AUTHOR", "COMMITTER"):
+                actor.setenv(f"GIT_{role}_NAME", author)
+                actor.setenv(f"GIT_{role}_EMAIL", email)
+            return self.env.commit(where, path, value, message)
 
     def item(self, name, number, days, merge="squash", task=None, no_pr=False, long_history=False):
         item = "SHOP/" + task if task else name
@@ -251,14 +256,17 @@ class History:
                 retried = [{**run, "started_at": (at + timedelta(minutes=4)).isoformat(),
                             "completed_at": (at + timedelta(minutes=6)).isoformat()} for run in GREEN]
                 self.checks[head] = failed + retried
-            self.repo.git("push", "-q", "origin", branch)
             if outcome == "blocked":
                 self.commit(where, name + ".py", f"print('hello reader {round_}')\n", "Repair the greeting",
                             at + timedelta(hours=1))
         head = heads[-1]
         files = [{"path": path} for path in self.repo.git("diff", "--name-only", state["base"], head).splitlines()]
+        # GitHub reads this history only after publish(). The final push keeps
+        # every ancestor and check hash, plus the surviving branch and PR refs.
+        refs = [branch]
         if not no_pr:
-            self.repo.git("push", "-q", "origin", f"{head}:refs/pull/{number}/head")
+            refs.append(f"{head}:refs/pull/{number}/head")
+        self.repo.git("push", "-q", "origin", *refs)
         if merged:
             self.at(merged)
             if merge == "squash":

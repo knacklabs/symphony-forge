@@ -8460,6 +8460,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_mod_install.py\tThe real Claude session misses its expected API-key prompt in the full suite but the focused run passes.",
+      "kind": "bug",
+      "path": "tests/test_mod_install.py",
+      "line": 167,
+      "text": "The real Claude session misses its expected API-key prompt in the full suite but the focused run passes.",
+      "from": "worker",
+      "item": "windows-nightly-red",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "tests/test_mod_plugin.py",
@@ -8665,6 +8676,28 @@
       "text": "Not done: New and previously adopted clients run the proposed picker through close",
       "from": "blocking",
       "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real8\twindows-nightly-red",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 146,
+      "text": "Not done: Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real8",
+      "from": "blocking",
+      "item": "windows-nightly-red",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tNot done: The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real\u539f\u56e0\twindows-nightly-red",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 146,
+      "text": "Not done: The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real\u539f\u56e0",
+      "from": "blocking",
+      "item": "windows-nightly-red",
       "status": "open",
       "closed_by": null
     },
