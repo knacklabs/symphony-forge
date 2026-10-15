@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-15T09:54:23.314488+00:00
-seconds: 363.776
-read_hash: f40a349c3280ed3feac5f285a5dba296a0fee5c9
-round: 1
+read_at: 2026-10-15T10:00:13.731288+00:00
+seconds: 216.904
+read_hash: 4f2f764133519e4616eea2b88fc5fc1c68b7bf38
+round: 2
 passed: no
-doc_seen: f40a349c3280ed3feac5f285a5dba296a0fee5c9
+doc_seen: 4f2f764133519e4616eea2b88fc5fc1c68b7bf38
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 537d62d70f2cc0ba481b96637052bcfd255e44a4
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13ef6-7126-7692-8ac4-4f759a6cdc3a
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -71,5 +71,28 @@ Only a genuine trade-off goes to the human, as a question with options.
 8. Blocking: The hand-off implementation covers only the first production story.
    Raise: Not done. `plans/FORGE-PACE-1.md:21–22` promises inherited prototype proof for **each new story**, but lines 96–100 prescribe and test it only for the **first** story after sign-off. Story creation independently starts from its template each time (`src/forge/story.py:148–151`); nothing carries that first story’s section into subsequent stories. The second story can repeat the planning and cold-read work this change promises to eliminate.
    Gain 4, Work 1, Harm 2
+
+   Disposition: cut
+
+## Round 2
+
+9. Blocking: Disputed keep 3: moving the design reference into `Why` still does not bind approval.
+   Raise: Not done. The new rule at `plans/FORGE-PACE-1.md:67–71` assumes `Why` is approved text. Both approval hashes exclude it (`src/forge/story.py:83`, `src/forge/task.py:70–74`). Updating the images and their matching tree id in `Why` therefore leaves the approval hash unchanged; task start still accepts that hash (`src/forge/task.py:260–265`). The newly prescribed placement does not provide the promised approval invalidation.
+   Gain 4, Work 2, Harm 3
+
+   Disposition: cut
+10. Blocking: The new optional prototype flag leaves the normal prototype build path outside the design gate.
+   Raise: Plan gap. `plans/FORGE-PACE-1.md:74–77` gates a build marked `--prototype`, but does not define what happens when that flag is omitted. Existing fix creation automatically identifies prototypes from repository state (`src/forge/task.py:384–385`, `src/forge/repo.py:519–526`). An ordinary `forge fix start ... --kind ui` in that repository remains a prototype build, yet the proposed rule does not require its design approval. The named gate test can pass while this normal path bypasses it.
+   Gain 4, Work 2, Harm 3
+
+   Disposition: cut
+11. Blocking: DESIGN and ROUTING introduce a shared command contract without an owner or dependency.
+   Raise: Plan gap. `plans/FORGE-PACE-1.md:76` introduces `--prototype`; lines 84–87 introduce `--kind`. Both require the same `fix start` argument row and `fix_start` implementation (`src/forge/task.py:433–436`, `src/forge/task.py:363–386`). The tasks at lines 118–120 can run independently, and neither first pins their combined behavior, including the design-preparation fix that must run before approval. Assign the shared command contract to one task and make the gate consumer depend on it.
+   Gain 4, Work 2, Harm 2
+
+   Disposition: cut
+12. Blocking: Sign-off reuse excludes the newly introduced proof and decisions from its validity check.
+   Raise: Plan gap. `plans/FORGE-PACE-1.md:93–108` makes `## Proof` and `## Decisions` sign-off evidence, but permits reuse based only on product commit, answers and review rules. Decision files are excluded from the product snapshot (`src/forge/review.py:854–868`), and recording the customer reply edits that decision before acceptance commits it (`src/forge/records.py:255–286`, `301–302`). Changing a proof mapping during that edit leaves all three cache inputs unchanged, allowing acceptance and subsequent story hand-off to use evidence the cached review never checked.
+   Gain 4, Work 2, Harm 3
 
    Disposition: cut
