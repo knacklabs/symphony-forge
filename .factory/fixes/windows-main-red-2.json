@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-15T08:28:42.548397+00:00",
+      "because": "Owner chose to merge this fix on its own targets and handle the varying slow Windows tests with a rerun-once fix",
+      "done_when": "Every Windows full-suite group passes in an all-platform run of this branch, each failure fixed at its real cause, not skipped"
+    }
+  ],
   "base": "d9abeffd1b7075eef9ac082b2331e7f94e05ac6d",
   "branch": "fix/windows-main-red-2",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "858e2781be44aef1413ac62619f8b66e43475d1a"
   },
-  "done_when": "Every Windows full-suite group passes in an all-platform run of this branch, each failure fixed at its real cause, not skipped",
+  "done_when": "The allow-list sync test, the board timing test and the group 8 hang pass on Windows for their real causes in an all-platform run of this branch (run 38700101238: groups 3 and 8 green, the allow-list test passes); other slow Windows tests are handled by a separate rerun-once fix",
   "kind": "fix",
   "round": 2,
   "status": "working",
