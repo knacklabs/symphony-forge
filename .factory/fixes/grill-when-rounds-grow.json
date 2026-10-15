@@ -1,0 +1,14 @@
+{
+  "base": "202d0aa921373257b8d471893e8058ff51fce7ca",
+  "branch": "fix/grill-when-rounds-grow",
+  "done_when": "From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner, listing every round's findings, and the shipped coordinator guide says to settle the missing rule one question at a time before the next round; new repos get it at init and existing repos on upgrade",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-15T05:40:36.668830+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Coordinators keep sending workers back round after round when a cold read or review finds a new problem each time, instead of stopping to settle the missing rule with the owner"
+}
