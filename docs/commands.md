@@ -17,6 +17,7 @@
 | `forge story done <KEY> "<outcome>"` | Corrects a finished story's outcome on an existing work branch; opens no separate pull request |
 | `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
+| `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a GitHub username. Writes Owner or Developer, commits on the story branch and pushes. Plan the story first. After a fetch, next offers the developer these parts first. A part assignment overrides its story owner. |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
 | `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix's done-when; the old text and the reason stay in its record, and the next review judges the new text |

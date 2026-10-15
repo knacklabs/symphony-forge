@@ -309,8 +309,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             where = trees.get(where) or where
         notes = _read(top, where, f"plans/{key}.read.md", history)
         plan = story._plan(top, key, landed if key in completed else None, history)
-        owner = re.search(r"^Owner:[ \t]*`?([^`\s]+)", plan, re.M)
-        owners[key] = owner[1] if owner else None
+        owners[key] = task.owner(plan)
         assignments = task.rows(task.sections(plan))
         if not story._record(notes)[0]:
             return "none", assignments
@@ -548,6 +547,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "started_by": starter["name"], "started_by_login": starter["login"],
                 "approved_by": approver["name"], "approved_by_login": approver["login"],
                 "developer": developer["name"], "developer_login": developer["login"],
+                "owner": (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
+                         or owners.get(read_key),
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
                          + board_visuals.stage_duration(s) for s in stages
@@ -696,6 +697,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                       or current.get("gates", {}).get("ci", {}).get("status") == "running" else
                       "Waiting" if current else readiness.get(key, {}).get("parts", {}).get(tid, "Not started"))
             parts.append({"id": item, "title": spec.get("Name") or "A part with no name yet",
+                          "owner": task.developer(spec) or task.owner(text),
                           "status": status, "waits_for": waits})
         phase = ("done" if key in completed else
                  readiness.get(key, {}).get("stage", "planning"))
@@ -710,9 +712,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 + (f", {ready_parts} ready to merge" if ready_parts else ""))
             items[key]["stage"] = phase
         maps.append({"id": key, "title": items.get(key, {}).get("title") or state.get("title")
-                     or "A story with no title yet", "parts": parts, "stage": phase, "planned": bool(parts)})
+                     or "A story with no title yet", "owner": task.owner(text),
+                     "parts": parts, "stage": phase, "planned": bool(parts)})
     mapped = {m["id"] for m in maps}
     maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet",
+                 "owner": None,
                  "parts": [], "stage": "done" if s["key"] in completed else "needs a spec", "planned": False}
                 for s in roadmap.values() if s["key"] not in mapped)
     order = list(roadmap)  # roadmap order; stories off the roadmap keep theirs, after it

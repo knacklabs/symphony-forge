@@ -16,10 +16,10 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
 # Machine views deliberately add --json to next and board (FORGE-MOD-1).
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
-# Test adds the machine lane and pytest picker; stop adds person-only cancellation after board.
+# Test adds the lane and picker; stop adds cancellation; FORGE-BOARD-3 adds assign.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -30,7 +30,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
@@ -49,6 +49,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    stop                Stop a running or waiting run (only a person)\n'
      '    story               Start a story, or record its outcome\n'
      '    read                Run a round of the cold read of a story doc or spec\n'
+     '    assign              Give a story or part to a developer by GitHub username\n'
      '    task                Start a task\n'
      '    fix                 Start a fix, let it go over the fix limit, or change\n'
      '                        its done-when\n'

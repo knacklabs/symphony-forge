@@ -575,7 +575,7 @@ def _with_developers(text: str, assignments: dict[str, str | None], include: boo
                 cells.pop(column)
             if include:
                 value = ("Developer" if cells[0].strip() == "ID" else "---"
-                         if set(cells[0].strip()) <= set("-: ") else assignments.get(cells[0].strip()) or "")
+                         if set(cells[0].strip()) <= set("-: ") else assignments.get(cells[0].strip("` ")) or "")
                 cells.append(f" {value} ")
             line = "|" + "|".join(cells) + "|\n"
         lines.append(line)
@@ -702,7 +702,9 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
     if doc_hash == read_hash or text is None:
         return doc_hash != read_hash
     old = repo.read_blob(top, read_hash or "-")
-    return old is None or above_builders(old) != above_builders(text)
+    return (old is None
+            or _with_developers(re.sub(r"(?m)^Owner:[^\n]*\n", "", above_builders(old)), {}, False)
+            != _with_developers(re.sub(r"(?m)^Owner:[^\n]*\n", "", above_builders(text)), {}, False))
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
