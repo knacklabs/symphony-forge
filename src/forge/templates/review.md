@@ -28,6 +28,11 @@ $covered
 The story's other Done-when items are context only; never report them as `Not done`:
 $context
 
+## Builder guidance
+These details guide implementation. They are not owner-approved acceptance criteria and never
+produce a blocking `Not done` finding:
+$guidance
+
 ## Tests this part must add or change
 $tests
 
@@ -60,7 +65,7 @@ and what it saw. Forge found this one in the branch's commit messages:
 $functional_check
 
 Report a missing or hollow one (nothing was really exercised, or it skips a covered item) as a
-P1 finding titled `Not done: functional check`. On the path it walks, missing keyboard access,
+P1 finding titled `Gate: functional check`. On the path it walks, missing keyboard access,
 labels or readable contrast is its own P1; a screen, field or step the job didn't need is an
 advisory `Simpler:`; and the one likely failure it triggers must show a message that says in
 plain words what to do next.
@@ -81,11 +86,11 @@ line to its run, so judge it by reading it:
 
 $proof_list
 
-On every round, check the whole list, not a sample. Check every entry against the code and its
+On the first round, check the whole list, not a sample. Check every entry against the code and its
 named proof, including every Done-when detail; compare it with the covered items above so an
 omitted item or detail cannot hide a gap. Report every missing case you find in this round, even
 when another finding already blocks; a case the Done-when doesn't name is a P2 `Follow-up:`
-(What blocks the merge, below). A missing list or entry is a P1 `Not done: proof list`; judge missing or hollow
+(What blocks the merge, below). A missing list or entry is a P1 `Gate: proof list`; judge missing or hollow
 proof by the test-audit rules below.
 
 <!-- rules -->
@@ -107,8 +112,7 @@ Raise, under one of these lines:
 - Data loss: data lost, corrupted or exposed.
 - Scale: a scale or performance problem at a realistic size the finding names, a cost repeated on
   every normal run, or growth with no bound.
-- Not done: an unmet Done-when item, or a doc the change delivers that contradicts itself or a
-  recorded decision.
+- Not done: an unmet owner-approved Done-when item, quoted as written in the finding's title.
 - Test: a missing or hollow test for a Done-when item's own behaviour.
 - Moving part: a new dependency, service, datastore, queue, background job or abstraction layer
   that the plan's `New moving parts` line doesn't name or, in a plan, that no Done-when item needs.
@@ -157,6 +161,9 @@ written. A case the Done-when does not name, such as another language, platform,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
 doesn't wait for, even when realistic (score it Gain 1 or 2); a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
+Only the numbered owner-approved Done-when sentences above (or the fix's Done-when line)
+can block as `Not done`. Builder details, Notes and implementation guidance cannot. Forge keeps
+a `Not done` finding that names none of those items as a follow-up, with its original scores.
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
@@ -170,7 +177,7 @@ it is still P1 `Not done`.
 Every test the change needs must exist, run in the repository's test suite, and fail if the
 behaviour it names broke. Report a missing test, or a hollow one (it checks only a mock, asserts
 nothing the change does, is skipped, or always passes), as a P1 finding titled
-`Not done: <the test>`. The test-audit skill (`.codex/skills/test-audit/SKILL.md`) has the full
+`Gate: <the test>`. The test-audit skill (`.codex/skills/test-audit/SKILL.md`) has the full
 checklist.
 
 Documentation-only changes still need every test named in the task's Tests column; check claims,
@@ -182,7 +189,7 @@ flows in a browser through Playwright. Settings, docs, deletions and test-only i
 the check the item names. So are CI and packaging items.
 Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Report an item proven only by unit tests as a P1 finding
-titled `Not done: <the item>`. Never ask for unit tests of helpers.
+titled `Not done: <the item>`, quoting the owner-approved item. Never ask for unit tests of helpers.
 
 ## Build simple
 $moving_parts
@@ -204,7 +211,7 @@ then audit and polish before a demo. Run emil-design-eng's review checklist insi
 one batched inspection, with at most one more round. Invoke emil-design-eng with a specific task,
 never bare. It owns interaction feel (press feedback, easing, durations, popovers, tooltips, drag
 and when not to animate). Report a missing impeccable pass on a UI change or a failed
-emil-design-eng checklist item on the changed screens as P1 `Not done`.
+emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
@@ -267,7 +274,7 @@ The spotted lists (`plans/spotted.json` and everything under `plans/spotted/`) a
 own records. Close writes them on this branch after a review; never report those writes as files
 outside Scope or as unrelated changes.
 All earlier reviews' findings and dismissals are below, including findings fixed in later
-rounds; recheck them against this branch for still-open gaps and report those alongside new ones:
+rounds. Settled findings stay settled; the repair-review boundary below governs later rounds:
 $previous
 
 The coordinator's rulings and dismissals on this branch so far, with their reasons:
@@ -282,6 +289,21 @@ files are there to read; the standard note that the sandbox is empty does not ap
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap).
+<!-- repair-review -->
+## Repair review
+The previous review checked commit $reviewed. From this second or later round, review only the
+previous round's findings and the diff since that commit, supplied as the review base. For each
+previous finding, say fixed or not fixed in your review summary; return each not fixed finding
+with its previous title and file. Read unchanged code only as context for those findings or the
+changed lines. Do not start a fresh review of the whole branch or proof list.
+
+Raise a new blocking finding only on a line changed since that review. A new defect on unchanged
+lines is a follow-up: keep it visible, but it cannot block or start another round. Security and
+data-loss problems still block on unchanged lines under their own Raise line. This boundary also
+applies to tests, standards and gates. Forge keeps original scores when it records a follow-up.
+
+Previous round's findings and answers:
+$findings
 <!-- review-rules -->
 ## This repository's review rules
 The repository's own AGENTS.md, on its default branch, sets these rules for every review. Follow

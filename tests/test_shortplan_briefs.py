@@ -1,5 +1,5 @@
-"""Done-when details reach the builders: the worker brief and the review carry each covered item's
-details, a bad details section is refused wherever the doc is read, and old docs read as before.
+"""Done-when details reach builders and reviews as guidance, separate from owner acceptance.
+Bad details sections are refused wherever read, and old docs read as before.
 
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
@@ -96,7 +96,10 @@ def test_3_brief_and_review_carry_the_covered_items_details(env):
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     covered, context = covered_and_context(env.prompt())
-    assert "1. **A shopper can save a basket.**" in covered and SAVE_DETAILS in flat(covered)
+    assert "1. **A shopper can save a basket.**" in covered
+    assert SAVE_DETAILS not in flat(covered)
+    guidance = env.prompt().split("## Builder guidance", 1)[1].split("##", 1)[0]
+    assert SAVE_DETAILS in flat(guidance)
     assert "2. **A saved basket comes back after sign-in.**" in context
     assert SIGN_IN_DETAILS not in flat(env.prompt())
 

@@ -104,6 +104,8 @@ def of(finding: dict[str, Any]) -> Scores | None:
 
 def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
     """A finding holds work by the bar (only `block` at the P0-only level), or unscored by priority."""
+    if finding.get("follow_up"):
+        return False
     outcome = bar(of(finding))
     if outcome is None:
         return finding.get("priority") in (("P0",) if level == "P0" else ("P0", "P1"))
@@ -140,7 +142,7 @@ def loop_stops(result: dict[str, Any], known: list[dict[str, Any]], round_number
     earlier = {identity(e["file"], e["title"]) for e in known if e.get("round", 0) < round_number}
     level = result.get("blocking_level")
     return any(holds(f, level) and (not of(f) or identity(f["file"], f["title"]) in earlier)
-               or f.get("harm", 0) >= 3 for f in open_findings(result))
+               or f.get("harm", 0) >= 3 for f in open_findings(result) if not f.get("follow_up"))
 
 
 def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
@@ -154,7 +156,7 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
         reason = because.get(n, "")
         outcome = ("lived with" if reason.startswith("settled area") else "accepted" if n in because
                    else "open" if holds(f, result.get("blocking_level"))
-                   else "follow-up" if bar(of(f)) == "follow-up" else "lived with")
+                   else "follow-up" if f.get("follow_up") or bar(of(f)) == "follow-up" else "lived with")
         if key not in by:
             known.append(by.setdefault(key, {
                 "title": f["title"], "file": f["file"], "line": f["line"], "gain": f.get("gain"),

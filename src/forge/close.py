@@ -1029,7 +1029,8 @@ def _block(result: dict[str, Any], check: str) -> str:
     because = {d["finding"]: d for d in result["dismissals"]}
     blocking, rest, below = [], [], {"follow-up": [], "live with": []}
     for n, finding in enumerate(result["findings"], 1):
-        outcome, scores = score.bar(score.of(finding)), score.of(finding)
+        outcome = "follow-up" if finding.get("follow_up") else score.bar(score.of(finding))
+        scores = score.of(finding)
         line = "Gain {}, Work {}, Harm {}".format(*scores) if scores else ""
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
