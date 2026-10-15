@@ -1,7 +1,9 @@
 """Parts start from reviewed remote work, with no branch created on a refusal.
 
-The command boundary owns admission and ancestry. GitHub and the review engine are
-the only fakes; a real close records the review used by task start.
+The command boundary owns admission and ancestry in src/forge/task.py and
+src/forge/nextstep.py, the setting in src/forge/repo.py, and the trailer in
+src/forge/merge.py. GitHub and the review engine are the only fakes; a real close
+records the review used by task start.
 """
 import json
 import sys
@@ -165,13 +167,17 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
             part, command = "D", "forge next"
             problem = "STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges."
     refuses_without_start(repo, part, problem, command)
-    if case == "stacked-merged":
+    if case in ("stacked-merged", "stacked-human-merged"):
         # Once close brings the Forge merge into B and records a current clean
         # review, D can use B. START reads the actual trailer and ancestry.
         _install(repo.bin, "gh", GH_STUB.format(python=sys.executable))
         env.open_pr("")
         closed = env.close("STACK/B")
         assert closed.returncode == 0, closed.stdout + closed.stderr
+        if case == "stacked-human-merged":
+            # Ancestry and a new clean review cannot replace Forge provenance.
+            refuses_without_start(repo, part, problem, command)
+            return
         head = repo.git("rev-parse", "origin/task/STACK-B")
         where, _ = start(repo, "D")
         repo.git("merge-base", "--is-ancestor", head, "HEAD", cwd=where)
