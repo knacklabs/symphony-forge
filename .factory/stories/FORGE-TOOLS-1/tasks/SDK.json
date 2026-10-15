@@ -93,7 +93,7 @@
     "id": "8e4b090a-ddb1-4a53-a2ca-8c5c1f2d7e6e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -106,10 +106,14 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "c61a54919dc412176efe180fb31e4996fbbef0a6",
-    "keys": {},
-    "round": null
+    "close": "2edaf550-32f2-49f4-a82b-4ceb60491363",
+    "head": "9304f781867871ed4a44dc3b0da1a303555022a9",
+    "keys": {
+      "the review finding \"An SDK result without text or errors crashes Forge's result handling\" in src/forge/claude_turn.py": 1,
+      "the review finding \"Claude SDK workers still require a separate claude executable\" in src/forge/worker.py": 1,
+      "the review finding \"Not done: missing-SDK refusal before state changes\" in src/forge/worker.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
