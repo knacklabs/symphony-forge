@@ -227,13 +227,13 @@
     "id": "b07a726d-0215-4de7-93ab-83b84a8fca8a",
     "status": "clean"
   },
-  "round": 11,
+  "round": 12,
   "settled_areas": [
     "machine_board.row() in src/forge/board.py",
     "src/forge/board.py",
     "src/forge/board_facts.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-14T19:31:52.134574+00:00",
@@ -280,14 +280,10 @@
     "worker_round": 11
   },
   "stuck": {
-    "close": "8e9ac51b-2cb0-4922-a4f0-9bd85078f32b",
-    "head": "cf04b6d86f876881352815a87bfa81dee8e21ce1",
-    "keys": {
-      "the review finding \"Not done: approval identity names the actual approver\" in src/forge/board.py": 1,
-      "the review finding \"Not done: board login test covers approval identity\" in tests/test_board_logins.py": 1,
-      "the review finding \"Not done: new work keeps a visible starter before its pull request\" in src/forge/board.py": 1
-    },
-    "round": 10
+    "close": "391e7284-15e8-4255-8713-232fc5b0c4cd",
+    "head": "6c3b529e762f361606177d10333b553691841dfe",
+    "keys": {},
+    "round": 11
   },
   "worker": "codex"
 }
