@@ -7,12 +7,102 @@
     "head": null,
     "start": "cc478955451cf825954f1d7713ad0bc3045f4c8e"
   },
+  "flagged": [
+    "src/forge/merge.py",
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 282,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: start refusals leave branches and worktrees untouched",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 106,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: retain the Forge-merged trailer in bounded merge bodies",
+      "work": 1
+    },
+    {
+      "area": "test_2_unsafe_starts_name_the_blocker_without_creating_work() in tests/test_stack_start.py",
+      "file": "tests/test_stack_start.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 145,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test an older base started before upgrade",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3c5099d74a2b4d2a5ae37f22e33cea9c2a95592e74cafeda8ac6ee7fddb120a7",
+    "changed": "2ee14d53c4aaa14b796eb4609e9d94dccafa8237dafbd12a1cb0c01add12db90",
+    "commit": "234fcf4bc10f765f859deb5ce8f97284b14f0770",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. The new stack refusal runs at line 282, after `start` may create a local `story/<key>` branch at lines 208\u2013210, add its worktree at lines 214\u2013219, and merge into it at line 228. In a checkout that has fetched an approved story but has no local story branch, starting B while A has not started creates that branch before reporting `base_not_started`. This violates item 2's requirement that each refusal happen before any branch or commit. The test creates its local story branch during setup, so its before-and-after ref check misses this case.",
+        "file": "src/forge/task.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 282,
+        "priority": "P1",
+        "title": "Not done: start refusals leave branches and worktrees untouched",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. The trailer is appended before `close._bounded_body` runs. For a merge body over its 65,536-byte limit, that function can shorten the trailing `Proof list:` section through the end of the body or remove the unprotected `Forge-merged:` line during prose clipping (`src/forge/close.py:961\u2013966, 980\u20131021`). The squash commit then lacks the trailer, so `forge_merged` returns empty and a reviewed stacked part remains blocked from becoming a base after Forge merged the lower part.",
+        "file": "src/forge/merge.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 106,
+        "priority": "P1",
+        "title": "Not done: retain the Forge-merged trailer in bounded merge bodies",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The named proof requires A to have started on the older Forge release before the client upgrades. Both parametrizations upgrade or configure the client before `reviewed(env)` starts A; the `older` case instead edits A's `forge.toml` after its review and pushes that edit. It proves a changed pin is refused, but cannot catch a regression specific to recognizing the state of a part genuinely started before upgrade.",
+        "file": "tests/test_stack_start.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 145,
+        "priority": "P1",
+        "title": "Not done: test an older base started before upgrade",
+        "work": 2
+      }
+    ],
+    "id": "e050a2f0-caac-4175-96a8-19da2b1bc62d",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T03:06:27.899974+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-15T03:30:24.825436+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
@@ -21,5 +111,6 @@
     "keys": {},
     "round": null
   },
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest d9abeffd1b7075eef9ac082b2331e7f94e05ac6d` exited with status 1 on this machine.\n            # Once close brings the Forge merge into B and records a current clean\n            # review, D can use B. START reads the actual trailer and ancestry.\n            _install(repo.bin, \"gh\", GH_STUB.format(python=sys.executable))\n            env.open_pr(\"\")\n            closed = env.close(\"STACK/B\")\n            assert closed.returncode == 0, closed.stdout + closed.stderr\n            if case == \"stacked-human-merged\":\n                # Ancestry and a new clean review cannot replace Forge provenance.\n                refuses_without_start(repo, part, problem, command)\n                return\n            head = repo.git(\"rev-parse\", \"origin/task/STACK-B\")\n>           where, _ = start(repo, \"D\")\n                       ^^^^^^^^^^^^^^^^\n\ntests/test_stack_start.py:182:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nrepo = <conftest.Repo object at 0x10ace0a50>, part = 'D'\n\n    def start(repo, part):\n        result = repo.forge(\"task\", \"start\", f\"STACK/{part}\")\n>       assert result.returncode == 0, result.stdout + result.stderr\nE       AssertionError: STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges.\nE         Next: forge next\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-STACK-1-START/.venv/bin/python', '/private...'', stderr='STACK/D waits for STACK/B, which builds on STACK/A, so it starts once STACK/A merges.\\nNext: forge next\\n').returncode\n\ntests/test_stack_start.py:73: AssertionError\n2 failed, 84 passed in 223.61s (0:03:43)",
   "worker": "codex"
 }
