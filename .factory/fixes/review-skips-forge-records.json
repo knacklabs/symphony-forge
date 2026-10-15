@@ -1,0 +1,14 @@
+{
+  "base": "b24f21f9ec68c04b9792c7a064b8ac758f89765f",
+  "branch": "fix/review-skips-forge-records",
+  "done_when": "Review never reports Forge's own record files (the spotted list and other files close writes) as a part's out-of-scope edits, in Forge's repo and in client repos, new and upgraded",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-15T02:30:51.015832+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close writes the spotted-problems list on the item's branch, then the next review flags that write as out of the part's scope, so a part can never pass review"
+}
