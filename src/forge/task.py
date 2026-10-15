@@ -205,49 +205,28 @@ def start(args: argparse.Namespace) -> None:
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     published = story.plan_ref(top, key)
-    if (published != main and not git("branch", "--list", story_branch)
-            and show(f"origin/{story_branch}", doc_rel) is not None):
-        git("branch", "--track", story_branch, f"origin/{story_branch}")
-    behind = story.plan_behind(top, key, main) if published != main else ""
-    old_pin = published != main and repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
+    local_story = bool(git("branch", "--list", story_branch))
+    plan = story_branch if local_story else published
+    old_pin = published != main and repo._older(repo._pin(show(plan, "forge.toml") or ""),
                                                  repo._pin(show(main, "forge.toml") or ""))
-    if published != main and (old_pin or (show(story_branch, doc_rel) is not None and
-            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0")):
-        folder = story.stories_here(top).get(key)
-        if folder is None:
-            folder = _folder(f"story-{key}")
-            git("worktree", "add", "-q", str(folder), story_branch)
-        retry = f"forge task start {item}"
-        if old_pin:
-            if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
-                raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
-            if git("status", "--porcelain", cwd=folder):
-                raise repo.Refused(f"Commit or stash the changes in {folder} before updating its Forge release.", retry)
-        if (not git("status", "--porcelain", cwd=folder) and
-                run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
-            merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
-            if not merged.returncode:
-                reason = "updated its Forge release" if old_pin else "only the story doc differs"
-                print(f"Merged {main} into {story_branch}; {reason}.")
-                behind = ""
-            elif old_pin:
-                if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
-                    raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
-                raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
-                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
-                                   f"and finish the merge, then {retry}")
-            elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
-                git("merge", "--abort", cwd=folder)
-    if behind:
-        sys.exit(behind)  # the same one line forge next prints
+    update_plan = published != main and (old_pin or (show(plan, doc_rel) is not None and
+            run("git", "diff", "--name-only", "-z", plan, main).stdout == doc_rel + "\0"))
+    # Preview the automatic update without creating a branch, checkout or commit.
+    preview = None
+    folder = story.stories_here(top).get(key)
+    if update_plan and (folder is None or not git("status", "--porcelain", cwd=folder)):
+        merged = run("git", "merge-tree", "--write-tree", plan, main)
+        if merged.returncode == 0:
+            preview = merged.stdout.splitlines()[0]
     notes_rel = f"plans/{key}.read.md"
     # Published builder assignments stay current even after the first part lands.
     state_rel = repo.state_path(key)
-    source = story.plan_ref(top, key)
+    source = preview or story.plan_ref(top, key)
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
-    text = story._plan(top, key)
+    if preview is None:
+        text = story._plan(top, key)
     try:
         story.parse(text, repo.root(), key=key)
     except ValueError as exc:
@@ -288,6 +267,40 @@ def start(args: argparse.Namespace) -> None:
         shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
+
+    if (published != main and not git("branch", "--list", story_branch)
+            and show(f"origin/{story_branch}", doc_rel) is not None):
+        git("branch", "--track", story_branch, f"origin/{story_branch}")
+    behind = story.plan_behind(top, key, main) if published != main else ""
+    if update_plan:
+        folder = story.stories_here(top).get(key)
+        if folder is None:
+            folder = _folder(f"story-{key}")
+            git("worktree", "add", "-q", str(folder), story_branch)
+        retry = f"forge task start {item}"
+        if old_pin:
+            if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
+                raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
+            if git("status", "--porcelain", cwd=folder):
+                raise repo.Refused(f"Commit or stash the changes in {folder} before updating its Forge release.", retry)
+        if (not git("status", "--porcelain", cwd=folder) and
+                run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
+            merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
+            if not merged.returncode:
+                reason = "updated its Forge release" if old_pin else "only the story doc differs"
+                print(f"Merged {main} into {story_branch}; {reason}.")
+                behind = ""
+            elif old_pin:
+                if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
+                    raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
+                raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
+                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
+                                   f"and finish the merge, then {retry}")
+            elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
+                git("merge", "--abort", cwd=folder)
+    if behind:
+        sys.exit(behind)  # the same one line forge next prints
+    source = story.plan_ref(top, key)
 
     assigned = developer(tasks[task])
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
