@@ -64,17 +64,41 @@
       "security": false,
       "title": "The unrelated spotted-record rewrite is outside ONCLASH scope",
       "work": 1
+    },
+    {
+      "area": "plans/spotted.json",
+      "file": "plans/spotted.json",
+      "gain": 4,
+      "harm": 2,
+      "line": 8440,
+      "outcome": "open",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "An unrelated test-audit finding edits the shared spotted list",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "073dd50e30b51f499920400996517ff72842cec590c7f966d5fab31656a78d65",
-    "changed": "bbe0f38e62c63d25768ba70f52fc052a88b5bf8a0cd8b02f3a342c31629de289",
-    "commit": "dff074822ed09c7a704825603e7839f47778f981",
+    "branch_diff": "7731d9652c578cc585531a9f87a7acd09bb6f992d1649261551905fd89f68e3b",
+    "changed": "eab9ec45b714201cb8f931ac180ced4c2b472a3feb0b87c03fd7a4d2c5be11a3",
+    "commit": "055a3474eae5febe8d5e7f03c750d0a9e2e6e7ed",
     "dismissals": [],
-    "findings": [],
-    "id": "3b9d3c2a-97e7-4824-9719-2b4f67070a36",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate. This adds an open finding for `tests/test_mod_guide.py` and `test-audit-followups` to `plans/spotted.json`. ONCLASH's Done-when items 1\u20133 do not need that record, and the file is outside its Scope. Merging it would change the default branch's problem inventory and touch the shared file assigned to the parallel SPOTTED work. The earlier large rewrite was removed, but this separate addition remains.",
+        "file": "plans/spotted.json",
+        "gain": 4,
+        "harm": 2,
+        "line": 8440,
+        "priority": "P1",
+        "title": "An unrelated test-audit finding edits the shared spotted list",
+        "work": 1
+      }
+    ],
+    "id": "459b8553-e259-49e4-9d2b-4e658059ee82",
+    "status": "blocked"
   },
   "round": 6,
   "status": "fixing",
@@ -97,6 +121,10 @@
     },
     {
       "at": "2026-10-15T02:07:20.326791+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:28:07.821775+00:00",
       "step": "review"
     }
   ],
