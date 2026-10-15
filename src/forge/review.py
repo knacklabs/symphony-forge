@@ -159,7 +159,8 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
         findings = (state.get("review") or {}).get("findings", [])
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
     # Close writes the spotted list after the review, so it never makes that review stale.
-    changed.discard(spotted.PATH)
+    changed = {path for path in changed if path != spotted.PATH
+               and not path.startswith("plans/spotted/")}
     if branch_diff:
         # Close alone uses both sides of the diff to reuse a review after a base-only merge.
         # Sort header/path pairs: diff.orderFile can reorder even raw Git output.
