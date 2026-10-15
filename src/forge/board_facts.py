@@ -57,21 +57,23 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
 
 
 def _cached(top: Path, name: str, fetch: Any) -> Any:
-    """`fetch()`'s answer, kept for a minute in .git/forge/<name>.json; None is never kept."""
+    """Cache for a minute; an outage keeps the last known answer without updating its date."""
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    previous = None
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
+        previous = saved.get("data")
         at = time_records.when(saved.get("fetched_at"))
         if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
             return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
     if not shutil.which("gh"):
-        return None
+        return previous
     data = fetch(now)
     if data is None:
-        return None  # A failed fetch is never cached.
+        return previous  # An outage keeps the last known records without refreshing their date.
     temp = cache.with_name(f"{name}-{os.getpid()}.tmp")
     try:
         temp.write_text(json.dumps({"fetched_at": repo.now(), "data": data}), encoding="utf-8")
@@ -94,7 +96,7 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
 
 def prs(top: Path, *, fresh: bool = False) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
-    this one, cached together for a minute. None when gh is missing or any list fails."""
+    this one, cached together for a minute. An outage retains the last cached records."""
     # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
         opened = _listing(top, "open")
@@ -118,12 +120,11 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
     return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
 
 
-def people(body: str) -> Item:
-    """Original actors survive a deleted squash branch in the item's shared evidence."""
-    record = time_records.from_body(body)
-    events, summary = record.get("events", []), record.get("summary") or {}
-    return {field: summary.get(field) or next((event.get("by") for event in events if event.get("event") == name), None)
-            for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
+def person(record: Item | str | None = None, name: str | None = None) -> Item:
+    """Use a loaded login and keep its name; a login alone is also a visible name."""
+    record = {"login": record} if isinstance(record, str) else record or {}
+    login = record.get("login")
+    return {"name": record.get("name") or name or login, "login": login}
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:

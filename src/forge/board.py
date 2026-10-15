@@ -231,13 +231,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     `trim` leaves out work finished more than seven days ago; the page keeps it."""
     from forge import nextstep, time_records
 
-    github_available = bool(shutil.which("gh"))
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
     if not trim:
         history = {**history, "expired": set()}
     landed = history["landed"]
-    starters = _starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
@@ -288,6 +286,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             end = start + timedelta(seconds=timing.get("seconds") or 0)
             timing_dates.setdefault(timing.get("item"), []).append(end.isoformat())
 
+    owners = {}
+
     @functools.cache
     def story_read(key: str) -> tuple[str, Item]:
         """A story's plan read and task rows: the same for the story and each of its parts."""
@@ -295,7 +295,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if where == f"story/{key}":
             where = trees.get(where) or where
         notes = _read(top, where, f"plans/{key}.read.md", history)
-        assignments = task.rows(task.sections(story._plan(top, key, landed if key in completed else None, history)))
+        plan = story._plan(top, key, landed if key in completed else None, history)
+        owner = re.search(r"^Owner:[ \t]*`?([^`\s]+)", plan, re.M)
+        owners[key] = owner[1] if owner else None
+        assignments = task.rows(task.sections(plan))
         if not story._record(notes)[0]:
             return "none", assignments
         text = _read(top, where, f"plans/{key}.md", history)
@@ -510,16 +513,18 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             if tests.get("elapsed") is not None:
                 status += " for " + board_visuals.duration(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
-        body = (pr or {}).get("body") or ""
-        developer = task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None
-        people = board_facts.people(body)
+        developer = board_facts.person(
+            (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
+            or owners.get(read_key))
+        starter = board_facts.person((pr or {}).get("author"), next(
+            (event.get("by") for event in activity if event.get("event") == "item started"), None))
+        approver = board_facts.person(owners.get(read_key), next(
+            (event.get("by") for event in by_item.get(read_key, [])
+             if event.get("event") == "plan approved"), None))
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
-                "started_by": people["started_by"] or starters.get(repo.state_path(item)),
-                "approved_by": (people["approved_by"]
-                                or (_approver(top, read_key) if read_key else None)),
-                "started_by_login": ((pr or {}).get("author") or {}).get("login") if github_available else None,
-                "approved_by_login": None,
-                "developer": developer, "developer_login": developer,
+                "started_by": starter["name"], "started_by_login": starter["login"],
+                "approved_by": approver["name"], "approved_by_login": approver["login"],
+                "developer": developer["name"], "developer_login": developer["login"],
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
                          + board_visuals.stage_duration(s) for s in stages
@@ -540,7 +545,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                        "checks": checks, "failures": failures},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
+                "merged_by": board_facts.person(pr["mergedBy"]) if (pr or {}).get("mergedBy") else None,
+                "merged_at": finished_at if finished else None,
                 **({k: v for k, v in time_records.combined(
                     top, item, state, (pr or {}).get("body") or "", events=activity, timings=item_timings,
                     ended_at=merged_dates.get(branch)).items()
@@ -697,18 +703,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    for parent in items.values():
-        for item in (parent, *parent["children"]):
-            if not github_available:
-                item["developer_login"] = None
-                if item["merged_by"]:
-                    item["merged_by"] = {**item["merged_by"], "login": None}
     team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits)
-    if not github_available:
-        for person in (team["trends"] or {}).get("people", []):
-            person["login"] = None
-        for pr in team["around_forge"] or []:
-            pr["author_login"] = None
     fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
@@ -725,7 +720,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
-            "viewer": task.github_login(top) if github_available else None,
+            "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top)),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
@@ -1035,24 +1030,6 @@ def _read_rounds(notes: str) -> list[Item]:
         rounds.append({"round": int(number), "findings": findings,
                        "read_at": record.get("read_at") if number == record.get("round") else None})
     return rounds
-
-
-def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) -> str | None:
-    """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
-    if display_names is None:
-        display_names = _display_names(top)
-    def read():
-        log = repo.git("log", "--all", "--format=%x00%aN%x00%aE%x00", "-F",
-                       "--grep=Approve the plan: ", "--name-only", "--", ".factory/stories", cwd=top).split("\0")[1:]
-        newest = {}
-        for found, address, paths in zip(log[::3], log[1::3], log[2::3]):
-            for rel in paths.splitlines():
-                newest.setdefault(rel, (found, address))
-        return newest
-    newest = repo.command_fact("board approvers", top, read)
-    name, email = newest.get(repo.state_path(key), ("", ""))
-    name = display_names.get(email.casefold(), name)
-    return name or None
 
 
 # --- plain English ---------------------------------------------------------------------------
