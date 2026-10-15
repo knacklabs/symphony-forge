@@ -11,6 +11,7 @@ import pytest
 
 from test_close import CLEAN, blocked, env, finding, run  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import client_item
+from test_land import _blocked_once_then_clean, land  # noqa: F401
 
 STORY = "no-wasted-rounds"
 
@@ -40,13 +41,21 @@ def test_2_unchanged_blocked_work_goes_straight_to_the_owner(env, tmp_path, monk
     assert not any("push" in event.get("argv", []) for event in events if event["event"] == "start")
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-@pytest.mark.parametrize("existing_pr,outcome,pending_history", [
-    (existing, outcome, False) for existing in (False, True)
+@pytest.mark.parametrize("previous,existing_pr,outcome,pending_history", [
+    (previous, existing, outcome, False) for previous in (False, True) for existing in (False, True)
     for outcome in ("clean", "blocked", "failed-checks")
-] + [(True, "clean", True)])
+] + [(previous, True, "clean", True) for previous in (False, True)]
+  + [(False, True, "land-repair", False)])
 def test_3_close_publishes_the_pull_request_body_once(
-        env, tmp_path, previous, existing_pr, outcome, pending_history):
+        env, tmp_path, request, previous, existing_pr, outcome, pending_history):
+    if outcome == "land-repair":
+        # Land reuses its command arguments across distinct close runs.
+        _blocked_once_then_clean(request.getfixturevalue("land"))
+        bodies = [json.loads(line) for line in
+                  (env.repo.bin / "gh-bodies.jsonl").read_text("utf-8").splitlines()]
+        assert any("Saving drops the greeting" in body for body in bodies)
+        assert "Review: clean" in bodies[-1]
+        return
     item, where = client_item(env, tmp_path, previous)
     if pending_history:
         # The first real close supplies actual history, not a fabricated receipt.

@@ -92,6 +92,7 @@ def close(args: argparse.Namespace) -> int:
     from forge.merge import ENABLE
 
     item = args.item
+    body_published = getattr(args, "body_published", False)
     top = _worktree(item)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
@@ -170,7 +171,7 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         done = _merged(top, item)
         if retried_history or backfill.upgrade_fix(top, item, state):
-            backfill.run(top, exclude_branch=branch if getattr(args, "body_published", False) else "")
+            backfill.run(top, exclude_branch=branch if body_published else "")
         return done
 
     previous = state.get("review") or {}
@@ -186,7 +187,7 @@ def close(args: argparse.Namespace) -> int:
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
                 repo.record_event(top, item, "owner wait start", reason="merge conflict")
             _push(top, branch)
-            if not getattr(args, "body_published", False):
+            if not body_published:
                 if pr:  # keep its review block; only the shared time record changes
                     _refresh_record(top, item, state, pr)
                 else:
@@ -278,7 +279,7 @@ def close(args: argparse.Namespace) -> int:
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         _push(top, branch)  # every machine's board sees the stop
-        if not getattr(args, "body_published", False):
+        if not body_published:
             _refresh_record(top, item, state, pr)
         check_stop(item, state, top)
     evidence = (review.functional_check(top, f"origin/{default}"),
@@ -397,10 +398,10 @@ def close(args: argparse.Namespace) -> int:
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
     def publish() -> None:
-        nonlocal pr
-        if not getattr(args, "body_published", False):
+        nonlocal pr, body_published
+        if not body_published:
             pr = _publish(top, item, state, branch, default, pr, result, evidence)
-            args.body_published = True
+            body_published = True
             _attach(top, item, branch)
             if retried_history or backfill.upgrade_fix(top, item, state):
                 backfill.run(top, exclude_branch=branch)
@@ -449,6 +450,7 @@ def close(args: argparse.Namespace) -> int:
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
                         accepted=choice == "accept", before=getattr(args, "pin_before", None))
         again = argparse.Namespace(**vars(args))
+        again.body_published = body_published
         again.dismiss = again.because = again.resolve = again.reason = None
         return close(again)
     merge = merger(top, state)
@@ -538,10 +540,13 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
         if default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
-        repo.refuse(REFUSALS["unchanged"] if state["stop"].get("unchanged") else REFUSALS["hotspot"], item=item,
-                    question=review.stop_question(_worktree(item), item, state),
-                    **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
-                       **state["stop"]})
+        message = REFUSALS["unchanged"] if state["stop"].get("unchanged") else REFUSALS["hotspot"]
+        values = {"item": item, "question": review.stop_question(_worktree(item), item, state),
+                  "round": sum(step["step"] == "review" for step in state.get("steps", [])),
+                  **state["stop"]}
+        # Land waits for the same review-loop choice for either stop message.
+        raise repo.Refused(message[0].format(**values), message[1].format(**values),
+                           entry=REFUSALS["hotspot"])
 
 
 def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
