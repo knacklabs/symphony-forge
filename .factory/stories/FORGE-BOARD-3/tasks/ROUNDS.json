@@ -56,7 +56,7 @@
       "gain": 3,
       "harm": 3,
       "line": 367,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -67,30 +67,19 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d7813677741c67229e031f70078e33596ed7f3dc97b4f21948bc4eb7f0eed7ed",
-    "changed": "df4f2924a2a15ee722662225c15469c2f4d7668a71dce756cdbab88c6ed46b48",
-    "commit": "eea5eba05ed839e5d9aa4fe756502497601884da",
+    "branch_diff": "ad557add07a633b15fcb4b8e287aaab339ce0283fa67e9c786b5a672c5c514f4",
+    "changed": "ecb0535bb4657099875500cb4ed0cc1bcecdf9193f9708251f3416ae023ef92c",
+    "commit": "401694d15116b9e1d355fdcad90a1c56eb3869e7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. A normal later `forge close` can resume a compacted round after time has passed. Line 367 treats the round as fully recorded because its earlier measurements survive, but the earlier `work phase` was removed with the compacted rows. With no new lifecycle event, `complete_since` is null, so the idle gap before the later CI wait is classified as unknown at lines 275\u2013277 and never enters that round's four `seconds` groups. The round therefore reports less time than it took. The named later-close proof checks only that `seconds` is non-null, so it would miss this loss.",
-        "file": "src/forge/time_records.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 367,
-        "priority": "P1",
-        "title": "Not done: Each round keeps its full duration after compaction",
-        "work": 2
-      }
-    ],
-    "id": "cdbaaf20-5214-457e-9144-1151dc60b648",
-    "status": "blocked"
+    "findings": [],
+    "id": "ab2b8d59-f14b-4bff-8c62-c6ae7c74428e",
+    "status": "clean"
   },
   "round": 4,
   "settled_areas": [
     "src/forge/time_records.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T19:31:58.599703+00:00",
@@ -106,6 +95,10 @@
     },
     {
       "at": "2026-10-14T22:18:30.376028+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:50:00.252452+00:00",
       "step": "review"
     }
   ],
