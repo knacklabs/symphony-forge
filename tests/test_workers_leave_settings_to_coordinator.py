@@ -89,7 +89,7 @@ def test_2_fresh_and_resumed_workers_report_needed_settings_changes(client):
         worked = client.forge("work", "correct-spelling", "--note", "fast_test needs a command")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         call = calls(log)[-1]
-        assert ("--resume" in call["args"]) == (round_number == 2)
+        assert (bool(call["options"].get("resume"))) == (round_number == 2)
         brief = " ".join(call["brief"].split())
         assert "Workers never edit `forge.toml`." in brief
         assert "Report a needed settings change in your last message instead." in brief
@@ -124,10 +124,10 @@ def test_4_worker_round_restores_uncommitted_settings_unless_done_when_names_the
     # The fake model edits files; real forge work owns restoration, permission and hand-back.
     if family == "claude":
         install_claude(client)
-        worker = client.bin / "claude"
+        worker = client.bin / "claude_agent_sdk" / "__init__.py"
         source = worker.read_text("utf-8")
-        insertion = 'print("stub claude: built it")'
-        cwd = "pathlib.Path.cwd()"
+        insertion = '    yield ResultMessage(session_id=session'
+        cwd = "Path.cwd()"
         if case == "failed":
             monkeypatch.setenv("STUB_CLAUDE_EXIT", "1")
     else:
@@ -158,9 +158,12 @@ settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker setting
 '''
     if case == "staged":
         edit += f'import subprocess\nsubprocess.run(["git", "add", "forge.toml"], cwd={cwd}, check=True)\n'
-    indent = " " * 16 if family == "codex" else ""
+    indent = " " * 16 if family == "codex" else " " * 4
     edit = "".join(indent + line + "\n" for line in edit.splitlines())
-    _install(client.bin, worker.name, source.replace(insertion, edit + insertion, 1))
+    if family == "claude":
+        worker.write_text(source.replace(insertion, edit + insertion, 1), encoding="utf-8")
+    else:
+        _install(client.bin, worker.name, source.replace(insertion, edit + insertion, 1))
     named = case == "named"
     started = client.forge("fix", "start", "Correct spelling", "--done",
                            "Update forge.toml" if named else "Correct the spelling")

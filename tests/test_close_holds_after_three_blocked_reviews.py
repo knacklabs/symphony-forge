@@ -145,7 +145,7 @@ def test_2_fresh_and_resumed_workers_receive_the_review_loop_hold_rule(env):
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         assert RULE in " ".join(calls(log)[-1]["brief"].split())
-    assert "--resume" in calls(log)[-1]["args"]
+    assert bool(calls(log)[-1]["options"].get("resume"))
 
 
 @pytest.mark.parametrize("interruption", ["clean", "dismissed"])

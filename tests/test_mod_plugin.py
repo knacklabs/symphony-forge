@@ -162,10 +162,10 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
     from test_run_records import configure
     repo = configure(env)
     item, _ = env.start_fix()
-    stub = repo.bin / "claude"
+    stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
-    stub.write_text(source.replace('print("stub claude: built it")',
-                                  'print("Question: May I reuse the parser?")'), encoding="utf-8")
+    stub.write_text(source.replace('"stub claude: built it\\n"',
+                                  '"Question: May I reuse the parser?"'), encoding="utf-8")
     answer = node_run(tmp_path, HOST + f"""
 import {{execFile}} from 'node:child_process';
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});

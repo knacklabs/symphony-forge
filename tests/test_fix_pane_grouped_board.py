@@ -188,9 +188,9 @@ def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
     env = request.getfixturevalue("env")
     repo = configure(env)
     item, _ = env.start_fix()
-    stub = repo.bin / "claude"
+    stub = repo.bin / "claude_agent_sdk/__init__.py"
     stub.write_text(stub.read_text("utf-8").replace(
-        'print("stub claude: built it")', 'print("\\n\\nQuestion: May I reuse the parser?")'), "utf-8")
+        '"stub claude: built it\\n"', '"Question: May I reuse the parser?"'), "utf-8")
     assert repo.forge("work", item).returncode == 0
     step = next(line for line in repo.forge("next").stdout.splitlines() if line.startswith("Next: "))
     assert step == f'Next: forge work {item} --note "<answer>"'

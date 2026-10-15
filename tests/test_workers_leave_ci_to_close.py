@@ -45,7 +45,7 @@ def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path
         worked = repo.forge("work", "check-worker-ci-guidance")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         call = calls(log)[-1]
-        assert ("--resume" in call["args"]) == (round_number == 2)
+        assert (bool(call["options"].get("resume"))) == (round_number == 2)
         brief = " ".join(call["brief"].split())
         assert "`forge close` pushes the committed branch and runs CI on every platform." in brief
         assert "CI output reaches you in your next round." in brief

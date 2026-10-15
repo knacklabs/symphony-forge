@@ -85,6 +85,23 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
                                              encoding="utf-8")
 
 
+def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
+    """A separate Python environment, with only the SDK's external edge replaced."""
+    pin = "0.2.161"
+    env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
+    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not python.is_file():
+        subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(env)], check=True)
+    (env / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+    package = bin_dir / "claude_agent_sdk"
+    package.mkdir(exist_ok=True)
+    shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
+    metadata = bin_dir / f"claude_agent_sdk-{pin}.dist-info"
+    metadata.mkdir(exist_ok=True)
+    (metadata / "METADATA").write_text(
+        f"Metadata-Version: 2.1\nName: claude-agent-sdk\nVersion: {pin}\n", encoding="utf-8")
+
+
 T = TypeVar("T")
 
 
@@ -360,6 +377,10 @@ elif args == ["plugin", "list", "--json"]:
     print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
 ''')
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    data = tmp_path / "data"
+    monkeypatch.setenv("XDG_DATA_HOME", str(data))
+    _install_claude_sdk(bin_dir, data)
+    monkeypatch.setenv("PYTHONPATH", str(bin_dir) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     # Host hooks find forge through uv's tool folders, so those name this one too.
     monkeypatch.setenv("XDG_BIN_HOME", str(bin_dir))
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)

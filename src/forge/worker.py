@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, native, repo, score, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, score, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -133,8 +133,7 @@ def _work(args: argparse.Namespace) -> bool:
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
-    claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,
-                                                      native=is_native)
+    claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
     why = "Claude failed this design round" if getattr(args, "fallback", None) else why
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
@@ -270,8 +269,7 @@ def _work(args: argparse.Namespace) -> bool:
                             state.get("tool") or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
-                    reason = ("claude command missing" if shutil.which("claude") is None else
-                              str(error).split("\n", 1)[0].removeprefix("The worker "))
+                    reason = str(error).split("\n", 1)[0].removeprefix("The worker ")
                     chosen = repo.design_models(config, "codex")
                     building = (f"Building {item} with Codex ({chosen['model']}, "
                                 f"{chosen['effort']}) because Claude {reason}")
@@ -307,7 +305,7 @@ def _work(args: argparse.Namespace) -> bool:
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
                         try:
-                            nudged = _run(item, top, nudge, claude, ["--resume", saved["id"]])
+                            nudged = _run(item, top, nudge, claude, resume=saved["id"])
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
@@ -377,9 +375,12 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
+        if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
+            refuse(REFUSALS["sdk"], problem=problem)
         # A worker always names its models; a cold read with no entry runs on Claude's own.
-        chosen = (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
-                                                                           "claude")
+        chosen = (repo.design_models(config, "claude") if design else
+                  (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
+                                                                          "claude"))
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = None if native else codex.sdk_problem()  # native sessions need no driver SDK
     if problem:
@@ -591,7 +592,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                 before_turn()
             size = log.stat().st_size if log.exists() else 0
             try:
-                return _run(item, top, brief, models, ["--resume", resume])
+                return _run(item, top, brief, models, resume=resume)
             except repo.Refused:
                 # Claude refuses a session it doesn't have before the turn starts, with this line.
                 output = log.read_bytes()[size:].decode("utf-8", "replace")
@@ -610,7 +611,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         codex.remember(top, item, codex._json(path))
         if before_turn is not None:
             before_turn()
-        return _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
+        return _run(item, top, fresh_brief or brief, models, session_id=session["id"])
     finally:
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
@@ -618,16 +619,17 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
 
 
 def _run(item: str, top: Path, brief: str, models: list[str],
-         session: list[str] | None = None) -> str:
-    """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""
-    exe = shutil.which("claude")
-    if exe is None:
-        refuse(repo.REFUSALS["missing_tool"], tool="claude")
+         *, resume: str | None = None, session_id: str | None = None) -> str:
+    """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
     log = repo.work_log(top, item)
-    # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
-    command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
-               "--output-format", "stream-json", "--verbose",
-               "--add-dir", str(CONVENTIONS), *(session or [])]
+    if problem := claude_sdk.sdk_problem():
+        refuse(REFUSALS["sdk"], problem=problem)
+    command = [str(claude_sdk.python()), str(claude_sdk.TURN)]
+    request = {"prompt": brief, "cwd": str(top),
+               "model": models[models.index("--model") + 1],
+               "effort": models[models.index("--effort") + 1],
+               "permission_mode": "bypassPermissions", "add_dirs": [str(CONVENTIONS)],
+               "resume": resume, "session_id": session_id}
     final_result = None
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],
@@ -638,7 +640,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             env=machine.worker_env(), **codex.GROUP) as worker, \
             machine.agent_process(worker, log):
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        worker._stdin_write(brief)
+        worker._stdin_write(json.dumps(request))
         for line in worker.stdout:
             out.write(line)
             try:
@@ -648,7 +650,8 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             if isinstance(event, dict):
                 line = repo.claude_output(top, item, ran, event)
                 # A result after no model turn (the prompt used up before the model ran) is no round.
-                if event.get("type") == "result" and event.get("num_turns") != 0:
+                if (event.get("type") == "result" and event.get("num_turns") != 0
+                        and (event.get("result") or event.get("errors"))):
                     final_result = line.rstrip("\n")
             if line and (not isinstance(event, dict) or event.get("type") == "result"):
                 print(line, end="", flush=True)

@@ -187,7 +187,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
            '\n'
            'options:\n'
            '  -h, --help  show this help message and exit\n'
-           '  --fix       repair what doctor safely can: the pinned Forge, the Codex SDK,\n'
+           '  --fix       repair what doctor safely can: the pinned Forge, the agent SDKs,\n'
            '              the git hooks, the folders of finished work and the files forge\n'
            '              sync writes\n',
  'migrate': 'usage: forge migrate [-h] [--dry-run]\n'

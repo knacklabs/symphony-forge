@@ -44,9 +44,9 @@ def brief(client, request, tmp_path):
         worked = client.forge("work", "BOARD/API", "--note", "Fix findings inside Done-when")
         assert worked.returncode == 0, worked.stdout + worked.stderr
         started, resumed = calls(log)
-        assert "--resume" in resumed["args"]
-        assert (resumed["args"][resumed["args"].index("--resume") + 1]
-                == started["args"][started["args"].index("--session-id") + 1])
+        assert bool(resumed["options"].get("resume"))
+        assert (resumed["options"]["resume"]
+                == started["options"]["session_id"])
     return calls(log)[-1]["brief"]
 
 

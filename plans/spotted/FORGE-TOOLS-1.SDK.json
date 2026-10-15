@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/doctor.py\tDoctor cannot install the SDK after an item switches to Claude\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 325,
+      "text": "Doctor cannot install the SDK after an item switches to Claude",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNo-turn refusal directs SDK-only clients to a nonexistent Claude command\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 653,
+      "text": "No-turn refusal directs SDK-only clients to a nonexistent Claude command",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: running commands follow changed Forge pin\tFORGE-TOOLS-1/SDK",
+      "kind": "bug",
+      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
+      "line": 95,
+      "text": "Not done: running commands follow changed Forge pin",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDK",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}
