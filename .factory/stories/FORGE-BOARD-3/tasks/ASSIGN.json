@@ -64,8 +64,8 @@
     "id": "7b8c43a0-f513-4217-a8e1-b0028230d98b",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T08:33:54.024957+00:00",
@@ -85,12 +85,10 @@
     }
   ],
   "stuck": {
-    "close": "fbe362fb-c08e-42c2-9b0b-4745b3035209",
-    "head": "ad57a08fe3a394997d291f4a20a669e8aa1687ba",
-    "keys": {
-      "the review finding \"Not done: local Owner edits take precedence after a fetch\" in src/forge/task.py": 1
-    },
-    "round": 2
+    "close": "99d87467-6d40-4b32-b0de-aaa6db99b41d",
+    "head": "16627761a589fc43fbd8b9d3b2447dd7af0ed238",
+    "keys": {},
+    "round": 3
   },
   "worker": "codex"
 }
