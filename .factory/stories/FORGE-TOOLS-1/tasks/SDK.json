@@ -59,8 +59,8 @@
       "gain": 3,
       "harm": 3,
       "line": 325,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/doctor.py:325 Owner chose split on 15 October: moved to the SDKFIX part",
       "round": 2,
       "security": false,
       "title": "Doctor cannot install the SDK after an item switches to Claude",
@@ -72,8 +72,8 @@
       "gain": 3,
       "harm": 3,
       "line": 95,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "tests/test_running_commands_follow_changed_forge_pin.py:95 Owner chose split on 15 October: moved to the SDKFIX part",
       "round": 2,
       "security": false,
       "title": "Not done: running commands follow changed Forge pin",
@@ -85,8 +85,8 @@
       "gain": 3,
       "harm": 3,
       "line": 653,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/worker.py:653 Owner chose split on 15 October: moved to the SDKFIX part",
       "round": 2,
       "security": false,
       "title": "No-turn refusal directs SDK-only clients to a nonexistent Claude command",
@@ -98,7 +98,23 @@
     "branch_diff": "f3cd730f8370492fb8ae34326068d8b9cc2d75e4cab873268b7e1984db01b7e8",
     "changed": "28eb9a0aa1595a339579b72601f7be74214249f372aacfa772bdb101bd918101",
     "commit": "4b2dec4219528678dacebb13fcf413c13ea9ceca",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/doctor.py:325 Owner chose split on 15 October: moved to the SDKFIX part",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "src/forge/worker.py:653 Owner chose split on 15 October: moved to the SDKFIX part",
+        "finding": 2,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_running_commands_follow_changed_forge_pin.py:95 Owner chose split on 15 October: moved to the SDKFIX part",
+        "finding": 3,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. This condition skips the Claude SDK when `workers = \"codex\"`. In a repo with `tools = \"both\"`, `forge close --choice switch` can select Claude for an item (src/forge/close.py:113-114). `forge work` then refuses with `forge doctor --fix` as the next action, but doctor neither reports nor installs the missing SDK.",
@@ -132,13 +148,13 @@
       }
     ],
     "id": "2d8bdb98-6967-4d47-b0fe-143b9c20ad30",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
   "settled_areas": [
     "_run() in src/forge/worker.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-14T16:46:51.827799+00:00",
