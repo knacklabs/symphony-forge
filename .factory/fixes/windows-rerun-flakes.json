@@ -73,7 +73,7 @@
     "id": "5b990fe0-820a-4bc5-b19f-a6ac33b15802",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -86,10 +86,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "54b0116a9cfcb51393d7a9538830916573606048",
-    "keys": {},
-    "round": null
+    "close": "829e140f-c31c-48a6-89b7-92c4a3bdf520",
+    "head": "1ee229e6c6c209194148de9dea9c34f00dfbe571",
+    "keys": {
+      "the review finding \"Not done: The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a B\" in pyproject.toml": 1,
+      "the review finding \"Windows client checks break configured PowerShell test commands\" in src/forge/prcheck.py": 1
+    },
+    "round": 1
   },
   "why": "Windows full-suite runs fail a different slow test each run (timeouts, a flaky retry), so the nightly is red even when nothing is broken",
   "worker": "codex"
