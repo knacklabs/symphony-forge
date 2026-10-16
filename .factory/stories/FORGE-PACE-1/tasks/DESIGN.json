@@ -95,7 +95,7 @@
     "id": "a9e26451-8e42-41b6-90ac-adc3fdd44fbe",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -108,10 +108,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "893999c5661da9ecef282f2db2cacc233e8bfcbe",
-    "keys": {},
-    "round": null
+    "close": "c5860f34-6bc7-4694-89c9-f8704d132a8f",
+    "head": "6e6cb8931a7a13a369b5fda9177f33aabf38085b",
+    "keys": {
+      "the review finding \"Reject task branches that change the approved design\" in src/forge/task.py": 1,
+      "the review finding \"Require a design for User-facing=true plans\" in src/forge/design.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
