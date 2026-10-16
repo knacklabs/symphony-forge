@@ -707,7 +707,8 @@ def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str
     if not cited:
         return False  # no cited line to compare: the dismissal stands, as before
     commit, path, number = cited
-    diff = repo.run("git", "diff", "-U0", "-M", commit, head, cwd=top)
+    # A Windows checkout can change CRLF to LF without changing the cited evidence.
+    diff = repo.run("git", "diff", "--ignore-cr-at-eol", "-U0", "-M", commit, head, cwd=top)
     if diff.returncode:
         return True  # the dismissal's commit is gone: nothing proves the line unchanged
     old, header = "", False
