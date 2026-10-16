@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:,">
+<title>Forge board</title>
+<link rel="stylesheet" href="tokens.css?token={{token}}">
+<script src="app.js?token={{token}}" defer></script>
+</head>
+<body>
+<header class="bar">
+  <span class="name">Forge <span class="repo" id="repo-name"></span></span>
+  <nav aria-label="Pages">
+    <a href="#now" data-page="now" aria-current="page">Now</a>
+    <a href="#releases" data-page="releases">Releases</a>
+    <a href="#insights" data-page="insights">Insights</a>
+  </nav>
+  <div class="end">
+    <div class="views" role="group" aria-label="View">
+      <button type="button" data-view="team" aria-pressed="true">Team</button>
+      <button type="button" data-view="me" aria-pressed="false">Me</button>
+    </div>
+    <span class="live" id="live" role="status" data-state="live">Live</span>
+  </div>
+</header>
+<main>
+  <section id="page-now" data-page="now" aria-labelledby="now-title">
+    <h1 id="now-title">Now</h1>
+    <p class="state" id="now-state">Loading the board…</p>
+  </section>
+  <section id="page-releases" data-page="releases" aria-labelledby="releases-title" hidden>
+    <h1 id="releases-title">Releases</h1>
+    <p class="state">Releases show here soon.</p>
+  </section>
+  <section id="page-insights" data-page="insights" aria-labelledby="insights-title" hidden>
+    <h1 id="insights-title">Insights</h1>
+    <p class="state">Insights show here soon.</p>
+  </section>
+  <section id="page-item" data-page="item" aria-labelledby="item-title" hidden>
+    <h1 id="item-title">Item</h1>
+    <p class="state" id="item-state"></p>
+  </section>
+  <aside class="drawer" id="drawer" aria-labelledby="drawer-title" hidden>
+    <button type="button" class="close" id="drawer-close">Close</button>
+    <h2 id="drawer-title"></h2>
+    <p class="state" id="drawer-state"></p>
+  </aside>
+</main>
+</body>
+</html>

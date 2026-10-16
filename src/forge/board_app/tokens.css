@@ -1,0 +1,173 @@
+/* The board's design language, from docs/board-design/Main.dc.html: ten colours in light and
+   dark, the system font in four sizes, a 4 px spacing grid, two corner radii and one ease. */
+:root {
+  color-scheme: light dark;
+  --ground: #F4F5F2;
+  --surface: #FFFFFF;
+  --line: #E2E4E0;
+  --ink: #15171A;
+  --ink-2: #4A4F57;
+  --moving: #1D4ED8;
+  --needs-you: #B54708;
+  --stuck: #9F1239;
+  --ready: #0F766E;
+  --waiting: #8A9096;
+  --tint: #EEEFEC;
+  /* The header bar stays dark in both schemes, as in the Manager artboard. */
+  --bar: #15171A;
+  --bar-ink: #ECEDEA;
+  --bar-ink-2: #B4B8BC;
+  --bar-well: #2C3034;
+  --live: #5CC8B8;
+  --focus: #1D4ED8;
+
+  --font: -apple-system, "Segoe UI", system-ui, sans-serif;
+  --size-title: 24px;
+  --size-region: 17px;
+  --size-body: 14px;
+  --size-label: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-card: 6px;
+  --radius-tag: 3px;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --shadow-drawer: -8px 0 24px rgba(21, 23, 26, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #141618;
+    --surface: #1D2023;
+    --line: #2C3034;
+    --ink: #ECEDEA;
+    --ink-2: #B4B8BC;
+    --moving: #7AA2F7;
+    --needs-you: #F0A35C;
+    --stuck: #F08AA6;
+    --ready: #5CC8B8;
+    --waiting: #6B717A;
+    --tint: #24282B;
+    --bar: #0E1012;
+    --focus: #7AA2F7;
+    --shadow-drawer: -8px 0 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #141618;
+  --surface: #1D2023;
+  --line: #2C3034;
+  --ink: #ECEDEA;
+  --ink-2: #B4B8BC;
+  --moving: #7AA2F7;
+  --needs-you: #F0A35C;
+  --stuck: #F08AA6;
+  --ready: #5CC8B8;
+  --waiting: #6B717A;
+  --tint: #24282B;
+  --bar: #0E1012;
+  --focus: #7AA2F7;
+  --shadow-drawer: -8px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+/* The shell: a 48 px bar, then the page fills the rest of the window. */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: var(--size-body) / 20px var(--font);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-direction: column;
+}
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.bar :focus-visible { outline-color: var(--bar-ink); }
+
+.bar {
+  height: 48px;
+  flex: none;
+  background: var(--bar);
+  color: var(--bar-ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--space-8);
+}
+.bar .name { font-weight: 600; }
+.bar .repo { font-weight: 400; color: var(--bar-ink-2); }
+.bar nav, .bar .views { display: flex; gap: var(--space-1); }
+.bar nav a {
+  color: var(--bar-ink-2);
+  text-decoration: none;
+  border-radius: var(--radius-card);
+  padding: 6px var(--space-3);
+}
+.bar nav a[aria-current="page"] { background: var(--bar-ink); color: var(--bar); font-weight: 600; }
+.bar .end { margin-left: auto; display: flex; align-items: center; gap: var(--space-4); }
+.bar .views { background: var(--bar-well); border-radius: var(--radius-card); padding: 2px; gap: 0; }
+.bar .views button {
+  border: 0;
+  font: inherit;
+  font-size: var(--size-label);
+  background: transparent;
+  color: var(--bar-ink-2);
+  border-radius: 4px;
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out);
+}
+.bar .views button:active { transform: scale(0.97); }
+.bar .views button[aria-pressed="true"] { background: var(--bar-ink); color: var(--bar); font-weight: 600; }
+.bar .live { font-size: var(--size-label); color: var(--bar-ink-2); display: flex; align-items: center; gap: 6px; }
+.bar .live::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--live); }
+.bar .live[data-state="polling"]::before { background: var(--needs-you); }
+
+main { flex: 1; min-height: 0; display: flex; }
+main > section { flex: 1; min-width: 0; padding: var(--space-6) var(--space-8); overflow: auto; }
+main > section[hidden] { display: none; }
+main h1 { margin: 0 0 var(--space-3); font-size: var(--size-title); font-weight: 600; }
+.state { color: var(--ink-2); margin: 0; }
+.state[data-kind="error"] { color: var(--stuck); font-weight: 600; }
+
+.drawer {
+  width: 480px;
+  flex: none;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-drawer);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow: auto;
+  transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+}
+@starting-style { .drawer { transform: translateX(16px); opacity: 0; } }
+.drawer[hidden] { display: none; }
+.drawer h2 { margin: 0; font-size: var(--size-region); font-weight: 600; }
+.drawer .close {
+  align-self: flex-end;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  border-radius: var(--radius-card);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer, .bar .views button { transition: none; }
+}
+@media (max-width: 720px) {
+  .bar { gap: var(--space-3); padding: 0 var(--space-4); overflow-x: auto; }
+  main > section { padding: var(--space-4); }
+  .drawer { width: 100%; position: fixed; inset: 48px 0 0 0; }
+}

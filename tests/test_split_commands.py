@@ -44,7 +44,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    upgrade             Upgrade Forge in this repo to a release, or the\n'
      '                        newest, through one fix\n'
      '    next                Say where things stand and give the exact next command\n'
-     '    board               Write and open the plain-English board page\n'
+     '    board               Open the live board page on this computer\n'
      "    lanes               Show this release's machine-wide runs\n"
      '    stop                Stop a running or waiting run (only a person)\n'
      '    story               Start a story, or record its outcome\n'
@@ -215,12 +215,12 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '  --json      Print the machine view\n',
  'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
-          'Write and open the plain-English board page\n'
+          'Open the live board page on this computer\n'
           '\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
           '  --json      Print the machine view\n'
-          '  --out PATH  write the page here instead of .git/forge/board.html\n',
+          '  --out PATH  write the static page here instead\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'
               'Start a story branch, worktree and story doc, or promote a fix\n'

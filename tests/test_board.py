@@ -166,7 +166,8 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
 
     # The board, a week later: every story in plain English.
     monkeypatch.setenv("FORGE_NOW", "2026-09-22T10:00:00+00:00")
-    made = repo.forge("board")
+    # Bare `forge board` now serves the live page; --out writes the static one.
+    made = repo.forge("board", "--out", str(repo.path / ".git" / "forge" / "board.html"))
     assert made.returncode == 0, made.stderr
     page = repo.path / ".git" / "forge" / "board.html"
     assert made.stdout == f"Wrote the board to {page}\n"

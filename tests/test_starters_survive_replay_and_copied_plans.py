@@ -79,7 +79,7 @@ def _observer(client, tmp_path):
     viewer = Repo(observer, client.bin)
     listing = viewer.forge("board", "--json")
     assert listing.returncode == 0, listing.stdout + listing.stderr
-    page = viewer.forge("board")
+    page = viewer.forge("board", "--out", str(observer / ".git/forge/board.html"))
     assert page.returncode == 0, page.stdout + page.stderr
     return json.loads(listing.stdout)["items"], seen(observer / ".git/forge/board.html")
 
