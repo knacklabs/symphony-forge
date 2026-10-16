@@ -89,7 +89,10 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "settled_areas": [
+    ".github/workflows/forge-next.yml"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T02:31:55.048820+00:00",
@@ -110,8 +113,12 @@
   ],
   "stop": {
     "at": "2026-10-16T06:54:17.907101+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": ".github/workflows/forge-next.yml",
-    "wait_id": "a0ddbc5f-6c8e-4978-8339-9fa69d14911e"
+    "reason": "Owner chose on 2026-10-16: narrow to this fix's own tests on every platform and the new group counts (5 Linux, 9 macOS, 12 Windows); the Windows known-issues test failure moves to its own fix",
+    "wait_id": "a0ddbc5f-6c8e-4978-8339-9fa69d14911e",
+    "worker_round": 2
   },
   "stuck": {
     "close": "e9e42d87-b4ac-46c1-84e7-2e1ba74bb468",
