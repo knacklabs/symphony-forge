@@ -1,6 +1,13 @@
 {
   "base": "ff7cfd0caa6f9cf53e8f8bd2df3cb0986d4446e3",
   "branch": "fix/generated-files-present",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1465e-60a8-73f0-9e17-09df33a2087c",
+    "head": null,
+    "start": "0d273312033c43418152eef13754571575ad8447"
+  },
   "done_when": "The review prompt's Generated files section says each listed file is committed at the real branch head with the listed line counts, that the review tree only restores it to the start to keep its contents out of the diff, and that a missing or untracked copy in the review tree is not a finding; a test proves the wording for a generated file the branch adds",
   "fix_kind": "mechanical",
   "kind": "fix",
