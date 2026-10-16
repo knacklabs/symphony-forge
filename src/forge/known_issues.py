@@ -71,8 +71,9 @@ def collect(top: Path, states: dict[str, dict[str, Any]]) -> list[dict[str, Any]
     saved = {item: state["known"] for item, state in states.items() if "known" in state}
 
     def historical(_now: Any) -> list[dict[str, Any]] | None:
-        done = repo.run("gh", "api", "--paginate",
-                        "repos/{owner}/{repo}/pulls?state=closed&per_page=100", "--jq",
+        # A query-string ampersand becomes a command separator through gh.cmd on Windows.
+        done = repo.run("gh", "api", "--paginate", "--method", "GET", "--raw-field", "per_page=100",
+                        "repos/{owner}/{repo}/pulls?state=closed", "--jq",
                         ".[] | select(.merged_at != null) | {number, headRefName: .head.ref}", cwd=top)
         if done.returncode:
             return None
