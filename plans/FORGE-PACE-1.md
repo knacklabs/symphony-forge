@@ -92,8 +92,8 @@ production unchecked. A canvas sign-off ships no code: production stories build 
    tool, the guide says to make the artboards as HTML files in the folder. App code: DESIGN pins
    one rule that BUILD and SIGNOFF use. A changed file is app code unless it is under `docs/`,
    `plans/`, `.factory/`, `.forge/`, `.github/`, `.claude/` or `.codex/`, or is a file `forge init`
-   or `forge sync` writes (such as AGENTS.md, forge.toml and the Dockerfile), or is PRODUCT.md or
-   DESIGN.md. Canvas artboards live under `docs/design/`, so they are never app code. A prototype
+   or `forge sync` writes (such as AGENTS.md, forge.toml and the Dockerfile), or is a Markdown
+   file anywhere (README.md, PRODUCT.md and DESIGN.md included). Canvas artboards live under `docs/design/`, so they are never app code. A prototype
    has a working build when its prototype-build decision is accepted or the default branch has a
    merged commit that changes app code. Tests: a story with a
    user-facing part and no design is refused with the next step; `User-facing | true` is refused
@@ -102,10 +102,11 @@ production unchecked. A canvas sign-off ships no code: production stories build 
    task.
 2. Canvas sign-off. The sign-off decision (`client-signoff`) gains a `## Signed design` section
    naming `docs/design/prototype/ (<tree id>)`. Accepting sign-off with no working prototype is
-   allowed when that tree id matches the folder; the repo then counts as signed, as with any
-   sign-off. The first story after a canvas sign-off names the signed folder in its `Design:`
+   allowed when that tree id matches the folder and the sign-off's own branch changes no app code
+   (item 1's rule); otherwise acceptance is refused with the next step `forge decision new
+   prototype-build`. The repo then counts as signed, as with any sign-off. The first story after a canvas sign-off names the signed folder in its `Design:`
    line, or a newer design approved with its plan. Tests: sign-off accepts a matching canvas with
-   no app code; a changed folder after sign-off is refused as the signed design; the first story
+   no app code; sign-off is refused when its own branch changes app code; a changed folder after sign-off is refused as the signed design; the first story
    after sign-off starts from the signed folder.
 3. Working build. `forge decision new prototype-build` records the FDE's reason the canvas cannot
    prove something; `forge decision accept prototype-build --by <owner>` approves it. While the

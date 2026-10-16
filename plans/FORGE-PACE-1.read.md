@@ -140,6 +140,10 @@ No findings.
     Raise: Functional. The new classification at `plans/FORGE-PACE-1.md:93–98` counts `README.md` as app code. An existing unsigned canvas repo with a merged README therefore becomes a working prototype on upgrade, despite having no app or accepted build request. Subsequent app changes bypass the decision gate, and canvas sign-off incorrectly requires working-product proof. Forge already recognizes root Markdown as documentation (`src/forge/review.py:577–583`).
     Gain 4, Work 2, Harm 3
 
+   Disposition: cut
+
 19. Blocking: Unmerged app code can pass through canvas sign-off and escape the build-decision gate.
     Raise: Plan gap. The new working-build predicate checks an accepted request or app changes on the default branch (`plans/FORGE-PACE-1.md:97–98`), while lines 112–115 permit app code to exist on an unmerged fix. Canvas sign-off on that fix therefore sees no working build and skips strict review. Acceptance records the decision in that checkout (`src/forge/records.py:301–302`), and `repo.is_prototype` immediately treats its local accepted sign-off as signed (`src/forge/repo.py:545–551`). The subsequent close no longer applies the unsigned-prototype gate, allowing those app changes to merge without the requested owner decision.
     Gain 5, Work 2, Harm 3
+
+   Disposition: cut
