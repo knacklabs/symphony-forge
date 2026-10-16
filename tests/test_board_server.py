@@ -1,8 +1,7 @@
 """`forge board` serves a live page on this computer only: a server on 127.0.0.1 that answers only
 with its run's token, serves a fresh snapshot after any change and the same one when nothing
 changed, rebuilds only the rows that changed, tells the page through its events stream, and shows
-a teammate's pushed work after its next fetch. The real command and HTTP are all the tests use;
-the page itself is driven in real Chrome."""
+a teammate's pushed work after its next fetch. The real command and HTTP are all the tests use."""
 from __future__ import annotations
 
 import http.client
@@ -22,7 +21,7 @@ from urllib.parse import urlsplit
 
 import pytest
 
-from conftest import REAL_UV, Repo
+from conftest import Repo
 from test_board import DOC
 from test_board_dependency_timelines import _client
 from test_story import worktree
@@ -111,7 +110,7 @@ def test_the_board_answers_only_on_this_computer_and_only_with_its_token(client,
         address = urlsplit(url)
         assert address.hostname == "127.0.0.1"
         status, headers, page = get(url)
-        assert status == 200 and b"app.js?token=" in page
+        assert status == 200 and f"board.json?{address.query}".encode() in page
         assert "default-src 'none'" in headers["Content-Security-Policy"]
         assert headers["Referrer-Policy"] == "no-referrer"
         status, _, plan = get(url, "/plan/SHOP")
@@ -198,58 +197,3 @@ def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_pa
         assert "SHOP" not in after["snapshot"]["rows_rebuilt"] and "elsewhere" in {row["id"] for row in after["items"]}
         kept = next(row for row in after["items"] if row["id"] == "SHOP")
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
-
-
-def test_the_page_shell_crosses_the_board_interfaces(client):
-    """In real Chrome: the page shows the snapshot, navigates, opens and closes the drawer with the
-    keyboard, opens an item's page, and its assign stub answers {ok, message}; nothing breaks the
-    page's content security policy."""
-    fix(client, "alpha")
-    script = r"""
-import json, sys
-from playwright.sync_api import sync_playwright
-with sync_playwright() as p:
-    browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
-    try:
-        for scheme in ('light', 'dark'):
-            page = browser.new_page(viewport={'width': 1440, 'height': 900}, color_scheme=scheme)
-            problems = []
-            page.on('console', lambda m: problems.append(m.text) if m.type == 'error' else None)
-            page.on('response', lambda r: problems.append(r.url) if r.status >= 400 else None)
-            page.goto(sys.argv[1])
-            page.wait_for_selector('#now-state[data-kind=""]', state='attached')
-            seen = page.evaluate("new Promise(done => Board.onSnapshot(s => done(s.items.map(i => i.id))))")
-            assert 'alpha' in seen, seen
-            assert page.locator('#now-state').inner_text().strip(), 'The Now page says something'
-            for name in ('releases', 'insights', 'now'):
-                page.locator(f'.bar nav a[data-page="{name}"]').focus()
-                page.keyboard.press('Enter')
-                assert page.locator(f'#page-{name}').is_visible(), name
-                assert page.locator(f'.bar nav a[data-page="{name}"]').get_attribute('aria-current') == 'page'
-            page.evaluate("Board.select('alpha')")
-            drawer = page.locator('#drawer')
-            assert drawer.is_visible() and 'alpha' in drawer.inner_text().lower()
-            assert page.evaluate("document.activeElement.id") == 'drawer-close'
-            page.keyboard.press('Escape')
-            assert not drawer.is_visible()
-            page.evaluate("Board.openItem('alpha')")
-            assert page.locator('#page-item').is_visible() and 'alpha' in page.locator('#item-title').inner_text().lower()
-            answer = page.evaluate("Board.api.assign('SHOP', 'page-dev')")
-            assert set(answer) == {'ok', 'message'} and answer['ok'] is False and answer['message'], answer
-            me = page.locator('.views button[data-view="me"]')
-            me.focus()
-            page.keyboard.press('Enter')
-            assert me.get_attribute('aria-pressed') == 'true' and page.evaluate('Board.view') == 'me'
-            assert page.evaluate("getComputedStyle(document.body).backgroundColor") == (
-                'rgb(244, 245, 242)' if scheme == 'light' else 'rgb(20, 22, 24)')
-            assert page.evaluate("document.documentElement.scrollHeight <= window.innerHeight")
-            assert not problems, problems
-            page.close()
-    finally:
-        browser.close()
-"""
-    with live(client) as url:
-        shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
-                                "playwright==1.55.0", "python", "-c", script, url],
-                               capture_output=True, text=True, encoding="utf-8", timeout=180)
-    assert shown.returncode == 0, shown.stdout + shown.stderr

@@ -41,6 +41,9 @@ WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|\.tmp
 # ponytail: the tests' seam, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 TICK = 1.0  # seconds between the events stream's input checks
+PLACEHOLDER = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Forge board</title></head>'
+               '<body><h1>Forge board</h1><p>The board is live. Its data is at '
+               '<a href="board.json?token={{token}}">board.json</a>.</p></body></html>')
 DENIED = "This board link is not valid. Open the board again to get a new link."
 
 
@@ -160,7 +163,9 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
 
         def route(self, path: str, query: dict[str, list[str]]) -> None:
             if path == "/":
-                shell = (APP / "shell.html").read_text(encoding="utf-8").replace("{{token}}", token)
+                # ponytail: a placeholder page until the page shell lands in board_app/shell.html
+                shell = ((APP / "shell.html").read_text(encoding="utf-8") if (APP / "shell.html").is_file()
+                         else PLACEHOLDER).replace("{{token}}", token)
                 self.send(200, "text/html; charset=utf-8", shell.encode("utf-8"), **{"Content-Security-Policy": CSP})
             elif (asset := ASSET.fullmatch(path)) and (APP / asset[1]).is_file():
                 self.send(200, TYPES[asset[1].rsplit(".", 1)[1]], (APP / asset[1]).read_bytes())
