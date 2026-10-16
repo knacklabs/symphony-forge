@@ -28,7 +28,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     assert asked.returncode == 1 and "ask the owner" in asked.stderr
     assert len(land.review_calls()) == 2
     # The coordinator records the owner's rule, then sends the focused third round.
-    land.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    land.commit(where, f"plans/{ITEM}.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
     focused = land.repo.forge("work", ITEM)
     assert focused.returncode == 0, focused.stdout + focused.stderr
     assert land.close(ITEM).returncode == 1
