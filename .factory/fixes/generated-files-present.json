@@ -10,13 +10,55 @@
   },
   "done_when": "The review prompt's Generated files section says each listed file is committed at the real branch head with the listed line counts, that the review tree only restores it to the start to keep its contents out of the diff, and that a missing or untracked copy in the review tree is not a finding; a test proves the wording for a generated file the branch adds",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_hide_generated() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 1061,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Generated files notice makes inaccurate claims for deletions and repeat reviews",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "04d333decd3c2a662c20c330a08f6c8334a85124811cc1f05fda9e59c0fbac6f",
+    "changed": "e11d828e78ce42ac14337f3dbb8c6c6714acff8e1743c32e3a6244ea9649e6c2",
+    "commit": "17451caade9927bc64400288fed5842653654a42",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 2, Harm 1\nRaise: Not done. The unconditional wording gives reviewers incorrect provenance for generated files. A deleted generated file is still included by the `diff --numstat` and `check-attr` selection at lines 1045\u20131053, but that file is absent from the real branch head, contrary to this line. On a repeat review, lines 922\u2013923 use the previous reviewed commit as the restore source, contrary to the next line\u2019s claim that restoration is to the branch start. The new test covers only a first review of an added file.",
+        "file": "src/forge/review.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 2,
+        "harm": 1,
+        "line": 1061,
+        "priority": "P1",
+        "title": "Not done: Generated files notice makes inaccurate claims for deletions and repeat reviews",
+        "work": 2
+      }
+    ],
+    "id": "6c8add57-7334-44d0-a473-474f596770b2",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T20:19:06.577674+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-16T20:23:40.427671+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
