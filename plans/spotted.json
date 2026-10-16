@@ -1717,6 +1717,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tAutomatic narrow starts another review before the worker uses the updated plan\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 509,
+      "text": "Automatic narrow starts another review before the worker uses the updated plan",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -7763,6 +7774,17 @@
       "text": "Not done: Hook trust in new and upgraded client repos",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_worker.py\tThe cached SDK interpreter can point into a deleted test folder.",
+      "kind": "bug",
+      "path": "tests/test_codex_worker.py",
+      "line": 84,
+      "text": "The cached SDK interpreter can point into a deleted test folder.",
+      "from": "worker",
+      "item": "no-wasted-rounds",
       "status": "open",
       "closed_by": null
     },
