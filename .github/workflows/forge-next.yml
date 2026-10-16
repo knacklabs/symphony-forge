@@ -67,14 +67,18 @@ jobs:
             {"os":"macos-latest","group":4,"groups":6},
             {"os":"macos-latest","group":5,"groups":6},
             {"os":"macos-latest","group":6,"groups":6},
-            {"os":"windows-latest","group":1,"groups":8},
-            {"os":"windows-latest","group":2,"groups":8},
-            {"os":"windows-latest","group":3,"groups":8},
-            {"os":"windows-latest","group":4,"groups":8},
-            {"os":"windows-latest","group":5,"groups":8},
-            {"os":"windows-latest","group":6,"groups":8},
-            {"os":"windows-latest","group":7,"groups":8},
-            {"os":"windows-latest","group":8,"groups":8}]') }}
+            {"os":"windows-latest","group":1,"groups":12},
+            {"os":"windows-latest","group":2,"groups":12},
+            {"os":"windows-latest","group":3,"groups":12},
+            {"os":"windows-latest","group":4,"groups":12},
+            {"os":"windows-latest","group":5,"groups":12},
+            {"os":"windows-latest","group":6,"groups":12},
+            {"os":"windows-latest","group":7,"groups":12},
+            {"os":"windows-latest","group":8,"groups":12},
+            {"os":"windows-latest","group":9,"groups":12},
+            {"os":"windows-latest","group":10,"groups":12},
+            {"os":"windows-latest","group":11,"groups":12},
+            {"os":"windows-latest","group":12,"groups":12}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || matrix.os == 'macos-latest' && 30 || 20 }}
