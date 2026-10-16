@@ -130,7 +130,8 @@ def new_story(repo, key, title="Shoppers can save a basket"):
 def prototype_design(repo):
     """Routing tests start after the design approval, now required for prototype UI fixes."""
     repo.write("docs/design/prototype/screen.svg", DESIGN_IMAGE)
-    repo.git("add", "docs/design/prototype")
+    repo.write("PRODUCT.md", "# Basket shop\n\nPeople save baskets and return to them.\n")
+    repo.git("add", "docs/design/prototype", "PRODUCT.md")
     tree = repo.git("write-tree")
     digest = repo.git("rev-parse", f"{tree}:docs/design/prototype")
     repo.write("docs/decisions/0001-prototype-design.md",

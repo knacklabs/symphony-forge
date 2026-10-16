@@ -16,7 +16,8 @@ SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"><text x
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, adopted):
+@pytest.mark.parametrize("user_facing", ["yes", "true"])
+def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, adopted, user_facing):
     # Previously read and approval accepted missing or changed screens. This command test owns
     # that contract; only the third-party reader is fake, with no new production test seam.
     if adopted:
@@ -40,6 +41,7 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     shop = new_story(repo, "SHOP")
     doc = shop / "plans/SHOP.md"
     text = "\n".join(line for line in DOC.split("\n") if not line.startswith("Design:"))
+    text = text.replace("| yes |", f"| {user_facing} |")
     doc.write_text(text, encoding="utf-8")
     refused = repo.forge("read", "SHOP")
     assert refused.returncode == 1, refused.stdout + refused.stderr
@@ -72,6 +74,17 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     assert started.returncode == 0, started.stdout + started.stderr
     task_folder = Path(re.search(r" in (.+)\n", started.stdout)[1])
     assert (task_folder / "docs/design/SHOP/basket.svg").read_text("utf-8") == SVG
+    # Approval also binds assets on the build branch, even when its plan did not change.
+    screen = task_folder / "docs/design/SHOP/basket.svg"
+    screen.write_text(SVG.replace("Basket", "Unapproved screen"), encoding="utf-8")
+    repo.git("add", "docs/design/SHOP/basket.svg", cwd=task_folder)
+    repo.git("commit", "-qm", "Change a screen on the task branch", cwd=task_folder)
+    refused = repo.forge("close", "SHOP/SAVE")
+    assert refused.returncode == 1 and "design folder changed" in refused.stderr.lower(), refused.stdout + refused.stderr
+    assert "Next:" in refused.stderr
+    screen.write_text(SVG, encoding="utf-8")
+    repo.git("add", "docs/design/SHOP/basket.svg", cwd=task_folder)
+    repo.git("commit", "-qm", "Restore the approved screen", cwd=task_folder)
 
     # Even unstaged and untracked edits must refuse stale approval, without changing the index.
     (folder / "basket.svg").write_text(SVG.replace("Basket", "Saved baskets"), encoding="utf-8")
@@ -97,7 +110,7 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     assert refused.returncode == 1 and "design" in refused.stderr.lower(), refused.stderr
 
     backend = new_story(repo, "BACK")
-    (backend / "plans/BACK.md").write_text(text.replace("| yes |", "| no |"), encoding="utf-8")
+    (backend / "plans/BACK.md").write_text(text.replace(f"| {user_facing} |", "| no |"), encoding="utf-8")
     passed = repo.forge("read", "BACK")
     assert passed.returncode == 0, passed.stdout + passed.stderr
 
@@ -131,6 +144,12 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     repo.git("commit", "-qm", "Save the prototype design", cwd=fix)
     accepted = repo.forge("decision", "accept", "prototype-design", "--by", "Owner", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    missing_product = repo.forge("fix", "start", "Build without product init", "--done", "Screens work", "--kind", "ui", cwd=fix)
+    assert missing_product.returncode == 1 and "PRODUCT.md" in missing_product.stderr, missing_product.stdout + missing_product.stderr
+    assert "init" in missing_product.stderr and "Next:" in missing_product.stderr
+    (fix / "PRODUCT.md").write_text("# Basket shop\n\nPeople save baskets and return to them.\n", encoding="utf-8")
+    repo.git("add", "PRODUCT.md", cwd=fix)
+    repo.git("commit", "-qm", "Record the product from design init", cwd=fix)
     ui = repo.forge("fix", "start", "Build approved screens", "--done", "Screens work", "--kind", "ui", cwd=fix)
     assert ui.returncode == 0, ui.stdout + ui.stderr
     (fix / "docs/design/prototype/screen.svg").write_text(SVG.replace("Basket", "Changed"), encoding="utf-8")

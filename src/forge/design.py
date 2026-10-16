@@ -14,7 +14,7 @@ IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
 def check(top: Path, text: str, ref: str | None = None) -> str | None:
     from forge import story
 
-    if not any(row["User-facing"].lower() == "yes" for row in story.parse(text, top)["tasks"]):
+    if not any(row["User-facing"].lower() in ("yes", "true") for row in story.parse(text, top)["tasks"]):
         return None
     body = story.sections(text)["What changes for you"].strip()
     line = body.splitlines()[-1] if body else ""
@@ -71,6 +71,9 @@ def require_prototype(top: Path, base: str) -> None:
             expected = re.search(r"^design_tree: ([0-9a-f]+)\s*$", front[1], re.M)
             actual, files = snapshot(top, "docs/design/prototype/", base)
             if expected and actual == expected[1] and any(PurePosixPath(file).suffix.lower() in IMAGES for file in files):
+                if not (story.show(top, base, "PRODUCT.md") or "").strip():
+                    repo.refuse(("This prototype needs PRODUCT.md from the design skill's init before a UI fix can start.",
+                                 "run impeccable init, commit PRODUCT.md in a mechanical fix, then retry this UI fix"))
                 return
     repo.refuse(("This prototype needs an approved design before a UI fix can start.", next_step))
 

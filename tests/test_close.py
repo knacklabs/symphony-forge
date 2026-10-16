@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 import conftest
-from test_story import READER
+from test_story import DESIGN_IMAGE, DESIGN_TREE, READER
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = re.search(r'AUTOREVIEW_PIN = "(\w+)"',
@@ -37,6 +37,8 @@ STORY_DOC = """# Shoppers can save a basket
 ## What changes for you
 Shoppers can save a basket and come back to it.
 
+Design: docs/design/baskets/ (<design tree>)
+
 ## Why
 Shoppers lose their basket when they leave.
 
@@ -56,6 +58,8 @@ New moving parts: none
 Risks: none
 """
 
+
+STORY_DOC = STORY_DOC.replace("<design tree>", DESIGN_TREE)
 
 # A default score line per priority that keeps each finding's outcome under today's rule.
 SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
@@ -242,6 +246,7 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
                              'interfaces = ["**/routes/**"]\n'
                              'models.build = { model = "opus", effort = "high" }\n')
     repo.write("plans/SHOP.md", STORY_DOC)
+    repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Run on Forge")
     repo.git("push", "-q", "origin", "main")
