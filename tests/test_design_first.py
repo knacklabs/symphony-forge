@@ -81,6 +81,7 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     screen.write_text(SVG.replace("Basket", "Unapproved screen"), encoding="utf-8")
     repo.git("add", "docs/design/SHOP/basket.svg", cwd=task_folder)
     repo.git("commit", "-qm", "Change a screen on the task branch", cwd=task_folder)
+    gh.respond("pr", "list", stdout="[]")
     refused = repo.forge("close", "SHOP/SAVE")
     assert refused.returncode == 1 and "design folder changed" in refused.stderr.lower(), refused.stdout + refused.stderr
     assert "Next:" in refused.stderr
