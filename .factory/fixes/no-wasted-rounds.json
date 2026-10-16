@@ -111,11 +111,11 @@
     "id": "2b361a7f-201f-4688-96b8-5fa7716ba142",
     "status": "clean"
   },
-  "round": 6,
+  "round": 7,
   "settled_areas": [
     "close() in src/forge/close.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
@@ -154,12 +154,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "8fec4007-afa3-4116-b218-6d1debddc4e0",
-    "head": "b361103fc7804d06f5c0bc8739cad186d3d6e04d",
-    "keys": {
-      "close's tests failing": 1
-    },
-    "round": 5
+    "close": "9e5075ff-eb9d-453a-bd97-cab007b9616d",
+    "head": "496aa6d8b7f6cf0a3bc7f9e130fdc3b2cccf6bfa",
+    "keys": {},
+    "round": 6
   },
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
   "worker": "codex"
