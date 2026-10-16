@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 import conftest
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
 from test_story import worktree
 
@@ -54,6 +54,7 @@ def test_1_prototype_allowance_covers_size_and_interfaces_without_diff_check(env
     # More than five code files, including an interface, need no agent allowance.
     for n in range(6):
         env.commit(folder, f"app/routes/view{n}.py", "print('prototype')\n")
+    env.checks(GREEN)
     closed = env.close("show-a-prototype")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     prompt = " ".join(env.prompt().split())
