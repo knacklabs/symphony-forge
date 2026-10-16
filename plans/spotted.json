@@ -320,6 +320,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: prove both dismissal tests and all platform groups at the current head\twindows-accept-body",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 57,
+      "text": "Not done: prove both dismissal tests and all platform groups at the current head",
+      "from": "blocking",
+      "item": "windows-accept-body",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each\twindows-accept-body",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
