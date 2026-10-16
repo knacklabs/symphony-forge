@@ -22,7 +22,7 @@
     "id": "513b596a-1156-487b-a2b0-31025816736b",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -39,10 +39,12 @@
     }
   ],
   "stuck": {
-    "close": "a0056be9-4f71-4b56-bae0-aa037381e604",
-    "head": "2db79817c14ff7798c1a0d66aa4d838ab78d7e42",
-    "keys": {},
-    "round": 2
+    "close": "63b463d8-e7ee-4205-8c95-86c7e3e7bcc5",
+    "head": "92afad1e159ceec62a17f9cf4ca60514771ff211",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 3
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest f0250948eb513a843659ab4bdf44dfc35cf18f3f` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/init.py; GitHub's checks will cover it.\n                env.commit(folder, \"forge.toml\", config.read_text(\"utf-8\").replace(\n                    json.dumps(f'\"{sys.executable}\" -c \"print(123)\"'),\n                    json.dumps(f'\"{sys.executable}\" -m pytest -vv{parallel} test_progress.py')))\n            process = subprocess.Popen([sys.executable, str(repo.bin / \"forge\"),\n                                       \"read\" if case.startswith(\"read\") else \"close\" if case.startswith((\"progress\", \"ci\", \"review\")) else \"work\", item], cwd=repo.path,\n                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n            connections, activities = [], []\n            try:\n                for expected in ([None] if case.startswith((\"progress\", \"ci\")) else expected_steps):\n>                   connection, _ = listener.accept()\n                                    ^^^^^^^^^^^^^^^^^\n\ntests/test_live_status.py:325:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>\n\n    def accept(self):\n        \"\"\"accept() -> (socket object, address info)\n\n        Wait for an incoming connection.  Return a new socket\n        representing the connection, and the address of the client.\n        For IP sockets, the address info is a pair (hostaddr, port).\n        \"\"\"\n>       fd, addr = self._accept()\n                   ^^^^^^^^^^^^^^\nE       TimeoutError: timed out\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/socket.py:294: TimeoutError\n3 failed, 37 passed in 126.47s (0:02:06)",
   "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard",
