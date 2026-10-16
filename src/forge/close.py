@@ -226,6 +226,7 @@ def close(args: argparse.Namespace) -> int:
     spotted.check(top, item)
     if not migrating:
         _synced(top, item)
+    _warn_fix_kind(top, state, f"origin/{default}")
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
     changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
@@ -432,6 +433,27 @@ def close(args: argparse.Namespace) -> int:
     return 0
 
 
+def _warn_fix_kind(top: Path, state: dict[str, Any], base: str) -> None:
+    kind = state.get("fix_kind")
+    if not kind:
+        return
+    files = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                     "--", ".", *[path.replace(":(glob)", ":(exclude,glob)")
+                                    for path in repo.TEST_PATHS], cwd=top).split("\0")
+    # This is advice: paths can suggest a mismatch, but cannot decide what a change does.
+    code = [Path(path) for path in files if path and not path.startswith(
+        (".factory/", "plans/", "docs/"))]
+    ui = any(path.suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
+             or set(path.parts) & {"web", "frontend", "components", "screens", "pages"}
+             for path in code)
+    backend = any(path.suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb"}
+                  for path in code)
+    if (kind == "backend" and ui or kind == "ui" and backend and not ui
+            or kind == "mechanical" and (ui or backend)):
+        print("Warning: The changed files do not match this fix's worker kind "
+              f"({kind}). Check the kind before the next round.")
+
+
 def _settled_areas(state: dict[str, Any]) -> list[str]:
     return [*state.get("settled_areas", []), *[(state.get("stop") or {}).get("file")] * bool((state.get("stop") or {}).get("choice"))]
 
@@ -467,7 +489,8 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
         try:  # fix start works in the current checkout: the follow-up stacks on this item
             os.chdir(top)
             with contextlib.redirect_stdout(out):
-                task.fix_start(argparse.Namespace(why=why, done=done, slug=None))
+                task.fix_start(argparse.Namespace(why=why, done=done, slug=None,
+                                                  kind=state.get("fix_kind") or "mechanical"))
         finally:
             os.chdir(here)
         fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])

@@ -84,7 +84,7 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main",
              cwd=client)
     started = repo.forge("fix", "start", "Delegate independent work", "--done",
-                         "Workers may delegate independent parts", cwd=client)
+                         "Workers may delegate independent parts", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     request.getfixturevalue("claude_session")
     worked = repo.forge("work", "delegate-independent-work", cwd=client)

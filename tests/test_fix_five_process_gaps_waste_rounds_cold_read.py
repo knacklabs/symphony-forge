@@ -68,7 +68,8 @@ def test_3_fix_work_brief_states_limit_interfaces_and_allowance(repo):
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")
-    assert repo.forge("fix", "start", "Clarify the fix boundary", "--done", "Workers see the boundary").returncode == 0
+    assert repo.forge("fix", "start", "Clarify the fix boundary", "--done", "Workers see the boundary",
+                      "--kind", "mechanical").returncode == 0
     fix = worktree(repo, "fix/clarify-the-fix-boundary")
     assert repo.forge("work", "clarify-the-fix-boundary").returncode == 0
     brief = calls(log)[-1]["brief"]

@@ -45,7 +45,8 @@ def client(repo, gh, tmp_path, request):
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "adoption")
         repo.git("push", "-q", "origin", "main")
-    started = repo.forge("fix", "start", "Prepare client settings", "--done", "Client is ready")
+    started = repo.forge("fix", "start", "Prepare client settings", "--done", "Client is ready",
+                         "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = worktree(repo, "fix/prepare-client-settings")
     config = (repo.path / "forge.toml").read_text("utf-8")

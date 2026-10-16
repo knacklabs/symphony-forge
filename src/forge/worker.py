@@ -116,13 +116,14 @@ def _work(args: argparse.Namespace) -> bool:
         row = task.rows(sections).get(match["task"], {})
         design = repo.user_facing(config, row)
     else:
-        design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
+        design = state.get("fix_kind") == "ui"
     tool = getattr(args, "fallback", None) or state.get("tool")
     family = repo.worker(config, "build", design, tool)[0]
     on_codex = family == "codex"
     # The coordinating app's own tool runs the round as one of the session's subagents.
     is_native = repo.route(config, family, command="work", item=item) == "native"
-    role = "frontend" if design else "worker" if match["task"] else "fixer"
+    role = ("frontend" if design else "worker" if match["task"] else
+            "coder" if state.get("fix_kind") == "backend" else "fixer")
     if note is None and (question := (asked_open[-1].get("question") if asked_open else None)
                          or codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
@@ -131,6 +132,8 @@ def _work(args: argparse.Namespace) -> bool:
     later = not is_native and (on_codex or design) and bool(codex.record(top, item).get("start") or
                                            state.get("status", "started") != "started")
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
+    if not match["task"] and state.get("fix_kind"):
+        kind = "Build" if state["fix_kind"] == "backend" else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,

@@ -39,7 +39,7 @@ def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
     log = install_claude(repo)
     started = repo.forge("fix", "start", "Check worker CI guidance", "--done",
-                         "Workers leave CI to close")
+                         "Workers leave CI to close", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     for round_number in (1, 2):
         worked = repo.forge("work", "check-worker-ci-guidance")

@@ -57,7 +57,8 @@ from forge.cli import main
 
 
 def _assert_hooks_are_small(repo, client, log):
-    started = repo.forge("fix", "start", "Small hook client", "--done", "A small commit", cwd=client)
+    started = repo.forge("fix", "start", "Small hook client", "--done", "A small commit",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     work = Path(started.stdout.splitlines()[0].split(" in ", 1)[1].removesuffix("."))
     _trace(repo, log)

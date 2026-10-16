@@ -967,14 +967,16 @@ def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path
     cfg = _report_config(folder, refusals)
     if "local" not in cfg:
         return ""
-    # Keep in step with forge work's choice of design and kind in worker.work (worker.py lines 89-106).
+    # Keep in step with forge work's choice of design and kind in worker.work.
     key, _, name = item.partition("/")
     design = (repo.user_facing(cfg, task.rows(task.sections((folder / "plans" / f"{key}.md").read_text(
         encoding="utf-8"))).get(name, {})) if name else
-        state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(folder))
+        state.get("fix_kind") == "ui")
     later = (repo.worker(cfg, "build", design, state.get("tool"))[0] == "codex" or design) and bool(
         codex.record(folder, item).get("start") or state.get("status", "started") != "started")
     kind = "fix" if later else "build" if name else "lite"
+    if not name and state.get("fix_kind"):
+        kind = "build" if state["fix_kind"] == "backend" else "lite"
     sources = repo.setting_sources(cfg, kind, design)
     return f"  # {repo.worker(cfg, kind, design, state.get('tool'))[0].title()} builds it ({sources})"
 

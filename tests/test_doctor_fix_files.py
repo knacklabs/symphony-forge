@@ -153,7 +153,8 @@ def _old_hosts(repo, client: Path) -> str:
 
 def _wanted(repo, client: Path, tmp_path) -> dict[str, str]:
     """What forge sync writes for this client: run it in a throwaway fix and read the result."""
-    started = repo.forge("fix", "start", "See what sync writes", "--done", "read", cwd=client)
+    started = repo.forge("fix", "start", "See what sync writes", "--done", "read",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     folder = Path(started.stdout.split(" in ", 1)[1].splitlines()[0])
     assert repo.forge("sync", cwd=folder).returncode == 0
@@ -181,7 +182,7 @@ def _folder_of(repo, client: Path, branch: str) -> Path:
 
 
 def _start_fix(repo, client: Path, why: str = "Try doctor on a fix branch") -> Path:
-    started = repo.forge("fix", "start", why, "--done", "it works", cwd=client)
+    started = repo.forge("fix", "start", why, "--done", "it works", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     return Path(started.stdout.split(" in ", 1)[1].splitlines()[0])
 
@@ -345,7 +346,7 @@ def _a_fix_already_named_forge_files_is_left_alone(repo, gh, tmp_path, monkeypat
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
     started = repo.forge("fix", "start", "Something else", "--done", "x", "--slug", "forge-files-20261004-0900",
-                         cwd=client)
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stderr
     folder = _folder_of(repo, client, "fix/forge-files-20261004-0900")
     before = _status(repo, folder)

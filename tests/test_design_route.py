@@ -35,8 +35,9 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     assert "| PAGE | The page |" in call["brief"]
     assert _sent(codex_log, "turn/start") == []
 
-    # Before sign-off, a new fix carries the prototype allowance and uses design Claude.
-    assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
+    # Fixes now name their kind; only UI fixes use design, regardless of their allowance.
+    assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in",
+                      "--kind", "ui").returncode == 0
     prototype = repo.forge("work", "fix-the-login-typo")
     assert prototype.returncode == 0, prototype.stdout + prototype.stderr
     assert len(calls(claude_log)) == 2
@@ -50,10 +51,12 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
     repo.git("commit", "-qam", "Allow other work", cwd=fix)
     request.getfixturevalue("claude_session")
+    # The UI fix keeps Claude now; neither coordinating app should claim this toolkit round.
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     ordinary = repo.forge("work", "fix-the-login-typo")
     assert ordinary.returncode == 0, ordinary.stdout + ordinary.stderr
-    assert len(_sent(codex_log, "turn/start")) == 1
-    assert len(calls(claude_log)) == 2
+    assert len(_sent(codex_log, "turn/start")) == 0
+    assert len(calls(claude_log)) == 3
 
     # Forge's source repo with explicit Codex workers keeps its ordinary worker model.
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
@@ -62,8 +65,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     repo.git("commit", "-qam", "Use the source repo", cwd=folder)
     source = repo.forge("work", "BOARD/PAGE")
     assert source.returncode == 0, source.stdout + source.stderr
-    assert len(_sent(codex_log, "turn/start")) == 2
-    assert len(calls(claude_log)) == 2
+    assert len(_sent(codex_log, "turn/start")) == 1
+    assert len(calls(claude_log)) == 3
 
     config.write_text(config.read_text("utf-8").replace('repo = "forge-source"',
                                                      'repo = "client"').replace(
@@ -72,7 +75,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
                       encoding="utf-8")
     repo.git("commit", "-qam", "Use a custom design model", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
-    monkeypatch.delenv("CLAUDECODE")
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
@@ -81,7 +84,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     assert "because its last round ran on Codex" in custom.stdout
     assert "## Tests first" in calls(claude_log)[-1]["brief"]
     assert "--resume" not in calls(claude_log)[-1]["args"]
-    assert len(_sent(codex_log, "turn/start")) == 2
+    assert len(_sent(codex_log, "turn/start")) == 1
 
     # A client story row without User-facing uses the configured Codex worker.
     started = repo.forge("task", "start", "BOARD/HELP")
@@ -90,8 +93,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     monkeypatch.delenv("CODEX_THREAD_ID")
     ordinary_task = repo.forge("work", "BOARD/HELP")
     assert ordinary_task.returncode == 0, ordinary_task.stdout + ordinary_task.stderr
-    assert len(_sent(codex_log, "turn/start")) == 3
-    assert len(calls(claude_log)) == 3
+    assert len(_sent(codex_log, "turn/start")) == 2
+    assert len(calls(claude_log)) == 4
 
     # Design still uses its own Claude model when the repo chooses Claude for ordinary work.
     config.write_text(config.read_text("utf-8").replace('workers = "split"',
@@ -102,7 +105,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     claude_worker = repo.forge("work", "BOARD/PAGE")
     assert claude_worker.returncode == 0, claude_worker.stdout + claude_worker.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
-    assert len(_sent(codex_log, "turn/start")) == 3
+    assert len(_sent(codex_log, "turn/start")) == 2
 
 
 def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,

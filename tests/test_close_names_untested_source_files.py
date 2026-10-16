@@ -58,7 +58,7 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
 def test_2_worker_brief_says_run_the_tests_that_check_changed_printed_text(client):
     log = install_claude(client)
     started = client.forge("fix", "start", "Check printed text guidance", "--done",
-                           "Workers run tests for printed text")
+                           "Workers run tests for printed text", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     worked = client.forge("work", "check-printed-text-guidance")
     assert worked.returncode == 0, worked.stdout + worked.stderr

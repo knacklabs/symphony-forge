@@ -97,7 +97,8 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
     _related_test_skills(repo.path)
     log = install_claude(repo)
-    started = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
+    started = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in",
+                         "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr

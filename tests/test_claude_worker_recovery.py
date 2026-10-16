@@ -35,7 +35,7 @@ def _client(repo, gh, tmp_path, previous, *, subagents=False):
         repo.path = client
     log = install_claude(repo)
     started = repo.forge("fix", "start", "Recover worker output", "--done",
-                         "Worker finishes after a lost session")
+                         "Worker finishes after a lost session", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = repo.path.parent / f"{repo.path.name}-fix-{FIX}"
     synced = repo.forge("sync", cwd=folder)
