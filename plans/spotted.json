@@ -1684,6 +1684,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA new ready pull request has no dated merge wait on other machines\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 435,
+      "text": "A new ready pull request has no dated merge wait on other machines",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tA red local test can leave an existing pull request mergeable\treview-alongside-tests",
       "kind": "bug",
       "path": "src/forge/close.py",
