@@ -61,6 +61,9 @@ $delegation
   only what is committed.
 - Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
   `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- Generated client CI on a `windows-*` runner retries a failed test command once in PowerShell.
+  PowerShell syntax and `.ps1` scripts keep working. A second failure still fails the check;
+  Linux, Mac and the trusted PR gate keep their commands.
 - When you change text the program prints (messages, pull request text, board lines), search the
   tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the

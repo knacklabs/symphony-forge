@@ -2,6 +2,7 @@
 STORY = "any-file-hold"
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -54,6 +55,7 @@ def client_item(env, tmp_path, previous):
     (False, True, "narrow"), (True, True, "split"),
 ], ids=["init-any-narrow", "upgrade-any-split", "init-any-accept", "upgrade-any-accept",
         "init-same-narrow", "upgrade-same-split"])
+@pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env, tmp_path, previous, same_file, choice):
     item, where = client_item(env, tmp_path, previous)
