@@ -51,21 +51,45 @@
       "security": false,
       "title": "Not done: local Owner edits take precedence after a fetch",
       "work": 2
+    },
+    {
+      "area": ".codex/config.toml",
+      "file": ".codex/config.toml",
+      "gain": 1,
+      "harm": 1,
+      "line": 9,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Remove the unrelated Codex config edit outside Scope",
+      "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fd5fe12f8ffcdf99d957032d5450b0ec10d544b81d0507bd0395a18796110fb7",
-    "changed": "60d36b9e1764ca255f0c3b1729743eb15b0625d15dfc02d7c9ce2d02aa4bf273",
-    "commit": "e769a323c4f9cdfb819fea7155a995d463c2840f",
+    "branch_diff": "dc7f2317c79306a9685a3f1c4d0b087bde35a3d9c1ef4415764bae2c8f007ae4",
+    "changed": "6abcdbbdd2dda9c9faef9a228a26639776e1722d19bce49348661d688e58c2cb",
+    "commit": "14c687edad13e341448d5568b6caaddc1988b5b0",
     "dismissals": [],
-    "findings": [],
-    "id": "7b8c43a0-f513-4217-a8e1-b0028230d98b",
+    "findings": [
+      {
+        "body": "Gain 1, Work 1, Harm 1\nRaise: Gate. `.codex/config.toml:9` changes only a generated comment about Codex access. Assignment does not use this file, and the ASSIGN scope excludes it. Remove this unrelated edit from the branch.",
+        "file": ".codex/config.toml",
+        "gain": 1,
+        "harm": 1,
+        "line": 9,
+        "priority": "P1",
+        "title": "Remove the unrelated Codex config edit outside Scope",
+        "work": 1
+      }
+    ],
+    "id": "f59070f9-5d71-46af-9a31-09cb3187bed2",
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T08:33:54.024957+00:00",
@@ -81,6 +105,10 @@
     },
     {
       "at": "2026-10-15T19:11:38.049456+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T02:47:36.402927+00:00",
       "step": "review"
     }
   ],
