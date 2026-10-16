@@ -78,7 +78,7 @@ def snapshot(url):
 
 
 def fix(repo, slug):
-    started = repo.forge("fix", "start", f"Readers see {slug}", "--done", "The board agrees", "--slug", slug)
+    started = repo.forge("fix", "start", f"Readers see {slug}", "--done", "The board agrees", "--slug", slug, "--kind", "backend")
     assert started.returncode == 0, started.stderr
     return worktree(repo, f"fix/{slug}")
 
