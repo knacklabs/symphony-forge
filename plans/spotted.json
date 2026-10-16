@@ -320,6 +320,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each\twindows-accept-body",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 70,
+      "text": "Not done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each",
+      "from": "blocking",
+      "item": "windows-accept-body",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: the owner-accept test passes in the 12-group every-platform suite\twindows-accept-body",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
