@@ -172,25 +172,31 @@ def test_the_events_stream_says_changed_after_a_commit(client):
 
 
 def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_path):
+    """The teammate gives the story to a developer with the plan's Owner line, as `forge assign`
+    writes it. After the server's own fetch the story and its parts show the owner, and an
+    unrelated change later keeps them: the story's rows come from the cache with their owner."""
     teammate = clone(client, tmp_path)
-    plan = DOC.replace("| User-facing |\n|---|---|---|---|---|---|---|---|",
-                       "| User-facing | Developer |\n|---|---|---|---|---|---|---|---|---|")
-    plan = re.sub(r"^(\| (SAVE|SHOW|SHARE) \|.*\|)$", r"\1  |", plan, flags=re.M)
-    pushed(teammate, "Plan a basket", {"plans/SHOP.md": plan, ".factory/stories/SHOP/story.json": json.dumps(
+    pushed(teammate, "Plan a basket", {"plans/SHOP.md": DOC, ".factory/stories/SHOP/story.json": json.dumps(
         {"doc": "plans/SHOP.md", "title": "Shoppers can save a basket", "status": "approved"})})
     client.git("fetch", "-q", "origin")
+
+    def story(url):
+        return next(row for row in snapshot(url)["items"] if row["id"] == "SHOP")
+
     with live(client, FORGE_BOARD_FETCH_WAIT="1") as url:
-        assert not [row for row in snapshot(url)["items"] if row["id"] == "SHOP" and row["children"]]
-        pushed(teammate, "Give the basket to page-dev", {"plans/SHOP.md": plan.replace(
-            "`tests/test_basket.py` | none | no |  |", "`tests/test_basket.py` | none | no | page-dev |")})
+        assert story(url)["owner"] is None and not story(url)["children"]
+        pushed(teammate, "Give the basket to page-dev", {"plans/SHOP.md": DOC.replace(
+            "## Tasks\n", "## Tasks\n\nOwner: page-dev\n", 1)})
         deadline = time.monotonic() + 60
-        while time.monotonic() < deadline:
-            story = next(row for row in snapshot(url)["items"] if row["id"] == "SHOP")
-            if [part["developer"] for part in story["children"]] == ["page-dev"]:
-                break
+        while (shown := story(url))["owner"] != "page-dev" and time.monotonic() < deadline:
             time.sleep(0.5)  # waiting for the server's own fetch, which the test cannot trigger
-        else:
-            pytest.fail(f"The teammate's assignment never showed: {story}")
+        assert shown["owner"] == "page-dev", shown
+        assert {part["owner"] for part in shown["children"]} == {"page-dev"}, shown["children"]
+        fix(client, "elsewhere")
+        after = snapshot(url)
+        assert "SHOP" not in after["snapshot"]["rows_rebuilt"] and "elsewhere" in after["snapshot"]["rows_rebuilt"]
+        kept = next(row for row in after["items"] if row["id"] == "SHOP")
+        assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
 
 
 def test_the_page_shell_crosses_the_board_interfaces(client):

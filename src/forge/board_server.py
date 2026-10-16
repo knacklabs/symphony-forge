@@ -37,7 +37,7 @@ TYPES = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 # Files the derivation itself writes under Forge's folder; watching them would rebuild forever.
-WRITTEN = re.compile(r"(-cache\.json|\.tmp|\.new|board\.html)$")
+WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|\.tmp|\.new|board\.html)$")
 # ponytail: the tests' seam, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 TICK = 1.0  # seconds between the events stream's input checks

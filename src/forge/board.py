@@ -329,6 +329,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             return "blocked", assignments
 
     forge_files = repo.forge_dir(top)
+    # Every row shows names from this one map, so a change to it rebuilds every row.
+    people = "" if cache is None else repo.blob_hash(json.dumps(sorted(map(str, names.items()))))
     files = [] if cache is None else [  # Forge's per-item records: locks, turn logs, approvals
         (path.relative_to(forge_files).as_posix(), path.stat().st_mtime_ns)
         for path in forge_files.rglob("*") if path.is_file()]
@@ -342,7 +344,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         own = item.split("/")[0]
         inputs = json.dumps([
             item, kind, title, state, str(where), tips.get(str(where)), tips.get(landed),
-            completed.get(own), starters.get(repo.state_path(item)),
+            completed.get(own), _starters(top).get(repo.state_path(item)), people,
+            [(branch, pr) for branch, pr in people_branches.items() if own in branch],
             [(ref, tip) for ref, tip in tips.items() if own in ref],
             [(branch, pr) for branch, pr in by_branch.items() if own in str(branch)],
             [rel for rel in merged if own in rel], [(rel, at) for rel, at in history["dates"].items() if own in rel],
@@ -352,7 +355,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             [f for f in files if own in f[0]]], sort_keys=True, default=str)
         kept = cache["rows"].get(item)
         if kept and kept[0] == inputs:
-            made, ready, waits = copy.deepcopy(kept[1])
+            made, ready, waits, owner = copy.deepcopy(kept[1])
+            if owner is not None:  # the story's owner, which its unstarted parts read after the rows
+                owners.setdefault(own, owner)
             now = _when(repo.now())
             if made["idle_since"] and now and _when(made["idle_since"]):
                 made["idle_seconds"] = max(0, (now - _when(made["idle_since"])).total_seconds())
@@ -363,7 +368,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             cache["rebuilt"].append(item)
             # A running row's times move with the clock, so it is derived again each time.
             running = made["worker"] or made["tests"] or made["activity"]["status"] == "running"
-            cache["rows"][item] = None if running else (inputs, copy.deepcopy([made, ready, waits]))
+            kept = [made, ready, waits, owners.get(own)]
+            cache["rows"][item] = None if running else (inputs, copy.deepcopy(kept))
         if ready is not None:
             readiness[item] = ready
         if waits is not None:
