@@ -467,6 +467,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
                 stages[-1]["elapsed"] = elapsed(live[0].get("at"))
+        # The initial close has no worker turn yet (stored as zero); people count from one.
+        if round_number is not None:
+            round_number = max(1, round_number)
+        if worker and worker.get("round") is not None:
+            worker["round"] = max(1, worker["round"])
         stage, receipt = (nextstep._item_readiness(item, state, top, checks, runs=active, pr=pr)
                           if kind != "story" else (state.get("status"), {}))
         if kind == "story" and not finished:
@@ -561,7 +566,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                     top, item, state, stage, pr, readiness.get(item, {}).get("blocker")))),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
-                          "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
+                          "review": {"status": "running"} if any(e.get("kind") == "review" for e in active) else
+                              {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
                               {"status": "clean" if review else "none"}, "ci": ci},
                 "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,

@@ -37,11 +37,13 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await clock.advance(15000)
     const drawn = JSON.stringify(await ui.drawn())
     const command = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 100 } })
-    // The breakdown and round lines live on the board page; the pane names the current stage only.
+    // The board page owns history; the pane shows current stages and the total.
     for (const visible of [drawn, command.text ?? '']) {
       expect(visible).toContain('Keep the basket')
-      expect(visible).toContain('Review running · under a minute')
-      for (const hidden of [round, 'Building 10s', 'unknown', 'total']) expect(visible).not.toContain(hidden)
+      expect(visible).toContain('Review running · round 1 · 15s')
+      expect(visible).toContain('Build → Tests → Review ● 15s → CI → Merge')
+      expect(visible).toContain('Total 30s')
+      for (const hidden of [round, 'Building 10s', 'unknown', '0 open findings']) expect(visible).not.toContain(hidden)
     }
   })
 }
