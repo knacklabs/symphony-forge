@@ -19,8 +19,8 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
     # Main's full run only, not the merge gate: groups ran past 10 minutes (Linux, macOS)
     # and 18 of 20 (Windows) on 12 October, so the limits leave room for the suite to grow.
     # macOS groups then ran 15 to 19 minutes of tests plus setup, so macOS gets 30.
-    ("ubuntu-latest", 3, 20),
-    ("macos-latest", 6, 30),
+    ("ubuntu-latest", 5, 20),
+    ("macos-latest", 9, 30),
     ("windows-latest", 12, 45),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes, tmp_path):
