@@ -160,11 +160,11 @@
     "id": "14a46370-c8c9-4511-904a-8474e6062158",
     "status": "clean"
   },
-  "round": 8,
+  "round": 9,
   "settled_areas": [
     "close() in src/forge/close.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
@@ -211,12 +211,10 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "1f5d9438-2401-42c6-8fcd-5502a05ecf30",
-    "head": "caf73c279d7a74859636d84b96022c50060dd8b6",
-    "keys": {
-      "the review finding \"Not done: narrow and split choices leave a fix's builder plan unchanged\" in src/forge/task.py": 1
-    },
-    "round": 7
+    "close": "a9b46ab9-01b0-43b7-9540-a5654ebb7c4c",
+    "head": "0b70f43cd3e1bcd7353acd96aecec2cb33e5021e",
+    "keys": {},
+    "round": 8
   },
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
   "worker": "codex"
