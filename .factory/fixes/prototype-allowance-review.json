@@ -1,6 +1,13 @@
 {
   "base": "ff7cfd0caa6f9cf53e8f8bd2df3cb0986d4446e3",
   "branch": "fix/prototype-allowance-review",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14657-164a-74a3-8695-be3a4d272ecc",
+    "head": null,
+    "start": "a379b647dc6b28e74d1ecf9c6a5c40d9b5aac8aa"
+  },
   "done_when": "A prototype fix's review prompt says the Prototype before sign-off allowance is recorded by Forge and covers any size and interface changes, and no longer asks the reviewer to check that allowance against the diff; other allowances keep the check; a test proves both",
   "fix_kind": "mechanical",
   "kind": "fix",
