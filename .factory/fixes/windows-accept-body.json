@@ -3,12 +3,20 @@
   "branch": "fix/windows-accept-body",
   "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T02:31:55.048820+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows, the full suite fails the owner-accept test: the last pull request body close publishes has no dismissed findings, so v1.2.13 cannot ship"
+  "stuck": {
+    "close": null,
+    "head": "4918fb2184f4819f641481bb999ddffc85630eb2",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows, the full suite fails the owner-accept test: the last pull request body close publishes has no dismissed findings, so v1.2.13 cannot ship",
+  "worker": "codex"
 }
