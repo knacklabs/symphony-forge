@@ -4,6 +4,11 @@
       "at": "2026-10-16T05:35:54.466041+00:00",
       "because": "The owner chose on 2026-10-16 to split the Windows suite into 12 groups: four of 8 groups hit the 45-minute limit at about 95% with no failure, which blocks proving this fix",
       "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite"
+    },
+    {
+      "at": "2026-10-16T09:08:46.619136+00:00",
+      "because": "The owner narrowed this fix on 2026-10-16: it proves its own tests on every platform and the new group counts; a Windows-only known-issues test failure from another change gets its own fix",
+      "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and every Windows group of that suite finishes inside its 45-minute limit (12 groups)"
     }
   ],
   "base": "d5a5186a5dc12e5f9232e6f122802ab5ff14e591",
@@ -15,7 +20,7 @@
     "head": null,
     "start": "ccae4095b1e420d33cbc8764814b191704072a51"
   },
-  "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and every Windows group of that suite finishes inside its 45-minute limit (12 groups)",
+  "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py and the line-ending dismissal test pass on Windows, macOS and Linux in the every-platform suite, and the suite runs in 5 Linux, 9 macOS and 12 Windows groups, each inside its time limit",
   "flagged": [
     ".github/workflows/forge-next.yml",
     "tests/test_dismissals_survive_line_ending_changes.py"
