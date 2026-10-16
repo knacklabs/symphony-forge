@@ -9285,6 +9285,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_sync_preserves_task_pin.py\tNot done: test that task-worktree sync preserves an older Forge pin\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "tests/test_sync_preserves_task_pin.py",
+      "line": 18,
+      "text": "Not done: test that task-worktree sync preserves an older Forge pin",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_tools_native_work.py\tNot done: Codex fixer handout and land proof\tFORGE-TOOLS-1/WORK",
       "kind": "bug",
       "path": "tests/test_tools_native_work.py",

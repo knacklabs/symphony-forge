@@ -29,7 +29,8 @@
   "flagged": [
     "src/forge/close.py",
     "src/forge/review.py",
-    "src/forge/task.py"
+    "src/forge/task.py",
+    "tests/test_sync_preserves_task_pin.py"
   ],
   "kind": "fix",
   "known": [
@@ -143,33 +144,46 @@
       "gain": 3,
       "harm": 3,
       "line": 435,
-      "outcome": "open",
+      "outcome": "fixed in round 9",
       "reason": "",
       "round": 8,
       "security": false,
       "title": "A new ready pull request has no dated merge wait on other machines",
       "work": 2
+    },
+    {
+      "area": "test_4_sync_in_a_task_worktree_preserves_the_forge_pin() in tests/test_sync_preserves_task_pin.py",
+      "file": "tests/test_sync_preserves_task_pin.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 18,
+      "outcome": "open",
+      "reason": "",
+      "round": 9,
+      "security": false,
+      "title": "Not done: test that task-worktree sync preserves an older Forge pin",
+      "work": 1
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a4a91e934b2bea86b20767a59d2d6d412ba168746172b01f8382732250f6c6ee",
-    "changed": "c548cc4379e6bf08d77f0d231a3fdbcc2bed79648902515e5e7c49940a7a624f",
-    "commit": "6fada3ca6a2a9f5264b96f099fc4194fd13563ee",
+    "branch_diff": "b7b7322c743de2a8a61a48e43e0038ba5d78c28143e6d21ec5124f1e6973b604",
+    "changed": "a6d8605e80db87673760e61756ff03a96719acc7bf9c9497063bdad659ec2ddc",
+    "commit": "20008b5d506e212c4cd16346e01bd6eac456676a",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 Close publishes a new pull request here, then records the owner's merge wait only after checks pass (`src/forge/close.py:465-467`). The one-publication guard leaves that wait out of the PR body. On another machine, `nextstep.person_waits` falls back to an undated merge wait (`src/forge/nextstep.py:913-916`), so Needs you cannot show its duration or place it correctly among dated waits. The changed board tests call close a second time before checking the shared view (`tests/test_board_needs_you.py:96-99`, `tests/test_board_counts.py:170-175`), although a normal first close already reports the PR ready.",
-        "file": "src/forge/close.py",
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test \u2014 The test sets the pin to the version of the Forge executable under test for both new and adopted clients. It would still pass if sync incorrectly rewrote forge.toml to that executable's version, so it does not prove the promised pin preservation during an upgrade. It also omits the named Forge-source repo case.",
+        "file": "tests/test_sync_preserves_task_pin.py",
         "gain": 3,
-        "harm": 3,
-        "line": 435,
+        "harm": 2,
+        "line": 18,
         "priority": "P1",
-        "title": "A new ready pull request has no dated merge wait on other machines",
-        "work": 2
+        "title": "Not done: test that task-worktree sync preserves an older Forge pin",
+        "work": 1
       }
     ],
-    "id": "4755b6cf-0196-4ad0-a214-e830783db1b2",
+    "id": "473a1ee9-a0bd-4418-9d34-9707f5f28d15",
     "status": "blocked"
   },
   "round": 10,
@@ -213,6 +227,10 @@
     },
     {
       "at": "2026-10-16T10:19:38.032098+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T16:01:00.623436+00:00",
       "step": "review"
     }
   ],
