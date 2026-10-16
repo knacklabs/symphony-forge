@@ -294,7 +294,7 @@ def start(args: argparse.Namespace) -> None:
         story.parse(text, repo.root(), key=key)
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
-    design_folder = design.check(top, text, source)
+    design_folder = design.check(top, text, source, required=False)
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)

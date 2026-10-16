@@ -188,7 +188,7 @@ def close(args: argparse.Namespace) -> int:
         _refresh_record(top, item, state, pr)
     if "/" in item:
         key = item.split("/")[0]
-        design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD")
+        design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
     if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
         excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]

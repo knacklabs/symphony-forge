@@ -2,10 +2,12 @@
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
 
+from conftest import FORGE_SHIM, _install
 from test_story import DOC, claude_plan, hook, new_story, setup
 from test_setup import _fresh_client
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
@@ -13,6 +15,34 @@ from test_conflicting_pull_requests_stop_check_waits import _publish_default
 STORY = "FORGE-PACE-1"
 ROOT = Path(__file__).resolve().parents[1]
 SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"><text x="20" y="40">Basket</text></svg>\n'
+
+
+def test_24_pre_upgrade_user_facing_approval_still_starts(repo, tmp_path, claude_payload):
+    # An actual earlier reader and approval hook own this historical approval. Task admission
+    # must retain it without silently applying the new design contract to existing work.
+    setup(repo)
+    folder = new_story(repo, "SHOP")
+    legacy = "\n".join(line for line in DOC.split("\n") if not line.startswith("Design:"))
+    (folder / "plans/SHOP.md").write_text(legacy, encoding="utf-8")
+    earlier = tmp_path / "earlier-release/src"
+    shutil.copytree(ROOT / "src/forge", earlier / "forge", ignore=shutil.ignore_patterns("__pycache__"))
+    for name in ("story.py", "approval.py"):
+        shutil.copyfile(ROOT / "tests/fixtures/forge-v1.2.2/src/forge" / name,
+                        earlier / "forge" / name)
+    _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(earlier)))
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 0, read.stdout + read.stderr
+    approved = hook(repo, claude_plan(claude_payload, legacy))
+    assert approved.returncode == 0, approved.stdout + approved.stderr
+    _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
+    started = repo.forge("task", "start", "SHOP/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+    shown = repo.forge("next")
+    assert shown.returncode == 0, shown.stderr
+    assert "needs its design" not in shown.stdout and "no screen images" not in shown.stdout
+    # The next actual plan read adopts the new contract; passive status checks do not.
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 1 and "needs its design" in read.stderr, read.stdout + read.stderr
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])

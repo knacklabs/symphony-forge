@@ -665,7 +665,7 @@ def check_read(target: str, top: Path | None = None) -> None:
     rel = _rel(top, doc)
     if is_story:
         _parsed(_text(doc), rel)
-        design.check(top, _text(doc))
+        design.check(top, _text(doc), required=False)
     gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
 
 

@@ -104,6 +104,10 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     branch (with a stub reader and the client's accepted sign-off), then send the hook a completed
     ExitPlanMode showing that doc."""
     top = cwd or repo.path
+    if f"Design: docs/design/baskets/ ({DESIGN_TREE})" in key_doc:
+        image = top / "docs/design/baskets/screen.svg"
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_text(DESIGN_IMAGE, encoding="utf-8")
     toml = top / "forge.toml"
     if "models.grill" not in toml.read_text("utf-8"):
         toml.write_text(toml.read_text("utf-8") + 'models.grill.claude = { model = "opus", effort = "high" }\n',

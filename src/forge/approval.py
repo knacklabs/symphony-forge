@@ -90,7 +90,7 @@ def waiting_digest(key: str, top: Path) -> str | None:
     digest = story.approval_hash(text)
     if (state.get("approval") or {}).get("hash") == digest:
         try:
-            design.check(top, text)
+            design.check(top, text, required=False)
         except (repo.Refused, ValueError):
             return digest
         return None
@@ -129,6 +129,7 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     story_used = repo.forge_dir(path) / "approvals" / marker
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
+    design.check(path, (path / "plans" / f"{key}.md").read_text(encoding="utf-8"))
     story.check_read(key, path)
     if repo.is_prototype(path):
         repo.refuse(REFUSALS["no_signoff"])
