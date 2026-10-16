@@ -79,6 +79,8 @@ def test_25_failed_earlier_review_keeps_retry_ordinal_and_unseen_findings_unknow
     env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     stamp.write_text(PIN + "\n", "utf-8")
     monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=30)).isoformat())
+    # An existing PR receives the complete retry history after CI in one body write.
+    env.open_pr("", draft=True)
     env.reviews(CLEAN if mechanical else blocked(finding("P1", "Greeting disappears")))
     retried = env.close(item)
     assert retried.returncode == (0 if mechanical else 1), retried.stdout + retried.stderr
