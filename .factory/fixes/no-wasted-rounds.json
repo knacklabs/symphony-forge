@@ -121,7 +121,7 @@
     "id": "3f74d1ac-1c34-4ade-a9d4-d52912696fac",
     "status": "clean"
   },
-  "round": 5,
+  "round": 6,
   "settled_areas": [
     "close() in src/forge/close.py"
   ],
@@ -160,12 +160,12 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "10e3579b-5eb6-45f4-9960-93aab176b329",
-    "head": "117e05df595109b89475e9af55dd5d71b2553c15",
+    "close": "8fec4007-afa3-4116-b218-6d1debddc4e0",
+    "head": "b361103fc7804d06f5c0bc8739cad186d3d6e04d",
     "keys": {
-      "the review finding \"An ordinary documentation edit can bypass the owner's second-round question\" in src/forge/review.py": 1
+      "close's tests failing": 1
     },
-    "round": 4
+    "round": 5
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest d5a5186a5dc12e5f9232e6f122802ab5ff14e591` exited with status 1 on this machine.\n        assert first.returncode == 1 and old[\"title\"] in first.stderr, first.stdout + first.stderr\n\n        # The deletion-only hunk has no new lines; its preceding anchor remains unchanged.\n        # This guards an existing diff-boundary rule, not a claimed pre-fix deletion defect.\n        repaired = (\"save = False\\nlegacy = True\\n\" if case == \"deletion\"\n                    else \"save = True\\n\\nlegacy = True\\n\")\n        env.commit(where, \"app.py\", repaired, \"Repair saving\")\n        if case == \"deletion\":\n            diff = env.repo.git(\"diff\", \"--unified=0\", reviewed, \"HEAD\", \"--\", \"app.py\", cwd=where)\n            assert \"@@ -2 +1,0 @@\" in diff and \"-bad = True\" in diff\n        new = (old if case == \"unresolved\" else finding(\n            \"P1\", \"Saving still ignores quantity\" if case in (\"changed\", \"deletion\") else \"Legacy output is wrong\",\n            line=1 if case in (\"changed\", \"deletion\") else 3))\n        if case in (\"security\", \"data-loss\"):\n            new[\"body\"] += \"\\nRaise: \" + (\"Security\" if case == \"security\" else \"Data loss\")\n        if case in (\"security-category\", \"data-loss-category\"):\n            new[\"category\"] = \"security\" if case == \"security-category\" else \"data_loss\"\n            new[\"body\"] = \"Gain 2, Work 5, Harm 1\\nThe category identifies the protection gap.\"\n            assert \"Raise:\" not in new[\"body\"]\n        env.reviews(blocked(new))\n        closed = env.close(item)\n        assert len(env.review_calls()) == 2, closed.stdout + closed.stderr\n        if case in (\"unchanged\", \"deletion\"):\n            assert closed.returncode == 0, closed.stdout + closed.stderr\n>           shown = body(env.gh_calls(\"pr\", \"edit\")[-1])\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           IndexError: list index out of range\n\ntests/test_reviews_converge_on_changed_lines.py:84: IndexError\n10 failed, 364 passed in 1426.70s (0:23:46)",
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
