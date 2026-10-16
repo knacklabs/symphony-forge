@@ -24,8 +24,9 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FORGE-BOARD-3"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-def test_4_board_lists_kept_review_problems_since_adoption(unsynced_up, monkeypatch, previous):
+@pytest.fixture(params=[False, True], ids=["new-client", "earlier-adoption"])
+def kept_history(unsynced_up, monkeypatch, request):
+    previous = request.param
     up, env = unsynced_up, unsynced_up.env
     repo = env.repo
     repo.git("config", "core.hooksPath", (up.tmp / "no-hooks").as_posix())
@@ -105,6 +106,11 @@ if args and args[0] == "api" and any("/pulls?" in arg for arg in args):
     if previous:
         upgraded = up.run(RELEASE)
         assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    return repo, known, item
+
+
+def test_4_board_lists_kept_review_problems_since_adoption(kept_history):
+    repo, known, item = kept_history
     issues = board(repo)["known_issues"]
     assert {row["title"] for row in issues} == {
         "Add another example", "Keep the short wording", "Explain short greetings", "Older greeting has no example"}
@@ -120,3 +126,22 @@ if args and args[0] == "api" and any("/pulls?" in arg for arg in args):
         assert (row["item"], row["file"], row["line"], row["kept"]) == (item, "greeting.py", line, kept)
         assert tuple(row[field] for field in ("gain", "work", "harm")) == scores
         assert row["reason"], row
+
+
+def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path):
+    # A minute-cache regression would preserve the JSON but repeat every network
+    # fetch. Trace real Git to observe that distinct board-refresh contract.
+    repo, _, _ = kept_history
+    fetches = []
+    for seconds in (0, 61):
+        trace = tmp_path / f"git-{seconds}.jsonl"
+        monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=seconds)).isoformat())
+        monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
+        issues = board(repo)["known_issues"]
+        assert any(row["item"] == "old-greeting" for row in issues)
+        events = [json.loads(line) for line in trace.read_text("utf-8").splitlines()]
+        fetches.append([event["argv"] for event in events if event.get("event") == "start"
+                        and "fetch" in event.get("argv", [])
+                        and "refs/pull/11/head" in event["argv"]])
+    assert len(fetches[0]) == 1, fetches
+    assert fetches[1] == [], fetches

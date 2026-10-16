@@ -1,5 +1,6 @@
 """Kept review findings from landed lists and original, pre-squash review history."""
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,43 @@ def _rows(item: str, known: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "below the review's blocking level")
         rows.append({"item": item, **{field: entry.get(field) for field in (
             "file", "line", "title", "gain", "work", "harm")}, "kept": kept, "reason": reason})
+    return rows
+
+
+def _pull(top: Path, pr: dict[str, Any]) -> list[dict[str, Any]]:
+    """A merged pull request's evidence is immutable; keep even an empty result."""
+    cache = repo.forge_dir(top) / f"known-issues-pr-{pr['number']}.json"
+    try:
+        return json.loads(cache.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    fetched = repo.run("git", "fetch", "-q", "--no-tags", "origin",
+                       f"refs/pull/{pr['number']}/head", cwd=top)
+    fetched.check_returncode()
+    head = repo.git("rev-parse", "FETCH_HEAD", cwd=top)
+    identity = backfill._identity(top, head, pr["headRefName"])
+    rows = []
+    if identity is not None:
+        item, state = identity
+        known = state.get("known")
+        if known is None:
+            starts = repo.git("log", "--reverse", "--diff-filter=A", "--format=%H", head,
+                              "--", repo.state_path(item), cwd=top).splitlines()
+            if not starts:
+                raise ValueError("The item's start commit could not be read")
+            known = []
+            for number, result in enumerate(review._history(
+                    top, item, starts[0], state.get("review") or {}, ref=head), 1):
+                score.remember(known, result, number, {})
+        rows = _rows(item, known)
+    temp = cache.with_suffix(f".{os.getpid()}.tmp")
+    try:
+        temp.write_text(json.dumps(rows), encoding="utf-8")
+        os.replace(temp, cache)
+    except OSError:
+        pass  # A read-only Git directory must not prevent a view.
+    finally:
+        temp.unlink(missing_ok=True)
     return rows
 
 
@@ -50,27 +88,7 @@ def collect(top: Path, states: dict[str, dict[str, Any]]) -> list[dict[str, Any]
             if any(state.get("branch") == pr["headRefName"] for item, state in states.items() if item in saved):
                 continue
             try:
-                fetched = repo.run("git", "fetch", "-q", "--no-tags", "origin",
-                                   f"refs/pull/{pr['number']}/head", cwd=top)
-                fetched.check_returncode()
-                head = repo.git("rev-parse", "FETCH_HEAD", cwd=top)
-                identity = backfill._identity(top, head, pr["headRefName"])
-                if identity is None:
-                    continue
-                item, state = identity
-                if item in saved:
-                    continue
-                known = state.get("known")
-                if known is None:
-                    starts = repo.git("log", "--reverse", "--diff-filter=A", "--format=%H", head,
-                                      "--", repo.state_path(item), cwd=top).splitlines()
-                    if not starts:
-                        continue
-                    known = []
-                    for number, result in enumerate(review._history(
-                            top, item, starts[0], state.get("review") or {}, ref=head), 1):
-                        score.remember(known, result, number, {})
-                rows.extend(_rows(item, known))
+                rows.extend(_pull(top, pr))
             except (subprocess.CalledProcessError, ValueError, KeyError, OSError):
                 return None  # Keep the last complete read and retry when GitHub is reachable.
         return rows
