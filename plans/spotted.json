@@ -3290,6 +3290,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/known_issues.py\tNot done: tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known pen_\twindows-known-issues",
+      "kind": "bug",
+      "path": "src/forge/known_issues.py",
+      "line": 75,
+      "text": "Not done: tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known pen_",
+      "from": "blocking",
+      "item": "windows-known-issues",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/land.py\tLand can close an unreturned fix round after its session ends\tFORGE-TOOLS-1/WORK",
       "kind": "bug",
       "path": "src/forge/land.py",
