@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-16T17:15:04.865059+00:00
-seconds: 187.307
-read_hash: 62dab3d4e997295b342f45549a95ee369c9423bf
-round: 6
+read_at: 2026-10-16T18:41:52.857282+00:00
+seconds: 115.237
+read_hash: f30d47e68f274be1c08d7a16e0bb2851020b578b
+round: 7
 passed: no
-doc_seen: 62dab3d4e997295b342f45549a95ee369c9423bf
+doc_seen: f30d47e68f274be1c08d7a16e0bb2851020b578b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 51feddcffbfd57e22f4c7127f9ef19e89f265b89
+notes_seen: 7cd2d6b62632bf2ead140df2f52551c0a094f33a
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13ef6-7126-7692-8ac4-4f759a6cdc3a
 session:
-blocked_rounds: 2
+blocked_rounds: 3
 loop_choice:
 loop_reason:
 ---
@@ -147,3 +147,9 @@ No findings.
     Gain 5, Work 2, Harm 3
 
    Disposition: cut
+
+## Round 7
+
+20. Blocking: A canvas content mismatch now sends the user to request a working build.
+    Raise: Functional. The new “otherwise” at `plans/FORGE-PACE-1.md:105–107` applies both to app-code changes and to a mismatched canvas tree id. Revising the canvas while sign-off is pending therefore produces `forge decision new prototype-build` even when no app code exists. That command creates a separate decision (`src/forge/records.py:218–226`); it does not repair the signed-design reference. The prescribed recovery cannot resolve this normal canvas-sign-off failure.
+    Gain 3, Work 2, Harm 2
