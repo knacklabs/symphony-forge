@@ -65,6 +65,7 @@
     "id": "237c8a95-a952-4853-93cc-83aa9d334244",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -76,5 +77,15 @@
       "step": "review"
     }
   ],
-  "why": "The strict sign-off review sends files marked linguist-generated (images, videos) to Autoreview, which refuses binary media, so sign-off cannot run in a repo with brand videos"
+  "stuck": {
+    "close": "07abb8b7-363e-478a-b061-bf5b1cc674a4",
+    "head": "08914eac10f8473292bbada781394006b6e568e8",
+    "keys": {
+      "the review finding \"Cover generated-file sign-off in new and earlier-adopted client repos\" in tests/test_signoff_hides_generated_files.py": 1,
+      "the review finding \"Not done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it\" in tests/test_signoff_hides_generated_files.py": 1
+    },
+    "round": null
+  },
+  "why": "The strict sign-off review sends files marked linguist-generated (images, videos) to Autoreview, which refuses binary media, so sign-off cannot run in a repo with brand videos",
+  "worker": "codex"
 }
