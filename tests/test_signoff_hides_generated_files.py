@@ -37,14 +37,18 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
                         dirs_exist_ok=True)
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Client adopted on an earlier release")
+        # Model the upgrade's release pin before running the installed release.
+        # The fixture has no installed Git hooks until sync below.
+        config = repo.path / "forge.toml"
+        version = repo.forge("--version").stdout.split()[-1]
+        config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
+                          encoding="utf-8")
+        repo.git("add", "forge.toml")
+        repo.git("commit", "-qm", "Select the upgraded Forge release")
         started = repo.forge("fix", "start", "Upgrade Forge", "--done", "Sign-off works after upgrade",
                              "--kind", "mechanical")
         assert started.returncode == 0, started.stdout + started.stderr
         fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
-        config = fix / "forge.toml"
-        version = repo.forge("--version").stdout.split()[-1]
-        config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
-                          encoding="utf-8")
         synced = repo.forge("sync", cwd=fix)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         repo.git("add", "-A", cwd=fix)
