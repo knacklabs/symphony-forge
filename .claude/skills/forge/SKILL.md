@@ -28,6 +28,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec |
 | "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
+| "Give this story or part to a developer" | `forge assign <KEY or KEY/TASK> <login>` |
 | "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
 | "Name this fix" | `forge fix start "<why>" --done "<done when>" --slug <name>` |
 | "Change this fix's Done-when" | `forge fix amend <fix> --done "<done when>" --because "<why>"` |
@@ -1450,18 +1451,24 @@ and leaves the work local: teammates cannot see that claim until its branch is p
 New repos get this at init; existing repos get it when upgraded and synced, including repos
 adopted on an earlier release.
 
-A story's Tasks table may have an optional Developer column containing a GitHub username.
-The lead adds or changes assignments below For the builders without another approval.
-`forge next` offers ready parts assigned to the caller's GitHub login, plus unassigned parts.
-Someone else may start an assigned part: task start goes ahead and names its assigned
-developer in a warning. Both boards show assignments alongside the starter and approver,
-including assigned parts not started yet. Documents without Developer work as before.
+Use `forge assign <KEY> <login>` to give a story to a developer by GitHub username.
+Use `forge assign <KEY/TASK> <login>` to give one part to a developer.
+The command writes the story's `Owner:` line or the part's Developer cell.
+It commits the plan on the story branch and pushes that branch.
+If the story has no plan, the command refuses and says to plan it first.
+
+After `git fetch origin`, `forge next` reads assignments from the remote story branch.
+For that developer, it offers assigned ready parts first, then unassigned parts.
+A part's Developer cell overrides the story's Owner.
+Someone else can start an assigned part. Task start names its assigned developer in a warning.
+The board JSON carries `owner` for each story and part, including parts not started yet.
+The lead can change assignments below For the builders without another approval.
 After fetching, teammates can discover the published story before its first part merges.
 If publishing its approval failed, the approved plan on the default branch after its first
 part merges takes precedence over the story's initial published draft.
 Next, start and both boards reconcile published assignments with local builder edits;
 a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
-This column is the only assignment record; there is no other assignee field or roster.
+The plan's Owner line and Developer cells are the assignment records. There is no separate roster.
 
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
 keep other ready work moving while that work finishes. Run `forge next` after each merge to

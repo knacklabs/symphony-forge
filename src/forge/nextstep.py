@@ -19,7 +19,7 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
                    score, task, time_records, upgrade)
-from forge.task import _started, developer, github_login, stack_base, start_base, waits_for
+from forge.task import _started, developer, github_login, owner, stack_base, start_base, waits_for
 
 COMMANDS = [
     {
@@ -221,14 +221,28 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             and branch not in prs
             for rel, state in history["states"].items()):
         merged_prs.update(board_facts.merged_before_weeks(top))
+    story_lines, unassigned_starts = [], []
     for key, (path, state, text) in sorted(stories.items()):
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
         found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
-        lines += found
+        assignments = {f"{key}/{tid}": developer(row) or owner(text)
+                       for tid, row in task.rows(task.sections(text)).items()}
+        ready = {line: assignments.get(match[1]) for line in found
+                 if (match := re.match(r"Next: forge task start (\S+)(?:\s|$)", line))}
+        login = github_login(top) if any(ready.values()) else None
+        mine = bool(login and any(assigned and assigned.casefold() == login.casefold()
+                                 for assigned in ready.values()))
+        if mine:
+            unassigned_starts += [line for line, assigned in ready.items() if not assigned]
+            found = [line for line in found if line not in ready or ready[line]]
+        story_lines.append((not mine, found))
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
+    for _, found in sorted(story_lines, key=lambda entry: entry[0]):
+        lines += found
+    lines += unassigned_starts
     for branch, path in sorted(trees.items()):
         kind, _, name = branch.partition("/")  # forge/<name> is migrate's fix
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
@@ -574,11 +588,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             except repo.Refused as error:
                 stack_waits += str(error).splitlines()
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == [] or task["id"] in stacked]
-    if any(developer(task) for task in doc["tasks"] if task["id"] in ready):
+    assignments = {row["id"]: developer(row) or owner(text) for row in doc["tasks"]}
+    if any(assignments[name] for name in ready):
         login = github_login(top)
         if login:
-            ready = [task["id"] for task in doc["tasks"] if task["id"] in ready
-                     and (not (assigned := developer(task)) or assigned.casefold() == login.casefold())]
+            ready = [name for name in ready
+                     if not assignments[name] or assignments[name].casefold() == login.casefold()]
+            ready.sort(key=lambda name: not assignments[name])
     waiting = (stack_waits if _report_config(top, refusals)["stack"] == "on" else
                [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                 if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)])
