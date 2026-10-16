@@ -58,7 +58,7 @@ def _ok(done) -> str:
 
 def _fix(repo, why: str):
     """Start a real fix and return its worktree."""
-    started = _ok(repo.forge("fix", "start", why, "--done", "It is recorded"))
+    started = _ok(repo.forge("fix", "start", why, "--done", "It is recorded", "--kind", "mechanical"))
     path = Path(started.splitlines()[0].rsplit(" in ", 1)[1])
     (path / "docs/specs").mkdir(parents=True, exist_ok=True)
     return path
