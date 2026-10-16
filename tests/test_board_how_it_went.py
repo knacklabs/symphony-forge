@@ -3,6 +3,7 @@
 Audit: existing time tests keep one machine's logs. These command tests protect
 cross-machine reconciliation, overlapping story time and human-readable rounding.
 Only GitHub and review reports are faked; no Forge helper is imported.
+New plan reads use src/forge/story.py before the approval and time history starts.
 """
 import json
 import re

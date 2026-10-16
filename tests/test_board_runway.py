@@ -1,5 +1,6 @@
 """The board page below the first screen: one key line, every story and fix in one order, done
-work folded away, all from the same derivation as `forge board --json`."""
+work folded away, all from the same derivation as `forge board --json`.
+New plan reads use src/forge/story.py before those plans appear on the board."""
 import json
 import re
 import subprocess
