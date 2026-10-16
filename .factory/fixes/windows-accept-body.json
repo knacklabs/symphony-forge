@@ -9,13 +9,29 @@
     "start": "ccae4095b1e420d33cbc8764814b191704072a51"
   },
   "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3d29884622a7be4cb5cfff1ee527740e5d2f45b45b54477649f1a4d373f0c586",
+    "changed": "0be15266e53222afc2091d099e1f286e95b2573bcfcff573c02b5ca4b98f2317",
+    "commit": "7bbdb684287b8a8b6d03a19e42fdde4021c94cd7",
+    "dismissals": [],
+    "findings": [],
+    "id": "93dde490-c54c-47f9-8db4-c56da5bcdd3a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T02:31:55.048820+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-16T02:41:24.726463+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
