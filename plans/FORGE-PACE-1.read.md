@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-16T16:07:43.788578+00:00
-seconds: 314.711
-read_hash: 1fd9618c0db726ec7d83a8f5a8c636430e43ee68
-round: 5
+read_at: 2026-10-16T17:15:04.865059+00:00
+seconds: 187.307
+read_hash: 62dab3d4e997295b342f45549a95ee369c9423bf
+round: 6
 passed: no
-doc_seen: 1fd9618c0db726ec7d83a8f5a8c636430e43ee68
+doc_seen: 62dab3d4e997295b342f45549a95ee369c9423bf
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: b2876d395f3d5846b9cea9cbd4f5e6fccac70583
+notes_seen: 51feddcffbfd57e22f4c7127f9ef19e89f265b89
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13ef6-7126-7692-8ac4-4f759a6cdc3a
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -133,3 +133,13 @@ No findings.
     Gain 4, Work 2, Harm 3
 
    Disposition: cut
+
+## Round 6
+
+18. Blocking: A root README is treated as a working build and grants build permission.
+    Raise: Functional. The new classification at `plans/FORGE-PACE-1.md:93–98` counts `README.md` as app code. An existing unsigned canvas repo with a merged README therefore becomes a working prototype on upgrade, despite having no app or accepted build request. Subsequent app changes bypass the decision gate, and canvas sign-off incorrectly requires working-product proof. Forge already recognizes root Markdown as documentation (`src/forge/review.py:577–583`).
+    Gain 4, Work 2, Harm 3
+
+19. Blocking: Unmerged app code can pass through canvas sign-off and escape the build-decision gate.
+    Raise: Plan gap. The new working-build predicate checks an accepted request or app changes on the default branch (`plans/FORGE-PACE-1.md:97–98`), while lines 112–115 permit app code to exist on an unmerged fix. Canvas sign-off on that fix therefore sees no working build and skips strict review. Acceptance records the decision in that checkout (`src/forge/records.py:301–302`), and `repo.is_prototype` immediately treats its local accepted sign-off as signed (`src/forge/repo.py:545–551`). The subsequent close no longer applies the unsigned-prototype gate, allowing those app changes to merge without the requested owner decision.
+    Gain 5, Work 2, Harm 3
