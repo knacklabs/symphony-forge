@@ -93,10 +93,16 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     env.start("human", "fix/human", ".factory/fixes/human.json", {**FIX, "why": "Human"}, {"human.py": "x\n"})
     assert env.close("human").returncode == 0
     share(env, prs, "human", 2)
+    # New pull requests publish before CI; refresh their completed history on
+    # an existing pull request before another machine reads their merge wait.
+    assert env.close("human").returncode == 0
+    share(env, prs, "human", 2)
     # A worker's question on a fix with a pull request.
     install_claude(env.repo)
     _, asks = env.start("asks", "fix/asks", ".factory/fixes/asks.json",
                         {**FIX, "why": "Asks", "round": 1}, {"asks.py": "x\n"})
+    assert env.close("asks").returncode == 0
+    share(env, prs, "asks", 3)
     assert env.close("asks").returncode == 0
     share(env, prs, "asks", 3)
     if previous:  # an earlier release's worker answered a question without recording its end
@@ -125,6 +131,8 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     share(env, prs, "clash", 4)
     # An older ready pull request with no merge wait recorded still waits on its human merge.
     env.start("legacy", "fix/legacy", ".factory/fixes/legacy.json", {**FIX, "why": "Legacy"}, {"legacy.py": "x\n"})
+    assert env.close("legacy").returncode == 0
+    share(env, prs, "legacy", 5)
     assert env.close("legacy").returncode == 0
     share(env, prs, "legacy", 5)
     older(env, prs, "legacy")

@@ -178,6 +178,8 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
     assert env.repo.git("merge-base", "--is-ancestor", "origin/story/SHOP", "HEAD", cwd=where) == ""
     if not automatic:
         assert "worker gets the updated plan" in chosen.stdout
+        if choice == "split":
+            assert "Split the part as agreed" in chosen.stdout
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert calls(log)[-1]["options"].get("resume")
