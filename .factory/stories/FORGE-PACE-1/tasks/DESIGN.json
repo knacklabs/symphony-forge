@@ -8,6 +8,7 @@
     "start": "0e50a4bc8a6bec6d65f840b253860550898c15c6"
   },
   "flagged": [
+    "src/forge/close.py",
     "src/forge/design.py",
     "src/forge/task.py"
   ],
@@ -50,18 +51,42 @@
       "security": false,
       "title": "Reject task branches that change the approved design",
       "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 191,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Gate: test closing a task with a pre-upgrade approval",
+      "work": 2
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "30046a2879a302c1a9871e8051a3b6419e060d543aa328cd00a93c6eb21da4e4",
-    "changed": "5abbe0e9dd8cb8bc2bbbd908c07f59d787108950ea184ad32e360deaa6a9b9a9",
-    "commit": "329daf9691231b59672db0fb8bd38b4dbac70657",
+    "branch_diff": "c035453c37d21d70b420b7e920ee1792f7776a0b781f5ba7bc67c95f36c640f4",
+    "changed": "dc2772ba3f4f0e2f3f5781e0743e80969865ca8ca128fc380a1c4059eb3fb301",
+    "commit": "c36b4b063a81a41160ce26bced6bae22cd06aef8",
     "dismissals": [],
-    "findings": [],
-    "id": "ee75217b-38fa-41db-a4bb-66d776de7099",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The changed close gate permits a user-facing plan approved before this rule without a Design line, but no command test closes a task under that earlier approval. `test_24_pre_upgrade_user_facing_approval_still_starts` stops after task start and `forge next`; the close tests use plans with Design lines. If this close path began requiring a Design line again, the existing tests would still pass while those tasks could no longer close.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 191,
+        "priority": "P1",
+        "title": "Gate: test closing a task with a pre-upgrade approval",
+        "work": 2
+      }
+    ],
+    "id": "2949eeeb-9d68-4cc4-898d-d1467563d710",
+    "status": "blocked"
   },
   "round": 3,
   "status": "fixing",
@@ -76,6 +101,10 @@
     },
     {
       "at": "2026-10-16T10:46:23.317305+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T15:43:41.710553+00:00",
       "step": "review"
     }
   ],

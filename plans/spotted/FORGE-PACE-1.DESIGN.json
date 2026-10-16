@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/close.py\tGate: test closing a task with a pre-upgrade approval\tFORGE-PACE-1/DESIGN",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 191,
+      "text": "Gate: test closing a task with a pre-upgrade approval",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/design.py\tRequire a design for User-facing=true plans\tFORGE-PACE-1/DESIGN",
       "kind": "bug",
       "path": "src/forge/design.py",
