@@ -29,28 +29,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "04d333decd3c2a662c20c330a08f6c8334a85124811cc1f05fda9e59c0fbac6f",
-    "changed": "e11d828e78ce42ac14337f3dbb8c6c6714acff8e1743c32e3a6244ea9649e6c2",
-    "commit": "17451caade9927bc64400288fed5842653654a42",
+    "branch_diff": "3f6bfab6b88d5f9357c8d859c89307d9d1b3f932d4c4b9a396dc027e95aa5500",
+    "changed": "4c783e19669cbc82cfc7baa6068cea8df70fdbea5da5c97dac48987decf8fc5e",
+    "commit": "cc0f66c33dc4523f6fe29c5a5bba4b8903d81f89",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 1\nRaise: Not done. The unconditional wording gives reviewers incorrect provenance for generated files. A deleted generated file is still included by the `diff --numstat` and `check-attr` selection at lines 1045\u20131053, but that file is absent from the real branch head, contrary to this line. On a repeat review, lines 922\u2013923 use the previous reviewed commit as the restore source, contrary to the next line\u2019s claim that restoration is to the branch start. The new test covers only a first review of an added file.",
-        "file": "src/forge/review.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 2,
-        "harm": 1,
-        "line": 1061,
-        "priority": "P1",
-        "title": "Not done: Generated files notice makes inaccurate claims for deletions and repeat reviews",
-        "work": 2
-      }
-    ],
-    "id": "6c8add57-7334-44d0-a473-474f596770b2",
+    "findings": [],
+    "id": "8594bba7-fa3d-4eb8-9150-051fdf6757b7",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T20:19:06.577674+00:00",
@@ -58,6 +46,10 @@
     },
     {
       "at": "2026-10-16T20:23:40.427671+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T20:43:13.692983+00:00",
       "step": "review"
     }
   ],
