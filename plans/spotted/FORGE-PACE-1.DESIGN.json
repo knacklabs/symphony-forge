@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/design.py\tRequire a design for User-facing=true plans\tFORGE-PACE-1/DESIGN",
+      "kind": "bug",
+      "path": "src/forge/design.py",
+      "line": 17,
+      "text": "Require a design for User-facing=true plans",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tReject task branches that change the approved design\tFORGE-PACE-1/DESIGN",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 297,
+      "text": "Reject task branches that change the approved design",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/design.py\tNot done: Every prototype and every story with user-facing parts starts with the design skill's init",
+      "kind": "edge",
+      "path": "src/forge/design.py",
+      "line": 73,
+      "text": "Not done: Every prototype and every story with user-facing parts starts with the design skill's init",
+      "from": "review",
+      "item": "FORGE-PACE-1/DESIGN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
