@@ -41,7 +41,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         assert "Waiting items that other planned work waits on go first, first-come within each group" in guide
     machine_cores(repo, 2)
     configured = repo.forge("fix", "start", "Configure the client", "--done", "Workers use Claude",
-                            "--slug", "configure-client")
+                            "--slug", "configure-client", "--kind", "mechanical")
     assert configured.returncode == 0, configured.stderr
     main = repo.path
     repo.path = worktree(repo, "fix/configure-client")
