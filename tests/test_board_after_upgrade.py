@@ -1,5 +1,7 @@
 """An upgrade rebuilds older item histories from real Git and GitHub evidence.
 
+Exercises src/forge/backfill.py through upgrade and close commands.
+
 Audit: previous time-history coverage starts with local logs. A squash and
 deleted branch leave no such logs, and weekly searches extend past the exact
 42-day window. Only uv, GitHub and the reviewer are third-party fakes; no
@@ -9,6 +11,9 @@ checks on pushed work heads, and puts a manual fix-prefixed PR before Forge
 items. These protect the cutoff, complete CI waits, and retry completion.
 A second story's squashed approval survives only in its pull ref; the board
 must show that actor and the story's own rebuilt history, even without parts.
+The reachable case owns the full historical matrix and second-machine lifecycle.
+Read and edit failures use the deleted item they must recover, without repeating
+unrelated history and board checks in each retry case.
 Local observations must join that shared history even when the older body has
 no history section. A long squashed item's genuine review commits force the
 shared record to shorten its older detail without losing the original starter.
@@ -91,6 +96,8 @@ if args[:2] == ["pr", "edit"]:
     found = next((pr for pr in prs if str(pr["number"]) == args[2] or pr["headRefName"] == args[2]), None)
     if found and "--body-file" in args:
         if (here / "history-reject-edit").exists() and found["number"] == 11:
+            with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
+                calls.write(json.dumps(args) + "\\n")
             sys.exit("GitHub refused this body edit")
         path = args[args.index("--body-file") + 1]
         found["body"] = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
@@ -191,9 +198,14 @@ class History:
 
     def commit(self, where, path, value, message, at, author="Original Starter"):
         self.at(at)
-        self.repo.git("config", "user.name", author)
-        self.repo.git("config", "user.email", author.lower().replace(" ", "-") + "@example.test")
-        return self.env.commit(where, path, value, message)
+        # Keep every real historical commit and actor without two Git launches
+        # per commit: the full history fixture creates dozens of real commits.
+        with self.monkeypatch.context() as actor:
+            email = author.lower().replace(" ", "-") + "@example.test"
+            for role in ("AUTHOR", "COMMITTER"):
+                actor.setenv(f"GIT_{role}_NAME", author)
+                actor.setenv(f"GIT_{role}_EMAIL", email)
+            return self.env.commit(where, path, value, message)
 
     def item(self, name, number, days, merge="squash", task=None, no_pr=False, long_history=False):
         item = "SHOP/" + task if task else name
@@ -210,7 +222,9 @@ class History:
         self.commit(where, path, json.dumps(state), "Start the fix: " + name, begin)
         self.commit(where, name + ".py", "print('first')\n", "Write the greeting", begin + timedelta(hours=1))
         heads = []
-        outcomes = ["blocked"] * 7 + ["clean"] if long_history else ["blocked", "clean"]
+        # The record must exceed GitHub's detail budget, not require eight rounds.
+        # Keep the same 84 findings in two blocked rounds to avoid needless Git launches.
+        outcomes = ["blocked"] * 2 + ["clean"] if long_history else ["blocked", "clean"]
         for round_, outcome in enumerate(outcomes, 1):
             at = begin + (timedelta(hours=round_ * 8) if long_history else timedelta(days=round_))
             reviewed = self.repo.git("rev-parse", "HEAD", cwd=where)
@@ -228,7 +242,7 @@ class History:
                              "file": name + ".py", "line": index + 1,
                              "body": "Gain 3, Work 2, Harm 3\n" +
                              "The greeting must describe how readers recover their saved text. " * 4}
-                            for index in range(12)]
+                            for index in range(42)]
             state.update(status="fixing" if findings else "waiting for checks", round=round_,
                          review={"commit": reviewed, "status": outcome, "findings": findings,
                                  "blocking_level": "P1", "dismissals": []})
@@ -251,14 +265,17 @@ class History:
                 retried = [{**run, "started_at": (at + timedelta(minutes=4)).isoformat(),
                             "completed_at": (at + timedelta(minutes=6)).isoformat()} for run in GREEN]
                 self.checks[head] = failed + retried
-            self.repo.git("push", "-q", "origin", branch)
             if outcome == "blocked":
                 self.commit(where, name + ".py", f"print('hello reader {round_}')\n", "Repair the greeting",
                             at + timedelta(hours=1))
         head = heads[-1]
         files = [{"path": path} for path in self.repo.git("diff", "--name-only", state["base"], head).splitlines()]
+        # GitHub reads this history only after publish(). The final push keeps
+        # every ancestor and check hash, plus the surviving branch and PR refs.
+        refs = [branch]
         if not no_pr:
-            self.repo.git("push", "-q", "origin", f"{head}:refs/pull/{number}/head")
+            refs.append(f"{head}:refs/pull/{number}/head")
+        self.repo.git("push", "-q", "origin", *refs)
         if merged:
             self.at(merged)
             if merge == "squash":
@@ -336,19 +353,20 @@ class History:
 def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsynced_up, monkeypatch, failure):
     history = History(unsynced_up, monkeypatch)
     up, repo = history.up, history.repo
-    history.around_forge()
-    history.story()
-    history.merged_story()
-    history.item("saved-basket", 10, 24, task="T1")
     history.item("deleted", 11, 21)
-    history.item("ordinary-merge", 12, 14, merge="merge")
-    history.item("fast-forward", 13, 14, merge="ff")
-    history.item("inside-cut", 14, 41)
-    history.item("exact-cut", 18, 42)
-    history.item("outside-cut", 15, 43)
-    history.item("long-history", 21, 10, long_history=True)
-    opened, _ = history.item("ready-before-upgrade", 16, None)
-    history.item("open-part", 17, None, task="T2", no_pr=True)
+    if not failure:
+        history.around_forge()
+        history.story()
+        history.merged_story()
+        history.item("saved-basket", 10, 24, task="T1")
+        history.item("ordinary-merge", 12, 14, merge="merge")
+        history.item("fast-forward", 13, 14, merge="ff")
+        history.item("inside-cut", 14, 41)
+        history.item("exact-cut", 18, 42)
+        history.item("outside-cut", 15, 43)
+        history.item("long-history", 21, 10, long_history=True)
+        opened, _ = history.item("ready-before-upgrade", 16, None)
+        history.item("open-part", 17, None, task="T2", no_pr=True)
     # Historical local logs are evidence to merge, never a prebuilt PR record.
     # Neither this observation nor its 90 seconds can be reconstructed from Git.
     local_at = (NOW - timedelta(days=25, hours=12)).isoformat()
@@ -366,12 +384,29 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     failing = repo.bin / ("history-unreachable" if failure == "read" else "history-reject-edit")
     if failure:
         failing.touch()
+    def rejected_edits():
+        return [call for call in up.env.gh.calls()
+                if call[:3] == ["pr", "edit", "11"] and "--body-file" in call]
+
+    def assert_publication_stopped(result):
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "GitHub refused this body edit" in result.stdout + result.stderr
+        assert "GitHub refused to update this pull request, so this command stopped." in result.stderr
+        assert result.stderr.splitlines()[-1] == "Next: fix the GitHub problem, then retry this command"
+
+    attempts = len(rejected_edits())
     upgraded = up.run(RELEASE)
-    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    if failure == "edit":
+        # A refused body write is now fatal: close stops after one attempt rather than
+        # retrying publication or continuing its own close as if it had only failed to read.
+        assert_publication_stopped(upgraded)
+        assert len(rejected_edits()) == attempts + 1
+    else:
+        assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     if failure:
-        assert UNREACHABLE in upgraded.stdout + upgraded.stderr
+        if failure == "read":
+            assert UNREACHABLE in upgraded.stdout + upgraded.stderr
         assert marker.is_file()
-        failing.unlink()
         # A different fix started from the upgraded checkout provides the next
         # close, without depending on an upgrade rerun remaining available.
         repo.path = up.folder
@@ -380,29 +415,23 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
             {"kind": "fix", "why": "Readers see a heading", "done_when": "The heading is clear",
              "base": repo.git("rev-parse", "HEAD")}, {"heading.txt": "Welcome readers\n"})
         repo.path = history.main
+        if failure == "edit":
+            attempts = len(rejected_edits())
+            held = repo.forge("close", retry_item, cwd=retry_where)
+            assert_publication_stopped(held)
+            assert len(rejected_edits()) == attempts + 1
+            assert marker.is_file()
+            assert not [call for call in up.env.gh.calls()
+                        if call[:2] == ["pr", "create"] and "fix/retry-history" in call]
+        failing.unlink()
         retried = repo.forge("close", retry_item, cwd=retry_where)
         assert retried.returncode == 0, retried.stdout + retried.stderr
     assert history.record(11), "Upgrade must write the deleted branch's original history into its PR"
     assert not marker.exists()
-    assert history.record(19) is None, "A manual fix-prefixed PR has no Forge time story to rebuild"
-    assert history.stored()[19]["body"] == "Manual owner notes.\n"
-    assert history.record(18), "A Sunday run includes a merge exactly 42 days earlier"
-    assert history.record(21)["summary"], "The long history must exercise actual record shortening"
-    assert rows(board(repo))["long-history"]["started_by"] == "Original Starter", \
-        "Shortening preserves the original starter after squash and branch deletion"
     assert local_event in history.record(11)["events"], "Backfill publishes local events in the readable record"
     assert local_timing in history.record(11)["timings"], "Backfill publishes measured local time too"
     assert sum(timing["seconds"] for timing in history.record(11)["timings"]
                if timing["step"] == "CI wait") == 720, "Both work-head and review-head checks bound CI waits"
-    assert sum(timing["seconds"] for timing in history.record(13)["timings"]
-               if timing["step"] == "CI wait") == 480, "A rerun includes the first failed attempt and the gap before retry"
-    for number in (10, 11, 12, 13, 14, 16, 18):
-        record = history.record(number)
-        assert record and record["rebuilt"] is True
-        assert "Owner notes remain." in history.stored()[number]["body"]
-        assert len([e for e in record["events"] if e["event"] == "review result"]) == 2
-    assert history.record(15) is None, "The exact 42-day cut excludes a merge 43 days ago"
-    assert 17 not in history.stored(), "An open part without a PR has no upgrade-time record store"
     before = history.stored()
     def historical_checks():
         return [call for call in up.env.gh.calls() if any(
@@ -413,7 +442,23 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     assert again.returncode == 0, again.stdout + again.stderr
     assert history.stored() == before, "A repeated upgrade must not rewrite an existing record"
     assert historical_checks() == checks
-
+    if failure:
+        return  # The reachable case below owns display, cutoff and cross-machine coverage.
+    assert history.record(19) is None, "A manual fix-prefixed PR has no Forge time story to rebuild"
+    assert history.stored()[19]["body"] == "Manual owner notes.\n"
+    assert history.record(18), "A Sunday run includes a merge exactly 42 days earlier"
+    assert history.record(21)["summary"], "The long history must exercise actual record shortening"
+    assert rows(board(repo))["long-history"]["started_by"] == "Original Starter", \
+        "Shortening preserves the original starter after squash and branch deletion"
+    assert sum(timing["seconds"] for timing in history.record(13)["timings"]
+               if timing["step"] == "CI wait") == 480, "A rerun includes the first failed attempt and the gap before retry"
+    for number in (10, 11, 12, 13, 14, 16, 18):
+        record = history.record(number)
+        assert record and record["rebuilt"] is True
+        assert "Owner notes remain." in history.stored()[number]["body"]
+        assert len([e for e in record["events"] if e["event"] == "review result"]) == 2
+    assert history.record(15) is None, "The exact 42-day cut excludes a merge 43 days ago"
+    assert 17 not in history.stored(), "An open part without a PR has no upgrade-time record store"
     history.clear_caches()
     before_board = repo.git("rev-parse", "HEAD")
     data = board(repo)
@@ -489,6 +534,9 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     for item, branch, number in ((opened, "fix/" + opened, 16), ("SHOP/T2", "task/SHOP-T2", 17)):
         resumed = up.tmp / ("second-" + branch.replace("/", "-"))
         repo.git("worktree", "add", "-q", "-b", branch, resumed.as_posix(), "origin/" + branch)
+        # Resume with the landed upgrade's files. Close no longer merges a clean main move
+        # just to refresh an active branch; this upgrade fixture brings it in explicitly.
+        repo.git("merge", "-q", "--no-edit", "origin/main", cwd=resumed)
         if number == 17:
             # Losing check history at first publication must keep the PR
             # record absent. Otherwise the retry sees a local-only record and

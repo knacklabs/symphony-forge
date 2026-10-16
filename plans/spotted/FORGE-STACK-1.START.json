@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tApproved remote story is ignored during an upgrade preview\tFORGE-STACK-1/START",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 209,
+      "text": "Approved remote story is ignored during an upgrade preview",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/START",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

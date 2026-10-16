@@ -430,11 +430,8 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
     if missing:
         # A's successful publication event remains; only its obsolete local receipt is absent.
         (machine_a / ".git/forge/ready" / f"{item}.json").unlink()
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
     if not wait_first:
-        stub.write_text(source.replace('print("stub claude: built it")',
-                                       'print("\\n\\nQuestion: May I reuse the existing basket parser?")'), "utf-8")
+        monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the existing basket parser?")
     monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=30)).isoformat())
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
@@ -457,7 +454,7 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
         assert row(env.repo, item)["waiting_seconds"] == refreshed["waiting_seconds"]
         return
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse the existing parser")
     assert answered.returncode == 0, answered.stdout + answered.stderr
     published(env, item)
@@ -472,16 +469,12 @@ def question_wait(env, monkeypatch):
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
-    asking = source.replace('print("stub claude: built it")',
-                            'print("\\n\\nQuestion: May I reuse the basket parser?")')
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     assert "Question: May I reuse the basket parser?" in asked.stdout
     assert not env.gh_calls("pr", "create") and not env.gh_calls("pr", "edit")
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse it")
     assert answered.returncode == 0, answered.stderr
     closed = env.close(item)
@@ -489,7 +482,7 @@ def question_wait(env, monkeypatch):
     published(env, item)
     at = datetime.now(timezone.utc) + timedelta(seconds=60)
     monkeypatch.setenv("FORGE_NOW", at.isoformat())
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     published(env, item)
@@ -503,7 +496,7 @@ def question_wait(env, monkeypatch):
                and datetime.fromisoformat(interval["start"]) >= at
                for interval in waiting["intervals"])
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, keep the existing parser")
     assert answered.returncode == 0, answered.stderr
     published(env, item)
@@ -742,7 +735,7 @@ def test_12_getting_around_the_board_and_telling_items_apart(request, case):
     """Plain times; the pinned bar and folding sections; story histories with their cold-read
     rounds; the shipped line allowing story keys. Each case gets the fixtures it needs."""
     if case == "plain-times":
-        plain_times(request.getfixturevalue("env"))
+        plain_times(request.getfixturevalue("env"), request.getfixturevalue("monkeypatch"))
         return
     part, history = case.split("-", 1)
     repo, gh, tmp_path = (request.getfixturevalue(name) for name in ("repo", "gh", "tmp_path"))
@@ -754,18 +747,23 @@ def test_12_getting_around_the_board_and_telling_items_apart(request, case):
         agents_md_allows_story_keys(repo, gh, tmp_path, history)
 
 
-def plain_times(env):
+def plain_times(env, monkeypatch):
     """15.001-second review times read in rounded plain units in the board and pull request."""
     item, _ = env.start_fix(round=1)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
     top = env.repo.path / ".git/forge"
-    timings = [json.loads(line) for line in (top / "timings.jsonl").read_text("utf-8").splitlines()]
-    for timing in timings:
-        if timing.get("item") == item and timing.get("step") == "review":
-            # 15.4 still rounds to whole seconds and leaves room for overlapping CI waits on slow runners.
-            timing["seconds"] = 15.4
-    (top / "timings.jsonl").write_text("".join(json.dumps(t) + "\n" for t in timings), "utf-8")
+    began = datetime(2026, 10, 9, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+    # This rounding case owns a fixed recorded review, independent of how long close took.
+    timing = {"item": item, "round": 1, "step": "review", "start": at(0),
+              "seconds": 15.001, "outcome": "clean"}
+    events = [json.loads(line) for line in (top / "events.jsonl").read_text("utf-8").splitlines()]
+    result = next(event for event in events if event.get("event") == "review result")
+    result["at"] = at(15.001)
+    (top / "timings.jsonl").write_text(json.dumps(timing) + "\n", "utf-8")
+    (top / "events.jsonl").write_text(json.dumps(result) + "\n", "utf-8")
+    monkeypatch.setenv("FORGE_NOW", at(60))
     current = row(env.repo, item)
     assert "15 seconds" in current["rounds"][0]["line"]
     again = env.close(item)

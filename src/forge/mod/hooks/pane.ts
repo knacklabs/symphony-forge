@@ -55,6 +55,7 @@ export function registerPane(on: On, data: Data) {
           return [...lines, ...(actions.get(row.item.kind ?? '') ?? []).map(render => render(row.item, e))]
         }
         if (view.summary) children.push(t.Text({ bold: true, wrap: 'wrap', children: view.summary }))
+        if (view.sentence) children.push(t.Box({ flexDirection: 'column', children: [view.sentence, ...view.totals].map(line => t.Text({ wrap: 'wrap', children: line })) }))
         if (!view.groups.length && !view.waiting.length) children.push(t.Text({ children: 'Nothing in progress.' }))
         for (const group of view.groups) {
           const lines: RenderNode[] = [t.Text({ bold: true, children: group.name })]

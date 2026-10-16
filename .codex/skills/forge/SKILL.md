@@ -28,6 +28,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec |
 | "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
+| "Give this story or part to a developer" | `forge assign <KEY or KEY/TASK> <login>` |
 | "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
 | "Name this fix" | `forge fix start "<why>" --done "<done when>" --slug <name>` |
 | "Change this fix's Done-when" | `forge fix amend <fix> --done "<done when>" --because "<why>"` |
@@ -121,7 +122,7 @@ current default branch, preserving its other settings. It leaves remote work out
 alone and refuses to replace a remote branch that changes after its check. The owner still
 merges the pull request. Close checks this generated fix mechanically instead of asking a model:
 only `forge.toml`'s top-level `merge = "agent"` may change, with all other parsed settings equal
-to the current default branch. Extra changes are refused without review. Tests and CI still run;
+to the fix's merge base. Extra changes are refused without review. Tests and CI still run;
 every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
@@ -546,18 +547,24 @@ The pane's Board tab, on the terminal and the Desktop app's Code tab alike, open
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
 Each part shows only when the board's `team` fact behind it is known and not zero; when
 none of them applies, the line counts the rows the tab shows in its own group words instead,
-such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Groups follow in this order, each only
-when it has items: NEEDS YOU (rows whose `needs_person` is true),
-STUCK (no activity past the board's stall threshold, with the longest wait in days),
-MOVING (running now: the current stage and how long, such as `Review running · 12 min`),
-READY TO MERGE (each saying Ready to merge, with the checks in words when known, and its merge
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board page's
+own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
+`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, word for word as the page shows
+them. Groups follow in this order, each only when it has items, and each in the board's own
+order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
+such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
+age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
+a running item shows its current stage and how long, such as `Review running · 12 min`),
+READY TO MERGE (the rest of `team.in_progress`, each saying Ready to merge, with the checks in words when known, and its merge
 step; an item merged from another machine shows `forge next`'s line naming who merges it), then a
-folded count of the work waiting or not started, opened with a native button to the same rows. Each item shows its plain title, the story key small
+folded count of the work waiting or not started (planned stories and fixes not started), opened with a native button to the same rows. Each item shows its plain title, the story key small
 beside it, one line of state in words and, where there is something to do, its next step
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
-The pane never shows zero counts, unknown times, raw timestamps, priority codes or
+An older Forge without the `team` lists draws the same groups from each row's `needs_person`,
+stalled, running and ready flags, and shows no sentence or totals.
+Outside the totals copied from the page, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
-relative (`12 min`, `8 days`). Stage chains, round lines and the time breakdown stay on
+relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
 the board page. An empty board says `Nothing in progress.` `/forge` always returns the
 same lines as text, as well as opening the pane. Where mods draw nothing (the VS Code
 chat panel, `claude -p` and Remote Control from a phone or claude.ai), that text is the
@@ -1032,7 +1039,7 @@ review rounds. For each kind of finding the plan missed that cost two or more fi
 two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
 outside Forge's block, in the last task's worktree; create the section when it is missing.
 Commit it before closing the task. Every cold read checks plans against that section.
-Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or
+Count the story's items' entries per file in the spotted records on the default branch, open or
 done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one
 trap line naming the file and the kind of problem that kept coming back.
 
@@ -1199,6 +1206,14 @@ on the changed code still blocks under its own Raise line.
 
 ## Closing
 
+From the second review round, close checks the previous round's findings and the lines changed
+since that review. The reviewer says fixed or not fixed for each previous finding. New findings
+on unchanged lines become visible follow-ups, except security or data loss, which still block.
+`Not done` blocks only against a numbered owner-approved Done-when item (a fix uses its Done-when
+line). Builder details, Notes and implementation guidance never block as `Not done`.
+New repos get this guide on init; existing repos, including earlier adopted repos, get it on
+upgrade and sync. Close applies the same boundary in every repo.
+
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
 recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
 count, so an upgrade fix needs no allowance. You may run `forge fix allow-large "<reason>"`
@@ -1227,7 +1242,8 @@ test against its own run and writes the list with only the tests it ran and thei
 check with its result. Forge copies the list into the pull request and the review prompt. The first review checks the whole list, not a sample: Check every
 entry against the code and its named proof, including every Done-when detail. Compare it with the
 covered items so omitted entries cannot hide gaps; report every missing case in that one round,
-even when a finding already blocks. Keep the whole list current and repeat the check on later rounds.
+even when a finding already blocks. Keep the whole list current; later reviews check repairs and
+newly changed lines under the boundary above.
 When a Done-when item's named proof is a pull request check that has not finished yet, do not
 report it as `Not done` if the check is configured to run on the pull request. Close's checks
 gate holds the merge until that check passes. A failed check or a proof with no check behind
@@ -1251,6 +1267,8 @@ any other file stops close for the worker to resolve. While waiting for checks, 
 if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
 in the default branch. Land retries close once itself, including a conflict during its merge check
 wait; if the merge needs a person, it stops with close's existing conflict next step.
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
 test command fails, close keeps the output for the worker: run
@@ -1334,6 +1352,10 @@ Gain 1 or 2 is lived with. Never re-score a finding to change its
 outcome. Dismiss only a finding outside the boundary or factually wrong, with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
 out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
+Close fetches the default branch but merges it in only for a trial-merge clash, or when GitHub
+reports the pull request conflicting or behind under its up-to-date rule. Unrelated main changes
+add no merge. Close checks GitHub's clash state at every look, even with green checks; a clash
+stops a hand-run close and says to run close again. An UNKNOWN answer keeps it waiting.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Before reusing serious findings, close also checks the reviewed files and contract against the
@@ -1429,18 +1451,24 @@ and leaves the work local: teammates cannot see that claim until its branch is p
 New repos get this at init; existing repos get it when upgraded and synced, including repos
 adopted on an earlier release.
 
-A story's Tasks table may have an optional Developer column containing a GitHub username.
-The lead adds or changes assignments below For the builders without another approval.
-`forge next` offers ready parts assigned to the caller's GitHub login, plus unassigned parts.
-Someone else may start an assigned part: task start goes ahead and names its assigned
-developer in a warning. Both boards show assignments alongside the starter and approver,
-including assigned parts not started yet. Documents without Developer work as before.
+Use `forge assign <KEY> <login>` to give a story to a developer by GitHub username.
+Use `forge assign <KEY/TASK> <login>` to give one part to a developer.
+The command writes the story's `Owner:` line or the part's Developer cell.
+It commits the plan on the story branch and pushes that branch.
+If the story has no plan, the command refuses and says to plan it first.
+
+After `git fetch origin`, `forge next` reads assignments from the remote story branch.
+For that developer, it offers assigned ready parts first, then unassigned parts.
+A part's Developer cell overrides the story's Owner.
+Someone else can start an assigned part. Task start names its assigned developer in a warning.
+The board JSON carries `owner` for each story and part, including parts not started yet.
+The lead can change assignments below For the builders without another approval.
 After fetching, teammates can discover the published story before its first part merges.
 If publishing its approval failed, the approved plan on the default branch after its first
 part merges takes precedence over the story's initial published draft.
 Next, start and both boards reconcile published assignments with local builder edits;
 a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
-This column is the only assignment record; there is no other assignee field or roster.
+The plan's Owner line and Developer cells are the assignment records. There is no separate roster.
 
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
 keep other ready work moving while that work finishes. Run `forge next` after each merge to
@@ -1450,19 +1478,30 @@ other refusals' next actions instead of repeatedly retrying them.
 ## Hotspots
 
 A worker or review notes problems outside its change as spotted items, which Forge keeps in
-`plans/spotted.json` and nobody edits by hand. A spotted item never widens the change in hand,
+spotted records and nobody edits by hand. A spotted item never widens the change in hand,
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 When `forge next` says the latest scheduled run of the default branch failed, it names the
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
+From the second blocked cold-read or review round on the same item, stop sending rounds and ask
+the owner to settle the missing rule, even when each round finds a new problem. Use the round
+table from `forge next` or close: list the findings, name the pattern, and ask the owner one
+question at a time with options and a recommendation until the missing rule is settled.
+Write that rule into the plan's builder details, then send one focused round. This owner question
+applies at every score. The coordinator asks. The owner decides. The coordinator records the choice.
+For a review's second-round question, commit the answer in the item's plan or builder guidance
+(`plans/`, `docs/`, or `README.md`) on its work branch. `forge next` then shows the work step again.
+Code-only changes and cold-read notes do not record an answer. A hard stop still needs its resolve choice.
+Keep the existing three-round hard stops below; record a resolve choice
+only after a command stops the loop.
+
 Close holds the fourth review after three blocked rounds only when a finding at the bar comes
 back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the
 third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
-Settle the stop yourself or ask the owner, by the stop rule below. To ask, ask the human to
-narrow the part, split it, or accept the remaining findings.
+Ask the owner to narrow the part, split it, or accept the remaining findings.
 Run `forge land <item>` in the background after a close stop, or keep the current land running.
 With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
 default; it does not send the worker back while the stop is unanswered.
@@ -1487,12 +1526,8 @@ Close also stops at the third finding in one area (a Python function, else the f
 proposes a structural move. The recorded choice settles the area: later findings there hold work
 only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
 
-The stop rule: the printed stop says who decides. When every open note has Harm 1 or 2, it says
-"Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) and tell the
-owner after." Then choose accept or narrow, record it with a reason that gives the scores, and
-tell the owner after, in one line; ask the owner instead only when the choice adds scope beyond
-the approved Done when or undoes a decision the owner made. Otherwise, with a note at Harm 3 or
-more or one without scores, it says "Ask the human", and the owner decides.
+The stop rule: the coordinator lists each round's findings and asks the owner, whatever the scores.
+The coordinator asks. The owner decides. The coordinator records the choice.
 When a cold read or review loop stops and you must ask, ask the human the question it printed, in
 its words, one item per question. It names the item and what it delivers, shows the open notes as one table ranked
 by score (number, the problem and who it hits, Gain, Work, Harm, and what is proposed), and says
@@ -1500,25 +1535,21 @@ what accept, narrow and split each do; `forge next` prints it again for a stoppe
 has no scores, as one saved before scores, the question lists the notes as plain lines instead.
 
 Every update to the owner that lists notes or findings uses the same table, in the same order.
-The coordinator settles a reversible note with Harm 1 or 2 itself and tells the owner after, in
-one line. It follows the bar's outcome and never re-scores a note: a fix round for a note at the
+The coordinator follows the bar's outcome and never re-scores a note: a fix round for a note at the
 bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
 stop. Approval and merge steps stay the owner's.
 
 When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
 the item; close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
-choices. Settle it by the stop rule above: when every open note has Harm 1 or 2, choose yourself,
-give the scores in the reason and tell the owner after, in one line. Ask the owner exactly that
-question only when a note has Harm 3 or more, the choice adds scope, or it undoes a decision the
-owner made. Record the choice with
+choices. Ask the owner exactly that question. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
 Read also stops after three blocked cold-read rounds, for stories and specs alike, only when a
-note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Settle
-it or ask the human to accept, narrow or split, by the stop rule; do not read again until the
+note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Ask
+the owner to accept, narrow or split, by the stop rule; do not read again until the
 choice is recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
 Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
 the current document; later changes need another read. Narrow or split the part as agreed before
@@ -1526,7 +1557,9 @@ reading again. A clean round or a recorded choice restarts the three-round count
 For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
 command as a close stop.
 
-When GitHub refuses because the branch is behind the default branch, `forge merge` and
+When GitHub reports a clash during the check wait or refuses a merge because the branch is
+behind or conflicting, `forge merge` retries close and merge once. A mergeable pull request
+keeps its current head. When the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,
 review and checks as close decides, then retry the merge. If that merge selects a different
 Forge release, close finishes under that release before the original command continues.

@@ -270,6 +270,24 @@
       "title": "Prototypes start from an approved design and reach sign-off faster, and signed-off work ships without redoing it",
       "status": "pending",
       "order": 84
+    },
+    {
+      "key": "FORGE-STACK-1",
+      "title": "A story's parts build on each other instead of clashing through main",
+      "status": "pending",
+      "order": 76
+    },
+    {
+      "key": "FORGE-MAINONCE-1",
+      "title": "Pull requests take in main only on a real clash",
+      "status": "pending",
+      "order": 76
+    },
+    {
+      "key": "FORGE-BOARD-3",
+      "title": "The board's data knows who owns what, what shipped when, and what was left",
+      "status": "pending",
+      "order": 84
     }
   ],
   "epics": [

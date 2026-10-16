@@ -56,22 +56,24 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any) -> Any:
-    """`fetch()`'s answer, kept for a minute in .git/forge/<name>.json; None is never kept."""
+def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False) -> Any:
+    """Cache for a minute; identity readers may retain the last known answer during an outage."""
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    previous = None
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
+        previous = saved.get("data")
         at = time_records.when(saved.get("fetched_at"))
         if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
             return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
     if not shutil.which("gh"):
-        return None
+        return previous if stale else None
     data = fetch(now)
     if data is None:
-        return None  # A failed fetch is never cached.
+        return previous if stale else None
     temp = cache.with_name(f"{name}-{os.getpid()}.tmp")
     try:
         temp.write_text(json.dumps({"fetched_at": repo.now(), "data": data}), encoding="utf-8")
@@ -92,9 +94,9 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
     return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
 
 
-def prs(top: Path, *, fresh: bool = False) -> Item | None:
+def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
-    this one, cached together for a minute. None when gh is missing or any list fails."""
+    this one, cached together for a minute. Only people may use expired records during an outage."""
     # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
         opened = _listing(top, "open")
@@ -115,15 +117,30 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
         return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
     if fresh:
         return fetch(time_records.when(repo.now()) or datetime.now(timezone.utc))
-    return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
+    current = repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
+    return (_cached(top, "prs-cache", lambda _: None, stale=True)
+            if current is None and people else current)
 
 
-def people(body: str) -> Item:
-    """Original actors survive a deleted squash branch in the item's shared evidence."""
-    record = time_records.from_body(body)
-    events, summary = record.get("events", []), record.get("summary") or {}
-    return {field: summary.get(field) or next((event.get("by") for event in events if event.get("event") == name), None)
-            for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
+def person(record: Item | str | None = None, name: str | None = None, *, field: str | None = None,
+           names: dict | None = None) -> Item:
+    """Use a loaded login and keep its name; a login alone is also a visible name."""
+    if field:
+        actors = record if isinstance(record, dict) else {}
+        summary = actors.get("summary") or {}
+        event = next((entry for entry in actors.get("events", [])
+                      if entry.get("event") == {"started_by": "item started", "approved_by": "plan approved"}[field]), {})
+        record = ({"name": summary.get(field), "login": summary.get(field + "_login")}
+                  if summary.get(field) or summary.get(field + "_login")
+                  else {"name": event.get("by"), "login": event.get("by_login"), "email": event.get("email")})
+    record = {"login": record} if isinstance(record, str) else record or {}
+    login = record.get("login")
+    display = record.get("name") or name or login
+    identity = ("login", login.casefold()) if login else (
+        ("email", record["email"].casefold()) if record.get("email") else None)
+    if names is not None and identity and display:
+        display = names.setdefault(identity, display)
+    return {"name": display, "login": login}
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:
@@ -272,7 +289,7 @@ def blocked(top: Path, rows: list[Item], best: dict[str, Any], maps: list[Item],
 
 def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], best: dict[str, Any],
          completed: dict[str, Item], github: Item | None, readiness: dict[str, Item],
-         person_waits: dict[str, list[Item]]) -> Item:
+         person_waits: dict[str, list[Item]], names: dict | None = None) -> Item:
     """Give every row its `state` and return the board's `team` facts."""
     stories = "\0".join(rel for rel in best if rel.startswith(".factory/stories/"))
     approvals: dict[str, list[Any]] = {}
@@ -336,7 +353,7 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
             counts["finished_last_7_days"]["fixes"] += recent(row)
         else:
             counts["fixes"]["done"] += 1  # a fix left out of the rows finished more than seven days ago
-    later, clause = board_trends.facts(top, history, counts, list(items.values()), github)
+    later, clause = board_trends.facts(top, history, counts, list(items.values()), github, names)
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     rows = [row for parent in items.values() for row in (parent, *parent["children"])]
     waiting, slow = needs_you(top, rows, readiness, person_waits, now), blocked(top, rows, best, maps, now)

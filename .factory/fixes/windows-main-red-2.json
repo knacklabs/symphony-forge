@@ -1,0 +1,52 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-15T08:28:42.548397+00:00",
+      "because": "Owner chose to merge this fix on its own targets and handle the varying slow Windows tests with a rerun-once fix",
+      "done_when": "Every Windows full-suite group passes in an all-platform run of this branch, each failure fixed at its real cause, not skipped"
+    }
+  ],
+  "base": "d9abeffd1b7075eef9ac082b2331e7f94e05ac6d",
+  "branch": "fix/windows-main-red-2",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13d9e-fd4d-7012-b46d-131ba089b09e",
+    "head": null,
+    "start": "858e2781be44aef1413ac62619f8b66e43475d1a"
+  },
+  "done_when": "The allow-list sync test, the board timing test and the group 8 hang pass on Windows for their real causes in an all-platform run of this branch (run 38700101238: groups 3 and 8 green, the allow-list test passes); other slow Windows tests are handled by a separate rerun-once fix",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "781d017312502617dd45f245aac42404d6641222c7278e91734f8fe4aacc461f",
+    "changed": "51395ff2f49926406a851a462a7ed75aa45f1ae702050610caef7ea0d3c71786",
+    "commit": "1fc0d93aaeee858734f6a819548a7e501a00f344",
+    "dismissals": [],
+    "findings": [],
+    "id": "160e2102-c586-4b25-a5e1-188cdb41de8c",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T03:33:07.016793+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T08:31:04.480860+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d4d5a634840e72812a0e074c6806a748ad3a82fd",
+    "keys": {},
+    "round": null
+  },
+  "why": "Main's all-platform run still fails on Windows: group 1 fails one test (sync merges the Claude Code allow list) and group 8 hits the 45-minute job limit",
+  "worker": "codex"
+}

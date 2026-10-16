@@ -137,7 +137,7 @@ def test_4_leased_replay_push_preserves_work_arriving_after_lease_is_captured(en
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_5_fix_started_on_default_keeps_merging_default(env, previous):
+def test_5_fix_started_on_default_keeps_its_commits_without_merging_unrelated_default_changes(env, previous):
     repo = configured(env, previous)
     fix, where = started(repo, "Repair an ordinary problem")
     original_head = env.commit(where, "src/own.py", "OWN = True\n")
@@ -147,9 +147,12 @@ def test_5_fix_started_on_default_keeps_merging_default(env, previous):
     closed = env.close(fix)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     repo.git("merge-base", "--is-ancestor", original_head, "HEAD", cwd=where)
-    repo.git("merge-base", "--is-ancestor", default_head, "HEAD", cwd=where)
+    # Ordinary fixes keep their own history; only stacked follow-ups need the replay above.
+    # An unrelated main move no longer gets merged just because close runs.
+    assert_not_ancestor(repo, default_head, where)
+    assert repo.git("log", "--merges", "origin/main..HEAD", cwd=where) == ""
     assert (where / "src/own.py").read_text("utf-8") == "OWN = True\n"
-    assert (where / "src/unrelated.py").read_text("utf-8") == "OTHER = True\n"
+    assert not (where / "src/unrelated.py").exists()
     assert remote_head(repo, fix) == repo.git("rev-parse", "HEAD", cwd=where)
 
 

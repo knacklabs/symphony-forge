@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: assigned parts come first across stories\tFORGE-BOARD-3/ASSIGN",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 239,
+      "text": "Not done: assigned parts come first across stories",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ASSIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: local Owner edits take precedence after a fetch\tFORGE-BOARD-3/ASSIGN",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 248,
+      "text": "Not done: local Owner edits take precedence after a fetch",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ASSIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_assign.py\tNot done: fetched second-clone next-order test\tFORGE-BOARD-3/ASSIGN",
+      "kind": "bug",
+      "path": "tests/test_assign.py",
+      "line": 12,
+      "text": "Not done: fetched second-clone next-order test",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ASSIGN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_worker.py\tThe cached SDK can retain a Python link into a deleted test directory.",
+      "kind": "bug",
+      "path": "tests/test_codex_worker.py",
+      "line": 87,
+      "text": "The cached SDK can retain a Python link into a deleted test directory.",
+      "from": "worker",
+      "item": "FORGE-BOARD-3/ASSIGN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

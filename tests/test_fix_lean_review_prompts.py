@@ -45,7 +45,7 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     repo.git("add", "-A", cwd=where)
     repo.git("commit", "-q", "-m", "Sync the client instructions", cwd=where)
 
-    log = install_claude(repo)
+    log = install_claude(repo, worker=False)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     env.commit(where, "docs/specs/basket.md", "# Basket\n\n## Why\n\nKeep a basket.\n")
     read = repo.forge("read", "basket", cwd=where)
@@ -55,18 +55,23 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     review = flat(env.prompt())
 
-    # Compare the whole boundary, including both review gates and cold-read plan gaps.
+    # Shared likelihood rules stay identical. A build review checks owner acceptance;
+    # a cold read can still catch contradictions before the owner approves the plan.
     boundary = [prompt.split("## What counts", 1)[1].split("at the start of its evidence.")[0]
                 for prompt in (cold_read, review)]
-    assert boundary[0] == boundary[1]
+    cold_done = ("- Not done: an unmet Done-when item, or a doc the change delivers that "
+                 "contradicts itself or a recorded decision.")
+    review_done = ("- Not done: an unmet owner-approved Done-when item, quoted as written "
+                   "in the finding's title.")
+    assert cold_done in boundary[0]
+    assert review_done in boundary[1]
+    assert boundary[0].replace(cold_done, "") == boundary[1].replace(review_done, "")
     for rule in ("Report exactly what falls inside this boundary: nothing outside it, and nothing "
                  "inside it left out.",
                  "- Functional: a defect on a path people or agents normally hit",
                  "- Security: a security gap", "- Data loss: data lost, corrupted or exposed.",
                  "- Scale: a scale or performance problem at a realistic size the finding names, a "
                  "cost repeated on every normal run, or growth with no bound.",
-                 "- Not done: an unmet Done-when item, or a doc the change delivers that "
-                 "contradicts itself or a recorded decision.",
                  "- Test: a missing or hollow test for a Done-when item's own behaviour.",
                  "it falls under Security or Data loss or the finding names a "
                  "realistic scenario that makes it likely in normal use: - a rare combination "
@@ -94,7 +99,8 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
                  "every rare combination.",
                  # Kept: the proof-list check and the previous findings carry over.
                  "Check every entry against the code and its named proof",
-                 "recheck them against this branch"):
+                 "All earlier reviews' findings and dismissals are below",
+                 "Settled findings stay settled; the repair-review boundary below governs later rounds"):
         assert rule in review, rule
     # Cold read: likely cases and traps only.
     for rule in ("Report a likely case no rule or test covers as `Unproven: item <n>: <case>`",

@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tThird-round output gives conflicting instructions about who decides\tgrill-when-rounds-grow",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 401,
+      "text": "Third-round output gives conflicting instructions about who decides",
+      "from": "blocking",
+      "item": "grill-when-rounds-grow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,\tgrill-when-rounds-grow",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 911,
+      "text": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
+      "from": "blocking",
+      "item": "grill-when-rounds-grow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tRemote hard stops hide the required resolution step\tgrill-when-rounds-grow",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 911,
+      "text": "Remote hard stops hide the required resolution step",
+      "from": "blocking",
+      "item": "grill-when-rounds-grow",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -30,13 +30,14 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     result = repo.forge("work", "BOARD/PAGE")
     assert result.returncode == 0, result.stdout + result.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert call["cwd"] == str(folder)
     assert "| PAGE | The page |" in call["brief"]
     assert _sent(codex_log, "turn/start") == []
 
-    # Before sign-off, a new fix carries the prototype allowance and uses design Claude.
-    assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
+    # Fixes now name their kind; only UI fixes use design, regardless of their allowance.
+    assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in",
+                      "--kind", "ui").returncode == 0
     prototype = repo.forge("work", "fix-the-login-typo")
     assert prototype.returncode == 0, prototype.stdout + prototype.stderr
     assert len(calls(claude_log)) == 2
@@ -50,10 +51,12 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
     repo.git("commit", "-qam", "Allow other work", cwd=fix)
     request.getfixturevalue("claude_session")
+    # The UI fix keeps Claude now; neither coordinating app should claim this toolkit round.
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     ordinary = repo.forge("work", "fix-the-login-typo")
     assert ordinary.returncode == 0, ordinary.stdout + ordinary.stderr
-    assert len(_sent(codex_log, "turn/start")) == 1
-    assert len(calls(claude_log)) == 2
+    assert len(_sent(codex_log, "turn/start")) == 0
+    assert len(calls(claude_log)) == 3
 
     # Forge's source repo with explicit Codex workers keeps its ordinary worker model.
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
@@ -62,8 +65,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     repo.git("commit", "-qam", "Use the source repo", cwd=folder)
     source = repo.forge("work", "BOARD/PAGE")
     assert source.returncode == 0, source.stdout + source.stderr
-    assert len(_sent(codex_log, "turn/start")) == 2
-    assert len(calls(claude_log)) == 2
+    assert len(_sent(codex_log, "turn/start")) == 1
+    assert len(calls(claude_log)) == 3
 
     config.write_text(config.read_text("utf-8").replace('repo = "forge-source"',
                                                      'repo = "client"').replace(
@@ -72,16 +75,16 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
                       encoding="utf-8")
     repo.git("commit", "-qam", "Use a custom design model", cwd=folder)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
-    monkeypatch.delenv("CLAUDECODE")
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("custom-opus", "high")
     # The round before ran on Codex, so this one starts a fresh Claude session with the whole
     # brief (it used to continue the first round's session).
     assert "because its last round ran on Codex" in custom.stdout
     assert "## Tests first" in calls(claude_log)[-1]["brief"]
-    assert "--resume" not in calls(claude_log)[-1]["args"]
-    assert len(_sent(codex_log, "turn/start")) == 2
+    assert not calls(claude_log)[-1]["options"].get("resume")
+    assert len(_sent(codex_log, "turn/start")) == 1
 
     # A client story row without User-facing uses the configured Codex worker.
     started = repo.forge("task", "start", "BOARD/HELP")
@@ -90,8 +93,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     monkeypatch.delenv("CODEX_THREAD_ID")
     ordinary_task = repo.forge("work", "BOARD/HELP")
     assert ordinary_task.returncode == 0, ordinary_task.stdout + ordinary_task.stderr
-    assert len(_sent(codex_log, "turn/start")) == 3
-    assert len(calls(claude_log)) == 3
+    assert len(_sent(codex_log, "turn/start")) == 2
+    assert len(calls(claude_log)) == 4
 
     # Design still uses its own Claude model when the repo chooses Claude for ordinary work.
     config.write_text(config.read_text("utf-8").replace('workers = "split"',
@@ -101,8 +104,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     monkeypatch.delenv("CLAUDECODE")
     claude_worker = repo.forge("work", "BOARD/PAGE")
     assert claude_worker.returncode == 0, claude_worker.stdout + claude_worker.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
-    assert len(_sent(codex_log, "turn/start")) == 3
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("custom-opus", "high")
+    assert len(_sent(codex_log, "turn/start")) == 2
 
 
 def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
@@ -135,7 +138,8 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert "fell back to Codex" in log and "exit code 3" in log
 
     # Delegation stays enabled and configured helpers survive the design override above.
-    # A later missing Claude command uses design defaults with no configured helpers.
+    # Without a separate Claude command the SDK still runs; a clean SDK failure uses
+    # design defaults with no configured helpers.
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
         f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
@@ -147,11 +151,11 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     monkeypatch.setenv("PATH", os.pathsep.join((str(repo.bin), git_dir, os.defpath)))
     missing = repo.forge("work", "BOARD/PAGE")
     assert missing.returncode == 0, missing.stdout + missing.stderr
-    assert "fell back to Codex" in missing.stdout and "missing" in missing.stdout
+    assert "fell back to Codex" in missing.stdout and "exit code 3" in missing.stdout
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
         **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
     install_claude(repo)
-    assert len(calls(claude_log)) == 1
+    assert len(calls(claude_log)) == 2
     # The round started on Claude after a round that ended on Codex, so its fallback starts a new
     # conversation with the whole brief (it used to resume the first fallback's).
     assert _sent(codex_log, "thread/resume") == []
@@ -160,25 +164,24 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # If Claude leaves a file behind, the same failure must stay with Claude.
-    script = repo.bin / "claude"
+    script = repo.bin / "claude_agent_sdk" / "__init__.py"
     original = script.read_text("utf-8")
-    script.write_text(original.replace('print("stub claude: built it")',
-                                       'pathlib.Path("worker-change.txt").write_text("changed")\n'
-                                       'print("stub claude: built it")'), encoding="utf-8")
+    script.write_text(original.replace('    yield ResultMessage(session_id=session',
+                                       '    Path("worker-change.txt").write_text("changed", encoding="utf-8")\n'
+                                       '    yield ResultMessage(session_id=session'), encoding="utf-8")
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     failed = repo.forge("work", "BOARD/PAGE")
     assert failed.returncode == 1
     assert "exit code 3" in failed.stderr
     assert "fell back to Codex" not in failed.stdout
     assert (folder / "worker-change.txt").read_text("utf-8") == "changed"
-    assert len(calls(claude_log)) == 2
+    assert len(calls(claude_log)) == 3
     assert len(_sent(codex_log, "turn/start")) == 2
 
-    script.write_text(original.replace('print("stub claude: built it")',
-                                       'import subprocess\n'
-                                       'pathlib.Path("README.md").write_text("staged change")\n'
-                                       'subprocess.run(["git", "add", "README.md"], check=True)\n'
-                                       'print("stub claude: built it")'), encoding="utf-8")
+    script.write_text(original.replace('    yield ResultMessage(session_id=session',
+                                       '    Path("README.md").write_text("staged change", encoding="utf-8")\n'
+                                       '    subprocess.run(["git", "add", "README.md"], check=True)\n'
+                                       '    yield ResultMessage(session_id=session'), encoding="utf-8")
     staged = repo.forge("work", "BOARD/PAGE")
     assert staged.returncode == 1 and "exit code 3" in staged.stderr
     assert repo.git("diff", "--cached", "--name-only", cwd=folder) == "README.md"

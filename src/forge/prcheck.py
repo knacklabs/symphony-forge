@@ -178,9 +178,18 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                            [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
     test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
                           "least_duration" if groups > 1 else "")
+    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
     if groups > 1:
         # Empty groups pass only if the unsplit suite still collects tests successfully.
-        test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
+        test += ("; if ($LASTEXITCODE -eq 5) { " + cfg["test"] + " --collect-only }" if windows
+                 else ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }')
+    if windows:
+        # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
+        script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
+                  "\n}\nif (Test-Path variable:LASTEXITCODE) { exit $LASTEXITCODE }")
+        attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
+                   script.replace("'", "''") + "'")
+        test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if source

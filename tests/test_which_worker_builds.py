@@ -70,7 +70,7 @@ def test_2_workers_split_builds_user_facing_on_claude_and_the_rest_on_codex(repo
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert _sent(codex_log, "turn/start") == []
     assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because it is user-facing "
             "(workers = split)") in page.stdout
@@ -92,16 +92,14 @@ def test_3_workers_claude_builds_user_facing_and_plain_tasks_on_claude(repo, mon
     _workers(repo, folder, "claude", CLAUDE_BUILD)
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
-                                                 "--effort", "xhigh"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because workers = claude, "
             "with the design model as it is user-facing") in page.stdout
 
     _help(repo, "claude", CLAUDE_BUILD)
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5",
-                                                 "--effort", "medium"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5", "medium")
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5, medium) because workers = claude"
             in plain.stdout)
     assert _sent(codex_log, "turn/start") == []
@@ -181,7 +179,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     assert ("Starting a new Claude session with the whole brief, because its last round ran on "
             "Codex") in to_claude.stdout
     last = calls(claude_log)[-1]
-    assert "--resume" not in last["args"] and "--session-id" in last["args"]
+    assert not last["options"].get("resume") and bool(last["options"].get("session_id"))
     assert "## Tests first" in last["brief"] and "Board misses a story" in last["brief"]
 
 
@@ -208,8 +206,7 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
     monkeypatch.delenv("CLAUDECODE")
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
-                                                 "--effort", "xhigh"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, xhigh) because workers = claude"
             in plain.stdout)
 

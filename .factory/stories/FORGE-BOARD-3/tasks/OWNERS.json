@@ -1,0 +1,309 @@
+{
+  "branch": "task/FORGE-BOARD-3-OWNERS",
+  "chat": {
+    "approval": "f0f8c5ede5017c1ad136b34a1d026cbd5c838a2ecc5cf27167cf92f8aa07bd50",
+    "claude": null,
+    "conversation": "01a13be8-8652-72d0-8c39-206d0c67fa15",
+    "head": null,
+    "start": "55e0babd5e41120aa700ce27c2b5fa7916b4d3b7"
+  },
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/board_facts.py"
+  ],
+  "known": [
+    {
+      "area": "person_login() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 172,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: known logins disappear when past work is compacted",
+      "work": 2
+    },
+    {
+      "area": "actor_login.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 138,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Serial commit lookups make board reads slow as the team grows",
+      "work": 2
+    },
+    {
+      "area": "test_1_board_people_keep_names_and_known_github_logins() in tests/test_board_logins.py",
+      "file": "tests/test_board_logins.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 27,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test past work in the adopted client",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 727,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Board fails when GitHub CLI is not installed",
+      "work": 1
+    },
+    {
+      "area": "actor_logins.batch.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 140,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Board still fails without GitHub CLI for ordinary git authors",
+      "work": 1
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 520,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: older board history loses known pull-request logins",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 257,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Not done: historical logins beyond the older PR limit",
+      "work": 3
+    },
+    {
+      "area": "_older_pull_request_history() in tests/test_board_logins.py",
+      "file": "tests/test_board_logins.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 142,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Not done: older-history login proof",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 705,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Offline board erases the only name for login-only mergers",
+      "work": 1
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 519,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+      "round": 7,
+      "security": false,
+      "title": "Not done: new work keeps a visible starter before its pull request",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 521,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+      "round": 7,
+      "security": false,
+      "title": "Not done: approval identity names the actual approver",
+      "work": 2
+    },
+    {
+      "area": "test_1_board_people_keep_loaded_names_and_logins() in tests/test_board_logins.py",
+      "file": "tests/test_board_logins.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 92,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: the three findings are fixed in the last commit (each starter and approver from their own record, with tests); CI decides, and a red CI comes back to the owner",
+      "round": 7,
+      "security": false,
+      "title": "Not done: board login test covers approval identity",
+      "work": 1
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 535,
+      "outcome": "fixed in round 9",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "Not done: a login-only pull request hides the starter's recorded name",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 538,
+      "outcome": "accepted",
+      "reason": "src/forge/board.py:538 Owner accepted on 15 October: the old HTML page is replaced by the board page story's server, which caches each item; kept as a known issue",
+      "round": 8,
+      "security": false,
+      "title": "Reparsing every starter commit for each historical row slows the HTML board",
+      "work": 1
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 596,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: one display name across a story and its parts moves to the BACKFILL part (plan updated); every other usernames rule is met",
+      "round": 9,
+      "security": false,
+      "title": "Not done: a parent and part can show different names for the same approver",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e0e2acc84798279eff77d07ae9d413fcfc86c45e78d341e7c23829d7f4802899",
+    "changed": "ba0a6cce48ca57dcec35d2e8ddf1f389c5e9c0d2bc5d79c1937dcb19d559d7c9",
+    "commit": "db80e7941051da8916d5ffabe4edb277298c0b05",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted on 15 October: one display name across a story and its parts moves to the BACKFILL part (plan updated); every other usernames rule is met",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Not done. The shared person-name table created at line 254 is reassigned to parsed task rows at line 596. On a normal story with a part, the parent can resolve an approver's email to their latest display name, while the part resolves that same approval record through the replacement table and shows an older name. This breaks the required one-display-name rule; the existing approval-history test has no part row to catch it.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 596,
+        "priority": "P1",
+        "title": "Not done: a parent and part can show different names for the same approver",
+        "work": 1
+      }
+    ],
+    "id": "c122a0a7-0ff5-4cbd-b1f7-0060a45fd752",
+    "status": "clean"
+  },
+  "round": 13,
+  "settled_areas": [
+    "machine_board() in src/forge/board.py",
+    "machine_board.row() in src/forge/board.py",
+    "src/forge/board.py",
+    "src/forge/board_facts.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T19:31:52.134574+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T21:08:20.579779+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T22:16:03.600317+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T22:27:03.323139+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:36:44.582727+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:51:02.001351+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T03:37:44.835269+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T05:53:25.599559+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T06:56:20.794679+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T07:39:30.974281+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "machine_board() in src/forge/board.py",
+    "at": "2026-10-15T07:39:30.974582+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "machine_board() in src/forge/board.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner accepted on 15 October: one display name across a story and its parts moves to the BACKFILL part (plan updated); every other usernames rule is met",
+    "wait_id": "62bf7d02-9b6d-466f-90f1-0fb140ebd9c5",
+    "worker_round": 13
+  },
+  "stuck": {
+    "close": "bd36335f-7bae-458e-8e30-fcb72b87b5cc",
+    "head": "3e8f2eecf096af715eeed2e8620d05c28df95bc3",
+    "keys": {
+      "the review finding \"Not done: a login-only pull request hides the starter's recorded name\" in src/forge/board.py": 1
+    },
+    "round": 12
+  },
+  "worker": "codex"
+}

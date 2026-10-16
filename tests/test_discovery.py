@@ -16,7 +16,7 @@ FIELDS = ("Job", "Workaround", "Cost", "Who feels it", "How often", "Evidence")
 DISCOVER = ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
             "the Forge skill's Discovery section says.",
             'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
-            'filled problem card and the brief names it"']
+            'filled problem card and the brief names it" --kind mechanical']
 PLAN_STORY = ["No story or fix is in progress and the roadmap is empty; the discovery notes hold a "
               "problem card, so plan its story with the problem in Why.",
               'Next: forge story new <KEY> "<title>"']

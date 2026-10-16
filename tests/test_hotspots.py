@@ -16,7 +16,7 @@ from test_measure import SPEC, DUE
 
 WHY = "Simplify app.py: problems keep turning up there"
 DONE = "app.py is simpler and none of these happen any more: Alpha; Beta; Gamma"
-COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}"'
+COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}" --kind backend'
 
 
 def land(env, branch):
@@ -95,7 +95,8 @@ def _command_cleans_punctuation_and_limits_texts(env):
     cleaned = ",-./:; _"
     expected = "app.py is simpler and none of these happen any more: " + "; ".join(
         f"{n} {cleaned}" for n in range(5)) + "; and 2 more"
-    assert shlex.split(command)[-1] == expected
+    words = shlex.split(command)
+    assert words[words.index("--done") + 1] == expected
 
 
 def _success_checks_then_sorted_hotspots_then_idle_lines(env):
@@ -111,7 +112,7 @@ def _success_checks_then_sorted_hotspots_then_idle_lines(env):
     assert result.stdout.splitlines()[:8] == [*DUE,
         "app.py keeps breaking: 3 noted problems are open there.", COMMAND,
         "z.py keeps breaking: 3 noted problems are open there.",
-        'Next: forge fix start "Simplify z.py: problems keep turning up there" --done "z.py is simpler and none of these happen any more: X; Y; Z"',
+        'Next: forge fix start "Simplify z.py: problems keep turning up there" --done "z.py is simpler and none of these happen any more: X; Y; Z" --kind backend',
         "No story or fix is in progress."]
 
 
@@ -204,12 +205,14 @@ def test_6_new_and_previously_adopted_clients_get_hotspot_guidance(repo, gh, pre
         assert text.index("## Closing") < text.index("## Hotspots") < text.index("## Check-back")
         flat = " ".join(text.split())
         for sentence in (
-            "A worker or review notes problems outside its change as spotted items, which Forge keeps in `plans/spotted.json` and nobody edits by hand.",
+            "A worker or review notes problems outside its change as spotted items, which Forge keeps in spotted records and nobody edits by hand.",
             "A spotted item never widens the change in hand, except a bug that blocks it.",
             "When `forge next` names a file that keeps breaking, start its fix command at once, like any ready item, without asking the owner.",
-            # Recovery now runs close automatically; both hosts must teach that flow.
-            "When GitHub refuses because the branch is behind the default branch, `forge merge` and `forge land` say so in one line, run close again to merge the default branch and run the tests, review and checks as close decides, then retry the merge.",
+            # Recovery now also handles a clash seen during the check wait; both hosts teach it.
+            "When GitHub reports a clash during the check wait or refuses a merge because the branch is behind or conflicting, `forge merge` retries close and merge once.",
+            "A mergeable pull request keeps its current head.",
+            "When the branch is behind the default branch, `forge merge` and `forge land` say so in one line, run close again to merge the default branch and run the tests, review and checks as close decides, then retry the merge.",
             "A real conflict stops with close's existing resolution steps.",
             "Other GitHub refusals keep their next action.",
-            "Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one trap line naming the file and the kind of problem that kept coming back."):
+            "Count the story's items' entries per file in the spotted records on the default branch, open or done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one trap line naming the file and the kind of problem that kept coming back."):
             assert sentence in flat

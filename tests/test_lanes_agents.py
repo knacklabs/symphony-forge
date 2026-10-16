@@ -58,6 +58,14 @@ def hold_agents(env):
     _install(env.repo.bin, "claude", HOLDING_CLAUDE.format(python=sys.executable).replace(
         'while not (here / f"go-{name}").exists():',
         'while not (here / f"go-{name}").exists() and not (here / "go-all").exists():'))
+    sdk = env.repo.bin / "claude_agent_sdk" / "__init__.py"
+    sdk.write_text(sdk.read_text("utf-8").replace(
+        '    yield SystemMessage("init", {"session_id": session, "model": options.model})',
+        '    name = Path.cwd().name\n'
+        '    (here / f"started-{name}").touch()\n'
+        '    while not (here / f"go-{name}").exists() and not (here / "go-all").exists():\n'
+        '        await asyncio.sleep(0.05)\n'
+        '    yield SystemMessage("init", {"session_id": session, "model": options.model})'), "utf-8")
     server = Path(__file__).parent / "stubs/codex-app-server"
     _install(env.repo.bin, "codex-app-server", server.read_text("utf-8").replace(
         '            turns += 1',
@@ -145,19 +153,19 @@ def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_lin
             str(ROOT / "src"), str(source)), "utf-8")
     # A dirty first turn forces a second model launch in the same work round.
     # Hold Git between launches: a per-launch reservation must not admit a waiter.
-    for provider in ("claude", "codex-app-server"):
+    for provider, indent, naming, marker, path_type in (
+            ("claude_agent_sdk/__init__.py", "    ", 'name = Path.cwd().name',
+             '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)', "Path"),
+            ("codex-app-server", "            ", 'name = pathlib.Path(cwd).name',
+             '            turns += 1', "pathlib.Path")):
         stub = repo.bin / provider
         source = stub.read_text("utf-8")
-        indent = "            " if provider == "codex-app-server" else ""
-        source = source.replace('name = pathlib.Path(cwd).name' if indent else
-                                'name = pathlib.Path.cwd().name',
-            ('name = pathlib.Path(cwd).name' if indent else 'name = pathlib.Path.cwd().name') +
+        source = source.replace(naming, naming +
             f'\n{indent}if name == {first_name!r} and (here / "first-ended").exists():\n'
             f'{indent}    name += "-nudge"')
-        marker = '            turns += 1' if indent else 'print("No findings.")'
         source = source.replace(marker,
             f'{indent}if name == {first_name!r}:\n'
-            f'{indent}    pathlib.Path({str(worktree(repo, "fix/" + first) / "dirty.txt")!r}).write_text("needs committing")\n'
+            f'{indent}    {path_type}({json.dumps((worktree(repo, "fix/" + first) / "dirty.txt").as_posix())}).write_text("needs committing")\n'
             f'{indent}    (here / "first-ended").touch()\n' + marker)
         stub.write_text(source, "utf-8")
     started = lambda name: (repo.bin / f"started-{name}").exists()

@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _install
+from conftest import REAL_UV, _install, _install_claude_sdk
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -120,6 +120,7 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path,
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    _install_claude_sdk(repo.bin, sdk_data)
     monkeypatch.setenv("FORGE_NOW", NOW)
     codex_home = repo.path.parent / "codex-home"
     codex_home.mkdir()
@@ -352,9 +353,9 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data, claude_session):
     assert sent
     # This test leaves forge.toml uncommitted, so the commit nudge uses the same settings too.
     for call in sent:
-        assert call["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
-        assert SOL["subagents"] not in call["args"]
-        assert SOL["subagent_effort"] not in call["args"]
+        assert (call["options"]["model"], call["options"]["effort"]) == ("opus", "high")
+        assert SOL["subagents"] not in call["options"].values()
+        assert SOL["subagent_effort"] not in call["options"].values()
 
 
 def test_4_turn_log(repo, monkeypatch, sdk_data, claude_session):

@@ -26,6 +26,8 @@ from forge import __version__, checks, codex, githooks, init, repo, review, scor
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
+    "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
+                "{action}, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
@@ -169,7 +171,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     try:
-        _merge_default(top, item, branch, default)
+        _merge_default(top, item, branch, default, pr)
     except repo.Refused as error:
         if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
@@ -205,13 +207,14 @@ def close(args: argparse.Namespace) -> int:
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:
-        files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
-                             "HEAD", cwd=top).splitlines())
+        base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top)
+        files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}...HEAD",
+                             cwd=top).splitlines())
         if (files - {"forge.toml", repo.state_path(item)} or
-                repo.git("diff", "--summary", f"origin/{default}", "HEAD", "--", "forge.toml", cwd=top)):
+                repo.git("diff", "--summary", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top)):
             repo.refuse(REFUSALS["merge_switch"], item=item)
         settings = tomllib.loads(repo.git("show", "HEAD:forge.toml", cwd=top))
-        original = tomllib.loads(repo.git("show", f"origin/{default}:forge.toml", cwd=top))
+        original = tomllib.loads(repo.git("show", f"{base}:forge.toml", cwd=top))
         if (settings.pop("merge", None) != "agent" or
                 settings != {key: value for key, value in original.items() if key != "merge"}):
             repo.refuse(REFUSALS["merge_switch"], item=item)
@@ -226,6 +229,7 @@ def close(args: argparse.Namespace) -> int:
     spotted.check(top, item)
     if not migrating:
         _synced(top, item)
+    _warn_fix_kind(top, state, f"origin/{default}")
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
     changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
@@ -365,7 +369,7 @@ def close(args: argparse.Namespace) -> int:
             stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
             state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
-    noted = (spotted.PATH,) if not switch and spotted.record(
+    noted = (spotted.own_path(item),) if not switch and spotted.record(
         top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
@@ -393,23 +397,40 @@ def close(args: argparse.Namespace) -> int:
         for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    advice = review.loop_advice(top, item) if serious else []
+    if advice:
+        print("\n".join(advice[:-1]), file=sys.stderr)
     if failed and not stopped:
-        repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
+        refusal = (REFUSALS["tests_failed"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["tests_failed"]
+        repo.refuse(refusal, command=command, item=item)
     if serious:
         if stopped:
             repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
                         question=review.stop_question(top, item, state), **stopped)
-        repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
+        refusal = (REFUSALS["blocked"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["blocked"]
+        repo.refuse(refusal, item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
-    finally:
-        pr = _publish(top, item, state, branch, default, pr, result, evidence)
+    except BaseException:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        raise
+    # Publish successful CI with Ready, or once before restarting on a refreshed head.
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
+    # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
+    pr = _pull_request(top, branch) or pr
+    _merge_default(top, item, branch, default, pr)
+    if repo.git("rev-parse", "HEAD", cwd=top) != head:
+        _publish(top, item, state, branch, default, pr, result, evidence)
+        repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
+                        accepted=choice == "accept", before=getattr(args, "pin_before", None))
+        again = argparse.Namespace(**vars(args))
+        again.dismiss = again.because = again.resolve = again.reason = None
+        return close(again)
     merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -417,7 +438,6 @@ def close(args: argparse.Namespace) -> int:
         pending = time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "")
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
-        _publish(top, item, state, branch, default, pr, result, evidence)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
@@ -430,6 +450,27 @@ def close(args: argparse.Namespace) -> int:
     if not retried_history and backfill.upgrade_fix(top, item, state):
         backfill.run(top)
     return 0
+
+
+def _warn_fix_kind(top: Path, state: dict[str, Any], base: str) -> None:
+    kind = state.get("fix_kind")
+    if not kind:
+        return
+    files = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                     "--", ".", *[path.replace(":(glob)", ":(exclude,glob)")
+                                    for path in repo.TEST_PATHS], cwd=top).split("\0")
+    # This is advice: paths can suggest a mismatch, but cannot decide what a change does.
+    code = [Path(path) for path in files if path and not path.startswith(
+        (".factory/", "plans/", "docs/"))]
+    ui = any(path.suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
+             or set(path.parts) & {"web", "frontend", "components", "screens", "pages"}
+             for path in code)
+    backend = any(path.suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb"}
+                  for path in code)
+    if (kind == "backend" and ui or kind == "ui" and backend and not ui
+            or kind == "mechanical" and (ui or backend)):
+        print("Warning: The changed files do not match this fix's worker kind "
+              f"({kind}). Check the kind before the next round.")
 
 
 def _settled_areas(state: dict[str, Any]) -> list[str]:
@@ -467,7 +508,8 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
         try:  # fix start works in the current checkout: the follow-up stacks on this item
             os.chdir(top)
             with contextlib.redirect_stdout(out):
-                task.fix_start(argparse.Namespace(why=why, done=done, slug=None))
+                task.fix_start(argparse.Namespace(why=why, done=done, slug=None,
+                                                  kind=state.get("fix_kind") or "mechanical"))
         finally:
             os.chdir(here)
         fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])
@@ -500,6 +542,8 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
         if default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
+        if advice := review.loop_advice(top or _worktree(item), item):
+            print("\n".join(advice[:-1]), file=sys.stderr)
         repo.refuse(REFUSALS["hotspot"], item=item,
                     question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
@@ -614,7 +658,8 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
     return from_base
 
 
-def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
+def _merge_default(top: Path, item: str, branch: str, default: str,
+                   pr: dict[str, Any] | None) -> None:
     cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     state = repo.read_state(item, top) or {}
@@ -663,6 +708,14 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
         if published.returncode:
             repo.git("reset", "--keep", original, cwd=top)
             repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
+        return
+    if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
+        return
+    trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
+    if trial.returncode not in (0, 1):
+        trial.check_returncode()
+    if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
+            and (pr or {}).get("mergeStateStatus") != "BEHIND"):
         return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
@@ -799,6 +852,12 @@ def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str
 def _gh(top: Path, *args: str) -> str:
     done = repo.run("gh", *args, cwd=top)
     if done.returncode:
+        if args[:2] == ("pr", "edit") and "--body-file" in args:
+            problem = (done.stderr or done.stdout or f"exit code {done.returncode}").strip()
+            action = ("wait for GitHub's rate limit to reset"
+                      if re.search(r"rate[ -]?limit|HTTP\s+429", problem, re.I)
+                      else "fix the GitHub problem")
+            repo.refuse(REFUSALS["publish"], problem=problem, action=action)
         if done.stderr.strip() == repo.REFUSALS["no_github"][0]:
             repo.refuse(repo.REFUSALS["no_github"])
         raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
@@ -822,7 +881,7 @@ def _draft(top: Path, *args: str) -> str:
 def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
     """The branch's open pull request, else its merged one, else None."""
     prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
-                         "--json", "number,state,body,isDraft"))
+                         "--json", "number,state,body,isDraft,mergeable,mergeStateStatus"))
     return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
                 None)
 
@@ -906,13 +965,13 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     return {**pr, "body": new}
 
 
-def _bounded_body(body: str) -> str:
+def _bounded_body(body: str, *, suffix: str = "") -> str:
     """Keep every GitHub write bounded, cutting duplicated and advisory detail before the contract."""
-    limit = 65536  # UTF-8 bytes also bound GitHub's character count, including emoji.
+    limit = 65536 - len(suffix.encode("utf-8"))  # Reserve the final merge trailer.
     note = ("Some detail was shortened to fit GitHub's pull request limit. "
             "Git holds the full contract and proof; missing time evidence remains unknown.")
     if len(body.encode("utf-8")) <= limit:
-        return body
+        return body + suffix
     body = body.replace(note + "\n", "")
     body = re.sub(r"\n<!-- forge:history .*? -->", "", body)
     body = re.sub(r"(?m)^([^\n<]+)\n(?:\1\n)+", r"\1\n", body)
@@ -989,7 +1048,7 @@ def _bounded_body(body: str) -> str:
             body = before + after
     lines = body.splitlines(keepends=True)
     body = prose(0)
-    return body.rstrip() + "\n\n" + note + "\n"
+    return body.rstrip() + "\n\n" + note + "\n" + suffix
 
 
 def _block(result: dict[str, Any], check: str) -> str:
@@ -1000,7 +1059,8 @@ def _block(result: dict[str, Any], check: str) -> str:
     because = {d["finding"]: d for d in result["dismissals"]}
     blocking, rest, below = [], [], {"follow-up": [], "live with": []}
     for n, finding in enumerate(result["findings"], 1):
-        outcome, scores = score.bar(score.of(finding)), score.of(finding)
+        outcome = "follow-up" if finding.get("follow_up") else score.bar(score.of(finding))
+        scores = score.of(finding)
         line = "Gain {}, Work {}, Harm {}".format(*scores) if scores else ""
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
