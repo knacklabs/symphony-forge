@@ -5897,6 +5897,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\tNot done: narrow and split choices leave a fix's builder plan unchanged\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 88,
+      "text": "Not done: narrow and split choices leave a fix's builder plan unchanged",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
       "kind": "bug",
       "path": "src/forge/task.py",

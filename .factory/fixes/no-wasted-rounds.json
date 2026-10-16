@@ -18,7 +18,8 @@
   "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "flagged": [
     "src/forge/close.py",
-    "src/forge/review.py"
+    "src/forge/review.py",
+    "src/forge/task.py"
   ],
   "kind": "fix",
   "known": [
@@ -99,17 +100,41 @@
       "security": false,
       "title": "Automatic narrow starts another review before the worker uses the updated plan",
       "work": 1
+    },
+    {
+      "area": "apply_review_choice() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 88,
+      "outcome": "open",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: narrow and split choices leave a fix's builder plan unchanged",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "af3def0b489defd6a0a3f6108e0491b606bf89f047f4235b793445701954bd4b",
-    "changed": "19e3c284e5d0633b19b4f9beaa5a75a089f31957cf763fb1404f2d341002e031",
-    "commit": "4f8012e6edc7106149a5313f11c1dccb00c02f11",
+    "branch_diff": "0a09e6517c35aa04bd91b1b887e42f879786193ae078f29be76ce934285827a5",
+    "changed": "2bd272cb141d3e3d4a9907d9071986ab367573fcab014b8a0fb7044d0b6383e7",
+    "commit": "cfd749c55871de4b0fd6dd738178c1a54c585b72",
     "dismissals": [],
-    "findings": [],
-    "id": "2b361a7f-201f-4688-96b8-5fa7716ba142",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done \u2014 For a fix item, `apply_review_choice` returns immediately because the item has no task component. `forge close --resolve narrow|split` therefore records the choice but leaves the fix's builder details unchanged and tells the worker to narrow it manually. This conflicts with the coordinator's ruling that a fix's own plan is `plans/<fix name>.md`. The named plan test exercises story tasks only, so it does not cover this path.",
+        "file": "src/forge/task.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 88,
+        "priority": "P1",
+        "title": "Not done: narrow and split choices leave a fix's builder plan unchanged",
+        "work": 2
+      }
+    ],
+    "id": "595dea15-2ee3-47db-ae18-730756fab6fe",
+    "status": "blocked"
   },
   "round": 7,
   "settled_areas": [
@@ -139,6 +164,10 @@
     },
     {
       "at": "2026-10-16T04:03:23.363134+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T06:01:10.722158+00:00",
       "step": "review"
     }
   ],
