@@ -1,6 +1,13 @@
 {
   "base": "8dc172b6bc6334049a8f6444b6a5311b5ba3a042",
   "branch": "fix/signoff-hide-generated",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1462f-91ff-7f12-92fa-8e820c23e243",
+    "head": null,
+    "start": "be4a4c3a4ed83bd725c5c9de5b1014f7f5a035f5"
+  },
   "done_when": "The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and a test proves it",
   "flagged": [
     "tests/test_signoff_hides_generated_files.py"
