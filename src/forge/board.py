@@ -306,9 +306,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         except repo.Refused:
             return "blocked", assignments
 
+    forge_files = repo.forge_dir(top)
     files = [] if cache is None else [  # Forge's per-item records: locks, turn logs, approvals
-        (path.relative_to(repo.forge_dir(top)).as_posix(), path.stat().st_mtime_ns)
-        for path in repo.forge_dir(top).rglob("*") if path.is_file()]
+        (path.relative_to(forge_files).as_posix(), path.stat().st_mtime_ns)
+        for path in forge_files.rglob("*") if path.is_file()]
 
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if cache is None:

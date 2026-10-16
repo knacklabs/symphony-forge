@@ -210,7 +210,7 @@ with sync_playwright() as p:
             page.on('console', lambda m: problems.append(m.text) if m.type == 'error' else None)
             page.on('response', lambda r: problems.append(r.url) if r.status >= 400 else None)
             page.goto(sys.argv[1])
-            page.wait_for_function("window.Board && window.Board.snapshot()")
+            page.wait_for_selector('#now-state[data-kind=""]', state='attached')
             seen = page.evaluate("new Promise(done => Board.onSnapshot(s => done(s.items.map(i => i.id))))")
             assert 'alpha' in seen, seen
             assert page.locator('#now-state').inner_text().strip(), 'The Now page says something'

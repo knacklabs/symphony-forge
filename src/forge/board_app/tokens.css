@@ -129,7 +129,7 @@ body {
 .bar .live::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--live); }
 .bar .live[data-state="polling"]::before { background: var(--needs-you); }
 
-main { flex: 1; min-height: 0; display: flex; }
+main { flex: 1; min-height: 0; display: flex; overflow-x: clip; } /* the drawer slides in from beyond the edge */
 main > section { flex: 1; min-width: 0; padding: var(--space-6) var(--space-8); overflow: auto; }
 main > section[hidden] { display: none; }
 main h1 { margin: 0 0 var(--space-3); font-size: var(--size-title); font-weight: 600; }
@@ -164,10 +164,18 @@ main h1 { margin: 0 0 var(--space-3); font-size: var(--size-title); font-weight:
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .drawer, .bar .views button { transition: none; }
+  .drawer, .bar .views button, .drawer .close { transition: none; }
 }
+.drawer .close { transition: transform 160ms var(--ease-out); }
+.drawer .close:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .drawer .close:hover { background: var(--tint); } }
+.bar .name { white-space: nowrap; }
+
 @media (max-width: 720px) {
-  .bar { gap: var(--space-3); padding: 0 var(--space-4); overflow-x: auto; }
+  .bar { height: auto; min-height: 48px; flex-wrap: wrap; gap: var(--space-2) var(--space-3);
+         padding: var(--space-2) var(--space-4); }
+  .bar .repo { display: none; }
+  .bar .end { margin-left: 0; }
   main > section { padding: var(--space-4); }
-  .drawer { width: 100%; position: fixed; inset: 48px 0 0 0; }
+  .drawer { width: 100%; position: fixed; inset: 0; z-index: 1; }
 }

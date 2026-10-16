@@ -53,6 +53,7 @@ class Snapshots:
         self.lock = threading.Lock()
         self.cache: dict[str, Any] = {"rows": {}, "rebuilt": []}
         self.inputs: tuple[str, str] | None = None
+        self.started = 0.0  # when the newest rebuild began
         self.version = 0
         self.body = b""
         self.pages: dict[str, Any] = {}  # the untrimmed derivation, for one refs fingerprint
@@ -80,12 +81,15 @@ class Snapshots:
 
     def now(self, force: bool = False) -> tuple[int, bytes]:
         """The Now view, rebuilt first when an input changed since the last one."""
+        asked = time.monotonic()
         seen = self.watched()
         if seen == self.inputs and not force:
             return self.version, self.body
         with self.lock:
-            seen = self.watched()  # another request may have rebuilt while this one waited
-            if seen != self.inputs or force:
+            # A rebuild that started after this request read inputs at least as new as it saw,
+            # so on a busy repo each request waits for at most one more rebuild.
+            if self.started < asked and (force or self.watched() != self.inputs):
+                self.started, seen = time.monotonic(), self.watched()
                 with repo.command_cache():
                     self.cache["rebuilt"] = []
                     view = board.machine_board(self.top, cache=self.cache)
