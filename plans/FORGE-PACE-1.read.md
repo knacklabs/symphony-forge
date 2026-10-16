@@ -153,3 +153,5 @@ No findings.
 20. Blocking: A canvas content mismatch now sends the user to request a working build.
     Raise: Functional. The new “otherwise” at `plans/FORGE-PACE-1.md:105–107` applies both to app-code changes and to a mismatched canvas tree id. Revising the canvas while sign-off is pending therefore produces `forge decision new prototype-build` even when no app code exists. That command creates a separate decision (`src/forge/records.py:218–226`); it does not repair the signed-design reference. The prescribed recovery cannot resolve this normal canvas-sign-off failure.
     Gain 3, Work 2, Harm 2
+
+   Disposition: cut

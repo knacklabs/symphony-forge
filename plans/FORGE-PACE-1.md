@@ -103,7 +103,8 @@ production unchecked. A canvas sign-off ships no code: production stories build 
 2. Canvas sign-off. The sign-off decision (`client-signoff`) gains a `## Signed design` section
    naming `docs/design/prototype/ (<tree id>)`. Accepting sign-off with no working prototype is
    allowed when that tree id matches the folder and the sign-off's own branch changes no app code
-   (item 1's rule); otherwise acceptance is refused with the next step `forge decision new
+   (item 1's rule). A tree id that does not match is refused with the next step to approve the
+   changed canvas again; app code on the branch is refused with the next step `forge decision new
    prototype-build`. The repo then counts as signed, as with any sign-off. The first story after a canvas sign-off names the signed folder in its `Design:`
    line, or a newer design approved with its plan. Tests: sign-off accepts a matching canvas with
    no app code; sign-off is refused when its own branch changes app code; a changed folder after sign-off is refused as the signed design; the first story
