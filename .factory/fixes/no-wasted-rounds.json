@@ -102,7 +102,7 @@
     "id": "8c7d7272-e2d2-45b3-9eb1-f8a2cf10d4a3",
     "status": "blocked"
   },
-  "round": 4,
+  "round": 5,
   "settled_areas": [
     "close() in src/forge/close.py"
   ],
@@ -137,12 +137,12 @@
     "worker_round": 3
   },
   "stuck": {
-    "close": "f3dd5645-bf66-468d-8fc4-afa8fa7543ea",
-    "head": "958dd3fc972137618c45196ce782080f307473c8",
+    "close": "10e3579b-5eb6-45f4-9960-93aab176b329",
+    "head": "117e05df595109b89475e9af55dd5d71b2553c15",
     "keys": {
-      "the review finding \"Not done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,\" in src/forge/close.py": 1
+      "the review finding \"An ordinary documentation edit can bypass the owner's second-round question\" in src/forge/review.py": 1
     },
-    "round": 3
+    "round": 4
   },
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
   "worker": "codex"
