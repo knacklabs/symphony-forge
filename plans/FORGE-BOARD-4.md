@@ -133,16 +133,20 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| SERVER | The local live page | server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, the shell, design tokens and the pinned `Board` interfaces with stubs | 1 | src/forge/board_server.py, src/forge/board_app/shell.html, src/forge/board_app/tokens.css, src/forge/board_app/app.js, src/forge/board.py | tests/test_board_server.py | | yes | |
-| NOW | The first screen | needs-you strip, pipeline, stories rail, figures, Team and Me | 2, 6 | src/forge/board_app/now.js, src/forge/board_app/now.css | tests/test_board_now_screen.py | SERVER | yes | |
-| DETAIL | Drawer and full item page | drawer, item page tabs, inert plan rendering | 3, 6 | src/forge/board_app/item.js, src/forge/board_app/item.css, src/forge/board_app/markdown.js | tests/test_board_item_page.py | SERVER | yes | |
-| PAGES | Releases and Insights | the two pages | 5, 6 | src/forge/board_app/releases.js, src/forge/board_app/insights.js | tests/test_board_releases_insights.py | SERVER | yes | |
+| SERVER | The local live server | server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, `/events` and the per-row snapshot cache | 1 | src/forge/board_server.py, src/forge/board.py | tests/test_board_server.py | | yes | |
+| SHELL | The page shell | the shell page, design tokens and the pinned `Board` interfaces with stubs, served by SERVER | 1 | src/forge/board_app/shell.html, src/forge/board_app/tokens.css, src/forge/board_app/app.js | tests/test_board_shell.py | SERVER | yes | |
+| NOW | The first screen | needs-you strip, pipeline, stories rail, figures, Team and Me | 2, 6 | src/forge/board_app/now.js, src/forge/board_app/now.css | tests/test_board_now_screen.py | SHELL | yes | |
+| DETAIL | Drawer and full item page | drawer, item page tabs, inert plan rendering | 3, 6 | src/forge/board_app/item.js, src/forge/board_app/item.css, src/forge/board_app/markdown.js | tests/test_board_item_page.py | SHELL | yes | |
+| PAGES | Releases and Insights | the two pages | 5, 6 | src/forge/board_app/releases.js, src/forge/board_app/insights.js | tests/test_board_releases_insights.py | SHELL | yes | |
 | ASSIGNUI | Assign on the board | the Assign control, `/assign`, refusal messages | 4 | src/forge/board_app/assign.js, src/forge/board_server.py | tests/test_board_assign_ui.py | NOW, DETAIL, FORGE-BOARD-3/ASSIGN | yes | |
 | CUTOVER | The old page goes | `forge board` serves only the new page; the old HTML board and its renderers are removed; the coordinator guide, both synced copies, docs/commands.md and docs/guide.md describe the live page | 1, 6 | src/forge/board.html, src/forge/board_visuals.py, src/forge/board_graph.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md, docs/guide.md, tests/ (only tests that cover the removed page) | tests/test_board_guide.py | NOW, DETAIL, PAGES, ASSIGNUI | yes | |
 
 New moving parts: a local web server started by `forge board`, bound to 127.0.0.1 (item 1)
 
 ## Notes
+
+- Split on 16 October 2026 by the owner's choice: SERVER keeps the server and the board data;
+  SHELL takes the page shell, styles and app script, so each part fits its size limit.
 
 - Waits for FORGE-BOARD-3 for owners, round times, known issues and releases; until those
   land, those regions show unknown.
