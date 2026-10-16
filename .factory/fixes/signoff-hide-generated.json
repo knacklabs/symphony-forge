@@ -1,0 +1,14 @@
+{
+  "base": "8dc172b6bc6334049a8f6444b6a5311b5ba3a042",
+  "branch": "fix/signoff-hide-generated",
+  "done_when": "The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and a test proves it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-16T19:24:52.609009+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The strict sign-off review sends files marked linguist-generated (images, videos) to Autoreview, which refuses binary media, so sign-off cannot run in a repo with brand videos"
+}
