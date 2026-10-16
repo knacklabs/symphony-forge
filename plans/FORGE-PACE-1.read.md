@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-15T10:13:21.177926+00:00
-seconds: 36.053
-read_hash: 6aff9b5194a0c6abe00c5f5e3604f58e73ab7367
-round: 4
-passed: yes
-doc_seen: 6aff9b5194a0c6abe00c5f5e3604f58e73ab7367
+read_at: 2026-10-16T16:07:43.788578+00:00
+seconds: 314.711
+read_hash: 1fd9618c0db726ec7d83a8f5a8c636430e43ee68
+round: 5
+passed: no
+doc_seen: 1fd9618c0db726ec7d83a8f5a8c636430e43ee68
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 613f1e07656fcb4e12cf844913cd16a4c322741e
+notes_seen: b2876d395f3d5846b9cea9cbd4f5e6fccac70583
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13ef6-7126-7692-8ac4-4f759a6cdc3a
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -107,3 +107,29 @@ Only a genuine trade-off goes to the human, as a question with options.
 ## Round 4
 
 No findings.
+
+## Round 5
+
+14. Blocking: The inherited gate hook cannot refuse backend builds.
+    Raise: Plan gap. `plans/FORGE-PACE-1.md:106–108` requires backend fixes to be refused through ROUTING’s hook, but its merged caller invokes that hook only for `ui` (`src/forge/task.py:518–519`). The plan explicitly leaves ROUTING unchanged at line 166, and BUILD owns no caller change. Filling the hook cannot make the newly required backend-refusal test pass.
+    Gain 5, Work 2, Harm 3
+
+   Disposition: cut
+
+15. Blocking: BUILD and SIGNOFF depend on an undefined distinction between canvas and working app.
+    Raise: Plan gap. `plans/FORGE-PACE-1.md:59–60`, `97–109` and `131–139` use app-code presence to grant build permission and choose whether strict review runs. No earlier task pins that shared predicate or its treatment of canvas HTML and generated scaffolding. `forge init` already writes a Dockerfile (`src/forge/init.py:138–147`), while `repo.is_prototype` determines only stage and sign-off status (`src/forge/repo.py:530–552`). BUILD and SIGNOFF can therefore implement incompatible classifications.
+    Gain 5, Work 2, Harm 3
+
+   Disposition: cut
+
+16. Blocking: The docs-only exception cannot be evaluated at fix start.
+    Raise: Plan gap. `plans/FORGE-PACE-1.md:106–108` exempts fixes that change only `docs/` or `plans/`, including an initial canvas-artboard fix. At that point the command has only why, done-when, kind and slug (`src/forge/task.py:579–584`); it creates the checkout before any worker changes files (`src/forge/task.py:522–528`). The plan supplies no prospective paths or other input for distinguishing a docs-only UI fix from a UI app build. The mechanical-fix test does not prove this separate exception.
+    Gain 4, Work 2, Harm 2
+
+   Disposition: cut
+
+17. Blocking: Disputed keep 12: the newly added signed-design reference is outside review reuse.
+    Raise: Plan gap. `plans/FORGE-PACE-1.md:138–139` adds `## Signed design` to the sign-off evidence, but lines 131–134 hash only Answers, Proof, Decisions and review rules alongside the product commit. Decision files are excluded from the product snapshot (`src/forge/review.py:894–908`). Switching the reference between two existing canvas folders while recording the customer’s reply leaves those cache inputs unchanged, allowing reuse against a different named design and copying it into subsequent stories as settled evidence.
+    Gain 4, Work 2, Harm 3
+
+   Disposition: cut

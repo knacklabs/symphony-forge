@@ -14,7 +14,7 @@
   signed canvas.
 - A working prototype is built only when the FDE asks for one, because the canvas cannot prove
   something such as real data or speed, and you accept that request as a recorded decision.
-  Until then, Forge refuses to start app code in an unsigned prototype.
+  Until then, Forge refuses to merge app code into an unsigned prototype.
 - A working prototype's rounds prove only what the demo needs: the demo's steps work, and
   nothing leaks or loses data. Its light review checks only demo breakage, security and data
   loss, with its own model setting. The full proof is due at sign-off.
@@ -89,7 +89,13 @@ production unchecked. A canvas sign-off ships no code: production stories build 
    runs init when PRODUCT.md is missing and makes the canvas folder `docs/design/prototype/` in a
    fix; the owner (or FDE) approves it with `forge decision new prototype-design` and
    `forge decision accept prototype-design --by <name>`. On a Codex-only host with no artifact
-   tool, the guide says to make the artboards as HTML files in the folder. Tests: a story with a
+   tool, the guide says to make the artboards as HTML files in the folder. App code: DESIGN pins
+   one rule that BUILD and SIGNOFF use. A changed file is app code unless it is under `docs/`,
+   `plans/`, `.factory/`, `.forge/`, `.github/`, `.claude/` or `.codex/`, or is a file `forge init`
+   or `forge sync` writes (such as AGENTS.md, forge.toml and the Dockerfile), or is PRODUCT.md or
+   DESIGN.md. Canvas artboards live under `docs/design/`, so they are never app code. A prototype
+   has a working build when its prototype-build decision is accepted or the default branch has a
+   merged commit that changes app code. Tests: a story with a
    user-facing part and no design is refused with the next step; `User-facing | true` is refused
    the same way; a changed folder voids approval; a task branch that changes the folder is refused
    at close; a backend-only story passes; a story approved on the earlier release still starts a
@@ -103,18 +109,20 @@ production unchecked. A canvas sign-off ships no code: production stories build 
    after sign-off starts from the signed folder.
 3. Working build. `forge decision new prototype-build` records the FDE's reason the canvas cannot
    prove something; `forge decision accept prototype-build --by <owner>` approves it. While the
-   prototype is unsigned and that decision is not accepted, `forge fix start` refuses every fix of
-   kind ui or backend, with the next step; mechanical fixes and fixes that change only `docs/` or
-   `plans/` are not refused. The rule uses ROUTING's ui gate hook. An unsigned repo that already
-   has merged app code counts as accepted. Once accepted, an unsigned prototype fix's brief asks
+   prototype is unsigned and has no working build (item 1's rule), close refuses any fix or task
+   whose branch changes app code, with the next step `forge decision new prototype-build`; a
+   branch that changes only canvas, docs or plan files closes as usual, whatever its kind. Fix
+   start does not refuse, because it cannot know which files a fix will change. An unsigned repo
+   that already has merged app code counts as having a working build. Once accepted, an unsigned prototype fix's brief asks
    for tests of the demo's steps and of security and data boundaries only, and close's review
    checks those, not per-function proof. Those rounds use a narrow review prompt that checks demo
    breakage, security and data loss only; `[models.light_review]` sets its model and effort
    (default: the review model at medium). Sign-off's full proof: the sign-off decision gains a
    `## Proof` section listing each demo workflow step with the test that proves it; the strict
-   sign-off review of a working prototype requires every step to name a passing test. Tests: an
-   unsigned prototype refuses a backend fix before the decision and starts it after; a
-   mechanical fix is not refused; an upgraded prototype with merged app code is not refused; a
+   sign-off review of a working prototype requires every step to name a passing test. Tests: in
+   an unsigned prototype, close refuses a fix that changes app code before the decision and
+   closes it after; a canvas-only ui fix closes with no decision; an upgraded prototype with
+   merged app code is not refused; a
    prototype round passes close with demo-step tests and no per-function proof; the light prompt
    names only the three checks; the setting changes the model used; a security finding still
    blocks; sign-off refuses a product whose `## Proof` leaves a demo step without a test.
@@ -130,11 +138,12 @@ production unchecked. A canvas sign-off ships no code: production stories build 
    on Codex and on Claude; the brief and the review input name the design folder.
 5. Sign-off reuse. For a working prototype, the strict sign-off review run before the customer
    reply saves its result with the product commit, a hash of the answers page, a hash of the
-   sign-off decision's `## Proof` and `## Decisions` sections, and the review rules. Accepting
+   sign-off decision's `## Signed design`, `## Proof` and `## Decisions` sections, and the review
+   rules. Accepting
    sign-off after the reply reuses that result while all four are unchanged and reviews again
    otherwise. A canvas-only sign-off runs no code review. Tests: review before the reply then
-   acceptance on an unchanged product runs one review; a changed answer page or a changed proof
-   mapping runs a second; a canvas-only sign-off runs none.
+   acceptance on an unchanged product runs one review; a changed answer page, a changed proof
+   mapping or a changed signed design runs a second; a canvas-only sign-off runs none.
 6. Hand-off. The sign-off decision's `## Signed design`, `## Proof` (demo outcomes and their
    tests, when a working prototype exists) and `## Decisions` sections are the evidence record;
    SIGNOFF pins the section names. Every story created after sign-off starts with a
@@ -148,10 +157,10 @@ production unchecked. A canvas sign-off ships no code: production stories build 
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| DESIGN | Design first | the `Design:` line with tree id in read, approval and close checks, the prototype-design decision rule ROUTING's gate calls, the folder layout and renderer | 1 | src/forge/design.py, src/forge/story.py, src/forge/templates/story.md, src/forge/templates/design/support.js | tests/test_design_first.py | ROUTING | no | |
+| DESIGN | Design first | the `Design:` line with tree id in read, approval and close checks, the prototype-design decision rule ROUTING's gate calls, the app-code rule BUILD and SIGNOFF use, the folder layout and renderer | 1 | src/forge/design.py, src/forge/story.py, src/forge/templates/story.md, src/forge/templates/design/support.js | tests/test_design_first.py | ROUTING | no | |
 | CONTEXT | Design and skills reach workers and reviewers | design folder and skill excerpts in the brief and the review input on both tools | 4 | src/forge/templates/brief.md, src/forge/templates/review.md, src/forge/review.py | tests/test_design_context.py | DESIGN | no | |
 | ROUTING | Fixes go to the right worker | owns `fix start`: `--kind`, the unsigned-prototype ui gate hook (pinned with a stub DESIGN fills), prototypes no longer forced to design, the same kind on every round, a warning when files disagree | 4 | src/forge/worker.py, src/forge/roles.py, src/forge/task.py, src/forge/cli.py | tests/test_fix_routing.py | | no | |
-| BUILD | Working prototype on request | the prototype-build decision gate, the demo-step and boundary test contract, the light review prompt and `[models.light_review]` | 3 | src/forge/design.py, src/forge/close.py, src/forge/score.py, src/forge/templates/review-light.md, src/forge/repo.py | tests/test_prototype_build.py | CONTEXT | no | |
+| BUILD | Working prototype on request | the prototype-build decision gate at close, the demo-step and boundary test contract, the light review prompt and `[models.light_review]` | 3 | src/forge/design.py, src/forge/close.py, src/forge/score.py, src/forge/templates/review-light.md, src/forge/repo.py | tests/test_prototype_build.py | CONTEXT | no | |
 | SIGNOFF | Sign-off on the canvas, once | canvas sign-off through `## Signed design`, the saved sign-off review and reuse, the decision's section names pinned | 2, 5 | src/forge/records.py, src/forge/review.py | tests/test_signoff_reuse.py | CONTEXT | no | |
 | HANDOFF | After sign-off | the proven section, cold read treats it as settled, and the guide's prototype, story and design steps on both synced copies | 6, 1, 2 | src/forge/story.py, src/forge/templates/cold-read.md, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/guide.md | tests/test_signoff_handoff.py | DESIGN, BUILD, SIGNOFF | no | |
 
