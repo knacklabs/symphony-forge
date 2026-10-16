@@ -26,27 +26,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e9140c72f9fef5670c01ea7dc2b8471a2c65a6dc9668b7d19264cc00fde3230c",
-    "changed": "e6eb46c51946ffddc53870b139b846b6f9644c1dc19fb7a1812cd9d5cdb2f76e",
-    "commit": "504f02711aa97b5657983f01e31a1a3429b0ec22",
+    "branch_diff": "08f29bd626e828eecfd481da4ddb082460f5ba201b6c0ea74eea1fa11ee93f8c",
+    "changed": "ab6219eff992fbb4babc87fb88d6154bf83aee6e001ffe7dfecde06b65bf9edb",
+    "commit": "8e4c5d8fe6a9281bb336b8304714f58654a7b99d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 2\nRaise: Scale. Every time the one-minute cache expires, `forge board` lists all closed pull requests and fetches each merged Forge pull request without a persisted list again. In a repo with 200 older items, a normal board refresh makes roughly 200 sequential network fetches plus Git history reads, delaying the board by minutes and repeating that cost throughout the repo's life.",
-        "file": "src/forge/known_issues.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 53,
-        "priority": "P1",
-        "title": "Board refresh re-fetches every older pull request",
-        "work": 3
-      }
-    ],
-    "id": "f8d5addb-a0dd-4f2d-aed1-e008d5a5e7f8",
+    "findings": [],
+    "id": "9fe1f370-d762-41f9-986f-6813189f99bd",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T05:16:12.122581+00:00",
@@ -54,6 +43,10 @@
     },
     {
       "at": "2026-10-16T05:23:25.778527+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T05:44:16.574551+00:00",
       "step": "review"
     }
   ],
