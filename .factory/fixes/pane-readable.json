@@ -23,7 +23,7 @@
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
@@ -38,6 +38,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "The Claude Code pane's Board tab is hard to read and shows wrong data is stuck. It should deliver: In the pane, each item shows its title on its own line, then short lines for status (state, round, worker, elapsed), stages with the total, and gates (plan read, review, CI with the failing check and pull request), then its next step, with a blank line between items; no field shows unknown, an empty value or 0s; rounds count from 1 and a running review shows as running; the Board and Machine tabs each have a shown key that selects them and the selected tab is marked; new repos get it at init, existing repos on upgrade and sync\nTwo rounds in a row left close's tests failing.\nThe worker tried: no new commits.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "5034291f-7b09-4c2f-b039-53cb6e501b7a"
+  },
   "stuck": {
     "close": "63b463d8-e7ee-4205-8c95-86c7e3e7bcc5",
     "head": "92afad1e159ceec62a17f9cf4ca60514771ff211",
