@@ -1,6 +1,13 @@
 {
   "base": "d5a5186a5dc12e5f9232e6f122802ab5ff14e591",
   "branch": "fix/windows-accept-body",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1428e-80c9-7f11-a1de-54691526dc6e",
+    "head": null,
+    "start": "ccae4095b1e420d33cbc8764814b191704072a51"
+  },
   "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite",
   "kind": "fix",
   "round": 1,
