@@ -164,7 +164,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     for (const bodyColumns of [80, 100]) {
       await ui.redraw({ ...band, bodyColumns })
       const blocks = (await ui.findAll({ type: 'Box' })).filter(b => b.props.flexShrink === 0 && b.text.includes('Review running · round 2 · Codex sol medium'))
-      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0 && b.text.endsWith(' · '))
+      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0 && b.text.endsWith(' · ') && b.props.width === bodyColumns - blocks[0]!.text.length)
       expect(blocks.length).toBe(2)
       expect(titles.length).toBe(2)
       expect(Number(titles[0]?.props.width) + Number(blocks[0]?.props.width)).toBe(bodyColumns)

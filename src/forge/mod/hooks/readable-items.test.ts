@@ -56,7 +56,7 @@ test('1: terminal Board separates details and omits absent or zero facts', async
   expect(status.toLowerCase()).toContain('codex')
   expect(status).not.toContain(rich.title)
   expect(status).not.toContain('Build')
-  const stages = texts.find(line => line.includes('Build ✓') && line.includes('→'))!
+  const stages = texts.find(line => line.includes('Build ✓') && line.includes('Review ● 1m 27s'))!
   for (const part of ['Tests –', 'Review ●', 'CI', 'Merge']) expect(stages).toContain(part)
   expect(texts.some(line => /^\s*Total\s+/.test(line))).toBe(true)
   expect(texts.some(line => /^\s*Plan read\s+:?\s*none\s*$/.test(line))).toBe(true)
@@ -102,7 +102,8 @@ test('3: terminal tabs show distinct hotkeys and mark the selected tab', async (
   await ui.press({ key: 'tab-Machine' })
   expect(String((await ui.find({ key: 'tab-Board' }))!.props.label)).not.toContain('●')
   expect(String((await ui.find({ key: 'tab-Machine' }))!.props.label)).toContain('●')
-  expect(JSON.stringify(await ui.drawn())).not.toContain(sparse.title)
+  expect(JSON.stringify(await ui.drawn())).toContain('This session · plans + decides')
+  expect(JSON.stringify(await ui.drawn())).not.toContain('Next: wait for the review')
   await ui.press({ key: 'tab-Board' })
   expect(String((await ui.find({ key: 'tab-Board' }))!.props.label)).toContain('●')
   expect(JSON.stringify(await ui.drawn())).toContain(sparse.title)
