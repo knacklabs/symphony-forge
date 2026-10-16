@@ -229,7 +229,7 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
 def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it."""
-    from forge import nextstep, time_records
+    from forge import known_issues, nextstep, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -747,6 +747,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
+            "known_issues": known_issues.collect(top, {
+                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
+                for rel, state, where in history["copies"]
+                if where == landed and (match := STATE.fullmatch(rel))}),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
