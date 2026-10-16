@@ -913,6 +913,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             snapshot = repo.git("commit-tree", product_tree, "-p", review_base,
                                 "-m", "Product snapshot for sign-off", cwd=tree)
             repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
+            # Sign-off reads every file, so generated ones (images, video, lockfiles) stay
+            # names only here too: Autoreview refuses binary media in its bundle.
+            prompt += _hide_generated(tree, review_base, snapshot)
         else:
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
