@@ -1,0 +1,143 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-16T05:35:54.466041+00:00",
+      "because": "The owner chose on 2026-10-16 to split the Windows suite into 12 groups: four of 8 groups hit the 45-minute limit at about 95% with no failure, which blocks proving this fix",
+      "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite"
+    },
+    {
+      "at": "2026-10-16T09:08:46.619136+00:00",
+      "because": "The owner narrowed this fix on 2026-10-16: it proves its own tests on every platform and the new group counts; a Windows-only known-issues test failure from another change gets its own fix",
+      "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and every Windows group of that suite finishes inside its 45-minute limit (12 groups)"
+    }
+  ],
+  "base": "d5a5186a5dc12e5f9232e6f122802ab5ff14e591",
+  "branch": "fix/windows-accept-body",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1428e-80c9-7f11-a1de-54691526dc6e",
+    "head": null,
+    "start": "ccae4095b1e420d33cbc8764814b191704072a51"
+  },
+  "done_when": "tests/test_accept_dismisses_the_latest_review_findings.py and the line-ending dismissal test pass on Windows, macOS and Linux in the every-platform suite, and the suite runs in 5 Linux, 9 macOS and 12 Windows groups, each inside its time limit",
+  "flagged": [
+    ".github/workflows/forge-next.yml",
+    "tests/test_dismissals_survive_line_ending_changes.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 5,
+      "harm": 3,
+      "line": 70,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: the owner-accept test passes in the 12-group every-platform suite",
+      "work": 2
+    },
+    {
+      "area": "test_1_dismissed_findings_keep_their_evidence_after_line_ending_changes() in tests/test_dismissals_survive_line_ending_changes.py",
+      "file": "tests/test_dismissals_survive_line_ending_changes.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 12,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: proof list",
+      "work": 1
+    },
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 5,
+      "harm": 3,
+      "line": 70,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each",
+      "work": 2
+    },
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 5,
+      "harm": 3,
+      "line": 57,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Not done: prove both dismissal tests and all platform groups at the current head",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f8183ebf7085a78bea4d9517282674f7a5c74c2a54e46df92c6316ea2184040f",
+    "changed": "3b72df5791f5b0860d7d9ba199413c5bddcb3ce91fcb8ef881331c2cbe2e67c0",
+    "commit": "57f35c5c78ff8fd33a694c3386b2b9d25eef9480",
+    "dismissals": [],
+    "findings": [],
+    "id": "5955826c-6efb-44f0-aae4-4d3ec4c0c6cf",
+    "status": "clean"
+  },
+  "round": 4,
+  "settled_areas": [
+    ".github/workflows/forge-next.yml"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T02:31:55.048820+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T02:41:24.726463+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T06:27:45.740435+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T06:54:17.896389+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T09:12:52.951858+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T14:41:24.732828+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-16T06:54:17.907101+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": ".github/workflows/forge-next.yml",
+    "reason": "Owner chose on 2026-10-16: narrow to this fix's own tests on every platform and the new group counts (5 Linux, 9 macOS, 12 Windows); the Windows known-issues test failure moves to its own fix",
+    "wait_id": "a0ddbc5f-6c8e-4978-8339-9fa69d14911e",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "d44edc85-cdbf-4ef6-a170-64572c7b5dc4",
+    "head": "049ab72aa9c961fe188d8637ef98288b0d00b1a7",
+    "keys": {
+      "the review finding \"Not done: prove both dismissal tests and all platform groups at the current head\" in .github/workflows/forge-next.yml": 1
+    },
+    "round": 3
+  },
+  "why": "On Windows, the full suite fails the owner-accept test: the last pull request body close publishes has no dismissed findings, so v1.2.13 cannot ship",
+  "worker": "codex"
+}

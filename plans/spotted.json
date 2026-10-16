@@ -320,6 +320,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: prove both dismissal tests and all platform groups at the current head\twindows-accept-body",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 57,
+      "text": "Not done: prove both dismissal tests and all platform groups at the current head",
+      "from": "blocking",
+      "item": "windows-accept-body",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each\twindows-accept-body",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 70,
+      "text": "Not done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each",
+      "from": "blocking",
+      "item": "windows-accept-body",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: the owner-accept test passes in the 12-group every-platform suite\twindows-accept-body",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 70,
+      "text": "Not done: the owner-accept test passes in the 12-group every-platform suite",
+      "from": "blocking",
+      "item": "windows-accept-body",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tRelease instructions require a full main run that no longer exists\tmain-run-faster",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -7829,6 +7862,17 @@
       "text": "Not done: init and earlier-adoption upgrade tests for the corrected hook",
       "from": "blocking",
       "item": "hook-n-flag",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_dismissals_survive_line_ending_changes.py\tNot done: proof list\twindows-accept-body",
+      "kind": "bug",
+      "path": "tests/test_dismissals_survive_line_ending_changes.py",
+      "line": 12,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "windows-accept-body",
       "status": "open",
       "closed_by": null
     },
