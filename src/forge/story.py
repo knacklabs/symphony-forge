@@ -167,6 +167,7 @@ def read(args: Any) -> int:
     if choice or reason is not None:
         if not choice or not reason or not reason.strip() or blocked_rounds < 3:
             repo.refuse(REFUSALS["bad_choice"], target=target)
+        folder = design.check(top, _text(doc)) if choice == "accept" and is_story else None
         reason = " ".join(reason.split())
         record.update(loop_choice=choice, loop_reason=reason)
         if choice == "accept":
@@ -177,7 +178,8 @@ def read(args: Any) -> int:
                     findings = findings.replace(block, settled + f"\n   Disposition: keep - {reason}", 1)
             record["read_hash"] = _store(top, doc.read_bytes(), rel)
         _write(notes, _notes(record, findings))
-        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes), top=top)
+        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes),
+                          *([folder] if folder else []), top=top)
         print(f"Recorded the human's choice: {choice}. " + (
             "Next: forge next" if choice == "accept" else
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))

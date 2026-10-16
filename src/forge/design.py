@@ -17,7 +17,7 @@ def check(top: Path, text: str, ref: str | None = None, *, required: bool = True
     body = story.sections(text).get("What changes for you", "").strip()
     if not required and not re.search(r"^Design:", body, re.M):
         return None  # Existing approvals adopt the rule at their next read and approval.
-    if not any(row["User-facing"].lower() in ("yes", "true") for row in story.parse(text, top)["tasks"]):
+    if not any(row["User-facing"].lower() in ("yes", "true") for row in story.parse(text)["tasks"]):
         return None
     line = body.splitlines()[-1] if body else ""
     match = re.fullmatch(r"Design: (docs/design/[^/\s]+/) \(([0-9a-f]{40}|[0-9a-f]{64})\)", line)
