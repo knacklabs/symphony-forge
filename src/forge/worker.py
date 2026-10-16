@@ -536,7 +536,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += "\n" + START_HERE + "\n"
         if match["task"]:
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
-                      f"Existing related tests: {values['existing_tests']}.\n")
+                      f"Existing related tests: {values['existing_tests']}.\n"
+                      f"\n## Current Done when\n\n{values['done']}\n")
         brief += "\n" + values["delegation"] + "\n"
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"

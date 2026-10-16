@@ -1507,10 +1507,17 @@ With the default enabled, land waits for a recorded choice and resumes after 30 
 default; it does not send the worker back while the stop is unanswered.
 Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
-Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
+For a story task, narrow writes the reason into its Done-when builder details; split also adds
+one follow-up task row. Forge commits and pushes the story plan, merges it into the task branch,
+and gives the worker the updated text next round. Fixes keep the choice in their own record;
+close names `forge fix amend <fix> --done "<done when>" --because "<why>"` as the next step.
+Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
+Sync in a task worktree keeps the Forge version pin unchanged.
+New repos get these rules at init; existing repos, including earlier adoptions, get them on upgrade
+and sync.
 A clean review clears an unanswered review-loop stop.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,

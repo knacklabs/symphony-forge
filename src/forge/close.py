@@ -97,6 +97,7 @@ def close(args: argparse.Namespace) -> int:
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    plan_updated = False
     continued = (os.environ.pop("FORGE_CLOSE_ACCEPTED", "") == "1" and choice == "accept"
                  and reason and (state.get("stop") or {}).get("choice") == choice
                  and state["stop"].get("reason") == reason.strip())
@@ -110,6 +111,8 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
                         else REFUSALS["bad_choice"], item=item)
         if not continued:
+            if choice in ("narrow", "split"):
+                plan_updated = task.apply_review_choice(top, item, choice, reason.strip())
             if choice == "switch":  # the next forge work runs this item on the other tool
                 state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
             if choice == "accept":
@@ -138,6 +141,15 @@ def close(args: argparse.Namespace) -> int:
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
         if choice != "accept":
+            if plan_updated:
+                print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed. "
+                      f"The worker gets the updated plan next round.\n"
+                      f"Next: forge work {item}")
+                return 0
+            if "/" not in item:
+                print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed.\n"
+                      f'Next: forge fix amend {item} --done "<done when>" --because "<why>"')
+                return 0
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
             return 0
@@ -495,6 +507,9 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
     """Record the repo's default choice, narrow, and start a follow-up fix for each open finding."""
     from forge import task  # close imports story, which imports task
 
+    reason = ("Nobody answered in 30 minutes; the repo's default narrows the part "
+              "to its Done-when lines and files each open finding as a follow-up fix")
+    task.apply_review_choice(top, item, "narrow", reason)
     fixes = []
     result = state.get("review") or {}
     dismissed = {d["finding"] for d in result.get("dismissals", [])}
@@ -514,8 +529,7 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
             os.chdir(here)
         fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])
     state["stop"].update(choice="narrow", by="default", fixes=fixes, worker_round=state.get("round"),
-                         reason="Nobody answered in 30 minutes; the repo's default narrows the part "
-                                "to its Done-when lines and files each open finding as a follow-up fix")
+                         reason=reason)
     state["status"] = "fixing"
     _save(top, item, state, "Record the repo's default review loop choice: narrow")
     repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))

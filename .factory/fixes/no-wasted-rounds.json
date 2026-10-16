@@ -1,0 +1,256 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-16T05:16:45.318595+00:00",
+      "because": "The owner split this fix on 2026-10-16: the rule that starts no review round when nothing changed clashes with main's newer review rules, so it moves to its own fix built on current main",
+      "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded"
+    },
+    {
+      "at": "2026-10-16T06:05:44.286197+00:00",
+      "because": "The owner narrowed this fix on 2026-10-16 to story parts: a fix already changes its done-when through fix amend",
+      "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded"
+    },
+    {
+      "at": "2026-10-16T14:36:43.966654+00:00",
+      "because": "The owner split this fix again on 2026-10-16: publishing the pull request body once per close moves to its own fix with the dated merge-wait case",
+      "done_when": "Choosing narrow or split on a story part updates that part's builder details in the plan and brings them into the task branch in one step, and on a fix it names the fix amend step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded"
+    }
+  ],
+  "base": "14f944a4e61456569288a386e83542e377ba96fb",
+  "branch": "fix/no-wasted-rounds",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13e64-03d9-72b2-8f4e-4da8171a5010",
+    "head": null,
+    "start": "fa7c754c40f8a3d5e9221309959f4f8e51b9f499"
+  },
+  "done_when": "Choosing narrow or split on a story part updates that part's builder details in the plan and brings them into the task branch in one step, and on a fix it names the fix amend step; sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/review.py",
+    "src/forge/task.py",
+    "tests/test_sync_preserves_task_pin.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 458,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A second review can leave a ready pull request showing a stale clean result",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 260,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "The timed default choice immediately recreates an unanswered stop",
+      "work": 1
+    },
+    {
+      "area": "test_3_close_publishes_the_pull_request_body_once() in tests/test_close_avoids_repeated_review_work.py",
+      "file": "tests/test_close_avoids_repeated_review_work.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test that land publishes each close body at most once",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 118,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no new,",
+      "work": 2
+    },
+    {
+      "area": "loop_advice() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "An ordinary documentation edit can bypass the owner's second-round question",
+      "work": 2
+    },
+    {
+      "area": "_answer_by_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 509,
+      "outcome": "accepted",
+      "reason": "src/forge/close.py:509 The owner accepted this on 2026-10-16 as a follow-up known issue: Gain 3, Harm 2 is below the bar to send work back",
+      "round": 4,
+      "security": false,
+      "title": "Automatic narrow starts another review before the worker uses the updated plan",
+      "work": 1
+    },
+    {
+      "area": "apply_review_choice() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 88,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: narrow and split choices leave a fix's builder plan unchanged",
+      "work": 2
+    },
+    {
+      "area": "_answer_by_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 500,
+      "outcome": "accepted",
+      "reason": "src/forge/close.py:500 The owner accepted this on 2026-10-16 as a follow-up known issue: Gain 3, Harm 2 is below the bar to send work back",
+      "round": 7,
+      "security": false,
+      "title": "Not done: Timed narrow on a fix does not name the fix amend step",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 435,
+      "outcome": "fixed in round 9",
+      "reason": "",
+      "round": 8,
+      "security": false,
+      "title": "A new ready pull request has no dated merge wait on other machines",
+      "work": 2
+    },
+    {
+      "area": "test_4_sync_in_a_task_worktree_preserves_the_forge_pin() in tests/test_sync_preserves_task_pin.py",
+      "file": "tests/test_sync_preserves_task_pin.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 18,
+      "outcome": "open",
+      "reason": "",
+      "round": 9,
+      "security": false,
+      "title": "Not done: test that task-worktree sync preserves an older Forge pin",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b7b7322c743de2a8a61a48e43e0038ba5d78c28143e6d21ec5124f1e6973b604",
+    "changed": "a6d8605e80db87673760e61756ff03a96719acc7bf9c9497063bdad659ec2ddc",
+    "commit": "20008b5d506e212c4cd16346e01bd6eac456676a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test \u2014 The test sets the pin to the version of the Forge executable under test for both new and adopted clients. It would still pass if sync incorrectly rewrote forge.toml to that executable's version, so it does not prove the promised pin preservation during an upgrade. It also omits the named Forge-source repo case.",
+        "file": "tests/test_sync_preserves_task_pin.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 18,
+        "priority": "P1",
+        "title": "Not done: test that task-worktree sync preserves an older Forge pin",
+        "work": 1
+      }
+    ],
+    "id": "473a1ee9-a0bd-4418-9d34-9707f5f28d15",
+    "status": "blocked"
+  },
+  "round": 10,
+  "settled_areas": [
+    "close() in src/forge/close.py",
+    "src/forge/close.py"
+  ],
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-10-15T06:46:40.237703+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T09:48:32.410768+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T10:37:32.147729+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T20:46:19.256465+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T03:00:24.840374+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T04:03:23.363134+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T06:01:10.722158+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T06:54:12.602462+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T10:19:38.032098+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T16:01:00.623436+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-16T10:19:38.044996+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "src/forge/close.py",
+    "reason": "Owner chose on 2026-10-16: split the one-body-publish rule, with this dated merge-wait case, into its own fix; this fix keeps the plan update on narrow and split, the fix amend step and the sync pin",
+    "wait_id": "cde591af-fc9c-47aa-b2b2-3ff6bd349df9",
+    "worker_round": 10
+  },
+  "stuck": {
+    "close": "ee055a4e-3119-47e6-b289-3e60fb928e95",
+    "head": "7f421048131bedba5a9be3f0faf940942bb11ad1",
+    "keys": {
+      "the review finding \"A new ready pull request has no dated merge wait on other machines\" in src/forge/close.py": 1
+    },
+    "round": 9
+  },
+  "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
+  "worker": "codex"
+}

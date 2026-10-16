@@ -1684,6 +1684,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/close.py\tA new ready pull request has no dated merge wait on other machines\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 435,
+      "text": "A new ready pull request has no dated merge wait on other machines",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tA red local test can leave an existing pull request mergeable\treview-alongside-tests",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1715,6 +1726,17 @@
       "item": "stuck-worker-asks",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tAutomatic narrow starts another review before the worker uses the updated plan\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 509,
+      "text": "Automatic narrow starts another review before the worker uses the updated plan",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
@@ -1957,6 +1979,17 @@
       "item": "stop-default-answer",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: Timed narrow on a fix does not name the fix amend step\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 500,
+      "text": "Not done: Timed narrow on a fix does not name the fix amend step",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
@@ -5886,6 +5919,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\tNot done: narrow and split choices leave a fix's builder plan unchanged\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 88,
+      "text": "Not done: narrow and split choices leave a fix's builder plan unchanged",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/task.py\tNot done: start refusals leave branches and worktrees untouched\tFORGE-STACK-1/START",
       "kind": "bug",
       "path": "src/forge/task.py",
@@ -7767,6 +7811,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_worker.py\tThe cached SDK interpreter can point into a deleted test folder.",
+      "kind": "bug",
+      "path": "tests/test_codex_worker.py",
+      "line": 84,
+      "text": "The cached SDK interpreter can point into a deleted test folder.",
+      "from": "worker",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
       "kind": "bug",
       "path": "tests/test_commands_load_only_their_owner.py",
@@ -9226,6 +9281,17 @@
       "text": "Not done: sync while forge land runs",
       "from": "blocking",
       "item": "sync-not-blocked",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_sync_preserves_task_pin.py\tNot done: test that task-worktree sync preserves an older Forge pin\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "tests/test_sync_preserves_task_pin.py",
+      "line": 18,
+      "text": "Not done: test that task-worktree sync preserves an older Forge pin",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
       "status": "open",
       "closed_by": null
     },
