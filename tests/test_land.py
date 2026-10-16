@@ -340,7 +340,7 @@ def _three_blocked_reviews_hold_the_fourth(env):
     asked = _land(env)
     assert asked.returncode == 1 and "ask the owner" in asked.stderr
     assert len(env.review_calls()) == 2
-    env.commit(where, f"plans/{ITEM}.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
     focused = env.repo.forge("work", ITEM)
     assert focused.returncode == 0, focused.stdout + focused.stderr
     assert env.close(ITEM).returncode == 1
@@ -444,7 +444,7 @@ def _default_stop_shows_the_question_while_it_waits(env):
         env.commit(where, "app.py", f"print({number})\n")
         assert env.close(ITEM).returncode == 1
     # After the second-round ask, the owner settles the missing rule before this focused round.
-    env.commit(where, f"plans/{ITEM}.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
     env.commit(where, "app.py", "print('focused repair')\n", "Repair the greeting")
     shim = env.repo.bin / "forge"
     clock = """import os, time

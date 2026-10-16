@@ -252,10 +252,12 @@ def loop_advice(top: Path, item: str, ref: str = "HEAD") -> list[str]:
     state = json.loads(repo.git("show", f"{ref}:{repo.state_path(item)}", cwd=top))
     if (state.get("stop") or {}).get("choice"):
         return []  # The recorded rule governs further work until close stops the loop again.
-    if not state.get("stop") and repo.git(
-            "diff", "--name-only", state["review"]["commit"], ref,
-            "--", f"plans/{item.partition('/')[0]}.md", cwd=top):
-        # Only a committed edit to this item's own plan answers the soft question.
+    if not state.get("stop") and any(
+            path.endswith(".md") and not path.endswith(".read.md") and
+            not path.startswith("plans/spotted/")
+            for path in repo.git("diff", "--name-only", "-z", state["review"]["commit"], ref,
+                                 "--", "plans/", "docs/", "README.md", cwd=top).split("\0")):
+        # A committed plan or builder-guidance edit answers the soft question.
         # A new review resets this comparison; an unresolved hard stop still needs a choice.
         return []
     history = _history(top, item, f"origin/{repo.default_branch(top)}", {}, ref)

@@ -185,7 +185,9 @@ def test_3_close_stops_after_github_refuses_one_pull_request_body_update(env, pr
     assert stopped.returncode != 0, stopped.stdout + stopped.stderr
     assert "Ready:" not in stopped.stdout
     assert len(env.gh_calls("pr", "edit")) - before == 1
+    # The repaired head is reviewed before its single body update reaches GitHub.
     assert stopped.stderr == (
+        "autoreview done\n"
         "GitHub refused to update this pull request, so this command stopped.\n"
         f"{problem}\nNext: {next_action}, then retry this command\n"
     )

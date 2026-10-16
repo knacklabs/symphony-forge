@@ -1,11 +1,10 @@
-"""Close spends one publication per run and asks before repeating unchanged work.
+"""Close spends one pull request body publication per run.
 
-The real commands own review reuse, Git pushes and PR publication. Only GitHub and
+The real commands own Git pushes and PR publication. Only GitHub and
 Autoreview are replaced at their external edges.
 """
 import json
 import re
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -15,49 +14,6 @@ from test_close_holds_after_three_blocked_reviews import client_item
 from test_land import _blocked_once_then_clean, land  # noqa: F401
 
 STORY = "no-wasted-rounds"
-
-
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_2_unchanged_blocked_work_goes_straight_to_the_owner(env, tmp_path, monkeypatch, previous):
-    began = datetime(2026, 10, 15, 10, tzinfo=timezone.utc)
-    monkeypatch.setenv("FORGE_NOW", began.isoformat())
-    item, where = client_item(env, tmp_path, previous)
-    env.reviews(blocked(finding("P1", "Greeting is missing")))
-    first = env.close(item)
-    assert first.returncode == 1, first.stdout + first.stderr
-    env.open_pr("", draft=True)
-    reviews, github = len(env.review_calls()), len(env.gh.calls())
-    trace = tmp_path / "git-trace.jsonl"
-    monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
-
-    stopped = env.close(item)
-
-    assert stopped.returncode == 1, stopped.stdout + stopped.stderr
-    assert "Nothing changed since the last review" in stopped.stderr
-    assert "Greeting is missing" in stopped.stderr
-    assert "Accept, narrow or split?" in stopped.stderr
-    assert f'forge close {item} --resolve <narrow|split|accept>' in stopped.stderr
-    assert len(env.review_calls()) == reviews
-    assert not any(call[:2] in (["pr", "create"], ["pr", "edit"])
-                   for call in env.gh.calls()[github:])
-    events = [json.loads(line) for line in trace.read_text("utf-8").splitlines()]
-    assert not any("push" in event.get("argv", []) for event in events if event["event"] == "start")
-    monkeypatch.setenv("FORGE_NOW", (began + timedelta(minutes=31)).isoformat())
-    chosen = env.close(item)
-    assert chosen.returncode == 1, chosen.stdout + chosen.stderr
-    assert "recorded the repo's default choice: narrow" in chosen.stdout
-    assert f"forge work {item}" in chosen.stderr
-    assert "Nothing changed since the last review" not in chosen.stderr
-    assert "Accept, narrow or split?" not in chosen.stderr
-    branches = env.repo.git("branch", "--list", "fix/*")
-    assert len(branches.splitlines()) == 2, branches
-    again = env.close(item)
-    assert "recorded the repo's default choice: narrow" not in again.stdout
-    assert "Accept, narrow or split?" not in again.stderr
-    assert "Nothing changed since the last review" not in again.stderr
-    assert env.repo.git("branch", "--list", "fix/*") == branches
-    assert len(env.review_calls()) == reviews
-    assert "The repo's default answered the review loop stop" in env.repo.forge("next").stdout
 
 
 @pytest.mark.parametrize("previous,existing_pr,outcome,pending_history", [
@@ -133,8 +89,9 @@ def test_3_close_publishes_the_pull_request_body_once(
     if outcome == "main-advances":
         if not existing_pr:
             assert len(env.review_calls()) == 1
-            assert "The default branch changed during checks." in closed.stderr
-            assert f"forge close {item}" in closed.stderr
+            assert ("The default branch changed during checks. The merged changes need a review "
+                    "before this pull request is ready.\n"
+                    f"Next: forge close {item}\n") in closed.stderr
             ready = env.gh_calls("pr", "ready")
             assert not ready or "--undo" in ready[-1], ready
             # A separate close owns the changed head and has its own publication budget.

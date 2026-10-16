@@ -60,9 +60,6 @@ REFUSALS = {
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
                 "earlier round flagged too, so Forge stops sending the worker back. {question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
-    "unchanged": ("Nothing changed since the last review and its serious findings are still open, "
-                  "so Forge stops sending the worker back. {question}",
-                  'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
@@ -258,14 +255,6 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    stop = state.get("stop") or {}
-    if (fresh and review.blocking(result) and not dismissals and choice != "accept"
-            and not (stop.get("choice") and stop.get("worker_round") == state.get("round"))):
-        state.update(stop={"file": review.blocking(result)[0][1]["file"],
-                           "round": round_number, "at": repo.now(), "unchanged": True}, status="hotspot")
-        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
-        _save(top, item, state, "Stop an unchanged review for the owner's choice")
-        check_stop(item, state, top)
     choice_round = 0
     if (state.get("stop") or {}).get("choice"):
         # Earlier stops omitted the round or stored the attempted next review.
@@ -554,13 +543,10 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
     if state.get("stop") and not state["stop"].get("choice"):
         if advice := review.loop_advice(top or _worktree(item), item):
             print("\n".join(advice[:-1]), file=sys.stderr)
-        message = REFUSALS["unchanged"] if state["stop"].get("unchanged") else REFUSALS["hotspot"]
-        values = {"item": item, "question": review.stop_question(_worktree(item), item, state),
-                  "round": sum(step["step"] == "review" for step in state.get("steps", [])),
-                  **state["stop"]}
-        # Land waits for the same review-loop choice for either stop message.
-        raise repo.Refused(message[0].format(**values), message[1].format(**values),
-                           entry=REFUSALS["hotspot"])
+        repo.refuse(REFUSALS["hotspot"], item=item,
+                    question=review.stop_question(_worktree(item), item, state),
+                    **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
+                       **state["stop"]})
 
 
 def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],

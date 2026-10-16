@@ -116,7 +116,7 @@ def test_3_land_carries_on_and_the_worker_narrows(land, entry):
             land.commit(where, paths[number - 1], f"print({number})\n")
             assert land.close(item).returncode == 1
         # The owner's second-round rule permits one focused round before the timer test starts.
-        land.commit(where, f"plans/{item}.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+        land.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
         land.commit(where, paths[2], "print('third greeting repair')\n")
         if entry == "running":
             assert land.close(item).returncode == 1

@@ -19,6 +19,7 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
     coupon = finding("P1", "Saving skips the coupon", line=3)
     env.reviews(blocked(coupon))
     assert env.close(item).returncode == 1
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
     reason = "app.py:3 the coupon is applied at checkout"
     dismissed = env.close(item, "--dismiss", "1", "--because", reason)
     assert dismissed.returncode == 0, dismissed.stdout + dismissed.stderr

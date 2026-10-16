@@ -519,10 +519,10 @@ def test_18_close(env, kind):
         "rev-parse", "HEAD", cwd=where)
     env.open_pr(body(create), draft=True)
 
-    # Green checks alone don't promote it: a matching dismissal is still required. An unchanged
-    # retry now asks the owner; that separate contract is covered by the unchanged-work regression.
+    # Green checks alone don't promote it: the serious finding still blocks, so it stays a draft.
     env.checks(GREEN)
-    assert not env.gh_calls("pr", "ready")
+    blocked_again = env.close(item)
+    assert blocked_again.returncode == 1 and not env.gh_calls("pr", "ready")
 
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
@@ -569,14 +569,10 @@ def test_18_close(env, kind):
     env.gh.respond("pr", "create", "--draft", stderr=no_drafts, exit=1)
     env.gh.respond("pr", "ready", "7", "--undo", stderr=no_drafts, exit=1)
     env.gh.respond("pr", "list", "--head", stdout="[]")  # no pull request yet
-    # Exercise draft fallback on changed work. An unchanged blocked retry now asks the owner
-    # before sending more requests to GitHub.
-    env.commit(where, "app.py", "print('saved with draft fallback')\n")
     fourth = env.close(item)
     refused, create = env.gh_calls("pr", "create")[-2:]
     assert refused == [*create[:2], "--draft", *create[2:]]
     env.open_pr(body(create))
-    env.commit(where, "app.py", "print('saved with existing pull request')\n")
     fifth = env.close(item)
     assert env.gh_calls("pr", "ready")[-1] == ["pr", "ready", "7", "--undo"]
     for done in (fourth, fifth):

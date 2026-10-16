@@ -20,6 +20,7 @@ def _stop_with_remaining_findings(env):
     safe = finding("P1", "Already proved safe", "src/a.py")
     env.reviews(blocked(safe))
     assert env.close(item).returncode == 1
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
     assert env.close(item, "--dismiss", "1", "--because", "src/a.py:1 Proven safe").returncode == 0
     for number in (2, 3):
         env.commit(where, "app.py", f"print({number})\n")
