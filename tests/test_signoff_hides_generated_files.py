@@ -45,6 +45,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
                           encoding="utf-8")
         repo.git("add", "forge.toml")
         repo.git("commit", "-qm", "Select the upgraded Forge release")
+        repo.git("push", "-q", "origin", "main")
         started = repo.forge("fix", "start", "Upgrade Forge", "--done", "Sign-off works after upgrade",
                              "--kind", "mechanical")
         assert started.returncode == 0, started.stdout + started.stderr
