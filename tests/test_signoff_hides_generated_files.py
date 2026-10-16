@@ -66,6 +66,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     answers = "## Answers\n" + "".join(
         f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
         f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
+    (fix / "docs/product").mkdir(parents=True, exist_ok=True)
     (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers, encoding="utf-8")
     (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
     with (fix / ".gitattributes").open("a", encoding="utf-8") as out:
