@@ -1,0 +1,14 @@
+{
+  "base": "f0250948eb513a843659ab4bdf44dfc35cf18f3f",
+  "branch": "fix/windows-known-issues",
+  "done_when": "tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known issues on Windows as on the other platforms",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-16T09:09:27.874207+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows the board's known issues miss problems kept in older merged pull requests, and the known-issues tests fail there, so the every-platform suite cannot pass"
+}
