@@ -93,7 +93,7 @@
     "id": "ce49cd2b-3983-43d2-988d-65d5f6fce82e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -106,10 +106,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "96e7cb13b454a2317aef1792adf944658008e86b",
-    "keys": {},
-    "round": null
+    "close": "a16d8f04-e907-4b5e-8503-6c8586e0a153",
+    "head": "9a845737830ba198f9a37cd4efff6ef91269aa9a",
+    "keys": {
+      "the review finding \"Prototype fixes suggested by forge next omit the required kind\" in src/forge/task.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
