@@ -3,12 +3,20 @@
   "branch": "fix/pane-readable",
   "done_when": "In the pane, each item shows its title on its own line, then short lines for status (state, round, worker, elapsed), stages with the total, and gates (plan read, review, CI with the failing check and pull request), then its next step, with a blank line between items; no field shows unknown, an empty value or 0s; rounds count from 1 and a running review shows as running; the Board and Machine tabs each have a shown key that selects them and the selected tab is marked; new repos get it at init, existing repos on upgrade and sync",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
       "step": "start"
     }
   ],
-  "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard"
+  "stuck": {
+    "close": null,
+    "head": "590175356a7effebff02aab9bf0c47a5057714a9",
+    "keys": {},
+    "round": null
+  },
+  "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard",
+  "worker": "codex"
 }
