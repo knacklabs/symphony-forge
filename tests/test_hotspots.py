@@ -16,7 +16,7 @@ from test_measure import SPEC, DUE
 
 WHY = "Simplify app.py: problems keep turning up there"
 DONE = "app.py is simpler and none of these happen any more: Alpha; Beta; Gamma"
-COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}"'
+COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}" --kind backend'
 
 
 def land(env, branch):
@@ -95,7 +95,8 @@ def _command_cleans_punctuation_and_limits_texts(env):
     cleaned = ",-./:; _"
     expected = "app.py is simpler and none of these happen any more: " + "; ".join(
         f"{n} {cleaned}" for n in range(5)) + "; and 2 more"
-    assert shlex.split(command)[-1] == expected
+    words = shlex.split(command)
+    assert words[words.index("--done") + 1] == expected
 
 
 def _success_checks_then_sorted_hotspots_then_idle_lines(env):
@@ -111,7 +112,7 @@ def _success_checks_then_sorted_hotspots_then_idle_lines(env):
     assert result.stdout.splitlines()[:8] == [*DUE,
         "app.py keeps breaking: 3 noted problems are open there.", COMMAND,
         "z.py keeps breaking: 3 noted problems are open there.",
-        'Next: forge fix start "Simplify z.py: problems keep turning up there" --done "z.py is simpler and none of these happen any more: X; Y; Z"',
+        'Next: forge fix start "Simplify z.py: problems keep turning up there" --done "z.py is simpler and none of these happen any more: X; Y; Z" --kind backend',
         "No story or fix is in progress."]
 
 

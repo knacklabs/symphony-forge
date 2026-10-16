@@ -43,7 +43,7 @@ ALL = "- Metric:, - Baseline:, - Target:, - Check date: YYYY-MM-DD"
 DUE = ["Every story from the Invoices by email spec is done and its check date has passed; "
        "measure share of invoices paid within 30 days.",
        'Next: forge fix start "Record the invoices success result" --done "The invoices spec '
-       'records its result"',
+       'records its result" --kind mechanical',
        'Next: forge spec measure invoices --result "<measured result>"']
 
 
@@ -163,7 +163,7 @@ def test_6_forge_next_lists_a_due_check_until_forge_spec_measure_records_it(repo
     assert _next(repo, monkeypatch, "2026-10-01") == DUE + [
         "No story or fix is in progress.",
         'Next: forge story new <KEY> "<title>"',
-        'Next: forge fix start "<why>" --done "<done when>"']
+        'Next: forge fix start "<why>" --done "<done when>" --kind mechanical']
 
     # Recording the result: only in a fix, only on the confirmed text, and the spec stays confirmed.
     record = _fix(repo, "Record the invoices success result")

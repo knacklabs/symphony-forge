@@ -1,6 +1,8 @@
 """Fix kind in src/forge/task.py stays the same across worker tools and repeat rounds."""
 import json
+import shlex
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -9,6 +11,9 @@ from test_codex_worker import ROOT, _codex_repo, _sent, sdk_data  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_setup import _fresh_client
 from test_worker import calls, install_claude
+from test_next_names_a_failed_scheduled_run import RUNS, LOG, runs
+from test_spotted import entry, LIST
+from test_measure import SPEC
 
 STORY = "FORGE-PACE-1"
 
@@ -119,3 +124,70 @@ def test_22_prototype_fixes_require_a_kind_before_a_checkout_exists(repo):
     assert invalid.returncode == 1
     assert "invalid choice" in invalid.stderr
     assert not repo.git("branch", "--list", "fix/repair-the-app")
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
+@pytest.mark.parametrize("case,path,kind,match", [
+    ("idle", None, "mechanical", '"Find the problem to solve"'),
+    ("roadmap", None, "mechanical", '"<why>"'),
+    ("schedule", None, "mechanical", '"The scheduled'),
+    ("hotspot", "src/server.py", "backend", '"Simplify src/server.py:'),
+    ("hotspot", "web/page.html", "ui", '"Simplify web/page.html:'),
+    ("hotspot", "src/components/page.ts", "ui", '"Simplify src/components/page.ts:'),
+    ("hotspot", "docs/guide.md", "mechanical", '"Simplify docs/guide.md:'),
+    ("refresh", None, "mechanical", '--slug refresh-dependencies'),
+    ("measure", None, "mechanical", '"Record the invoices success result"'),
+])
+def test_23_prototype_next_fix_commands_run_as_printed(repo, gh, tmp_path, monkeypatch,
+                                                      adopted, case, path, kind, match):
+    # Direct fix-start tests cannot catch missing options in the preceding guidance command.
+    if adopted:
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
+                        dirs_exist_ok=True)
+    else:
+        repo.path, made = _fresh_client(repo, gh, tmp_path)
+        assert made.returncode == 0, made.stdout + made.stderr
+    repo.git("switch", "-qc", "fix/next-settings")
+    version = repo.forge("--version").stdout.split()[-1]
+    config = (repo.path / "forge.toml").read_text("utf-8")
+    if adopted:
+        repo.write("forge.toml", config.replace('version = "v1.2.2"', f'version = "{version}"')
+                   .replace('stage = "live"', 'stage = "prototype"'))
+    repo.write(".factory/fixes/next-settings.json", json.dumps({
+        "kind": "fix", "branch": "fix/next-settings", "why": "Prepare next guidance",
+        "done_when": "The guidance has its input files"}))
+    if case == "roadmap":
+        repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "PENDING"}]}))
+    elif case == "hotspot":
+        repo.write(path, "Sample\n")
+        repo.write(LIST, json.dumps({"items": [entry("bug", path, 1, text, "worker")
+                                               for text in ("First", "Second", "Third")]}))
+    elif case == "schedule":
+        repo.write(".github/workflows/forge-next-1.yml", "name: forge-next\n")
+        gh.respond(*RUNS, stdout=runs((7, 1, "forge-next", "failure")))
+        gh.respond("run", "view", "7", "--log-failed", stdout=LOG)
+    elif case == "refresh":
+        repo.write("uv.lock", "version = 1\n")
+    elif case == "measure":
+        repo.write("docs/specs/invoices.md", "---\nstatus: confirmed\n---\n" + SPEC)
+        repo.write("plans/roadmap.json", json.dumps({"items": [
+            {"key": "INV-1", "spec": "docs/specs/invoices.md"}]}))
+        repo.write(".factory/stories/INV-1/story.json", json.dumps({"status": "done"}))
+    monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-09-01T10:00:00+00:00")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Prepare guidance inputs")
+    monkeypatch.delenv("GIT_COMMITTER_DATE")
+    _publish_default(repo, repo.git("remote", "get-url", "origin"))
+    repo.git("switch", "-q", "main")
+    repo.git("merge", "-q", "--ff-only", "fix/next-settings")
+    monkeypatch.setenv("FORGE_NOW", "2030-02-01T10:00:00+00:00")
+    shown = repo.forge("next")
+    assert shown.returncode == 0, shown.stdout + shown.stderr
+    command = next(line for line in shown.stdout.splitlines()
+                   if line.startswith("Next: forge fix start ") and match in line)
+    words = shlex.split(command.removeprefix("Next: forge "))
+    started = repo.forge(*words)
+    assert started.returncode == 0, started.stdout + started.stderr
+    assert words[words.index("--kind") + 1] == kind
+    checkout = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+    assert checkout.is_dir()
