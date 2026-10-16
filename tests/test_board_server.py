@@ -194,7 +194,8 @@ def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_pa
         assert {part["owner"] for part in shown["children"]} == {"page-dev"}, shown["children"]
         fix(client, "elsewhere")
         after = snapshot(url)
-        assert "SHOP" not in after["snapshot"]["rows_rebuilt"] and "elsewhere" in after["snapshot"]["rows_rebuilt"]
+        # The fetch rebuilds every second here, so the newest rebuild may have had nothing new.
+        assert "SHOP" not in after["snapshot"]["rows_rebuilt"] and "elsewhere" in {row["id"] for row in after["items"]}
         kept = next(row for row in after["items"] if row["id"] == "SHOP")
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
 
