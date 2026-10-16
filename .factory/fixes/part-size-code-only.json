@@ -3,12 +3,20 @@
   "branch": "fix/part-size-code-only",
   "done_when": "A story part's size limit counts only code: Markdown files and files under docs/, plans/ and .factory/ do not count, nor do tests; a part that carries its story's design copies is measured by its own code; new repos get it at init and existing repos on upgrade",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T17:12:52.170830+00:00",
       "step": "start"
     }
   ],
-  "why": "A story part's size limit counts its story's design copies under docs and Markdown files as code, so a user-facing part stops on size it does not have"
+  "stuck": {
+    "close": null,
+    "head": "1b61200b106bead800637b1e55554145392dc0fc",
+    "keys": {},
+    "round": null
+  },
+  "why": "A story part's size limit counts its story's design copies under docs and Markdown files as code, so a user-facing part stops on size it does not have",
+  "worker": "codex"
 }
