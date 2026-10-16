@@ -62,8 +62,8 @@
     "id": "c49d9c4b-6ad9-4848-8848-412ca362693b",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T05:16:17.695363+00:00",
@@ -79,12 +79,10 @@
     }
   ],
   "stuck": {
-    "close": "a16d8f04-e907-4b5e-8503-6c8586e0a153",
-    "head": "9a845737830ba198f9a37cd4efff6ef91269aa9a",
-    "keys": {
-      "the review finding \"Prototype fixes suggested by forge next omit the required kind\" in src/forge/task.py": 1
-    },
-    "round": 1
+    "close": "bdf30084-9e81-4e33-959b-16ce552b8927",
+    "head": "24c8824d07945377b56adc9164227327b829eb37",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
