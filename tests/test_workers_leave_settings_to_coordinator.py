@@ -50,7 +50,7 @@ def test_1_worker_settings_commits_require_named_done_when(client, monkeypatch, 
     # Done-when now allows it; a note mentioning settings grants no permission.
     named = case in ("settings-fix", "release-bump")
     done = "Update forge.toml settings" if named else "Correct the spelling"
-    started = client.forge("fix", "start", "Correct spelling", "--done", done)
+    started = client.forge("fix", "start", "Correct spelling", "--done", done, "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = client.path.parent / f"{client.path.name}-fix-correct-spelling"
     config = folder / "forge.toml"
@@ -83,7 +83,8 @@ def test_1_worker_settings_commits_require_named_done_when(client, monkeypatch, 
 
 def test_2_fresh_and_resumed_workers_report_needed_settings_changes(client):
     log = install_claude(client)
-    started = client.forge("fix", "start", "Correct spelling", "--done", "Correct the spelling")
+    started = client.forge("fix", "start", "Correct spelling", "--done", "Correct the spelling",
+                           "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     for round_number in (1, 2):
         worked = client.forge("work", "correct-spelling", "--note", "fast_test needs a command")
@@ -166,7 +167,7 @@ settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker setting
         _install(client.bin, worker.name, source.replace(insertion, edit + insertion, 1))
     named = case == "named"
     started = client.forge("fix", "start", "Correct spelling", "--done",
-                           "Update forge.toml" if named else "Correct the spelling")
+                           "Update forge.toml" if named else "Correct the spelling", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = client.path.parent / f"{client.path.name}-fix-correct-spelling"
     before = (folder / "forge.toml").read_bytes()

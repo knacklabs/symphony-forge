@@ -33,6 +33,8 @@ REFUSALS = {
                 "forge close {other}"),
     "fix_lines": ("A fix needs a one-line why and a one-line done-when.",
                   'forge fix start "<why>" --done "<done when>"'),
+    "fix_kind": ("A prototype fix needs --kind ui, backend or mechanical.",
+                 'forge fix start "<why>" --done "<done when>" --kind <kind>'),
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
                 'cd <the fix folder> && forge fix allow-large "<reason>"'),
     "no_reason": ("The permission needs a one-line reason.", 'forge fix allow-large "<reason>"'),
@@ -489,6 +491,10 @@ def _one_line(text: str) -> bool:
     return bool(text.strip()) and "\n" not in text.strip()
 
 
+def require_prototype_design(top: Path) -> None:
+    """Unsigned-prototype UI gate: DESIGN fills this hook with the approved-design check."""
+
+
 def fix_start(args: argparse.Namespace) -> None:
     if not (_one_line(args.why) and _one_line(args.done)):
         refuse(REFUSALS["fix_lines"])
@@ -505,12 +511,19 @@ def fix_start(args: argparse.Namespace) -> None:
         n += 1
         name = f"{slug}-{n}"
     top = repo.root()
+    prototype = (top / "forge.toml").is_file() and repo.is_prototype(top)
+    fix_kind = args.kind
+    if prototype and fix_kind is None:
+        refuse(REFUSALS["fix_kind"])
+    if prototype and fix_kind == "ui":
+        require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
-    state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base)}
+    state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
+             "fix_kind": fix_kind or "mechanical"}
     if base == "HEAD":
         state["stacked_on"] = parent[0]
-    if (repo.root() / "forge.toml").is_file() and repo.is_prototype(repo.root()):
+    if prototype:
         state["allow_large"] = "Prototype before sign-off"
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
@@ -566,6 +579,8 @@ COMMANDS = [
     {"words": "fix start", "run": "fix_start", "changes_state": True,
      "help": "Start a fix in its own branch and worktree, with a one-line why and done-when",
      "args": [(('why',), {}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+              (('--kind',), {"choices": ["ui", "backend", "mechanical"],
+                             "help": "the worker kind; required for prototype fixes"}),
               (('--slug',), {"metavar": "NAME", "help": "the fix's name, instead of one cut from the why"})],
      "position": 110,
      "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |'},

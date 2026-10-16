@@ -49,7 +49,8 @@ def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypat
         repo.git("add", "-A", cwd=client)
         repo.git("commit", "-q", "-m", "Use the installed Forge", cwd=client)
         repo.git("push", "-q", "origin", "main", cwd=client)
-    made = repo.forge("fix", "start", "Check proof guidance", "--done", "Proof is listed", cwd=client)
+    made = repo.forge("fix", "start", "Check proof guidance", "--done", "Proof is listed",
+                      "--kind", "mechanical", cwd=client)
     assert made.returncode == 0, made.stdout + made.stderr
     where = Path(made.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     if not adopted:

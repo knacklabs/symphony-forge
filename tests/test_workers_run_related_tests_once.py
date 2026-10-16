@@ -9,7 +9,7 @@ def test_1_worker_brief_says_run_related_tests_once_without_polling(client):
     # The brief forge work sends is the contract; the stub only records it.
     log = install_claude(client)
     started = client.forge("fix", "start", "Check worker test guidance", "--done",
-                           "Workers run related tests once")
+                           "Workers run related tests once", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     worked = client.forge("work", "check-worker-test-guidance")
     assert worked.returncode == 0, worked.stdout + worked.stderr
