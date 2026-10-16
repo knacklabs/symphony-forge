@@ -1509,7 +1509,8 @@ Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 For a story task, narrow writes the reason into its Done-when builder details; split also adds
 one follow-up task row. Forge commits and pushes the story plan, merges it into the task branch,
-and gives the worker the updated text next round. Fixes keep the choice in their own record.
+and gives the worker the updated text next round. Fixes keep the choice in their own record;
+close names `forge fix amend <fix> --done "<done when>" --because "<why>"` as the next step.
 Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work

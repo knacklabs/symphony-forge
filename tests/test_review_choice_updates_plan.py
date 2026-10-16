@@ -16,6 +16,8 @@ import pytest
 
 import conftest
 from test_close import GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
+from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_close_waits_for_review_loop_choice import stopped
 from test_setup import _fresh_client
 from test_story import READER
 from test_worker import calls, install_claude
@@ -180,3 +182,19 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert calls(log)[-1]["options"].get("resume")
     assert reason in calls(log)[-1]["brief"]
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+def test_2_fix_narrow_names_the_fix_amend_step(env, previous):
+    client(env, previous)
+    item, where = stopped(env)
+    plans = env.repo.git("ls-tree", "-r", "HEAD", "--", "plans/", cwd=where)
+    before = len(env.review_calls())
+
+    chosen = env.close(item, "--resolve", "narrow", "--reason", "Keep only the greeting")
+
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    assert chosen.stdout.splitlines()[-1] == (
+        f'Next: forge fix amend {item} --done "<done when>" --because "<why>"')
+    assert env.repo.git("ls-tree", "-r", "HEAD", "--", "plans/", cwd=where) == plans
+    assert len(env.review_calls()) == before

@@ -147,6 +147,10 @@ def close(args: argparse.Namespace) -> int:
                 print(f"Recorded the human's choice. The worker gets the updated plan next round.\n"
                       f"Next: forge work {item}")
                 return 0
+            if "/" not in item:
+                print(f"Recorded the human's choice.\n"
+                      f'Next: forge fix amend {item} --done "<done when>" --because "<why>"')
+                return 0
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
             return 0
