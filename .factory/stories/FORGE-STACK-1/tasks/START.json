@@ -1,0 +1,109 @@
+{
+  "branch": "task/FORGE-STACK-1-START",
+  "chat": {
+    "approval": "163c341206a7b61eb1165174f54268020096e3131854660f47f52ab7d21c8127",
+    "claude": null,
+    "conversation": "01a13d86-b511-7772-87e7-d896b0cf23e3",
+    "head": null,
+    "start": "cc478955451cf825954f1d7713ad0bc3045f4c8e"
+  },
+  "flagged": [
+    "src/forge/merge.py",
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 282,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: start refusals leave branches and worktrees untouched",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 106,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: retain the Forge-merged trailer in bounded merge bodies",
+      "work": 1
+    },
+    {
+      "area": "test_2_unsafe_starts_name_the_blocker_without_creating_work() in tests/test_stack_start.py",
+      "file": "tests/test_stack_start.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 145,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: test an older base started before upgrade",
+      "work": 2
+    },
+    {
+      "area": "start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 209,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Approved remote story is ignored during an upgrade preview",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cc8d084a98c4f8ea869188c6f4a6f6f5eb3e9bf120d992cdcb179acaa805ed11",
+    "changed": "a9e0674d3aed8260a9b9587133da24db38595e5b6ba75ba9e90f6abaf4cec240",
+    "commit": "d69ccf4ae7edd6bd1a1ad66abdc1456608742a4a",
+    "dismissals": [],
+    "findings": [],
+    "id": "02a08e12-35a2-495f-87f0-a70f94e82fb9",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T03:06:27.899974+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T03:30:24.825436+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T04:05:49.979836+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T06:10:53.667206+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T07:20:48.632401+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "20b4fc5d-c1cb-4c57-ade7-11bd4b208147",
+    "head": "504d187fd6975e8135421aaabb25f134ef2597c2",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

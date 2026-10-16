@@ -43,11 +43,13 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
 def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
         repo, gh, monkeypatch, tmp_path, sdk_data, claude_session):
     _, calls = _closable(repo, gh, monkeypatch, tmp_path, sdk_data)
-    # With no recorded chat, close sends Codex nothing and never asks GitHub for the link.
+    # With no recorded chat, close sends no attachment and never asks GitHub for the link.
+    # Its review may still run through Codex.
     before = repo.forge("close", "BOARD/PAGE")
     assert before.returncode == 0, before.stdout + before.stderr
     assert "Ready:" in before.stdout
-    assert not any(call[:2] == ["pr", "view"] for call in gh.calls())
+    # Close now checks mergeability even with green checks; only the chat-link lookup is absent.
+    assert ["pr", "view", "task/BOARD-PAGE", "--json", "number,url,headRefName"] not in gh.calls()
     assert _sent(calls, "thread/attachment/add") == []
 
     assert repo.forge("work", "BOARD/PAGE").returncode == 0

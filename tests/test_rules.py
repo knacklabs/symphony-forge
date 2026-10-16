@@ -66,8 +66,8 @@ def test_5_forge_stays_small(repo):
 
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
-    # Decisions 0104/0105 add test/stop; approved FORGE-MOD-1 item 6 adds lanes.
-    assert len(commands) <= 23, f"{len(commands)} commands: {commands}"
+    # Decisions 0104/0105 add test/stop; FORGE-MOD-1 adds lanes; FORGE-BOARD-3 adds assign.
+    assert len(commands) <= 24, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 

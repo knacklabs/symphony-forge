@@ -2,6 +2,7 @@
 STORY = "any-file-hold"
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -54,6 +55,7 @@ def client_item(env, tmp_path, previous):
     (False, True, "narrow"), (True, True, "split"),
 ], ids=["init-any-narrow", "upgrade-any-split", "init-any-accept", "upgrade-any-accept",
         "init-same-narrow", "upgrade-same-split"])
+@pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env, tmp_path, previous, same_file, choice):
     item, where = client_item(env, tmp_path, previous)
@@ -62,10 +64,12 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        previous = (where / path).read_text("utf-8") if (where / path).exists() else ""
+        env.commit(where, path, f"# Review round {number}\n" + previous)
         # The advice note repeats each round; from round 2 it is known below the bar, so already settled.
         env.reviews(blocked(finding("P3", "Advice only"),
-                            {**finding("P1", f"Not done: Round {number} defect", path),
-                             "body": "Gain 3, Work 2, Harm 3\nRaise: Not done \u2014 Saving at `app.py:3` drops the basket "
+                            {**finding("P1", f"Functional: Round {number} defect", path),
+                             "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 Saving at `app.py:3` drops the basket "
                                      "(a3f9c2e1b). Returning shoppers lose their saved items. "
                                      "More detail."}))
         result = env.close(item)
@@ -145,7 +149,7 @@ def test_2_fresh_and_resumed_workers_receive_the_review_loop_hold_rule(env):
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         assert RULE in " ".join(calls(log)[-1]["brief"].split())
-    assert "--resume" in calls(log)[-1]["args"]
+    assert bool(calls(log)[-1]["options"].get("resume"))
 
 
 @pytest.mark.parametrize("interruption", ["clean", "dismissed"])
@@ -154,6 +158,7 @@ def test_3_only_consecutive_serious_blocked_reviews_hold_the_next_reviewer(env, 
     item, where = env.start_fix(changes={"app.py": "print('work')\n"})
     for number in range(1, 6):
         env.commit(where, "app.py", f"print('round {number}')\n")
+        env.commit(where, f"docs/{number}.md", f"# Review round {number}\n")
         clean = number == 5 or number == 2 and interruption == "clean"
         # Harm 3 holds the loop by the bar; files of their own keep each finding in its own area.
         env.reviews(CLEAN if clean else blocked(

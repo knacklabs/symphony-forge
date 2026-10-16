@@ -155,7 +155,9 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
         _old_round(repo, tmp_path, folder, "work", item)
     else:
         assert "Starting a new" not in _work(repo, item).stdout
-    first = _chat(log, app)
+    first_log = (repo.bin / "claude-calls.jsonl"
+                 if adopted == "previous-release-round" and app == "claude" else log)
+    first = _chat(first_log, app)
     if adopted == "previous-release-round":
         _sync_elsewhere(repo, tmp_path)
     if change == "model-and-effort":
@@ -192,10 +194,12 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
             config = _sent(log, "thread/resume")[-1]["config"]
             assert (config["model"], config["model_reasoning_effort"]) == ("gpt-6-nova", "low")
     else:
-        assert len(calls(log)) == 2
-        assert "--session-id" not in calls(log)[-1]["args"]
+        legacy_rounds = (len(calls(repo.bin / "claude-calls.jsonl"))
+                         if adopted == "previous-release-round" else 0)
+        assert len(calls(log)) + legacy_rounds == 2
+        assert not calls(log)[-1]["options"].get("session_id")
         if change == "model-and-effort":
-            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "sonnet", "--effort", "low"]
+            assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("sonnet", "low")
 
 
 @pytest.mark.parametrize("app", ["codex", "claude"])
@@ -279,7 +283,7 @@ def test_3_only_a_missing_chat_or_changed_tool_starts_fresh(repo, monkeypatch, s
     _work(repo, item)
     first = _chat(log, app)
     if reason == "tool-gone":
-        store = repo.bin / ("threads.json" if app == "codex" else "claude-sessions.json")
+        store = repo.bin / ("threads.json" if app == "codex" else "claude-sdk-sessions.json")
         store.write_text(json.dumps({"unrelated": {"cwd": str(folder), "turns": {}}}), encoding="utf-8")
     else:
         other = "claude" if app == "codex" else "codex"
@@ -535,7 +539,7 @@ def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_ed
             state.write_text(json.dumps(data), encoding="utf-8")
             repo.git("commit", "-qam", "Keep the earlier chat record", cwd=folder)
         else:
-            (repo.bin / "claude-sessions.json").unlink()
+            (repo.bin / "claude-sdk-sessions.json").unlink()
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     if case == "editing-worker":
         monkeypatch.setenv("STUB_CLAUDE_LEAVE", "worker-change.txt")
@@ -554,7 +558,7 @@ def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_ed
         assert "fell back to Codex" in done.stdout and "exit code 3" in done.stdout
         assert len(codex) == 1
         assert "## Tests first" in codex[0]["input"][0]["text"]
-        assert calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "medium"]
+        assert (calls(claude)[-1]["options"]["model"], calls(claude)[-1]["options"]["effort"]) == ("opus", "medium")
 
 
 def test_12_archived_previous_release_reader_starts_one_replacement_chat(
@@ -706,12 +710,13 @@ def test_15_previous_release_split_worker_follows_its_last_successful_tool(
     fallback = _old_round(repo, tmp_path, folder, "work", item)
     assert "fell back to Codex" in fallback.stdout
     assert len(_sent(repo.bin / "codex-app-server.jsonl", "turn/start")) == 1
-    first = _chat(claude, "claude")
+    legacy = repo.bin / "claude-calls.jsonl"
+    first = _chat(legacy, "claude")
     monkeypatch.delenv("STUB_CLAUDE_EXIT")
     if last == "claude":
         successful = _old_round(repo, tmp_path, folder, "work", item)
         assert "fell back to Codex" not in successful.stdout
-        first = _chat(claude, "claude", resumed=True)
+        first = _chat(legacy, "claude", resumed=True)
     _sync_elsewhere(repo, tmp_path)
     shutil.rmtree(repo.path / ".git/forge")
     said = _work(repo, item)
@@ -834,7 +839,7 @@ def test_19_upgrade_preserves_previous_release_worker_on_forge_branch(
     folder, item, log, _ = _worker(repo, monkeypatch, sdk_data, family, "fix", adopted=True)
     repo.git("branch", "-m", "forge/" + item, cwd=folder)
     _old_round(repo, tmp_path, folder, "work", item)
-    first = _chat(log, family)
+    first = _chat(repo.bin / "claude-calls.jsonl" if family == "claude" else log, family)
     _sync_elsewhere(repo, tmp_path)
     shutil.rmtree(repo.path / ".git/forge")
     said = _work(repo, item)

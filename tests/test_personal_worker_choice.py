@@ -53,7 +53,7 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     assert started.returncode == 0, started.stdout + started.stderr
     built = repo.forge("work", "BOARD/HELP")
     assert built.returncode == 0, built.stdout + built.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5", "--effort", "medium"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5", "medium")
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5, medium) because workers = claude; "
             "forge.local.toml: workers = claude, models.build; forge.toml: tools = both") in built.stdout
     # A local tools choice overrides forge.toml's Codex workers too. forge.toml has only Codex

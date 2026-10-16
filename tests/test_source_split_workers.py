@@ -18,7 +18,7 @@ def test_1_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
 
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-opus-5-5", "medium")
     assert _sent(codex_log, "turn/start") == []
 
     started = repo.forge("task", "start", "BOARD/HELP")

@@ -47,27 +47,21 @@ def _client(repo, gh, tmp_path, previous, *, subagents=False):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
-def test_1_lost_session_recovery_searches_all_claude_output(repo, gh, tmp_path, previous):
+def test_1_lost_session_recovery_searches_all_claude_output(repo, gh, tmp_path, previous, monkeypatch):
     log, folder = _client(repo, gh, tmp_path, previous)
     first = repo.forge("work", FIX)
     assert first.returncode == 0, first.stdout + first.stderr
     original = calls(log)[0]
-    session = original["args"][original["args"].index("--session-id") + 1]
-    (repo.bin / "claude-sessions.json").unlink()
-    stub = repo.bin / "claude"
-    source = stub.read_text("utf-8").replace(
-        'print(f"No conversation found with session ID: {session}", file=sys.stderr)',
-        'print(json.dumps({"type": "result", "subtype": "error_during_execution", '
-        '"result": "Resume failed", "errors": ["Diagnostic before the error", '
-        'f"No conversation found with session ID: {session}"]}))')
-    stub.write_text(source, encoding="utf-8")
+    session = original["options"]["session_id"]
+    (repo.bin / "claude-sdk-sessions.json").unlink()
+    monkeypatch.setenv("STUB_CLAUDE_LOST_ERRORS", "1")
 
     recovered = repo.forge("work", FIX)
 
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
     _, rejected, fresh = calls(log)
-    assert rejected["args"][rejected["args"].index("--resume") + 1] == session
-    assert "--session-id" in fresh["args"] and "--resume" not in fresh["args"]
+    assert rejected["options"]["resume"] == session
+    assert fresh["options"]["session_id"] and not fresh["options"].get("resume")
     assert "# Worker brief" in fresh["brief"]
     assert "Starting a new Claude session with the whole brief" in recovered.stdout
     assert fresh["cwd"] == str(folder)
@@ -79,18 +73,14 @@ def test_2_claude_ignores_codex_only_subagent_keys_on_first_fix(repo, gh, tmp_pa
     worked = repo.forge("work", FIX)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     [sent] = calls(log)
-    assert sent["args"][:5] == ["-p", "--model", "sonnet", "--effort", "medium"]
-    assert "subagents" not in sent["args"] and "gpt-6-luna" not in sent["args"]
+    assert (sent["options"]["model"], sent["options"]["effort"]) == ("sonnet", "medium")
+    assert "subagents" not in sent["options"] and "gpt-6-luna" not in json.dumps(sent["options"])
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
-def test_3_progress_retries_a_busy_events_file_without_aborting_worker(repo, gh, tmp_path, previous):
+def test_3_progress_retries_a_busy_events_file_without_aborting_worker(repo, gh, tmp_path, previous, monkeypatch):
     log, _ = _client(repo, gh, tmp_path, previous)
-    stub = repo.bin / "claude"
-    stub.write_text(stub.read_text("utf-8").replace(
-        'print("stub claude: built it")',
-        'print(json.dumps({"type": "system", "subtype": "init", "model": "sonnet"}))\n'
-        'print(json.dumps({"type": "result", "result": "Worker completed"}))'), encoding="utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "Worker completed")
     # The command shim supplies one Windows sharing violation at the filesystem edge;
     # the real progress writer decides whether to retry, without a production seam.
     shim = repo.bin / "forge"

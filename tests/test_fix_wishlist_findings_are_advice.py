@@ -12,7 +12,7 @@ def test_1_review_blocks_only_on_real_gaps_and_wishlists_are_p2(env):
     prompt = " ".join(env.prompt().split())
     for blocker in ("Functional: a defect on a path people or agents normally hit",
                     "Security: a security gap", "Data loss: data lost, corrupted or exposed",
-                    "Not done: an unmet Done-when item",
+                    "Not done: an unmet owner-approved Done-when item",
                     "Test: a missing or hollow test for a Done-when item's own behaviour"):
         assert blocker in prompt
     assert "- hardening beyond what the item promises;" in prompt

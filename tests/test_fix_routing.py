@@ -81,8 +81,7 @@ def test_2_fix_kind_selects_the_same_worker_on_every_round(repo, gh, tmp_path, m
             sent = _sent(codex_log, "thread/start") + _sent(codex_log, "thread/resume")
             assert sent[-1]["config"]["model"] == expected
         else:
-            args = calls(claude_log)[-1]["args"]
-            assert args[args.index("--model") + 1] == expected
+            assert calls(claude_log)[-1]["options"]["model"] == expected
 
 
 @pytest.mark.parametrize("kind,path,warns", [("backend", "web/page.html", True),

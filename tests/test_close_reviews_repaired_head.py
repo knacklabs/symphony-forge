@@ -44,6 +44,9 @@ def test_1_close_and_land_review_the_repaired_head_before_reusing_blocking_findi
         "args = sys.argv[1:]\n"
         "Path(args[args.index('--json-output') + 1]).write_text(json.dumps(answer), 'utf-8')\n"
         "sys.exit(0 if answer is clean else 1)\n", encoding="utf-8")
+    # This rule concerns a required main refresh, not an unrelated clean main move.
+    env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                   '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     first = env.repo.forge("close", item, cwd=where)
     assert first.returncode == 1, first.stdout + first.stderr
     assert "The review left serious findings open:" in first.stderr, first.stdout + first.stderr
