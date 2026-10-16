@@ -86,8 +86,8 @@
       "gain": 3,
       "harm": 2,
       "line": 509,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/close.py:509 The owner accepted this on 2026-10-16 as a follow-up known issue: Gain 3, Harm 2 is below the bar to send work back",
       "round": 4,
       "security": false,
       "title": "Automatic narrow starts another review before the worker uses the updated plan",
@@ -99,7 +99,13 @@
     "branch_diff": "0d8c60dc5e78051eb74efd2d697c51f92efd771bcb3f84682b34d1abfb703cfe",
     "changed": "95ebc58bdcf5c39744af6cabdaf988f3047fbbd8e8bc70aa5523d8ceb00bff1f",
     "commit": "92ccd40763e74c823178b7040077ff59bd4ef7f8",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/close.py:509 The owner accepted this on 2026-10-16 as a follow-up known issue: Gain 3, Harm 2 is below the bar to send work back",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 2\nRaise: Functional \u2014 After a timed review-loop stop, `_answer_by_default` merges the updated plan into the task branch here. `check_stop` then returns to `close` without ending the command (close.py:160). The plan change makes the prior review fingerprint stale (close.py:245\u2013248), so the same close call starts another review at close.py:291\u2013313 before `forge work` can give the updated details to the worker. Repeated findings can consume another round or stop the task again. The automatic narrow path should reach the resumed worker as the explicit choice does.",
@@ -113,7 +119,7 @@
       }
     ],
     "id": "3f74d1ac-1c34-4ade-a9d4-d52912696fac",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 5,
   "settled_areas": [

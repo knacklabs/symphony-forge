@@ -1724,8 +1724,8 @@
       "text": "Automatic narrow starts another review before the worker uses the updated plan",
       "from": "blocking",
       "item": "no-wasted-rounds",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
