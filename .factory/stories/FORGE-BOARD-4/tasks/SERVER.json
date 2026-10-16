@@ -2,13 +2,19 @@
   "branch": "task/FORGE-BOARD-4-SERVER",
   "part_line_limit": 400,
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The local live page is stuck. It should deliver: server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, the shell, design tokens and the pinned `Board` interfaces with stubs\nIt changes 1729 lines outside tests, over its limit of 400.\nThe worker tried: Server test: the owner check no longer depends on which rebuild ran last; The live board works with main's owner and known-issue facts; Give the board server test's fix a kind, as prototype fixes now need one; Board shell: phone header wraps, rebuilds are shared, the drawer press feels right; The board opens as a live page on this computer.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "claude",
+    "wait_id": "ec33d14b-1bd9-4fe7-be2b-5789c1452510"
+  },
   "stuck": {
     "close": null,
     "head": "0aedacf59c9ad73a9d2fe16236b0c30490a6e835",
