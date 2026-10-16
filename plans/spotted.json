@@ -8317,6 +8317,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_live_status.py\tA failed assertion can leave the reviewer blocked and hide the assertion behind a cleanup timeout.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 382,
+      "text": "A failed assertion can leave the reviewer blocked and hide the assertion behind a cleanup timeout.",
+      "from": "worker",
+      "item": "pane-readable",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -8368,6 +8379,17 @@
       "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "from": "worker",
       "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tThree Codex setup cases can stop before their socket handshake in the default branch's full-file run.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 325,
+      "text": "Three Codex setup cases can stop before their socket handshake in the default branch's full-file run.",
+      "from": "worker",
+      "item": "pane-readable",
       "status": "open",
       "closed_by": null
     },
