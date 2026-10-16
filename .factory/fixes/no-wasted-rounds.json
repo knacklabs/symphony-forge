@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-16T05:16:45.318595+00:00",
+      "because": "The owner split this fix on 2026-10-16: the rule that starts no review round when nothing changed clashes with main's newer review rules, so it moves to its own fix built on current main",
+      "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded"
+    }
+  ],
   "base": "14f944a4e61456569288a386e83542e377ba96fb",
   "branch": "fix/no-wasted-rounds",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "fa7c754c40f8a3d5e9221309959f4f8e51b9f499"
   },
-  "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; close starts no review round when nothing changed since the last review and the findings repeat, and goes straight to the owner's question; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
+  "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "flagged": [
     "src/forge/close.py",
     "src/forge/review.py"
