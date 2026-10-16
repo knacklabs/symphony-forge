@@ -174,7 +174,8 @@
   },
   "round": 10,
   "settled_areas": [
-    "close() in src/forge/close.py"
+    "close() in src/forge/close.py",
+    "src/forge/close.py"
   ],
   "status": "fixing",
   "steps": [
@@ -217,8 +218,12 @@
   ],
   "stop": {
     "at": "2026-10-16T10:19:38.044996+00:00",
+    "by": "owner",
+    "choice": "split",
     "file": "src/forge/close.py",
-    "wait_id": "cde591af-fc9c-47aa-b2b2-3ff6bd349df9"
+    "reason": "Owner chose on 2026-10-16: split the one-body-publish rule, with this dated merge-wait case, into its own fix; this fix keeps the plan update on narrow and split, the fix amend step and the sync pin",
+    "wait_id": "cde591af-fc9c-47aa-b2b2-3ff6bd349df9",
+    "worker_round": 10
   },
   "stuck": {
     "close": "ee055a4e-3119-47e6-b289-3e60fb928e95",
