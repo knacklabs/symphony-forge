@@ -77,7 +77,7 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
     assert notes.count("Disposition: keep - below the bar (follow-up)") == 2
 
     # A finding saved before scores still holds work by its priority, until its next round.
-    old = {"commit": "0" * 40, "status": "blocked", "dismissals": [], "blocking_level": "P1",
+    old = {"commit": repo.git("rev-parse", "HEAD"), "status": "blocked", "dismissals": [], "blocking_level": "P1",
            "findings": [{"priority": "P1", "title": "Saved serious finding", "body": "Evidence",
                          "file": "app.py", "line": 1},
                         {"priority": "P3", "title": "Saved advice", "body": "Evidence",
@@ -97,6 +97,8 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
             ("The checkout total is wrong", 4, 1, 1),
             ("The checkout misses a coupon", 4, 2, 2),
             ("The receipt cannot be read", 3, 1, 3)]
+    for n, _ in enumerate(held):
+        env.commit(where, f"docs/held-{n}.md", f"# Held case {n}\n")
     env.reviews(blocked(*[
         _scored("P2", title, f"Gain {gain}, Work {work}, Harm {harm}\nRaise: Functional", f"docs/held-{n}.md")
         for n, (title, gain, work, harm) in enumerate(held)],
@@ -118,6 +120,8 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
              ("The heading is long", 1, 1, 3),
              ("The title is long", 2, 2, 3)]
     env.commit(where, "app.py", "print('saved the note')\n")
+    for n, _ in enumerate([*followed, *lived]):
+        env.commit(where, f"docs/below-{n}.md", f"# Advice case {n}\n")
     env.reviews(blocked(*[
         _scored("P1", title, f"Gain {gain}, Work {work}, Harm {harm}\nRaise: Functional", f"docs/below-{n}.md")
         for n, (title, gain, work, harm) in enumerate([*followed, *lived])]))
@@ -198,7 +202,8 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
     stopped = env.close("SHOP/T1")
-    assert stopped.returncode == 1 and "settle it yourself" in stopped.stderr
+    assert stopped.returncode == 1 and "Ask the human" in stopped.stderr
+    assert "settle it yourself" not in stopped.stderr
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Label wording (app.py): known: below the bar (live with); Gain 2, Work 1, Harm 1" in known
     assert "Button colour (app.py): dismissed because app.py:1 the colour is set; Gain 2, Work 1, Harm 1" in known
@@ -233,6 +238,14 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
 
 def _round(env, item, where, number, *findings, code=1):
     env.commit(where, "app.py", f"print({number})\n")
+    # The score/area rules own these cases; each new defect is in this round's edits.
+    for entry in findings:
+        location = entry["code_location"]
+        path, line = location["file_path"], location["line"]
+        lines = (where / path).read_text("utf-8").splitlines() if (where / path).exists() else []
+        lines.extend([""] * max(0, line - len(lines)))
+        lines[line - 1] += f"  # review round {number}"
+        env.commit(where, path, "\n".join(lines) + "\n")
     env.reviews(blocked(*findings) if findings else CLEAN)
     result = env.close(item)
     assert result.returncode == code, result.stdout + result.stderr
@@ -280,8 +293,9 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
             state = json.loads((where / path).read_text("utf-8"))
             state.pop("known")
             env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
-        assert ("Every open note has Harm 1 or 2: settle it yourself (accept or narrow with a reason) "
-                "and tell the owner after.") in _round(env, item, where, 4).stderr
+        stopped = _round(env, item, where, 4).stderr
+        # The owner now decides even when every open finding has low Harm.
+        assert "Ask the human" in stopped and "settle it yourself" not in stopped
         assert len(env.review_calls()) == 3
         later(monkeypatch, 31)
         narrowed = env.close(item)

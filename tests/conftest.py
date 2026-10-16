@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import threading
@@ -49,22 +50,28 @@ def machine_cores(repo, count, system_count=None):
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
-import json, pathlib, sys
+import json, pathlib, subprocess, sys
+from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
-with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
-    calls.write(json.dumps(args) + "\\n")
+append_json(here / "gh-calls.jsonl", args)
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
-    with open(here / "gh-bodies.jsonl", "a", encoding="utf-8") as bodies:
-        path = args[args.index("--body-file") + 1]
-        body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
-        bodies.write(json.dumps(body) + "\\n")
+    path = args[args.index("--body-file") + 1]
+    body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
+    append_json(here / "gh-bodies.jsonl", body)
 responses = here / "gh-responses.json"
 for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
     if args[:len(rule["args"])] == rule["args"]:
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
+if args[:2] == ["pr", "view"] and args[-2:] == ["--json", "mergeable,headRefOid"]:
+    # Ordinary close fixtures have a mergeable pull request on the real pushed head.
+    # Explicit responses above still own API errors and conflicting/unknown states.
+    head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
+                                    "refs/heads/" + args[2]], text=True).split()[0]
+    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head}}))
+    sys.exit(0)
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)
 """
@@ -77,6 +84,23 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
     if os.name == "nt":  # Windows finds commands by extension; a .cmd hands off to Python.
         (bin_dir / f"{name}.cmd").write_text(f'@"{sys.executable}" "%~dp0{name}" %*\n',
                                              encoding="utf-8")
+
+
+def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
+    """A separate Python environment, with only the SDK's external edge replaced."""
+    pin = "0.2.161"
+    env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
+    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not python.is_file():
+        subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(env)], check=True)
+    (env / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+    package = bin_dir / "claude_agent_sdk"
+    package.mkdir(exist_ok=True)
+    shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
+    metadata = bin_dir / f"claude_agent_sdk-{pin}.dist-info"
+    metadata.mkdir(exist_ok=True)
+    (metadata / "METADATA").write_text(
+        f"Metadata-Version: 2.1\nName: claude-agent-sdk\nVersion: {pin}\n", encoding="utf-8")
 
 
 T = TypeVar("T")
@@ -152,7 +176,21 @@ _rm_error = _pytest.pathlib.on_rm_rf_error
 
 def _skip_locked(func: Any, path: Any, excinfo: Any, **kwargs: Any) -> Any:
     try:
+        error = excinfo if isinstance(excinfo, BaseException) else excinfo[1]
+        if isinstance(error, PermissionError) and func in (os.unlink, os.remove):
+            mode = os.lstat(path).st_mode
+            if stat.S_ISREG(mode) and not mode & stat.S_IWUSR:
+                # Windows Git objects need only their own read-only bit cleared.
+                # Pytest's fallback chmods every ancestor for each object.
+                try:
+                    os.chmod(path, mode | stat.S_IWUSR)
+                    func(path)
+                    return True
+                except PermissionError:
+                    pass  # Retain pytest's parent-permission recovery when needed.
         return _rm_error(func, path, excinfo, **kwargs)
+    except FileNotFoundError:
+        return False
     except PermissionError:
         # Pytest already retries read-only files after chmod; a persistent lock is skipped.
         return False
@@ -313,6 +351,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 # Time zones need no pin: Forge writes UTC times and runs `ps` with TZ=UTC itself.
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Outer test-selection flags must not change a client's own pytest command.
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
@@ -336,6 +376,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
+    shutil.copyfile(ROOT / "tests/stubs/json_log.py", bin_dir / "json_log.py")
     _install(bin_dir, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
     _install(bin_dir, "gh", GH_STUB.format(python=sys.executable))
     # Sync manages Claude's user-scope plugins. Never let a command test touch
@@ -351,6 +392,10 @@ elif args == ["plugin", "list", "--json"]:
     print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
 ''')
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    data = tmp_path / "data"
+    monkeypatch.setenv("XDG_DATA_HOME", str(data))
+    _install_claude_sdk(bin_dir, data)
+    monkeypatch.setenv("PYTHONPATH", str(bin_dir) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     # Host hooks find forge through uv's tool folders, so those name this one too.
     monkeypatch.setenv("XDG_BIN_HOME", str(bin_dir))
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)

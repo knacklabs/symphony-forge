@@ -7,6 +7,11 @@ including findings already fixed or dismissed. Do not reopen them with the same 
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
 
+From the second review round, close checks the previous round's findings and the lines changed
+since that review. New findings on unchanged lines become visible follow-ups, except security
+or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
+item (the fix's Done-when line); builder details are guidance and never block as `Not done`.
+
 You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
 
@@ -32,6 +37,12 @@ review stops from close or land use `forge close <item> --resolve <narrow|split|
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
 
+Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
+makes new parts wait for merges. A part that builds on another part keeps that base until close
+moves its own changes onto the default branch after the base merges through Forge.
+If a base exists only on this machine, finish its work and run `forge close <base>` to publish
+and review it before you start a part on top of it.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings
@@ -50,6 +61,9 @@ $delegation
   only what is committed.
 - Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
   `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- Generated client CI on a `windows-*` runner retries a failed test command once in PowerShell.
+  PowerShell syntax and `.ps1` scripts keep working. A second failure still fails the check;
+  Linux, Mac and the trusted PR gate keep their commands.
 - When you change text the program prints (messages, pull request text, board lines), search the
   tests for that text and run those tests too.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
@@ -273,7 +287,7 @@ human, and board and `forge next` lines. Briefs, guides and code stay as they ar
 
 Note anything you spot outside your item instead of fixing it: end a commit message's body with
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
-widen this change for one, and never edit `plans/spotted.json`; Forge keeps it. The one
+widen this change for one, and never edit the spotted records; Forge keeps them. The one
 exception is a bug that stops your item from working: fix it and name it in your handoff.
 
 <!-- if standards -->

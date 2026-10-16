@@ -76,7 +76,7 @@ def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
         assert settled in env.prompt(), settled
 
     env.commit(where, "basket.py", "print('saved with delivery')\n")
-    env.reviews(blocked(finding("P1", "Delivery loses the basket")))
+    env.reviews(blocked(finding("P1", "Delivery loses the basket", "basket.py")))
     done = env.close(item)
     assert done.returncode == 1 and "Delivery loses the basket" in done.stderr
     assert len(env.review_calls()) == 4

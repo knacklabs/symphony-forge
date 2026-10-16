@@ -164,7 +164,8 @@ def test_5_new_pytest_client_runs_the_proposed_picker_through_close(env, tmp_pat
     repo.git("add", "-A", cwd=client)
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Configure pytest", cwd=client)
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main", cwd=client)
-    started = repo.forge("fix", "start", "Change prices", "--done", "Related tests pass", cwd=client)
+    started = repo.forge("fix", "start", "Change prices", "--done", "Related tests pass",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     folder = client.parent / "client-fix-change-prices"
     env.commit(folder, "prices.py", "PRICE = 2\n")

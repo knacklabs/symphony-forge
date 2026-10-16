@@ -72,10 +72,17 @@ marker = here / "default-moved"
 merged = here / "github-merged"
 def git(*words, cwd=None):
     return subprocess.check_output(["git", *words], cwd=cwd, text=True).strip()
-if args[:2] in (["pr", "merge"], ["pr", "view"]):
+if args[:2] in (["pr", "merge"], ["pr", "view"], ["pr", "list"]):
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(args) + "\\n")
     head = git("ls-remote", remote, "refs/heads/fix/tidy-readme").split()[0]
+    if args[:2] == ["pr", "list"]:
+        # Close must see the up-to-date requirement or GitHub-only clash after main moves,
+        # even when its own trial merge can resolve the changed lines.
+        print(json.dumps([{"number": 7, "state": "OPEN", "body": "", "isDraft": False,
+                           "mergeable": "CONFLICTING" if marker.exists() and merge_state == "DIRTY" else "MERGEABLE",
+                           "mergeStateStatus": merge_state if marker.exists() else "CLEAN"}]))
+        sys.exit(0)
     if args[:2] == ["pr", "view"]:
         state = "MERGED" if merged.exists() else "OPEN"
         if "--jq" in args:
@@ -116,7 +123,7 @@ if args[:2] in (["pr", "merge"], ["pr", "view"]):
     git("push", "-q", "origin", "main", cwd=checkout)
     merged.write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", json.dumps(remote)).replace("CONFLICT", repr(conflict)).replace(
+'''.replace("REMOTE", json.dumps(remote)).replace("conflict = CONFLICT", f"conflict = {conflict!r}").replace(
     "MERGE_STATE", json.dumps(merge_state)).replace("UPGRADED", repr(upgraded)).replace(
     "FAILING_TEST", repr(failing_test))
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]

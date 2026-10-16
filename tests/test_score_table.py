@@ -21,7 +21,13 @@ HEAD = ["| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|-
 
 
 def _table(text: str) -> list[str]:
-    return [line for line in text.splitlines() if line.startswith("|")]
+    # History includes settled findings; this test owns the open-note decision table.
+    lines = text.splitlines()
+    if HEAD[0] not in lines:
+        return []
+    start = lines.index(HEAD[0])
+    end = next((n for n in range(start, len(lines)) if not lines[n].startswith("|")), len(lines))
+    return lines[start:end]
 
 
 @pytest.mark.parametrize("case", CASES)
@@ -33,10 +39,9 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     for host in (".claude", ".codex"):
         guide = " ".join((repo.path / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "shows the open notes as one table ranked by score" in guide
-        assert ("The coordinator settles a reversible note with Harm 1 or 2 itself and tells the owner "
-                "after, in one line.") in guide
-        assert ("The stop rule: the printed stop says who decides. When every open note has Harm 1 or 2, "
-                "it says \"Every open note has Harm 1 or 2: settle it yourself") in guide
+        # The owner now decides at both the second-round ask and the hard stop.
+        assert "The owner decides" in guide
+        assert "settle it yourself" not in guide
         assert "never a dismissal for being unnecessary, rare or low value" not in guide
         assert "whatever files they were in" not in guide
 

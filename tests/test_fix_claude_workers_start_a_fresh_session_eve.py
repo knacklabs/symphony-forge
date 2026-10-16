@@ -29,6 +29,8 @@ def _started(repo) -> Path:
 
 
 def _session(call: dict, flag: str) -> str:
+    if "options" in call:
+        return str(uuid.UUID(call["options"]["resume" if flag == "--resume" else "session_id"]))
     return str(uuid.UUID(call["args"][call["args"].index(flag) + 1]))
 
 
@@ -39,14 +41,14 @@ def test_1_a_claude_fix_round_continues_its_session_with_the_short_prompt(repo, 
     assert first.returncode == 0, first.stdout + first.stderr
     [built] = calls(log)
     session = _session(built, "--session-id")
-    assert "--resume" not in built["args"]
+    assert not built["options"].get("resume")
     assert "# Worker brief" in built["brief"] and "Why: Fix the login typo" in built["brief"]
 
     again = repo.forge("work", FIX, "--note", "Use the word Log in, not Login.")
 
     assert again.returncode == 0, again.stdout + again.stderr
     [_, fixed] = calls(log)
-    assert _session(fixed, "--resume") == session and "--session-id" not in fixed["args"]
+    assert _session(fixed, "--resume") == session and not fixed["options"].get("session_id")
     assert fixed["cwd"] == built["cwd"]
     brief = fixed["brief"]
     assert EARLIER in brief and "Use the word Log in, not Login." in brief
@@ -77,8 +79,8 @@ def test_2_a_design_claude_worker_continues_its_session_with_the_short_prompt(
 
     assert again.returncode == 0, again.stdout + again.stderr
     [_, fixed] = calls(log)
-    assert _session(fixed, "--resume") == session and "--session-id" not in fixed["args"]
-    assert fixed["cwd"] == str(folder) and fixed["args"][:3] == ["-p", "--model", "claude-sonnet-5-5"]
+    assert _session(fixed, "--resume") == session and not fixed["options"].get("session_id")
+    assert fixed["cwd"] == str(folder) and fixed["options"]["model"] == "claude-sonnet-5-5"
     assert EARLIER in fixed["brief"] and "Make the heading bigger." in fixed["brief"]
     assert "# Worker brief" not in fixed["brief"]
     assert FRESH not in again.stdout
@@ -90,7 +92,7 @@ def test_3_a_resume_claude_rejects_starts_fresh_in_the_same_round_saying_why(rep
     assert repo.forge("work", FIX).returncode == 0
     first = _session(calls(log)[0], "--session-id")
     # Claude has lost the session, as after its own history was cleared.
-    (repo.bin / "claude-sessions.json").unlink()
+    (repo.bin / "claude-sdk-sessions.json").unlink()
 
     lost = repo.forge("work", FIX)
 
@@ -98,7 +100,7 @@ def test_3_a_resume_claude_rejects_starts_fresh_in_the_same_round_saying_why(rep
     assert lost.returncode == 0, lost.stdout + lost.stderr
     [_, rejected, fresh] = calls(log)
     assert _session(rejected, "--resume") == first
-    assert "--resume" not in fresh["args"]
+    assert not fresh["options"].get("resume")
     second = _session(fresh, "--session-id")
     assert second != first
     assert "# Worker brief" in fresh["brief"] and EARLIER not in fresh["brief"]
@@ -123,7 +125,7 @@ def test_3_a_resume_claude_rejects_starts_fresh_in_the_same_round_saying_why(rep
 
     assert elsewhere.returncode == 0, elsewhere.stdout + elsewhere.stderr
     [*_, restarted] = calls(log)
-    assert len(calls(log)) == 5 and "--session-id" not in restarted["args"]
+    assert len(calls(log)) == 5 and not restarted["options"].get("session_id")
     assert _session(restarted, "--resume") == second
     assert Path(restarted["cwd"]).resolve() == moved.resolve()
     assert restarted["brief"].startswith("Fix round 4 on Fix the login typo.")
@@ -151,6 +153,6 @@ def test_5_failed_turns_in_a_session_claude_still_has_keep_that_session(repo, gh
     assert again.returncode == 0, again.stdout + again.stderr
     [*_, resumed] = calls(log)
     assert len(calls(log)) == 4
-    assert _session(resumed, "--resume") == first and "--session-id" not in resumed["args"]
+    assert _session(resumed, "--resume") == first and not resumed["options"].get("session_id")
     assert EARLIER in resumed["brief"] and "# Worker brief" not in resumed["brief"]
     assert FRESH not in again.stdout

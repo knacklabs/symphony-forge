@@ -1,0 +1,92 @@
+{
+  "branch": "task/FORGE-PACE-1-ROUTING",
+  "chat": {
+    "approval": "d4d8358328732737d1c7870ab4fb844c6487ec5e7e7775ba471afc64804839c1",
+    "claude": null,
+    "conversation": "01a14324-0469-78c2-9a1a-e71247f9686f",
+    "head": null,
+    "start": "f7c97288aba77980c151982e4faf6f926a5e140e"
+  },
+  "flagged": [
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "fix_start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 516,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Prototype fixes suggested by forge next omit the required kind",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 119,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: CONTEXT must send the design and skill guidance on both tools",
+      "work": 4
+    },
+    {
+      "area": "src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 582,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: HANDOFF must update the shipped fix-start guide",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "602a52cc50019bd0fc507e4143076506fdc9c14093a070fbf8791b21715b41d3",
+    "changed": "a1cfe825a71b4577cd77d5e09f27f6c0e5567dd3aecea99da4209a52dee179ff",
+    "commit": "931a4096425453a4005bc93aa713f0ef56b83ee0",
+    "dismissals": [],
+    "findings": [],
+    "id": "cfb6c391-0146-4af7-bd83-d538608955aa",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T05:16:17.695363+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T06:49:44.010859+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T07:21:16.349958+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T08:49:32.827282+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "bdf30084-9e81-4e33-959b-16ce552b8927",
+    "head": "24c8824d07945377b56adc9164227327b829eb37",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

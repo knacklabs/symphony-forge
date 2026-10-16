@@ -346,18 +346,15 @@ def test_7_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(en
     assert "CI passed, then passed" in committed
 
 
-def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(env):
+def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(env, monkeypatch):
     install_claude(env.repo)
     config = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8")
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
     question = "Question: May I reuse the existing parser?"
-    stub.write_text(source.replace('print("stub claude: built it")',
-                                   f'print("\\n\\n" + {question!r})'), "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\n" + question)
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     assert question in asked.stdout
@@ -367,7 +364,7 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
     assert waiting["rounds"][0]["worker_round"] == 1
     question_event = next(event for event in records(env.repo, "events.jsonl")
                           if event["event"] == "worker question")
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse it")
     assert answered.returncode == 0, answered.stderr
     current = row(env.repo, item)

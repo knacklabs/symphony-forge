@@ -1,4 +1,4 @@
-"""The worker: forge work runs claude -p in the item's checkout with the whole brief."""
+"""The worker: forge work runs the Claude Agent SDK with the whole brief."""
 from __future__ import annotations
 
 import json
@@ -14,19 +14,24 @@ WALKS_ALL = ("in every round, fix rounds included, it walks every Done-when item
              "part covers, not only what the round changed.")
 
 
-def install_claude(repo) -> Path:
-    """Put the stub claude on PATH; its calls land in claude-calls.jsonl beside it."""
+def install_claude(repo, *, worker=True) -> Path:
+    """Install the reader CLI stub and select the worker SDK log by default."""
     stub = repo.bin / "claude"
     shutil.copy(ROOT / "tests" / "stubs" / "claude", stub)
     stub.chmod(0o755)
     if os.name == "nt":
         (repo.bin / "claude.cmd").write_text(f'@"{sys.executable}" "%~dp0claude" %*\n',
                                              encoding="utf-8")
-    return repo.bin / "claude-calls.jsonl"
+    return repo.bin / ("claude-sdk-calls.jsonl" if worker else "claude-calls.jsonl")
 
 
 def calls(log: Path) -> list[dict]:
-    return [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
+    records = [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
+    # Prompt assertions are shared with reader CLI tests; the SDK receives prompt directly.
+    for record in records:
+        if "options" in record:
+            record["brief"] = record["prompt"]
+    return records
 
 
 def test_17_worker(repo, gh, monkeypatch):
@@ -57,9 +62,9 @@ def test_17_worker(repo, gh, monkeypatch):
     assert built.returncode == 0, built.stderr
     assert "stub claude: built it" in built.stdout
     call = calls(log)[-1]
-    assert call["args"][:7] == ["-p", "--model", "sonnet", "--effort", "medium",
-                                "--permission-mode", "bypassPermissions"]
-    assert "--allowedTools" not in call["args"]  # full access; the deny hook guards
+    assert (call["options"]["model"], call["options"]["effort"]) == ("sonnet", "medium")
+    assert call["options"]["permission_mode"] == "bypassPermissions"
+    assert not call["options"].get("allowed_tools")  # full access; the deny hook guards
     assert Path(call["cwd"]).resolve() == folder.resolve()
     brief = call["brief"]
     for text in ("Board shows each story in plain English", "Anyone can open one page",
@@ -79,7 +84,7 @@ def test_17_worker(repo, gh, monkeypatch):
             "`tests/test_old_board.py`, `web/test_board.py`.") in brief
     conventions = ROOT / "src" / "forge" / "templates" / "conventions"
     assert f"`{conventions}`" in brief and (conventions / "stack.md").is_file()
-    assert call["args"][call["args"].index("--add-dir") + 1] == str(conventions)
+    assert call["options"]["add_dirs"][0] == str(conventions)
 
     # The log sits in .git/forge/, where git never commits it.
     logs = list((repo.path / ".git" / "forge").glob("*.log"))

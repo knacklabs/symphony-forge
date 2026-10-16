@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-14T12:57:39.503336+00:00
-seconds: 93.33
-read_hash: e062e2d3546722a7d9bdf7c6383dc49e5135a7ec
-round: 35
+read_at: 2026-10-14T14:16:14.707605+00:00
+seconds: 51.037
+read_hash: 20104295eba2311e0514492057d9c2581987908f
+round: 42
 passed: yes
-doc_seen: e062e2d3546722a7d9bdf7c6383dc49e5135a7ec
+doc_seen: 20104295eba2311e0514492057d9c2581987908f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 509998a372b73626e8f2a09045a93711afcdc9d4
+notes_seen: f33a7dc8665ca61b0d8b265cf29e5844d8440ba3
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a138d9-664f-7b40-bb0e-9a66ddfe7a00
 session:
@@ -293,5 +293,39 @@ No findings.
     Disposition: cut
 
 ## Round 35
+
+No findings.
+
+## Round 36
+
+No findings.
+
+## Round 37
+
+34. Blocking: Criterion 5 still permits the API-key fallback that the new rule forbids.
+    Raise: Plan gap. [The new model-access rule](/docs/specs/sandbox-runs.md:78) requires sandbox rounds to use plan logins only, with local execution or waiting when none is free. But [criterion 5](/docs/specs/sandbox-runs.md:265) still permits using the team’s API key. A second Codex round with the first login occupied therefore has conflicting acceptance outcomes. Remove the stale API-key fallback from the criterion.
+    Gain 3, Work 1, Harm 3
+    Disposition: cut
+
+## Round 38
+
+No findings.
+
+## Round 39
+
+35. Blocking: The credential-scrubbing variable has the wrong name.
+    Raise: Security. [The new rule](/docs/specs/sandbox-runs.md:81) sets `CLAUDE_CODE_SCRUB_SUBPROC_ENV=1`, but [Anthropic’s security documentation](https://github.com/anthropics/claude-code-action/blob/main/docs/security.md) names `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`. The installed Claude executable likewise recognizes only the latter. Implementing the specified variable leaves ordinary Bash and hook subprocesses inheriting the developer’s OAuth token, contradicting the promised separation even without Docker root access. Use the supported variable.
+    Gain 4, Work 1, Harm 4
+    Disposition: cut
+
+## Round 40
+
+No findings.
+
+## Round 41
+
+No findings.
+
+## Round 42
 
 No findings.

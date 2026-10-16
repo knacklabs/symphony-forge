@@ -28,7 +28,7 @@ def _signed_off(repo) -> None:
 
 
 def _fix_path(repo, why: str) -> Path:
-    started = repo.forge("fix", "start", why, "--done", "The prototype works")
+    started = repo.forge("fix", "start", why, "--done", "The prototype works", "--kind", "mechanical")
     assert started.returncode == 0, started.stderr
     return Path(re.search(r" in (.+)\n", started.stdout)[1])
 

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_board_status_and_times.py\tThe browser command timed out in CI and left browser processes running.",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 112,
+      "text": "The browser command timed out in CI and left browser processes running.",
+      "from": "worker",
+      "item": "test-audit-followups",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

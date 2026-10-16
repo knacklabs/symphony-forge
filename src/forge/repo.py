@@ -97,14 +97,21 @@ def command_cache():
 
 def _common_path(cwd: str | os.PathLike[str] | None) -> Path:
     """Identify linked worktrees without another git process."""
-    top = Path(cwd or Path.cwd()).resolve()
+    top = Path(cwd or Path.cwd()).absolute()
+    key = ("common path", top)
+    if _command_cache is not None and key in _command_cache:
+        return _command_cache[key]
+    top = top.resolve()
     for folder in (top, *top.parents):
         dot = folder / ".git"
         if dot.is_file():
             dot = (folder / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
         if dot.is_dir():
             common = dot / "commondir"
-            return (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            found = (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+            if _command_cache is not None:
+                _command_cache[key] = found
+            return found
     return top
 
 
@@ -157,6 +164,9 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         # The board's pull request lists, which forge next --json reads too, show Forge's own change.
         (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
+        if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
+                "+refs/heads/*:refs/remotes/origin/*"):
+            command_fact("fetched origin", cwd, dict)["all"] = True
         key = ("landed ref", _common_path(cwd))
         if key in _command_cache and not _command_cache[key].startswith("origin/"):
             del _command_cache[key]  # A first fetch can create the previously absent remote ref.
@@ -436,15 +446,15 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
-        "merge": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
+        "merge": str, "stack": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
-            "stop_default": "narrow", "merge": "human", "checks": [], "interfaces": [], "always_test": [],
+            "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
             "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
-           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off")}
+           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -503,7 +513,8 @@ def _with_local(cfg: dict[str, Any], top: Path) -> dict[str, Any]:
 def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
-    git("fetch", "-q", "origin", default, cwd=top)
+    if not command_fact("fetched origin", top, dict).get("all"):
+        git("fetch", "-q", "origin", default, cwd=top)
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
