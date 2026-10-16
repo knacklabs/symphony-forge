@@ -122,8 +122,6 @@ def test_3_each_round_keeps_seconds_and_older_unrecorded_time_stays_unknown(
     item, where = env.start_fix(round=200 if scenario == "compacted-history" else 0)
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    # Use an existing PR so this close publishes the complete CI history once.
-    env.open_pr("", draft=True)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))

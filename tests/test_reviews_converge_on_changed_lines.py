@@ -58,8 +58,6 @@ def test_1_review_convergence_keeps_repairs_and_serious_unchanged_defects(env, a
     reviewed = env.repo.git("rev-parse", "HEAD", cwd=where).strip()
     first = env.close(item)
     assert first.returncode == 1 and old["title"] in first.stderr, first.stdout + first.stderr
-    # GitHub returns the PR created by the first close on the next lookup.
-    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
 
     # The deletion-only hunk has no new lines; its preceding anchor remains unchanged.
     # This guards an existing diff-boundary rule, not a claimed pre-fix deletion defect.
@@ -122,7 +120,7 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
         assert closed.returncode == 1 and note["title"].rstrip(".") in closed.stderr, closed.stdout + closed.stderr
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr
-        shown = body(env.gh_calls("pr", "create")[-1])
+        shown = body(env.gh_calls("pr", "edit")[-1])
         assert "Follow-ups:" in shown and note["title"] in shown
         assert "blocks the merge" not in shown
 

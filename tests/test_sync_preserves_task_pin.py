@@ -46,5 +46,4 @@ def test_4_sync_in_a_task_worktree_preserves_the_forge_pin(repo, gh, tmp_path, a
     assert repo.git("diff", "--", "forge.toml", cwd=task) == ""
     for host in (".codex", ".claude"):
         shipped_guide = (task / host / "skills/forge/SKILL.md").read_text("utf-8")
-        assert "A close run publishes the pull request body at most once." in shipped_guide
         assert "Sync in a task worktree keeps the Forge version pin unchanged." in shipped_guide

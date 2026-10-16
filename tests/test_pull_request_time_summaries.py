@@ -73,8 +73,6 @@ def test_1_long_item_keeps_recent_round_times_and_older_totals_within_a_fixed_bo
     env.reviews({"exit": 0, "report": report(finding("P2", "Basket label stays unclear"))})
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    # Existing PRs publish the completed CI and owner-wait history in one edit.
-    env.open_pr("", draft=True)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
@@ -273,7 +271,7 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     # Closing again once ready publishes close's saved clean review with the record.
-    env.open_pr(body(env.gh_calls("pr", "create")[-1]))
+    env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
     monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=30)).isoformat())
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr

@@ -106,7 +106,6 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
     closed = env.close(item)
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "The review left serious findings open" in closed.stderr
-    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
     assert repo.forge("work", item).returncode == 0
     brief = _findings_in(calls(log)[-1]["brief"])
     assert all(title in brief for title, *_ in held)

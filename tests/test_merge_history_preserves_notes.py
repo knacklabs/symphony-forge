@@ -14,7 +14,6 @@ def test_18_merge_refreshes_only_managed_history_and_keeps_handwritten_sections(
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
-    env.open_pr("", draft=True)
     env.reviews({"exit": 0, "report": report(finding("P2", "Use clearer basket copy"))})
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr

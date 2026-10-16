@@ -1,4 +1,4 @@
-"""Close pushes before review and requires review and CI outcomes before Ready."""
+"""Close starts remote tests before review and requires both outcomes before Ready."""
 import json
 import os
 from pathlib import Path
@@ -11,12 +11,12 @@ STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 
 @pytest.mark.parametrize("review_clean", [True, False], ids=["clean", "blocked"])
-def test_1_close_pushes_before_review_and_ready_needs_both(env, review_clean):
+def test_1_close_pushes_and_opens_ci_before_review_and_ready_needs_both(env, review_clean):
     item, where = env.start_fix()
     env.reviews(CLEAN if review_clean else blocked(finding("P1", "Greeting is missing")))
     helper = Path(os.environ["AUTOREVIEW"])
     # Observe real Git and the GitHub edge at review launch; the observer does not decide
-    # either outcome. The branch is pushed first; creation waits for the review outcome.
+    # either outcome. Previously the remote branch and pull request did not exist here.
     observer = '''
 remote = subprocess.run(["git", "ls-remote", {origin!r}, "fix/tidy-readme"],
                         capture_output=True, text=True).stdout.strip()
@@ -33,18 +33,12 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
     for tests in ([None, "failure", "success"] if review_clean else ["success"]):
         env.checks([run("tests", tests, "in_progress" if tests is None else "completed"),
                     run("forge-pr-check")])
-        before = len(env.gh.calls())
-        bodies = env.repo.bin / "gh-bodies.jsonl"
-        old_bodies = len(bodies.read_text("utf-8").splitlines()) if bodies.exists() else 0
         closed = env.close(item)
         assert (closed.returncode == 0) == (review_clean and tests == "success"), closed.stderr
         assert ("Ready:" in closed.stdout) == (review_clean and tests == "success")
-        # Previously creation plus several edits published intermediate bodies in one close.
-        # Close now creates after review, or updates an existing PR once after checking CI.
-        publications = [call for call in env.gh.calls()[before:]
-                        if call[:2] in (["pr", "create"], ["pr", "edit"]) and "--body-file" in call]
-        assert len(publications) == 1, publications
-        [body] = [json.loads(line) for line in bodies.read_text("utf-8").splitlines()[old_bodies:]]
+        edits = env.gh_calls("pr", "edit")
+        assert edits
+        body = Path(edits[-1][edits[-1].index("--body-file") + 1]).read_text()
         assert ("Review: clean" in body) == review_clean
         assert ("The review found serious problems." in body) == (not review_clean)
         pushed = env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
@@ -58,5 +52,5 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
     assert seen["remote"], "The branch was not pushed before review"
     assert seen["remote"].split()[0] == env.review_calls()[0]["head"]
     calls = [json.loads(line) for line in seen["github"].splitlines()]
-    assert not any(call[:2] in (["pr", "create"], ["pr", "edit"]) for call in calls)
+    assert any(call[:2] == ["pr", "create"] for call in calls)
     assert len(env.review_calls()) == 1

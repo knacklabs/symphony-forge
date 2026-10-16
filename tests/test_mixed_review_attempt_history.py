@@ -52,7 +52,7 @@ def test_23_timing_only_review_and_modern_result_in_one_worker_turn_keep_both_at
     seconds = current["time_breakdown"]["reviewing"] - legacy["seconds"]
     queued = current["time_breakdown"]["waiting_in_line"] or 0
     assert round(seconds + queued, 3) == round(timing["seconds"], 3)
-    published = body(env.gh_calls("pr", "create")[-1])
+    published = body(env.gh_calls("pr", "edit")[-1])
     assert old["line"] in published and new["line"] in published
 
 
@@ -113,7 +113,6 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
                      datetime.fromisoformat(joined["at"])).total_seconds(), 3)
     assert re.search(r"in line \d+ (?:seconds?|minutes?|hours?|days?)", turn["line"]), current["rounds"]
     assert current["time_breakdown"]["waiting_in_line"] == seconds
-    env.open_pr("", draft=True)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])

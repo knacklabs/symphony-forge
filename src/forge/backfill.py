@@ -164,7 +164,7 @@ def failed(top: Path) -> None:
     repo.command_fact("backfill warning", top, lambda: print(UNREACHABLE))
 
 
-def run(top: Path, *, exclude_branch: str = "") -> None:
+def run(top: Path) -> None:
     """A best-effort whole rebuild. Keep the retry until all reads and writes succeeded."""
     from forge import close
 
@@ -178,8 +178,6 @@ def run(top: Path, *, exclude_branch: str = "") -> None:
         prs = [*github["open"], *[pr for pr in board_facts.merged_prs(github)
                                 if time_records.when(pr.get("mergedAt")) and time_records.when(pr["mergedAt"]) >= cutoff]]
         for pr in {pr["number"]: pr for pr in prs}.values():
-            if pr.get("headRefName") == exclude_branch:
-                continue  # close publishes its own body once, with rebuilt history included
             if not pr.get("headRefName", "").startswith(("fix/", "task/", "story/")) or time_records.from_body(pr.get("body") or ""):
                 continue
             rebuilt = rebuild(top, pr)

@@ -78,7 +78,7 @@ def github(env, prs):
 
 
 def ready_pr(env, item, branch, number=8):
-    calls = [call for call in env.gh_calls("pr") if call[1] in ("create", "edit")]
+    calls = env.gh_calls("pr", "edit") or env.gh_calls("pr", "create")
     return {"number": number, "headRefName": branch, "state": "OPEN", "title": "Show a saved basket",
             "body": body(calls[-1]), "isDraft": False, "mergedAt": None, "mergedBy": None,
             "author": {"login": "forge-test", "name": "Forge Test"},
@@ -167,20 +167,10 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
               {"kind": "fix", "why": "Tidy the readme", "done_when": "It is tidy"}, {"gone.py": "x = 1\n"})
     env.repo.git("push", "-q", "origin", "fix/gone")
     pr = ready_pr(env, "SHOP/T2", "task/SHOP-T2")
-    # A new pull request starts CI with its initial body. The next close shares
-    # the completed ready record with machines that have no local receipt.
-    github(env, [pr])
-    closed = env.close("SHOP/T2")
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    pr = ready_pr(env, "SHOP/T2", "task/SHOP-T2")
     # A fix closed ready here too.
     shelf = env.repo.forge("fix", "start", "Shelve a basket", "--done", "A basket can wait", "--slug", "shelf")
     assert shelf.returncode == 0, shelf.stdout + shelf.stderr
     env.commit(worktree(env.repo, "fix/shelf"), "shelf.py", "print('shelf')\n")
-    closed = env.close("shelf")
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    shelf_pr = ready_pr(env, "shelf", "fix/shelf", number=10)
-    github(env, [pr, shelf_pr])
     closed = env.close("shelf")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     shelf_pr = ready_pr(env, "shelf", "fix/shelf", number=10)

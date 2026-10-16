@@ -651,12 +651,12 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert env.close(item).returncode == 0
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
-    # Creation now publishes the review once, before CI; the later existing-PR close below
-    # owns the final CI and owner-wait history assertions.
+    # Close now opens a draft before review, then makes it ready after both gates pass.
     assert "--draft" in create
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
     assert body(create).splitlines()[1] == f"Done when: {summary}"
-    assert "Review: clean" in body(create)
+    assert "CI passed" in body(create)
+    assert "waiting for the owner (ongoing)" in body(create)
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
     edited = body(create) + "Checked by hand on the staging shop.\n"

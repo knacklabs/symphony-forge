@@ -98,8 +98,6 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stderr
         env.commit(where, "app.py", "print('upgraded client configuration')\n")
-    # Keep one PR throughout the loop so each close publishes its final history.
-    env.open_pr("", draft=True)
     for number in (1, 2, 3):
         env.commit(where, "app.py", f"print('round {number}')\n")
         if number == 3:  # a frozen clock: the stuck stop below adds no owner wait
@@ -330,8 +328,6 @@ def test_7_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(en
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
-    # The existing PR receives the first completed CI history in its one edit.
-    env.open_pr("", draft=True)
     env.reviews({"exit": 0, "report": report(finding("P2", "Use clearer basket copy"))})
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr

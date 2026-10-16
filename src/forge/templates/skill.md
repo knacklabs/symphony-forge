@@ -1361,8 +1361,8 @@ its dismissals, including `--dismiss` given in that close command. A changed dif
 Before reusing serious findings, close also checks the reviewed files and contract against the
 current head. A repair brought in from the default branch needs a new review, even if the branch
 diff stayed the same. Land uses the same check through close.
-Close pushes before a new review. A new pull request opens with the review result, which starts
-CI; an existing pull request gets one body update after the check wait. Ready still needs a clean
+Close pushes and opens the pull request before a new review, so CI runs alongside it, then
+updates the pull request's review block when the review finishes. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
 the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
@@ -1515,10 +1515,6 @@ Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
-A close run publishes the pull request body at most once. A new PR opens after review and starts
-CI; its next close refreshes the CI history. An existing PR publishes after the check wait.
-If main changes during checks after close published the body, close returns the PR to a draft
-and asks you to run close again to review the merged changes.
 Sync in a task worktree keeps the Forge version pin unchanged.
 New repos get these rules at init; existing repos, including earlier adoptions, get them on upgrade
 and sync.

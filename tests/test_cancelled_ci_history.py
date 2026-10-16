@@ -24,8 +24,6 @@ def test_27_cancelled_ci_wait_keeps_observed_phase_reason_and_published_history(
     _agent(env)
     _client(env, history, "ubuntu-latest")
     _fix(env, "working", worked=True, round=1)
-    # An existing PR can publish the observed cancellation in its one body edit.
-    env.open_pr("", draft=True)
     if command == "merge":
         ready = env.close(ITEM)
         assert ready.returncode == 0, ready.stdout + ready.stderr

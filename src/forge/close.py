@@ -1,7 +1,7 @@
 """forge close: close a task or fix by the close rule.
 
-Bring the default branch in, push, review and publish the result once. Wait for the checks
-forge.toml names on exactly that pushed head; an existing PR publishes after the check wait.
+Bring the default branch in, push and open the pull request so CI runs during review. Commit and
+publish the result, then wait for the checks forge.toml names on exactly that pushed head.
 Nothing is committed after the checks: GitHub holds when they finished. A human merges.
 """
 from __future__ import annotations
@@ -48,8 +48,6 @@ REFUSALS = {
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "stale_dismiss": ("The branch changed since the review those finding numbers came from.",
                       "forge close {item}"),
-    "changed_after_checks": ("The default branch changed during checks. The merged changes need a review "
-                             "before this pull request is ready.", "forge close {item}"),
     "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
                      "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "no_such_base_line": ("{where} is not a line of the base commit, so it can't prove a finding "
@@ -91,9 +89,10 @@ def close(args: argparse.Namespace) -> int:
     from forge.merge import ENABLE
 
     item = args.item
-    body_published = False
     top = _worktree(item)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
+    if retried_history:
+        backfill.run(top)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
@@ -137,8 +136,7 @@ def close(args: argparse.Namespace) -> int:
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
                 _push(top, repo.current_branch(top))  # every machine's board sees the wait end
-                if choice != "accept":
-                    _refresh_record(top, item, state)
+                _refresh_record(top, item, state)
         if choice in ("switch", "same"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
@@ -174,7 +172,7 @@ def close(args: argparse.Namespace) -> int:
             init.protect(top, default, cfg["checks"])
         _attach(top, item, branch)
         done = _merged(top, item)
-        if retried_history or backfill.upgrade_fix(top, item, state):
+        if not retried_history and backfill.upgrade_fix(top, item, state):
             backfill.run(top)
         return done
 
@@ -199,6 +197,7 @@ def close(args: argparse.Namespace) -> int:
         raise
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
+        _refresh_record(top, item, state, pr)
     if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
         excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
@@ -289,6 +288,8 @@ def close(args: argparse.Namespace) -> int:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
         _push(top, branch)
+        pr = _publish(top, item, state, branch, default, pr,
+                      {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
@@ -394,15 +395,8 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
-    def publish() -> None:
-        nonlocal pr, body_published
-        if not body_published:
-            if retried_history or backfill.upgrade_fix(top, item, state):
-                backfill.run(top, exclude_branch=branch)
-            pr = _publish(top, item, state, branch, default, pr, result, evidence)
-            body_published = True
-            _attach(top, item, branch)
-
+    pr = _publish(top, item, state, branch, default, pr, result, evidence)
+    _attach(top, item, branch)
 
     print(f"Review: {result['status']}.", flush=True)
     for number, finding in serious:
@@ -415,8 +409,6 @@ def close(args: argparse.Namespace) -> int:
         for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
-    if failed or serious:
-        publish()
     advice = review.loop_advice(top, item) if serious else []
     if advice:
         print("\n".join(advice[:-1]), file=sys.stderr)
@@ -430,29 +422,22 @@ def close(args: argparse.Namespace) -> int:
         refusal = (REFUSALS["blocked"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["blocked"]
         repo.refuse(refusal, item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    # A new PR starts pull_request CI. A later close refreshes its CI history.
-    # Existing PRs publish after the check wait.
-    if pr is None:
-        publish()
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
                     branch=branch, progress=getattr(args, "wait_for_progress", False))
     except BaseException:
-        publish()
+        _publish(top, item, state, branch, default, pr, result, evidence)
         raise
-    # Ready follows successful CI on the final head.
+    # Publish successful CI with Ready, or once before restarting on a refreshed head.
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
     pr = _pull_request(top, branch) or pr
     _merge_default(top, item, branch, default, pr)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
-        if body_published:
-            _draft(top, "pr", "ready", str(pr["number"]), "--undo")
-            _push(top, branch)
-            repo.refuse(REFUSALS["changed_after_checks"], item=item)
+        _publish(top, item, state, branch, default, pr, result, evidence)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
                         accepted=choice == "accept", before=getattr(args, "pin_before", None))
         again = argparse.Namespace(**vars(args))
@@ -468,12 +453,14 @@ def close(args: argparse.Namespace) -> int:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
-    publish()
+    _publish(top, item, state, branch, default, pr, result, evidence)
     if merge == "agent":
         print(f"Ready: {item} has a clean review and green checks.")
         print(f"Next: forge merge {item}")
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+    if not retried_history and backfill.upgrade_fix(top, item, state):
+        backfill.run(top)
     return 0
 
 
@@ -955,7 +942,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = (result["status"] == "blocked" or bool(state.get("tests")) or
-             pr is None)
+             (pr is None and result["status"] == "reviewing"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
