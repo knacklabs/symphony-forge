@@ -162,7 +162,7 @@ def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, 
         assert anchor in text
         env.commit(where, plan, text.replace(anchor, anchor + " " + rule), "Record the owner's saving rule")
     else:
-        env.commit(where, "docs/implementation.md", "# Builder guidance\n\n" + rule + "\n",
+        env.commit(where, f"plans/{item}.md", "# Builder guidance\n\n" + rule + "\n",
                    "Record the owner's saving rule")
     answered = env.repo.forge("next")
     assert answered.returncode == 0, answered.stdout + answered.stderr
@@ -180,7 +180,7 @@ def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, 
     stopped = env.close(item)
     resolve = f"forge close {item} --resolve <narrow|split|accept>"
     assert stopped.returncode == 1 and resolve in stopped.stderr, stopped.stdout + stopped.stderr
-    path = "plans/SHOP.md" if kind == "task" else "docs/implementation.md"
+    path = "plans/SHOP.md" if kind == "task" else f"plans/{item}.md"
     env.commit(where, path, (where / path).read_text("utf-8") + "\nKeep the owner's rule.\n")
     held = env.repo.forge("next")
     assert held.returncode == 0 and resolve in held.stdout, held.stdout + held.stderr
