@@ -12,6 +12,10 @@ since that review. New findings on unchanged lines become visible follow-ups, ex
 or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
 item (the fix's Done-when line); builder details are guidance and never block as `Not done`.
 
+Forge records the "Prototype before sign-off" allowance. It covers any size and interface
+changes. Reviewers do not check this allowance against the diff. Other agent-recorded
+allowances still need the check that their reason matches the whole diff.
+
 You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
 
