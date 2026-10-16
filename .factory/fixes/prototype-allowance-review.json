@@ -4,12 +4,20 @@
   "done_when": "A prototype fix's review prompt says the Prototype before sign-off allowance is recorded by Forge and covers any size and interface changes, and no longer asks the reviewer to check that allowance against the diff; other allowances keep the check; a test proves both",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T20:11:08.465476+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge records Prototype before sign-off on every client prototype fix, but the fix review tells the reviewer to check it as an agent-recorded allowance, so every prototype fix that adds an interface gets a blocking allowance-mismatch finding it cannot fix"
+  "stuck": {
+    "close": null,
+    "head": "b88a524d2e8a03e9a84be3f896f86c3e968a3029",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge records Prototype before sign-off on every client prototype fix, but the fix review tells the reviewer to check it as an agent-recorded allowance, so every prototype fix that adds an interface gets a blocking allowance-mismatch finding it cannot fix",
+  "worker": "codex"
 }
