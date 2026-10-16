@@ -29,6 +29,8 @@ def test_1_design_first_binds_the_screens(repo, gh, tmp_path, claude_payload, ad
     repo.git("switch", "-qc", "fix/design-settings")
     repo.write(".factory/fixes/design-settings.json", json.dumps({"kind": "fix", "branch": "fix/design-settings", "why": "Set design settings", "done_when": "Settings are ready"}))
     setup(repo, kind="client", keys=("SHOP", "BACK"))
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8") +
+               'checks = ["tests", "forge-pr-check"]\n')
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert (repo.path / ".forge/design/support.js").is_file()

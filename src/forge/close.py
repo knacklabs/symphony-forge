@@ -149,9 +149,6 @@ def close(args: argparse.Namespace) -> int:
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
-    if "/" in item:
-        key = item.split("/")[0]
-        design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD")
     if not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
     dismissals = _dismissals(args, item)
