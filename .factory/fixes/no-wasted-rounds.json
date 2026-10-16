@@ -125,8 +125,8 @@
       "gain": 3,
       "harm": 2,
       "line": 500,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/close.py:500 The owner accepted this on 2026-10-16 as a follow-up known issue: Gain 3, Harm 2 is below the bar to send work back",
       "round": 7,
       "security": false,
       "title": "Not done: Timed narrow on a fix does not name the fix amend step",
@@ -138,7 +138,13 @@
     "branch_diff": "58c3c6f81f02a9fa85420cce52d7e070b5a68dd8a53f07c749778fef384e5c1e",
     "changed": "9e30cdcacd1a5bc32cff8522eab2e15855118752be061096c17d3c55f1c0fc15",
     "commit": "aae14a0ddf72a1ea826325ea4c4a18c7785f81db",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/close.py:500 The owner accepted this on 2026-10-16 as a follow-up known issue: Gain 3, Harm 2 is below the bar to send work back",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 1, Harm 2\nRaise: Not done \u2014 When the default stop choice narrows a fix after 30 minutes, this call reaches `apply_review_choice`, which returns without changing a plan for fixes (`src/forge/task.py:88`). The resulting message (`src/forge/close.py:525`) names only the follow-up fixes and a command to reverse the choice; it never names `forge fix amend` as the required next step. The fix amend proof test covers only an explicit `--resolve narrow` choice, so it would pass with this normal default-choice path broken.",
@@ -152,13 +158,13 @@
       }
     ],
     "id": "14a46370-c8c9-4511-904a-8474e6062158",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 8,
   "settled_areas": [
     "close() in src/forge/close.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",

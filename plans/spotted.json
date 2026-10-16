@@ -1977,8 +1977,8 @@
       "text": "Not done: Timed narrow on a fix does not name the fix amend step",
       "from": "blocking",
       "item": "no-wasted-rounds",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/close.py\tNot done: When taking in main clashes in any file Forge does not generate, close names the clashing files and the next step, and never re\tmerge-clash-names-files",
