@@ -1,6 +1,13 @@
 {
   "base": "f0250948eb513a843659ab4bdf44dfc35cf18f3f",
   "branch": "fix/windows-known-issues",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a143f9-7335-7e12-8597-513aa9d4ec78",
+    "head": null,
+    "start": "d2933677a048b06d4f22d95f179b90c5edf5d494"
+  },
   "done_when": "tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known issues on Windows as on the other platforms",
   "kind": "fix",
   "round": 1,
