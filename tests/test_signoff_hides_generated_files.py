@@ -24,7 +24,7 @@ git = lambda *a: subprocess.run(["git", *a], capture_output=True, text=True, che
 start = git("merge-base", base, "HEAD").strip()
 with open(os.environ["AUTOREVIEW_STUB"] + ".diff", "a", encoding="utf-8") as out:
     out.write(git("diff-tree", "-r", "--patch", "--no-renames", start, "HEAD"))
-sys.exit(subprocess.run([sys.executable, {stub!r}, *args]).returncode)
+sys.exit(subprocess.run([sys.executable, {stub}, *args]).returncode)
 '''
 
 
@@ -37,26 +37,26 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
                         dirs_exist_ok=True)
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Client adopted on an earlier release")
-        repo.git("switch", "-qc", "fix/upgrade")
-        config = repo.path / "forge.toml"
+        started = repo.forge("fix", "start", "Upgrade Forge", "--done", "Sign-off works after upgrade",
+                             "--kind", "mechanical")
+        assert started.returncode == 0, started.stdout + started.stderr
+        fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
+        config = fix / "forge.toml"
         version = repo.forge("--version").stdout.split()[-1]
         config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
                           encoding="utf-8")
-        synced = repo.forge("sync")
+        synced = repo.forge("sync", cwd=fix)
         assert synced.returncode == 0, synced.stdout + synced.stderr
-        repo.git("add", "-A")
-        repo.git("commit", "-qm", "Upgrade Forge")
-        repo.git("switch", "-q", "main")
-        repo.git("merge", "-q", "--ff-only", "fix/upgrade")
-        repo.git("push", "-q", "origin", "main")
+        repo.git("add", "-A", cwd=fix)
+        repo.git("commit", "-qm", "Upgrade Forge", cwd=fix)
     else:
         client, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = client
-
-    started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded")
-    assert started.returncode == 0, started.stdout + started.stderr
-    fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
+        started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded",
+                             "--kind", "backend")
+        assert started.returncode == 0, started.stdout + started.stderr
+        fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
     sources = {"Demo workflow": "salesperson", "Users and roles": "developer"}
     answers = "## Answers\n" + "".join(
         f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
@@ -74,7 +74,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     helper = os.environ["AUTOREVIEW"]
     shutil.copyfile(ROOT / "tests/stubs/autoreview", helper + "-stub")
     with open(helper, "w", encoding="utf-8") as out:
-        out.write(RECORDER.format(python=sys.executable, stub=helper + "-stub"))
+        out.write(RECORDER.format(python=sys.executable, stub=json.dumps(helper + "-stub")))
     queue = tmp_path / "reviews.json"
     queue.write_text(json.dumps([{"report": {"review_status": "scoped-clean", "findings": []}}]),
                      encoding="utf-8")
