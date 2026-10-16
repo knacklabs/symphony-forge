@@ -193,6 +193,68 @@ def developer(row: dict[str, Any]) -> str | None:
     return (row.get("Developer") or "").strip("` ") or None
 
 
+def owner(text: str) -> str | None:
+    found = re.search(r"^Owner:[ \t]*`?([^`\s]+)", text, re.M)
+    return found[1] if found else None
+
+
+def assign(args: argparse.Namespace) -> None:
+    from forge import story
+
+    top, login = repo.root(), args.login
+    match = repo.ITEM.fullmatch(args.item)
+    if not match or not story.KEY.fullmatch(match["key"]):
+        raise repo.Refused("Use a story key or a story key and part to assign work.",
+                           "forge assign <KEY or KEY/TASK> <login>")
+    if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?", login) or "--" in login:
+        raise repo.Refused("Use a GitHub username with letters, digits and single hyphens, without @.",
+                           "forge assign <KEY or KEY/TASK> <login>")
+    key, part = match["key"], match["task"]
+    main_ref()
+    branch, rel = f"story/{key}", f"plans/{key}.md"
+    source = story.plan_ref(top, key)
+    text = story.show(top, source, rel) or ""
+    tasks = rows(sections(text))
+    if not tasks:
+        raise repo.Refused("This story has no plan. Plan it first, then assign it.", "forge next")
+    if part and part not in tasks:
+        refuse(REFUSALS["no_task"], key=key, task=part)
+    path = story.stories_here(top).get(key)
+    if path and git("status", "--porcelain", cwd=path):
+        raise repo.Refused("The story has local changes. Commit or set them aside before you assign it.",
+                           "forge next")
+    if path is None:
+        if git("branch", "--list", branch, cwd=top):
+            path = _folder(branch.replace("/", "-"))
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+        else:
+            path = story.add_worktree(top, branch, source)
+    if git("rev-parse", "HEAD", cwd=path) != git("rev-parse", source, cwd=top):
+        updated = run("git", "merge", "--ff-only", source, cwd=path)
+        if updated.returncode:
+            raise repo.Refused("The local and published story differ. Reconcile them before you assign it.",
+                               "forge next")
+    text = (path / rel).read_text(encoding="utf-8")
+    if part:
+        assignments = {tid: developer(row) for tid, row in rows(sections(text)).items()}
+        assignments[part] = login
+        text = story._with_developers(text, assignments, True)
+    elif re.search(r"^Owner:", text, re.M):
+        text = re.sub(r"^Owner:[^\n]*", f"Owner: {login}", text, count=1, flags=re.M)
+    else:
+        # Keep assignment metadata out of the approval's What changes and Done when sections.
+        heading = re.search(r"^## For the builders[ \t]*$", text, re.M)
+        at = heading.end() if heading else text.index("\n")
+        text = text[:at] + f"\nOwner: {login}" + text[at:]
+    (path / rel).write_bytes(text.encode("utf-8"))
+    repo.commit_state(f"Assign the {'part' if part else 'story'} to {login}", rel, top=path)
+    pushed = run("git", "push", "-q", "--set-upstream", "origin", branch, cwd=path)
+    if pushed.returncode:
+        raise repo.Refused("The assignment is local. The push failed: " + pushed.stderr.strip(),
+                           f"git -C {str(path)!r} push origin {branch}")
+    print(f"Assigned the {'part' if part else 'story'} to {login} and published it.")
+
+
 # --- forge task start ------------------------------------------------------------------
 
 
@@ -303,7 +365,7 @@ def start(args: argparse.Namespace) -> None:
         sys.exit(behind)  # the same one line forge next prints
     source = story.plan_ref(top, key)
 
-    assigned = developer(tasks[task])
+    assigned = developer(tasks[task]) or owner(text)
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
         print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
     base = stacked or start_base(main, key, tasks[task])
@@ -493,6 +555,10 @@ def amend(args: argparse.Namespace) -> None:
 
 
 COMMANDS = [
+    {"words": "assign", "run": "assign", "changes_state": True,
+     "help": "Give a story or part to a developer by GitHub username",
+     "args": [(('item',), {}), (('login',), {})], "position": 95,
+     "listing": '| `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |'},
     {"words": "task start", "run": "start", "changes_state": True,
      "help": "Start a task in its own branch and worktree",
      "args": [(('item',), {"metavar": "KEY/TASK"})], "position": 100,
