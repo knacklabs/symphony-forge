@@ -9,13 +9,29 @@
     "start": "ed957e5a01831428170368ee9d2d9f4d0fa0033a"
   },
   "done_when": "In the pane, each item shows its title on its own line, then short lines for status (state, round, worker, elapsed), stages with the total, and gates (plan read, review, CI with the failing check and pull request), then its next step, with a blank line between items; no field shows unknown, an empty value or 0s; rounds count from 1 and a running review shows as running; the Board and Machine tabs each have a shown key that selects them and the selected tab is marked; new repos get it at init, existing repos on upgrade and sync",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e255602514cd566c912e86d8db1702c8c11343bd5f94c3c8d6e305075fcc8a1f",
+    "changed": "eed5b1d79617adea32c6cb8784202dddfd812f9c821d5faaf9af8543592d39e6",
+    "commit": "23708d4b4de8c0d014c904a0937962bc5df01d47",
+    "dismissals": [],
+    "findings": [],
+    "id": "70107011-f9d1-4a9f-94d7-d448e35082f0",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-16T08:11:52.411504+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
