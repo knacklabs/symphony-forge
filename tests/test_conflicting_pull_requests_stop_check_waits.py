@@ -109,7 +109,7 @@ if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
     head = refs.get("refs/heads/" + {branch}, "")
     clean = subprocess.run(["git", "merge-tree", "--write-tree", refs["refs/heads/main"], head],
                            cwd=remote, capture_output=True).returncode == 0
-    answer({green} if clean else "")
+    answer({green})
 if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.index("--json") + 1]:
     refs = heads()
     head = refs.get("refs/heads/" + args[2], "")
@@ -124,15 +124,77 @@ if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.
     return where, before, moved
 
 
-def test_1_close_explains_conflicts_without_waiting_for_missing_checks(client):
+@pytest.mark.parametrize("mode", ["conflict", "unknown-once", "unknown-always", "merge-conflict",
+                                  "lookup-error", "lookup-unreadable", "lookup-wrong-shape"])
+def test_1_close_and_merge_check_clashes_before_green_checks(client, monkeypatch, mode):
     env, _, remote = client
+    repo = env.repo
+    if mode.startswith("lookup-"):
+        _fix(env, "working", worked=True)
+        response = {"lookup-error": ("", 1), "lookup-unreadable": ("not JSON", 0),
+                    "lookup-wrong-shape": ("[]", 0)}[mode]
+        script = '''
+if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.index("--json") + 1]:
+    answer(RESPONSE, CODE)
+'''.replace("RESPONSE", repr(response[0])).replace("CODE", str(response[1]))
+        stub = repo.bin / "gh"
+        stub.write_text(stub.read_text(encoding="utf-8").replace(
+            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'),
+            encoding="utf-8")
+        monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
+        done = repo.forge("close", ITEM)
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "not green yet" in done.stderr and "GitHub did not answer" in done.stderr
+        assert "Ready:" not in done.stdout
+        assert len(env.gh_calls(*RUNS)) == 1
+        assert not env.gh_calls("pr", "ready")
+        return
+    if mode == "merge-conflict":
+        repo.git("switch", "fix/upgrade-client")
+        env.commit(repo.path, "forge.toml", (repo.path / "forge.toml").read_text(encoding="utf-8")
+                   + 'merge = "agent"\n')
+        _publish_default(repo, remote)
+        repo.git("switch", "main")
+        repo.git("merge", "--ff-only", "fix/upgrade-client")
+        _advance_during_ci(env, remote, conflict=False, during_merge=True)
+        closed = repo.forge("close", ITEM)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        done = repo.forge("merge", ITEM)
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert len(env.gh_calls("pr", "merge")) == 1
+        assert repo.git("show", "origin/main:default.txt") == "Default update"
+        return
+    if mode.startswith("unknown"):
+        _fix(env, "working", worked=True)
+        script = '''
+if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.index("--json") + 1]:
+    marker = here / "mergeability-look"
+    state = "UNKNOWN" if not marker.exists() or ALWAYS else "MERGEABLE"
+    marker.touch()
+    answer(json.dumps({"mergeable": state, "headRefOid": heads()["refs/heads/" + args[2]]}))
+'''.replace("ALWAYS", repr(mode == "unknown-always"))
+        stub = repo.bin / "gh"
+        stub.write_text(stub.read_text(encoding="utf-8").replace(
+            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'),
+            encoding="utf-8")
+        if mode == "unknown-always":
+            monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
+        done = repo.forge("close", ITEM)
+        if mode == "unknown-always":
+            assert done.returncode == 1, done.stdout + done.stderr
+            assert "not green yet" in done.stderr and "Ready:" not in done.stdout
+            assert len(env.gh_calls(*RUNS)) == 1
+        else:
+            assert done.returncode == 0, done.stdout + done.stderr
+            assert "Ready:" in done.stdout
+            assert len(env.gh_calls(*RUNS)) == 2
+        return
     _advance_during_ci(env, remote, conflict=True)
     done = env.repo.forge("close", ITEM)
     assert done.returncode == 1, done.stdout + done.stderr
     assert done.stderr.endswith(
-        "GitHub runs no checks on a conflicting pull request. "
-        "Merge the default branch through close before waiting for checks.\n"
-        f"Next: forge close {ITEM}\n")
+        "GitHub reports this pull request clashes with the default branch, so it runs no checks on it.\n"
+        f"Next: forge close {ITEM}, which brings the default branch in\n")
     assert "has not reported" not in done.stderr
     assert len(env.gh_calls(*RUNS)) == 1
 
@@ -191,7 +253,9 @@ def test_4_land_recovers_a_conflict_during_merge_check_revalidation(client):
     _advance_during_ci(env, remote, conflict=False, during_merge=True)
     done = repo.forge("land", ITEM)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert done.stdout.count(f"Closing {ITEM}.") == 2
+    # Merge now owns this retry; land need not start a second outer close step.
+    assert "Forge will run close again, then retry the merge." in done.stdout
+    assert len(env.review_calls()) == 2
     assert len(env.gh_calls("pr", "merge")) == 1
     assert repo.git("show", "origin/main:default.txt") == "Default update"
     assert len(env.gh_calls(*RUNS)) == 4
@@ -211,6 +275,6 @@ def test_5_land_stops_if_github_still_reports_a_conflict_after_close(client):
         'if args[:2] == ["pr", "view"]:'), encoding="utf-8")
     done = env.repo.forge("land", ITEM)
     assert done.returncode == 1, done.stdout + done.stderr
-    assert "GitHub runs no checks on a conflicting pull request" in done.stderr
+    assert "GitHub reports this pull request clashes with the default branch" in done.stderr
     assert done.stdout.count(f"Closing {ITEM}.") == 2
     assert len(env.gh_calls(*RUNS)) == 2

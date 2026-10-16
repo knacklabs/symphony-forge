@@ -107,13 +107,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
                            "at": (now + timedelta(minutes=2, seconds=30)).isoformat()}):
                 log.write(json.dumps({**event, "item": "asks"}) + "\n")
     clock(monkeypatch, now + timedelta(minutes=3))
-    stub = env.repo.bin / "claude"
-    plain = stub.read_text("utf-8")
-    stub.write_text(plain.replace('print("stub claude: built it")',
-                                  'print("\\n\\nQuestion: May I reuse the basket parser?")'), "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", "asks")
     assert asked.returncode == 0 and "May I reuse the basket parser?" in asked.stdout, asked.stderr
-    stub.write_text(plain, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     share(env, prs, "asks", 3)
     # A merge conflict close stopped on, on the fix's first close: it opens the pull request.
     clock(monkeypatch, now + timedelta(minutes=4))
@@ -177,11 +174,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     share(env, prs, "asks", 3)
     # A's own record still holds that question, yet A works on; its worker asks a second one.
     env.repo.path = machine_a
-    stub.write_text(plain.replace('print("stub claude: built it")',
-                                  'print("\\n\\nQuestion: Should the parser keep comments?")'), "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: Should the parser keep comments?")
     worked = env.repo.forge("work", "asks")
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    stub.write_text(plain, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     share(env, prs, "asks", 3)
     clock(monkeypatch, now + timedelta(minutes=7))
     for where in (machine_a, machine_b):

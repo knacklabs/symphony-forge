@@ -97,6 +97,9 @@ def test_5_close_runs_the_test_command_merged_from_the_default_branch(env):
     env.commit(env.repo.path, "forge.toml",
                toml.read_text("utf-8").replace("-p no:cacheprovider", "-p no:cacheprovider -v"))
     env.repo.git("push", "-q", "origin", "main")
+    # GitHub requires this refresh; unrelated main settings no longer enter a fix.
+    env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                   '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     done = env.close(item)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "-p no:cacheprovider -v checks` exited" in done.stdout

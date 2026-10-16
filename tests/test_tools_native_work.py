@@ -37,7 +37,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / (
         "codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
     data = tmp_path / "data"  # no Codex SDK installed: a native round needs none
-    data.mkdir()
+    data.mkdir(exist_ok=True)
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
     if tool == "claude":
         monkeypatch.delenv("CODEX_THREAD_ID", raising=False)

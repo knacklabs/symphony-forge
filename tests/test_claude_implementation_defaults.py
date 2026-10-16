@@ -99,4 +99,4 @@ def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
     for _ in range(2):
         result = repo.forge("work", "correct-greeting")
         assert result.returncode == 0, result.stdout + result.stderr
-        assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
+        assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")

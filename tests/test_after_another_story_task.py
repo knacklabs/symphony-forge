@@ -14,10 +14,15 @@ OTHER = (DOC.replace("Shoppers can save a basket", "Turns take one click")
          .replace("`src/basket.py`", "`src/turn.py`").replace("`src/page.py`", "`src/turn_page.py`"))
 
 
-def _plans(repo, claude_payload, after):
+def _plans(repo, claude_payload, after, stack=None):
     """TURN-1 approved with a task T4, and SHOP approved with its first task SAVE waiting for
     `after`, both planned before T4 merges."""
     setup(repo, keys=("SHOP", "TURN-1"))
+    if stack:
+        repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8") + f'stack = "{stack}"\n')
+        repo.git("add", "forge.toml")
+        repo.git("commit", "-qm", "Keep tasks waiting for merges")
+        repo.git("push", "-q", "origin", "main")
     for key, doc in (("TURN-1", OTHER), ("SHOP", DOC.replace(
             "`tests/test_basket.py` | none |", f"`tests/test_basket.py` | {after} |"))):
         path = ready(repo, key, doc)
@@ -25,7 +30,9 @@ def _plans(repo, claude_payload, after):
 
 
 def test_1_a_task_waits_for_another_story_s_task_then_starts_once_it_merges(repo, claude_payload):
-    _plans(repo, claude_payload, "TURN-1/T4")
+    # Keep this cross-story wait-until-merge contract in the opt-out lane;
+    # default-on admission is owned by test_stack_start.py.
+    _plans(repo, claude_payload, "TURN-1/T4", stack="off")
     waiting = "SHOP/SAVE waits for TURN-1/T4 to merge first."
 
     def waits():

@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -95,20 +96,31 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     # The worker runs tests the sanctioned way, then calls pytest -n auto directly; each probe
     # test records the xdist process it ran in.
     record = ("_bin = pathlib.Path({bin!r})\n"
-              "_out = __import__('subprocess').run([sys.executable, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
+              "_out = __import__('subprocess').run([{python!r}, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'via-forge')), capture_output=True, text=True)\n"
-              "__import__('subprocess').run([sys.executable, *{args!r}, '-n', 'auto'], cwd={cwd},\n"
+              "_direct = __import__('subprocess').run([{python!r}, *{args!r}, '-n', 'auto'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'direct')), capture_output=True)\n"
-              "(_bin / 'worker-tests').write_text(_out.stdout + _out.stderr)\n")
-    _install(repo.bin, "claude", f"#!{sys.executable}\nimport os, pathlib, sys\nsys.stdin.read()\n"
-             + record.format(bin=str(repo.bin), cwd="None", args=pytest_args) + "print('Done.')\n")
+              "(_bin / 'worker-tests').write_text(_out.stdout + _out.stderr)\n"
+              "assert _out.returncode == 0, _out.stdout + _out.stderr\n"
+              "assert _direct.returncode == 0, _direct.stdout + _direct.stderr\n")
+    # The SDK's interpreter owns only the provider. The test client has pytest
+    # in its own environment, and real worker-launched tests must run there.
+    sdk = repo.bin / "claude_agent_sdk" / "__init__.py"
+    sdk_record = record.format(bin=repo.bin.as_posix(), cwd="None", args=pytest_args,
+                               python=Path(sys.executable).as_posix()).replace("pathlib.Path", "Path")
+    sdk.write_text(sdk.read_text("utf-8").replace(
+        '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)',
+        "".join("    " + line + "\n" for line in sdk_record.splitlines()) +
+        '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'), "utf-8")
     server = ROOT / "tests/stubs/codex-app-server"
     _install(repo.bin, "codex-app-server", server.read_text("utf-8").replace(
         "            turns += 1",
         "".join("            " + line + "\n" for line in
-                record.format(bin=str(repo.bin), cwd="cwd", args=pytest_args).splitlines())
+                record.format(bin=repo.bin.as_posix(), cwd="cwd", args=pytest_args,
+                              python=Path(sys.executable).as_posix()).splitlines())
         + "            turns += 1"))
     worked = repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
     assert (repo.bin / "worker-tests").exists(), worked.stdout + worked.stderr
     report = (repo.bin / "worker-tests").read_text("utf-8")
     for run in ("via-forge", "direct"):

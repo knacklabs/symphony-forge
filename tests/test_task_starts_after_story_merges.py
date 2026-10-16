@@ -51,6 +51,12 @@ def test_2_only_a_story_doc_difference_is_merged_into_the_story(repo):
 
 @pytest.mark.parametrize("other_story", [False, True], ids=["same-story", "another-story"])
 def test_3_next_names_the_unmerged_glob_overlap_instead_of_offering_start(repo, other_story):
+    # Default-on stacking waits for the published base's review, rather than its merge.
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-qm", "Configure the current release")
+    repo.git("push", "-q", "origin", "main")
     story(repo)
     assert repo.forge("task", "start", "BOARD/API").returncode == 0
     key = "OTHER" if other_story else "BOARD"
@@ -59,7 +65,8 @@ def test_3_next_names_the_unmerged_glob_overlap_instead_of_offering_start(repo, 
     repo.git("worktree", "add", "-q", str(repo.path.parent / f"story-{key}"), f"story/{key}")
     shown = repo.forge("next")
     assert shown.returncode == 0, shown.stderr
-    assert f"{key}/ROUTES waits for BOARD/API to merge first." in shown.stdout
+    assert (f"{key}/ROUTES builds on BOARD/API, whose latest changes haven't passed review."
+            in shown.stdout)
     assert f"Next: forge task start {key}/ROUTES" not in shown.stdout
     refused = repo.forge("task", "start", f"{key}/ROUTES")
     assert refused.returncode == 1 and "BOARD/API" in refused.stderr

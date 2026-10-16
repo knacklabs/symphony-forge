@@ -126,7 +126,10 @@ replies.push((await fire('command.run', {{command: 'forge'}}, api)).text);
 console.log(JSON.stringify({{replies, processCalls}}));
 """)
     # Checks show only on a row ready to merge; this fix is still in progress.
-    assert all(reply.startswith("1 in progress\n\nWAITING OR NOT STARTED (1)") for reply in answer["replies"])
+    # The board's In progress list is the tab's MOVING group, under the board's own sentence and totals.
+    assert all(reply.startswith("1 in progress\n\n0 stories building, 1 parts and fixes in progress")
+               and "\n\nMOVING\n  Readme greets new readers\n    In progress\n" in reply
+               for reply in answer["replies"]), answer["replies"]
     assert len(answer["processCalls"]) == 24  # only initial load + seven scheduled ticks
 
 
@@ -159,10 +162,10 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
     from test_run_records import configure
     repo = configure(env)
     item, _ = env.start_fix()
-    stub = repo.bin / "claude"
+    stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
-    stub.write_text(source.replace('print("stub claude: built it")',
-                                  'print("Question: May I reuse the parser?")'), encoding="utf-8")
+    stub.write_text(source.replace('"stub claude: built it\\n"',
+                                  '"Question: May I reuse the parser?"'), encoding="utf-8")
     answer = node_run(tmp_path, HOST + f"""
 import {{execFile}} from 'node:child_process';
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});

@@ -21,7 +21,7 @@ def test_1_sync_and_worker_briefs_carry_only_general_rules(repo, gh, tmp_path, m
         client, made = _fresh_client(repo, gh, tmp_path)
         assert made.returncode == 0, made.stdout + made.stderr
         started = repo.forge("fix", "start", "Check general rules", "--done",
-                             "Workers receive general rules", cwd=client)
+                             "Workers receive general rules", "--kind", "mechanical", cwd=client)
         assert started.returncode == 0, started.stdout + started.stderr
         client = tmp_path / "client-fix-check-general-rules"
     else:

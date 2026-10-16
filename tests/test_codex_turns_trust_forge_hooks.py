@@ -245,7 +245,8 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
     if lifecycle == "new":
         made = repo.forge("init", cwd=client)
         assert made.returncode == 0, made.stdout + made.stderr
-        started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted", cwd=client)
+        started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted",
+                             "--kind", "mechanical", cwd=client)
         assert started.returncode == 0, started.stdout + started.stderr
         _canonical_checkout(repo, client, "fix/hook-trust")
     else:

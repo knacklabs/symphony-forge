@@ -57,18 +57,18 @@ def test_1_a_reused_agent_pid_keeps_the_run_while_forge_runs(env, tmp_path, pers
     item, name = make_work(repo, "First typo")
     hold_agents(env)
     # A dirty first turn makes the same work round start a second agent, the commit nudge.
-    dirty = str(worktree(repo, "fix/" + item) / "dirty.txt")
-    for provider in ("claude", "codex-app-server"):
+    dirty = json.dumps((worktree(repo, "fix/" + item) / "dirty.txt").as_posix())
+    for provider, indent, named, marker, path_type in (
+            ("claude_agent_sdk/__init__.py", "    ", 'name = Path.cwd().name',
+             '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)', "Path"),
+            ("codex-app-server", "            ", 'name = pathlib.Path(cwd).name',
+             '            turns += 1', "pathlib.Path")):
         stub = repo.bin / provider
-        codex = provider == "codex-app-server"
-        indent = "            " if codex else ""
-        named = 'name = pathlib.Path(cwd).name' if codex else 'name = pathlib.Path.cwd().name'
-        marker = '            turns += 1' if codex else 'print("No findings.")'
         stub.write_text(stub.read_text("utf-8").replace(named,
             f'{named}\n{indent}if name == {name!r} and (here / "first-ended").exists():\n'
             f'{indent}    name += "-nudge"').replace(marker,
             f'{indent}if name == {name!r}:\n'
-            f'{indent}    pathlib.Path({dirty!r}).write_text("needs committing")\n'
+            f'{indent}    {path_type}({dirty}).write_text("needs committing")\n'
             f'{indent}    (here / "first-ended").touch()\n' + marker), "utf-8")
     queue = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge/agent-runs.json"
 

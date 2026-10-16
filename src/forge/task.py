@@ -23,10 +23,18 @@ REFUSALS = {
                 "so it needs a new approval.", "forge next"),
     "started": ("{item} is already started on {branch}{person}.", "forge work {item}"),
     "waiting": ("{item} waits for {deps} to merge first.", "forge next"),
+    "base_not_started": ("{item} builds on {base}, which hasn't started yet.", "forge task start {base}"),
+    "base_local": ("{item} waits for {base} to publish reviewed changes.", "forge close {base}"),
+    "base_not_built": ("{item} builds on {base}, whose latest changes haven't passed review.", "forge close {base}"),
+    "base_stacked": ("{item} waits for {base}, which builds on {below}, so it starts once {below} merges.", "forge next"),
+    "base_older": ("{item} waits for {base}, which runs an older Forge release, so it starts once {base} merges.", "forge next"),
+    "two_bases": ("{item} waits for {deps}, so it starts once all but one of them merge.", "forge next"),
     "overlap": ("{item} would change {paths}, which {other} is changing and hasn't merged yet.",
                 "forge close {other}"),
     "fix_lines": ("A fix needs a one-line why and a one-line done-when.",
                   'forge fix start "<why>" --done "<done when>"'),
+    "fix_kind": ("A prototype fix needs --kind ui, backend or mechanical.",
+                 'forge fix start "<why>" --done "<done when>" --kind <kind>'),
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
                 'cd <the fix folder> && forge fix allow-large "<reason>"'),
     "no_reason": ("The permission needs a one-line reason.", 'forge fix allow-large "<reason>"'),
@@ -187,6 +195,68 @@ def developer(row: dict[str, Any]) -> str | None:
     return (row.get("Developer") or "").strip("` ") or None
 
 
+def owner(text: str) -> str | None:
+    found = re.search(r"^Owner:[ \t]*`?([^`\s]+)", text, re.M)
+    return found[1] if found else None
+
+
+def assign(args: argparse.Namespace) -> None:
+    from forge import story
+
+    top, login = repo.root(), args.login
+    match = repo.ITEM.fullmatch(args.item)
+    if not match or not story.KEY.fullmatch(match["key"]):
+        raise repo.Refused("Use a story key or a story key and part to assign work.",
+                           "forge assign <KEY or KEY/TASK> <login>")
+    if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?", login) or "--" in login:
+        raise repo.Refused("Use a GitHub username with letters, digits and single hyphens, without @.",
+                           "forge assign <KEY or KEY/TASK> <login>")
+    key, part = match["key"], match["task"]
+    main_ref()
+    branch, rel = f"story/{key}", f"plans/{key}.md"
+    source = story.plan_ref(top, key)
+    text = story.show(top, source, rel) or ""
+    tasks = rows(sections(text))
+    if not tasks:
+        raise repo.Refused("This story has no plan. Plan it first, then assign it.", "forge next")
+    if part and part not in tasks:
+        refuse(REFUSALS["no_task"], key=key, task=part)
+    path = story.stories_here(top).get(key)
+    if path and git("status", "--porcelain", cwd=path):
+        raise repo.Refused("The story has local changes. Commit or set them aside before you assign it.",
+                           "forge next")
+    if path is None:
+        if git("branch", "--list", branch, cwd=top):
+            path = _folder(branch.replace("/", "-"))
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+        else:
+            path = story.add_worktree(top, branch, source)
+    if git("rev-parse", "HEAD", cwd=path) != git("rev-parse", source, cwd=top):
+        updated = run("git", "merge", "--ff-only", source, cwd=path)
+        if updated.returncode:
+            raise repo.Refused("The local and published story differ. Reconcile them before you assign it.",
+                               "forge next")
+    text = (path / rel).read_text(encoding="utf-8")
+    if part:
+        assignments = {tid: developer(row) for tid, row in rows(sections(text)).items()}
+        assignments[part] = login
+        text = story._with_developers(text, assignments, True)
+    elif re.search(r"^Owner:", text, re.M):
+        text = re.sub(r"^Owner:[^\n]*", f"Owner: {login}", text, count=1, flags=re.M)
+    else:
+        # Keep assignment metadata out of the approval's What changes and Done when sections.
+        heading = re.search(r"^## For the builders[ \t]*$", text, re.M)
+        at = heading.end() if heading else text.index("\n")
+        text = text[:at] + f"\nOwner: {login}" + text[at:]
+    (path / rel).write_bytes(text.encode("utf-8"))
+    repo.commit_state(f"Assign the {'part' if part else 'story'} to {login}", rel, top=path)
+    pushed = run("git", "push", "-q", "--set-upstream", "origin", branch, cwd=path)
+    if pushed.returncode:
+        raise repo.Refused("The assignment is local. The push failed: " + pushed.stderr.strip(),
+                           f"git -C {str(path)!r} push origin {branch}")
+    print(f"Assigned the {'part' if part else 'story'} to {login} and published it.")
+
+
 # --- forge task start ------------------------------------------------------------------
 
 
@@ -200,49 +270,26 @@ def start(args: argparse.Namespace) -> None:
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     published = story.plan_ref(top, key)
-    if (published != main and not git("branch", "--list", story_branch)
-            and show(f"origin/{story_branch}", doc_rel) is not None):
-        git("branch", "--track", story_branch, f"origin/{story_branch}")
-    behind = story.plan_behind(top, key, main) if published != main else ""
-    old_pin = published != main and repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
+    old_pin = published != main and repo._older(repo._pin(show(published, "forge.toml") or ""),
                                                  repo._pin(show(main, "forge.toml") or ""))
-    if published != main and (old_pin or (show(story_branch, doc_rel) is not None and
-            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0")):
-        folder = story.stories_here(top).get(key)
-        if folder is None:
-            folder = _folder(f"story-{key}")
-            git("worktree", "add", "-q", str(folder), story_branch)
-        retry = f"forge task start {item}"
-        if old_pin:
-            if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
-                raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
-            if git("status", "--porcelain", cwd=folder):
-                raise repo.Refused(f"Commit or stash the changes in {folder} before updating its Forge release.", retry)
-        if (not git("status", "--porcelain", cwd=folder) and
-                run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
-            merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
-            if not merged.returncode:
-                reason = "updated its Forge release" if old_pin else "only the story doc differs"
-                print(f"Merged {main} into {story_branch}; {reason}.")
-                behind = ""
-            elif old_pin:
-                if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
-                    raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
-                raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
-                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
-                                   f"and finish the merge, then {retry}")
-            elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
-                git("merge", "--abort", cwd=folder)
-    if behind:
-        sys.exit(behind)  # the same one line forge next prints
+    update_plan = published != main and (old_pin or (show(published, doc_rel) is not None and
+            run("git", "diff", "--name-only", "-z", published, main).stdout == doc_rel + "\0"))
+    # Preview the automatic update without creating a branch, checkout or commit.
+    preview = None
+    folder = story.stories_here(top).get(key)
+    if update_plan and (folder is None or not git("status", "--porcelain", cwd=folder)):
+        merged = run("git", "merge-tree", "--write-tree", published, main)
+        if merged.returncode == 0:
+            preview = merged.stdout.splitlines()[0]
     notes_rel = f"plans/{key}.read.md"
     # Published builder assignments stay current even after the first part lands.
     state_rel = repo.state_path(key)
-    source = story.plan_ref(top, key)
+    source = preview or story.plan_ref(top, key)
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
-    text = story._plan(top, key)
+    if preview is None:
+        text = story._plan(top, key)
     try:
         story.parse(text, repo.root(), key=key)
     except ValueError as exc:
@@ -272,25 +319,109 @@ def start(args: argparse.Namespace) -> None:
         refuse(REFUSALS["started"], item=item, branch=branch, person=f" by {name}" if name else "")
     waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
     waiting = [dep for dep in waiting if not _merged(main, dep)]
-    if waiting:
-        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
     scope = cell_list(tasks[task].get("Scope", ""))
+    blockers = waits_for(item, waiting, scope, started)
+    stacked = stack_base(item, blockers, main, top)
+    if waiting and not stacked:
+        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
     for other, theirs in started.items():
+        if stacked and other == blockers[0]:
+            continue
         shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
-    assigned = developer(tasks[task])
+    if (published != main and not git("branch", "--list", story_branch)
+            and show(f"origin/{story_branch}", doc_rel) is not None):
+        git("branch", "--track", story_branch, f"origin/{story_branch}")
+    behind = story.plan_behind(top, key, main) if published != main else ""
+    if update_plan:
+        folder = story.stories_here(top).get(key)
+        if folder is None:
+            folder = _folder(f"story-{key}")
+            git("worktree", "add", "-q", str(folder), story_branch)
+        retry = f"forge task start {item}"
+        if old_pin:
+            if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
+                raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
+            if git("status", "--porcelain", cwd=folder):
+                raise repo.Refused(f"Commit or stash the changes in {folder} before updating its Forge release.", retry)
+        if (not git("status", "--porcelain", cwd=folder) and
+                run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
+            if published != story_branch:
+                git("merge", "-q", "--ff-only", published, cwd=folder)
+            merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
+            if not merged.returncode:
+                reason = "updated its Forge release" if old_pin else "only the story doc differs"
+                print(f"Merged {main} into {story_branch}; {reason}.")
+                behind = ""
+            elif old_pin:
+                if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
+                    raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
+                raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
+                                   f"git -C {repo.quote(str(folder))} status; fix the reported problem "
+                                   f"and finish the merge, then {retry}")
+            elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
+                git("merge", "--abort", cwd=folder)
+    if behind:
+        sys.exit(behind)  # the same one line forge next prints
+    source = story.plan_ref(top, key)
+
+    assigned = developer(tasks[task]) or owner(text)
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
         print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
-    base = start_base(main, key, tasks[task])
+    base = stacked or start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
              ) if source != base else None
     # Earlier approvals keep their agreed parts, including ones not started yet.
     state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
+    if stacked:
+        state.update(stacked_on=blockers[0], base=git("rev-parse", stacked))
     path = _new_checkout(item, branch, f"{key}-{task}", base, state, f"Start {item}", carry)
-    print(f"Started {item} on {branch} in {path}")
+    on = f" on top of {blockers[0]}" if stacked else ""
+    print(f"Started {item}{on} on {branch} in {path}")
     print(f"Next: forge work {item}")
+
+
+def forge_merged(main: str, item: str, top: Path | None = None) -> str:
+    """The default branch commit where Forge merged this item, or an empty string."""
+    commit = git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%H", main,
+                 "--", repo.state_path(item), cwd=top)
+    if commit and f"Forge-merged: {item}" in git("show", "-s", "--format=%B", commit, cwd=top).splitlines():
+        return commit
+    return ""
+
+
+def stack_base(item: str, blockers: list[str], main: str, top: Path | None = None) -> str | None:
+    """The single reviewed remote base for a new part; refuse before any start mutation."""
+    top = top or repo.root()
+    if not blockers or repo.config(top)["stack"] == "off":
+        return None
+    if len(blockers) != 1:
+        refuse(REFUSALS["two_bases"], item=item, deps=", ".join(blockers))
+    base = blockers[0]
+    ref = "origin/task/" + base.replace("/", "-")
+    state = json.loads(show(ref, repo.state_path(base), top) or "{}")
+    if not state or state.get("branch") != ref.removeprefix("origin/"):
+        local = ref.removeprefix("origin/")
+        local_state = json.loads(show(local, repo.state_path(base), top) or "{}")
+        if local_state.get("branch") == local:
+            refuse(REFUSALS["base_local"], item=item, base=base)
+        refuse(REFUSALS["base_not_started"], item=item, base=base)
+    if below := state.get("stacked_on"):
+        merged = forge_merged(main, below, top)
+        if not merged or run("git", "merge-base", "--is-ancestor", merged, ref, cwd=top).returncode:
+            refuse(REFUSALS["base_stacked"], item=item, base=base, below=below)
+    if repo._pin(show(ref, "forge.toml", top) or "") != repo._pin(show(main, "forge.toml", top) or ""):
+        refuse(REFUSALS["base_older"], item=item, base=base)
+    from forge import review
+    from forge.prcheck import _on_branch
+    result = state.get("review") or {}
+    if (result.get("status") != "clean" or not _on_branch(top, str(result.get("commit", "")), ref)
+            or review.blocking(result)
+            or result.get("changed") != review.fingerprint(ref, base, top, state, main)):
+        refuse(REFUSALS["base_not_built"], item=item, base=base)
+    return ref
 
 
 def start_base(main: str, key: str, row: dict[str, str], history: dict[str, Any] | None = None,
@@ -360,6 +491,10 @@ def _one_line(text: str) -> bool:
     return bool(text.strip()) and "\n" not in text.strip()
 
 
+def require_prototype_design(top: Path) -> None:
+    """Unsigned-prototype UI gate: DESIGN fills this hook with the approved-design check."""
+
+
 def fix_start(args: argparse.Namespace) -> None:
     if not (_one_line(args.why) and _one_line(args.done)):
         refuse(REFUSALS["fix_lines"])
@@ -376,12 +511,19 @@ def fix_start(args: argparse.Namespace) -> None:
         n += 1
         name = f"{slug}-{n}"
     top = repo.root()
+    prototype = (top / "forge.toml").is_file() and repo.is_prototype(top)
+    fix_kind = args.kind
+    if prototype and fix_kind is None:
+        refuse(REFUSALS["fix_kind"])
+    if prototype and fix_kind == "ui":
+        require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
-    state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base)}
+    state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
+             "fix_kind": fix_kind or "mechanical"}
     if base == "HEAD":
         state["stacked_on"] = parent[0]
-    if (repo.root() / "forge.toml").is_file() and repo.is_prototype(repo.root()):
+    if prototype:
         state["allow_large"] = "Prototype before sign-off"
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
@@ -426,6 +568,10 @@ def amend(args: argparse.Namespace) -> None:
 
 
 COMMANDS = [
+    {"words": "assign", "run": "assign", "changes_state": True,
+     "help": "Give a story or part to a developer by GitHub username",
+     "args": [(('item',), {}), (('login',), {})], "position": 95,
+     "listing": '| `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |'},
     {"words": "task start", "run": "start", "changes_state": True,
      "help": "Start a task in its own branch and worktree",
      "args": [(('item',), {"metavar": "KEY/TASK"})], "position": 100,
@@ -433,6 +579,8 @@ COMMANDS = [
     {"words": "fix start", "run": "fix_start", "changes_state": True,
      "help": "Start a fix in its own branch and worktree, with a one-line why and done-when",
      "args": [(('why',), {}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+              (('--kind',), {"choices": ["ui", "backend", "mechanical"],
+                             "help": "the worker kind; required for prototype fixes"}),
               (('--slug',), {"metavar": "NAME", "help": "the fix's name, instead of one cut from the why"})],
      "position": 110,
      "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |'},

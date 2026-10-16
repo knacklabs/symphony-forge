@@ -58,4 +58,4 @@ def test_1_due_success_check_precedes_planning_when_every_roadmap_story_is_done(
     assert _ok(repo.forge("next")).splitlines()[:6] == DUE + [
         "No story or fix is in progress.",
         'Next: forge story new <KEY> "<title>"',
-        'Next: forge fix start "<why>" --done "<done when>"']
+        'Next: forge fix start "<why>" --done "<done when>" --kind mechanical']

@@ -122,10 +122,10 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         'if os.name != "nt": signal.signal(signal.SIGTERM, signal.SIG_IGN)\n'
         '(here / "tree-pid").write_text(str(os.getpid()))\n'
         'while not (here / "go-all").exists(): time.sleep(0.05)\n', "utf-8")
-    for executable in ("claude", "codex-app-server"):
+    for executable in ("claude_agent_sdk/__init__.py", "codex-app-server"):
         path = repo.bin / executable
         source = path.read_text("utf-8")
-        indent = "" if executable == "claude" else "            "
+        indent = "    " if executable.startswith("claude_agent_sdk") else "            "
         marker = indent + '(here / f"started-'
         spawn = (indent + 'if name.endswith("first-typo"):\n' + indent + '    import subprocess\n'
                  + indent + '    subprocess.Popen([sys.executable, str(here / "tree-helper.py")],\n'
@@ -217,22 +217,28 @@ def check_stop_refuses_workers_and_unverified_processes(env, tmp_path, monkeypat
     hold_agents(env)
     # Check the recorded process and the actual model. Windows records a .cmd
     # launcher, so a fresh reply comes from the model's own pid, not the launcher's.
-    child = repo.bin / "claude"
-    child.write_text(child.read_text("utf-8").replace('name = pathlib.Path.cwd().name',
-        'name = pathlib.Path.cwd().name\n(here / "model-pid").write_text(str(os.getpid()))').replace("    time.sleep(0.05)",
-        '    challenge = here / "challenge"\n'
-        '    if challenge.exists():\n'
-        '        (here / "reply").write_text(str(os.getpid()) + ":" + challenge.read_text())\n'
-        '    time.sleep(0.05)'), "utf-8")
+    child = repo.bin / "claude_agent_sdk/__init__.py"
+    source = child.read_text("utf-8")
+    challenge = ('        challenge = here / "challenge"\n'
+        '        if challenge.exists():\n'
+        '            (here / "reply").write_text(str(os.getpid()) + ":" + challenge.read_text())\n')
+    source = source.replace('    name = Path.cwd().name',
+        '    name = Path.cwd().name\n    (here / "model-pid").write_text(str(os.getpid()))')
+    source = source.replace('        await asyncio.sleep(0.05)',
+        challenge + '        await asyncio.sleep(0.05)')
     if lane_adapter == "claude" and older_queue and os.name != "nt":
-        # Match Windows' .cmd launcher: Forge records the launcher, while the
-        # actual model replying to our challenge has another pid.
-        model = child.with_name("held-claude")
-        child.rename(model)
-        _install(repo.bin, "claude", f'''#!{sys.executable}
-import subprocess, sys
-sys.exit(subprocess.call([sys.executable, {model.as_posix()!r}, *sys.argv[1:]]))
-''')
+        # An SDK turn can have a model child: Forge records the driver, while
+        # the model replying to our challenge has another pid.
+        model = repo.bin / "held-model.py"
+        model.write_text('import os, time\nfrom pathlib import Path\n'
+            'here = Path(__file__).resolve().parent\n'
+            '(here / "model-pid").write_text(str(os.getpid()))\n'
+            'while not (here / "go-all").exists():\n' + challenge.replace("        ", "    ") +
+            '    time.sleep(0.05)\n', "utf-8")
+        source = source.replace('    (here / "model-pid").write_text(str(os.getpid()))',
+            f'    subprocess.Popen([sys.executable, {model.as_posix()!r}])')
+        source = source.replace(challenge, '')
+    child.write_text(source, "utf-8")
     process, _ = start(repo.path, tmp_path, repo, "work", item)
     try:
         _until(lambda: (repo.bin / f"started-{name}").exists(), "running worker")
@@ -245,6 +251,8 @@ sys.exit(subprocess.call([sys.executable, {model.as_posix()!r}, *sys.argv[1:]]))
                 "repo": repo.path.as_posix(), "kind": "work"}]), "utf-8")
         row = lanes(repo)["agents"]["entries"][0]
         assert row["process"]["pid"] != process.pid
+        if lane_adapter == "claude":
+            _until(lambda: (repo.bin / "model-pid").exists(), "the model child's identity")
         model_pid = int((repo.bin / "model-pid").read_text("utf-8")) if lane_adapter == "claude" else None
         if lane_adapter == "claude" and older_queue and os.name != "nt":
             assert model_pid != row["process"]["pid"]
