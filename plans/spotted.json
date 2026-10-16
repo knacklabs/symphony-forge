@@ -9120,6 +9120,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_signoff_hides_generated_files.py\tCover generated-file sign-off in new and earlier-adopted client repos\tsignoff-hide-generated",
+      "kind": "bug",
+      "path": "tests/test_signoff_hides_generated_files.py",
+      "line": 26,
+      "text": "Cover generated-file sign-off in new and earlier-adopted client repos",
+      "from": "blocking",
+      "item": "signoff-hide-generated",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_signoff_hides_generated_files.py\tNot done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it\tsignoff-hide-generated",
+      "kind": "bug",
+      "path": "tests/test_signoff_hides_generated_files.py",
+      "line": 42,
+      "text": "Not done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it",
+      "from": "blocking",
+      "item": "signoff-hide-generated",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_small_test_runs_skip_the_test_line.py\tNot done: the five-file picker boundary has an end-to-end lane test\treviews-skip-agent-line",
       "kind": "bug",
       "path": "tests/test_small_test_runs_skip_the_test_line.py",

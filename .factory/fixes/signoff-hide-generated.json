@@ -2,12 +2,78 @@
   "base": "8dc172b6bc6334049a8f6444b6a5311b5ba3a042",
   "branch": "fix/signoff-hide-generated",
   "done_when": "The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and a test proves it",
+  "flagged": [
+    "tests/test_signoff_hides_generated_files.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "test_1_signoff_review_reads_generated_files_as_names_only() in tests/test_signoff_hides_generated_files.py",
+      "file": "tests/test_signoff_hides_generated_files.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 42,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it",
+      "work": 1
+    },
+    {
+      "area": "test_1_signoff_review_reads_generated_files_as_names_only() in tests/test_signoff_hides_generated_files.py",
+      "file": "tests/test_signoff_hides_generated_files.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 26,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Cover generated-file sign-off in new and earlier-adopted client repos",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4762da0c837656cbb4f7877bc138c110461383fefd9de8dcd97a7edbb594e613",
+    "changed": "13c246867267f2026b32f914e80fdc66478813272f96de5c223b644a058f207d",
+    "commit": "77dc044f04d7a4b039f786c529a882501d46d5a9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. The test proves the media file is absent from Autoreview's diff, but never checks that its name appears in the review prompt. If the prompt addition were removed while the snapshot filtering remained, every assertion would still pass, leaving the Done-when naming requirement unproven.",
+        "file": "tests/test_signoff_hides_generated_files.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 42,
+        "priority": "P1",
+        "title": "Not done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Gate. The repository's review rule requires Forge changes to test both a new client repo and an existing repo adopted on an earlier release. This test creates an ad hoc client configuration and starts a fix; it exercises neither init nor earlier-release adoption. No other sign-off generated-file test covers those paths.",
+        "file": "tests/test_signoff_hides_generated_files.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 26,
+        "priority": "P1",
+        "title": "Cover generated-file sign-off in new and earlier-adopted client repos",
+        "work": 2
+      }
+    ],
+    "id": "237c8a95-a952-4853-93cc-83aa9d334244",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T19:24:52.609009+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-16T19:27:57.194016+00:00",
+      "step": "review"
     }
   ],
   "why": "The strict sign-off review sends files marked linguist-generated (images, videos) to Autoreview, which refuses binary media, so sign-off cannot run in a repo with brand videos"
