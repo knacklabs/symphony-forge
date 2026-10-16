@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-PACE-1-ROUTING",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T05:16:17.695363+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "96e7cb13b454a2317aef1792adf944658008e86b",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
