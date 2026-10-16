@@ -1057,8 +1057,10 @@ def _hide_generated(tree: Path, start: str, head: str) -> str:
     snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
                         "-m", "Branch head without generated files' contents", cwd=tree)
     repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
-    return ("\n\n## Generated files\n\nThese files are marked linguist-generated in .gitattributes, "
-            "so their contents are left out of the diff:\n"
+    return ("\n\n## Generated files\n\nThese files are marked linguist-generated in .gitattributes. "
+            "Each listed file is committed at the real branch head with the listed line counts. "
+            "The review tree only restores each file to the branch start to keep its contents out of "
+            "the diff. A missing or untracked copy in the review tree is not a finding:\n"
             + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
                        for path in generated))
 
