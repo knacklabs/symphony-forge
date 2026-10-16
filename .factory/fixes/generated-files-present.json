@@ -1,0 +1,15 @@
+{
+  "base": "ff7cfd0caa6f9cf53e8f8bd2df3cb0986d4446e3",
+  "branch": "fix/generated-files-present",
+  "done_when": "The review prompt's Generated files section says each listed file is committed at the real branch head with the listed line counts, that the review tree only restores it to the start to keep its contents out of the diff, and that a missing or untracked copy in the review tree is not a finding; a test proves the wording for a generated file the branch adds",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-16T20:19:06.577674+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviews hide linguist-generated files by restoring them to the branch start, so a generated file the branch adds is missing from the review tree's HEAD and left untracked; reviewers then report the branch's fonts, media and logos as not committed"
+}
