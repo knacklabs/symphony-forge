@@ -49,8 +49,8 @@
     "id": "6c8add57-7334-44d0-a473-474f596770b2",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T20:19:06.577674+00:00",
@@ -62,10 +62,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "34c79ee783dd94634d606651791e2fbe31f73aee",
+    "close": "7513a9d5-8e0d-4e69-b7fa-20ce924b0816",
+    "head": "1aad2e479e37f1241ad9129b991aa372fb617ac8",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Reviews hide linguist-generated files by restoring them to the branch start, so a generated file the branch adds is missing from the review tree's HEAD and left untracked; reviewers then report the branch's fonts, media and logos as not committed",
   "worker": "codex"
