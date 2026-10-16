@@ -88,7 +88,7 @@
     "id": "e41beb72-8bf0-42b8-b2c1-52f632eb588b",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "settled_areas": [
     ".github/workflows/forge-next.yml"
   ],
@@ -121,13 +121,12 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "e9e42d87-b4ac-46c1-84e7-2e1ba74bb468",
-    "head": "cdc53f0294a6fe9c9a2db431e9cfc1e800a5c77b",
+    "close": "069c29b3-167c-4098-ac08-56f08f906aa0",
+    "head": "d13184bdc280c44785861db442927b034a309d81",
     "keys": {
-      "the review finding \"Not done: proof list\" in tests/test_dismissals_survive_line_ending_changes.py": 1,
-      "the review finding \"Not done: the owner-accept test passes in the 12-group every-platform suite\" in .github/workflows/forge-next.yml": 1
+      "the review finding \"Not done: tests/test_accept_dismisses_the_latest_review_findings.py passes on Windows, macOS and Linux in the every-platform suite, and each\" in .github/workflows/forge-next.yml": 1
     },
-    "round": 1
+    "round": 2
   },
   "why": "On Windows, the full suite fails the owner-accept test: the last pull request body close publishes has no dismissed findings, so v1.2.13 cannot ship",
   "worker": "codex"
