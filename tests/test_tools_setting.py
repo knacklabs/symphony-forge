@@ -91,7 +91,7 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     started = repo.forge("fix", "start", "Choose tools", "--done", "Doctor checks chosen tool",
-                         cwd=client)
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     client = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     config = client / "forge.toml"

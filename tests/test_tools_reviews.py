@@ -52,7 +52,8 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
     else:
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    started = repo.forge("fix", "start", "Upgrade settings", "--done", "Settings work", cwd=client)
+    started = repo.forge("fix", "start", "Upgrade settings", "--done", "Settings work",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     client = type(client)(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     config = client / "forge.toml"

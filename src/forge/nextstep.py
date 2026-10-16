@@ -325,7 +325,7 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
         alerts[key] = [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
                        f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
                        *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
-                       f'Next: forge fix start "{why}" --done "{done}"']
+                       f'Next: forge fix start "{why}" --done "{done}" --kind mechanical']
     return alerts
 
 
@@ -352,8 +352,14 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
             continue
         reason = (f"{count} noted problems are open there." if hotspot["reason"] == "open"
                   else f"{count} changes had the same kind of serious review finding there.")
+        suffix = Path(path).suffix.lower()
+        kind = ("ui" if suffix in {".html", ".css", ".scss", ".jsx", ".tsx", ".vue", ".svelte"}
+                or suffix in {".ts", ".js"} and set(Path(path).parts) & {
+                    "web", "frontend", "components", "screens", "pages"}
+                else "backend" if suffix in {".py", ".ts", ".js", ".go", ".rs", ".java", ".rb",
+                                             ".sql", ".prisma"} else "mechanical")
         lines += [f"{path} keeps breaking: {reason}",
-                  f'Next: forge fix start "{why}" --done "{done}"']
+                  f'Next: forge fix start "{why}" --done "{done}" --kind {kind}']
     return lines
 
 
@@ -402,7 +408,7 @@ def _due(top: Path, history: dict[str, Any] | None = None) -> list[str]:
             lines += [f"Every story from the {found[0] or slug} spec is done and its check date has "
                       f"passed; measure {found[1]}.",
                       f'Next: forge fix start "Record the {slug} success result" --done "The {slug} '
-                      'spec records its result"',
+                      'spec records its result" --kind mechanical',
                       f'Next: forge spec measure {slug} --result "<measured result>"']
     return lines
 
@@ -431,7 +437,7 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
     return ["The dependencies and base images haven't been refreshed in over a week; refresh them.",
             'Next: forge fix start "Dependencies and base images are over a week old, so new '
             'security advisories fail the image scan" --done "Lockfiles and base images are updated '
-            f'within their allowed ranges, the image builds and the test command passes" --slug {REFRESH}']
+            f'within their allowed ranges, the image builds and the test command passes" --kind mechanical --slug {REFRESH}']
 
 
 def _idle(top: Path) -> list[str]:
@@ -442,7 +448,7 @@ def _idle(top: Path) -> list[str]:
             not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
         return ["No story or fix is in progress.",
                 'Next: forge story new <KEY> "<title>"',
-                'Next: forge fix start "<why>" --done "<done when>"']
+                'Next: forge fix start "<why>" --done "<done when>" --kind mechanical']
     fields = CARD_FIELD.findall(story.show(top, ref, DISCOVERY) or "")
     if any(value.strip().lower() not in ("", "unknown") for value in fields):
         return ["No story or fix is in progress and the roadmap is empty; the discovery notes hold "
@@ -451,7 +457,7 @@ def _idle(top: Path) -> list[str]:
     return ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
             "the Forge skill's Discovery section says.",
             'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
-            'filled problem card and the brief names it"']
+            'filled problem card and the brief names it" --kind mechanical']
 
 
 def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
@@ -1026,14 +1032,16 @@ def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path
     cfg = _report_config(folder, refusals)
     if "local" not in cfg:
         return ""
-    # Keep in step with forge work's choice of design and kind in worker.work (worker.py lines 89-106).
+    # Keep in step with forge work's choice of design and kind in worker.work.
     key, _, name = item.partition("/")
     design = (repo.user_facing(cfg, task.rows(task.sections((folder / "plans" / f"{key}.md").read_text(
         encoding="utf-8"))).get(name, {})) if name else
-        state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(folder))
+        state.get("fix_kind") == "ui")
     later = (repo.worker(cfg, "build", design, state.get("tool"))[0] == "codex" or design) and bool(
         codex.record(folder, item).get("start") or state.get("status", "started") != "started")
     kind = "fix" if later else "build" if name else "lite"
+    if not name and state.get("fix_kind"):
+        kind = "build" if state["fix_kind"] == "backend" else "lite"
     sources = repo.setting_sources(cfg, kind, design)
     return f"  # {repo.worker(cfg, kind, design, state.get('tool'))[0].title()} builds it ({sources})"
 

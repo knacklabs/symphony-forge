@@ -30,7 +30,8 @@ def test_9_login_only_pull_request_keeps_the_recorded_starter_name(env, previous
     repo.git("config", "user.name", "Recorded Starter")
     repo.git("config", "user.email", "starter@example.test")
     item = "recorded-starter"
-    started = repo.forge("fix", "start", "Keep the starter visible", "--done", "The starter is visible", "--slug", item)
+    started = repo.forge("fix", "start", "Keep the starter visible", "--done", "The starter is visible", "--slug", item,
+                         "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([{
         "number": 7, "headRefName": "fix/" + item, "state": "OPEN",
@@ -46,7 +47,8 @@ def test_7_started_item_shows_its_own_starter_before_a_pull_request(env, previou
     repo = env.repo
     repo.git("config", "user.name", "Original Fix Starter")
     repo.git("config", "user.email", "starter@example.test")
-    started = repo.forge("fix", "start", "Show a greeting", "--done", "Readers see a greeting")
+    started = repo.forge("fix", "start", "Show a greeting", "--done", "Readers see a greeting",
+                         "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     where = worktree(repo, "fix/show-a-greeting")
     repo.git("config", "user.name", "Later Contributor")

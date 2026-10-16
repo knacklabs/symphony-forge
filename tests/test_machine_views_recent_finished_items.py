@@ -291,4 +291,4 @@ def test_2_machine_next_preserves_due_spec_guidance_with_crlf(
         "measure completed jobs per week.")
     assert shown["next"]["command"] == (
         'forge fix start "Record the crlf-result success result" '
-        '--done "The crlf-result spec records its result"')
+        '--done "The crlf-result spec records its result" --kind mechanical')

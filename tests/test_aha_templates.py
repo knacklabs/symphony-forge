@@ -27,7 +27,8 @@ def _section(text, heading):
 def _conventions(repo, client):
     # A worker reads the conventions from the folder its brief names, so read them from there.
     log = install_claude(repo)
-    started = repo.forge("fix", "start", "Show their work", "--done", "The demo has data", cwd=client)
+    started = repo.forge("fix", "start", "Show their work", "--done", "The demo has data",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stderr
     fix = repo.git("worktree", "list", "--porcelain", cwd=client).split("worktree ")[-1].splitlines()[0]
     toml = Path(fix) / "forge.toml"  # the fix's own settings

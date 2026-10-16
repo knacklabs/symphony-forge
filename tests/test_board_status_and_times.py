@@ -35,7 +35,8 @@ def _fix(repo, title="Readers see the correct state", slug="correct-state", **ch
     with pytest.MonkeyPatch.context() as dated:
         dated.setenv("GIT_AUTHOR_DATE", os.environ["FORGE_NOW"])
         dated.setenv("GIT_COMMITTER_DATE", os.environ["FORGE_NOW"])
-        result = repo.forge("fix", "start", title, "--done", "The board agrees", "--slug", slug)
+        result = repo.forge("fix", "start", title, "--done", "The board agrees", "--slug", slug,
+                            "--kind", "mechanical")
     assert result.returncode == 0, result.stderr
     tree = worktree(repo, f"fix/{slug}")
     path = tree / f".factory/fixes/{slug}.json"
