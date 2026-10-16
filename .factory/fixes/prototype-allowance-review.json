@@ -10,13 +10,29 @@
   },
   "done_when": "A prototype fix's review prompt says the Prototype before sign-off allowance is recorded by Forge and covers any size and interface changes, and no longer asks the reviewer to check that allowance against the diff; other allowances keep the check; a test proves both",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "79826a1a7a18030156281c7dbc9b5a860ce3be8b1908e0ac38a4390db73ba069",
+    "changed": "fee801d7041f6bf0de3ef61102b16aa80b812a69ee082e8a231a755aeef7e2b5",
+    "commit": "d0a02dca4d4fa30941304b126d21b6e6996d5586",
+    "dismissals": [],
+    "findings": [],
+    "id": "48bfa4ee-dc1c-4f0a-9c04-1142d4a14b13",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T20:11:08.465476+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-16T20:15:49.772105+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
