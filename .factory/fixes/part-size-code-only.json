@@ -1,6 +1,13 @@
 {
   "base": "f0250948eb513a843659ab4bdf44dfc35cf18f3f",
   "branch": "fix/part-size-code-only",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a145b3-db91-7a10-aef6-06b7385bc3f4",
+    "head": null,
+    "start": "cfe2858101e33b1b10c7fcb537706f15e5f736e4"
+  },
   "done_when": "A story part's size limit counts only code: Markdown files and files under docs/, plans/ and .factory/ do not count, nor do tests; a part that carries its story's design copies is measured by its own code; new repos get it at init and existing repos on upgrade",
   "kind": "fix",
   "round": 1,
