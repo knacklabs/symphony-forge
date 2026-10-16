@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-3-KNOWN",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T05:16:12.122581+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "312b45fcc8e66159ce1201286ae956ca4fafa3e1",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
