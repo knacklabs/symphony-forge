@@ -178,6 +178,7 @@ def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_pa
     pushed(teammate, "Plan a basket", {"plans/SHOP.md": DOC, ".factory/stories/SHOP/story.json": json.dumps(
         {"doc": "plans/SHOP.md", "title": "Shoppers can save a basket", "status": "approved"})})
     client.git("fetch", "-q", "origin")
+    elsewhere = fix(client, "elsewhere")
 
     def story(url):
         return next(row for row in snapshot(url)["items"] if row["id"] == "SHOP")
@@ -191,9 +192,8 @@ def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_pa
             time.sleep(0.5)  # waiting for the server's own fetch, which the test cannot trigger
         assert shown["owner"] == "page-dev", shown
         assert {part["owner"] for part in shown["children"]} == {"page-dev"}, shown["children"]
-        fix(client, "elsewhere")
+        commit(elsewhere, "elsewhere.txt")
         after = snapshot(url)
-        # The fetch rebuilds every second here, so the newest rebuild may have had nothing new.
-        assert "SHOP" not in after["snapshot"]["rows_rebuilt"] and "elsewhere" in {row["id"] for row in after["items"]}
+        assert "SHOP" not in after["snapshot"]["rows_rebuilt"]
         kept = next(row for row in after["items"] if row["id"] == "SHOP")
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
