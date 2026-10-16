@@ -6,6 +6,15 @@
 
 <What the people who use this will notice, in plain English. No IDs, codes or jargon.>
 
+<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
+in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
+Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
+the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
+id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
+the Design line for a backend-only story. Cold read follows the design; one plan approval binds
+these exact files. A folder edit needs its new tree id and a new plan approval. -->
+Design: docs/design/<KEY>/ (<tree id>)
+
 ## Why
 
 $why

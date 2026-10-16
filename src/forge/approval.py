@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, machine, repo, story
+from forge import __version__, design, machine, repo, story
 
 REFUSALS = {
     "bad_payload": ("The hook input is not a JSON object.", "forge doctor"),
@@ -86,8 +86,15 @@ def waiting_digest(key: str, top: Path) -> str | None:
     state, doc = repo.read_state(key, top), top / "plans" / f"{key}.md"
     if state is None or not doc.is_file():
         return None
-    digest = story.approval_hash(doc.read_text(encoding="utf-8"))
-    return None if (state.get("approval") or {}).get("hash") == digest else digest
+    text = doc.read_text(encoding="utf-8")
+    digest = story.approval_hash(text)
+    if (state.get("approval") or {}).get("hash") == digest:
+        try:
+            design.check(top, text)
+        except (repo.Refused, ValueError):
+            return digest
+        return None
+    return digest
 
 
 def last_refusal(top: Path) -> Path:
