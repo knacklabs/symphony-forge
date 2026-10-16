@@ -7,7 +7,7 @@ import shutil
 import pytest
 
 from conftest import ROOT
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 from test_fix_review_bundles_include_generated_files_s import _record_bundles
 from test_setup import _fresh_client
 
@@ -33,6 +33,8 @@ def test_1_review_confirms_added_generated_files_are_committed(env, adopted):
         client, initialized = _fresh_client(repo, env.gh, env.tmp)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = client
+    # Init installs a general GitHub API response; restore the close fixture's CI responses.
+    env.checks(GREEN)
     repo.git("push", "-q", "origin", "main")
     _record_bundles(env)
     item, where = env.start_fix({".gitattributes": "media/** linguist-generated\n",
