@@ -9,6 +9,11 @@
       "at": "2026-10-16T06:05:44.286197+00:00",
       "because": "The owner narrowed this fix on 2026-10-16 to story parts: a fix already changes its done-when through fix amend",
       "done_when": "Choosing narrow or split updates the plan's builder details and brings them into the task branch in one step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded"
+    },
+    {
+      "at": "2026-10-16T14:36:43.966654+00:00",
+      "because": "The owner split this fix again on 2026-10-16: publishing the pull request body once per close moves to its own fix with the dated merge-wait case",
+      "done_when": "Choosing narrow or split on a story part updates that part's builder details in the plan and brings them into the task branch in one step, and on a fix it names the fix amend step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded"
     }
   ],
   "base": "14f944a4e61456569288a386e83542e377ba96fb",
@@ -20,7 +25,7 @@
     "head": null,
     "start": "fa7c754c40f8a3d5e9221309959f4f8e51b9f499"
   },
-  "done_when": "Choosing narrow or split on a story part updates that part's builder details in the plan and brings them into the task branch in one step, and on a fix it names the fix amend step; one close run publishes the pull request body at most once, and sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
+  "done_when": "Choosing narrow or split on a story part updates that part's builder details in the plan and brings them into the task branch in one step, and on a fix it names the fix amend step; sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "flagged": [
     "src/forge/close.py",
     "src/forge/review.py",
