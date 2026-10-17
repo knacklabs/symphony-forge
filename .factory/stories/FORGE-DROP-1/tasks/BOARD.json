@@ -1,0 +1,13 @@
+{
+  "base": "04a9083591c2e2dab5fb77a42fbacd0935e3daa3",
+  "branch": "task/FORGE-DROP-1-BOARD",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-BOARD-4/SERVER",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T20:41:19.516274+00:00",
+      "step": "start"
+    }
+  ]
+}
