@@ -37,8 +37,8 @@
     "id": "8684737b-1481-47a6-9706-a032d11637d0",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:28:51.777172+00:00",
@@ -54,10 +54,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "5984dc3086d7d374683c372899293226b5316d41",
+    "close": "b02ee783-a80c-41ca-801e-641f887d5f5a",
+    "head": "f9c4b4b52554d0805b22237cb6831d6765b24015",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Tests and reviews start on a busy machine because only work rounds wait for high load, so self-hosted CI runners on the same Mac slow everything",
   "worker": "codex"
