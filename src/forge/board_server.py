@@ -1,18 +1,12 @@
-"""`forge board`'s live page: a server on 127.0.0.1 at a free port that only answers with this run's
-token, and stops when the command ends.
-
-A full derivation takes seconds, so the server never rebuilds blindly. Each request first checks
-the inputs cheaply: git's refs, Forge's record and event files under the git folder, the lanes
-file, each worktree's HEAD and each checkout's uncommitted records, plans and settings. When none
-changed it serves the last snapshot as it is; otherwise one background thread rebuilds, and only
-rows whose own inputs changed are derived again. A request waits at most REBUILD_WAIT for that
-rebuild, then gets the last snapshot marked as updating; `/events` tells the page when a new
-snapshot exists. The last snapshot and its rows are saved in Forge's folder, so a restart shows the
-board at once and rebuilds warm. Every minute the server fetches from the remote and refreshes
-GitHub's facts.
+"""`forge board`'s live page: a server on 127.0.0.1 at a free port that answers only with this run's
+token and stops with the command. A request serves the last snapshot while the cheaply checked
+inputs are unchanged; otherwise one background thread rebuilds only the changed rows, a request
+waits at most REBUILD_WAIT and then gets the last snapshot marked as updating, and `/events` says
+"changed" when a new one exists. The last snapshot and its rows are saved, so a restart is instant.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import hmac
 import json
@@ -32,24 +26,20 @@ from urllib.parse import parse_qs, urlsplit
 
 from forge import board, machine, repo, story
 
-APP = Path(__file__).with_name("board_app")
-ASSET = re.compile(r"/([a-z][a-z-]*\.(?:js|css))")
 PLAN = re.compile(r"/plan/([A-Z][A-Z0-9-]*)")
-TYPES = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8"}
 # Nothing on the page loads from or talks to another origin, and nothing inline runs.
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 # Files the derivation itself writes under Forge's folder; watching them would rebuild forever.
-WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|\.tmp|\.new|"
-                     r"board\.html)$")
+WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|\.tmp|\.new)$")
 # ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 # How long a request waits for a rebuild before it gets the last snapshot marked as updating.
 REBUILD_WAIT = float(os.environ.get("FORGE_BOARD_REBUILD_WAIT", "0.5"))
 TICK = 1.0  # seconds between the events stream's input checks
-PLACEHOLDER = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Forge board</title></head>'
-               '<body><h1>Forge board</h1><p>The board is live. Its data is at '
-               '<a href="board.json?token={{token}}">board.json</a>.</p></body></html>')
+# ponytail: a placeholder page until the page shell part replaces it
+PLACEHOLDER = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Forge board</title></head><body>'
+               '<h1>Forge board</h1><p>The board is live. Its data is at <a href="board.json?token={token}">board.json</a>.')
 DENIED = "This board link is not valid. Open the board again to get a new link."
 
 
@@ -63,14 +53,11 @@ class Snapshots:
         self.lock = threading.Lock()  # one derivation at a time: they share the row cache
         self.done = threading.Condition()
         self.wanted = threading.Event()
-        self.forced = False
-        self.cache: dict[str, Any] = {"rows": {}, "rebuilt": []}
+        self.forced, self.cache = False, {"rows": {}, "rebuilt": []}
         self.inputs: tuple[str, str] | None = None
-        self.finished = 0.0  # when the newest finished rebuild began
-        self.failed: Exception | None = None  # what stopped that rebuild, if anything
-        self.version = 0
-        self.body = b""
-        self.updating = b""  # the same snapshot, marked as updating
+        # When the newest finished rebuild began, and what stopped it, if anything.
+        self.finished, self.failed = 0.0, None
+        self.version, self.body, self.updating = 0, b"", b""  # updating: the same snapshot, marked so
         self.pages: dict[str, Any] = {}  # the untrimmed derivation, for one refs fingerprint
         try:  # the last run's snapshot and rows, so a restart shows the board at once and rebuilds warm
             saved = json.loads(self.saved.read_text(encoding="utf-8"))
@@ -94,25 +81,41 @@ class Snapshots:
             except OSError:  # removed while we looked: the next check sees it gone
                 continue
             digest.update(f"{path}\0{found.st_mtime_ns}\0{found.st_size}\n".encode())
-        rest.update(json.dumps(local_files(self.trees())).encode())
+        rest.update(json.dumps(self.local_files()).encode())
         lanes = machine._repos_file().parent / "agent-runs.json"  # rewritten on every read, so by content
-        try:
-            rest.update(lanes.read_bytes())
-        except OSError:
-            rest.update(b"[]")  # the first read writes an empty line of runs
+        rest.update(lanes.read_bytes() if lanes.is_file() else b"[]")  # the first read writes "[]"
         return refs.hexdigest(), rest.hexdigest()
 
-    def trees(self) -> dict[str, Path]:
-        """Each checkout's branch and folder, read from git's files without a git process."""
-        found = {}
-        for folder, head in [(self.common.parent, self.common / "HEAD"),
-                             *((None, head) for head in (self.common / "worktrees").glob("*/HEAD"))]:
-            try:
-                # gitdir names the checkout's .git file, absolute or relative to this folder
-                folder = folder or (head.parent / head.with_name("gitdir").read_text(encoding="utf-8").strip()).parent
-                found[head.read_text(encoding="utf-8").strip().removeprefix("ref: refs/heads/")] = folder
+    def local_files(self) -> list[tuple[str, str, int, int]]:
+        """The files the board reads from each checkout's disk, uncommitted edits included, with their
+        times and sizes: settings, the roadmap, and each Forge branch's own records and plan. Checkouts
+        come from git's files, without a git process."""
+        # ponytail: a Forge branch's edits to other items' records are not watched (tens of thousands of
+        # files on a big repo); watch them too if a worker ever edits another item's record.
+        found = []
+        for tree, head in [(self.common.parent, self.common / "HEAD"),
+                           *((None, head) for head in (self.common / "worktrees").glob("*/HEAD"))]:
+            try:  # gitdir names the checkout's .git file, absolute or relative to this folder
+                tree = tree or (head.parent / head.with_name("gitdir").read_text(encoding="utf-8").strip()).parent
+                branch = head.read_text(encoding="utf-8").strip().removeprefix("ref: refs/heads/")
             except OSError:  # removed while we looked: the next check sees it gone
                 continue
+            kind, _, name = branch.partition("/")
+            paths = [tree / "forge.toml", tree / "plans/roadmap.json"]
+            if kind == "fix":
+                paths.append(tree / f".factory/fixes/{name}.json")
+            elif kind == "story":
+                paths += [*(tree / f".factory/stories/{name}").rglob("*.json"), tree / f"plans/{name}.md",
+                          tree / f"plans/{name}.read.md"]
+            elif kind == "task":
+                paths += [path for path in (tree / ".factory/stories").glob("*/tasks/*.json")
+                          if f"{path.parent.parent.name}-{path.stem}" == name]
+            elif kind == "forge":  # migrate's branch rewrites every record
+                paths += (tree / ".factory").rglob("*.json")
+            for path in paths:
+                with contextlib.suppress(OSError):  # removed while we looked: the next check sees it gone
+                    found.append((branch, path.relative_to(tree).as_posix(), (seen := path.stat()).st_mtime_ns,
+                                  seen.st_size))
         return found
 
     def now(self) -> tuple[int, bytes]:
@@ -145,8 +148,7 @@ class Snapshots:
         while True:
             self.wanted.wait()
             self.wanted.clear()
-            started, seen = time.monotonic(), self.watched()
-            failed = None
+            started, seen, failed = time.monotonic(), self.watched(), None
             try:
                 if self.forced or seen != self.inputs:
                     self.forced = False
@@ -161,19 +163,17 @@ class Snapshots:
     def build(self, seen: tuple[str, str]) -> None:
         with self.lock:
             with repo.command_cache():
-                self.cache.update(rebuilt=[], local=local_files(self.trees()))
+                self.cache.update(rebuilt=[], local=self.local_files())
                 view = board.machine_board(self.top, cache=self.cache)
             view["snapshot"] = {"version": self.version + 1, "rows_rebuilt": self.cache["rebuilt"]}
             rows = json.dumps({"forge": board.__version__, "inputs": seen, "rows": self.cache["rows"], "view": view})
         with self.done:
             self.publish(view)
             self.inputs = seen
-        try:  # a write that fails only costs the next start its head start
+        with contextlib.suppress(OSError):  # a failed write only costs the next start its head start
             spare = self.saved.with_name(self.saved.name + ".tmp")
             spare.write_text(rows, encoding="utf-8")
             os.replace(spare, self.saved)
-        except OSError:
-            pass
 
     def untrimmed(self) -> dict[str, Any]:
         """Every item, finished ones included, cached until a ref changes."""
@@ -192,39 +192,11 @@ class Snapshots:
         """At most once a minute: the remote's refs, then GitHub's facts with them."""
         while True:
             time.sleep(FETCH_WAIT)
-            # Not repo.run: its command cache belongs to whichever rebuild runs at the time.
+            # Not repo.run: its command cache belongs to the rebuild running now.
             subprocess.run(["git", "fetch", "-q", "--prune", "--tags", "origin"], cwd=self.top,
                            stdin=subprocess.DEVNULL, capture_output=True)
             self.forced = True
             self.wanted.set()
-
-
-def local_files(trees: dict[str, Path]) -> list[tuple[str, str, int, int]]:
-    """The files the board reads from each checkout's disk, uncommitted edits included, with their
-    times and sizes: settings, the roadmap, and each Forge branch's own records and plan."""
-    # ponytail: a Forge branch's edits to other items' records are not watched (tens of thousands of
-    # files on a big repo); watch them too if a worker ever edits another item's record.
-    found = []
-    for branch, tree in trees.items():
-        kind, _, name = branch.partition("/")
-        paths = [tree / "forge.toml", tree / "plans/roadmap.json"]
-        if kind == "fix":
-            paths.append(tree / f".factory/fixes/{name}.json")
-        elif kind == "story":
-            paths += [*(tree / f".factory/stories/{name}").rglob("*.json"), tree / f"plans/{name}.md",
-                      tree / f"plans/{name}.read.md"]
-        elif kind == "task":
-            paths += [path for path in (tree / ".factory/stories").glob("*/tasks/*.json")
-                      if f"{path.parent.parent.name}-{path.stem}" == name]
-        elif kind == "forge":  # migrate's branch rewrites every record
-            paths += (tree / ".factory").rglob("*.json")
-        for path in paths:
-            try:
-                seen = path.stat()
-            except OSError:
-                continue
-            found.append((branch, path.relative_to(tree).as_posix(), seen.st_mtime_ns, seen.st_size))
-    return found
 
 
 def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
@@ -263,12 +235,8 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
 
         def route(self, path: str, query: dict[str, list[str]]) -> None:
             if path == "/":
-                # ponytail: a placeholder page until the page shell lands in board_app/shell.html
-                shell = ((APP / "shell.html").read_text(encoding="utf-8") if (APP / "shell.html").is_file()
-                         else PLACEHOLDER).replace("{{token}}", token)
-                self.send(200, "text/html; charset=utf-8", shell.encode("utf-8"), **{"Content-Security-Policy": CSP})
-            elif (asset := ASSET.fullmatch(path)) and (APP / asset[1]).is_file():
-                self.send(200, TYPES[asset[1].rsplit(".", 1)[1]], (APP / asset[1]).read_bytes())
+                page = PLACEHOLDER.format(token=token).encode("utf-8")
+                self.send(200, "text/html; charset=utf-8", page, **{"Content-Security-Policy": CSP})
             elif path == "/board.json":
                 self.board(query.get("page", ["now"])[0], query.get("id", [""])[0])
             elif plan := PLAN.fullmatch(path):

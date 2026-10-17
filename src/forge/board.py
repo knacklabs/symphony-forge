@@ -338,7 +338,6 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     # The server's read of each checkout's records and plans on disk, uncommitted edits included.
     local = [] if cache is None else [entry for entry in cache.get("local", [])
                                       if entry[1] not in ("forge.toml", "plans/roadmap.json")]
-
     starters = {} if cache is None else _starters(top)
 
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
@@ -361,9 +360,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             [(rel, part) for rel, (part, _) in best.items() if own in rel],
             [(name, e) for name, e in by_item.items() if own in str(name)],
             [(name, t) for name, t in timings_by_item.items() if own in str(name)],
-            [f for f in files if own in f[0]]], sort_keys=True, default=str)
-        inputs = repo.blob_hash(inputs)  # kept small, so the server can save the rows to disk
-        kept = cache["rows"].get(item)
+            [f for f in files if own in f[0]]], sort_keys=True, default=str)  # hashed below, kept small to save
+        kept, inputs = cache["rows"].get(item), repo.blob_hash(inputs)
         if kept and kept[0] == inputs:
             made, ready, waits, owner = copy.deepcopy(kept[1])
             if owner is not None:  # the story's owner, which its unstarted parts read after the rows

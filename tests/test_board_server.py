@@ -10,6 +10,7 @@ import os
 import queue
 import re
 import socket
+import statistics
 import subprocess
 import sys
 import threading
@@ -275,3 +276,26 @@ def test_7_a_slow_rebuild_never_holds_a_request(client):
         fresh = snapshot(url)
         assert fresh["snapshot"]["version"] == first["snapshot"]["version"] + 1
         assert fresh["snapshot"]["rows_rebuilt"] == ["alpha"] and "updating" not in fresh["snapshot"]
+
+
+def test_8_board_requests_stay_fast(client):
+    """Real requests, timed: an unchanged board answers under 100 ms, and a request after a
+    one-item change answers within the half-second rebuild wait, under 1 s. Medians of a few
+    requests keep a loaded test machine from deciding the result."""
+    alpha = fix(client, "alpha")
+    with live(client, FORGE_BOARD_REBUILD_WAIT="0.5") as url:
+        snapshot(url)
+
+        def timed():
+            started = time.perf_counter()
+            status, _, _ = get(url, "/board.json")
+            assert status == 200
+            return time.perf_counter() - started
+
+        unchanged = statistics.median(timed() for _ in range(5))
+        assert unchanged < 0.1, unchanged
+        changed = []
+        for n in range(3):
+            commit(alpha, f"alpha-{n}.txt")
+            changed.append(timed())
+        assert statistics.median(changed) < 1.0, changed
