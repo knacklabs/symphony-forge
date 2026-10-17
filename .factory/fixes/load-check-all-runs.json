@@ -4,12 +4,20 @@
   "done_when": "Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on this machine, and a test covers a test run waiting under high load",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:28:51.777172+00:00",
       "step": "start"
     }
   ],
-  "why": "Tests and reviews start on a busy machine because only work rounds wait for high load, so self-hosted CI runners on the same Mac slow everything"
+  "stuck": {
+    "close": null,
+    "head": "5984dc3086d7d374683c372899293226b5316d41",
+    "keys": {},
+    "round": null
+  },
+  "why": "Tests and reviews start on a busy machine because only work rounds wait for high load, so self-hosted CI runners on the same Mac slow everything",
+  "worker": "codex"
 }
