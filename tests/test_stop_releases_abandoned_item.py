@@ -109,3 +109,24 @@ def test_2_stop_keeps_a_live_older_work_lock_without_a_queue_entry(env, tmp_path
         assert process.poll() is None
     finally:
         finish(repo, [process])
+
+
+def test_3_stop_handles_a_queued_run_before_its_abandoned_lock(env, tmp_path, person):
+    repo = env.repo
+    item, name = make_work(repo, "Correct the spelling")
+    hold_agents(env)
+    process, _ = start(repo.path, tmp_path / "run", repo, "work", item)
+    try:
+        _until(lambda: (repo.bin / f"started-{name}").exists(), "the launched worker")
+        # As in the adopted-client lane test, the model outlives its Forge parent.
+        process.kill()
+        process.wait(timeout=30)
+        lock = repo.path / ".git/forge/threads/fix" / (item + ".lock")
+        owner = json.loads(lock.read_text("utf-8"))
+        owner.pop("started")
+        lock.write_text(json.dumps(owner), "utf-8")
+        stopped = repo.forge("stop", "--repo", str(repo.path), item)
+        assert stopped.returncode == 0, stopped.stdout + stopped.stderr
+        assert stopped.stdout == "Stopped the run.\n"
+    finally:
+        finish(repo, [process])

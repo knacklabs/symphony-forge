@@ -395,7 +395,7 @@ def stop(args: Any) -> int:
     for run in held:
         native.cancel(run)
     cleared = False
-    if root and repo.ITEM.fullmatch(args.item):
+    if not selected and root and repo.ITEM.fullmatch(args.item):
         for kind in ("Build", "Grill"):
             cleared = _clear_item_lock(root, args.item, kind) or cleared
     print("Stopped Forge's hold; stop the subagent in your session too." if held else
