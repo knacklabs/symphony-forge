@@ -490,7 +490,8 @@ in `tests/test_machine_views.py` checks both views against it.
 The Claude Code mod reads Forge's machine views, runs `forge` commands and draws;
 it never edits repo files or replaces the commands' approval and merge rules.
 All its consumers share one snapshot. On load, then every 10 seconds, one refresh
-runs `forge board --json`, `forge next --json` and `forge lanes --json` together.
+runs `forge next --json` and `forge lanes --json` together. The next output also
+supplies the board rows, so the pane reads them once per refresh.
 If that Forge has no lanes command, lane data is absent. A due refresh is skipped
 while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
 Drawing ticks advance live timers every second without fetching state.

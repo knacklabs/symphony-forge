@@ -30,8 +30,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
       on('process.run', async (_$, e) => {
         if (gate) { entered(); await gate }
         return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-          e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items } :
-          e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: '' } } : { version: '1.2.5' },
+          e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', items, next: { command: null, line: '' } } : { version: '1.2.5' },
         ) } }
       })
       on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
@@ -82,8 +81,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('process.run', (_$, e) => {
       directories.push(e.init?.cwd ?? '')
       return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-        e.argv[1] === 'board' ? { version: '1.2.5', repo_root: boardRoot, items } :
-        e.argv[1] === 'next' ? { version: '1.2.5', repo_root: boardRoot, next: { command: null, line: '' } } : { version: '1.2.5' },
+        e.argv[1] === 'next' ? { version: '1.2.5', repo_root: boardRoot, items, next: { command: null, line: '' } } : { version: '1.2.5' },
       ) } }
     })
     on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
@@ -140,8 +138,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('ui.invalidate', () => ({ value: undefined }))
     on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-      e.argv[1] === 'board' ? { version: '1.2.5', repo_root: root, items } :
-      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: root, next: { command: null, line: '' } } : { version: '1.2.5' },
+      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: root, items, next: { command: null, line: '' } } : { version: '1.2.5' },
     ) } }))
     on('prompt.submit', (_$, e) => {
       if (unavailable) throw new Error('Session disconnected')
@@ -249,8 +246,7 @@ for (const mode of ['worker', 'headless'] as const) {
     on('ui.invalidate', () => ({ value: undefined }))
     on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-      e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items: [row('Guide', id)] } :
-      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: '' } } : { version: '1.2.5' },
+      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', items: [row('Guide', id)], next: { command: null, line: '' } } : { version: '1.2.5' },
     ) } }))
     on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
     await $.session.start({ ...started, isInteractive: mode !== 'headless' })

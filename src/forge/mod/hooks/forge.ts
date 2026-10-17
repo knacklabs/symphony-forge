@@ -53,7 +53,7 @@ export function createCore() {
     if (running) return
     running = true
     try {
-      const results = await Promise.allSettled(['board', 'next', 'lanes'].map(async command => {
+      const results = await Promise.allSettled(['next', 'lanes'].map(async command => {
         const result = await run(command)
         if (result.exitCode !== 0) {
           const error = result.stderr || result.stdout || `forge ${command} failed`
@@ -65,12 +65,11 @@ export function createCore() {
       }))
       const failed = results.find(r => r.status === 'rejected')
       if (failed?.status === 'rejected') throw failed.reason
-      const [board, next, lanes] = results.map(r => r.status === 'fulfilled' ? r.value : null)
-      if (!board || typeof board.version !== 'string' || typeof board.repo_root !== 'string' || !Array.isArray(board.items) || !board.items.every(item)) throw new Error('Malformed forge board output')
-      if (!next || typeof next.version !== 'string' || typeof next.repo_root !== 'string' || !object(next.next) || typeof next.next.line !== 'string' || !nullable(next.next.command, 'string')) throw new Error('Malformed forge next output')
+      const [next, lanes] = results.map(r => r.status === 'fulfilled' ? r.value : null)
+      if (!next || typeof next.version !== 'string' || typeof next.repo_root !== 'string' || !Array.isArray(next.items) || !next.items.every(item) || !object(next.next) || typeof next.next.line !== 'string' || !nullable(next.next.command, 'string')) throw new Error('Malformed forge next output')
       if (lanes && typeof lanes.version !== 'string') throw new Error('Malformed forge lanes output')
       const refreshedAt = await now()
-      data.board = board as Board
+      data.board = next as Board
       data.next = next as Next
       data.lanes = lanes ?? null
       data.refreshedAt = refreshedAt

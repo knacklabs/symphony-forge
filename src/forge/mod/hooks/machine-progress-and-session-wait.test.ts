@@ -18,8 +18,8 @@ function host(on: On, surface: 'terminal' | 'desktop') {
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.open', () => ({ value: undefined }))
   on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-    e.argv[1] === 'lanes' ? state.lanes : e.argv[1] === 'board' ? boardFixture() :
-      { version: '1.2.6', repo_root: '/repo', next: { command: null, line: 'Waiting for work.' } },
+    e.argv[1] === 'lanes' ? state.lanes :
+      { ...boardFixture(), next: { command: null, line: 'Waiting for work.' } },
   ) } }))
   return { state, clock }
 }

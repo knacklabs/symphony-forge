@@ -11,7 +11,7 @@ const row = {
   children: [],
 }
 const board = { version: '1.2.5', repo_root: '/repo', items: [row] }
-const following = { version: '1.2.5', repo_root: '/repo', next: { command: 'forge close guide', line: 'Close the guide.' } }
+const following = { ...board, next: { command: 'forge close guide', line: 'Close the guide.' } }
 const command = { command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } } as const
 const started = { cwd: '/repo', surface: null, isInteractive: false } as const
 
@@ -26,18 +26,18 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
   on('ui.open', (_$, e) => { opened.push(e); return { value: undefined } })
   on('process.run', (_$, e) => {
     calls.push([...e.argv])
-    const value = e.argv[1] === 'board' ? board : following
+    const value = following
     if (e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
   await $.session.start(started)
   const first = await $.command.run(command)
   expect(first.text).toBe('MOVING\n  Polish the guide · Building · under a minute')
-  expect(calls.length).toBe(3)
+  expect(calls.length).toBe(2)
   await clock.advance(5000)
-  expect(calls.length).toBe(3)
+  expect(calls.length).toBe(2)
   await clock.advance(5000)
-  expect(calls.length).toBe(6)
+  expect(calls.length).toBe(4)
   expect(opened[0]).toEqual({ id: 'forge', title: 'Forge', focus: true })
 })
 
@@ -50,7 +50,7 @@ test('1: /forge accepts unknown worker starts and names only the current stage',
   on('ui.invalidate', () => ({ value: undefined }))
   on('ui.open', () => ({ value: undefined }))
   on('process.run', (_$, e) => {
-    const value = e.argv[1] === 'board' ? { ...board, items: [{
+    const value = e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: runnable ? following.next.command : null }, items: [{
       ...row, worker: { ...row.worker, started_at: null },
       stages: [
         { name: 'Build', status: 'pass', seconds: 4 },
@@ -59,7 +59,7 @@ test('1: /forge accepts unknown worker starts and names only the current stage',
         { name: 'CI', status: null },
         { name: 'Merge', status: 'skipped' },
       ],
-    }] } : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: runnable ? following.next.command : null } } : { version: '1.2.5', agents: [], tests: [] }
+    }] } : { version: '1.2.5', agents: [], tests: [] }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
   await $.session.start(started)
@@ -81,11 +81,10 @@ test('1: failed and malformed refreshes preserve rows and retry on the next tick
   on('ui.open', () => ({ value: undefined }))
   on('process.run', (_$, e) => {
     if (e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
-    if (e.argv[1] === 'next') return { value: { exitCode: 0, stdout: JSON.stringify(following), stderr: '' } }
     refresh++
     if (refresh === 2) return { value: { exitCode: 1, stdout: '', stderr: 'offline\nprivate details' } }
     if (refresh === 3) return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
-    return { value: { exitCode: 0, stdout: JSON.stringify({ ...board, items: [{ ...row, pr: { number: 7, checks: refresh >= 4 ? 'fail' : 'pass' } }] }), stderr: '' } }
+    return { value: { exitCode: 0, stdout: JSON.stringify({ ...following, items: [{ ...row, pr: { number: 7, checks: refresh >= 4 ? 'fail' : 'pass' } }] }), stderr: '' } }
   })
   await $.session.start(started)
   await clock.advance(10000)
@@ -114,7 +113,7 @@ test('1: empty and missing state stay readable; old Forge asks for an upgrade', 
   on('process.run', (_$, e) => {
     if (mode === 'old') return { value: { exitCode: 2, stdout: '', stderr: 'unrecognized arguments: --json' } }
     if (e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
-    const value = e.argv[1] === 'next' ? following : { ...board, items: mode === 'empty' ? [] : [{ title: 'Lost state', children: [] }] }
+    const value = { ...following, items: mode === 'empty' ? [] : [{ title: 'Lost state', children: [] }] }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
   await $.session.start(started)
@@ -130,7 +129,7 @@ test('1: empty and missing state stay readable; old Forge asks for an upgrade', 
 test('1, 6: one refresh at a time; the whole refresh expires after sixty seconds', async ($, on) => {
   const clock = mock.clock(on)
   let slow = false
-  let boards = 0
+  let reads = 0
   on('session.cwd', () => ({ value: '/repo' }))
   let published: (() => void) | undefined
   on('session.start', () => ({ cwd: '/repo' }))
@@ -138,14 +137,14 @@ test('1, 6: one refresh at a time; the whole refresh expires after sixty seconds
   on('ui.invalidate', () => { published?.(); return { value: undefined } })
   on('ui.open', () => ({ value: undefined }))
   on('process.run', async (_$, e) => {
-    if (e.argv[1] === 'board') boards++
+    if (e.argv[1] === 'next') reads++
     if (slow) {
       // Expire just after the deadline, avoiding an unspecified ordering
       // between a timeout and the refresh tick at exactly the same instant.
       await clock.sleep((e.init?.timeoutMs ?? 30000) + 1)
       return { deny: 'Refresh took over 60 seconds' }
     }
-    const value = e.argv[1] === 'board' ? board : e.argv[1] === 'next' ? following : { version: '1.2.5', agents: [], tests: [] }
+    const value = e.argv[1] === 'next' ? following : { version: '1.2.5', agents: [], tests: [] }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
   await $.session.start(started)
@@ -153,7 +152,7 @@ test('1, 6: one refresh at a time; the whole refresh expires after sixty seconds
   // Advancing the host clock is sequential; the process itself stays pending.
   await clock.advance(10000)
   await clock.advance(10000)
-  expect(boards).toBe(2)
+  expect(reads).toBe(2)
   const expired = new Promise<void>(resolve => { published = resolve })
   await clock.advance(50001)
   await clock.settle()
@@ -168,7 +167,7 @@ test('1, 6: one refresh at a time; the whole refresh expires after sixty seconds
   await clock.advance(10000)
   await clock.settle()
   await repaired
-  expect(boards).toBe(3)
+  expect(reads).toBe(3)
   expect((await $.command.run(command)).text).not.toContain("Couldn't refresh:")
 })
 

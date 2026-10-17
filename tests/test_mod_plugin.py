@@ -130,7 +130,7 @@ console.log(JSON.stringify({{replies, processCalls}}));
     assert all(reply.startswith("1 in progress\n\n0 stories building, 1 parts and fixes in progress")
                and "\n\nMOVING\n  Readme greets new readers\n    In progress\n" in reply
                for reply in answer["replies"]), answer["replies"]
-    assert len(answer["processCalls"]) == 24  # only initial load + seven scheduled ticks
+    assert len(answer["processCalls"]) == 16  # one next read plus lanes per scheduled refresh
 
 
 HOST = """
@@ -193,7 +193,7 @@ async function session(id, duringRefresh) {{
     prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
     process: {{run: async argv => {{
       if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}
-      // Claude runs the snapshot's three commands concurrently; don't serialize them in the host.
+      // Claude runs the snapshot's two commands concurrently; don't serialize them in the host.
       return new Promise(resolve => execFile({json.dumps(sys.executable)},
         [{json.dumps(str(repo.bin / 'forge'))}, ...argv.slice(1)],
         {{cwd: {json.dumps(str(repo.path))}, encoding: 'utf8', timeout: 30000}},
@@ -306,8 +306,8 @@ export function {function}(on, data, addTab) {{
     answer = node_run(tmp_path, HOST + f"""
 const mod = await import({json.dumps((plugin / 'hooks/register.ts').as_uri())});
 const timers = [];
-const values = {{board: {{version: '1.2.5', repo_root: '/repo', items: [{{title: 'Shared board'}}]}},
-  next: {{version: '1.2.5', repo_root: '/repo', next: {{command: null, line: 'Shared next step'}}}},
+const values = {{next: {{version: '1.2.5', repo_root: '/repo', items: [{{title: 'Shared board'}}],
+    next: {{command: null, line: 'Shared next step'}}}},
   lanes: {{version: '1.2.5', marker: 'shared lanes'}}}};
 const api = {{ session: {{cwd: async () => '/repo'}}, clock: {{now: async () => 123, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
   command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}}},
@@ -348,14 +348,14 @@ const api = {{
     const command = argv[1];
     if (mode === 'slow') return new Promise((resolve, reject) => pending.push({{resolve, reject}}));
     if (mode === 'old') return {{exitCode: 2, stdout: '', stderr: 'unrecognized arguments: --json'}};
-    if (mode === 'failed' && command === 'board') return {{exitCode: 1, stdout: '', stderr: 'offline\\nsecond line'}};
-    if (mode === 'bad-board' && command === 'board') return {{exitCode: 0, stdout: '{{"items":[{{}}]}}', stderr: ''}};
+    if (mode === 'failed' && command === 'next') return {{exitCode: 1, stdout: '', stderr: 'offline\\nsecond line'}};
+    if (mode === 'bad-board' && command === 'next') return {{exitCode: 0, stdout: '{{"items":[{{}}]}}', stderr: ''}};
     if (mode === 'bad-lanes' && command === 'lanes') return {{exitCode: 0, stdout: '{{}}', stderr: ''}};
     if (command === 'lanes') return {{exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'"}};
-    const value = structuredClone(fixture[command]);
-    if (command === 'board' && mode === 'empty') value.items = [];
-    if (command === 'board' && mode === 'missing') value.items = [{{title: 'Lost state'}}];
-    if (command === 'board' && mode === 'bad-time') value.items[0].stages[0].started_at = 'not a timestamp';
+    const value = structuredClone({{...fixture.board, ...fixture.next}});
+    if (mode === 'empty') value.items = [];
+    if (mode === 'missing') value.items = [{{title: 'Lost state'}}];
+    if (mode === 'bad-time') value.items[0].stages[0].started_at = 'not a timestamp';
     return {{exitCode: 0, stdout: JSON.stringify(value), stderr: ''}};
   }} }},
 }};
@@ -383,7 +383,7 @@ for (const nextMode of ['empty', 'missing', 'old']) {{
 console.log(JSON.stringify(texts));
 """)
     assert "Polish the guide" in answer[0]
-    for text, error in zip(answer[1:5], ["offline", "Malformed forge board output", "Malformed forge board output", "Malformed forge lanes output"]):
+    for text, error in zip(answer[1:5], ["offline", "Malformed forge next output", "Malformed forge next output", "Malformed forge lanes output"]):
         assert "Polish the guide" in text
         assert f"Couldn't refresh: {error}" in text
         assert "second line" not in text

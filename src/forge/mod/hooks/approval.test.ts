@@ -14,15 +14,15 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('ui.open', () => ({ value: undefined }))
     on('ui.invalidate', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: {
-      exitCode: 0, stderr: '', stdout: JSON.stringify(e.argv[1] === 'board'
-        ? { version: '1.2.6', repo_root: '/session-checkout', items: [{
+      exitCode: 0, stderr: '', stdout: JSON.stringify(e.argv[1] === 'next'
+        ? { version: '1.2.6', repo_root: '/session-checkout', next: {
+          command: null, line: 'Approve the story in Plan Mode.',
+        }, items: [{
           id: 'SHOP', kind: 'story', title: 'Share a basket', stage: 'waiting for approval',
           approval: { doc: '/story-worktree/plans/SHOP.md' }, children: [],
           needs_person: true, next: { command: null, line: 'Share a basket is waiting for approval.', step: 'in Claude Code, show plans/SHOP.md in Plan Mode and exit Plan Mode with it as the plan' },
         }] }
-        : { version: '1.2.6', repo_root: '/session-checkout', next: {
-          command: null, line: 'Approve the story in Plan Mode.',
-        } }),
+        : { version: '1.2.6' }),
     } }))
     await $.session.start({ cwd: '/session-checkout', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: {
