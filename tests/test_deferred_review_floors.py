@@ -1,7 +1,7 @@
 """A review's Later findings for another item keep their scores through close."""
 import pytest
 
-from test_close import blocked, body, env  # noqa: F401 (env is a fixture)
+from test_close import GREEN, blocked, body, env  # noqa: F401 (env is a fixture)
 from test_score_notes import _client_repo, _scored
 
 STORY = "FIX-LATER-NOT-FLOORED"
@@ -12,6 +12,7 @@ def test_1_later_findings_for_another_item_do_not_trigger_floors(env, tmp_path, 
     # Existing floor coverage protects current-item defects. These notes explicitly defer
     # work to another item: neither a migration mention nor a Raise label must block this one.
     _client_repo(env, tmp_path, previous)
+    env.checks(GREEN)  # init's GitHub setup replaces the fixture's earlier API responses.
     findings = [
         _scored("P2", "Later: SHOP/T2 moves old baskets",
                 "Gain 3, Work 3, Harm 1\nRaise: Functional\nSHOP/T2 adds the migration."),
