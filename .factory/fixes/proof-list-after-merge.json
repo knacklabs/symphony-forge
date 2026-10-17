@@ -23,8 +23,8 @@
     "id": "7ee1128f-ec2a-4e0b-bf3c-97b82ef64197",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T05:29:42.359286+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "309606e160e29d689bf4d3564e587f69a1f5d80c",
+    "close": "62d61caf-8164-4be1-94dc-61be37d70da2",
+    "head": "96264ec1e5b9e6a280ca907e7de855dead8b85ff",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Review reports a missing Proof list after the coordinator merges main into a branch, so a worker round is spent copying the list forward",
   "worker": "codex"
