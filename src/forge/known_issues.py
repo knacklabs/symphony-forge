@@ -93,7 +93,7 @@ def collect(top: Path, states: dict[str, dict[str, Any]]) -> list[dict[str, Any]
                 return None  # Keep the last complete read and retry when GitHub is reachable.
         return rows
 
-    older = board_facts._cached(top, "known-issues", historical, stale=True) or []
+    older = board_facts._cached(top, "known-issues", historical, stale=True, seconds=86400) or []
     rows = [row for row in older if row["item"] not in saved]
     rows.extend(row for item, known in saved.items() for row in _rows(item, known))
     return sorted(rows, key=lambda row: (row["item"], row["file"], row["line"], row["title"]))
