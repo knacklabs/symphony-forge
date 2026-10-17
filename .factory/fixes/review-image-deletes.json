@@ -4,12 +4,20 @@
   "done_when": "A branch that deletes or changes an image is reviewed with the image named only, as generated files are, and a test removes an image through close",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:15:23.696987+00:00",
       "step": "start"
     }
   ],
-  "why": "Review refuses any branch that deletes or changes a binary image, so an image can never be removed through Forge"
+  "stuck": {
+    "close": null,
+    "head": "c47f7bdbc8f08936d96eaab1bac0f56e47fd5a2a",
+    "keys": {},
+    "round": null
+  },
+  "why": "Review refuses any branch that deletes or changes a binary image, so an image can never be removed through Forge",
+  "worker": "codex"
 }
