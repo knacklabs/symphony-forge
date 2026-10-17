@@ -19,7 +19,7 @@ OWNERS = {
     "records": {"spec save", "spec confirm", "spec measure", "decision new",
                 "decision accept", "roadmap add", "roadmap retire"},
     "story": {"story new", "story done", "read"},
-    "task": {"assign", "task start", "fix start", "fix allow-large", "fix amend"},
+    "task": {"assign", "task start", "fix start", "fix drop", "fix allow-large", "fix amend"},
     "worker": {"work"},
 }
 
