@@ -11,13 +11,56 @@
   },
   "done_when": "Read-only callers reuse cached time records without copying, the parser is built once, stack checks are remembered per command, and a test counts the git calls and checks a time budget on a client-sized repo",
   "fix_kind": "backend",
+  "flagged": [
+    "tests/test_next_reuses_command_work.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_next_reuses_work_within_a_command() in tests/test_next_reuses_command_work.py",
+      "file": "tests/test_next_reuses_command_work.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 74,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test parser and time-record reuse",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d1b2c1762cf6d1954e6b274be6246618c430d256fec12e0e28c28f619edc3355",
+    "changed": "e51a449f88964724f446f3e01075328a20a7124e7b31b365c9efeab01c85f7c5",
+    "commit": "2b61e003b558301773ab503e1eb05223bb57dec4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The test caps git calls and allows 30 seconds (90 on Windows), but it never checks whether the parser is built once or read-only time records avoid copying. Restoring either old behavior would leave the git and network counts unchanged, and the measured overhead for both is well below the budget. The test could therefore pass with those Done-when behaviors broken.",
+        "file": "tests/test_next_reuses_command_work.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 74,
+        "priority": "P1",
+        "title": "Gate: test parser and time-record reuse",
+        "work": 2
+      }
+    ],
+    "id": "063b1f0d-4775-46dd-be0d-4659caeaa9bd",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T14:21:24.671299+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:05:59.373256+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
