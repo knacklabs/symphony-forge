@@ -44,7 +44,7 @@ def through_forge(pr: Item) -> bool:
     if not branch.startswith(("story/", "task/", "fix/")):
         return False
     files = pr.get("files")
-    if time_records.from_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
+    if time_records.view_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
         return True  # Missing or capped file evidence cannot establish that the state is absent.
     return item_key(branch, [file["path"] for file in files if isinstance(file, dict)
                              and isinstance(file.get("path"), str)]) is not None
