@@ -105,7 +105,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
@@ -121,9 +121,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "narrow",
     "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The local live server is stuck. It should deliver: server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, `/events` and the per-row snapshot cache\nTwo rounds in a row left the review finding \"An unrelated main commit invalidates every cached item row\" in src/forge/board.py.\nThe worker tried: Review of FORGE-BOARD-4/SERVER: blocked; Server tests cite this story's numbered criteria; The live board sees uncommitted edits and ignores unrelated merges.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "Owner's cache rule (plan detail 1b): part and fix rows key only on their own branch head, record and plan; story rows also rebuild when the default branch changes; no other shared input in a row key. test_5 must keep one unedited item and prove it does not rebuild.",
     "tool": "claude",
-    "wait_id": "de2d7334-a466-41c6-8166-a536c337c2d8"
+    "wait_id": "de2d7334-a466-41c6-8166-a536c337c2d8",
+    "worker_round": 4
   },
   "stuck": {
     "close": "6f56fe2a-e6de-4117-af7a-867aae621bf1",
