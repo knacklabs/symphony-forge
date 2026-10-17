@@ -1,0 +1,15 @@
+{
+  "base": "8eff6a06039b94085e806e9e19dfd30e170de523",
+  "branch": "fix/sdk-cache-after-restart",
+  "done_when": "The test suite rebuilds a cached SDK whose Python is missing or half-installed, so tests pass after a restart without manual steps",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T05:48:37.054946+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After a restart, the tests' cached Codex SDK points to a deleted Python, and about nine tests fail until someone moves the cache aside by hand"
+}
