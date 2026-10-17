@@ -29,24 +29,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "255079f3eec0d69e41b8bb9680f2636385739627d37f470d0f6b9d77d2283a4a",
-    "changed": "023a8f4901a784f118bb02354c4545f5afe0c32a2421d85088d874fd8c9e7697",
-    "commit": "223c5eb0338ddf64322f975fc163ac3f3475635c",
+    "branch_diff": "496bbfbfd3ad0743e74d714f3009ddec119224208169fbbdbca5d6c3b3998633",
+    "changed": "64b5d3fd2add051ec5065034eb76902843e3599b19ad9324fdb0add182ae5b65",
+    "commit": "96bce70f52efc6f68e3d53869dc8c872ba519aad",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. A standalone `forge test --pytest <base>` starts tests under high load. The new load check runs in `machine.join`, but `src/forge/fasttest.py:269` calls `pytest_tests` directly for this documented picker mode, and `src/forge/fasttest.py:428` launches the test command without joining the lane. The new test exercises only bare `forge test`, so it does not catch this path.",
-        "file": "src/forge/machine.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 181,
-        "priority": "P1",
-        "title": "Not done: Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on the",
-        "work": 2
-      }
-    ],
-    "id": "a63edf15-8f40-4f09-b24f-637a0ff2cc24",
+    "findings": [],
+    "id": "8684737b-1481-47a6-9706-a032d11637d0",
     "status": "clean"
   },
   "round": 1,
@@ -58,6 +46,10 @@
     },
     {
       "at": "2026-10-17T17:39:12.306933+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T19:56:22.468614+00:00",
       "step": "review"
     }
   ],
