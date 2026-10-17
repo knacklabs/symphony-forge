@@ -10,13 +10,29 @@
   },
   "done_when": "A finding the review labels Later for another item is never raised to blocking by the migration or other floors",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf5e87070a084c2f890987c895b7a7dfcc4afb7160a373d9f2393fae2c649498",
+    "changed": "8075120f7a7e231be7d6e2d335ca8009a0aae2f22d59eb430e69900c8a001d27",
+    "commit": "bf3a566226f97c72d0d1bca25bc2a5cbf2a8a6ae",
+    "dismissals": [],
+    "findings": [],
+    "id": "7fa8721b-c964-47b3-8ae2-2ac4fd867fb2",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T05:29:31.285651+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:58:02.202035+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
