@@ -39,8 +39,8 @@
     "id": "e8269751-90ba-4981-847e-38b468b87946",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T05:29:35.134342+00:00",
@@ -56,12 +56,10 @@
     }
   ],
   "stuck": {
-    "close": "945c4ee6-1978-46ad-9b8f-fb628e7cc83b",
-    "head": "521899845db60e8025ccf9dfef18293008c72902",
-    "keys": {
-      "the review finding \"Queued CI events can report an obsolete result after a rerun\" in src/forge/mod/hooks/events.ts": 1
-    },
-    "round": 1
+    "close": "5adaaaf6-0002-493d-bc86-d5904e0d264a",
+    "head": "75461bf1c9d49ed2439fe0bbff6f5e3cef526482",
+    "keys": {},
+    "round": 2
   },
   "why": "The Claude Code pane delivers Forge events late in bursts, with Next lines worked out when the event happened, and each push gives two bare 'Ci finished' lines",
   "worker": "codex"
