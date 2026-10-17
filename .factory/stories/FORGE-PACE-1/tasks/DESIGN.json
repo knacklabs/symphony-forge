@@ -1,0 +1,118 @@
+{
+  "branch": "task/FORGE-PACE-1-DESIGN",
+  "chat": {
+    "approval": "d4d8358328732737d1c7870ab4fb844c6487ec5e7e7775ba471afc64804839c1",
+    "claude": null,
+    "conversation": "01a143fa-9133-7d11-893d-3e406f4c22cd",
+    "head": null,
+    "start": "0e50a4bc8a6bec6d65f840b253860550898c15c6"
+  },
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/design.py",
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "require_prototype() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 73,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every prototype and every story with user-facing parts starts with the design skill's init",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 17,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Require a design for User-facing=true plans",
+      "work": 1
+    },
+    {
+      "area": "start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 297,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Reject task branches that change the approved design",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 191,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Gate: test closing a task with a pre-upgrade approval",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c035453c37d21d70b420b7e920ee1792f7776a0b781f5ba7bc67c95f36c640f4",
+    "changed": "dc2772ba3f4f0e2f3f5781e0743e80969865ca8ca128fc380a1c4059eb3fb301",
+    "commit": "c36b4b063a81a41160ce26bced6bae22cd06aef8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The changed close gate permits a user-facing plan approved before this rule without a Design line, but no command test closes a task under that earlier approval. `test_24_pre_upgrade_user_facing_approval_still_starts` stops after task start and `forge next`; the close tests use plans with Design lines. If this close path began requiring a Design line again, the existing tests would still pass while those tasks could no longer close.",
+        "file": "src/forge/close.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 191,
+        "priority": "P1",
+        "title": "Gate: test closing a task with a pre-upgrade approval",
+        "work": 2
+      }
+    ],
+    "id": "2949eeeb-9d68-4cc4-898d-d1467563d710",
+    "status": "blocked"
+  },
+  "round": 3,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-10-16T09:09:56.753834+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T09:58:29.605067+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T10:46:23.317305+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T15:43:41.710553+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a05a8a71-94e1-4f1c-8da9-e6069f4271a4",
+    "head": "27abec815f0af2716222ddd832f20032eb671dd2",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

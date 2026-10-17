@@ -3,6 +3,7 @@
 Command-boundary cases cover unavailable GitHub, an actual upgrade of an earlier
 client, and starter and approver identities before publication. No Forge internals
 are imported and no identity lookup is faked.
+New plan reads use src/forge/story.py before the approver identity is recorded.
 """
 from datetime import datetime, timedelta, timezone
 import json

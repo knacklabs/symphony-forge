@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, score, spotted, story, sync, task, time_records
+from forge import __version__, checks, codex, design, githooks, init, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -186,6 +186,9 @@ def close(args: argparse.Namespace) -> int:
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         _refresh_record(top, item, state, pr)
+    if "/" in item:
+        key = item.split("/")[0]
+        design.check(top, story.show(top, story.plan_ref(top, key), f"plans/{key}.md") or "", "HEAD", required=False)
     if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
         excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
         excluded += [":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md"]

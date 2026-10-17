@@ -266,7 +266,7 @@ def start(args: argparse.Namespace) -> None:
     if not match or not match["task"]:
         refuse(REFUSALS["bad_task"], item=item)
     key, task = match["key"], match["task"]
-    from forge import story  # story imports this module's helpers
+    from forge import design, story  # story imports this module's helpers
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     published = story.plan_ref(top, key)
@@ -294,6 +294,7 @@ def start(args: argparse.Namespace) -> None:
         story.parse(text, repo.root(), key=key)
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
+    design_folder = design.check(top, text, source, required=False)
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)
@@ -371,7 +372,7 @@ def start(args: argparse.Namespace) -> None:
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
         print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
     base = stacked or start_base(main, key, tasks[task])
-    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
+    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
     # Earlier approvals keep their agreed parts, including ones not started yet.
     state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
@@ -491,8 +492,11 @@ def _one_line(text: str) -> bool:
     return bool(text.strip()) and "\n" not in text.strip()
 
 
-def require_prototype_design(top: Path) -> None:
-    """Unsigned-prototype UI gate: DESIGN fills this hook with the approved-design check."""
+def require_prototype_design(top: Path, base: str = "HEAD") -> None:
+    """Unsigned-prototype UI fixes wait for the accepted design decision."""
+    from forge import design
+
+    design.require_prototype(top, base)
 
 
 def fix_start(args: argparse.Namespace) -> None:
@@ -515,10 +519,10 @@ def fix_start(args: argparse.Namespace) -> None:
     fix_kind = args.kind
     if prototype and fix_kind is None:
         refuse(REFUSALS["fix_kind"])
-    if prototype and fix_kind == "ui":
-        require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
+    if prototype and fix_kind == "ui":
+        require_prototype_design(top, base)
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
              "fix_kind": fix_kind or "mechanical"}
     if base == "HEAD":

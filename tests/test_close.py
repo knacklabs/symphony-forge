@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 import conftest
-from test_story import READER
+from test_story import DESIGN_IMAGE, DESIGN_TREE, READER
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = re.search(r'AUTOREVIEW_PIN = "(\w+)"',
@@ -37,6 +37,8 @@ STORY_DOC = """# Shoppers can save a basket
 ## What changes for you
 Shoppers can save a basket and come back to it.
 
+Design: docs/design/baskets/ (<design tree>)
+
 ## Why
 Shoppers lose their basket when they leave.
 
@@ -56,6 +58,8 @@ New moving parts: none
 Risks: none
 """
 
+
+STORY_DOC = STORY_DOC.replace("<design tree>", DESIGN_TREE)
 
 # A default score line per priority that keeps each finding's outcome under today's rule.
 SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
@@ -100,6 +104,10 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     branch (with a stub reader and the client's accepted sign-off), then send the hook a completed
     ExitPlanMode showing that doc."""
     top = cwd or repo.path
+    if f"Design: docs/design/baskets/ ({DESIGN_TREE})" in key_doc:
+        image = top / "docs/design/baskets/screen.svg"
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_text(DESIGN_IMAGE, encoding="utf-8")
     toml = top / "forge.toml"
     if "models.grill" not in toml.read_text("utf-8"):
         toml.write_text(toml.read_text("utf-8") + 'models.grill.claude = { model = "opus", effort = "high" }\n',
@@ -242,6 +250,7 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
                              'interfaces = ["**/routes/**"]\n'
                              'models.build = { model = "opus", effort = "high" }\n')
     repo.write("plans/SHOP.md", STORY_DOC)
+    repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Run on Forge")
     repo.git("push", "-q", "origin", "main")

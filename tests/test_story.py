@@ -4,6 +4,7 @@ The helpers here set up stories; test_approval.py and test_next.py use them too.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -13,11 +14,18 @@ from pathlib import Path
 
 import pytest
 
+DESIGN_IMAGE = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"></svg>\n'
+_blob = hashlib.sha1(f'blob {len(DESIGN_IMAGE)}\0'.encode() + DESIGN_IMAGE.encode()).digest()
+_tree = b'100644 screen.svg\0' + _blob
+DESIGN_TREE = hashlib.sha1(f'tree {len(_tree)}\0'.encode() + _tree).hexdigest()
+
 DOC = """# Shoppers can save a basket
 
 ## What changes for you
 
 Shoppers can save a basket and come back to it later.
+
+Design: docs/design/baskets/ (<design tree>)
 
 ## Why
 
@@ -42,7 +50,7 @@ New moving parts: none
 Risks: none
 
 ## Notes
-"""
+""".replace("<design tree>", DESIGN_TREE)
 
 # A stub reader: it records each call, answers with claude-says.md (or "No findings."), and writes the
 # file named in claude-touch, to stand for a reader that changes a file.
@@ -89,6 +97,8 @@ def setup(repo, kind="forge-source", keys=("SHOP",)):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "{kind}"\n{GRILL}')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
+    # These user-facing plans need screens under the new design-first contract.
+    repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Set up Forge")
     repo.git("push", "-q", "origin", "main")
@@ -109,7 +119,23 @@ def worktree(repo, branch):
 def new_story(repo, key, title="Shoppers can save a basket"):
     made = repo.forge("story", "new", key, title)
     assert made.returncode == 0, made.stderr
-    return worktree(repo, f"story/{key}")
+    path = worktree(repo, f"story/{key}")
+    image = path / "docs/design/baskets/screen.svg"
+    if not image.exists():
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_text(DESIGN_IMAGE, encoding="utf-8")
+    return path
+
+
+def prototype_design(repo):
+    """Routing tests start after the design approval, now required for prototype UI fixes."""
+    repo.write("docs/design/prototype/screen.svg", DESIGN_IMAGE)
+    repo.write("PRODUCT.md", "# Basket shop\n\nPeople save baskets and return to them.\n")
+    repo.git("add", "docs/design/prototype", "PRODUCT.md")
+    tree = repo.git("write-tree")
+    digest = repo.git("rev-parse", f"{tree}:docs/design/prototype")
+    repo.write("docs/decisions/0001-prototype-design.md",
+               f"---\nstatus: accepted\ndesign_tree: {digest}\n---\n# Approved prototype screens\n")
 
 
 def ready(repo, key, doc=DOC):

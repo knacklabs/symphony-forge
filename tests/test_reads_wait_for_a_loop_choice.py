@@ -14,7 +14,7 @@ from test_close import env  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import QUESTION_RULE, client_item
 from test_readloop_gates import dispose_all, say
 from test_records import SPEC
-from test_story import DOC, READER, claude_plan, hook, new_story, setup, worktree
+from test_story import DESIGN_IMAGE, DOC, READER, claude_plan, hook, new_story, setup, worktree
 from test_worker import calls, install_claude
 
 
@@ -38,6 +38,10 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     assert made.returncode == 0, made.stderr
     # The spec is planned on the story's branch, where forge spec save accepts it.
     where = worktree(repo, "story/SHOP")
+    if target == "SHOP":
+        image = where / "docs/design/baskets/screen.svg"
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_text(DESIGN_IMAGE, encoding="utf-8")
     doc = where / ("plans/SHOP.md" if target == "SHOP" else "docs/specs/basket.md")
     doc.parent.mkdir(parents=True, exist_ok=True)
     # A short bold lead-in keeps the sentence after it.

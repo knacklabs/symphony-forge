@@ -1,4 +1,5 @@
-"""Approval capture on both hosts, and the client sign-off gate (spec criteria 14 and 32)."""
+"""Approval capture in src/forge/approval.py on both hosts and the client sign-off gate
+(spec criteria 14 and 32)."""
 from __future__ import annotations
 
 import json

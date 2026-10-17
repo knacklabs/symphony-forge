@@ -1,4 +1,5 @@
-"""Board cards, counts and durations agree at the real command boundary."""
+"""Board cards, counts and durations agree at the real command boundary.
+New plan reads use src/forge/story.py before their state and time appear on the board."""
 import json
 import os
 import re
