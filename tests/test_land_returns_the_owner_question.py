@@ -36,6 +36,8 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
     assert f"then forge land {item}" in output
     assert len(env.review_calls()) == 3
     env.gh.respond("pr", "checks", stdout="[]")
+    env.gh.respond("pr", "view", f"fix/{item}", "--json", "url",
+                   stdout='{"url": "https://github.com/acme/shop/pull/7"}')
     resolved = env.close(item, "--resolve", "accept", "--reason", "The owner accepts the greeting limit")
     assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     resumed = env.repo.forge("land", item)
