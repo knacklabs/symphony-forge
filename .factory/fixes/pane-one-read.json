@@ -1,0 +1,15 @@
+{
+  "base": "e8168963a12c1060de16e797d56e8afc9778d347",
+  "branch": "fix/pane-one-read",
+  "done_when": "The pane runs one forge next --json per refresh and reads the board rows from it, and a test proves one refresh starts one read command",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T14:21:20.956533+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The Claude Code pane runs forge board --json and forge next --json together every refresh, though next already carries the board's rows, so it does the work twice"
+}
