@@ -228,17 +228,18 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds
-share a line. Plan reads and close reviews wait on the model's service, not this machine, so they
-start at once and take no place. A work round also waits while the machine's
-one-minute load per core is 1.5 or more, unless no other agent runs; where the OS reports no load
+share a line. Plan reads and close reviews take no place in that line. Every run, including
+tests, reviews and plan reads, waits while the machine's
+one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
 (Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
-and takes no place when the whole command is the picker, optionally run through `uv run`.
+one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
+place when the whole command is the picker, optionally run through `uv run`. It still waits for load.
 Compound commands, including the picker's underlying `test` command, keep their place.
 Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget.
+and the per-test budget. On Mac and Linux, it warns when a GitHub Actions self-hosted runner
+runs on this machine: its CPUs count against Forge's load limit.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
 alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
@@ -1003,8 +1004,8 @@ when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. A work round also waits while load per
-core is 1.5 or more and another agent runs. Items that other planned work waits on go
+reviews), across all its repos; the rest wait in line. Every run also waits while load per
+core is 1.5 or more, including when external jobs cause the load. Items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
 each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
@@ -1434,8 +1435,8 @@ in that order.
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work` already queues work rounds across the machine, while reads and close reviews start
-at once; close and worker tests share the separate test lane, except picker runs of five or fewer
+`forge work` already queues work rounds across the machine, while reads and close reviews skip
+that line. All runs wait for high load to fall. Close and worker tests share the separate test lane, except picker runs of five or fewer
 test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 

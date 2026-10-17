@@ -469,6 +469,13 @@ def doctor(args: argparse.Namespace) -> int:
     budget = machine.half_cores()
     print(f"This machine: {cores} cores, so {budget} agents at once and "
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+    if os.name != "nt":
+        processes = repo.run("ps", "-axo", "command=")
+        if processes.returncode == 0 and re.search(
+                r"(?:^|\s)(?:\S*/)?Runner\.Listener(?:\s|$)|actions-runner/(?:\S*/)?run\.sh(?:\s|$)",
+                processes.stdout, re.M):
+            print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
+                  "Its CPUs count against Forge's load limit.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
     events = repo.forge_dir(top) / "events.jsonl"

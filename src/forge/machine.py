@@ -129,8 +129,8 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
          small: bool = False) -> dict[str, Any]:
     """Join a lane; prerequisite agents go first, with arrival order within each group.
 
-    Reviews and plan reads wait on a model's API rather than this machine's cores, and a small
-    test run ends in moments, so they start at once and take no place from anyone else."""
+    Reviews, plan reads and small test runs take no place from anyone else, but every run
+    waits for the machine's load to fall below the limit."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
@@ -175,13 +175,10 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                         and not run.get("free")]
                 place = 0 if entry["free"] else lane.index(mine) - size + 1
                 busy = None
-                # A work round waits while the machine is busy, unless no other agent runs, since
-                # waiting then never lowers the load.
+                # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
                 # once; space admissions by a minute if that burst shows up in queue waits.
-                if place <= 0 and kind == "work" and any(
-                        run.get("admitted") or run["started_at"] or run.get("legacy")
-                        for run in lane if run["id"] != entry["id"]):
+                if place <= 0:
                     busy = _load_per_core()
                     busy = busy if busy is not None and busy >= LOAD_LIMIT else None
                 if place <= 0 and busy is None:
