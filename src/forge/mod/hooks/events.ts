@@ -73,7 +73,7 @@ export function registerEvents(on: On, data: Data) {
           key = seenKey
           return
         }
-        for (const [id, line] of current) if (!seen.has(id) && !observed.has(id)) pending.set(id, line)
+        for (const [id, line] of current) if (!seen.has(id) && (!observed.has(id) || pending.has(id))) pending.set(id, line)
         // The current snapshot suppresses visible history even after its saved ids expire.
         observed = new Set(current.keys())
         if (!pending.size || await $.store.get(JSON.stringify(['forge-active-turn', session]))) return
