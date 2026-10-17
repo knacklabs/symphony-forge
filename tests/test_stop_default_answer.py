@@ -89,13 +89,13 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
     waiting = env.close(item)
     assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
     waiting = env.repo.forge("land", item)
-    assert waiting.returncode == 1 and "Ask the human" in waiting.stderr
+    assert waiting.returncode == 3 and "Ask the human" in waiting.stderr
     assert "Ask the human" in env.repo.forge("next").stdout
     assert follow_ups(env) == []
 
 
 @pytest.mark.parametrize("entry", ["running", "same-file", "stopped"])
-def test_3_land_carries_on_and_the_worker_narrows(land, entry):
+def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
     if entry == "stopped":
         item, where = stopped(land)
         land.reviews(CLEAN)
@@ -109,8 +109,7 @@ def test_3_land_carries_on_and_the_worker_narrows(land, entry):
         # A new finding title each round: the same finding twice would stop the stuck worker first.
         land.reviews(*(blocked(finding("P1", f"Greeting is missing, case {n}", file=file))
                        for n, file in enumerate(paths, 1)), CLEAN)
-    # Advance only the clock; one real land invocation must wait and resume itself.
-    # Rerunning land after moving the clock missed the unattended failure.
+    # Land returns a stop; a later invocation can apply an overdue low-harm default.
     if entry != "stopped":
         for number in (1, 2):
             land.commit(where, paths[number - 1], f"print({number})\n")
@@ -123,15 +122,10 @@ def test_3_land_carries_on_and_the_worker_narrows(land, entry):
             # Distinct low-Harm findings do not require a recorded hard-stop choice.
             focused = land.repo.forge("work", item)
             assert focused.returncode == 0, focused.stdout + focused.stderr
-    shim = land.repo.bin / "forge"
-    clock = """import os, time
-from datetime import datetime, timedelta, timezone
-def advance(seconds):
-    current = datetime.fromisoformat(os.environ.get('FORGE_NOW') or datetime.now(timezone.utc).isoformat())
-    os.environ['FORGE_NOW'] = (current + timedelta(seconds=seconds)).isoformat()
-time.sleep = advance
-"""
-    shim.write_text(shim.read_text().replace("from forge.cli import main", clock + "from forge.cli import main"))
+    if entry != "running":
+        stopped_run = _land(land, item)
+        assert stopped_run.returncode == 3, stopped_run.stdout + stopped_run.stderr
+        later(monkeypatch, 31)
     landed = _land(land, item)
     assert landed.returncode == 0, landed.stdout + landed.stderr
     assert f"{item} is ready; a human merges" in landed.stdout

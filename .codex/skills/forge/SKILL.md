@@ -274,6 +274,9 @@ include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 `forge next --json` uses the same 60-second GitHub cache as `forge board --json`, while text
 `forge next` reads GitHub live.
+Pull request creates, edits and draft changes keep this shared cache. They show within a minute.
+Merges clear it at once. Each command fetches the default branch's settings at most once.
+After close, a matching receipt still shows "ready to merge" while the cached list lacks the pull request's link.
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
@@ -1516,11 +1519,12 @@ back or a finding with Harm 3 or more is open. The existing same-file stop still
 third round.
 When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the owner to narrow the part, split it, or accept the remaining findings.
-Run `forge land <item>` in the background after a close stop, or keep the current land running.
-With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
-default; it does not send the worker back while the stop is unanswered.
+Land prints the owner's question, open findings and failing checks, then exits with status 3
+(needs a choice). It does not wait or send the worker back while the stop is unanswered.
 Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Then run `forge land <item>` again. Land also prints open findings and failing checks when it
+stops for another reason or hands a round to a session subagent.
 Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
@@ -1529,9 +1533,8 @@ A clean review clears an unanswered review-loop stop.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
 with that finding as its why. It does this only when every open finding has Harm 1 or 2; with
-Harm 3 or more open, it waits for the owner. The running land records it and carries on without
-another command; the worker's next round narrows the part. A later close can also record an
-overdue default.
+Harm 3 or more open, it needs the owner's choice. A later close or land can record an overdue
+default; the worker's next round narrows the part.
 The owner can reverse it later with the same `forge close <item> --resolve` command. To always
 wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
 A recorded choice restarts the three-round count; a later stop needs a new choice.

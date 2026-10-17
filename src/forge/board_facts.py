@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,7 @@ def through_forge(pr: Item) -> bool:
     if not branch.startswith(("story/", "task/", "fix/")):
         return False
     files = pr.get("files")
-    if time_records.from_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
+    if time_records.view_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
         return True  # Missing or capped file evidence cannot establish that the state is absent.
     return item_key(branch, [file["path"] for file in files if isinstance(file, dict)
                              and isinstance(file.get("path"), str)]) is not None
@@ -56,8 +57,18 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False) -> Any:
-    """Cache for a minute; identity readers may retain the last known answer during an outage."""
+def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: int = 60) -> Any:
+    """Serialize readers through the fetch and write, then let waiters reuse the answer."""
+    from forge import codex
+    with ExitStack() as guard:
+        try:
+            guard.enter_context(codex._one_at_a_time(repo.forge_dir(top) / f"{name}.lock"))
+        except OSError:
+            pass  # A read-only Git directory must not prevent a view.
+        return _read_cached(top, name, fetch, stale=stale, seconds=seconds)
+
+
+def _read_cached(top: Path, name: str, fetch: Any, *, stale: bool, seconds: int) -> Any:
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     previous = None
@@ -65,7 +76,7 @@ def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False) -> Any:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         previous = saved.get("data")
         at = time_records.when(saved.get("fetched_at"))
-        if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
+        if at and 0 <= (now - at).total_seconds() < seconds and "data" in saved:
             return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
@@ -96,8 +107,9 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
 
 def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
-    this one, cached together for a minute. Only people may use expired records during an outage."""
-    # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
+    this one. Past weeks live a day; open and current-week lists live a minute.
+    Only people may use expired records during an outage."""
+    # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
         opened = _listing(top, "open")
         if opened is None:
@@ -105,9 +117,14 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
         # Board restoration and backfill share these windows. The first Monday
         # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
+        def week(start: datetime) -> list[Item] | None:
+            def listing(_now: datetime) -> list[Item] | None:
+                return _listing(top, "merged", "--search",
+                                f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
+            return (listing(now) if fresh or start == starts[-1] else
+                    _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
         with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
-            lists = list(pool.map(lambda start: _listing(
-                top, "merged", "--search", f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"), starts))
+            lists = list(pool.map(week, starts))
         if None in lists:
             return None
         weeks = []
@@ -145,12 +162,14 @@ def person(record: Item | str | None = None, name: str | None = None, *, field: 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:
     """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
-    kept for a minute. Only asked when an unfinished story has parts merged that long ago."""
+    kept for a day. Only asked when an unfinished story has parts merged that long ago."""
     # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
-    def fetch(now: datetime) -> list[Item] | None:
+    now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    cutoff = full_weeks(now, 6)[0] - timedelta(days=1)
+    def fetch(_now: datetime) -> list[Item] | None:
         # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
-        return _listing(top, "merged", "--search", f"merged:*..{full_weeks(now, 6)[0] - timedelta(days=1):%Y-%m-%d}")
-    return {pr["headRefName"]: pr for pr in _cached(top, "prs-older-cache", fetch) or []
+        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}")
+    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-cache-{cutoff:%Y-%m-%d}", fetch, seconds=86400) or []
             if isinstance(pr.get("headRefName"), str)}
 
 
@@ -165,7 +184,7 @@ def details(top: Path) -> list[Item]:
 def failed_schedules(top: Path) -> list[Item]:
     """Each workflow whose latest scheduled run on the default branch failed: its name and file,
     failed jobs and failing pytest tests as printed; [] when none failed or GitHub can't be read.
-    One request for the runs and one log per failed workflow, kept a minute."""
+    One request for the runs and one log per failed workflow, kept ten minutes."""
     branch = repo.default_branch(top)
 
     def fetch(now: datetime) -> list[Item] | None:
@@ -197,7 +216,7 @@ def failed_schedules(top: Path) -> list[Item]:
                            "tests": sorted({found[1] for line in lines if (found := re.search(
                                r"(?:FAILED|ERROR) (\S+?::[^\s\[]+(?:\[.*?\])?)(?= - |$)", line))})})
         return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
-    return _cached(top, "schedule-cache", fetch) or []
+    return _cached(top, "schedule-cache", fetch, seconds=600) or []
 
 
 def merged_prs(github: Item | None) -> list[Item]:
