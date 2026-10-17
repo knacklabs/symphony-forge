@@ -23,8 +23,8 @@
     "id": "ab5829e1-4f01-4e7f-8cc8-c5d10181cc91",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T05:29:27.568963+00:00",
@@ -44,12 +44,10 @@
     }
   ],
   "stuck": {
-    "close": "a8c909c2-40ee-4a22-a081-42af08e4e5a5",
-    "head": "89625497f0cb5bbda044ccb39f39ca5a34471019",
-    "keys": {
-      "close's tests failing": 1
-    },
-    "round": 1
+    "close": "16287029-6140-49cd-bf6c-1929c2616ea2",
+    "head": "bdb8a2b2d5ffc273398e8f557e334ee517f79145",
+    "keys": {},
+    "round": 2
   },
   "why": "After land replays a branch, close reuses the clean review but keeps the old commit in its record, so the pull request check fails on every push; and land then hands the worker a round it cannot fix",
   "worker": "codex"
