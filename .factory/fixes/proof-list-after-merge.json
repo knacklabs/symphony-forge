@@ -1,0 +1,15 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/proof-list-after-merge",
+  "done_when": "Review reads the Proof list from the newest commit that has one, and a merge of main into the branch never causes a missing Proof list finding",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:42.359286+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review reports a missing Proof list after the coordinator merges main into a branch, so a worker round is spent copying the list forward"
+}
