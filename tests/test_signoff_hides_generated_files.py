@@ -20,7 +20,7 @@ RECORDER = '''#!{python}
 import os, subprocess, sys
 args = sys.argv[1:]
 base = args[args.index("--base") + 1]
-git = lambda *a: subprocess.run(["git", *a], capture_output=True, text=True, check=True).stdout
+git = lambda *a: subprocess.run(["git", *a], capture_output=True, encoding="utf-8", errors="replace", check=True).stdout
 start = git("merge-base", base, "HEAD").strip()
 with open(os.environ["AUTOREVIEW_STUB"] + ".diff", "a", encoding="utf-8") as out:
     out.write(git("diff-tree", "-r", "--patch", "--no-renames", start, "HEAD"))
