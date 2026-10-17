@@ -4,12 +4,20 @@
   "done_when": "A queued CI event whose workflow has been rerun since is dropped or replaced by the current result before delivery, and a test covers a failure followed by a rerun",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T16:22:47.631758+00:00",
       "step": "start"
     }
   ],
-  "why": "The pane can deliver a queued CI failure after that workflow's rerun has started, because delivery checks only that the item still exists"
+  "stuck": {
+    "close": null,
+    "head": "a0d2591dd10bae9f7ec7ad978e441f6d3f2ad336",
+    "keys": {},
+    "round": null
+  },
+  "why": "The pane can deliver a queued CI failure after that workflow's rerun has started, because delivery checks only that the item still exists",
+  "worker": "codex"
 }
