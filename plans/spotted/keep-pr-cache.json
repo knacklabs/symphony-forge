@@ -8,8 +8,8 @@
       "text": "Queued CI failure is delivered after its rerun starts",
       "from": "blocking",
       "item": "keep-pr-cache",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
