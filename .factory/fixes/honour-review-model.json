@@ -1,0 +1,15 @@
+{
+  "base": "835fb8749d7a32d91cd5b24c27df0f3be7053872",
+  "branch": "fix/honour-review-model",
+  "done_when": "Reviews use the model and effort in forge.toml's [models.review] when set and the review tool's default when not, doctor stops calling the entry ignored, and tests cover a new repo and an adopted earlier-release repo",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T17:25:45.118204+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge accepts a review model in forge.toml but ignores it, so a repo cannot choose the model or effort its reviews use"
+}
