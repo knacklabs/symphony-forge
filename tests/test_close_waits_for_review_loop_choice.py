@@ -14,7 +14,7 @@ from test_setup import _fresh_client
 
 GUIDANCE = (
     "Ask the owner to narrow the part, split it, or accept the remaining findings. "
-    "Run `forge land <item>` in the background after a close stop, or keep the current land running."
+    "Land prints the owner's question, open findings and failing checks, then exits with status 3 (needs a choice)."
 )
 
 
@@ -58,7 +58,7 @@ def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, 
     env.reviews(CLEAN)
     for command in ("close", "land", "close", "land"):
         result = env.repo.forge(command, item)
-        assert result.returncode == 1, result.stdout + result.stderr
+        assert result.returncode == (3 if command == "land" else 1), result.stdout + result.stderr
         assert "Ask the human" in result.stderr
         assert len(env.review_calls()) == before
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == head

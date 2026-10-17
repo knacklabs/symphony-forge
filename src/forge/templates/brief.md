@@ -37,6 +37,9 @@ $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
 review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Land prints the owner's question, open findings and failing checks, then exits with status 3
+(needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
+again. Other stops and session subagent handoffs also print the open findings and failing checks.
 
 Close records a reused review against the current branch after a replay. Land retries close once
 when only Forge's review check reports a stale or missing review. If that check still fails,

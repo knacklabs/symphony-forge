@@ -16,9 +16,10 @@ from functools import partial
 from graphlib import TopologicalSorter
 from pathlib import Path
 
-from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, spotted, story, task, worker
+from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, score, spotted, story, task, worker
 
 ROUNDS = 3
+NEEDS_CHOICE = 3
 REFUSALS = {
     "rerun": ("GitHub has not started the re-run of {check}.", "forge land {item}"),
     "one_or_all": ("Give one change or --all, not both and not neither.",
@@ -45,7 +46,7 @@ def land(args: argparse.Namespace) -> int:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
     top = close._worktree(item)
     pin = repo.config(top)["version"]
-    state, branch = _wait_for_choice(top, item, queued), repo.current_branch(top)
+    state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
     # A round handed to a session subagent ends this run; the next one carries on its count until
     # the item is ready or the owner records a choice.
@@ -56,11 +57,13 @@ def land(args: argparse.Namespace) -> int:
     conflict_retry = False
     review_retry = False
     try:
+        close.check_stop(item, state, top)
         merged = _merged(top, branch)
         status = state.get("status", "started")
         start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--",
                          repo.state_path(item), cwd=top)
         if _pending(top, item):  # a round is out with the session's subagent, whatever the status
+            _problems(top, item)
             say(f"Next: run the subagent, forge handback {item}, then forge land {item}")
             return 0
         head = repo.git("rev-parse", "HEAD", cwd=top)
@@ -82,13 +85,6 @@ def land(args: argparse.Namespace) -> int:
             try:
                 close.close(step)
             except repo.Refused as error:
-                if error.entry is close.REFUSALS["hotspot"] and not queued:
-                    state = _wait_for_choice(top, item)
-                    rounds = step.land_rounds = 0
-                    if (state.get("stop") or {}).get("choice") in ("narrow", "split") and (
-                            _handed_out(step, top)):
-                        return 0
-                    continue
                 if error.entry is checks.REFUSALS["conflict"] and not conflict_retry:
                     conflict_retry = True
                     continue
@@ -158,9 +154,14 @@ def land(args: argparse.Namespace) -> int:
                 if error.entry is not checks.REFUSALS["conflict"] or conflict_retry:
                     raise
                 conflict_retry = True
-    except repo.Refused:
+    except repo.Refused as error:
+        _problems(top, item)
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")
+        if error.entry is close.REFUSALS["hotspot"]:
+            problem, _, next_step = str(error).partition("\nNext: ")
+            raise repo.Refused(problem, f"{next_step}, then forge land {item}",
+                               NEEDS_CHOICE, error.entry) from None
         raise
 
 
@@ -169,6 +170,7 @@ def _handed_out(step: argparse.Namespace, top: Path) -> bool:
     worker.work(step)
     if not _pending(top, step.item):
         return False
+    _problems(top, step.item)
     say(f"Next: run the subagent, forge handback {step.item}, then forge land {step.item}")
     return True
 
@@ -179,24 +181,20 @@ def _pending(top: Path, item: str) -> bool:
     return any(run["id"] == (pending.get("entry") or {}).get("id") for run in machine.entries())
 
 
-def _wait_for_choice(top: Path, item: str, queued: bool = False) -> dict:
-    """Keep land alive through a review stop; an owner answer or the default releases it."""
-    said = False
-    while True:
-        state = repo.read_state(item, top) or {}
-        try:
-            close.check_stop(item, state)
-            return state
-        except repo.Refused as error:
-            if (error.entry is not close.REFUSALS["hotspot"] or queued
-                    or repo.config(top)["stop_default"] == "off"):
-                raise
-            if not said:
-                say(review.stop_question(top, item, state))  # the question forge next repeats
-                say("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
-                    "the repo's default applies.")
-                said = True
-            time.sleep(15)
+def _problems(top: Path, item: str) -> None:
+    """Show the coordinator the evidence that also goes into the worker's brief."""
+    state = repo.read_state(item, top) or {}
+    findings = score.open_findings(state.get("review") or {})
+    _, failing = worker._fix_round(state)
+    if findings:
+        say("Open findings:")
+        for finding in findings:
+            say(f"- {finding.get('title', '')} ({finding.get('file', '')}:"
+                f"{finding.get('line', '')}): {finding.get('body', '')}")
+    if failing:
+        say("Failing checks:")
+        for name, tail in failing:
+            say(f"- {name}\n{tail}")
 
 
 def _rerun(top: Path, item: str, branch: str) -> bool:
