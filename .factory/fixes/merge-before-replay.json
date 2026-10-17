@@ -1,0 +1,60 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/merge-before-replay",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1485a-633c-7e82-893d-44a55a17de56",
+    "head": null,
+    "start": "e3ae3f80f3b62ea3871e4b0078ce487e8d43209d"
+  },
+  "done_when": "Close tries a plain merge of main first and replays only when that merge conflicts, and its message names a step the coordinator can run without a force-push when the merge is clean",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8573e2cb1e86493b9cca3e47294bfe76d290a6554b5da9311b1ffcc9a65fa06f",
+    "changed": "dc86e658272d5c137bce7dad5dbf8b26ad52c9370444770d31292549cbfd7e0c",
+    "commit": "4913b8814a691efb02324db329fd9f10f693fdb3",
+    "dismissals": [],
+    "findings": [],
+    "id": "cf4c7a47-82da-41d2-bdf6-2ed73a897678",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:38.679045+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T06:23:11.276063+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:13:05.236759+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:00:01.184447+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:49:22.707761+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "0befda05-d551-48f9-8494-6d44731df01c",
+    "head": "9290e8857181b027e615fe7b25e1d683c36e5f04",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
+  },
+  "why": "When main moves, close suggests a replay of the branch's commits even where a plain merge of main has no conflicts, and its refusal tells the coordinator to rebase and force-push by hand",
+  "worker": "codex"
+}
