@@ -46,8 +46,18 @@ if args[:2] == ["pr", "list"]:
         found = [row for row in found if row["state"].lower() == args[args.index("--state") + 1]]
     done(found)
 if args[:2] == ["api", "graphql"]:
-    done({"data": {"repository": {"pullRequests": {"nodes": [
-        {**row, "commits": {"nodes": []}} for row in rows if row["state"] == "OPEN"]}}}})
+    nodes = []
+    for row in rows:
+        if row["state"] != "OPEN":
+            continue
+        head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
+                                        "refs/heads/" + row["headRefName"]], text=True).split()[0]
+        contexts = [{"__typename": "CheckRun", "name": name, "status": "COMPLETED",
+                     "conclusion": "SUCCESS"} for name in ("tests", "forge-pr-check")]
+        nodes.append({**row, "headRefOid": head, "commits": {"nodes": [{"commit": {
+            "oid": head, "statusCheckRollup": {"contexts": {
+                "pageInfo": {"hasNextPage": False}, "nodes": contexts}}}}]}})
+    done({"data": {"repository": {"pullRequests": {"nodes": nodes}}}})
 if args[:2] == ["pr", "create"]:
     branch = args[args.index("--head") + 1]
     rows.append({"number": 7, "headRefName": branch, "state": "OPEN", "baseRefName": "main",
@@ -173,6 +183,18 @@ def test_2_undo_restores_work_pr_and_close_step(env, kept):
         repo.git("push", "-q", "origin", "fix/unwanted", cwd=peer)
     restored = repo.forge("fix", "drop", "unwanted", "--undo")
     assert restored.returncode == 0, restored.stdout + restored.stderr
+    # A teammate has no local close receipt. A legacy PR has no shared time record,
+    # and green checks alone cannot make its newly restored commit ready to merge.
+    observer = repo.path.parent / "restore-observer"
+    repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(observer))
+    viewer = Repo(observer, repo.bin)
+    observed = viewer.forge("board", "--json")
+    assert observed.returncode == 0, observed.stdout + observed.stderr
+    row = next(row for row in json.loads(observed.stdout)["items"] if row["id"] == "unwanted")
+    assert row["gates"]["ci"]["status"] == "green"
+    assert row["stage"] == "waiting for checks"
+    assert "ready to merge" not in viewer.forge("next").stdout.lower()
+    assert "Next: forge close unwanted" in restored.stdout
     assert worktree(repo, "fix/unwanted").resolve() == where.resolve()
     assert repo.git("merge-base", "--is-ancestor", before, "HEAD", cwd=where) == ""
     assert (where / "greeting.txt").read_text("utf-8") == "Hello readers\n"
