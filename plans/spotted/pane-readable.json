@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tDisputed keep In-progress CI rerun can deliver the previous failure: cached failure still reaches the prompt\tpane-readable",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 96,
+      "text": "Disputed keep In-progress CI rerun can deliver the previous failure: cached failure still reaches the prompt",
+      "from": "blocking",
+      "item": "pane-readable",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/events.ts\tIn-progress CI rerun can deliver the previous failure\tpane-readable",
       "kind": "bug",
       "path": "src/forge/mod/hooks/events.ts",
