@@ -4,12 +4,20 @@
   "done_when": "Pull request edits no longer delete the shared cache (changes show within its minute), forge next fetches the default branch at most once per run, and a test counts the fetches and cache refills",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T14:21:17.299313+00:00",
       "step": "start"
     }
   ],
-  "why": "Every pull request edit from any worktree deletes the shared pull request cache, and forge next fetches the default branch twice per run"
+  "stuck": {
+    "close": null,
+    "head": "b660fe3423ea5f3841cf51fd375fe092e9c2e69d",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every pull request edit from any worktree deletes the shared pull request cache, and forge next fetches the default branch twice per run",
+  "worker": "codex"
 }
