@@ -21,7 +21,7 @@
       "gain": 4,
       "harm": 2,
       "line": 941,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ca1376cb931e44f6184c35ea574788c188533bef1aa5e8465c9ea2d1124759ee",
-    "changed": "f0e60f8aeb9415a2a71ccc3780a3ccc3d884845a317c7a1a573a7dca000d5158",
-    "commit": "5d35c4acf13b184df692f95f7d1f308c9fe5455b",
+    "branch_diff": "1050cb03435b97a0b3197290a97460926ebebf50b31b279c9c860a876f2074a0",
+    "changed": "a3a05dbb3377be060209fb9fe612f3dde313ef7d044aee07c01beaa9eea34a17",
+    "commit": "7ca70151ab59166e62a11d7371dffe72b1a8eed1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. Forwarding these flags makes existing required tests fail: they configure review models but still assert that `--model` and `--thinking` are absent. The conflicting assertions remain in `tests/test_close.py:495`, `tests/test_models_per_family.py:110`, `tests/test_aha_review.py:53` (also :96), and `tests/test_live_stage.py:100`. These tests run under forge.toml's full test command, so updating only the selected proof tests leaves CI red. Update the obsolete expectations to verify the configured values while retaining their other behavior checks.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 941,
-        "priority": "P1",
-        "title": "Gate: update obsolete expectations in existing review tests",
-        "work": 2
-      }
-    ],
-    "id": "af5c6a27-1955-4e84-b679-b8ac655edf7d",
-    "status": "blocked"
+    "findings": [],
+    "id": "bb411fa4-f695-4940-9e3d-9be247d42e53",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T17:25:45.118204+00:00",
@@ -59,6 +48,10 @@
     },
     {
       "at": "2026-10-17T17:35:33.068857+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:23:06.221538+00:00",
       "step": "review"
     }
   ],
