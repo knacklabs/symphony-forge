@@ -10,13 +10,29 @@
   },
   "done_when": "tests/test_pull_request_cache_survives_close.py passes on main with both cache fixes, and it still proves a close keeps the cached lists until they expire",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d50b8dc0fd729dd9f4fc618e4559d2a7b9e440e3745b5005e8ec06ab72828cac",
+    "changed": "11b94c8cd7e3db40569a68408bd1a18f4ccbd409098bdf30a4e4361a6cf1a531",
+    "commit": "c8d357481507dfaa1a1c73fa81959f6d7ab0e6c7",
+    "dismissals": [],
+    "findings": [],
+    "id": "41e4219f-e52b-4f17-8cca-ed6d8a76b1bc",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T18:09:49.407804+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T18:14:56.515487+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
