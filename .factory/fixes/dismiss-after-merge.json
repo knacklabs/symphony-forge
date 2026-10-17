@@ -10,13 +10,29 @@
   },
   "done_when": "A dismissal recorded with its file and reason applies to the same finding in the next review after a merge of main, and close accepts a dismissal of a finding the current review still reports",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "414f3e755fef9e5483d7b5d287129ff0d72b8d8adc7cf85443bcdbcdb678fd58",
+    "changed": "e328fcebe16ef399c3ca5fdd7a81abfa8dadb7eca5f068d12acc4a0b60c2a952",
+    "commit": "de1002d2f629739ebb489c68c1aa66e52476c9e7",
+    "dismissals": [],
+    "findings": [],
+    "id": "de75275c-485c-4b00-8718-1bed70d92e0c",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T15:25:39.317469+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T15:49:28.896193+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
