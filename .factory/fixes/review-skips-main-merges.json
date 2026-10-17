@@ -1,6 +1,13 @@
 {
   "base": "ddf2c24ab37e3bde066324d78c6dcb32d78bd010",
   "branch": "fix/review-skips-main-merges",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14bc1-3624-7e52-b04e-c8f6ad1c054a",
+    "head": null,
+    "start": "063bd9c15e20bf6d98e88141b57445425925ef9f"
+  },
   "done_when": "A review after a merge of the default branch covers only the change's own work, never commits that came from the default branch, and a test merges main with an unrelated change between two closes and sees no finding about it",
   "fix_kind": "backend",
   "kind": "fix",
