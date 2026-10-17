@@ -164,10 +164,12 @@ def merged_before_weeks(top: Path) -> dict[str, Item]:
     """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
     kept for a day. Only asked when an unfinished story has parts merged that long ago."""
     # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
-    def fetch(now: datetime) -> list[Item] | None:
+    now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    cutoff = full_weeks(now, 6)[0] - timedelta(days=1)
+    def fetch(_now: datetime) -> list[Item] | None:
         # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
-        return _listing(top, "merged", "--search", f"merged:*..{full_weeks(now, 6)[0] - timedelta(days=1):%Y-%m-%d}")
-    return {pr["headRefName"]: pr for pr in _cached(top, "prs-older-cache", fetch, seconds=86400) or []
+        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}")
+    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-cache-{cutoff:%Y-%m-%d}", fetch, seconds=86400) or []
             if isinstance(pr.get("headRefName"), str)}
 
 

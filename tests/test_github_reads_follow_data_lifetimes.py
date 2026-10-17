@@ -6,10 +6,12 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 
 from conftest import _install
+from test_board_counts import github
 from test_machine_views_recent_finished_items import client, finished_fix, landed
 from test_story import DOC
 
@@ -94,3 +96,39 @@ def test_2_concurrent_next_readers_share_each_github_fetch(repo, gh, monkeypatch
         views = list(pool.map(lambda _: read(repo), range(2)))
     assert reads(gh.calls()[before:]) == (1, 7, 1, 1, 1)
     assert views[0]["team"] == views[1]["team"]
+
+
+@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+def test_3_monday_keeps_parts_from_the_week_leaving_the_weekly_window(repo, gh, monkeypatch, history):
+    setup(repo, gh, monkeypatch, history)
+    # Another archived part forces the older-list lookup before the rollover.
+    landed(repo, monkeypatch, (NOW - timedelta(weeks=9)).isoformat(), {
+        ".factory/stories/LIVE/tasks/ANCIENT.json": {
+            "status": "merged", "branch": "task/LIVE-ANCIENT"},
+    })
+    # Sunday includes October 5-11 in its weekly lists; Monday needs that part
+    # from the older listing, even though Sunday's older listing is still young.
+    sunday = datetime(2026, 11, 22, 23, 58, tzinfo=timezone.utc)
+    events = [
+        {"id": "save-phase", "event": "work phase", "phase": "building", "round": 1,
+         "at": "2026-10-07T10:00:00+00:00"},
+        {"id": "save-start", "event": "run start", "kind": "worker", "round": 1,
+         "at": "2026-10-07T10:00:00+00:00"},
+        {"id": "save-end", "event": "run end", "kind": "worker", "round": 1,
+         "run_id": "save-start", "at": "2026-10-07T11:00:00+00:00"},
+    ]
+    published = ("<!-- forge:begin -->\n<!-- forge:time-record "
+                 + json.dumps({"events": events}) + " -->\n<!-- forge:end -->")
+    github(SimpleNamespace(repo=repo, gh=gh), [{
+        "number": 7, "headRefName": "task/LIVE-SAVE", "state": "MERGED", "body": published,
+        "title": "Save baskets", "mergedAt": "2026-10-07T11:00:00+00:00",
+        "files": [{"path": ".factory/stories/LIVE/tasks/SAVE.json"}],
+    }])
+    for at in (sunday, sunday + timedelta(minutes=3), sunday + timedelta(minutes=5)):
+        monkeypatch.setenv("FORGE_NOW", at.isoformat())
+        shown = read(repo)
+        live = next(row for row in shown["items"] if row["id"] == "LIVE")
+        assert live["time_breakdown"]["working"] == 3600, at
+    older = [call[call.index("--search") + 1] for call in gh.calls()
+             if any(arg.startswith("merged:*") for arg in call)]
+    assert older == ["merged:*..2026-10-04", "merged:*..2026-10-11"]
