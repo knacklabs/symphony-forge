@@ -36,8 +36,7 @@ function host(on: On) {
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.open', () => ({ value: undefined }))
   on('process.run', (_$, e) => {
-    const value = e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items: [sparse, rich] }
-      : e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: 'Wait for the review.' } }
+    const value = e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', items: [sparse, rich], next: { command: null, line: 'Wait for the review.' } }
       : { version: '1.2.5', agents: { size: 2, entries: [] }, tests: { size: 1, entries: [] }, machine: { load: null, cores: null } }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
