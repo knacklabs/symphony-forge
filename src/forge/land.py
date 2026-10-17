@@ -311,10 +311,19 @@ def _queue(top: Path) -> int:
             changes.append((age, item, files, ready))
             stacked[item] = state.get("stacked_on")
     changes.sort()
-    queued = {item for _, item, *_ in changes}
-    order = {item: index for index, item in enumerate(TopologicalSorter({
+    queued = {item: age for age, item, *_ in changes}
+    dependencies = TopologicalSorter({
         item: [stacked[item]] if stacked[item] in queued else []
-        for _, item, *_ in changes}).static_order())}
+        for _, item, *_ in changes})
+    dependencies.prepare()
+    available = list(dependencies.get_ready())
+    order = {}
+    while available:
+        item = min(available, key=queued.__getitem__)
+        available.remove(item)
+        order[item] = len(order)
+        dependencies.done(item)
+        available.extend(dependencies.get_ready())
     changes.sort(key=lambda change: order[change[1]])
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
@@ -323,6 +332,11 @@ def _queue(top: Path) -> int:
             if item in running or item in finished:
                 continue
             parent = stacked[item]
+            if parent and parent not in queued and not task._merged(f"origin/{default}", parent, top):
+                needs[item] = (age, *needs[parent][1:]) if parent in needs else (
+                    age, f"its base {parent} is not merged.", f"forge land {parent}")
+                finished.add(item)
+                continue
             if hold and parent in queued:
                 if parent not in finished:
                     continue

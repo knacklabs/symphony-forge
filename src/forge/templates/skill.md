@@ -1403,7 +1403,9 @@ status is reviewing, fixing, waiting for checks or ready, and leaves out, by nam
 its builder, one already merged and one another command works on. It starts them oldest first,
 several at a time up to this machine's agent places, and merges each one when it passes. A stacked
 fix follows its base even when its start date is earlier. Where Forge merges, it waits for its
-base in the run to merge; if the base stops, the stacked fix stops with it. A change
+base to merge, including a base whose builder or another command still works on it. If the base
+stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
+can enter close. Among changes whose bases are ready, the oldest starts first. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
