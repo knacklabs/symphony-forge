@@ -1,0 +1,81 @@
+{
+  "base": "8dc172b6bc6334049a8f6444b6a5311b5ba3a042",
+  "branch": "fix/signoff-hide-generated",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1462f-91ff-7f12-92fa-8e820c23e243",
+    "head": null,
+    "start": "be4a4c3a4ed83bd725c5c9de5b1014f7f5a035f5"
+  },
+  "done_when": "The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and a test proves it",
+  "flagged": [
+    "tests/test_signoff_hides_generated_files.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_signoff_review_reads_generated_files_as_names_only() in tests/test_signoff_hides_generated_files.py",
+      "file": "tests/test_signoff_hides_generated_files.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 42,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it",
+      "work": 1
+    },
+    {
+      "area": "test_1_signoff_review_reads_generated_files_as_names_only() in tests/test_signoff_hides_generated_files.py",
+      "file": "tests/test_signoff_hides_generated_files.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Cover generated-file sign-off in new and earlier-adopted client repos",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "af7c6d1a6d629bdedad2dce51f796d72a465e0b8cf87b1b668ab662b8d07b8b3",
+    "changed": "21da5ca48fa17bd7d5a1a5cddab48a819cf460586c4c82000a84cc4b3778c51d",
+    "commit": "bbde8c589d2a7bc08a941f456e6381afb6a7704b",
+    "dismissals": [],
+    "findings": [],
+    "id": "c553ab66-e68b-4722-a014-d9f1b089a9f6",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T19:24:52.609009+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T19:27:57.194016+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T19:33:02.889835+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "07abb8b7-363e-478a-b061-bf5b1cc674a4",
+    "head": "08914eac10f8473292bbada781394006b6e568e8",
+    "keys": {
+      "the review finding \"Cover generated-file sign-off in new and earlier-adopted client repos\" in tests/test_signoff_hides_generated_files.py": 1,
+      "the review finding \"Not done: The sign-off review leaves linguist-generated files out of its snapshot and names them, like normal reviews do, and test proves it\" in tests/test_signoff_hides_generated_files.py": 1
+    },
+    "round": null
+  },
+  "why": "The strict sign-off review sends files marked linguist-generated (images, videos) to Autoreview, which refuses binary media, so sign-off cannot run in a repo with brand videos",
+  "worker": "codex"
+}

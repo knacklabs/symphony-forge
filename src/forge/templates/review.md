@@ -52,8 +52,11 @@ Recorded allowance: $allowance
 Check the change against both lines. If the branch does not meet the Done-when line, report a P1
 finding titled `Not done: $done_when`.
 
-For an agent-recorded allowance to correct one kind of problem everywhere without changing an
-interface, check its reason against the whole diff. Report as P1 an allowance whose reason
+Forge records the "Prototype before sign-off" allowance. It covers any size and interface
+changes. Do not check this allowance against the diff.
+
+For other agent-recorded allowances to correct one kind of problem everywhere without changing
+an interface, check the reason against the whole diff. Report as P1 an allowance whose reason
 doesn't match the diff: more than one kind of problem, or an interface change.
 
 <!-- functional-check -->
