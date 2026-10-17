@@ -8,8 +8,8 @@
       "text": "Disputed keep In-progress CI rerun can deliver the previous failure: cached failure still reaches the prompt",
       "from": "blocking",
       "item": "pane-readable",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/mod/hooks/events.ts\tIn-progress CI rerun can deliver the previous failure\tpane-readable",
