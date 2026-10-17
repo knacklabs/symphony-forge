@@ -10,13 +10,29 @@
   },
   "done_when": "Review reads the Proof list from the newest commit that has one, and a merge of main into the branch never causes a missing Proof list finding",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "516d2f94555f39b6cdec2f15195c7ef30292f8432eb84b13c01f4e3a53bd5b2c",
+    "changed": "3ab9002140ea129c15908e46efa341d936c86f8c677a6f7aabfcc9298db1ab97",
+    "commit": "e0a815757ab5e2ca40da37058c304f04ce12ad06",
+    "dismissals": [],
+    "findings": [],
+    "id": "7ee1128f-ec2a-4e0b-bf3c-97b82ef64197",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T05:29:42.359286+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:35:39.678552+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
