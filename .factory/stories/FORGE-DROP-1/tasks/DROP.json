@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-DROP-1-DROP",
+  "chat": {
+    "approval": "c0edd03485b1f9611b484bcd48553d07d81d64dfbee8c9b0a3cf6169e3e393c5",
+    "claude": null,
+    "conversation": "01a14af7-59e4-72b1-9ea5-c902a572c4b3",
+    "head": null,
+    "start": "2d06d16c00f2358ba7e43a678210b049da8a427c"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
