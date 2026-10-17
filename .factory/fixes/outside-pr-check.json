@@ -39,8 +39,8 @@
     "id": "7559ebe8-f0d8-4a15-975b-22a00b861692",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:18:34.533305+00:00",
@@ -60,10 +60,10 @@
     }
   ],
   "stuck": {
-    "close": "9637596d-ed26-437b-b76b-8b27a0d77d76",
-    "head": "564f712572bb107e89f5607627a8da102661fde4",
+    "close": "4c455ed8-b4ad-4eed-b397-35ef909e18cd",
+    "head": "ca543cce7760795d34788651ca14c338399994e1",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "A pull request from a branch Forge did not start passes Forge's required check, then cannot merge, and nothing tells its author to redo it as a fix",
   "worker": "codex"
