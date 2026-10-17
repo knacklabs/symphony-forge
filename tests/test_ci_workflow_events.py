@@ -16,7 +16,11 @@ def test_3_ci_events_name_each_workflow_and_result_once_per_commit(
         repo, gh, tmp_path, monkeypatch, history, env):
     configured = (repo.path / "forge.toml").read_text("utf-8")
     _client(repo, gh, tmp_path, history)
-    env.commit(repo.path, "forge.toml", configured, "Configure checks")
+    setting = repo.forge("fix", "start", "Configure checks", "--done", "Checks are configured",
+                         "--slug", "configure-checks", "--kind", "mechanical")
+    assert setting.returncode == 0, setting.stderr
+    env.commit(worktree(repo, "fix/configure-checks"), "forge.toml", configured, "Configure checks")
+    repo.git("merge", "-q", "--ff-only", "fix/configure-checks")
     _land_fixture(repo)
     made = repo.forge("fix", "start", "The basket saves", "--done", "It saves", "--slug", "basket")
     assert made.returncode == 0, made.stderr
