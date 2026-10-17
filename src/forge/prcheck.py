@@ -15,6 +15,9 @@ from typing import Any
 from forge import repo, review
 
 REFUSALS = {
+    "outside_branch": ('This branch was not started by Forge, so it cannot merge. '
+                       'Redo the change with forge fix start "<why>" --done "<done when>" '
+                       'and copy the commits there.', ""),
     "usage": ("forge hook pr-check needs the pull request's --base, --head and --branch.",
               "forge hook pr-check --base <base commit> --head <head commit> --branch <branch>"),
     "not_started": ("Forge did not start {branch}: no task or fix at its head is on that branch.",
@@ -223,9 +226,7 @@ def pr_check(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["usage"])
     base, head, branch = given["--base"], given["--head"], given["--branch"]
     if not branch.startswith(("task/", "fix/", "story/", "forge/")):
-        print("Forge didn't start this branch, so it checks nothing here; the repo's own CI and "
-              "review apply.")
-        return 0
+        repo.refuse(REFUSALS["outside_branch"])
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)
