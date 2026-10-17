@@ -770,7 +770,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     elif ref and not receipt and not record and checks == "pass":
         # An older release's pull request: its state file at the head says it was closed clean.
         older = story.json_of(story.show(top, ref, repo.state_path(item)))
-        if older.get("review") and not review.blocking(older["review"]) and \
+        if not older.get("drop") and older.get("review") and not review.blocking(older["review"]) and \
                 older.get("status") in ("waiting for checks", "ready"):
             evidence = {"commit": ref, "review": "clean", "shared": True}
     if status not in ("merged", "done", "hotspot"):

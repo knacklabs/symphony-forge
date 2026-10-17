@@ -43,8 +43,6 @@ def land(args: argparse.Namespace) -> int:
         repo.refuse(repo.REFUSALS["bad_item"], item=item)
     if item == merge.ENABLE:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
-    if match["fix"] and nextstep.remote_state(repo.root(), item, f"fix/{item}").get("status") == "dropped":
-        repo.refuse(("{item} is dropped.", "forge fix drop {item} --undo"), item=item)
     top = close._worktree(item)
     pin = repo.config(top)["version"]
     state, branch = _wait_for_choice(top, item, queued), repo.current_branch(top)

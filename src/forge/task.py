@@ -579,7 +579,7 @@ def require_active(item: str, top: Path | None = None) -> None:
 
 
 def fix_drop(args: argparse.Namespace) -> None:
-    from forge import codex, machine, story
+    from forge import close, codex, machine, story
 
     item = args.item
     command = f'forge fix drop {item} --undo' if args.undo else f'forge fix drop {item} --because "<reason>"'
@@ -606,7 +606,7 @@ def fix_drop(args: argparse.Namespace) -> None:
     lock = codex._item_file(top, item, ".lock", "Build")
     if held or lock.exists() and codex._alive(codex._json(lock)) is not False:
         raise repo.Refused(f"A Forge run on this machine holds fix {item}. Wait for it to finish.", command)
-    prs = json.loads(_drop_gh(top, "pr", "list", "--head", branch, "--state", "all",
+    prs = json.loads(close._gh(top, "pr", "list", "--head", branch, "--state", "all",
                              "--json", "number,state"))
     if _merged(main, item, top) or any(pr.get("state") == "MERGED" for pr in prs):
         raise repo.Refused(f"Fix {item} is already merged. Start a new fix instead.",
@@ -645,7 +645,7 @@ def fix_drop(args: argparse.Namespace) -> None:
         dropped = state["drop"]
         if number := dropped.get("pull_request"):
             if any(pr.get("number") == number and pr.get("state") == "CLOSED" for pr in prs):
-                _drop_gh(path, "pr", "reopen", str(number))
+                close._gh(path, "pr", "reopen", str(number))
         previous = dropped["status"]
         state["status"] = "waiting for checks" if previous == "ready" else previous
         dropped["restored_at"] = repo.now()
@@ -653,7 +653,8 @@ def fix_drop(args: argparse.Namespace) -> None:
         repo.commit_state(f"Restore the fix: {state['why']}", repo.write_state(item, state, path), top=path)
         git("push", "-q", "--set-upstream", "origin", branch, cwd=path)
         print(f"Restored fix {item} in {path}.")
-        print(f"Next: forge {'close' if previous == 'ready' else 'work'} {item}")
+        next_command = "close" if previous in ("ready", "waiting for checks", "reviewing") else "work"
+        print(f"Next: forge {next_command} {item}")
     else:
         git("push", "-q", "--set-upstream", "origin", branch, cwd=path)
         pr = next((pr for pr in prs if pr.get("state") == "OPEN"), None)
@@ -667,7 +668,7 @@ def fix_drop(args: argparse.Namespace) -> None:
             repo.commit_state(f"Drop the fix: {state['why']}", repo.write_state(item, state, path), top=path)
             git("push", "-q", "origin", branch, cwd=path)
         if pr:
-            _drop_gh(path, "pr", "close", str(pr["number"]), "--comment", state["drop"]["because"])
+            close._gh(path, "pr", "close", str(pr["number"]), "--comment", state["drop"]["because"])
         ignored = git("ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z", cwd=path)
         rebuildable = {".venv", "node_modules", ".pytest_cache", "__pycache__", "dist", "build"}
         kept = [name for name in ignored.split("\0") if name and not any(
@@ -683,12 +684,6 @@ def fix_drop(args: argparse.Namespace) -> None:
             git("worktree", "remove", "--force", str(path), cwd=root)
             git("branch", "-d", branch, cwd=root)
     (repo.forge_dir(top if top.exists() else root) / "prs-cache.json").unlink(missing_ok=True)
-
-
-def _drop_gh(top: Path, *args: str) -> str:
-    result = run("gh", *args, cwd=top)
-    result.check_returncode()
-    return result.stdout
 
 
 COMMANDS = [
