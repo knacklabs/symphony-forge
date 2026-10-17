@@ -1,11 +1,12 @@
 """Pull requests outside Forge fail with a fix-flow recovery step."""
-import shutil
+import re
+import shlex
+from string import Template
 
 import pytest
 
-from conftest import ROOT
 from test_close import env  # noqa: F401
-from test_setup import _fresh_client, _version
+from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 
 STORY = "FIX-OUTSIDE-PR-CHECK"
 
@@ -15,18 +16,22 @@ MESSAGE = ('This branch was not started by Forge, so it cannot merge. '
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_1_required_check_rejects_outside_branch_with_fix_flow(repo, gh, tmp_path, adopted):
+def test_1_required_check_rejects_outside_branch_with_fix_flow(env, tmp_path, adopted):
+    # This fixture commits the old adoption and its upgrade separately, lands both on
+    # origin/main, and returns a fresh clone of the committed client.
+    setup_client(env, adopted)
+    repo, client = env.repo, env.repo.path
+    repo.git("push", "-q", "origin", "main")
+    base = repo.git("rev-parse", "origin/main")
+    assert repo.git("rev-parse", "HEAD") == base
     if adopted:
-        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
-                        dirs_exist_ok=True)
-        repo.git("checkout", "-q", "-b", "fix/upgrade")
-        config = (repo.path / "forge.toml").read_text("utf-8")
-        repo.write("forge.toml", config.replace('version = "v1.2.2"',
-                                               f'version = "{_version(repo)}"'))
-        client, setup = repo.path, repo.forge("sync")
-    else:
-        client, setup = _fresh_client(repo, gh, tmp_path)
-    assert setup.returncode == 0, setup.stdout + setup.stderr
+        assert 'version = "v1.2.2"' in repo.git("show", f"{base}~1:forge.toml")
+    workflow = repo.git("show", f"{base}:.github/workflows/forge.yml")
+    job = workflow.split("\n  forge-pr-check:\n", 1)[1]
+    assert "if: github.event_name == 'pull_request_target'" in job
+    gate = job.split("      - env:")[-1].split("      - name:", 1)[0]
+    assert "continue-on-error:" not in gate
+    command = shlex.split(re.search(r"^        run: (forge hook pr-check .+)$", gate, re.M)[1])
     # The author makes a real commit in a clone without Forge's local hooks.
     outside = tmp_path / "outside"
     repo.git("clone", "-q", str(client), str(outside))
@@ -36,13 +41,15 @@ def test_1_required_check_rejects_outside_branch_with_fix_flow(repo, gh, tmp_pat
     repo.git("add", "README.md", cwd=outside)
     repo.git("commit", "-qm", "Change the readme", cwd=outside)
     repo.git("fetch", "-q", str(outside), branch, cwd=client)
-    checked = repo.forge("hook", "pr-check", "--base", "HEAD", "--head", "FETCH_HEAD",
-                         "--branch", branch, cwd=client)
+    variables = {"BASE_SHA": base, "HEAD_SHA": repo.git("rev-parse", "FETCH_HEAD"),
+                 "HEAD_REF": branch}
+    # Execute the committed workflow's gate command with GitHub's PR values.
+    checked = repo.forge(*(Template(arg).substitute(variables) for arg in command[1:]))
     assert checked.returncode == 1, checked.stdout + checked.stderr
     assert checked.stderr == MESSAGE + "\n"
     assert checked.stdout == ""
     for host in (".claude", ".codex"):
-        guide = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
+        guide = repo.git("show", f"{base}:{host}/skills/forge/SKILL.md")
         assert 'forge fix start "<why>" --done "<done when>"' in guide
         assert "fails a pull request from a branch Forge did not start" in guide
 
