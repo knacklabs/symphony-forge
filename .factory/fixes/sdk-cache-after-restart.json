@@ -1,6 +1,13 @@
 {
   "base": "8eff6a06039b94085e806e9e19dfd30e170de523",
   "branch": "fix/sdk-cache-after-restart",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14867-caff-7e51-9902-989dfd9035a3",
+    "head": null,
+    "start": "508ad9f6e3c3cbcc85faaf9e3007a2ca41f1bd8f"
+  },
   "done_when": "The test suite rebuilds a cached SDK whose Python is missing or half-installed, so tests pass after a restart without manual steps",
   "fix_kind": "mechanical",
   "kind": "fix",
