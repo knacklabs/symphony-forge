@@ -39,8 +39,8 @@
     "id": "451619dc-3417-474e-9b4d-7db9bf0fdd89",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T17:15:27.504481+00:00",
@@ -60,10 +60,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "6fcd73f0df2096770344a1c16b735b281a451fce",
+    "close": "021705e0-f72d-4e4b-92ce-b0c7c695c682",
+    "head": "7ec5f6ba330f9eee36cf2c1546906bcf4df16aeb",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A stopped forge work can leave its item lock behind, and forge stop says there is nothing to stop, so the next round is refused as busy",
   "worker": "codex"
