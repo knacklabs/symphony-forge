@@ -48,6 +48,7 @@ export function registerEvents(on: On, data: Data) {
     if (!await eligibility) return started
     let running = false
     let observed = new Set<string>()
+    let heldSaved = false
     drain = async () => {
       if (running) return
       running = true
@@ -68,12 +69,31 @@ export function registerEvents(on: On, data: Data) {
         const saved = await $.store.get(seenKey)
         const seen = new Set(Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string') : [])
         const current = occurrences(data.board.items)
+        const heldKey = JSON.stringify([repo.root, session, 'forge-held-checks'])
+        const saveHeld = async () => {
+          const held = [...pending].filter(([, event]) => event.checksAt !== undefined)
+            .map(([id, event]) => [id, event.checksAt])
+          if (held.length) await $.store.set(heldKey, held)
+          else if (heldSaved) await $.store.delete(heldKey)
+          heldSaved = held.length > 0
+        }
         if (baseline) {
-          for (const id of current.keys()) seen.add(id)
+          const held = await $.store.get(heldKey)
+          heldSaved = Array.isArray(held) && held.length > 0
+          for (const entry of Array.isArray(held) ? held : []) {
+            if (!Array.isArray(entry) || typeof entry[0] !== 'string' || !entry[0].startsWith('workflow:')
+              || !(entry[1] === null || typeof entry[1] === 'string' && Number.isFinite(Date.parse(entry[1])))) continue
+            const event = current.get(entry[0])
+            if (event && !seen.has(entry[0])) pending.set(entry[0], { ...event, checksAt: entry[1] })
+          }
+          for (const id of current.keys()) if (!pending.has(id)) seen.add(id)
           await $.store.set(seenKey, [...seen].slice(-MAX_SEEN_EVENTS))
           observed = new Set(current.keys())
           key = seenKey
-          return
+          if (!pending.size) {
+            await saveHeld()
+            return
+          }
         }
         for (const [id, line] of current) if (!seen.has(id) && (!observed.has(id) || pending.has(id))) {
           pending.set(id, { ...line, checksAt: pending.get(id)?.checksAt ?? line.checksAt })
@@ -83,6 +103,7 @@ export function registerEvents(on: On, data: Data) {
         if (!pending.size) return
         if (await $.store.get(JSON.stringify(['forge-active-turn', session]))) {
           for (const [id, line] of current) if (pending.has(id)) pending.set(id, line)
+          await saveHeld()
           return
         }
         // The host can change identity while the asynchronous reads finish.
@@ -112,12 +133,14 @@ export function registerEvents(on: On, data: Data) {
           const command = object(item.next) && typeof item.next.command === 'string' ? item.next.command : 'forge next'
           batch.push([id, `${item.title.replace(/[\r\n]+/g, ' ')}: ${event.title.replace(/[\r\n]+/g, ' ')} Next: ${command}`])
         }
+        await saveHeld()
         if (!batch.length) return
         const result = await $.prompt.submit({ text: batch.map(([, line]) => line).join('\n') })
         if (result.drop !== undefined || session === endedSession) return
         for (const [id] of batch) seen.add(id)
         await $.store.set(seenKey, [...seen].slice(-MAX_SEEN_EVENTS))
         for (const [id] of batch) pending.delete(id)
+        await saveHeld()
       } catch {
         // A failed host call leaves occurrences unseen for the next refresh.
       } finally {
@@ -133,6 +156,7 @@ export function registerEvents(on: On, data: Data) {
     key = null
     pending.clear()
     if (await eligibility) {
+      // Held-check bookmarks use three-part keys so a resumed session can finish delivery.
       for (const savedKey of await $.store.keys()) {
         let parts: unknown
         try { parts = JSON.parse(savedKey) } catch { continue }

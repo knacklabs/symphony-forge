@@ -209,7 +209,8 @@ async function session(id, duringRefresh) {{
     env: {{get: async () => undefined}},
     session: {{id: async () => id, cwd: async () => {json.dumps(str(repo.path))}, repo: async () => ({{root: {json.dumps(str(repo.path))}}}),
       surfaces: async () => ['terminal']}},
-    store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value)}},
+    store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value),
+      delete: async key => store.delete(key)}},
     prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
     process: {{run: async argv => {{
       if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}

@@ -17,6 +17,17 @@ STORY = "FIX-PANE-RERUN-CACHE-WINDOW"
 @pytest.mark.parametrize("refresh_while_busy", [True, False])
 def test_1_queued_failure_waits_out_checks_cache(
         env, packaged_mod, tmp_path, history, rerun, drop, refresh_while_busy):
+    _queued_failure(env, packaged_mod, tmp_path, history, rerun, drop, refresh_while_busy)
+
+
+@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("rerun", [True, False])
+@pytest.mark.parametrize("restart", ["reload", "resume"])
+def test_2_held_failure_survives_session_restart(env, packaged_mod, tmp_path, history, rerun, restart):
+    _queued_failure(env, packaged_mod, tmp_path, history, rerun, False, False, restart)
+
+
+def _queued_failure(env, packaged_mod, tmp_path, history, rerun, drop, refresh_while_busy, restart=None):
     repo = env.repo
     _client(repo, env.gh, tmp_path, history)
     item, _ = env.start_fix()
@@ -48,7 +59,9 @@ const api = {{
   env: {{get: async () => undefined}},
   session: {{id: async () => 'cache-window', cwd: async () => {json.dumps(str(repo.path))},
     repo: async () => ({{root: {json.dumps(str(repo.path))}}}), surfaces: async () => ['terminal']}},
-  store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value)}},
+  store: {{get: async key => structuredClone(store.get(key)),
+    set: async (key, value) => store.set(key, structuredClone(value)),
+    keys: async () => [...store.keys()], delete: async key => store.delete(key)}},
   prompt: {{submit: async input => {{
     if (reject) {{reject = false; return {{drop: 'Host is busy'}};}}
     prompts.push(input.text); return {{text: input.text}};
@@ -62,6 +75,15 @@ async function tick(time) {{
   process.env.FORGE_NOW = time;
   await new Promise(resolve => {{published = resolve; timers[0]();}});
   await new Promise(resolve => setImmediate(resolve));
+}}
+async function restartPane() {{
+  if ({json.dumps(restart)} === 'resume') {{
+    await fire('session.end', {{reason: 'resume', sessionId: 'cache-window', resume: {{id: 'cache-window'}}}}, api);
+  }}
+  // A fresh registration discards all pane memory; only Claude's store survives.
+  hooks.clear(); timers.length = 0;
+  mod.register(on);
+  await fire('session.start', {{cwd: {json.dumps(str(repo.path))}, isInteractive: true, surface: 'terminal'}}, api);
 }}
 mod.register(on);
 await fire('session.start', {{cwd: {json.dumps(str(repo.path))}, isInteractive: true, surface: 'terminal'}}, api);
@@ -77,6 +99,10 @@ if ({json.dumps(rerun and not drop)}) writeFileSync({json.dumps(str(repo.bin / '
 await tick({json.dumps('2030-01-01T00:02:10+00:00' if refresh_while_busy else '2030-01-01T00:01:10+00:00')});
 await fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}}, api);
 assert.deepEqual(prompts, [], 'A cached failure must not enter the next turn');
+if ({json.dumps(restart)} !== null) {{
+  await restartPane();
+  assert.deepEqual(prompts, [], 'Restarting must preserve the freshness wait');
+}}
 await tick('2030-01-01T00:03:00+00:00');
 if ({json.dumps(drop)}) {{
   assert.equal(reject, false, 'The host rejected a fresh, confirmed failure');
@@ -98,6 +124,10 @@ if ({json.dumps(rerun)}) {{
 }}
 await tick({json.dumps('2030-01-01T00:05:10+00:00' if drop else '2030-01-01T00:04:10+00:00' if rerun else '2030-01-01T00:03:10+00:00')});
 assert.equal(prompts.length, 1);
+if ({json.dumps(restart)} !== null) {{
+  await restartPane();
+  assert.equal(prompts.length, 1, 'A delivered or retired failure must not replay after another restart');
+}}
 console.log(JSON.stringify({{prompts}}));
 """)
     assert len(answer["prompts"]) == 1
