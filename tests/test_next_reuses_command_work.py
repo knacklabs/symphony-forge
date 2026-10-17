@@ -1,4 +1,6 @@
-"""A client-sized next command has bounded subprocess work and elapsed time."""
+"""Bound subprocesses, elapsed time and repeated work in src/forge/cli.py,
+src/forge/time_records.py and src/forge/board_facts.py at the command boundary.
+"""
 import hashlib
 import json
 import os
@@ -45,6 +47,36 @@ def test_1_next_reuses_work_within_a_command(repo, gh, monkeypatch, history):
     landed(repo, monkeypatch, "2026-11-15T12:00:00+00:00", files)
     gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(prs))
 
+    # Observe real calls in the command process, without replacing any Forge
+    # function or adding a production diagnostic just for this test.
+    measurements = repo.bin / "next-work.json"
+    shim = repo.bin / "forge"
+    shim.write_text(shim.read_text("utf-8").replace("sys.exit(main())", f'''
+import json, pathlib
+counts = {{"parser_builds": 0, "record_copies": 0, "_combined": 0, "through_forge": 0}}
+def observe(frame, event, arg):
+    if event != "call":
+        return
+    code = frame.f_code
+    if code.co_name == "_parser" and code.co_filename.endswith("cli.py"):
+        counts["parser_builds"] += 1
+    elif code.co_name in ("_combined", "through_forge"):
+        counts[code.co_name] += 1
+    elif code.co_name == "deepcopy":
+        caller = frame.f_back
+        while caller and caller.f_code.co_filename.endswith(("time_records.py", "board_facts.py")):
+            if caller.f_code.co_name in ("_combined", "through_forge"):
+                counts["record_copies"] += 1
+                break
+            caller = caller.f_back
+sys.setprofile(observe)
+try:
+    status = main()
+finally:
+    sys.setprofile(None)
+    pathlib.Path({json.dumps(measurements.as_posix())}).write_text(json.dumps(counts), encoding="utf-8")
+sys.exit(status)
+'''), encoding="utf-8")
     real_git = shutil.which("git")
     log = repo.bin / "git-calls.jsonl"
     _install(repo.bin, "git", f'''#!{sys.executable}
@@ -63,6 +95,10 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
     assert {f"done-{n}" for n in range(120)} <= rows.keys()
     for n in range(12):
         assert rows[f"ACTIVE-{n}"]["next"]["command"] == f"forge task start ACTIVE-{n}/SAVE"
+    work = json.loads(measurements.read_text("utf-8"))
+    assert work["parser_builds"] == 1, work
+    assert work["_combined"] >= 120 and work["through_forge"] >= 120, work
+    assert work["record_copies"] == 0, work
     calls = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     base_reads = [call for call in calls if call[:1] == ["show"]
                   and any("task/ACTIVE-" in arg and arg.endswith("/tasks/SAVE.json") for arg in call)]
