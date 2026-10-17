@@ -73,7 +73,7 @@
     "id": "39e3df9c-9375-4b1b-8059-5ef0bab42d87",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -86,10 +86,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "920bbd17fa4330a92e48925a213480f9771e4143",
-    "keys": {},
-    "round": null
+    "close": "b5eb2d2d-85f2-4260-9bab-80493f21342b",
+    "head": "9e58e0f899a740e277ff9762155767d043716044",
+    "keys": {
+      "the review finding \"Not done: Land lands a stacked fix after the fix it was stacked on\" in src/forge/land.py": 1,
+      "the review finding \"Stack ordering puts an unrelated younger change ahead of an older child\" in src/forge/land.py": 1
+    },
+    "round": 1
   },
   "why": "Land lands stacked fixes by age, not in the order they were stacked",
   "worker": "codex"
