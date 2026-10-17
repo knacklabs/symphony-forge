@@ -294,6 +294,9 @@ def _queue(top: Path) -> int:
         if not found:
             continue
         item, state = found
+        state = nextstep.at_ref(top, item, state, prs.get(branch))
+        if state.get("status") == "dropped":
+            continue
         age = (int(repo.git("log", "-1", "--diff-filter=A", "--format=%ct", "--",
                             repo.state_path(item), cwd=tree) or 0), item)
         if state.get("stop"):  # close decides: the owner's choice, its 30-minute default, or a stop

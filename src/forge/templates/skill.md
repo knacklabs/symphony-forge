@@ -1213,6 +1213,23 @@ tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge record
 doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
 
+## Dropping a fix
+
+Only the human decides to drop a fix. Ask first and run `forge fix drop <fix> --because
+"<reason>"` only on a clear yes. Forge pushes the fix branch, records the reason, who and when
+on that branch, and closes its pull request with the reason. The fix leaves the board,
+`forge next` and the merge queue. Its name stays reserved and its remote branch keeps the work.
+
+Forge removes the clean worktree and local branch unless ignored files outside rebuildable
+folders keep it. It lists those paths and keeps their data. Commit uncommitted changes first;
+wait for local Forge runs to finish and drop or finish any open fixes stacked on this fix.
+A merged fix cannot be dropped.
+
+Run `forge fix drop <fix> --undo` to bring it back. Forge restores the worktree or reuses the
+kept one after a fast-forward, records the restore and reopens a pull request the drop closed.
+A fix that was ready needs `forge close` again for its new commit. Teammates see a drop or
+restore after they fetch.
+
 ## Closing
 
 From the second review round, close checks the previous round's findings and the lines changed

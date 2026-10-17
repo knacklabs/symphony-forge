@@ -248,6 +248,9 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
         if state is not None:
+            state = at_ref(top, name, state, prs.get(branch))
+            if state.get("status") == "dropped":
+                continue
             if history is not None and repo.state_path(name) in history["expired"]:
                 continue
             if branch in merged_prs:
@@ -271,6 +274,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                     else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
+            if state.get("status") == "dropped":
+                continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
             if alert := claim(state):
                 pinned += alert[:-1] + found
@@ -770,7 +775,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     elif ref and not receipt and not record and checks == "pass":
         # An older release's pull request: its state file at the head says it was closed clean.
         older = story.json_of(story.show(top, ref, repo.state_path(item)))
-        if older.get("review") and not review.blocking(older["review"]) and \
+        if not older.get("drop") and older.get("review") and not review.blocking(older["review"]) and \
                 older.get("status") in ("waiting for checks", "ready"):
             evidence = {"commit": ref, "review": "clean", "shared": True}
     if status not in ("merged", "done", "hotspot"):
@@ -826,6 +831,11 @@ def _review_ref(top: Path, branch: str, pr: dict[str, Any] | None) -> str:
     head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
     if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it
         repo.run("git", "fetch", "-q", "origin", head, cwd=top)
+    remote = _commit(top, f"refs/remotes/origin/{branch}") if branch.startswith("fix/") else ""
+    # A cached pull request can precede a drop or restoration already fetched from its branch.
+    if remote and remote != head and (not head or repo.run(
+            "git", "merge-base", "--is-ancestor", head, remote, cwd=top).returncode == 0):
+        head = remote
     if local and (not head or local == head or repo.run(
             "git", "merge-base", "--is-ancestor", head, local, cwd=top).returncode == 0):
         return local
@@ -940,6 +950,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         return held
     pr = (prs or {}).get(state.get("branch", "")) or {}
     state = at_ref(top, item, state, pr)
+    if state.get("status") == "dropped":
+        return []
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks, pr=pr)
     status = status or "started"

@@ -61,6 +61,10 @@ $delegation
 - $settings
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
+- Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
+  to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
+  fix needs `forge close` again before it is ready.
+  Restore a dropped fix before you start another fix from its checkout.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
@@ -177,6 +181,7 @@ Windows checklist:
 - Tests never assume a drive letter or a '/' separator.
 - File operations in tests use the repo's lock-safe helpers where it has them.
 
+Review lists binary changes by name and line counts, including added, changed and deleted images.
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder.
 
