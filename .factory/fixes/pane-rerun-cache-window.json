@@ -10,13 +10,56 @@
   },
   "done_when": "A queued CI failure is not delivered while the same workflow and commit has a newer run on GitHub, even inside the checks cache window, and a test covers a rerun that starts within the cache window",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 109,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Queued CI failures are lost if the pane session restarts during the freshness wait",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "69702c8440695e2feaeae850c798bfded5391c09a44099922c3c9105379b8ea5",
+    "changed": "2454bcafde96f60c4d1e594105557aeda212da59a1041b4e818197e4dace2b0c",
+    "commit": "13888979220e3373579f245ef7fdc6bee9f24386",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Line 109 holds a queued failure until a later checks fetch. If the turn ends during the cache window and the user restarts the pane before that fetch, session cleanup clears `pending` (events.ts:145), and the new session's baseline marks the still-visible workflow ID as seen (events.ts:71\u201375). The unchanged failure is then never delivered, even after fresh checks arrive. The new test covers waiting in one session but not this normal restart path.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "gain": 4,
+        "harm": 3,
+        "line": 109,
+        "priority": "P1",
+        "title": "Queued CI failures are lost if the pane session restarts during the freshness wait",
+        "work": 2
+      }
+    ],
+    "id": "bd035321-17d6-4c1f-b5e9-7e163df1d75f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T19:52:40.865537+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T20:23:12.914882+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
