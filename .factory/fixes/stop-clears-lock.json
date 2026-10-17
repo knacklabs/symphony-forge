@@ -10,21 +10,48 @@
   },
   "done_when": "forge stop on an item also clears that item's lock when no live run of this machine holds it, and a test stops an item whose lock outlived its run",
   "fix_kind": "backend",
-  "flagged": [],
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
   "kind": "fix",
-  "known": [],
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 96,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "A queued CI failure is delivered after a rerun starts within the cache window",
+      "work": 2
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5e8a87e26da39bd89ca271dd56a7619c5bee95b474159422ac86141a8e248be3",
-    "changed": "6e277a6d1770d07e609d2f6b0fad2cbac5e7da68e316ec71c0980b54726069da",
-    "commit": "ea7cabb55b314a36bb10286d288799701cfcb5e2",
+    "branch_diff": "9264c2abceae2979d2822d18866e93949287311c0377a8481a59be36fd02ddbe",
+    "changed": "77539049ba892e125cfe389169991c01089a8e6fb31f5afbaaddb8c1856fc278",
+    "commit": "885573d3352404b3888b782c3c2b597ceac092c7",
     "dismissals": [],
-    "findings": [],
-    "id": "6cf1cb0e-8b97-4144-abcf-53d877f06337",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. When a workflow failure is queued during a busy turn and its rerun starts within 60 seconds, the next board refresh still reads the failed occurrence from the checks cache (`src/forge/board.py:104`). At turn completion, `latest.has(id)` remains true, so this guard submits the obsolete failure. The new test advances `FORGE_NOW` by a full minute between responses (`tests/test_mod_plugin.py:248`), missing this normal sequence.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 96,
+        "priority": "P1",
+        "title": "A queued CI failure is delivered after a rerun starts within the cache window",
+        "work": 2
+      }
+    ],
+    "id": "8ba7571d-40fe-41a3-92d4-b3b949427521",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T17:15:27.504481+00:00",
@@ -32,6 +59,10 @@
     },
     {
       "at": "2026-10-17T17:37:22.363198+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:43:00.904478+00:00",
       "step": "review"
     }
   ],
