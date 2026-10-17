@@ -21,7 +21,7 @@
       "gain": 3,
       "harm": 3,
       "line": 76,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5eaf02750ba6dd9ad1096d639fede27e7dbec7410db589f7ed7121fe2c4b1480",
-    "changed": "699f50b3ecabde91bc71737b4b0fd4af7da248a758580872167534b4d8123d2e",
-    "commit": "51193cc3816b868946d027962d4b37e1aa2396c7",
+    "branch_diff": "8b8316697503387ae5458fa6d599cc8b966362e3a60f9bfdefa864be9314162c",
+    "changed": "fa931d13a1202f431c825020177092742fe34b705232e3481e948c8e2f38dcee",
+    "commit": "180ddfd572dea36f0006af35e9894e4939a83023",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 If a workflow fails while Claude is busy, then passes on a rerun of the same commit before delivery, the board updates its result but keeps the same workflow-and-commit event ID. This line does not replace the pending event because its ID is already observed, so delivery still says the workflow failed. The same-commit rerun proof changes check IDs and times but never changes the result, leaving this path untested.",
-        "file": "src/forge/mod/hooks/events.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 76,
-        "priority": "P1",
-        "title": "Queued CI events can report an obsolete result after a rerun",
-        "work": 2
-      }
-    ],
-    "id": "7d40a4eb-4a65-47a1-a6b1-d5cbf52135b1",
-    "status": "blocked"
+    "findings": [],
+    "id": "e8269751-90ba-4981-847e-38b468b87946",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T05:29:35.134342+00:00",
@@ -59,6 +48,10 @@
     },
     {
       "at": "2026-10-17T06:19:08.746078+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:14:17.716576+00:00",
       "step": "review"
     }
   ],
