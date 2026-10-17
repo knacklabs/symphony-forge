@@ -1,6 +1,13 @@
 {
   "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
   "branch": "fix/outside-pr-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14adf-77ec-7d20-b976-843341f7b545",
+    "head": null,
+    "start": "49cc5b84263922674216508e4f9fceaeb1e2e293"
+  },
   "done_when": "Forge's required check fails such a pull request at once with a plain message that names the fix flow, on new and existing repos, and a test covers it",
   "fix_kind": "backend",
   "kind": "fix",
