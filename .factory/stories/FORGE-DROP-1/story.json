@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-17T17:43:58.693365+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01KhXaFs9xpzNeC9z19eTtHi",
+    "hash": "c0edd03485b1f9611b484bcd48553d07d81d64dfbee8c9b0a3cf6169e3e393c5",
+    "part_line_limit": 400,
+    "round": 4,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-DROP-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-17T17:29:50.299103+00:00",
@@ -21,8 +31,12 @@
     {
       "at": "2026-10-17T17:43:08.025333+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-17T17:43:58.693894+00:00",
+      "step": "approved"
     }
   ],
   "title": "Drop a fix nobody wants any more, and bring it back later",
-  "touches": 0
+  "touches": 1
 }
