@@ -47,7 +47,7 @@
     "id": "b84ef50e-fc9f-4de1-90f0-f30ab6da814c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -60,10 +60,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "32cfedf10cf84f8b83c6bad8b2facac8bd92ee44",
-    "keys": {},
-    "round": null
+    "close": "8efa6178-fc55-430b-85ed-b091d04b3e2f",
+    "head": "34c99167288f4b611714ca765766f124b074244e",
+    "keys": {
+      "the review finding \"Starting a fix from a retained dropped checkout creates a blocked stack\" in src/forge/task.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
