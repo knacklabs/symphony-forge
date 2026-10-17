@@ -1,0 +1,142 @@
+{
+  "branch": "task/FORGE-BOARD-4-SERVER",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/board_server.py",
+    "tests/test_board_server.py"
+  ],
+  "known": [
+    {
+      "area": "docs/board-design/Manager.dc.html",
+      "file": "docs/board-design/Manager.dc.html",
+      "gain": 3,
+      "harm": 2,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: remove design artboards from the SERVER change",
+      "work": 1
+    },
+    {
+      "area": "Snapshots.watched() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Watch working-tree inputs before serving the cached snapshot",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 346,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "An unrelated main commit invalidates every cached item row",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 44,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: SHELL must make the page refresh by itself",
+      "work": 3
+    },
+    {
+      "area": "test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request() in tests/test_board_server.py",
+      "file": "tests/test_board_server.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 235,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request",
+      "work": 1
+    },
+    {
+      "area": "handler.Handler.route() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 237,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Removing shell and asset serving breaks the live page when SHELL lands",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eb78115ef2c91707b404bb2f5a150c5997fe8022d4f98499f36954f81f023588",
+    "changed": "e4a3e893e88f85ddb68802706dbf1dbe554ad9016e9d69156de9e34c326330da",
+    "commit": "21609b827e858f51b30abb61fd859990e2a40ee6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. This route now always serves the placeholder, and the asset route was removed. When SHELL adds board_app/shell.html, app.js and tokens.css as assigned, `forge board` will still show the placeholder and return 404 for its assets. The server therefore cannot display SHELL's page or its automatic refresh.",
+        "file": "src/forge/board_server.py",
+        "follow_up": "New finding on lines unchanged since the previous review.",
+        "gain": 4,
+        "harm": 3,
+        "line": 237,
+        "priority": "P1",
+        "title": "Removing shell and asset serving breaks the live page when SHELL lands",
+        "work": 1
+      }
+    ],
+    "id": "5dc39cb3-86b3-48d2-b484-975864023a29",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T06:15:46.941448+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:47:12.073339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T06:12:44.996867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:10:46.228335+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:31:25.975487+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "87ead75c-089e-4a76-ad39-2c2aada3270f",
+    "head": "d99e8b412ad29b466cb7c5809d59a8c4a057e3b6",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "claude"
+}

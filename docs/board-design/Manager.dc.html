@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board, team now</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column">
+
+  <header style="height: 48px; flex: none; background: #15171A; color: #ECEDEA; display: flex; align-items: center; gap: 24px; padding: 0 32px">
+    <span style="font-size: 14px; font-weight: 600">Forge <span style="font-weight: 400; color: #B4B8BC">symphony-forge</span></span>
+    <nav aria-label="Pages" style="display: flex; gap: 4px">
+      <a href="Manager.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 6px; padding: 6px 12px">Now</a>
+      <a href="Releases.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Releases</a>
+      <a href="Insights.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Insights</a>
+    </nav>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 16px">
+      <div role="group" aria-label="View" style="display: flex; background: #2C3034; border-radius: 6px; padding: 2px">
+        <a href="Manager.dc.html" aria-current="page" style="font-size: 12px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 4px; padding: 4px 12px">Team</a>
+        <a href="Developer.dc.html" style="font-size: 12px; color: #B4B8BC; padding: 4px 12px">Me</a>
+      </div>
+      <span style="font-size: 12px; color: #B4B8BC; display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #5CC8B8"></span>Live</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-label="Needs you" style="display: flex; align-items: stretch; gap: 16px; flex: none">
+      <div style="width: 96px; display: flex; flex-direction: column; justify-content: center">
+        <span style="font-size: 24px; font-weight: 600; color: #B54708">2</span>
+        <span style="font-size: 12px; color: #4A4F57">need you</span>
+      </div>
+      <sc-for list="{{asks}}" as="a" hint-placeholder-count="2">
+        <a href="Drawer.dc.html" style="width: 300px; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+          <span style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; color: #FFFFFF; background: #B54708; border-radius: 3px; padding: 2px 8px">{{a.verb}}</span><span style="font-size: 12px; color: #6B717A">{{a.key}}</span></span>
+          <span style="font-size: 14px; font-weight: 600">{{a.title}}</span>
+          <span title="{{a.age}}" style="display: flex; height: 4px; border-radius: 2px; background: #EEEFEC"><span style="width: {{a.bar}}; background: #B54708; border-radius: 2px"></span></span>
+        </a>
+      </sc-for>
+    </section>
+
+    <div style="flex: 1; min-height: 0; display: flex; gap: 24px">
+
+      <section aria-label="Pipeline" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: flex-end">
+          <div role="group" aria-label="Show" style="display: flex; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 2px">
+            <button type="button" style="border: 0; font: inherit; font-size: 12px; font-weight: 600; background: #15171A; color: #FFFFFF; border-radius: 4px; padding: 4px 10px">All</button>
+            <button type="button" style="border: 0; font: inherit; font-size: 12px; background: transparent; color: #4A4F57; padding: 4px 10px">Story parts</button>
+            <button type="button" style="border: 0; font: inherit; font-size: 12px; background: transparent; color: #4A4F57; padding: 4px 10px">Fixes</button>
+          </div>
+        </div>
+        <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+            <div style="background: #EEEFEC; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px 4px">
+                <span style="font-size: 14px; font-weight: 600">{{c.name}}</span>
+                <span style="font-size: 12px; color: #4A4F57">{{c.count}}</span>
+              </div>
+              <sc-for list="{{c.chips}}" as="h" hint-placeholder-count="3">
+                <a href="Drawer.dc.html" style="background: #FFFFFF; border: 1px {{h.edge}} {{h.line}}; border-left: 3px solid {{h.color}}; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px">
+                  <span style="display: flex; gap: 6px; align-items: baseline">
+                    <span style="font-size: 14px; font-weight: 600; line-height: 18px; flex: 1; min-width: 0">{{h.title}}</span>
+                    <span style="font-size: 12px; color: {{h.tagColor}}; background: {{h.tagBg}}; border-radius: 3px; padding: 0 5px; white-space: nowrap; font-weight: {{h.tagWeight}}">{{h.tag}}</span>
+                    <span title="{{h.whoName}}" style="width: 18px; height: 18px; flex: none; border-radius: 999px; background: {{h.whoBg}}; color: #FFFFFF; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; align-self: center">{{h.who}}</span>
+                  </span>
+                  <sc-if value="{{h.hasStrip}}" hint-placeholder-val="{{true}}">
+                    <span style="display: flex; height: 4px; border-radius: 2px; overflow: hidden; width: {{h.len}}">
+                      <span style="flex: {{h.work}}; background: {{h.color}}"></span>
+                      <span style="flex: {{h.wait}}; background: repeating-linear-gradient(135deg, #C9CCC6 0 3px, #F4F5F2 3px 6px)"></span>
+                      <span style="flex: {{h.you}}; background: repeating-linear-gradient(135deg, #F0A35C 0 3px, #FDF0E6 3px 6px)"></span>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{h.hasNote}}" hint-placeholder-val="{{false}}">
+                    <span style="display: flex; gap: 6px; flex-wrap: wrap">
+                      <span style="font-size: 12px; color: {{h.noteColor}}; border: 1px {{h.noteEdge}} {{h.noteLine}}; background: {{h.noteBg}}; border-radius: 3px; padding: 1px 6px; font-weight: {{h.noteWeight}}">{{h.note}}</span>
+                    </span>
+                  </sc-if>
+                </a>
+              </sc-for>
+              <sc-if value="{{c.empty}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 12px; color: #6B717A; padding: 4px 2px">Nothing ready to merge.</span>
+              </sc-if>
+              <sc-if value="{{c.merged}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; flex-direction: column; gap: 6px; padding: 2px">
+                  <span style="font-size: 24px; font-weight: 600; color: #0F766E">174</span>
+                  <span style="font-size: 12px; color: #4A4F57; margin-top: -6px">last 7 days</span>
+                  <sc-for list="{{lastMerged}}" as="m" hint-placeholder-count="5">
+                    <span style="font-size: 12px; color: #4A4F57; line-height: 16px; border-top: 1px solid #E2E4E0; padding-top: 6px">{{m}}</span>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <aside aria-label="Stories" style="width: 320px; flex: none; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <span style="font-size: 17px; font-weight: 600">Stories</span>
+          <span style="font-size: 12px; color: #4A4F57">go-live</span>
+        </div>
+        <sc-for list="{{stories}}" as="s" hint-placeholder-count="3">
+          <a href="Drawer.dc.html" style="display: flex; flex-direction: column; gap: 6px; padding-left: {{s.indent}}; border-left: {{s.rule}}">
+            <span style="display: flex; gap: 8px; align-items: baseline">
+              <span style="font-size: 14px; font-weight: 600; line-height: 18px; flex: 1">{{s.title}}</span>
+              <span style="font-size: 12px; color: #6B717A; white-space: nowrap">{{s.live}}</span>
+            </span>
+            <span style="display: flex; gap: 3px; height: 6px">
+              <sc-for list="{{s.parts}}" as="p" hint-placeholder-count="4">
+                <span style="flex: 1; border-radius: 2px; background: {{p}}"></span>
+              </sc-for>
+            </span>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B717A">
+              <span>{{s.key}}</span>
+              <span style="margin-left: auto; color: {{s.ownerColor}}; font-weight: {{s.ownerWeight}}; border: 1px {{s.ownerEdge}} {{s.ownerLine}}; border-radius: 3px; padding: 0 6px">{{s.owner}}</span>
+            </span>
+          </a>
+        </sc-for>
+        <div style="margin-top: auto; border-top: 1px solid #E2E4E0; padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+          <span style="display: flex; justify-content: space-between"><span>No plan yet</span><span style="color: #4A4F57">6 stories</span></span>
+          <span style="display: flex; justify-content: space-between"><span>Fixes</span><span style="color: #4A4F57">6 moving · 0 ready</span></span>
+        </div>
+      </aside>
+    </div>
+
+    <section aria-label="Figures" style="flex: none; display: flex; gap: 48px; border-top: 1px solid #E2E4E0; padding-top: 14px">
+      <sc-for list="{{figures}}" as="f" hint-placeholder-count="4">
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="font-size: 24px; font-weight: 600; color: {{f.color}}">{{f.value}}</span>
+          <span style="font-size: 12px; color: #4A4F57">{{f.label}}</span>
+        </div>
+      </sc-for>
+      <span style="margin-left: auto; font-size: 12px; color: #8A9096; align-self: center">Sample data</span>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = { edge: 'solid', line: '#E2E4E0', tagColor: '#6B717A', tagBg: 'transparent', tagWeight: 400, hasStrip: true, hasNote: false, you: 0, len: '100%', who: 'RV', whoName: '@vrknetha', whoBg: '#4A4F57' };
+    const kn = { who: 'KN', whoName: '@kl-nandeeshwar', whoBg: '#1D4ED8' };
+    const none = { who: '–', whoName: 'Not assigned', whoBg: '#C9CCC6' };
+    const own = (u) => ({ owner: '@' + u, ownerColor: '#4A4F57', ownerWeight: 400, ownerEdge: 'solid', ownerLine: 'transparent' });
+    const assign = { owner: 'Assign', ownerColor: '#1D4ED8', ownerWeight: 600, ownerEdge: 'solid', ownerLine: '#1D4ED8' };
+    const fix = { tagColor: '#4A4F57', tagBg: '#EEEFEC' };
+    const after = (t) => ({ hasNote: true, note: t, noteColor: '#4A4F57', noteEdge: 'dashed', noteLine: '#8A9096', noteBg: 'transparent', noteWeight: 400 });
+    const blocks = (t) => ({ hasNote: true, note: t, noteColor: '#FFFFFF', noteEdge: 'solid', noteLine: '#15171A', noteBg: '#15171A', noteWeight: 600 });
+    const planned = { ...base, color: '#8A9096', hasStrip: false };
+    const moving = { ...base, color: '#1D4ED8' };
+    return {
+      asks: [
+        { verb: 'Decide', key: 'MAINONCE', title: 'Spotted per change', age: 'waiting 1 h 10 m', bar: '30%' },
+        { verb: 'Approve', key: 'TOOLS', title: 'Run Forge in Claude, Codex or both', age: 'waiting 5 h', bar: '85%' }
+      ],
+      cols: [
+        { name: 'Planned', count: '4', chips: [
+          { ...planned, title: 'Close takes in main once', tag: 'MAINONCE', ...after('after Main only on a clash') },
+          { ...planned, ...none, title: 'Start a part on its parent', tag: 'STACK' },
+          { ...planned, ...none, title: 'Close a stacked part', tag: 'STACK', ...after('after Main only on a clash +1') },
+          { ...planned, ...kn, title: 'Claude workers through the SDK', tag: 'TOOLS' } ] },
+        { name: 'Building', count: '4', chips: [
+          { ...moving, title: 'Main only on a clash', tag: 'MAINONCE', work: 55, wait: 45, len: '60%', ...blocks('blocks 5') },
+          { ...moving, ...kn, title: 'The SDK runs Claude workers', tag: 'TOOLS', work: 8, wait: 2, len: '15%' },
+          { ...moving, ...fix, title: 'Windows tests pass again', tag: 'Fix', work: 70, wait: 25, you: 5, len: '100%' },
+          { ...moving, ...fix, title: "The board's product record", tag: 'Fix', work: 10, wait: 0, len: '8%' } ] },
+        { name: 'Review', count: '3', chips: [
+          { ...moving, color: '#9F1239', line: '#9F1239', title: 'Spotted per change', tag: '3 rounds', tagColor: '#9F1239', tagWeight: 600, work: 60, wait: 20, you: 20, len: '70%' },
+          { ...moving, ...fix, title: 'Test audit follow-ups', tag: 'Fix', work: 45, wait: 55, len: '40%' },
+          { ...moving, ...fix, color: '#9F1239', line: '#9F1239', title: 'Time summaries in pull requests', tag: 'idle 2 d', tagColor: '#9F1239', tagBg: 'transparent', tagWeight: 600, work: 15, wait: 85, len: '45%' } ] },
+        { name: 'Ready', count: '0', chips: [], empty: true },
+        { name: 'Merged', count: '', chips: [], merged: true }
+      ],
+      lastMerged: ['The pane shows the board first', 'Board JSON in 5 seconds', 'Sandbox rounds use the plan login', 'A note reaches a running worker', 'Item cost spec'],
+      stories: [
+        { title: 'Main only on a real clash', key: 'FORGE-MAINONCE-1', live: 'unknown', indent: '0', rule: '0', parts: ['#1D4ED8', '#9F1239', '#E2E4E0'], ...own('vrknetha') },
+        { title: "A story's parts build on each other", key: 'FORGE-STACK-1 · waits', live: 'unknown', indent: '12px', rule: '2px solid #E2E4E0', parts: ['#E2E4E0', '#E2E4E0'], ...assign },
+        { title: 'Run Forge in Claude, Codex or both', key: 'FORGE-TOOLS-1', live: 'next release', indent: '0', rule: '0', parts: ['#0F766E', '#0F766E', '#0F766E', '#0F766E', '#1D4ED8', '#E2E4E0', '#E2E4E0'], ...own('kl-nandeeshwar') }
+      ],
+      figures: [
+        { value: '174', label: 'merged in 7 days', color: '#15171A' },
+        { value: '1.9 h', label: 'median item', color: '#15171A' },
+        { value: '9.5%', label: 'waited for you', color: '#B54708' },
+        { value: '1', label: 'red checks', color: '#9F1239' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

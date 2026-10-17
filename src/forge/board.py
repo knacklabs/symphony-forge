@@ -9,6 +9,7 @@ none of those. Without gh the page shows the state and its dates only.
 """
 from __future__ import annotations
 
+import copy
 import functools
 import io
 import json
@@ -28,12 +29,11 @@ from forge import __version__, approval, board_facts, board_graph, board_visuals
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
-    "help": "Write and open the plain-English board page",
+    "help": "Open the live board page on this computer",
     "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
-             (('--out',), {"metavar": "PATH", "help":
-              "write the page here instead of .git/forge/board.html"})],
+             (('--out',), {"metavar": "PATH", "help": "write the static page here instead"})],
     "position": 60,
-    "listing": "| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |",
+    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes the static page instead) |",
 }]
 
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
@@ -56,11 +56,14 @@ def board(args: Any) -> int:
     if args.json:
         print(json.dumps(machine_board(top)))
         return 0
+    if not args.out:
+        from forge import board_server
+        return board_server.serve(top)
     view = machine_board(top, trim=False)
     stories, prs = _gather(top)
     page = board_visuals.page(view, "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + ".",
                               prs is not None, _when(repo.now()) or datetime.now(timezone.utc))
-    out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
+    out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(page.encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
@@ -226,9 +229,11 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
     return runs
 
 
-def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> Item:
+def machine_board(top: Path, history: Item | None = None, trim: bool = True, cache: Item | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
-    `trim` leaves out work finished more than seven days ago; the page keeps it."""
+    `trim` leaves out work finished more than seven days ago; the page keeps it. The live page
+    passes `cache`, which keeps each row with its inputs between calls; only rows whose inputs
+    changed are derived again, and their ids are listed in `cache["rebuilt"]`."""
     from forge import known_issues, nextstep, time_records
 
     trees = story.worktrees(top)
@@ -287,9 +292,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             story_event_dates.setdefault(key, []).append(event.get("at"))
     timings = time_records.read(top, "timings")
 
-    branch_dates = dict(line.split("\0", 1) for line in repo.git(
-        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)",
-        "refs/heads", "refs/remotes/origin", cwd=top).splitlines())
+    refs = [line.split("\0") for line in repo.git(
+        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)%00%(objectname)",
+        "refs/heads", "refs/remotes/origin", cwd=top).splitlines()]
+    branch_dates = {name: date for name, date, _ in refs}
+    tips = {name: tip for name, _, tip in refs}
     timing_dates: dict[str, list[str]] = {}
     timings_by_item: dict[Any, list[Item]] = {}
     for timing in timings:
@@ -321,7 +328,63 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         except repo.Refused:
             return "blocked", assignments
 
+    forge_files = repo.forge_dir(top)
+    # Every row shows names from this one map, so a change to it rebuilds every row.
+    people = "" if cache is None else repo.blob_hash(json.dumps(sorted(map(str, names.items()))))
+    files = [] if cache is None else [  # Forge's per-item records: locks, turn logs, approvals
+        (path.relative_to(forge_files).as_posix(), path.stat().st_mtime_ns)
+        for path in forge_files.rglob("*") if path.is_file()]
+    docs = {} if cache is None else {name: repo.blob_hash(text) for name, text in history.get("docs", {}).items()}
+    # The server's read of each checkout's records and plans on disk, uncommitted edits included.
+    local = [] if cache is None else [entry for entry in cache.get("local", [])
+                                      if entry[1] not in ("forge.toml", "plans/roadmap.json")]
+    starters = {} if cache is None else _starters(top)
+
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
+        if cache is None:
+            return derive(item, kind, title, state, where)
+        # ponytail: a row's inputs are every fact that names its story or fix, a substring match
+        # that can over-include (SHOP-1 in SHOP-10) and so only rebuilds more; a fact that names
+        # neither waits for the row's own inputs to change.
+        own = item.split("/")[0]
+        inputs = json.dumps([
+            # A story's next step reads the default branch, so a story row also rebuilds when it moves.
+            item, kind, title, state, str(where), tips.get(str(where)) if where != landed else None,
+            tips.get(landed) if kind == "story" else None, [entry for entry in local if own in entry[0] + entry[1]],
+            [(name, blob) for name, blob in docs.items() if own in name],
+            completed.get(own), starters.get(repo.state_path(item)), people,
+            [(branch, pr) for branch, pr in people_branches.items() if own in branch],
+            [(ref, tip) for ref, tip in tips.items() if own in ref],
+            [(branch, pr) for branch, pr in by_branch.items() if own in str(branch)],
+            sorted(rel for rel in merged if own in rel), [(rel, at) for rel, at in history["dates"].items() if own in rel],
+            [(rel, part) for rel, (part, _) in best.items() if own in rel],
+            [(name, e) for name, e in by_item.items() if own in str(name)],
+            [(name, t) for name, t in timings_by_item.items() if own in str(name)],
+            [f for f in files if own in f[0]]], sort_keys=True, default=str)  # hashed below, kept small to save
+        kept, inputs = cache["rows"].get(item), repo.blob_hash(inputs)
+        if kept and kept[0] == inputs:
+            made, ready, waits, owner = copy.deepcopy(kept[1])
+            if owner is not None:  # the story's owner, which its unstarted parts read after the rows
+                owners.setdefault(own, owner)
+            now = _when(repo.now())
+            if made["idle_since"] and now and _when(made["idle_since"]):
+                made["idle_seconds"] = max(0, (now - _when(made["idle_since"])).total_seconds())
+                made["stalled"] = made["idle_seconds"] > 86400
+        else:
+            made = derive(item, kind, title, state, where)
+            ready, waits = readiness.get(item), person_waits.get(item)
+            cache["rebuilt"].append(item)
+            # A running row's times move with the clock, so it is derived again each time.
+            running = made["worker"] or made["tests"] or made["activity"]["status"] == "running"
+            kept = [made, ready, waits, owners.get(own)]
+            cache["rows"][item] = None if running else (inputs, copy.deepcopy(kept))
+        if ready is not None:
+            readiness[item] = ready
+        if waits is not None:
+            person_waits[item] = waits
+        return made
+
+    def derive(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if kind == "story" and item in completed:
             state = {**state, **completed[item], "status": "done"}
         elif kind == "task" and item.split("/")[0] in completed:
