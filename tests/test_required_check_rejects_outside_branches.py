@@ -34,13 +34,15 @@ def test_1_required_check_rejects_outside_branch_with_fix_flow(env, tmp_path, ad
     command = shlex.split(re.search(r"^        run: (forge hook pr-check .+)$", gate, re.M)[1])
     # The author makes a real commit in a clone without Forge's local hooks.
     outside = tmp_path / "outside"
-    repo.git("clone", "-q", str(client), str(outside))
+    repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(outside))
+    assert repo.git("rev-parse", "HEAD", cwd=outside) == base
     branch = "feature/readme"
     repo.git("checkout", "-q", "-b", branch, cwd=outside)
     (outside / "README.md").write_text("# An outside change\n", encoding="utf-8")
     repo.git("add", "README.md", cwd=outside)
     repo.git("commit", "-qm", "Change the readme", cwd=outside)
-    repo.git("fetch", "-q", str(outside), branch, cwd=client)
+    repo.git("push", "-q", "origin", branch, cwd=outside)
+    repo.git("fetch", "-q", "origin", branch, cwd=client)
     variables = {"BASE_SHA": base, "HEAD_SHA": repo.git("rev-parse", "FETCH_HEAD"),
                  "HEAD_REF": branch}
     # Execute the committed workflow's gate command with GitHub's PR values.
