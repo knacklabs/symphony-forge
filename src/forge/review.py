@@ -707,7 +707,8 @@ def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str
     if not cited:
         return False  # no cited line to compare: the dismissal stands, as before
     commit, path, number = cited
-    diff = repo.run("git", "diff", "-U0", "-M", commit, head, cwd=top)
+    # A Windows checkout can change CRLF to LF without changing the cited evidence.
+    diff = repo.run("git", "diff", "--ignore-cr-at-eol", "-U0", "-M", commit, head, cwd=top)
     if diff.returncode:
         return True  # the dismissal's commit is gone: nothing proves the line unchanged
     old, header = "", False
@@ -912,6 +913,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             snapshot = repo.git("commit-tree", product_tree, "-p", review_base,
                                 "-m", "Product snapshot for sign-off", cwd=tree)
             repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
+            # Sign-off reads every file, so generated ones (images, video, lockfiles) stay
+            # names only here too: Autoreview refuses binary media in its bundle.
+            prompt += _hide_generated(tree, review_base, snapshot)
         else:
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
@@ -1053,8 +1057,9 @@ def _hide_generated(tree: Path, start: str, head: str) -> str:
     snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
                         "-m", "Branch head without generated files' contents", cwd=tree)
     repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
-    return ("\n\n## Generated files\n\nThese files are marked linguist-generated in .gitattributes, "
-            "so their contents are left out of the diff:\n"
+    return ("\n\n## Generated files\n\nEach listed file is committed at the real branch head with the listed line counts. "
+            "The review tree only restores each file to the branch start to keep its contents out of "
+            "the diff. A missing or untracked copy in the review tree is not a finding:\n"
             + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
                        for path in generated))
 
