@@ -10,13 +10,29 @@
   },
   "done_when": "A reused review is recorded against the branch's new head after a replay, so the pull request check passes; and when the only failing check is Forge's own review check, land closes again instead of starting a worker round",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a75917f29731c7a6d3048391ffef6bb38421813ae6408624a2163f55f4236917",
+    "changed": "584c26d6923af836541f885640adf71e346ae2a29e1a020ad677dcddd4caf2f6",
+    "commit": "afecc3f81ca37b25c656b7efe6755f1ef7fcbee1",
+    "dismissals": [],
+    "findings": [],
+    "id": "2fd3f7af-9db4-4ff5-affc-67399a1b6712",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T05:29:27.568963+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:57:14.493713+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
@@ -25,6 +41,7 @@
     "keys": {},
     "round": null
   },
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest 2afce1d89e3e304696b33c359cb1fe19355ef3b5` exited with status 1 on this machine.\nNo local test names src/forge/land.py; GitHub's checks will cover it.\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nrepo = <conftest.Repo object at 0x10ad66590>\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ad66390>\nsdk_data = PosixPath('/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-after-replay/.pytest_cache/d/codex-sdk-0.159.2')\n\n    def _resumable_question(repo, monkeypatch, sdk_data):\n        folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)\n        stub = repo.bin / \"codex-app-server\"\n        source = stub.read_text(\"utf-8\")\n        original = '\"text\": f\"stub codex: {turn} on {id}\"'\n        assert source.count(original) == 1\n        source = source.replace(original, original + ' + os.environ.get(\"STUB_SAY\", \"\")')\n        # The resume fixture only displays its message. Give the SDK the timestamp it requires to\n        # recognize the message as a final answer, as the worker fixture does.\n        source = source.replace('\"turnId\": turn, \"item\": said',\n                                '\"turnId\": turn, \"completedAtMs\": 2, \"item\": said')\n        _install(repo.bin, \"codex-app-server\", source)\n        question = \"Question: May I use the existing parser?\"\n        monkeypatch.setenv(\"STUB_SAY\", \"\\n\\n\" + question)\n        asked = repo.forge(\"work\", \"BOARD/PAGE\")\n>       assert asked.returncode == 0, asked.stderr\nE       AssertionError: The Codex SDK 0.159.2 isn't installed in /Users/ravikiranvemula/Workdir/symphony-forge-fix-review-after-replay/.pytest_cache/d/codex-sdk-0.159.2/forge/codex-sdk/openai-codex-0.159.2.\nE         Next: forge doctor --fix\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-after-replay/.venv/bin/python', '/pri...view-after-replay/.pytest_cache/d/codex-sdk-0.159.2/forge/codex-sdk/openai-codex-0.159.2.\\nNext: forge doctor --fix\\n\").returncode\n\ntests/test_steer_question.py:36: AssertionError\n8 failed, 62 passed in 345.42s (0:05:45)",
   "why": "After land replays a branch, close reuses the clean review but keeps the old commit in its record, so the pull request check fails on every push; and land then hands the worker a round it cannot fix",
   "worker": "codex"
 }

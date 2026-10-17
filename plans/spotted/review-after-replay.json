@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_codex_worker.py\tThe cached SDK points to Python inside a test folder that no longer exists.",
+      "kind": "edge",
+      "path": "tests/test_codex_worker.py",
+      "line": 78,
+      "text": "The cached SDK points to Python inside a test folder that no longer exists.",
+      "from": "worker",
+      "item": "review-after-replay",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_live_status.py\tTwo Codex read cases could not find a coordinator session in the selected run.",
+      "kind": "edge",
+      "path": "tests/test_live_status.py",
+      "line": 107,
+      "text": "Two Codex read cases could not find a coordinator session in the selected run.",
+      "from": "worker",
+      "item": "review-after-replay",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
