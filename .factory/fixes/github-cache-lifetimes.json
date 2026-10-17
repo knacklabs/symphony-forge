@@ -21,7 +21,7 @@
       "gain": 3,
       "harm": 3,
       "line": 170,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,38 +44,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ff6b39e0d744c396b1f5631349f64d877aee9723e0e9b7e139ef6ec07ffae2e1",
-    "changed": "33f6f84320f55798f63449fcb64b988e74ea9b00cb84c8ffdc46cd9f76a48206",
-    "commit": "3fc1cbf5b16199de7c9174954e00a3cfd6ffa165",
+    "branch_diff": "3c39a798b054d6bd65d91fce503e3f559251ac9223c202a93f1dec4f1010fc4f",
+    "changed": "e3898bf12c64740360191fe61cb86a5de68d47f62e6bd4750521fb1cd52247c8",
+    "commit": "a899f5498afcd59c74ab43c1fb10158e412c201d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 `merged_before_weeks` changes its search cutoff each Monday, but `prs-older-cache` retains Sunday's result for 24 hours. A task merged in the week that just fell outside the six-week window is absent from both the weekly lists and the cached older list. During that interval, the board loses its part history and `forge next` can treat the merged part as unmerged. The named lifetime test advances from Wednesday to Thursday, so it does not catch this transition.",
-        "file": "src/forge/board_facts.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 170,
-        "priority": "P1",
-        "title": "Older merged parts disappear for up to a day when the week rolls over",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done \u2014 The warm-command test checks that the `gh` stub received no calls, but it only counts Git commands; it never checks whether any were network calls. In a client repo with a Dockerfile on the default branch, the unchanged `nextstep._needs_demo_address` path calls `repo.default_config`, which runs `git fetch origin <default>` on every `forge next --json`, including a warm run. Neither tested client fixture has a Dockerfile, so the proof passes while the stated no-network condition fails for this common layout.",
-        "file": "tests/test_github_reads_follow_data_lifetimes.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 77,
-        "priority": "P1",
-        "title": "Not done: Each GitHub cache lives as long as its data changes (open pull requests and this week each minute, past weeks and history for a d\u2026",
-        "work": 2
-      }
-    ],
-    "id": "1534cd7b-eb0d-471f-b06f-59d017cabb60",
-    "status": "blocked"
+    "findings": [],
+    "id": "275baa0f-86b3-4bcc-80fa-ba32efa9ccf1",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T14:21:13.537518+00:00",
@@ -83,6 +61,10 @@
     },
     {
       "at": "2026-10-17T15:04:45.584196+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T15:29:38.891729+00:00",
       "step": "review"
     }
   ],
