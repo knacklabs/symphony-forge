@@ -1,0 +1,15 @@
+{
+  "base": "db35b0d7cf9fc1ad2a8bbcd95dc91c3e5bc64483",
+  "branch": "fix/pane-ci-rerun",
+  "done_when": "A queued CI event whose workflow has been rerun since is dropped or replaced by the current result before delivery, and a test covers a failure followed by a rerun",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T16:22:47.631758+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pane can deliver a queued CI failure after that workflow's rerun has started, because delivery checks only that the item still exists"
+}
