@@ -4,6 +4,7 @@ STORY = "FORGE-UPGRADE-1"
 Each test is named test_<n>_ after the story's Done-when item it proves.
 """
 import json
+import os
 import re
 import sys
 
@@ -13,6 +14,7 @@ from conftest import _install, machine_cores
 
 from test_doctor_fix_files import _land, _set
 from test_setup import _autoreview, _fresh_client, _stub_forge, _version
+from test_runs_wait_for_machine_load import runner_process_list
 
 INSTALL = "uv tool install git+https://github.com/knacklabs/symphony-forge@{pin}"
 
@@ -34,6 +36,9 @@ def _compared(installed: str, pinned: str) -> str:
 def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, monkeypatch,
                                                             case):
     machine_cores(repo, 6)
+    # The exact-output contract describes a machine without a runner, including on CI hosts.
+    if os.name != "nt":
+        runner_process_list(repo).write_text("", encoding="utf-8")
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")

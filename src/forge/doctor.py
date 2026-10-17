@@ -472,7 +472,8 @@ def doctor(args: argparse.Namespace) -> int:
     if os.name != "nt":
         processes = repo.run("ps", "-axo", "command=")
         if processes.returncode == 0 and re.search(
-                r"(?:^|\s)(?:\S*/)?Runner\.Listener(?:\s|$)|actions-runner/(?:\S*/)?run\.sh(?:\s|$)",
+                r"^(?:\S*/)?Runner\.Listener(?:\s|$)|"
+                r"^(?:(?:\S*/)?(?:bash|sh|dash|zsh)\s+)?(?:\S*/)?actions-runner/run\.sh(?:\s|$)",
                 processes.stdout, re.M):
             print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
                   "Its CPUs count against Forge's load limit.")

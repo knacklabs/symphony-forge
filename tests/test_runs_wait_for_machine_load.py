@@ -83,6 +83,26 @@ def test_1_tests_and_reviews_wait_for_high_load_then_start(env, tmp_path, adopte
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
 def test_2_doctor_warns_that_self_hosted_runner_cpus_count_against_load(env, tmp_path, adopted):
     repo = client(env, tmp_path, adopted)
+    listing = runner_process_list(repo)
+    warning = ("Warning: a GitHub Actions self-hosted runner runs on this machine. "
+               "Its CPUs count against Forge's load limit.")
+    for commands, expected in [
+        ("/opt/actions-runner/bin/Runner.Listener run", True),
+        ("/bin/bash /opt/actions-runner/run.sh", True),
+        ("/opt/actions-runner/run.sh", True),
+        ("/opt/other/run.sh\npython unrelated.py", False),
+        ("/opt/not-actions-runner/run.sh", False),
+        ("python inspect.py /opt/actions-runner/bin/Runner.Listener run\n"
+         "python inspect.py /opt/actions-runner/run.sh", False),
+        ("", False),
+    ]:
+        listing.write_text(commands, "utf-8")
+        result = repo.forge("doctor")
+        assert (warning in result.stdout) is expected, result.stdout + result.stderr
+
+
+def runner_process_list(repo):
+    """Control only the OS process inventory; process identity queries still use real ps."""
     real_ps = shutil.which("ps")
     listing = repo.bin / "process-list"
     _install(repo.bin, "ps", f'''#!{sys.executable}
@@ -92,13 +112,4 @@ if sys.argv[1:] == ["-axo", "command="]:
 else:
     sys.exit(subprocess.call([{real_ps!r}, *sys.argv[1:]]))
 ''')
-    warning = ("Warning: a GitHub Actions self-hosted runner runs on this machine. "
-               "Its CPUs count against Forge's load limit.")
-    for commands, expected in [
-        ("/opt/actions-runner/bin/Runner.Listener run", True),
-        ("/bin/bash /opt/actions-runner/run.sh", True),
-        ("/opt/other/run.sh\npython unrelated.py", False),
-    ]:
-        listing.write_text(commands, "utf-8")
-        result = repo.forge("doctor")
-        assert (warning in result.stdout) is expected, result.stdout + result.stderr
+    return listing
