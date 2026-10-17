@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tIn-progress CI rerun can deliver the previous failure\tpane-readable",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 94,
+      "text": "In-progress CI rerun can deliver the previous failure",
+      "from": "blocking",
+      "item": "pane-readable",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tpyproject.toml\tA local plugin test creates ignored declaration files that the package build includes.",
+      "kind": "edge",
+      "path": "pyproject.toml",
+      "line": 22,
+      "text": "A local plugin test creates ignored declaration files that the package build includes.",
+      "from": "worker",
+      "item": "pane-readable",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

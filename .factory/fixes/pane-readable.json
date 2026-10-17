@@ -9,21 +9,48 @@
     "start": "ed957e5a01831428170368ee9d2d9f4d0fa0033a"
   },
   "done_when": "In the pane, each item shows its title on its own line, then short lines for status (state, round, worker, elapsed), stages with the total, and gates (plan read, review, CI with the failing check and pull request), then its next step, with a blank line between items; no field shows unknown, an empty value or 0s; rounds count from 1 and a running review shows as running; the Board and Machine tabs each have a shown key that selects them and the selected tab is marked; new repos get it at init, existing repos on upgrade and sync",
-  "flagged": [],
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
   "kind": "fix",
-  "known": [],
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 94,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "In-progress CI rerun can deliver the previous failure",
+      "work": 2
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5911d0f8500c27afcc712c9e73bbf11bddfd3a19ac9a755ddb9806080d9d6f1e",
-    "changed": "f78b801ed95a8147234fc498ec255e6bf19488e91e14b396b1dc828b412f442a",
-    "commit": "6ea7eb3657bb0b7ebef894608e1400d1a99ee3e1",
+    "branch_diff": "d22b0c663565ae666d0318820cac043b48f00e54a3d5ac38cc6aac5fdaed1bd7",
+    "changed": "b9816ef51046f696a8c8685a7b4922f5887747cd7fe35cbb277b0b3a6e463634",
+    "commit": "3a2de0b188f05531369609815be3ef7e24b10072",
     "dismissals": [],
-    "findings": [],
-    "id": "513b596a-1156-487b-a2b0-31025816736b",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nIf a workflow fails while Claude is busy, its failure remains in `pending`. When a same-commit rerun starts, the board emits no completed-workflow occurrence, but this loop keeps the pending event because the item still exists. When the turn ends, the pane submits the old \u201cfailed\u201d result while CI is running. The rerun proof covers completed failure and success snapshots, but not the running interval.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 94,
+        "priority": "P1",
+        "title": "In-progress CI rerun can deliver the previous failure",
+        "work": 2
+      }
+    ],
+    "id": "89d4180e-6aed-4721-a3b5-8e4c424e7986",
+    "status": "blocked"
   },
   "round": 6,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
@@ -35,6 +62,10 @@
     },
     {
       "at": "2026-10-16T10:18:09.486569+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T17:58:39.631866+00:00",
       "step": "review"
     }
   ],
