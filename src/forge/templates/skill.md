@@ -970,7 +970,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
-  additions and removals outside tests. Close stops a part over 400 lines before review;
+  additions and removals outside tests, Markdown files, docs/, plans/ and .factory/.
+  Close stops a part over 400 lines before review;
   split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
   in the part's folder, the same way fixes work. Stories approved before this limit keep working.
 - Keep each part's builder notes to its goal, files and one test per rule.
