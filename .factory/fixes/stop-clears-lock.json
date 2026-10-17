@@ -31,29 +31,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9264c2abceae2979d2822d18866e93949287311c0377a8481a59be36fd02ddbe",
-    "changed": "77539049ba892e125cfe389169991c01089a8e6fb31f5afbaaddb8c1856fc278",
-    "commit": "885573d3352404b3888b782c3c2b597ceac092c7",
-    "dismissals": [
-      {
-        "because": "src/forge/mod/hooks/events.ts:94 Owner accepted: this fix does not change events.ts; the rerun inside the cache window goes to its own fix",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. When a workflow failure is queued during a busy turn and its rerun starts within 60 seconds, the next board refresh still reads the failed occurrence from the checks cache (`src/forge/board.py:104`). At turn completion, `latest.has(id)` remains true, so this guard submits the obsolete failure. The new test advances `FORGE_NOW` by a full minute between responses (`tests/test_mod_plugin.py:248`), missing this normal sequence.",
-        "file": "src/forge/mod/hooks/events.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 96,
-        "priority": "P1",
-        "title": "A queued CI failure is delivered after a rerun starts within the cache window",
-        "work": 2
-      }
-    ],
-    "id": "8ba7571d-40fe-41a3-92d4-b3b949427521",
+    "branch_diff": "d5ed13c420142abb9a832972ad8f3f8923c60cf689792880c266eb57fa337197",
+    "changed": "fff4a73c4002aae5301f1a23e002f9d2090161745012519a6f0925ce61089bd1",
+    "commit": "904cbe716e9d162da89101ba10b5656d5b5a10d7",
+    "dismissals": [],
+    "findings": [],
+    "id": "451619dc-3417-474e-9b4d-7db9bf0fdd89",
     "status": "clean"
   },
   "round": 1,
@@ -69,6 +52,10 @@
     },
     {
       "at": "2026-10-17T18:43:00.904478+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T21:28:28.694293+00:00",
       "step": "review"
     }
   ],
