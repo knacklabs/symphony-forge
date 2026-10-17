@@ -71,6 +71,7 @@ REFUSALS = {
 
 def checkout(item: str) -> tuple[re.Match[str], Path]:
     """Find a work checkout and refuse its unfinished merge before parsing any settings."""
+    task.require_active(item)
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)

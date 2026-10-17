@@ -6,15 +6,18 @@ const KINDS = new Set(['review_findings', 'checks_failed', 'ready_to_merge', 'wo
 const MAX_SEEN_EVENTS = 1024
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 
-function occurrences(items: Item[]): Map<string, string> {
-  const lines = new Map<string, string>()
+type Pending = { item: string; title: string }
+const itemKey = (item: Item) => item.id ?? item.title
+
+function occurrences(items: Item[]): Map<string, Pending> {
+  const lines = new Map<string, Pending>()
   for (const item of items) {
-    const command = object(item.next) && typeof item.next.command === 'string' ? item.next.command : 'forge next'
+    if (item.stage === 'merged' || item.stage === 'done') continue
     if (Array.isArray(item.occurrences)) {
       for (const event of item.occurrences) {
         if (object(event) && typeof event.id === 'string' && event.id && typeof event.kind === 'string'
           && KINDS.has(event.kind) && typeof event.title === 'string') {
-          lines.set(event.id, `${item.title.replace(/[\r\n]+/g, ' ')}: ${event.title.replace(/[\r\n]+/g, ' ')} Next: ${command}`)
+          lines.set(event.id, { item: itemKey(item), title: event.title })
         }
       }
     }
@@ -27,7 +30,7 @@ export function registerEvents(on: On, data: Data) {
   let eligibility = Promise.resolve(false)
   let key: string | null = null
   let endedSession: string | null = null
-  const pending = new Map<string, string>()
+  const pending = new Map<string, Pending>()
   let drain = async () => {}
   let unsubscribe = () => {}
   on('session.start', { isInteractive: true }, async ($, e, next) => {
@@ -70,13 +73,34 @@ export function registerEvents(on: On, data: Data) {
           key = seenKey
           return
         }
-        for (const [id, line] of current) if (!seen.has(id) && !observed.has(id)) pending.set(id, line)
+        for (const [id, line] of current) if (!seen.has(id) && (!observed.has(id) || pending.has(id))) pending.set(id, line)
         // The current snapshot suppresses visible history even after its saved ids expire.
         observed = new Set(current.keys())
         if (!pending.size || await $.store.get(JSON.stringify(['forge-active-turn', session]))) return
         // The host can change identity while the asynchronous reads finish.
         if ((await $.session.repo())?.root !== repo.root || await $.session.id() !== session) return
-        const batch = [...pending]
+        // Keep the occurrence, but derive its advice only when the host can accept it.
+        const items = new Map<string, Item>()
+        const collect = (rows: Item[]) => {
+          for (const item of rows) {
+            items.set(itemKey(item), item)
+            collect(item.children ?? [])
+          }
+        }
+        collect(data.board.items)
+        const latest = occurrences(data.board.items)
+        const batch: [string, string][] = []
+        for (const [id, event] of pending) {
+          const item = items.get(event.item)
+          if (!item || item.stage === 'merged' || item.stage === 'done'
+            || id.startsWith('workflow:') && !latest.has(id)) {
+            pending.delete(id)
+            continue
+          }
+          const command = object(item.next) && typeof item.next.command === 'string' ? item.next.command : 'forge next'
+          batch.push([id, `${item.title.replace(/[\r\n]+/g, ' ')}: ${event.title.replace(/[\r\n]+/g, ' ')} Next: ${command}`])
+        }
+        if (!batch.length) return
         const result = await $.prompt.submit({ text: batch.map(([, line]) => line).join('\n') })
         if (result.drop !== undefined || session === endedSession) return
         for (const [id] of batch) seen.add(id)

@@ -1,0 +1,46 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/later-not-floored",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1485a-0600-7311-9f8e-4e7b23964b76",
+    "head": null,
+    "start": "dc77d9aab348e26c4d938773714ff7fe991c4cf4"
+  },
+  "done_when": "A finding the review labels Later for another item is never raised to blocking by the migration or other floors",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf5e87070a084c2f890987c895b7a7dfcc4afb7160a373d9f2393fae2c649498",
+    "changed": "8075120f7a7e231be7d6e2d335ca8009a0aae2f22d59eb430e69900c8a001d27",
+    "commit": "bf3a566226f97c72d0d1bca25bc2a5cbf2a8a6ae",
+    "dismissals": [],
+    "findings": [],
+    "id": "7fa8721b-c964-47b3-8ae2-2ac4fd867fb2",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:31.285651+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:58:02.202035+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "f5c888fa50c9e143ad7a8eac37f5097a19fa441c",
+    "keys": {},
+    "round": null
+  },
+  "why": "A review finding titled Later with another item's name is raised to blocking when its text mentions a migration",
+  "worker": "codex"
+}

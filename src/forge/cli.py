@@ -1,6 +1,7 @@
 """The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
+import functools
 import importlib.metadata
 import json
 import os
@@ -25,7 +26,7 @@ ROUTES = {
     "init": "init", "sync": "sync", "doctor": "doctor", "test": "fasttest",
     "migrate": "migrate", "upgrade": "upgrade", "next": "nextstep", "board": "board", "lanes": "machine", "stop": "machine",
     "story new": "story", "story done": "story", "read": "story", "assign": "task",
-    "task start": "task", "fix start": "task", "fix allow-large": "task", "fix amend": "task",
+    "task start": "task", "fix start": "task", "fix drop": "task", "fix allow-large": "task", "fix amend": "task",
     "work": "worker", "handback": "native", "close": "close", "merge": "merge", "land": "land",
     "spec save": "records", "spec confirm": "records", "spec measure": "records",
     "spec payback": "payback", "decision new": "records", "decision accept": "records",
@@ -90,6 +91,7 @@ class _Parser(argparse.ArgumentParser):
         repo.refuse(REFUSALS["usage"], problem=f"{self.prog}: {message}", prog=self.prog)
 
 
+@functools.cache
 def _parser() -> _Parser:
     parser = _Parser(prog="forge",
                      description="Forge takes a story from approval to a merged pull request.")

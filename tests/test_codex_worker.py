@@ -76,8 +76,19 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")
     env = data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
+    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     if (env / "forge-sdk-ready").is_file():
-        return data
+        try:
+            if subprocess.run([python, "-I", "-c", "pass"], capture_output=True,
+                              timeout=10).returncode == 0:
+                return data
+        except (OSError, subprocess.TimeoutExpired):
+            pass  # A restart can remove the Python that this cached venv points to.
+    if env.exists():
+        try:
+            shutil.rmtree(env)
+        except FileNotFoundError:  # another worker removed the stale cache first
+            pass
     build = env.with_name(f"building-{uuid.uuid4().hex}")  # parallel workers each build their own
     build.parent.mkdir(parents=True, exist_ok=True)
     python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")

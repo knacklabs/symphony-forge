@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/mod/hooks/events.ts\tNot done: A queued CI failure can still be delivered after its workflow reruns",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 96,
+      "text": "Not done: A queued CI failure can still be delivered after its workflow reruns",
+      "from": "review",
+      "item": "pane-ci-rerun",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
