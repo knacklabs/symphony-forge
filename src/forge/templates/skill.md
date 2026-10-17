@@ -606,7 +606,8 @@ work only when allowed. Answer a worker question with
 Do not build another polling or watcher loop for an interactive mod session.
 
 Forge's occurrence ids distinguish events, never their text: review results, run
-ends and questions get fresh ids; failed check runs use GitHub's id and completion time,
+ends and questions get fresh ids; CI completions use the workflow id and head commit.
+Failed checks outside a workflow use GitHub's id and completion time,
 failed commit statuses use their own id, and readiness uses the review id and head commit.
 The same question in another round or a check failing again after a later completion
 therefore gets another turn, even if its wording is unchanged. A run that starts
@@ -616,6 +617,9 @@ Seen ids are stored for the repo root and session id together, so two sessions
 consume events independently. At session start or reload the current ids become
 seen without starting a turn. Several changes, including those found while Claude
 is busy, are combined in one turn after the current turn ends, one line per event.
+At delivery, each line uses the item's current next command. Events for items that
+have since merged are dropped. A CI completion names the workflow and its result,
+once per workflow and commit.
 A failed submission leaves them unseen for the next refresh to retry; a successful
 one is not repeated. Only interactive sessions on terminal or Desktop receive
 event turns, and only for their own repo. Forge-started workers, readers and

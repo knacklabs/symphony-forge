@@ -4,7 +4,7 @@ import { expect, mock, test } from 'claude-code/testing'
 // response are replaced. The plugin decides what enters the session.
 const occurrence = (id: string, kind = 'worker_question', title = 'Which option?') => ({ id, kind, title })
 const row = (title: string, id: string, command: string | null = 'forge work guide') => ({
-  title, occurrences: [occurrence(id)], next: { command, line: '' },
+  title, stage: 'working', occurrences: [occurrence(id)], next: { command, line: '' },
 })
 const started = { cwd: '/repo', surface: 'terminal', isInteractive: true } as const
 const complete = { answer: '', durationMs: 1, isAborted: false, turnId: 'main', reason: 'answer' } as const
@@ -165,16 +165,18 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await $.turn.start({ text: 'Working', turnId: 'main' })
     // Reload has no replay of the active turn's start. Both following ticks must batch.
     await $.session.start({ ...started, surface })
-    items = [row('Guide', 'question-2')]
+    items = [row('Guide', 'question-2'), row('Merged', 'obsolete')]
     await clock.advance(10000)
-    items = [row('Checks', 'check-run:7:later', 'forge close checks')]
+    items = [row('Checks', 'check-run:7:later', 'forge close checks'),
+      { ...row('Guide', 'question-2', 'forge close guide'), occurrences: [] },
+      { ...row('Merged', 'obsolete'), stage: 'merged', occurrences: [] }]
     items[0]!.occurrences = [occurrence('check-run:7:later', 'checks_failed', 'Tests failed')]
     await clock.advance(10000)
     expect(prompts.length).toBe(1)
     await $.turn.complete({ ...complete, agentId: 'child' })
     expect(prompts.length).toBe(1)
     await $.turn.complete(complete)
-    expect(prompts[1]).toBe('Guide: Which option? Next: forge work guide\nChecks: Tests failed Next: forge close checks')
+    expect(prompts[1]).toBe('Guide: Which option? Next: forge close guide\nChecks: Tests failed Next: forge close checks')
     await clock.advance(10000)
     expect(prompts.length).toBe(2)
     for (const id of ['check-run:8:now', 'check-run:8:later', 'commit-status:9']) {

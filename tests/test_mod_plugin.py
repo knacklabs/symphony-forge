@@ -164,8 +164,9 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
     item, _ = env.start_fix()
     stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
-    stub.write_text(source.replace('"stub claude: built it\\n"',
-                                  '"Question: May I reuse the parser?"'), encoding="utf-8")
+    if case not in ("fresh advice", "merged before delivery"):
+        stub.write_text(source.replace('"stub claude: built it\\n"',
+                                      '"Question: May I reuse the parser?"'), encoding="utf-8")
     answer = node_run(tmp_path, HOST + f"""
 import {{execFile}} from 'node:child_process';
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});
@@ -218,7 +219,33 @@ async function session(id, duringRefresh) {{
   }}}};
 }}
 // Each lifecycle has its own host budget: real Forge processes are slower on Windows.
-if ({json.dumps(case)} === 'events') {{
+if (['fresh advice', 'merged before delivery'].includes({json.dumps(case)})) {{
+const first = await session('fresh');
+await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
+forge(['work', {json.dumps(item)}]);
+await first.tick();
+const before = JSON.parse(forge(['board', '--json'])).items.find(row => row.id === {json.dumps(item)});
+assert.equal(before.next.command, 'forge close ' + {json.dumps(item)});
+forge(['close', {json.dumps(item)}]);
+if ({json.dumps(case)} === 'merged before delivery') {{
+  execFileSync('git', ['merge', '--squash', {json.dumps('fix/' + item)}], {{cwd: {json.dumps(str(repo.path))}}});
+  execFileSync('git', ['commit', '-qm', 'Accept the fix'], {{cwd: {json.dumps(str(repo.path))}}});
+  execFileSync('git', ['push', '-q', 'origin', 'main'], {{cwd: {json.dumps(str(repo.path))}}});
+}}
+await first.tick();
+const current = JSON.parse(forge(['board', '--json'])).items.find(row => row.id === {json.dumps(item)});
+assert.deepEqual(first.prompts, []);
+await first.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
+if ({json.dumps(case)} === 'merged before delivery') {{
+  assert.equal(current.stage, 'merged');
+  assert.deepEqual(first.prompts, []);
+}} else {{
+  assert.notEqual(current.next.command, before.next.command);
+  assert.equal(first.prompts.length, 1);
+  assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith('Next: ' + (current.next.command ?? 'forge next'))), first.prompts[0]);
+}}
+console.log(JSON.stringify({{prompts: first.prompts}}));
+}} else if ({json.dumps(case)} === 'events') {{
 const first = await session('first'), second = await session('second');
 assert.deepEqual(first.prompts, []);
 assert.deepEqual(second.prompts, []);
