@@ -12,6 +12,11 @@ from test_tools_session_hold import Session
 @pytest.mark.parametrize("previous,harm", [(False, 1), (True, 3)])
 def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_path, previous, harm):
     item, where = client_item(env, tmp_path, previous)
+    if not previous:
+        # This regression ends at human handoff; prototype auto-merging has its own owner tests.
+        env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
+                   '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# Client sign-off\n')
+        env.repo.git("push", "-q", "origin", "main")
     for host in (".codex", ".claude"):
         guide = " ".join((where / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "exits with status 3 (needs a choice)" in guide
