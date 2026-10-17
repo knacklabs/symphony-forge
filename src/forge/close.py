@@ -185,8 +185,7 @@ def close(args: argparse.Namespace) -> int:
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         _refresh_record(top, item, state, pr)
     if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
-        excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
-        excluded += [":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md"]
+        excluded = list(review.DOC_EXCLUDES)
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"origin/{default}...HEAD",
                          "--", ".", *excluded, cwd=top)
@@ -1151,5 +1150,5 @@ COMMANDS = [{
              (('--resolve',), {"choices": ["narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix by the close rule |",
+    "listing": "| `forge close <item>` | Closes a task or fix; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]

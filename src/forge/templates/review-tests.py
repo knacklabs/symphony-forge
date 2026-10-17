@@ -59,11 +59,20 @@ def reuse() -> bool:
     return latest.get("status") == "completed" and latest.get("conclusion") == "success"
 
 
+docs_only = False
 try:
-    passed = reuse()
+    # Sync supplies the same Git path exclusions that close and the part-size rule use.
+    if os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
+        docs_only = not run("git", "diff", "--name-only", "-z", "--no-renames",
+                            f"{os.environ['BASE_SHA']}...HEAD", "--", ".",
+                            *json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
+    passed = docs_only or reuse()
 except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError):
     # Missing history, unreadable records or unavailable GitHub proof runs the full suite.
     passed = False
 with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"reuse={str(passed).lower()}\n")
-print("Parent tests passed; only the close record changed." if passed else "Run the test suite.")
+    if docs_only:
+        output.write("docs-only=true\n")
+print("docs only: tests skipped" if docs_only else
+      "Parent tests passed; only the close record changed." if passed else "Run the test suite.")

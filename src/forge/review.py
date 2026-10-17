@@ -41,6 +41,8 @@ TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_out
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
+DOC_EXCLUDES = [f":(exclude,glob){path}**" for path in (*BOOKKEEPING, ".forge/", "docs/")]
+DOC_EXCLUDES += [":(exclude,glob,icase)**/*.md"]
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
@@ -464,7 +466,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
-        # forge.toml's always_test runs on every change, settings and docs included.
+        # Worker tests always run; close skips documentation before it enters the test lane.
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)
             return 0, said
@@ -573,18 +575,15 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         repo.record_timing(top, item, "test run", start, clock, outcome)
 
 
-DOCS = ("docs/", "plans/", ".factory/")
 def docs_only(top: Path, base: str) -> bool:
-    """Close runs no tests for a change to settings, docs or Markdown alone, unless forge.toml
-    names an always_test."""
+    """Docs skip tests; settings alone retain the always_test contract."""
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                       cwd=top).split("\0")
-    return not repo.config(top)["always_test"] and all(
-        path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md") for path in changed if path)
+                       "--", ".", *DOC_EXCLUDES, cwd=top).strip("\0")
+    return not changed or changed == "forge.toml" and not repo.config(top)["always_test"]
 
 
 DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
-             "did not run `{command}`.")
+             "did not run `{command}` (docs only: tests skipped).")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
 
