@@ -1038,8 +1038,8 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[
 
 
 def _hide_generated(tree: Path, start: str, head: str) -> str:
-    """Check out, in the review tree, head with each changed file .gitattributes marks
-    linguist-generated put back as it was at start, so its contents stay out of the reviewed diff.
+    """Put changed binary and linguist-generated files back as they were at start in the review
+    tree, so their contents stay out of the reviewed diff.
     Returns the lines naming those files with their changed-line counts, or "" when there are none."""
     counts = {}
     for record in repo.git("diff", "--numstat", "-z", "--no-renames", start, head,
@@ -1050,14 +1050,15 @@ def _hide_generated(tree: Path, start: str, head: str) -> str:
             counts[path] = (added, removed)
     attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
                      input="\0".join(counts)).stdout.split("\0")
-    generated = [path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")]
+    marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
+    generated = [path for path, count in counts.items() if path in marked or "-" in count]
     if not generated:
         return ""
     repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
     snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
                         "-m", "Branch head without generated files' contents", cwd=tree)
     repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
-    return ("\n\n## Generated files\n\nEach listed file is committed at the real branch head with the listed line counts. "
+    return ("\n\n## Generated files\n\nEach listed change is committed at the real branch head with the listed line counts. "
             "The review tree only restores each file to the branch start to keep its contents out of "
             "the diff. A missing or untracked copy in the review tree is not a finding:\n"
             + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
