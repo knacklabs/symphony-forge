@@ -6,7 +6,7 @@ const KINDS = new Set(['review_findings', 'checks_failed', 'ready_to_merge', 'wo
 const MAX_SEEN_EVENTS = 1024
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 
-type Pending = { item: string; title: string }
+type Pending = { item: string; title: string; checksAt?: string | null }
 const itemKey = (item: Item) => item.id ?? item.title
 
 function occurrences(items: Item[]): Map<string, Pending> {
@@ -17,7 +17,9 @@ function occurrences(items: Item[]): Map<string, Pending> {
       for (const event of item.occurrences) {
         if (object(event) && typeof event.id === 'string' && event.id && typeof event.kind === 'string'
           && KINDS.has(event.kind) && typeof event.title === 'string') {
-          lines.set(event.id, { item: itemKey(item), title: event.title })
+          lines.set(event.id, { item: itemKey(item), title: event.title,
+            ...(event.id.startsWith('workflow:') && typeof event.conclusion === 'string' && event.conclusion !== 'SUCCESS'
+              ? { checksAt: item.pr?.checked_at ?? null } : {}) })
         }
       }
     }
@@ -73,10 +75,16 @@ export function registerEvents(on: On, data: Data) {
           key = seenKey
           return
         }
-        for (const [id, line] of current) if (!seen.has(id) && (!observed.has(id) || pending.has(id))) pending.set(id, line)
+        for (const [id, line] of current) if (!seen.has(id) && (!observed.has(id) || pending.has(id))) {
+          pending.set(id, { ...line, checksAt: pending.get(id)?.checksAt ?? line.checksAt })
+        }
         // The current snapshot suppresses visible history even after its saved ids expire.
         observed = new Set(current.keys())
-        if (!pending.size || await $.store.get(JSON.stringify(['forge-active-turn', session]))) return
+        if (!pending.size) return
+        if (await $.store.get(JSON.stringify(['forge-active-turn', session]))) {
+          for (const [id, line] of current) if (pending.has(id)) pending.set(id, line)
+          return
+        }
         // The host can change identity while the asynchronous reads finish.
         if ((await $.session.repo())?.root !== repo.root || await $.session.id() !== session) return
         // Keep the occurrence, but derive its advice only when the host can accept it.
@@ -97,6 +105,9 @@ export function registerEvents(on: On, data: Data) {
             pending.delete(id)
             continue
           }
+          // A cached failure cannot tell us whether its workflow has started again.
+          if (event.checksAt !== undefined && (!event.checksAt || !item.pr?.checked_at
+            || Date.parse(item.pr.checked_at) <= Date.parse(event.checksAt))) continue
           const command = object(item.next) && typeof item.next.command === 'string' ? item.next.command : 'forge next'
           batch.push([id, `${item.title.replace(/[\r\n]+/g, ' ')}: ${event.title.replace(/[\r\n]+/g, ' ')} Next: ${command}`])
         }
