@@ -1,0 +1,15 @@
+{
+  "base": "e8168963a12c1060de16e797d56e8afc9778d347",
+  "branch": "fix/github-cache-lifetimes",
+  "done_when": "Each GitHub cache lives as long as its data changes (open pull requests and this week each minute, past weeks and history for a day, failed schedules ten minutes), and a test proves a warm forge next --json makes no network call and finishes within its time budget",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T14:21:13.537518+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pane and the board wait on GitHub for 20 to 45 seconds because every read refetches all merged history behind one 60-second cache"
+}
