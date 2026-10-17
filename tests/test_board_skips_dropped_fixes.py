@@ -1,5 +1,7 @@
 """Dropped fixes leave the board's rows AND counts, and undo restores both.
 
+Exercises src/forge/board.py through the board command.
+
 DROP owns command preservation and row visibility. This test owns the board's
 aggregate contract: a hidden fix must not be counted as finished. Real commands
 exercise new and upgraded clients and a teammate with a stale local branch;
