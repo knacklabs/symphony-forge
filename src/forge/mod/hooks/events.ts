@@ -108,6 +108,7 @@ export function registerEvents(on: On, data: Data) {
           // A cached failure cannot tell us whether its workflow has started again.
           if (event.checksAt !== undefined && (!event.checksAt || !item.pr?.checked_at
             || Date.parse(item.pr.checked_at) <= Date.parse(event.checksAt))) continue
+          if (event.checksAt !== undefined) event.checksAt = item.pr?.checked_at ?? null
           const command = object(item.next) && typeof item.next.command === 'string' ? item.next.command : 'forge next'
           batch.push([id, `${item.title.replace(/[\r\n]+/g, ' ')}: ${event.title.replace(/[\r\n]+/g, ' ')} Next: ${command}`])
         }
