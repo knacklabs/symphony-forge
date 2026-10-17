@@ -10,13 +10,55 @@
   },
   "done_when": "A queued CI event whose workflow has been rerun since is dropped or replaced by the current result before delivery, and a test covers a failure followed by a rerun",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 5,
+      "harm": 3,
+      "line": 96,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A queued CI failure can still be delivered after its workflow reruns",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e10dcf4dc705b0b4898fe915f9df0db75a37d4c4bfd42368300e502ac8ef94aa",
+    "changed": "53ae00587013bc3513327c388634dc594a911060c943f5a9098dda820bbfe375",
+    "commit": "18f13ae77eb8162d7e4c7d8c3b8e81ca2c678f3f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done. If a failure is queued while the pane turn is busy and the workflow is rerun within the next minute, `forge next` can still return the failed result from the 60-second GitHub cache (`src/forge/board.py:101`). On turn completion, this line finds the old workflow ID in that cached snapshot and submits the stale failure. The new test advances `FORGE_NOW` by a full minute between responses (`tests/test_mod_plugin.py:248`), so it never exercises delivery during the cache window. The Done-when requirement that the queued event be dropped or replaced before delivery remains unmet in this normal sequence.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 3,
+        "line": 96,
+        "priority": "P1",
+        "title": "Not done: A queued CI failure can still be delivered after its workflow reruns",
+        "work": 3
+      }
+    ],
+    "id": "44b12fe6-b3f3-4c4e-9eb3-0b4014572672",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T16:22:47.631758+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:29:48.516106+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
