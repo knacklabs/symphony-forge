@@ -1,6 +1,13 @@
 {
   "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
   "branch": "fix/review-image-deletes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14adc-9b3b-7a92-9c41-0d276463f85e",
+    "head": null,
+    "start": "2275ffc700cfe0bdad7d5b196d4f5c26a53d337d"
+  },
   "done_when": "A branch that deletes or changes an image is reviewed with the image named only, as generated files are, and a test removes an image through close",
   "fix_kind": "backend",
   "kind": "fix",
