@@ -1,0 +1,46 @@
+{
+  "base": "ff7cfd0caa6f9cf53e8f8bd2df3cb0986d4446e3",
+  "branch": "fix/prototype-allowance-review",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14657-164a-74a3-8695-be3a4d272ecc",
+    "head": null,
+    "start": "a379b647dc6b28e74d1ecf9c6a5c40d9b5aac8aa"
+  },
+  "done_when": "A prototype fix's review prompt says the Prototype before sign-off allowance is recorded by Forge and covers any size and interface changes, and no longer asks the reviewer to check that allowance against the diff; other allowances keep the check; a test proves both",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "79826a1a7a18030156281c7dbc9b5a860ce3be8b1908e0ac38a4390db73ba069",
+    "changed": "fee801d7041f6bf0de3ef61102b16aa80b812a69ee082e8a231a755aeef7e2b5",
+    "commit": "d0a02dca4d4fa30941304b126d21b6e6996d5586",
+    "dismissals": [],
+    "findings": [],
+    "id": "48bfa4ee-dc1c-4f0a-9c04-1142d4a14b13",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T20:11:08.465476+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T20:15:49.772105+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b88a524d2e8a03e9a84be3f896f86c3e968a3029",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge records Prototype before sign-off on every client prototype fix, but the fix review tells the reviewer to check it as an agent-recorded allowance, so every prototype fix that adds an interface gets a blocking allowance-mismatch finding it cannot fix",
+  "worker": "codex"
+}
