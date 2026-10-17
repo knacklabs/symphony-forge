@@ -10,7 +10,8 @@
   },
   "done_when": "tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known issues on Windows as on the other platforms",
   "flagged": [
-    "src/forge/known_issues.py"
+    "src/forge/known_issues.py",
+    "src/forge/mod/hooks/events.ts"
   ],
   "kind": "fix",
   "known": [
@@ -26,20 +27,44 @@
       "security": false,
       "title": "Not done: tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known pen_",
       "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 96,
+      "outcome": "open",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "A queued CI failure is delivered when its rerun starts within the cache minute",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "290abef274859840ff159198e18a80a0ed53297c3ef5de49c3ed1dfa54611f3c",
-    "changed": "a4eefa3662502b808bb5b5ec37d05451aa04ee359f9d0f69186b83a79ea11b4d",
-    "commit": "df231910500bcd3c3e0a932aa38e7e3cbedd500b",
+    "branch_diff": "52cbce52093e378e53e9fc95b5e41cd0021ef73916ac00f772e5d4f1e1065a66",
+    "changed": "c4ffd86fc5c084e00b9b903b067aa7f5d83c67ebf75bd80049e6906d7c510c49",
+    "commit": "f52f007079c3f6716bdbfc6e7fcc1df5b18b06dc",
     "dismissals": [],
-    "findings": [],
-    "id": "ea73c4fb-ff52-4d88-aed9-1263afd64367",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. This check treats a workflow ID in the current board snapshot as proof that its queued failure is still current. The board reuses check results for 60 seconds (`src/forge/board.py:104`), so a rerun started during that window leaves the failed occurrence in the snapshot. If the busy turn ends then, the pane submits the obsolete failure. The new test advances `FORGE_NOW` by a full minute before each response (`tests/test_mod_plugin.py:248`), so it does not cover this sequence.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 96,
+        "priority": "P1",
+        "title": "A queued CI failure is delivered when its rerun starts within the cache minute",
+        "work": 2
+      }
+    ],
+    "id": "4c3115d9-6480-443a-b272-791ad98c3456",
+    "status": "blocked"
   },
   "round": 2,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T09:09:27.874207+00:00",
@@ -51,6 +76,10 @@
     },
     {
       "at": "2026-10-17T18:13:55.272034+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T19:54:53.202986+00:00",
       "step": "review"
     }
   ],
