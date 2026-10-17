@@ -4,12 +4,20 @@
   "done_when": "forge land prints the owner's question with the open findings and failing checks, then exits with its own status instead of waiting, and the coordinator runs land again after the choice",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T15:25:34.985086+00:00",
       "step": "start"
     }
   ],
-  "why": "forge land sits silently for hours while it waits for the owner's choice, and when it stops it prints only the worker's instructions"
+  "stuck": {
+    "close": null,
+    "head": "af58475bef643cd7d152af72826bc7b2bbb973fa",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge land sits silently for hours while it waits for the owner's choice, and when it stops it prints only the worker's instructions",
+  "worker": "codex"
 }
