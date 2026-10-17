@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_required_check_rejects_outside_branches.py\tGate: test_1_required_check_rejects_outside_branch_with_fix_flow\toutside-pr-check",
+      "kind": "bug",
+      "path": "tests/test_required_check_rejects_outside_branches.py",
+      "line": 32,
+      "text": "Gate: test_1_required_check_rejects_outside_branch_with_fix_flow",
+      "from": "blocking",
+      "item": "outside-pr-check",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

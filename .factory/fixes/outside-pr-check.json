@@ -10,13 +10,56 @@
   },
   "done_when": "Forge's required check fails such a pull request at once with a plain message that names the fix flow, on new and existing repos, and a test covers it",
   "fix_kind": "backend",
+  "flagged": [
+    "tests/test_required_check_rejects_outside_branches.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_required_check_rejects_outside_branch_with_fix_flow() in tests/test_required_check_rejects_outside_branches.py",
+      "file": "tests/test_required_check_rejects_outside_branches.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 32,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_required_check_rejects_outside_branch_with_fix_flow",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e795203dcdb2066159b2e86ee76d8abb7c1ac20ae30cb960bc0f19e35726b46c",
+    "changed": "7cae79e3b53bb069e7c3c9f49a48f47ebd1db590c93b17d61ad3996dbf1a3e48",
+    "commit": "a440ca8ec96a3e655433938f30798b21beee6640",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. In the adopted-v1.2.2 case, the fixture and upgraded Forge files are never committed. The clone at line 32 therefore starts from the repo fixture's original README-only commit, and `--base HEAD` does not represent an upgraded, previously adopted client. The direct hook call can pass this test even if an existing client's upgraded workflow never runs the required check. Commit the adopted setup and upgrade before creating the outside pull request, then verify that the committed workflow runs the check.",
+        "file": "tests/test_required_check_rejects_outside_branches.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 32,
+        "priority": "P1",
+        "title": "Gate: test_1_required_check_rejects_outside_branch_with_fix_flow",
+        "work": 2
+      }
+    ],
+    "id": "432bf63c-0ab0-4865-803f-9de089772b35",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T17:18:34.533305+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:23:35.778889+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
