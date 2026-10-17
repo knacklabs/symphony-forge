@@ -12,7 +12,7 @@
   "done_when": "Read-only callers reuse cached time records without copying, the parser is built once, stack checks are remembered per command, and a test counts the git calls and checks a time budget on a client-sized repo",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
