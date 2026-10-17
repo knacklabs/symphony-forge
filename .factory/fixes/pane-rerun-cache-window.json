@@ -4,12 +4,20 @@
   "done_when": "A queued CI failure is not delivered while the same workflow and commit has a newer run on GitHub, even inside the checks cache window, and a test covers a rerun that starts within the cache window",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T19:52:40.865537+00:00",
       "step": "start"
     }
   ],
-  "why": "The pane can still deliver a queued CI failure when its rerun starts within the board's one-minute checks cache, because the cached snapshot does not show the rerun yet"
+  "stuck": {
+    "close": null,
+    "head": "76ade1d8feaadebf7934cdf92b8f1c354cc4e04c",
+    "keys": {},
+    "round": null
+  },
+  "why": "The pane can still deliver a queued CI failure when its rerun starts within the board's one-minute checks cache, because the cached snapshot does not show the rerun yet",
+  "worker": "codex"
 }
