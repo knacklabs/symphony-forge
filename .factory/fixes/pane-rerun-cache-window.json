@@ -50,7 +50,7 @@
     "id": "bd035321-17d6-4c1f-b5e9-7e163df1d75f",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "76ade1d8feaadebf7934cdf92b8f1c354cc4e04c",
-    "keys": {},
-    "round": null
+    "close": "c228150e-f977-4a69-8360-d756c8d885db",
+    "head": "22d4e5f1a318eb21de99dde89399b24544c447e9",
+    "keys": {
+      "the review finding \"Queued CI failures are lost if the pane session restarts during the freshness wait\" in src/forge/mod/hooks/events.ts": 1
+    },
+    "round": 1
   },
   "why": "The pane can still deliver a queued CI failure when its rerun starts within the board's one-minute checks cache, because the cached snapshot does not show the rerun yet",
   "worker": "codex"
