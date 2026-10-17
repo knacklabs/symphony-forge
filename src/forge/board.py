@@ -339,6 +339,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     local = [] if cache is None else [entry for entry in cache.get("local", [])
                                       if entry[1] not in ("forge.toml", "plans/roadmap.json")]
 
+    starters = {} if cache is None else _starters(top)
+
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if cache is None:
             return derive(item, kind, title, state, where)
@@ -351,15 +353,16 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             item, kind, title, state, str(where), tips.get(str(where)) if where != landed else None,
             tips.get(landed) if kind == "story" else None, [entry for entry in local if own in entry[0] + entry[1]],
             [(name, blob) for name, blob in docs.items() if own in name],
-            completed.get(own), _starters(top).get(repo.state_path(item)), people,
+            completed.get(own), starters.get(repo.state_path(item)), people,
             [(branch, pr) for branch, pr in people_branches.items() if own in branch],
             [(ref, tip) for ref, tip in tips.items() if own in ref],
             [(branch, pr) for branch, pr in by_branch.items() if own in str(branch)],
-            [rel for rel in merged if own in rel], [(rel, at) for rel, at in history["dates"].items() if own in rel],
+            sorted(rel for rel in merged if own in rel), [(rel, at) for rel, at in history["dates"].items() if own in rel],
             [(rel, part) for rel, (part, _) in best.items() if own in rel],
             [(name, e) for name, e in by_item.items() if own in str(name)],
             [(name, t) for name, t in timings_by_item.items() if own in str(name)],
             [f for f in files if own in f[0]]], sort_keys=True, default=str)
+        inputs = repo.blob_hash(inputs)  # kept small, so the server can save the rows to disk
         kept = cache["rows"].get(item)
         if kept and kept[0] == inputs:
             made, ready, waits, owner = copy.deepcopy(kept[1])

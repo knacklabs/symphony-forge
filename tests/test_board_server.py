@@ -39,10 +39,12 @@ def client(repo, gh, tmp_path, request):
 
 @contextmanager
 def live(repo, **env):
-    """Run `forge board` until the test ends, and give its page address."""
+    """Run `forge board` until the test ends, and give its page address. A request waits for its
+    rebuild unless the test sets a shorter wait, so every answer is fresh on a slow test machine."""
     process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "board"], cwd=repo.path,
                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               text=True, encoding="utf-8", env={**os.environ, **env})
+                               text=True, encoding="utf-8",
+                               env={**os.environ, "FORGE_BOARD_REBUILD_WAIT": "120", **env})
     lines: queue.Queue[str | None] = queue.Queue()
     threading.Thread(target=lambda: [*map(lines.put, process.stdout), lines.put(None)], daemon=True).start()
     try:
@@ -235,3 +237,41 @@ def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_
         # The owner also brings the story's unstarted parts onto the board; the unedited fix stays.
         rebuilt = {row for row in edited["snapshot"]["rows_rebuilt"] if not row.startswith("SHOP/")}
         assert rebuilt == {"SHOP", "alpha"} and "beta" in rows, edited["snapshot"]
+
+
+def test_6_a_restarted_board_shows_the_last_snapshot_at_once_and_rebuilds_warm(client):
+    alpha, _ = fix(client, "alpha"), fix(client, "beta")
+    with live(client) as url:
+        snapshot(url)
+        commit(alpha, "alpha.txt")
+        last = snapshot(url)
+    with live(client) as url:
+        # Nothing moved while it was stopped: the saved snapshot, as it was, with no rebuild.
+        assert snapshot(url) == last
+        commit(alpha, "again.txt")
+        changed = snapshot(url)
+        assert changed["snapshot"]["version"] == last["snapshot"]["version"] + 1
+        assert changed["snapshot"]["rows_rebuilt"] == ["alpha"], changed["snapshot"]
+
+
+def test_7_a_slow_rebuild_never_holds_a_request(client):
+    """Past the wait, a request gets the last snapshot marked as updating; the events stream says
+    "changed" when the rebuild is done, and the next request has the change."""
+    alpha = fix(client, "alpha")
+    with live(client, FORGE_BOARD_REBUILD_WAIT="0") as url:
+        first = snapshot(url)
+        assert "updating" not in first["snapshot"]
+        address = urlsplit(url)
+        stream = http.client.HTTPConnection(address.hostname, address.port, timeout=60)
+        stream.request("GET", f"/events?{address.query}")
+        answer = stream.getresponse()
+        assert answer.readline() == b"retry: 10000\n"
+        commit(alpha, "alpha.txt")
+        held = snapshot(url)
+        assert held["snapshot"] == {**first["snapshot"], "updating": True}, held["snapshot"]
+        lines = [answer.readline() for _ in range(3)]
+        stream.close()
+        assert lines[1] == b"event: changed\n", lines
+        fresh = snapshot(url)
+        assert fresh["snapshot"]["version"] == first["snapshot"]["version"] + 1
+        assert fresh["snapshot"]["rows_rebuilt"] == ["alpha"] and "updating" not in fresh["snapshot"]

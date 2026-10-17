@@ -4,9 +4,12 @@ token, and stops when the command ends.
 A full derivation takes seconds, so the server never rebuilds blindly. Each request first checks
 the inputs cheaply: git's refs, Forge's record and event files under the git folder, the lanes
 file, each worktree's HEAD and each checkout's uncommitted records, plans and settings. When none
-changed it serves the last snapshot as it is; otherwise it rebuilds, and only rows whose own inputs
-changed are derived again. `/events` tells the page when a new snapshot exists. Every minute the
-server fetches from the remote and refreshes GitHub's facts.
+changed it serves the last snapshot as it is; otherwise one background thread rebuilds, and only
+rows whose own inputs changed are derived again. A request waits at most REBUILD_WAIT for that
+rebuild, then gets the last snapshot marked as updating; `/events` tells the page when a new
+snapshot exists. The last snapshot and its rows are saved in Forge's folder, so a restart shows the
+board at once and rebuilds warm. Every minute the server fetches from the remote and refreshes
+GitHub's facts.
 """
 from __future__ import annotations
 
@@ -37,9 +40,12 @@ TYPES = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 # Files the derivation itself writes under Forge's folder; watching them would rebuild forever.
-WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|\.tmp|\.new|board\.html)$")
-# ponytail: the tests' seam, like FORGE_CHECKS_WAIT
+WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|\.tmp|\.new|"
+                     r"board\.html)$")
+# ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
+# How long a request waits for a rebuild before it gets the last snapshot marked as updating.
+REBUILD_WAIT = float(os.environ.get("FORGE_BOARD_REBUILD_WAIT", "0.5"))
 TICK = 1.0  # seconds between the events stream's input checks
 PLACEHOLDER = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Forge board</title></head>'
                '<body><h1>Forge board</h1><p>The board is live. Its data is at '
@@ -53,13 +59,26 @@ class Snapshots:
     def __init__(self, top: Path):
         self.top = top
         self.common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
-        self.lock = threading.Lock()
+        self.saved = self.common / "forge" / "board-snapshot.json"
+        self.lock = threading.Lock()  # one derivation at a time: they share the row cache
+        self.done = threading.Condition()
+        self.wanted = threading.Event()
+        self.forced = False
         self.cache: dict[str, Any] = {"rows": {}, "rebuilt": []}
         self.inputs: tuple[str, str] | None = None
-        self.started = 0.0  # when the newest rebuild began
+        self.finished = 0.0  # when the newest finished rebuild began
+        self.failed: Exception | None = None  # what stopped that rebuild, if anything
         self.version = 0
         self.body = b""
+        self.updating = b""  # the same snapshot, marked as updating
         self.pages: dict[str, Any] = {}  # the untrimmed derivation, for one refs fingerprint
+        try:  # the last run's snapshot and rows, so a restart shows the board at once and rebuilds warm
+            saved = json.loads(self.saved.read_text(encoding="utf-8"))
+            if saved["forge"] == board.__version__:
+                self.cache["rows"], self.inputs = saved["rows"], tuple(saved["inputs"])
+                self.publish(saved["view"])
+        except (OSError, ValueError, KeyError, TypeError):
+            pass  # no saved board, or one from another Forge: the first request waits for a build
 
     def watched(self) -> tuple[str, str]:
         """Two digests: git's refs and worktree HEADs, then everything else the board reads."""
@@ -96,24 +115,65 @@ class Snapshots:
                 continue
         return found
 
-    def now(self, force: bool = False) -> tuple[int, bytes]:
-        """The Now view, rebuilt first when an input changed since the last one."""
+    def now(self) -> tuple[int, bytes]:
+        """The Now view. When an input changed, a request waits up to REBUILD_WAIT for a rebuild
+        that read inputs at least as new as it saw; past that it gets the last snapshot marked as
+        updating, and the events stream says "changed" once the rebuild is done."""
         asked = time.monotonic()
-        seen = self.watched()
-        if seen == self.inputs and not force:
+        if self.watched() == self.inputs:
             return self.version, self.body
+        self.wanted.set()
+        with self.done:
+            fresh = self.done.wait_for(lambda: self.finished >= asked, timeout=None if not self.body else REBUILD_WAIT)
+            if fresh and self.failed is not None:
+                raise self.failed
+            return self.version, self.body if fresh else self.updating
+
+    def changed(self) -> int:
+        """The newest snapshot's version, asking for a rebuild when an input changed; never waits."""
+        if self.watched() != self.inputs:
+            self.wanted.set()
+        return self.version
+
+    def publish(self, view: dict[str, Any]) -> None:
+        self.version = view["snapshot"]["version"]
+        self.body = json.dumps(view).encode("utf-8")
+        self.updating = json.dumps({**view, "snapshot": {**view["snapshot"], "updating": True}}).encode("utf-8")
+
+    def keep_building(self) -> None:
+        """Rebuilds whenever a request saw changed inputs or the minute's fetch asked for one."""
+        while True:
+            self.wanted.wait()
+            self.wanted.clear()
+            started, seen = time.monotonic(), self.watched()
+            failed = None
+            try:
+                if self.forced or seen != self.inputs:
+                    self.forced = False
+                    self.build(seen)
+            except Exception as error:  # the waiting request shows it; this thread keeps building
+                traceback.print_exc()
+                failed = error
+            with self.done:
+                self.finished, self.failed = started, failed
+                self.done.notify_all()
+
+    def build(self, seen: tuple[str, str]) -> None:
         with self.lock:
-            # A rebuild that started after this request read inputs at least as new as it saw,
-            # so on a busy repo each request waits for at most one more rebuild.
-            if self.started < asked and (force or self.watched() != self.inputs):
-                self.started, seen = time.monotonic(), self.watched()
-                with repo.command_cache():
-                    self.cache.update(rebuilt=[], local=local_files(self.trees()))
-                    view = board.machine_board(self.top, cache=self.cache)
-                self.version += 1
-                view["snapshot"] = {"version": self.version, "rows_rebuilt": self.cache["rebuilt"]}
-                self.body, self.inputs = json.dumps(view).encode("utf-8"), seen
-            return self.version, self.body
+            with repo.command_cache():
+                self.cache.update(rebuilt=[], local=local_files(self.trees()))
+                view = board.machine_board(self.top, cache=self.cache)
+            view["snapshot"] = {"version": self.version + 1, "rows_rebuilt": self.cache["rebuilt"]}
+            rows = json.dumps({"forge": board.__version__, "inputs": seen, "rows": self.cache["rows"], "view": view})
+        with self.done:
+            self.publish(view)
+            self.inputs = seen
+        try:  # a write that fails only costs the next start its head start
+            spare = self.saved.with_name(self.saved.name + ".tmp")
+            spare.write_text(rows, encoding="utf-8")
+            os.replace(spare, self.saved)
+        except OSError:
+            pass
 
     def untrimmed(self) -> dict[str, Any]:
         """Every item, finished ones included, cached until a ref changes."""
@@ -135,10 +195,8 @@ class Snapshots:
             # Not repo.run: its command cache belongs to whichever rebuild runs at the time.
             subprocess.run(["git", "fetch", "-q", "--prune", "--tags", "origin"], cwd=self.top,
                            stdin=subprocess.DEVNULL, capture_output=True)
-            try:
-                self.now(force=True)
-            except Exception:  # the next request shows the error; this thread keeps fetching
-                traceback.print_exc()
+            self.forced = True
+            self.wanted.set()
 
 
 def local_files(trees: dict[str, Path]) -> list[tuple[str, str, int, int]]:
@@ -246,12 +304,12 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                                 ("X-Content-Type-Options", "nosniff")):
                 self.send_header(name, value)
             self.end_headers()
-            sent, quiet = snapshots.now()[0], 0.0
+            sent, quiet = snapshots.changed(), 0.0
             self.wfile.write(b"retry: 10000\n\n")
             self.wfile.flush()
             while True:
                 time.sleep(TICK)
-                version = snapshots.now()[0]
+                version = snapshots.changed()
                 quiet += TICK
                 if version != sent:
                     self.wfile.write(f"event: changed\ndata: {version}\n\n".encode())
@@ -267,7 +325,10 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
 def serve(top: Path) -> int:
     print("Reading the work for the board…", flush=True)
     snapshots = Snapshots(top)
-    snapshots.now()  # the page shows the first snapshot at once
+    threading.Thread(target=snapshots.keep_building, daemon=True).start()
+    if not snapshots.body:
+        snapshots.now()  # no saved board yet: the page waits for this first build, once
+    snapshots.changed()  # a saved board starts its rebuild now when the work moved since
     token = secrets.token_urlsafe(24)
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler(snapshots, token))
     server.daemon_threads = True
