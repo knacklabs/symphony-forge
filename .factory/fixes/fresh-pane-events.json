@@ -1,0 +1,15 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/fresh-pane-events",
+  "done_when": "Each delivered event's Next line is worked out from current state, events for items that have since merged are dropped, and each CI line names the workflow and its result, once per workflow and commit",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:35.134342+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The Claude Code pane delivers Forge events late in bursts, with Next lines worked out when the event happened, and each push gives two bare 'Ci finished' lines"
+}
