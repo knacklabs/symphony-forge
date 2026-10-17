@@ -70,21 +70,46 @@
       "security": false,
       "title": "Gate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request",
       "work": 1
+    },
+    {
+      "area": "handler.Handler.route() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 237,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Removing shell and asset serving breaks the live page when SHELL lands",
+      "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2ab612fee531fec5b5c8c68571fdf8333ea7c7e54212b2d3829c75d57f8bec94",
-    "changed": "a4372723de994352be31f09d2753b1b833c14430e839bfe98ff1606d0f20c348",
-    "commit": "cb8d14a70ab97ee84990ad332fcebc044d5c7efa",
+    "branch_diff": "eb78115ef2c91707b404bb2f5a150c5997fe8022d4f98499f36954f81f023588",
+    "changed": "e4a3e893e88f85ddb68802706dbf1dbe554ad9016e9d69156de9e34c326330da",
+    "commit": "21609b827e858f51b30abb61fd859990e2a40ee6",
     "dismissals": [],
-    "findings": [],
-    "id": "61bcea2b-9362-465f-9f0f-feb1e6afd234",
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. This route now always serves the placeholder, and the asset route was removed. When SHELL adds board_app/shell.html, app.js and tokens.css as assigned, `forge board` will still show the placeholder and return 404 for its assets. The server therefore cannot display SHELL's page or its automatic refresh.",
+        "file": "src/forge/board_server.py",
+        "follow_up": "New finding on lines unchanged since the previous review.",
+        "gain": 4,
+        "harm": 3,
+        "line": 237,
+        "priority": "P1",
+        "title": "Removing shell and asset serving breaks the live page when SHELL lands",
+        "work": 1
+      }
+    ],
+    "id": "5dc39cb3-86b3-48d2-b484-975864023a29",
     "status": "clean"
   },
   "round": 7,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
@@ -100,6 +125,10 @@
     },
     {
       "at": "2026-10-17T08:10:46.228335+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:31:25.975487+00:00",
       "step": "review"
     }
   ],
