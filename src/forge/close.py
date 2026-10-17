@@ -643,6 +643,7 @@ def merger(top: Path, state: dict[str, Any]) -> str:
 def _worktree(item: str) -> Path:
     """The checkout on the item's own branch: the one its state names. An earlier item's state
     reaches later branches through the default branch, so the file alone proves nothing."""
+    task.require_active(item)
     for branch, tree in story.worktrees(repo.root()).items():
         state = repo.read_state(item, tree)
         if state and state.get("branch") == branch:

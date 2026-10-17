@@ -12,6 +12,7 @@ from test_split_commands import HELP_GOLDEN
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
 STORY = "FIX-EVERY-FORGE-PROCESS-INCLUDING-EACH-GIT-H"
+# The shared golden now includes fix drop; its help must keep the same lazy-owner contract.
 HELP = {**HELP_GOLDEN,
         "test": "usage: forge test [-h] [--pytest BASE]\n\n"
                 "Run related tests in the machine test lane, or pick pytest tests with --pytest\n\n"

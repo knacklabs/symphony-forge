@@ -58,7 +58,7 @@ def test_1_review_confirms_added_generated_files_are_committed(env, adopted):
     assert "media/logo.svg: 2 added, 0 removed" in section
     # Previously the prompt said only that contents were omitted. Reviewers must also know
     # that an added file absent from the filtered HEAD is already committed on the branch.
-    assert "Each listed file is committed at the real branch head with the listed line counts" in section
+    assert "Each listed change is committed at the real branch head with the listed line counts" in section
     assert "The review tree only restores each file to the branch start to keep its contents out of the diff" in section
     assert "A missing or untracked copy in the review tree is not a finding" in section
     assert "GENERATED-LOGO" not in section

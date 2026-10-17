@@ -140,8 +140,8 @@ When a round's tool is the coordinator's, its route is native: that session's ow
 even with both tools. The other tool runs through its kit: the Codex app server or the Claude
 Agent SDK. No coordinating session open in a one-tool repo means work waits for the session.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
-otherwise Claude. Autoreview uses its own default model and effort for normal, light and
-sign-off reviews. Existing review model entries are ignored; doctor explains this in a note.
+otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
+Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
@@ -228,17 +228,18 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds
-share a line. Plan reads and close reviews wait on the model's service, not this machine, so they
-start at once and take no place. A work round also waits while the machine's
-one-minute load per core is 1.5 or more, unless no other agent runs; where the OS reports no load
+share a line. Plan reads and close reviews take no place in that line. Every run, including
+tests, reviews and plan reads, waits while the machine's
+one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
 (Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
-and takes no place when the whole command is the picker, optionally run through `uv run`.
+one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
+place when the whole command is the picker, optionally run through `uv run`. It still waits for load.
 Compound commands, including the picker's underlying `test` command, keep their place.
 Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget.
+and the per-test budget. On Mac and Linux, it warns when a GitHub Actions self-hosted runner
+runs on this machine: its CPUs count against Forge's load limit.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
 alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
@@ -792,7 +793,7 @@ run the strict sign-off review before anyone asks for sign-off: write `forge dec
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
-repo's tool and its own model and effort defaults. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
+repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
@@ -800,8 +801,10 @@ records.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
-it uses Codex when installed and Claude otherwise. Forge pins no review model or effort,
-including when an older `forge.toml` still has `[models.review]` entries. A prototype fix
+it uses Codex when installed and Claude otherwise. Forge passes the selected tool's
+`[models.review]` model and optional effort to Autoreview; without an entry, it uses
+Autoreview's defaults. New and earlier-adopted repos get this behaviour on the current release.
+A prototype fix
 before sign-off gets a light review that blocks only on P0 findings.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
@@ -1005,8 +1008,8 @@ when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. A work round also waits while load per
-core is 1.5 or more and another agent runs. Items that other planned work waits on go
+reviews), across all its repos; the rest wait in line. Every run also waits while load per
+core is 1.5 or more, including when external jobs cause the load. Items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
 each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
@@ -1214,6 +1217,23 @@ written. A case the Done-when does not name, such as another language, platform,
 tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge records and the merge
 doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
+
+## Dropping a fix
+
+Only the human decides to drop a fix. Ask first and run `forge fix drop <fix> --because
+"<reason>"` only on a clear yes. Forge pushes the fix branch, records the reason, who and when
+on that branch, and closes its pull request with the reason. The fix leaves the board,
+`forge next` and the merge queue. Its name stays reserved and its remote branch keeps the work.
+
+Forge removes the clean worktree and local branch unless ignored files outside rebuildable
+folders keep it. It lists those paths and keeps their data. Commit uncommitted changes first;
+wait for local Forge runs to finish and drop or finish any open fixes stacked on this fix.
+A merged fix cannot be dropped.
+
+Run `forge fix drop <fix> --undo` to bring it back. Forge restores the worktree or reuses the
+kept one after a fast-forward, records the restore and reopens a pull request the drop closed.
+A fix that was ready needs `forge close` again for its new commit. Teammates see a drop or
+restore after they fetch.
 
 ## Closing
 
@@ -1436,8 +1456,8 @@ in that order.
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work` already queues work rounds across the machine, while reads and close reviews start
-at once; close and worker tests share the separate test lane, except picker runs of five or fewer
+`forge work` already queues work rounds across the machine, while reads and close reviews skip
+that line. All runs wait for high load to fall. Close and worker tests share the separate test lane, except picker runs of five or fewer
 test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 

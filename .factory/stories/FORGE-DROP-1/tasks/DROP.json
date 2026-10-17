@@ -1,0 +1,64 @@
+{
+  "branch": "task/FORGE-DROP-1-DROP",
+  "chat": {
+    "approval": "c0edd03485b1f9611b484bcd48553d07d81d64dfbee8c9b0a3cf6169e3e393c5",
+    "claude": null,
+    "conversation": "01a14af7-59e4-72b1-9ea5-c902a572c4b3",
+    "head": null,
+    "start": "2d06d16c00f2358ba7e43a678210b049da8a427c"
+  },
+  "flagged": [
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "require_active() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 577,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Starting a fix from a retained dropped checkout creates a blocked stack",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99c3eb57ce565c4ec31e348501a29a5153213cef702e5201fd60eb705979630a",
+    "changed": "9be1b6d8420ee02527fdfd05784e0447f7b6c18b12127806bdfc73a461f27d38",
+    "commit": "9dff3e274547531a460ede06fadba8e1adb5d4ae",
+    "dismissals": [],
+    "findings": [],
+    "id": "e2f8fd72-fafd-477a-9773-3c197f081598",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:44:39.334969+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T18:56:30.717727+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:17:33.095170+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8efa6178-fc55-430b-85ed-b091d04b3e2f",
+    "head": "34c99167288f4b611714ca765766f124b074244e",
+    "keys": {
+      "the review finding \"Starting a fix from a retained dropped checkout creates a blocked stack\" in src/forge/task.py": 1
+    },
+    "round": 1
+  },
+  "worker": "codex"
+}
