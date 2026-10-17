@@ -1,6 +1,13 @@
 {
   "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
   "branch": "fix/merge-before-replay",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1485a-633c-7e82-893d-44a55a17de56",
+    "head": null,
+    "start": "e3ae3f80f3b62ea3871e4b0078ce487e8d43209d"
+  },
   "done_when": "Close tries a plain merge of main first and replays only when that merge conflicts, and its message names a step the coordinator can run without a force-push when the merge is clean",
   "fix_kind": "backend",
   "kind": "fix",
