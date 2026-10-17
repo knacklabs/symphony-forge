@@ -294,6 +294,12 @@
       "title": "The board's data knows who owns what, what shipped when, and what was left",
       "status": "pending",
       "order": 84
+    },
+    {
+      "key": "FORGE-DROP-1",
+      "title": "Drop a fix nobody wants any more, and bring it back later",
+      "status": "pending",
+      "order": 85
     }
   ],
   "epics": [
