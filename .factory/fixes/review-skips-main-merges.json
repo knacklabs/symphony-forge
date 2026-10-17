@@ -10,13 +10,29 @@
   },
   "done_when": "A review after a merge of the default branch covers only the change's own work, never commits that came from the default branch, and a test merges main with an unrelated change between two closes and sees no finding about it",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cdb84834a2881b2ed5cd472af2e1cbb4ad8016de53a9552126c7fe95266d1e35",
+    "changed": "5b53686b2d7d54ccb6b9271a5e73cf7a827b1babf0d30af50e00a89e80368b5c",
+    "commit": "c17051ad73fb57c6210f9499783b63739dfecaa3",
+    "dismissals": [],
+    "findings": [],
+    "id": "792923d8-60f2-489a-9449-8d9b8cabcd2d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T21:25:09.925950+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T21:28:51.869088+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
