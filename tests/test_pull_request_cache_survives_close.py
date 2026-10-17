@@ -68,7 +68,9 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
     monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=60)).isoformat())
     refreshed = env.repo.forge("next", "--json")
     assert refreshed.returncode == 0, refreshed.stderr
-    assert len(lists(env)) == 16
+    # The six past weeks stay cached for a day. At one minute, only the open
+    # list and this week's merged list refill: eight initial calls plus two.
+    assert len(lists(env)) == 10
     assert row(json.loads(refreshed.stdout), item)["pr"]["number"] == 7
 
 
