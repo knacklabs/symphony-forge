@@ -464,7 +464,12 @@ def _sane(text: str) -> float:
 
 def from_body(body: str) -> dict[str, Any]:
     # Callers can amend a record; only its validated snapshot is shared within the command.
-    return copy.deepcopy(repo.command_fact(("time record", body), None, lambda: _from_body(body)))
+    return copy.deepcopy(view_body(body))
+
+
+def view_body(body: str) -> dict[str, Any]:
+    """Read the validated command snapshot without copying; callers must not amend it."""
+    return repo.command_fact(("time record", body), None, lambda: _from_body(body))
 
 
 def _from_body(body: str) -> dict[str, Any]:
@@ -628,7 +633,7 @@ def _combined(top: Path, key: str, state: dict[str, Any], published: str, *,
               ended_at: str | None = None) -> dict[str, Any]:
     """The item's time from local logs and its pull request, derived once; a published summary
     replaces its rounds' local rows, so long items stay quick to read."""
-    record = from_body(published)
+    record = view_body(published)
     if not record:
         return merged(item(top, key, state, events=events, timings=timings, ended_at=ended_at), {})
     rows = {name: [r for r in (read(top, name) if given is None else given) if r.get("item") == key]
