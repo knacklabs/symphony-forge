@@ -276,6 +276,7 @@ worktree path, shared by the repo's worktrees).
 `forge next` reads GitHub live.
 Pull request creates, edits and draft changes keep this shared cache. They show within a minute.
 Merges clear it at once. Each command fetches the default branch's settings at most once.
+After close, a matching receipt still shows "ready to merge" while the cached list lacks the pull request's link.
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;

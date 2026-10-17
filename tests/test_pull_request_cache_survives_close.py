@@ -54,6 +54,8 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
         elapsed = time.monotonic() - started
         assert shown.returncode == 0, shown.stderr
         assert row(json.loads(shown.stdout), item)["pr"]["number"] is None
+        # A close receipt still announces readiness while the cached list lacks its link.
+        assert "ready to merge" in row(json.loads(shown.stdout), item)["next"]["line"]
         assert len(lists(env)) == 8, "close discarded the shared pull request lists"
         assert len(git_calls()) - before[0] <= 500
         assert len(env.gh.calls()) - before[1] <= 40
