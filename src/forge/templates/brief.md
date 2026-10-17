@@ -44,6 +44,10 @@ Close records a reused review against the current branch after a replay. Land re
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
+Normal, light and sign-off reviews use the selected tool's model and optional effort from
+`[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
+uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.
+
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
 

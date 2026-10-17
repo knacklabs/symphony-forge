@@ -451,8 +451,6 @@ def doctor(args: argparse.Namespace) -> int:
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
             + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
                for name, entry in entries]) + ".")
-    if "review" in cfg.get("models", {}):
-        print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "

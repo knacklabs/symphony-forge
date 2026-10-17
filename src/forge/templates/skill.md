@@ -140,8 +140,9 @@ When a round's tool is the coordinator's, its route is native: that session's ow
 even with both tools. The other tool runs through its kit: the Codex app server or the Claude
 Agent SDK. No coordinating session open in a one-tool repo means work waits for the session.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
-otherwise Claude. Autoreview uses its own default model and effort for normal, light and
-sign-off reviews. Existing review model entries are ignored; doctor explains this in a note.
+otherwise Claude. Normal, light and sign-off reviews use the selected tool's model and optional
+effort from `[models.review]`, or `[models.review.codex]` and `[models.review.claude]`.
+Without an entry for that tool, Autoreview uses its defaults; without effort, its default effort.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
@@ -790,7 +791,7 @@ run the strict sign-off review before anyone asks for sign-off: write `forge dec
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
-repo's tool and its own model and effort defaults. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
+repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
@@ -798,8 +799,10 @@ records.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
-it uses Codex when installed and Claude otherwise. Forge pins no review model or effort,
-including when an older `forge.toml` still has `[models.review]` entries. A prototype fix
+it uses Codex when installed and Claude otherwise. Forge passes the selected tool's
+`[models.review]` model and optional effort to Autoreview; without an entry, it uses
+Autoreview's defaults. New and earlier-adopted repos get this behaviour on the current release.
+A prototype fix
 before sign-off gets a light review that blocks only on P0 findings.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
