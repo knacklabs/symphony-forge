@@ -139,7 +139,7 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
 | DETAIL | Drawer and full item page | drawer, item page tabs, inert plan rendering | 3, 6 | src/forge/board_app/item.js, src/forge/board_app/item.css, src/forge/board_app/markdown.js | tests/test_board_item_page.py | SHELL | yes | |
 | PAGES | Releases and Insights | the two pages | 5, 6 | src/forge/board_app/releases.js, src/forge/board_app/insights.js | tests/test_board_releases_insights.py | SHELL | yes | |
 | ASSIGNUI | Assign on the board | the Assign control, `/assign`, refusal messages | 4 | src/forge/board_app/assign.js, src/forge/board_server.py | tests/test_board_assign_ui.py | NOW, DETAIL, FORGE-BOARD-3/ASSIGN | yes | |
-| CUTOVER | The old page goes | `forge board` serves only the new page; the old HTML board and its renderers are removed; the coordinator guide, both synced copies, docs/commands.md and docs/guide.md describe the live page | 1, 6 | src/forge/board.html, src/forge/board_visuals.py, src/forge/board_graph.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md, docs/guide.md, tests/ (only tests that cover the removed page) | tests/test_board_guide.py | NOW, DETAIL, PAGES, ASSIGNUI | yes | |
+| CUTOVER | The old page goes | `forge board` serves only the new page; the old HTML board and its renderers are removed; the coordinator guide, both synced copies, docs/commands.md and docs/guide.md describe the live page | 1, 6 | src/forge/board.html, src/forge/board_visuals.py, src/forge/board_graph.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md, docs/guide.md, tests/ (only tests that cover the removed page) | tests/test_board_guide.py | SHELL | yes | |
 
 New moving parts: a local web server started by `forge board`, bound to 127.0.0.1 (item 1)
 
@@ -147,6 +147,8 @@ New moving parts: a local web server started by `forge board`, bound to 127.0.0.
 
 - Split on 16 October 2026 by the owner's choice: SERVER keeps the server and the board data;
   SHELL takes the page shell, styles and app script, so each part fits its size limit.
+- Moved on 17 October 2026 by the owner's choice: CUTOVER comes right after SHELL, so the old
+  page goes before the screens land. Hold the next release until NOW merges.
 
 - Waits for FORGE-BOARD-3 for owners, round times, known issues and releases; until those
   land, those regions show unknown.
