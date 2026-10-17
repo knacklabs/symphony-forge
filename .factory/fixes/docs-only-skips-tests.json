@@ -10,13 +10,29 @@
   },
   "done_when": "A pull request that changes only Markdown, docs/, plans/ or Forge's records skips the test suite in the generated workflow and at close, and the required tests check passes with a docs-only note, on new repos and after sync on existing repos",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6ad6e1487347aa7c8f9997f26219042b2813ea0bca06d9b8ef5a10b9675d5b61",
+    "changed": "27616a8e256f437e23c5f38b613e457cc832587fef336ce3ccb37bd29d097cef",
+    "commit": "26742da27f2a1b7d947760b8faee642d1695319c",
+    "dismissals": [],
+    "findings": [],
+    "id": "667dd2e5-061c-4804-a155-d74c6d7e272e",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T17:49:25.029989+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T18:15:09.959293+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
