@@ -32,7 +32,7 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
   })
   await $.session.start(started)
   const first = await $.command.run(command)
-  expect(first.text).toBe('MOVING\n  Polish the guide · Building · under a minute')
+  expect(first.text).toBe('MOVING\n  Polish the guide\n    Building · round 2 · opus\n\n    Build ● → Tests → Review → CI → Merge\n    Total 12s\n\n    Plan read  none\n    Review     none\n    CI         none (PR #7)\n    1 open finding')
   expect(calls.length).toBe(3)
   await clock.advance(5000)
   expect(calls.length).toBe(3)
@@ -41,7 +41,7 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
   expect(opened[0]).toEqual({ id: 'forge', title: 'Forge', focus: true })
 })
 
-test('1: /forge accepts unknown worker starts and names only the current stage', async ($, on) => {
+test('1: /forge accepts unknown worker starts and shows stages without zero durations', async ($, on) => {
   const clock = mock.clock(on)
   let runnable = true
   on('session.cwd', () => ({ value: '/repo' }))
@@ -65,7 +65,7 @@ test('1: /forge accepts unknown worker starts and names only the current stage',
   await $.session.start(started)
   const reply = (await $.command.run(command)).text
   expect(reply).not.toContain("Couldn't refresh:")
-  expect(reply).toBe('MOVING\n  Polish the guide · Review running · under a minute')
+  expect(reply).toBe('MOVING\n  Polish the guide\n    Review running · round 2 · opus\n\n    Build ✓ 4s → Tests ✗ 5s → Review ● → CI → Merge –\n    Total 12s\n\n    Plan read  none\n    Review     none\n    CI         none (PR #7)\n    1 open finding')
   runnable = false
   await clock.advance(10000)
   expect((await $.command.run(command)).text).not.toContain('unknown')

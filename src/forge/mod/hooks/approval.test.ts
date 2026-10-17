@@ -32,6 +32,6 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(JSON.stringify(await ui.drawn())).toContain('Share a basket')
     expect(await ui.find({ type: 'Button', text: /Approve/ })).toBeUndefined()
     const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toBe('NEEDS YOU\n  Share a basket  SHOP\n    The plan is ready for your approval.\n    → in Claude Code, show plans/SHOP.md in Plan Mode and exit Plan Mode with it as the plan')
+    expect(reply.text).toBe('NEEDS YOU\n  Share a basket  SHOP\n    The plan is ready for your approval.\n\n    Build → Tests → Review → CI → Merge\n\n    Plan read  none\n    Review     none\n    CI         none\n\n    Next: in Claude Code, show plans/SHOP.md in Plan Mode and exit Plan Mode with it as the plan')
   })
 }
