@@ -2,12 +2,20 @@
   "base": "04a9083591c2e2dab5fb77a42fbacd0935e3daa3",
   "branch": "task/FORGE-DROP-1-BOARD",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-BOARD-4/SERVER",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T20:41:19.516274+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "84d1c0d247302473038b81a8f1ae8636eefb64ba",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
