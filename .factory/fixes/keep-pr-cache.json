@@ -10,13 +10,29 @@
   },
   "done_when": "Pull request edits no longer delete the shared cache (changes show within its minute), forge next fetches the default branch at most once per run, and a test counts the fetches and cache refills",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5305e20f24c3ab2720c2193cc6b4e6661cd6dbbf201c55e5564eb60dbb9f5735",
+    "changed": "711f59414d6461cee3d4ff93600269ae7657117bca552afebcc7e1b5c92022cd",
+    "commit": "ef24289e247d8f36f0bdcf51519c3bf6ef782aed",
+    "dismissals": [],
+    "findings": [],
+    "id": "cbd45379-3b41-49d1-b915-b9dddcdd8b5d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T14:21:17.299313+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T14:33:37.487638+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
