@@ -22,8 +22,8 @@
     "id": "513b596a-1156-487b-a2b0-31025816736b",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
@@ -39,12 +39,10 @@
     }
   ],
   "stuck": {
-    "close": "2bff59ed-6b44-4251-be17-fb316192fcfd",
-    "head": "1341a77fa107d282f6e63e0793dde3c6c6b36e20",
-    "keys": {
-      "close's tests failing": 2
-    },
-    "round": 4
+    "close": "5b0fe7f7-d5b3-4d27-8d49-4809b7263907",
+    "head": "19a55485a17a36138603e6562426953364e07839",
+    "keys": {},
+    "round": 5
   },
   "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard",
   "worker": "codex"
