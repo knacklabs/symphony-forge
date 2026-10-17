@@ -739,15 +739,12 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
 def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> str:
     """Copy the newest worker proof list; other labels require the latest worker commit."""
     for _, message, files in repo.commit_log(top, base, head):
-        if files and all(f.startswith(BOOKKEEPING) for f in files):
-            continue
         # Any words between the label and its colon on that line still name the paragraph.
         found = re.search(r"^" + re.escape(label.removesuffix(":")) + r"\b[^\n]*?:.*",
                           message, re.M | re.S)
-        if found:
-            return found[0].strip()
-        if label != "Proof list:":
-            return ""
+        if not (files and all(f.startswith(BOOKKEEPING) for f in files)) and (
+                found or label != "Proof list:"):
+            return found[0].strip() if found else ""
     return ""
 
 
