@@ -27,10 +27,10 @@ def parse(text: str) -> Scores | None:
 
 def normalise(title: str, body: str) -> tuple[Scores | None, str]:
     """The scores with the Harm floor applied, and the body with its score line rewritten: a
-    security, data-loss or migration note never scores Harm below 4."""
+    security, data-loss or migration note never scores Harm below 4, except work marked Later."""
     scores = parse(body)
-    if not scores:
-        return None, body
+    if not scores or title.startswith("Later:"):
+        return scores, body
     gain, work, harm = scores
     why = next((name for pattern, name in FLOORS
                 if pattern.search(body if name != "migration" else f"{title}\n{body}")), "")
