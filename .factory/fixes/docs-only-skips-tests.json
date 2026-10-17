@@ -24,8 +24,8 @@
     "id": "667dd2e5-061c-4804-a155-d74c6d7e272e",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:49:25.029989+00:00",
@@ -37,10 +37,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "38c264fa3f3aabf254ec4ecc2e24ad77b1dfe34e",
+    "close": "ba2ce0f5-c48f-4519-b88c-0bc550d742fb",
+    "head": "96d6295736c431271280756c8204f4898c5febea",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Every pull request runs the full test suite, even one that changes only Markdown, docs, plans or Forge's records",
   "worker": "codex"
