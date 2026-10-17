@@ -6,10 +6,10 @@
 
 - When you no longer want a fix, you tell the agent, and it drops the fix with one command and
   your reason. The fix leaves the board, `forge next` and the merge queue. Its pull request
-  closes with your reason in it. Its worktree goes. Its branch stays on GitHub.
+  closes with your reason in it. Its worktree goes, unless it holds local files that are not in
+  git. Its branch stays on GitHub.
 - When you want a dropped fix back, the agent brings it back with the same command. The pull
-  request opens again, the worktree comes back from the branch, and the fix continues from where
-  it stopped.
+  request opens again, the worktree comes back, and the fix continues from where it stopped.
 - Teammates see the same result after their next fetch, because the fact lives in git and on
   GitHub, not on one laptop.
 
