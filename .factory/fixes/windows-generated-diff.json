@@ -1,6 +1,13 @@
 {
   "base": "db35b0d7cf9fc1ad2a8bbcd95dc91c3e5bc64483",
   "branch": "fix/windows-generated-diff",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14aab-93b9-79a2-ab73-b89b2766f7a5",
+    "head": null,
+    "start": "06251a0be9393397896dbc6cbe41817b294b94a4"
+  },
   "done_when": "Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
   "fix_kind": "mechanical",
   "kind": "fix",
