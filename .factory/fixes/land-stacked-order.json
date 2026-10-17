@@ -10,13 +10,79 @@
   },
   "done_when": "Land lands a stacked fix after the fix it was stacked on",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/land.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 326,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Land lands a stacked fix after the fix it was stacked on",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 315,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Stack ordering puts an unrelated younger change ahead of an older child",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "87bdfe9497f11faf7f7b1d500b90d7becdefa9348bee7794532d0eba08317e32",
+    "changed": "059c4af31c1f3148f4b6570849112b5a18ec9213299faca52c7e471e3c87bc54",
+    "commit": "07ddceb70b76c1c5cfde1d342e4ff51b0b0a103a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. The dependency check runs only when the base is in `queued`. If the base is left out because its builder is still working, another command owns it, or a recorded stop needs a human answer, its stacked child can still run and merge first. `task.py:520-525` permits starting a fix on an unmerged fix, so this is a normal path. The new test covers only a base that remains in the queue.",
+        "file": "src/forge/land.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 326,
+        "priority": "P1",
+        "title": "Not done: Land lands a stacked fix after the fix it was stacked on",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. `TopologicalSorter.static_order()` emits all initially ready changes before children that become ready later. With a child dated day 1, its base day 2, and an unrelated change day 3, this sorts them base, unrelated, child. Land therefore starts and may merge the unrelated change before the older child, contrary to the queue's otherwise-oldest-first behavior; if their files overlap, that reversal can change which close encounters a conflict. The named stack test has no unrelated change, so it passes with this regression.",
+        "file": "src/forge/land.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 315,
+        "priority": "P1",
+        "title": "Stack ordering puts an unrelated younger change ahead of an older child",
+        "work": 2
+      }
+    ],
+    "id": "39e3df9c-9375-4b1b-8059-5ef0bab42d87",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T05:29:46.199137+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T06:42:23.230485+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
