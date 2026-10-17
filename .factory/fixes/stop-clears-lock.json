@@ -1,0 +1,15 @@
+{
+  "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
+  "branch": "fix/stop-clears-lock",
+  "done_when": "forge stop on an item also clears that item's lock when no live run of this machine holds it, and a test stops an item whose lock outlived its run",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T17:15:27.504481+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A stopped forge work can leave its item lock behind, and forge stop says there is nothing to stop, so the next round is refused as busy"
+}
