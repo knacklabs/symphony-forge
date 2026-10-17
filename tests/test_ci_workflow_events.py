@@ -4,7 +4,7 @@ import copy
 import pytest
 
 from test_board_dependency_timelines import _client, _land_fixture
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 from test_machine_views import github, pull, view
 from test_story import worktree
 
@@ -16,6 +16,7 @@ def test_3_ci_events_name_each_workflow_and_result_once_per_commit(
         repo, gh, tmp_path, monkeypatch, history, env):
     configured = (repo.path / "forge.toml").read_text("utf-8")
     _client(repo, gh, tmp_path, history)
+    env.checks(GREEN)  # Init's GitHub setup replaces earlier API responses.
     setting = repo.forge("fix", "start", "Configure checks", "--done", "Checks are configured",
                          "--slug", "configure-checks", "--kind", "mechanical")
     assert setting.returncode == 0, setting.stderr
