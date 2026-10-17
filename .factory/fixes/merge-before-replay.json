@@ -4,12 +4,20 @@
   "done_when": "Close tries a plain merge of main first and replays only when that merge conflicts, and its message names a step the coordinator can run without a force-push when the merge is clean",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T05:29:38.679045+00:00",
       "step": "start"
     }
   ],
-  "why": "When main moves, close suggests a replay of the branch's commits even where a plain merge of main has no conflicts, and its refusal tells the coordinator to rebase and force-push by hand"
+  "stuck": {
+    "close": null,
+    "head": "ad48a0d0c47b9dda65eb7297652353083af741cc",
+    "keys": {},
+    "round": null
+  },
+  "why": "When main moves, close suggests a replay of the branch's commits even where a plain merge of main has no conflicts, and its refusal tells the coordinator to rebase and force-push by hand",
+  "worker": "codex"
 }
