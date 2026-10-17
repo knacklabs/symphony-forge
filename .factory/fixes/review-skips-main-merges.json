@@ -23,8 +23,8 @@
     "id": "792923d8-60f2-489a-9449-8d9b8cabcd2d",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T21:25:09.925950+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "07f3af499b5a15c3a4b1186e0687d272328acdda",
+    "close": "5eae27dd-980d-4dcf-889b-8df5f23695cd",
+    "head": "9f51e9bfb6a3fa68a91004299db6b04847109a14",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After main is merged into a branch, close's next review covers every commit since the last review, including main's own new commits, so reviews blame the change for other merged work",
   "worker": "codex"
