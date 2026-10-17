@@ -4,12 +4,20 @@
   "done_when": "A finding the review labels Later for another item is never raised to blocking by the migration or other floors",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T05:29:31.285651+00:00",
       "step": "start"
     }
   ],
-  "why": "A review finding titled Later with another item's name is raised to blocking when its text mentions a migration"
+  "stuck": {
+    "close": null,
+    "head": "f5c888fa50c9e143ad7a8eac37f5097a19fa441c",
+    "keys": {},
+    "round": null
+  },
+  "why": "A review finding titled Later with another item's name is raised to blocking when its text mentions a migration",
+  "worker": "codex"
 }
