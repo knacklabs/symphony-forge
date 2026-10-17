@@ -1,4 +1,5 @@
 {
+  "allow_large": "Owner allowed (18 Oct): one docs-only path rule shared by the generated workflow, close and sync needs 6 code files",
   "base": "7167abd06bd0e58c60bb72f102ccad1db8f6f216",
   "branch": "fix/docs-only-skips-tests",
   "chat": {
