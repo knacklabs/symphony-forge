@@ -10,13 +10,56 @@
   },
   "done_when": "Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
   "fix_kind": "mechanical",
+  "flagged": [
+    "tests/test_fix_review_bundles_include_generated_files_s.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_fix_review_bundles_include_generated_files_s.py",
+      "file": "tests/test_fix_review_bundles_include_generated_files_s.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 19,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d016ad0081bf367b3542e63efff9dcce499a3f19f681e569ae50aed2d8b9b884",
+    "changed": "3b9623b22ae822d243e0568862ea27dea1e6eb9fd51aef5d7e71f4aa87338034",
+    "commit": "14d521e8bdc597fc930f352d3d91186b664029a3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done. The changed recorder serves both named tests, but the proof list says the every-platform run is pending. The full-suite job in `.github/workflows/forge-next.yml` excludes pull requests; the pull-request suite in `.github/workflows/forge.yml` runs on Linux only. There is therefore no Windows or macOS result, or pending pull-request check that gates one, to establish the required pass before merge.",
+        "file": "tests/test_fix_review_bundles_include_generated_files_s.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 19,
+        "priority": "P1",
+        "title": "Not done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
+        "work": 1
+      }
+    ],
+    "id": "018d8d68-e7c2-43b8-b476-1bb475f056b9",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T16:21:53.802316+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:26:08.828702+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
