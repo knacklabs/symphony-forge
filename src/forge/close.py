@@ -242,9 +242,14 @@ def close(args: argparse.Namespace) -> int:
                                any(d.get("accepted") for d in result.get("dismissals", []))):
         fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
-                           result.get("branch_diff") != branch_diff)
+                           result.get("branch_diff") != branch_diff or
+                           not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", str(result.get("commit", ""))) or
+                           repo.run("git", "merge-base", "--is-ancestor", result["commit"],
+                                    "HEAD", cwd=top).returncode != 0)
     if fresh:
         result.update(changed=changed, branch_diff=branch_diff)
+        if refreshed:
+            result["commit"] = repo.git("rev-parse", "HEAD", cwd=top)
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
