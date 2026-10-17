@@ -104,7 +104,7 @@
     "id": "2a5b60ef-63f1-40ce-9073-d9546a925284",
     "status": "blocked"
   },
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
@@ -120,23 +120,14 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "narrow",
-    "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The local live server is stuck. It should deliver: server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, `/events` and the per-row snapshot cache\nTwo rounds in a row left the review finding \"An unrelated main commit invalidates every cached item row\" in src/forge/board.py.\nThe worker tried: Review of FORGE-BOARD-4/SERVER: blocked; Server tests cite this story's numbered criteria; The live board sees uncommitted edits and ignores unrelated merges.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "Owner's cache rule (plan detail 1b): part and fix rows key only on their own branch head, record and plan; story rows also rebuild when the default branch changes; no other shared input in a row key. test_5 must keep one unedited item and prove it does not rebuild.",
-    "tool": "claude",
-    "wait_id": "de2d7334-a466-41c6-8166-a536c337c2d8",
-    "worker_round": 4
-  },
   "stuck": {
-    "close": "6f56fe2a-e6de-4117-af7a-867aae621bf1",
-    "head": "c80fc7aff11b122a22fbd31d05344c44c294cabb",
+    "close": "4c78121a-8fd0-4a8d-8f21-fc342d684d56",
+    "head": "0f815482224239b935dfacac45a485f2cfd75d70",
     "keys": {
-      "the review finding \"An unrelated main commit invalidates every cached item row\" in src/forge/board.py": 1,
-      "the review finding \"Watch working-tree inputs before serving the cached snapshot\" in src/forge/board_server.py": 1
+      "the review finding \"An unrelated main commit invalidates every cached item row\" in src/forge/board.py": 2,
+      "the review finding \"Gate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request\" in tests/test_board_server.py": 1
     },
-    "round": 3
+    "round": 4
   },
   "worker": "claude"
 }
