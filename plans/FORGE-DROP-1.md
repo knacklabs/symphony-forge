@@ -49,19 +49,25 @@ Risks: none one-way. The branch and its commits stay on GitHub, so every drop ca
      when) on the fix branch itself, not on the default branch;
    - closes the fix's pull request with a comment that holds the reason; a fix with no pull
      request yet gets none;
-   - removes the worktree and the local branch, as merge cleanup does today, and keeps the remote
-     branch;
+   - removes the worktree and the local branch and keeps the remote branch, but only when the
+     worktree holds no ignored files other than rebuildable folders (`.venv`, `node_modules`,
+     `.pytest_cache`, `__pycache__`, `dist`, `build`); otherwise it keeps the worktree, says which
+     ignored paths kept it, and still drops the fix;
    - refuses with a plain reason and the next step when the fix has uncommitted changes, when a
-     Forge run on this machine holds it, or when it is already merged.
+     Forge run on this machine holds it, when it is already merged, or when another open fix is
+     stacked on it (it names those fixes: drop or finish them first).
    The board, `forge next`, `forge land`'s queue and `forge board --json` skip a dropped fix. The
    fix's name stays reserved, as abandoned names are today.
    Tests: drop a fix with a pull request and one without; each leaves the board and `forge next`;
    the pull request is closed with the reason; the remote branch keeps every commit; a drop with
-   uncommitted changes is refused and changes nothing.
+   uncommitted changes is refused and changes nothing; a fix with an ignored local data folder
+   keeps its worktree; a fix that another open fix is stacked on is refused and names it.
 2. `forge fix drop <fix> --undo`. It recreates the worktree from the remote branch, commits a
-   restored record, and reopens the pull request when one was closed by the drop. The fix's next
-   step is the one it had before the drop. Tests: drop then undo; the fix is back on the board with
-   its old commits and an open pull request; `forge work` continues it.
+   restored record, and reopens the pull request when one was closed by the drop. Its next step
+   then follows the usual rules for its new commit: a fix that was ready before the drop needs
+   `forge close` again, because readiness belongs to a commit. Tests: drop then undo; the fix is
+   back on the board with its old commits and an open pull request; `forge work` continues it; a
+   fix that was ready before the drop shows `forge close` as its next step after the undo.
 3. The dropped state is read from the fix branch's record and the pull request's state on GitHub,
    never from a local-only file. Tests: a second clone fetches and shows the fix dropped, then
    restored.

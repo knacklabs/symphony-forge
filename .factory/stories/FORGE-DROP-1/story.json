@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-DROP-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-17T17:29:50.299103+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:38:17.395315+00:00",
+      "step": "read"
     }
   ],
   "title": "Drop a fix nobody wants any more, and bring it back later",
