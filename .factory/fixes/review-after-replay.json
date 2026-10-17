@@ -1,6 +1,13 @@
 {
   "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
   "branch": "fix/review-after-replay",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-d42b-7b51-9c75-15d6179fe178",
+    "head": null,
+    "start": "4616528d587b1663537d7905428a071a64c1fba4"
+  },
   "done_when": "A reused review is recorded against the branch's new head after a replay, so the pull request check passes; and when the only failing check is Forge's own review check, land closes again instead of starting a worker round",
   "fix_kind": "backend",
   "kind": "fix",
