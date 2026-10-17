@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tQueued CI failure is delivered after its rerun starts\tkeep-pr-cache",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 92,
+      "text": "Queued CI failure is delivered after its rerun starts",
+      "from": "blocking",
+      "item": "keep-pr-cache",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -10,21 +10,48 @@
   },
   "done_when": "Pull request edits no longer delete the shared cache (changes show within its minute), forge next fetches the default branch at most once per run, and a test counts the fetches and cache refills",
   "fix_kind": "backend",
-  "flagged": [],
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
   "kind": "fix",
-  "known": [],
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 92,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Queued CI failure is delivered after its rerun starts",
+      "work": 2
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5305e20f24c3ab2720c2193cc6b4e6661cd6dbbf201c55e5564eb60dbb9f5735",
-    "changed": "711f59414d6461cee3d4ff93600269ae7657117bca552afebcc7e1b5c92022cd",
-    "commit": "ef24289e247d8f36f0bdcf51519c3bf6ef782aed",
+    "branch_diff": "c05028fcac3a7e7e3b56a0a1df7d1d0e9344b0aaacf66d3dc9fce67ea3ab5f0c",
+    "changed": "65bcd098978310c38a7bb31a594abc0a24550865ebe24e03fcbbd60cdf834d5f",
+    "commit": "81c59d8ab565a2b5ef1d1055f5c6d71c81053b76",
     "dismissals": [],
-    "findings": [],
-    "id": "cbd45379-3b41-49d1-b915-b9dddcdd8b5d",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. While a session turn is busy, a failed workflow can enter `pending`. If that workflow is rerun before delivery, its check suite becomes queued and the current board no longer contains the completed event. This loop checks only whether the item still exists, so it delivers the old \u201cfailed\u201d result even though the rerun is underway. The delivery test covers completed results changing, but not the interval while a rerun is queued. GitHub [documents](https://docs.github.com/en/rest/checks/suites?apiVersion=2022-11-28) that rerequesting a suite resets its status to queued and clears its conclusion.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 92,
+        "priority": "P1",
+        "title": "Queued CI failure is delivered after its rerun starts",
+        "work": 2
+      }
+    ],
+    "id": "bd4f4e25-4c2f-48e2-bdd2-ea9af6cca73d",
+    "status": "blocked"
   },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T14:21:17.299313+00:00",
@@ -32,6 +59,10 @@
     },
     {
       "at": "2026-10-17T14:33:37.487638+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T15:27:13.229081+00:00",
       "step": "review"
     }
   ],
