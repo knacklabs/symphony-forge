@@ -4,12 +4,20 @@
   "done_when": "Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T16:21:53.802316+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows, two generated-files tests fail because the tests' stand-in review script reads a binary diff with the Windows code page"
+  "stuck": {
+    "close": null,
+    "head": "93aebb47c2527d535a1e23f6eafda768b72346df",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows, two generated-files tests fail because the tests' stand-in review script reads a binary diff with the Windows code page",
+  "worker": "codex"
 }
