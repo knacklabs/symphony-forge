@@ -54,7 +54,7 @@ STATUS = {
     "fixing": ("Close stopped on {label}: {reason}.", "forge work {item}"),
     "waiting for checks": ("{label} is waiting for its checks.", "forge close {item}"),
     "checks failed": ("{label}'s checks failed.", "forge work {item}"),
-    "ready": ("{label} is ready and waiting for someone to merge it.",
+    "ready": ("{label} is ready to merge.",
               "merge its pull request, then forge next"),
 }
 
@@ -588,11 +588,16 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     stack_waits: list[str] = []
     for name, deps in waits.items():
         if deps and _report_config(top, refusals)["stack"] == "on":
-            try:
-                if base := stack_base(f"{key}/{name}", deps, story.landed_ref(top), top):
-                    stacked[name] = base
-            except repo.Refused as error:
-                stack_waits += str(error).splitlines()
+            item, main = f"{key}/{name}", story.landed_ref(top)
+            def read_base():
+                try:
+                    return stack_base(item, deps, main, top), []
+                except repo.Refused as error:
+                    return None, str(error).splitlines()
+            base, problems = repo.command_fact(("stack base", item, tuple(deps), main), top, read_base)
+            if base:
+                stacked[name] = base
+            stack_waits += problems
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == [] or task["id"] in stacked]
     assignments = {row["id"]: developer(row) or owner(text) for row in doc["tasks"]}
     if any(assignments[name] for name in ready):

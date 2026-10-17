@@ -88,10 +88,12 @@ export function registerEvents(on: On, data: Data) {
           }
         }
         collect(data.board.items)
+        const latest = occurrences(data.board.items)
         const batch: [string, string][] = []
         for (const [id, event] of pending) {
           const item = items.get(event.item)
-          if (!item || item.stage === 'merged' || item.stage === 'done') {
+          if (!item || item.stage === 'merged' || item.stage === 'done'
+            || id.startsWith('workflow:') && !latest.has(id)) {
             pending.delete(id)
             continue
           }

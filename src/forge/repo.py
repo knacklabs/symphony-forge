@@ -160,8 +160,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
     done = _github_read(args, execute) if args[0] == "gh" else execute()
-    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
-        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+    if args[:3] == ("gh", "pr", "merge") and not done.returncode:
+        # Merges must show at once; other pull request changes wait for the minute cache.
         (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
         if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
@@ -514,7 +514,7 @@ def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
     if not command_fact("fetched origin", top, dict).get("all"):
-        git("fetch", "-q", "origin", default, cwd=top)
+        command_fact(("fetch default", default), top, lambda: git("fetch", "-q", "origin", default, cwd=top))
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
