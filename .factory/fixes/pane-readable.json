@@ -43,36 +43,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0b490651cc27a845d69ce605cb8c0337f9b3a8d9243173795f9f206386d0477c",
-    "changed": "c6111a00d824446be6d5165c79ef5663287930765866e096005d5212d1211d51",
-    "commit": "d35c1b1acbc3296c984067660991591060506d28",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner chose (18 Oct): accept the events.ts CI-rerun finding on fixes that do not change events.ts; this branch's diff against main does not touch events.ts; the cache-window case is its own fix (pane-rerun-cache-window)",
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The earlier finding was dismissed because this fix did not change `events.ts`; the current diff now adds this occurrence check. When a failed workflow is rerun and the busy turn ends within 60 seconds, `board.py:101` can still return the cached failed snapshot. The old workflow ID remains in `latest`, so this check submits the stale failure. The new rerun test advances `FORGE_NOW` by a full minute before reading the rerun, bypassing that normal interval.",
-        "file": "src/forge/mod/hooks/events.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 96,
-        "priority": "P1",
-        "title": "Disputed keep In-progress CI rerun can deliver the previous failure: cached failure still reaches the prompt",
-        "work": 2
-      }
-    ],
-    "id": "967cd4a4-702a-413b-ad87-a90948361daa",
+    "branch_diff": "bec1f0c165714bb21a5bbc4b4b24999b4655ef7615bd85fd64b998f7d600f0b9",
+    "changed": "63d0aa3c19c77767e39b968e6ee30fdc9db6be9202479a7722307ac4c75b27ab",
+    "commit": "f885c1a824067d479bffa4615045981cecaefd4d",
+    "dismissals": [],
+    "findings": [],
+    "id": "f7e683a1-271b-418a-8284-a541330f15c9",
     "status": "clean"
   },
   "round": 7,
   "settled_areas": [
     "src/forge/mod/hooks/events.ts"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
@@ -92,6 +75,10 @@
     },
     {
       "at": "2026-10-17T20:05:23.853553+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:34:35.885487+00:00",
       "step": "review"
     }
   ],
