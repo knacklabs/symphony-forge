@@ -1401,7 +1401,11 @@ still stops for a pending question and gives open findings or failing tests a wo
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
 status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
 its builder, one already merged and one another command works on. It starts them oldest first,
-several at a time up to this machine's agent places, and merges each one when it passes. A change
+several at a time up to this machine's agent places, and merges each one when it passes. A stacked
+fix follows its base even when its start date is earlier. Where Forge merges, it waits for its
+base to merge, including a base whose builder or another command still works on it. If the base
+stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
+can enter close. Among changes whose bases are ready, the oldest starts first. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
@@ -1412,7 +1416,8 @@ its fix rounds, or, for a stopped change, close's own question and next step, wh
 answers. Close's stop rule decides each stopped change, its 30-minute default included. A failed
 check whose log names none of the change's files runs again once when the tests passed here; a
 second failure stops that change. Where a human merges, the run closes every change, holds none
-and merges none, and lists the ready ones oldest first with their pull request links: merge them
+and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
+with their pull request links: merge them
 in that order.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
