@@ -83,7 +83,8 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
         commits(last: 1) { nodes { commit { oid statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
-            ... on CheckRun { databaseId name status conclusion startedAt completedAt }
+            ... on CheckRun { databaseId name status conclusion startedAt completedAt
+              checkSuite { status conclusion workflowRun { workflow { id name } } } }
             ... on StatusContext { id context state createdAt }
           } }
         } } } }
@@ -151,10 +152,24 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
     except (KeyError, TypeError, IndexError):
         return "unknown", [], []
     statuses, events, names, failures = [], [], [], []
+    workflows = set()
     for check in nodes:
         if not isinstance(check, dict):
             continue
         name = check.get("name") or check.get("context") or "Check"
+        suite = check.get("checkSuite") or {}
+        workflow = (suite.get("workflowRun") or {}).get("workflow") or {}
+        workflow_id = workflow.get("id")
+        if (workflow_id and suite.get("status") == "COMPLETED" and suite.get("conclusion")
+                and workflow_id not in workflows):
+            workflows.add(workflow_id)
+            result = {"SUCCESS": "passed", "FAILURE": "failed", "TIMED_OUT": "timed out",
+                      "CANCELLED": "cancelled", "ACTION_REQUIRED": "needs action",
+                      "STARTUP_FAILURE": "failed to start", "NEUTRAL": "neutral",
+                      "SKIPPED": "skipped", "STALE": "stale"}.get(
+                          suite["conclusion"], suite["conclusion"].lower().replace("_", " "))
+            events.append({"id": f"workflow:{workflow_id}:{pr['headRefOid']}",
+                           "kind": "run_finished", "title": f"{workflow['name']} {result}"})
         names.append(name)
         value = (check.get("conclusion") if check.get("status") == "COMPLETED" else None) or check.get("state")
         failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE")
@@ -169,7 +184,7 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
             identity = (f"check-run:{check['databaseId']}:{check['completedAt']}"
                         if check.get("databaseId") is not None and check.get("completedAt")
                         else f"status:{check['id']}" if check.get("__typename") == "StatusContext" and check.get("id") else None)
-            if identity:
+            if identity and not workflow:
                 events.append({"id": identity, "kind": "checks_failed", "title": f"{name} failed"})
     missing = any(not any(n == want or n.startswith(want + " (") for n in names) for want in required)
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
@@ -485,6 +500,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         for event in activity:
             event_kind = event.get("event")
             if event_kind == "run end":
+                if event.get("kind") == "ci":
+                    continue
                 occurrence_kind, message = "run_finished", f"{event.get('kind', 'Run').capitalize()} finished"
             elif event_kind == "worker question" and event.get("id") == pending:
                 occurrence_kind, message = "worker_question", event.get("question")

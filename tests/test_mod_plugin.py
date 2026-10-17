@@ -130,7 +130,7 @@ console.log(JSON.stringify({{replies, processCalls}}));
     assert all(reply.startswith("1 in progress\n\n0 stories building, 1 parts and fixes in progress")
                and "\n\nMOVING\n  Readme greets new readers\n    In progress\n" in reply
                for reply in answer["replies"]), answer["replies"]
-    assert len(answer["processCalls"]) == 24  # only initial load + seven scheduled ticks
+    assert len(answer["processCalls"]) == 16  # one next read plus lanes per scheduled refresh
 
 
 HOST = """
@@ -164,8 +164,26 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
     item, _ = env.start_fix()
     stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
-    stub.write_text(source.replace('"stub claude: built it\\n"',
-                                  '"Question: May I reuse the parser?"'), encoding="utf-8")
+    if case not in ("fresh advice", "merged before delivery"):
+        stub.write_text(source.replace('"stub claude: built it\\n"',
+                                      '"Question: May I reuse the parser?"'), encoding="utf-8")
+    workflow_responses = []
+    if case == "workflow rerun":
+        from test_machine_views import github, pull
+        # Only GitHub changes the result. Real commands generate the occurrence,
+        # and the packaged mod decides which result reaches Claude's prompt.
+        for conclusion in ("FAILURE", "SUCCESS", "FAILURE"):
+            pr = pull(7, f"fix/{item}", conclusion)
+            pr["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
+            checks = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+            checks[0]["checkSuite"] = {
+                "status": "COMPLETED", "conclusion": conclusion,
+                "workflowRun": {"workflow": {"id": "client-tests", "name": "Client tests"}},
+            }
+            github(env.gh, [pr])
+            workflow_responses.append((repo.bin / "gh-responses.json").read_text("utf-8"))
+        # Start without any workflow occurrence, before the first push completes.
+        github(env.gh, [])
     answer = node_run(tmp_path, HOST + f"""
 import {{execFile}} from 'node:child_process';
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});
@@ -193,7 +211,7 @@ async function session(id, duringRefresh) {{
     prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
     process: {{run: async argv => {{
       if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}
-      // Claude runs the snapshot's three commands concurrently; don't serialize them in the host.
+      // Claude runs the snapshot's two commands concurrently; don't serialize them in the host.
       return new Promise(resolve => execFile({json.dumps(sys.executable)},
         [{json.dumps(str(repo.bin / 'forge'))}, ...argv.slice(1)],
         {{cwd: {json.dumps(str(repo.path))}, encoding: 'utf8', timeout: 30000}},
@@ -218,7 +236,63 @@ async function session(id, duringRefresh) {{
   }}}};
 }}
 // Each lifecycle has its own host budget: real Forge processes are slower on Windows.
-if ({json.dumps(case)} === 'events') {{
+if ({json.dumps(case)} === 'workflow rerun') {{
+const first = await session('rerun');
+await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
+const responses = {json.dumps(workflow_responses)};
+const results = [];
+for (let n = 0; n < responses.length; n++) {{
+  writeFileSync({json.dumps(str(repo.bin / 'gh-responses.json'))}, responses[n]);
+  process.env.FORGE_NOW = `2030-01-01T00:0${{n}}:00+00:00`;
+  await first.tick();
+  const row = JSON.parse(forge(['board', '--json'])).items.find(row => row.id === {json.dumps(item)});
+  const event = row.occurrences.find(event => event.id.startsWith('workflow:'));
+  results.push(event);
+  if (n === 0) {{
+    assert.equal(event.title, 'Client tests failed');
+    assert.deepEqual(first.prompts, []);
+  }} else if (n === 1) {{
+    assert.equal(event.id, results[0].id);
+    assert.equal(event.title, 'Client tests passed');
+    assert.deepEqual(first.prompts, []);
+    await first.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
+    assert.equal(first.prompts.length, 1);
+    assert.match(first.prompts[0], /Client tests passed Next:/);
+    assert.ok(!first.prompts[0].includes('Client tests failed'), first.prompts[0]);
+  }} else {{
+    assert.equal(event.id, results[0].id);
+    assert.equal(event.title, 'Client tests failed');
+    assert.equal(first.prompts.length, 1); // Already delivered once for this commit.
+  }}
+}}
+console.log(JSON.stringify({{prompts: first.prompts}}));
+}} else if (['fresh advice', 'merged before delivery'].includes({json.dumps(case)})) {{
+const first = await session('fresh');
+await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
+forge(['work', {json.dumps(item)}]);
+await first.tick();
+const before = JSON.parse(forge(['board', '--json'])).items.find(row => row.id === {json.dumps(item)});
+assert.equal(before.next.command, 'forge close ' + {json.dumps(item)});
+forge(['close', {json.dumps(item)}]);
+if ({json.dumps(case)} === 'merged before delivery') {{
+  execFileSync('git', ['merge', '--squash', {json.dumps('fix/' + item)}], {{cwd: {json.dumps(str(repo.path))}}});
+  execFileSync('git', ['commit', '-qm', 'Accept the fix'], {{cwd: {json.dumps(str(repo.path))}}});
+  execFileSync('git', ['push', '-q', 'origin', 'main'], {{cwd: {json.dumps(str(repo.path))}}});
+}}
+await first.tick();
+const current = JSON.parse(forge(['board', '--json'])).items.find(row => row.id === {json.dumps(item)});
+assert.deepEqual(first.prompts, []);
+await first.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
+if ({json.dumps(case)} === 'merged before delivery') {{
+  assert.equal(current.stage, 'merged');
+  assert.deepEqual(first.prompts, []);
+}} else {{
+  assert.notEqual(current.next.command, before.next.command);
+  assert.equal(first.prompts.length, 1);
+  assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith('Next: ' + (current.next.command ?? 'forge next'))), first.prompts[0]);
+}}
+console.log(JSON.stringify({{prompts: first.prompts}}));
+}} else if ({json.dumps(case)} === 'events') {{
 const first = await session('first'), second = await session('second');
 assert.deepEqual(first.prompts, []);
 assert.deepEqual(second.prompts, []);
@@ -306,8 +380,8 @@ export function {function}(on, data, addTab) {{
     answer = node_run(tmp_path, HOST + f"""
 const mod = await import({json.dumps((plugin / 'hooks/register.ts').as_uri())});
 const timers = [];
-const values = {{board: {{version: '1.2.5', repo_root: '/repo', items: [{{title: 'Shared board'}}]}},
-  next: {{version: '1.2.5', repo_root: '/repo', next: {{command: null, line: 'Shared next step'}}}},
+const values = {{next: {{version: '1.2.5', repo_root: '/repo', items: [{{title: 'Shared board'}}],
+    next: {{command: null, line: 'Shared next step'}}}},
   lanes: {{version: '1.2.5', marker: 'shared lanes'}}}};
 const api = {{ session: {{cwd: async () => '/repo'}}, clock: {{now: async () => 123, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
   command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}}},
@@ -348,14 +422,14 @@ const api = {{
     const command = argv[1];
     if (mode === 'slow') return new Promise((resolve, reject) => pending.push({{resolve, reject}}));
     if (mode === 'old') return {{exitCode: 2, stdout: '', stderr: 'unrecognized arguments: --json'}};
-    if (mode === 'failed' && command === 'board') return {{exitCode: 1, stdout: '', stderr: 'offline\\nsecond line'}};
-    if (mode === 'bad-board' && command === 'board') return {{exitCode: 0, stdout: '{{"items":[{{}}]}}', stderr: ''}};
+    if (mode === 'failed' && command === 'next') return {{exitCode: 1, stdout: '', stderr: 'offline\\nsecond line'}};
+    if (mode === 'bad-board' && command === 'next') return {{exitCode: 0, stdout: '{{"items":[{{}}]}}', stderr: ''}};
     if (mode === 'bad-lanes' && command === 'lanes') return {{exitCode: 0, stdout: '{{}}', stderr: ''}};
     if (command === 'lanes') return {{exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'"}};
-    const value = structuredClone(fixture[command]);
-    if (command === 'board' && mode === 'empty') value.items = [];
-    if (command === 'board' && mode === 'missing') value.items = [{{title: 'Lost state'}}];
-    if (command === 'board' && mode === 'bad-time') value.items[0].stages[0].started_at = 'not a timestamp';
+    const value = structuredClone({{...fixture.next, ...fixture.board}});
+    if (mode === 'empty') value.items = [];
+    if (mode === 'missing') value.items = [{{title: 'Lost state'}}];
+    if (mode === 'bad-time') value.items[0].stages[0].started_at = 'not a timestamp';
     return {{exitCode: 0, stdout: JSON.stringify(value), stderr: ''}};
   }} }},
 }};
@@ -383,7 +457,7 @@ for (const nextMode of ['empty', 'missing', 'old']) {{
 console.log(JSON.stringify(texts));
 """)
     assert "Polish the guide" in answer[0]
-    for text, error in zip(answer[1:5], ["offline", "Malformed forge board output", "Malformed forge board output", "Malformed forge lanes output"]):
+    for text, error in zip(answer[1:5], ["offline", "Malformed forge next output", "Malformed forge next output", "Malformed forge lanes output"]):
         assert "Polish the guide" in text
         assert f"Couldn't refresh: {error}" in text
         assert "second line" not in text
