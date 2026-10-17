@@ -188,6 +188,7 @@ def close(args: argparse.Namespace) -> int:
         _refresh_record(top, item, state, pr)
     if "/" in item and (limit := state.get("part_line_limit")) and not state.get("allow_large"):
         excluded = [f":(exclude,glob){path}**" for path in review.BOOKKEEPING]
+        excluded += [":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md"]
         excluded += [path.replace(":(glob)", ":(exclude,glob)") for path in repo.TEST_PATHS]
         stats = repo.git("diff", "--numstat", "-z", "--no-renames", f"origin/{default}...HEAD",
                          "--", ".", *excluded, cwd=top)
