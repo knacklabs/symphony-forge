@@ -4,12 +4,20 @@
   "done_when": "Forge's required check fails such a pull request at once with a plain message that names the fix flow, on new and existing repos, and a test covers it",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:18:34.533305+00:00",
       "step": "start"
     }
   ],
-  "why": "A pull request from a branch Forge did not start passes Forge's required check, then cannot merge, and nothing tells its author to redo it as a fix"
+  "stuck": {
+    "close": null,
+    "head": "529aef25a9eeaced12187ef9bb4b2ac337bb0240",
+    "keys": {},
+    "round": null
+  },
+  "why": "A pull request from a branch Forge did not start passes Forge's required check, then cannot merge, and nothing tells its author to redo it as a fix",
+  "worker": "codex"
 }
