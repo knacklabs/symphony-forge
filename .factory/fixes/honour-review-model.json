@@ -50,7 +50,7 @@
     "id": "af5c6a27-1955-4e84-b679-b8ac655edf7d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "19878a47668b8a9905f74f2a99368f9c9c204929",
-    "keys": {},
-    "round": null
+    "close": "4969eed6-1517-4ee4-86f0-bd609ff18a07",
+    "head": "b02efb0f07a69122f8d182657325a76efdad5b16",
+    "keys": {
+      "the review finding \"Gate: update obsolete expectations in existing review tests\" in src/forge/review.py": 1
+    },
+    "round": 1
   },
   "why": "Forge accepts a review model in forge.toml but ignores it, so a repo cannot choose the model or effort its reviews use",
   "worker": "codex"
