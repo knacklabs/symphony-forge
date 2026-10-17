@@ -6,6 +6,8 @@ Settled findings stay settled. Each reader and reviewer gets earlier rounds' not
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
+After a merge of main, close applies a requested dismissal to the same title and file in the
+current review, even if its number changes. Only the human chooses which findings to dismiss.
 
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security
@@ -37,6 +39,13 @@ $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
 review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Land prints the owner's question, open findings and failing checks, then exits with status 3
+(needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
+again. Other stops and session subagent handoffs also print the open findings and failing checks.
+
+Close records a reused review against the current branch after a replay. Land retries close once
+when only Forge's review check reports a stale or missing review. If that check still fails,
+land stops without a worker round.
 
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.

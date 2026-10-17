@@ -21,7 +21,7 @@ const row = {
 }
 const story = { id: 'story', kind: 'story', title: 'A better board', stage: 'planning', activity: { status: 'idle' }, idle_since: '1969-12-30T00:00:00Z', stalled: true, children: [row], stages: stages.map(s => ({ name: s.name, status: null })) }
 const board = { version: '1.2.5', repo_root: '/repo', items: [story] }
-const following = { version: '1.2.5', repo_root: '/repo', next: { command: 'forge close guide', line: 'Close the guide.' } }
+const following = { ...board, next: { command: 'forge close guide', line: 'Close the guide.' } }
 const lanes = { version: '1.2.5', agents: { size: 4, entries: [{ started_at: '1970-01-01T00:00:00Z', item: 'other', repo_root: '/other' }, { started_at: null }] }, tests: { size: 1, entries: [{ started_at: '1970-01-01T00:00:00Z', item: 'guide', repo_root: '/repo' }, { started_at: null }] } }
 
 // The shipped registration and mounted surfaces decide behavior; only the host
@@ -44,8 +44,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', (_$, e) => { opens.push(e); return { value: undefined } })
     on('process.run', (_$, e) => {
-      if (mode === 'bad' && e.argv[1] === 'board') return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
-      const value = e.argv[1] === 'next' ? following : e.argv[1] === 'lanes' ? lanes : { ...board, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [early] }
+      if (mode === 'bad' && e.argv[1] === 'next') return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
+      const value = e.argv[1] === 'lanes' ? lanes : { ...following, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [early] }
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
@@ -68,7 +68,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     mode = 'bad'; await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('Polish the guide')
-    expect(drawn).toContain("Couldn't refresh: Malformed forge board output")
+    expect(drawn).toContain("Couldn't refresh: Malformed forge next output")
     mode = 'empty'; await clock.advance(10000)
     expect(JSON.stringify(await ui.drawn())).toContain('Nothing in progress.')
     mode = 'missing'; await clock.advance(10000)
@@ -100,7 +100,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('prompt.submit', (_$, e) => { if (failSubmit) return { drop: 'Prompt unavailable' }; submitted.push(e.text); origins.push(e.origin); return { text: e.text, origin: e.origin } })
     on('process.run', (_$, e) => {
       if (failRead && e.argv[1] === 'next') return { value: { exitCode: 1, stdout: '', stderr: 'offline' } }
-      const value = e.argv[1] === 'board' ? board : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command } } : lanes
+      const value = e.argv[1] === 'next' ? { ...following, next: { ...following.next, command } } : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
@@ -145,7 +145,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('process.run', (_$, e) => {
       if (old && e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
       const items = inactive ? [] : [long ? { ...row, title: 'A very long guide title that must never displace worker details or elapsed time', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
-      const value = e.argv[1] === 'board' ? { ...board, items } : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: nextCommand } } : lanes
+      const value = e.argv[1] === 'next' ? { ...following, items, next: { ...following.next, command: nextCommand } } : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
@@ -336,7 +336,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
   test(`${surface} Board tab draws the summary and all four groups with their steps`, async ($, on) => {
     mock.clock(on)
     let shown: object = grouped
-    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'board' ? shown : argv[1] === 'next' ? following : lanes) } }))
+    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'next' ? { ...following, ...shown } : lanes) } }))
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     const drawn = JSON.stringify(await ui.drawn())

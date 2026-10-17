@@ -7,7 +7,7 @@
   "next": {
     "version": "1.2.3",
     "repo_root": "/example/repo",
-    "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it.", "step": "merge its pull request, then forge next"},
+    "next": {"command": null, "line": "The fix polish is ready to merge.", "step": "merge its pull request, then forge next"},
     "team": {
       "sentence": null,
       "counts": {
@@ -64,7 +64,7 @@
           {"name": "Merge", "status": null, "started_at": null, "ended_at": null, "seconds": null}
         ],
         "occurrences": [],
-        "next": {"command": null, "line": "Polish the guide is ready and waiting for someone to merge it.", "step": "merge its pull request, then forge next"},
+        "next": {"command": null, "line": "Polish the guide is ready to merge.", "step": "merge its pull request, then forge next"},
         "needs_person": false,
         "children": []
       },
