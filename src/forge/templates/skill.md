@@ -492,7 +492,8 @@ in `tests/test_machine_views.py` checks both views against it.
 The Claude Code mod reads Forge's machine views, runs `forge` commands and draws;
 it never edits repo files or replaces the commands' approval and merge rules.
 All its consumers share one snapshot. On load, then every 10 seconds, one refresh
-runs `forge board --json`, `forge next --json` and `forge lanes --json` together.
+runs `forge next --json` and `forge lanes --json` together. The next output also
+supplies the board rows, so the pane reads them once per refresh.
 If that Forge has no lanes command, lane data is absent. A due refresh is skipped
 while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
 Drawing ticks advance live timers every second without fetching state.
@@ -608,7 +609,8 @@ work only when allowed. Answer a worker question with
 Do not build another polling or watcher loop for an interactive mod session.
 
 Forge's occurrence ids distinguish events, never their text: review results, run
-ends and questions get fresh ids; failed check runs use GitHub's id and completion time,
+ends and questions get fresh ids; CI completions use the workflow id and head commit.
+Failed checks outside a workflow use GitHub's id and completion time,
 failed commit statuses use their own id, and readiness uses the review id and head commit.
 The same question in another round or a check failing again after a later completion
 therefore gets another turn, even if its wording is unchanged. A run that starts
@@ -618,6 +620,9 @@ Seen ids are stored for the repo root and session id together, so two sessions
 consume events independently. At session start or reload the current ids become
 seen without starting a turn. Several changes, including those found while Claude
 is busy, are combined in one turn after the current turn ends, one line per event.
+At delivery, each line uses the item's current next command. Events for items that
+have since merged are dropped. A CI completion names the workflow and its result,
+once per workflow and commit.
 A failed submission leaves them unseen for the next refresh to retry; a successful
 one is not repeated. Only interactive sessions on terminal or Desktop receive
 event turns, and only for their own repo. Forge-started workers, readers and
@@ -1226,7 +1231,10 @@ before editing beyond the limit. Anything else needs the human's allowance or a 
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
-after the underlying item lands. Once it lands, close replays only the follow-up's own commits
+after the underlying item lands. Close first tries a plain merge of the current default branch
+without changing the checkout. If it is clean, close keeps the branch's commits and merges when
+the pull request needs it. A clean merge needs no force-push. If the merge conflicts after the
+underlying item lands, close replays only the follow-up's own commits from its recorded start
 onto the current default branch and publishes with a lease. It preserves earlier merge edits,
 leaves unknown remote commits alone, and stops with a replay command if the fix's own changes
 conflict. Follow the printed replay and leased publication commands before closing again.
@@ -1403,7 +1411,11 @@ still stops for a pending question and gives open findings or failing tests a wo
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
 status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
 its builder, one already merged and one another command works on. It starts them oldest first,
-several at a time up to this machine's agent places, and merges each one when it passes. A change
+several at a time up to this machine's agent places, and merges each one when it passes. A stacked
+fix follows its base even when its start date is earlier. Where Forge merges, it waits for its
+base to merge, including a base whose builder or another command still works on it. If the base
+stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
+can enter close. Among changes whose bases are ready, the oldest starts first. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
@@ -1414,7 +1426,8 @@ its fix rounds, or, for a stopped change, close's own question and next step, wh
 answers. Close's stop rule decides each stopped change, its 30-minute default included. A failed
 check whose log names none of the change's files runs again once when the tests passed here; a
 second failure stops that change. Where a human merges, the run closes every change, holds none
-and merges none, and lists the ready ones oldest first with their pull request links: merge them
+and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
+with their pull request links: merge them
 in that order.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
