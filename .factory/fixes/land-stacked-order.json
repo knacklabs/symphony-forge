@@ -52,8 +52,8 @@
     "id": "3ffc9059-c8b2-401f-b160-b8178d1f6453",
     "status": "clean"
   },
-  "round": 3,
-  "status": "fixing",
+  "round": 4,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T05:29:46.199137+00:00",
@@ -69,10 +69,10 @@
     }
   ],
   "stuck": {
-    "close": "58a00093-df26-4f44-9a47-8bff5aa346aa",
-    "head": "c014182a7d7923f34eff76f3da0e7572828fc820",
+    "close": "fe2849ab-99c9-4214-bdae-b6bb3fc358e2",
+    "head": "fc4f706dbcde97da60e67aa59f3ce62836267870",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Land lands stacked fixes by age, not in the order they were stacked",
   "worker": "codex"
