@@ -1,6 +1,13 @@
 {
   "base": "835fb8749d7a32d91cd5b24c27df0f3be7053872",
   "branch": "fix/honour-review-model",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14ae6-06ad-7333-9c8b-a5c03f81f08c",
+    "head": null,
+    "start": "789170c111586821d2e693b0e42b7e9502621696"
+  },
   "done_when": "Reviews use the model and effort in forge.toml's [models.review] when set and the review tool's default when not, doctor stops calling the entry ignored, and tests cover a new repo and an adopted earlier-release repo",
   "fix_kind": "backend",
   "kind": "fix",
