@@ -110,7 +110,7 @@
     "id": "10c9b37c-ca61-479e-b874-45298b19b07d",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -123,10 +123,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0aedacf59c9ad73a9d2fe16236b0c30490a6e835",
-    "keys": {},
-    "round": null
+    "close": "6f56fe2a-e6de-4117-af7a-867aae621bf1",
+    "head": "c80fc7aff11b122a22fbd31d05344c44c294cabb",
+    "keys": {
+      "the review finding \"An unrelated main commit invalidates every cached item row\" in src/forge/board.py": 1,
+      "the review finding \"Watch working-tree inputs before serving the cached snapshot\" in src/forge/board_server.py": 1
+    },
+    "round": 3
   },
   "worker": "claude"
 }
