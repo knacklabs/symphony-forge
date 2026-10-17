@@ -3,10 +3,10 @@ token, and stops when the command ends.
 
 A full derivation takes seconds, so the server never rebuilds blindly. Each request first checks
 the inputs cheaply: git's refs, Forge's record and event files under the git folder, the lanes
-file and each worktree's HEAD. When none changed it serves the last snapshot as it is; otherwise
-it rebuilds, and only rows whose own inputs changed are derived again. `/events` tells the page
-when a new snapshot exists. Every minute the server fetches from the remote and refreshes
-GitHub's facts.
+file, each worktree's HEAD and each checkout's uncommitted records, plans and settings. When none
+changed it serves the last snapshot as it is; otherwise it rebuilds, and only rows whose own inputs
+changed are derived again. `/events` tells the page when a new snapshot exists. Every minute the
+server fetches from the remote and refreshes GitHub's facts.
 """
 from __future__ import annotations
 
@@ -75,12 +75,26 @@ class Snapshots:
             except OSError:  # removed while we looked: the next check sees it gone
                 continue
             digest.update(f"{path}\0{found.st_mtime_ns}\0{found.st_size}\n".encode())
+        rest.update(json.dumps(local_files(self.trees())).encode())
         lanes = machine._repos_file().parent / "agent-runs.json"  # rewritten on every read, so by content
         try:
             rest.update(lanes.read_bytes())
         except OSError:
             rest.update(b"[]")  # the first read writes an empty line of runs
         return refs.hexdigest(), rest.hexdigest()
+
+    def trees(self) -> dict[str, Path]:
+        """Each checkout's branch and folder, read from git's files without a git process."""
+        found = {}
+        for folder, head in [(self.common.parent, self.common / "HEAD"),
+                             *((None, head) for head in (self.common / "worktrees").glob("*/HEAD"))]:
+            try:
+                # gitdir names the checkout's .git file, absolute or relative to this folder
+                folder = folder or (head.parent / head.with_name("gitdir").read_text(encoding="utf-8").strip()).parent
+                found[head.read_text(encoding="utf-8").strip().removeprefix("ref: refs/heads/")] = folder
+            except OSError:  # removed while we looked: the next check sees it gone
+                continue
+        return found
 
     def now(self, force: bool = False) -> tuple[int, bytes]:
         """The Now view, rebuilt first when an input changed since the last one."""
@@ -94,7 +108,7 @@ class Snapshots:
             if self.started < asked and (force or self.watched() != self.inputs):
                 self.started, seen = time.monotonic(), self.watched()
                 with repo.command_cache():
-                    self.cache["rebuilt"] = []
+                    self.cache.update(rebuilt=[], local=local_files(self.trees()))
                     view = board.machine_board(self.top, cache=self.cache)
                 self.version += 1
                 view["snapshot"] = {"version": self.version, "rows_rebuilt": self.cache["rebuilt"]}
@@ -125,6 +139,34 @@ class Snapshots:
                 self.now(force=True)
             except Exception:  # the next request shows the error; this thread keeps fetching
                 traceback.print_exc()
+
+
+def local_files(trees: dict[str, Path]) -> list[tuple[str, str, int, int]]:
+    """The files the board reads from each checkout's disk, uncommitted edits included, with their
+    times and sizes: settings, the roadmap, and each Forge branch's own records and plan."""
+    # ponytail: a Forge branch's edits to other items' records are not watched (tens of thousands of
+    # files on a big repo); watch them too if a worker ever edits another item's record.
+    found = []
+    for branch, tree in trees.items():
+        kind, _, name = branch.partition("/")
+        paths = [tree / "forge.toml", tree / "plans/roadmap.json"]
+        if kind == "fix":
+            paths.append(tree / f".factory/fixes/{name}.json")
+        elif kind == "story":
+            paths += [*(tree / f".factory/stories/{name}").rglob("*.json"), tree / f"plans/{name}.md",
+                      tree / f"plans/{name}.read.md"]
+        elif kind == "task":
+            paths += [path for path in (tree / ".factory/stories").glob("*/tasks/*.json")
+                      if f"{path.parent.parent.name}-{path.stem}" == name]
+        elif kind == "forge":  # migrate's branch rewrites every record
+            paths += (tree / ".factory").rglob("*.json")
+        for path in paths:
+            try:
+                seen = path.stat()
+            except OSError:
+                continue
+            found.append((branch, path.relative_to(tree).as_posix(), seen.st_mtime_ns, seen.st_size))
+    return found
 
 
 def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:

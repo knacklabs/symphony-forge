@@ -132,7 +132,8 @@ def test_the_board_answers_only_on_this_computer_and_only_with_its_token(client,
                 socket.create_connection((outside, address.port), timeout=5).close()
 
 
-def test_the_board_rebuilds_only_what_changed(client):
+def test_the_board_rebuilds_only_what_changed(client, tmp_path):
+    teammate = clone(client, tmp_path)
     alpha, _ = fix(client, "alpha"), fix(client, "beta")
     with live(client) as url:
         first = snapshot(url)
@@ -145,6 +146,12 @@ def test_the_board_rebuilds_only_what_changed(client):
         changed = snapshot(url)
         assert changed["snapshot"]["version"] == first["snapshot"]["version"] + 1
         assert changed["snapshot"]["rows_rebuilt"] == ["alpha"]
+        # An unrelated merge on the default branch is new, but no item's own inputs changed.
+        pushed(teammate, "An unrelated change lands", {"notes.txt": "unrelated\n"})
+        client.git("fetch", "-q", "origin")
+        merged = snapshot(url)
+        assert merged["snapshot"]["version"] == changed["snapshot"]["version"] + 1
+        assert merged["snapshot"]["rows_rebuilt"] == [], merged["snapshot"]
         # A change between two requests appears in the second.
         fix(client, "gamma")
         assert "gamma" in {row["id"] for row in snapshot(url)["items"]}
@@ -197,3 +204,31 @@ def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_pa
         assert "SHOP" not in after["snapshot"]["rows_rebuilt"]
         kept = next(row for row in after["items"] if row["id"] == "SHOP")
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
+
+
+def test_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_path):
+    """A worker edits an open story's plan and a fix's record without committing: the next
+    request shows both, and only those items are derived again."""
+    shop, alpha = tmp_path / "shop", fix(client, "alpha")
+    client.git("worktree", "add", "-q", "-b", "story/SHOP", str(shop))
+    (shop / "plans").mkdir(exist_ok=True)
+    (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
+    (shop / ".factory/stories/SHOP").mkdir(parents=True)
+    (shop / ".factory/stories/SHOP/story.json").write_text(json.dumps(
+        {"doc": "plans/SHOP.md", "title": "Shoppers can save a basket", "status": "approved"}), encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=shop, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-qm", "Plan a basket"], cwd=shop, check=True, capture_output=True)
+    with live(client) as url:
+        first = snapshot(url)
+        assert next(row for row in first["items"] if row["id"] == "SHOP")["owner"] is None
+        (shop / "plans/SHOP.md").write_text(DOC.replace("## Tasks\n", "## Tasks\n\nOwner: page-dev\n", 1),
+                                            encoding="utf-8")
+        record = alpha / ".factory/fixes/alpha.json"
+        record.write_text(json.dumps({**json.loads(record.read_text("utf-8")), "why": "Readers see the new title"}),
+                          encoding="utf-8")
+        edited = snapshot(url)
+        rows = {row["id"]: row for row in edited["items"]}
+        assert rows["SHOP"]["owner"] == "page-dev" and rows["alpha"]["title"] == "Readers see the new title", rows
+        # The owner also brings the story's unstarted parts onto the board; nothing else rebuilds.
+        rebuilt = {row for row in edited["snapshot"]["rows_rebuilt"] if not row.startswith("SHOP/")}
+        assert rebuilt == {"SHOP", "alpha"}, edited["snapshot"]
