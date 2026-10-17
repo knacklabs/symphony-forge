@@ -140,9 +140,8 @@ When a round's tool is the coordinator's, its route is native: that session's ow
 even with both tools. The other tool runs through its kit: the Codex app server or the Claude
 Agent SDK. No coordinating session open in a one-tool repo means work waits for the session.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
-otherwise Claude. Normal, light and sign-off reviews use the selected tool's model and optional
-effort from `[models.review]`, or `[models.review.codex]` and `[models.review.claude]`.
-Without an entry for that tool, Autoreview uses its defaults; without effort, its default effort.
+otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
+Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
