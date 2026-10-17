@@ -10,13 +10,29 @@
   },
   "done_when": "forge land prints the owner's question with the open findings and failing checks, then exits with its own status instead of waiting, and the coordinator runs land again after the choice",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c82c41ec68e215a655cbaa703966eea992652ee10932e8281626ae955a7b4e11",
+    "changed": "c60825b2efec8d1554bd2eca74ea0187f66a4dfbe25f972da59a992b8c8d87a3",
+    "commit": "c54301049cdba68c9ce327b5c7a30dc971724b07",
+    "dismissals": [],
+    "findings": [],
+    "id": "5a3cb47a-b68e-4738-b62e-939db4369a78",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T15:25:34.985086+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:29:16.399696+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
