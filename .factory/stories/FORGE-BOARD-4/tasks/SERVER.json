@@ -38,7 +38,7 @@
       "gain": 4,
       "harm": 3,
       "line": 346,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,7 +64,7 @@
       "gain": 3,
       "harm": 3,
       "line": 235,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -75,37 +75,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bdd26b032096e54588b2f52193daf6288538600e67508df16130fcbcd46edc31",
-    "changed": "fc61fadc214004b1f3b801b0ca70d3eda1ee12875d176bae4536570d9891e398",
-    "commit": "7f8f847f0690e279fe60810822bfda36551fd3bb",
+    "branch_diff": "2ab612fee531fec5b5c8c68571fdf8333ea7c7e54212b2d3829c75d57f8bec94",
+    "changed": "a4372723de994352be31f09d2753b1b833c14430e839bfe98ff1606d0f20c348",
+    "commit": "cb8d14a70ab97ee84990ad332fcebc044d5c7efa",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Scale. The new `busy` input contains every merged task record and every task branch tip, and `settings` contains files from every checkout. Merging one unrelated task into main changes `busy` for every story; starting a fix adds its checkout settings to every row key. Both normal operations rebuild unrelated rows, so the per-row cache still loses its benefit as the board grows. The new test merges only `notes.txt`, which leaves these inputs unchanged.",
-        "file": "src/forge/board.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 355,
-        "priority": "P1",
-        "title": "An unrelated main commit invalidates every cached item row",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. This test changes both items on the board, then accepts both being rebuilt. It would pass if an uncommitted edit rebuilt every item row, so it does not prove its named claim that only edited items rebuild. The earlier selective-cache test changes a branch commit, not an uncommitted working file.",
-        "file": "tests/test_board_server.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 235,
-        "priority": "P1",
-        "title": "Gate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request",
-        "work": 1
-      }
-    ],
-    "id": "2a5b60ef-63f1-40ce-9073-d9546a925284",
-    "status": "blocked"
+    "findings": [],
+    "id": "61bcea2b-9362-465f-9f0f-feb1e6afd234",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
@@ -117,6 +96,10 @@
     },
     {
       "at": "2026-10-17T06:12:44.996867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:10:46.228335+00:00",
       "step": "review"
     }
   ],
