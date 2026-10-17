@@ -49,7 +49,7 @@
     "id": "87b91233-4bf6-4007-938b-3c19df656bca",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -62,10 +62,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e087f830ec1334091d75bf9a1a78de37336ab584",
-    "keys": {},
-    "round": null
+    "close": "4d813279-221a-4d04-9696-de21adb5e2b3",
+    "head": "125c059b4ead7ee09f908e866b2d04c14c01ac71",
+    "keys": {
+      "the review finding \"Not done: tests/test_known_issues.py passes on Windows, macOS and Linux in the every-platform suite, and the board lists the same known pen_\" in src/forge/known_issues.py": 1
+    },
+    "round": 1
   },
   "why": "On Windows the board's known issues miss problems kept in older merged pull requests, and the known-issues tests fail there, so the every-platform suite cannot pass",
   "worker": "codex"
