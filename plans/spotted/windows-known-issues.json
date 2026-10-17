@@ -8,8 +8,8 @@
       "text": "A queued CI failure is delivered when its rerun starts within the cache minute",
       "from": "blocking",
       "item": "windows-known-issues",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }

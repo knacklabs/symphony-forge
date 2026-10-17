@@ -34,8 +34,8 @@
       "gain": 3,
       "harm": 3,
       "line": 96,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/mod/hooks/events.ts:96 Owner accepted (18 Oct): this fix does not change events.ts; the cache-window rerun case is its own fix",
       "round": 3,
       "security": false,
       "title": "A queued CI failure is delivered when its rerun starts within the cache minute",
@@ -47,7 +47,13 @@
     "branch_diff": "52cbce52093e378e53e9fc95b5e41cd0021ef73916ac00f772e5d4f1e1065a66",
     "changed": "c4ffd86fc5c084e00b9b903b067aa7f5d83c67ebf75bd80049e6906d7c510c49",
     "commit": "f52f007079c3f6716bdbfc6e7fcc1df5b18b06dc",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/mod/hooks/events.ts:96 Owner accepted (18 Oct): this fix does not change events.ts; the cache-window rerun case is its own fix",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. This check treats a workflow ID in the current board snapshot as proof that its queued failure is still current. The board reuses check results for 60 seconds (`src/forge/board.py:104`), so a rerun started during that window leaves the failed occurrence in the snapshot. If the busy turn ends then, the pane submits the obsolete failure. The new test advances `FORGE_NOW` by a full minute before each response (`tests/test_mod_plugin.py:248`), so it does not cover this sequence.",
@@ -61,10 +67,10 @@
       }
     ],
     "id": "4c3115d9-6480-443a-b272-791ad98c3456",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T09:09:27.874207+00:00",
