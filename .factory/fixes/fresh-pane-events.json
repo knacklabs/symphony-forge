@@ -1,6 +1,13 @@
 {
   "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
   "branch": "fix/fresh-pane-events",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-d7ed-7022-9c30-6cea07e5c967",
+    "head": null,
+    "start": "4e7b6138f2fa40316f9c2c2169315ff1164ddb66"
+  },
   "done_when": "Each delivered event's Next line is worked out from current state, events for items that have since merged are dropped, and each CI line names the workflow and its result, once per workflow and commit",
   "fix_kind": "backend",
   "kind": "fix",
