@@ -167,6 +167,23 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
     if case not in ("fresh advice", "merged before delivery"):
         stub.write_text(source.replace('"stub claude: built it\\n"',
                                       '"Question: May I reuse the parser?"'), encoding="utf-8")
+    workflow_responses = []
+    if case == "workflow rerun":
+        from test_machine_views import github, pull
+        # Only GitHub changes the result. Real commands generate the occurrence,
+        # and the packaged mod decides which result reaches Claude's prompt.
+        for conclusion in ("FAILURE", "SUCCESS", "FAILURE"):
+            pr = pull(7, f"fix/{item}", conclusion)
+            pr["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
+            checks = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+            checks[0]["checkSuite"] = {
+                "status": "COMPLETED", "conclusion": conclusion,
+                "workflowRun": {"workflow": {"id": "client-tests", "name": "Client tests"}},
+            }
+            github(env.gh, [pr])
+            workflow_responses.append((repo.bin / "gh-responses.json").read_text("utf-8"))
+        # Start without any workflow occurrence, before the first push completes.
+        github(env.gh, [])
     answer = node_run(tmp_path, HOST + f"""
 import {{execFile}} from 'node:child_process';
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});
@@ -219,7 +236,37 @@ async function session(id, duringRefresh) {{
   }}}};
 }}
 // Each lifecycle has its own host budget: real Forge processes are slower on Windows.
-if (['fresh advice', 'merged before delivery'].includes({json.dumps(case)})) {{
+if ({json.dumps(case)} === 'workflow rerun') {{
+const first = await session('rerun');
+await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
+const responses = {json.dumps(workflow_responses)};
+const results = [];
+for (let n = 0; n < responses.length; n++) {{
+  writeFileSync({json.dumps(str(repo.bin / 'gh-responses.json'))}, responses[n]);
+  process.env.FORGE_NOW = `2030-01-01T00:0${{n}}:00+00:00`;
+  await first.tick();
+  const row = JSON.parse(forge(['board', '--json'])).items.find(row => row.id === {json.dumps(item)});
+  const event = row.occurrences.find(event => event.id.startsWith('workflow:'));
+  results.push(event);
+  if (n === 0) {{
+    assert.equal(event.title, 'Client tests failed');
+    assert.deepEqual(first.prompts, []);
+  }} else if (n === 1) {{
+    assert.equal(event.id, results[0].id);
+    assert.equal(event.title, 'Client tests passed');
+    assert.deepEqual(first.prompts, []);
+    await first.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
+    assert.equal(first.prompts.length, 1);
+    assert.match(first.prompts[0], /Client tests passed Next:/);
+    assert.ok(!first.prompts[0].includes('Client tests failed'), first.prompts[0]);
+  }} else {{
+    assert.equal(event.id, results[0].id);
+    assert.equal(event.title, 'Client tests failed');
+    assert.equal(first.prompts.length, 1); // Already delivered once for this commit.
+  }}
+}}
+console.log(JSON.stringify({{prompts: first.prompts}}));
+}} else if (['fresh advice', 'merged before delivery'].includes({json.dumps(case)})) {{
 const first = await session('fresh');
 await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
 forge(['work', {json.dumps(item)}]);

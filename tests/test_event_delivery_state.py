@@ -8,7 +8,7 @@ from test_mod_plugin import (packaged_mod,  # noqa: F401
 STORY = "FIX-FRESH-PANE-EVENTS"
 
 
-@pytest.mark.parametrize("case", ["fresh advice", "merged before delivery"])
+@pytest.mark.parametrize("case", ["fresh advice", "merged before delivery", "workflow rerun"])
 def test_1_delayed_events_follow_current_state(env, packaged_mod, tmp_path, case):
     # The shared host runs the packaged entry point and real Forge commands.
     # Only Claude, its worker, review and GitHub are fake boundaries.
