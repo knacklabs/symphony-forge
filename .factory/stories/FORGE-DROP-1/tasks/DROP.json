@@ -7,13 +7,56 @@
     "head": null,
     "start": "2d06d16c00f2358ba7e43a678210b049da8a427c"
   },
+  "flagged": [
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "require_active() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 577,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Starting a fix from a retained dropped checkout creates a blocked stack",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1edadb269724132a31fd2dd6051a9be28f9a800b77abc336fd9d6291f569ea18",
+    "changed": "be18c198538e68711efd4d4eb88def50f1c3548ac7062ed3e705e0673a39045e",
+    "commit": "33a2d5401dccd9c7704428910958f563090c083c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. A drop can retain its checkout when it contains ignored local data or is the primary checkout. The new active-state guard is used by work and close, but `fix_start` still uses the current checkout as its base and records the dropped fix as `stacked_on` (`task.py:521-525`). `forge land --all` skips that dropped parent and directs the user to land it before the new fix, leaving the new fix blocked until the parent is restored.",
+        "file": "src/forge/task.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 577,
+        "priority": "P1",
+        "title": "Starting a fix from a retained dropped checkout creates a blocked stack",
+        "work": 2
+      }
+    ],
+    "id": "b84ef50e-fc9f-4de1-90f0-f30ab6da814c",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T17:44:39.334969+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T18:56:30.717727+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
