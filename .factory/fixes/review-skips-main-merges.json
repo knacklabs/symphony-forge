@@ -4,12 +4,20 @@
   "done_when": "A review after a merge of the default branch covers only the change's own work, never commits that came from the default branch, and a test merges main with an unrelated change between two closes and sees no finding about it",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T21:25:09.925950+00:00",
       "step": "start"
     }
   ],
-  "why": "After main is merged into a branch, close's next review covers every commit since the last review, including main's own new commits, so reviews blame the change for other merged work"
+  "stuck": {
+    "close": null,
+    "head": "07f3af499b5a15c3a4b1186e0687d272328acdda",
+    "keys": {},
+    "round": null
+  },
+  "why": "After main is merged into a branch, close's next review covers every commit since the last review, including main's own new commits, so reviews blame the change for other merged work",
+  "worker": "codex"
 }
