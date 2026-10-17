@@ -1,0 +1,15 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/later-not-floored",
+  "done_when": "A finding the review labels Later for another item is never raised to blocking by the migration or other floors",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:31.285651+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A review finding titled Later with another item's name is raised to blocking when its text mentions a migration"
+}
