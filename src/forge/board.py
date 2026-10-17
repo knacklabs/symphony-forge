@@ -294,10 +294,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if fix := STATE.fullmatch(rel)["fix"]:
             if rel not in merged and state.get("branch") not in merged_prs:
                 state = nextstep.at_ref(top, fix, state, by_branch.get(state.get("branch")))
-            if state.get("status") == "dropped":
-                del best[rel]
-            else:
-                best[rel] = state, where
+            best[rel] = state, where
+    best = {rel: pair for rel, pair in best.items() if pair[0].get("status") != "dropped"}
     readiness: dict[str, Item] = {}
     person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
