@@ -62,12 +62,14 @@ Risks: none one-way. The branch and its commits stay on GitHub, so every drop ca
    the pull request is closed with the reason; the remote branch keeps every commit; a drop with
    uncommitted changes is refused and changes nothing; a fix with an ignored local data folder
    keeps its worktree; a fix that another open fix is stacked on is refused and names it.
-2. `forge fix drop <fix> --undo`. It recreates the worktree from the remote branch, commits a
+2. `forge fix drop <fix> --undo`. It reuses the kept worktree when the drop kept one (after a
+   fast-forward to the remote branch), or recreates it from the remote branch otherwise, commits a
    restored record, and reopens the pull request when one was closed by the drop. Its next step
    then follows the usual rules for its new commit: a fix that was ready before the drop needs
    `forge close` again, because readiness belongs to a commit. Tests: drop then undo; the fix is
    back on the board with its old commits and an open pull request; `forge work` continues it; a
-   fix that was ready before the drop shows `forge close` as its next step after the undo.
+   fix that was ready before the drop shows `forge close` as its next step after the undo; an undo
+   of a drop that kept its worktree reuses it and its ignored data is still there.
 3. The dropped state is read from the fix branch's record and the pull request's state on GitHub,
    never from a local-only file. Tests: a second clone fetches and shows the fix dropped, then
    restored.
