@@ -1,6 +1,13 @@
 {
   "base": "db35b0d7cf9fc1ad2a8bbcd95dc91c3e5bc64483",
   "branch": "fix/pane-ci-rerun",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14aac-b653-7a22-995f-7fa44a2a4683",
+    "head": null,
+    "start": "cb0b1347a358bb9ff5c3b8a8ae8b12db9a8238ad"
+  },
   "done_when": "A queued CI event whose workflow has been rerun since is dropped or replaced by the current result before delivery, and a test covers a failure followed by a rerun",
   "fix_kind": "backend",
   "kind": "fix",
