@@ -52,8 +52,8 @@
     "id": "275baa0f-86b3-4bcc-80fa-ba32efa9ccf1",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T14:21:13.537518+00:00",
@@ -69,12 +69,10 @@
     }
   ],
   "stuck": {
-    "close": "e5c1ed35-a536-4fbe-8ad6-272dc5522618",
-    "head": "b23dda1c1ebc5d2273539abe0ffda8ce4bbbb742",
-    "keys": {
-      "the review finding \"Older merged parts disappear for up to a day when the week rolls over\" in src/forge/board_facts.py": 1
-    },
-    "round": 1
+    "close": "b16c6c34-5e10-4f0f-938b-0647e9c37480",
+    "head": "dd25f6c9f2640386c42c58adf60ce82810754344",
+    "keys": {},
+    "round": 2
   },
   "why": "The pane and the board wait on GitHub for 20 to 45 seconds because every read refetches all merged history behind one 60-second cache",
   "worker": "codex"
