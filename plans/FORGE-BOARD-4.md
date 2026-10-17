@@ -73,7 +73,10 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
    refs and packed refs, Forge's record and event files under the git directory, the lanes
    files and each worktree's HEAD; when none changed it serves the last snapshot, otherwise it
    rebuilds. Nothing that changed is ever served stale. (b) Each item's row is cached by its
-   inputs (branch head and state file) and only changed rows are rebuilt. (c) `/board.json`
+   inputs and only changed rows are rebuilt. Cache rule (owner, 17 October 2026): a part or fix
+   row keys only on its own branch head, its own record and its own plan; a story row also
+   rebuilds whenever the default branch changes, because its next step reads the default branch.
+   No other shared input goes into a row key. (c) `/board.json`
    serves the Now view: active items and team facts. Releases, Insights and an item's full history
    come from `/board.json?page=releases|insights|item&id=...`, built from the untrimmed
    derivation on first open and cached until a ref changes. (d) `/events` is a server-sent events
