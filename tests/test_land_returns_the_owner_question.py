@@ -1,11 +1,15 @@
 """Land returns an actionable stop instead of keeping a coordinator alive."""
 STORY = "land-exits-for-owner"
 
+import sys
+from pathlib import Path
+
 import pytest
 
+from conftest import GH_STUB, _install
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import client_item
-from test_land import ITEM, _fix, _red_checks, land  # noqa: F401
+from test_land import GH, ITEM, URL, _fix, _red_checks, land  # noqa: F401
 from test_tools_session_hold import Session
 
 
@@ -13,10 +17,10 @@ from test_tools_session_hold import Session
 def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_path, previous, harm):
     item, where = client_item(env, tmp_path, previous)
     if not previous:
-        # This regression ends at human handoff; prototype auto-merging has its own owner tests.
-        env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
-                   '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# Client sign-off\n')
-        env.repo.git("push", "-q", "origin", "main")
+        # Init's prototype merges automatically: reuse land's GitHub edge fake for that final step.
+        remote = Path(env.repo.git("remote", "get-url", "origin")).as_posix()
+        _install(env.repo.bin, "gh", GH.format(python=sys.executable, remote=remote, url=URL)
+                 + GH_STUB.format(python=sys.executable).split("\n", 1)[1])
     for host in (".codex", ".claude"):
         guide = " ".join((where / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "exits with status 3 (needs a choice)" in guide
