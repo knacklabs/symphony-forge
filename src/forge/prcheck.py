@@ -91,11 +91,11 @@ jobs:
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: <runner>
     steps:
-      - if: needs.tests.outputs.docs-only == 'true'
-        run: "echo 'docs only: tests skipped'"
       - env:
           GROUPS: ${{ needs.tests.result }}
         run: test "$GROUPS" = success
+      - if: needs.tests.outputs.docs-only == 'true'
+        run: "echo 'docs only: tests skipped'"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
