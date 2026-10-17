@@ -518,6 +518,8 @@ def fix_start(args: argparse.Namespace) -> None:
     if prototype and fix_kind == "ui":
         require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
+    if parent:
+        require_active(parent[0], top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
              "fix_kind": fix_kind or "mechanical"}

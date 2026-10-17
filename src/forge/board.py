@@ -602,7 +602,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             continue
         match = STATE.fullmatch(rel)
         if match["fix"]:
-            state = nextstep.at_ref(top, match["fix"], state, by_branch.get(state.get("branch")))
+            if rel not in merged and state.get("branch") not in merged_prs:
+                state = nextstep.at_ref(top, match["fix"], state, by_branch.get(state.get("branch")))
             if state.get("status") == "dropped":
                 continue
             if state.get("kind") != "story-done":
