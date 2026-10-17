@@ -335,13 +335,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         (path.relative_to(forge_files).as_posix(), path.stat().st_mtime_ns)
         for path in forge_files.rglob("*") if path.is_file()]
     docs = {} if cache is None else {name: repo.blob_hash(text) for name, text in history.get("docs", {}).items()}
-    local = [] if cache is None else cache.get("local", [])  # the server's read of each checkout's files
-    settings = [entry for entry in local if entry[1] in ("forge.toml", "plans/roadmap.json")]
-    # A story's next step also reads every started part (for overlapping scopes) and the default
-    # branch's settings; a fix or part reads neither.
-    busy = [] if cache is None else [
-        [(ref, tip) for ref, tip in tips.items() if ref.startswith(("task/", "origin/task/"))],
-        sorted(rel for rel in merged if "/tasks/" in rel), docs.get(f"{landed}:forge.toml")]
+    # The server's read of each checkout's records and plans on disk, uncommitted edits included.
+    local = [] if cache is None else [entry for entry in cache.get("local", [])
+                                      if entry[1] not in ("forge.toml", "plans/roadmap.json")]
 
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if cache is None:
@@ -351,8 +347,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         # neither waits for the row's own inputs to change.
         own = item.split("/")[0]
         inputs = json.dumps([
+            # A story's next step reads the default branch, so a story row also rebuilds when it moves.
             item, kind, title, state, str(where), tips.get(str(where)) if where != landed else None,
-            busy if kind == "story" else None, settings, [entry for entry in local if own in entry[0] + entry[1]],
+            tips.get(landed) if kind == "story" else None, [entry for entry in local if own in entry[0] + entry[1]],
             [(name, blob) for name, blob in docs.items() if own in name],
             completed.get(own), _starters(top).get(repo.state_path(item)), people,
             [(branch, pr) for branch, pr in people_branches.items() if own in branch],

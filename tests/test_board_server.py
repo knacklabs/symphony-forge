@@ -210,8 +210,8 @@ def test_4_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_
 
 def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_path):
     """A worker edits an open story's plan and a fix's record without committing: the next
-    request shows both, and only those items are derived again."""
-    shop, alpha = tmp_path / "shop", fix(client, "alpha")
+    request shows both, and only those items are derived again: an unedited fix keeps its row."""
+    shop, alpha, _ = tmp_path / "shop", fix(client, "alpha"), fix(client, "beta")
     client.git("worktree", "add", "-q", "-b", "story/SHOP", str(shop))
     (shop / "plans").mkdir(exist_ok=True)
     (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
@@ -223,6 +223,7 @@ def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_
     with live(client) as url:
         first = snapshot(url)
         assert next(row for row in first["items"] if row["id"] == "SHOP")["owner"] is None
+        assert "beta" in first["snapshot"]["rows_rebuilt"]
         (shop / "plans/SHOP.md").write_text(DOC.replace("## Tasks\n", "## Tasks\n\nOwner: page-dev\n", 1),
                                             encoding="utf-8")
         record = alpha / ".factory/fixes/alpha.json"
@@ -231,6 +232,6 @@ def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_
         edited = snapshot(url)
         rows = {row["id"]: row for row in edited["items"]}
         assert rows["SHOP"]["owner"] == "page-dev" and rows["alpha"]["title"] == "Readers see the new title", rows
-        # The owner also brings the story's unstarted parts onto the board; nothing else rebuilds.
+        # The owner also brings the story's unstarted parts onto the board; the unedited fix stays.
         rebuilt = {row for row in edited["snapshot"]["rows_rebuilt"] if not row.startswith("SHOP/")}
-        assert rebuilt == {"SHOP", "alpha"}, edited["snapshot"]
+        assert rebuilt == {"SHOP", "alpha"} and "beta" in rows, edited["snapshot"]
