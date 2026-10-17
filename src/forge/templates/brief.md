@@ -9,6 +9,8 @@ Forge ignores settled repeats, so they cannot block or start another round.
 After a merge of main, close applies a requested dismissal to the same title and file in the
 current review, even if its number changes. Only the human chooses which findings to dismiss.
 
+After a merge of the default branch, close reviews only this change's own diff against the new
+merge base, keeping earlier findings and allowances from this item's records.
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security
 or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
