@@ -1,6 +1,13 @@
 {
   "base": "835fb8749d7a32d91cd5b24c27df0f3be7053872",
   "branch": "fix/load-check-all-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14ae8-de0c-7372-800f-9a1382857eb7",
+    "head": null,
+    "start": "9810eaf231f0dab9530cc5366590448045aaa3e1"
+  },
   "done_when": "Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on this machine, and a test covers a test run waiting under high load",
   "fix_kind": "backend",
   "kind": "fix",
