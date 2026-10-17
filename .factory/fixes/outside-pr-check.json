@@ -1,0 +1,30 @@
+{
+  "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
+  "branch": "fix/outside-pr-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14adf-77ec-7d20-b976-843341f7b545",
+    "head": null,
+    "start": "49cc5b84263922674216508e4f9fceaeb1e2e293"
+  },
+  "done_when": "Forge's required check fails such a pull request at once with a plain message that names the fix flow, on new and existing repos, and a test covers it",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "round": 1,
+  "status": "working",
+  "steps": [
+    {
+      "at": "2026-10-17T17:18:34.533305+00:00",
+      "step": "start"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "529aef25a9eeaced12187ef9bb4b2ac337bb0240",
+    "keys": {},
+    "round": null
+  },
+  "why": "A pull request from a branch Forge did not start passes Forge's required check, then cannot merge, and nothing tells its author to redo it as a fix",
+  "worker": "codex"
+}

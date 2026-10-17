@@ -1290,6 +1290,11 @@ The generated `forge.yml` runs that suite as test groups behind the one required
 which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
+The required `forge-pr-check` fails a pull request from a branch Forge did not start.
+Redo the change with `forge fix start "<why>" --done "<done when>"` and copy the commits there.
+Forge's generated `forge/*` branches and doctor's dated `fix/forge-files-*` branches still use
+the normal check for a Forge record and a current review. New repos get this check at init;
+existing repos get it after upgrading Forge. Sync refreshes these instructions for both.
 When the pytest selection would cover more than a third of the Python test files (shared
 test inputs select them all), close skips the local run, says so in one line, and relies on
 the pull request's required checks. `forge test` still runs its tests.
