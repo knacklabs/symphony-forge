@@ -170,16 +170,18 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
         stub.write_text(source.replace('"stub claude: built it\\n"',
                                       '"Question: May I reuse the parser?"'), encoding="utf-8")
     workflow_responses = []
-    if case == "workflow rerun":
+    if case.startswith("workflow "):
         from test_machine_views import github, pull
         # Only GitHub changes the result. Real commands generate the occurrence,
         # and the packaged mod decides which result reaches Claude's prompt.
-        for conclusion in ("FAILURE", "SUCCESS", "FAILURE"):
+        for conclusion in (("FAILURE", case.split()[1], "SUCCESS", "FAILURE")
+                           if case != "workflow rerun" else ("FAILURE", "SUCCESS", "FAILURE")):
             pr = pull(7, f"fix/{item}", conclusion)
             pr["headRefOid"] = repo.git("rev-parse", f"fix/{item}")
             checks = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
             checks[0]["checkSuite"] = {
-                "status": "COMPLETED", "conclusion": conclusion,
+                "status": conclusion if conclusion in ("QUEUED", "IN_PROGRESS") else "COMPLETED",
+                "conclusion": None if conclusion in ("QUEUED", "IN_PROGRESS") else conclusion,
                 "workflowRun": {"workflow": {"id": "client-tests", "name": "Client tests"}},
             }
             github(env.gh, [pr])
@@ -238,7 +240,7 @@ async function session(id, duringRefresh) {{
   }}}};
 }}
 // Each lifecycle has its own host budget: real Forge processes are slower on Windows.
-if ({json.dumps(case)} === 'workflow rerun') {{
+if ({json.dumps(case)}.startsWith('workflow ')) {{
 const first = await session('rerun');
 await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
 const responses = {json.dumps(workflow_responses)};
@@ -253,10 +255,16 @@ for (let n = 0; n < responses.length; n++) {{
   if (n === 0) {{
     assert.equal(event.title, 'Client tests failed');
     assert.deepEqual(first.prompts, []);
-  }} else if (n === 1) {{
+  }} else if (!event) {{
+    // A rerun removes the completed occurrence before the busy turn ends.
+    assert.equal(n, 1);
+    assert.deepEqual(first.prompts, []);
+    await first.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
+    assert.deepEqual(first.prompts, []);
+  }} else if (n === responses.length - 2) {{
     assert.equal(event.id, results[0].id);
     assert.equal(event.title, 'Client tests passed');
-    assert.deepEqual(first.prompts, []);
+    if (responses.length === 3) assert.deepEqual(first.prompts, []);
     await first.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
     assert.equal(first.prompts.length, 1);
     assert.match(first.prompts[0], /Client tests passed Next:/);
