@@ -1,6 +1,13 @@
 {
   "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
   "branch": "fix/proof-list-after-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-d2c6-7f00-9b03-292c593dffd4",
+    "head": null,
+    "start": "47f9deb28f969c1b083e6cc4b82f25373f43d7fe"
+  },
   "done_when": "Review reads the Proof list from the newest commit that has one, and a merge of main into the branch never causes a missing Proof list finding",
   "fix_kind": "backend",
   "kind": "fix",
