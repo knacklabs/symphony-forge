@@ -1,6 +1,7 @@
 """The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
+import functools
 import importlib.metadata
 import json
 import os
@@ -90,6 +91,7 @@ class _Parser(argparse.ArgumentParser):
         repo.refuse(REFUSALS["usage"], problem=f"{self.prog}: {message}", prog=self.prog)
 
 
+@functools.cache
 def _parser() -> _Parser:
     parser = _Parser(prog="forge",
                      description="Forge takes a story from approval to a merged pull request.")

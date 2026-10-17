@@ -1,0 +1,46 @@
+{
+  "base": "a255d481cb1c5eee5570279ea3b3e5ce511fbffd",
+  "branch": "fix/land-exits-for-owner",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14a79-7d33-79b0-bbd9-347687fa5a8e",
+    "head": null,
+    "start": "363f221d2dc5047a774a6ac8a0f40c4ffb521851"
+  },
+  "done_when": "forge land prints the owner's question with the open findings and failing checks, then exits with its own status instead of waiting, and the coordinator runs land again after the choice",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c82c41ec68e215a655cbaa703966eea992652ee10932e8281626ae955a7b4e11",
+    "changed": "c60825b2efec8d1554bd2eca74ea0187f66a4dfbe25f972da59a992b8c8d87a3",
+    "commit": "c54301049cdba68c9ce327b5c7a30dc971724b07",
+    "dismissals": [],
+    "findings": [],
+    "id": "5a3cb47a-b68e-4738-b62e-939db4369a78",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T15:25:34.985086+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:29:16.399696+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "af58475bef643cd7d152af72826bc7b2bbb973fa",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge land sits silently for hours while it waits for the owner's choice, and when it stops it prints only the worker's instructions",
+  "worker": "codex"
+}
