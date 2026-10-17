@@ -84,7 +84,7 @@
     "status": "clean"
   },
   "round": 6,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
@@ -104,10 +104,14 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The local live server is stuck. It should deliver: server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, `/events` and the per-row snapshot cache\nIt changes 432 lines outside tests, over its limit of 400.\nThe worker tried: The live board answers at once and shows the last board on restart.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "Owner chose one round to trim the part under its 400 code-line limit without losing the speed work",
     "size": true,
     "tool": "claude",
-    "wait_id": "99aff571-beb7-4e71-b025-8aaf5059c975"
+    "wait_id": "99aff571-beb7-4e71-b025-8aaf5059c975",
+    "worker_round": 6
   },
   "stuck": {
     "close": "87ead75c-089e-4a76-ad39-2c2aada3270f",
