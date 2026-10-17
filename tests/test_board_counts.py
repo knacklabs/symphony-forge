@@ -433,10 +433,11 @@ def older_part(env, monkeypatch, previous):
     shop = rows(board(env.repo))["SHOP"]
     assert shop["state"] == "building" and "SHOP/T1" not in [c["id"] for c in shop["children"]]
     board(env.repo)
-    assert len(asked()) == 1, "asked once a minute"
+    assert len(asked()) == 1, "history is reused within the day"
     # Without the record in its pull request, the part's recorded time is gone from the runway.
     github(env, [{**pr, "body": ""}])
-    clock(monkeypatch, datetime.now(timezone.utc) + timedelta(minutes=2))
+    # Historical PRs now refresh daily rather than every minute.
+    clock(monkeypatch, datetime.now(timezone.utc) + timedelta(days=1, minutes=2))
     bare = rows(board(env.repo))["SHOP"]
     first = lambda row: min(datetime.fromisoformat(i["start"]) for i in row["intervals"])  # noqa: E731
     assert first(shop) <= then - timedelta(hours=2) < first(bare), (shop["intervals"], bare["intervals"])
