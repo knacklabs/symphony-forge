@@ -8,8 +8,8 @@
       "text": "A queued CI failure is delivered after a rerun starts within the cache window",
       "from": "blocking",
       "item": "stop-clears-lock",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
