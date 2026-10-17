@@ -23,7 +23,7 @@
     "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T17:12:52.170830+00:00",
@@ -40,7 +40,6 @@
     "keys": {},
     "round": null
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 2afce1d89e3e304696b33c359cb1fe19355ef3b5` exited with status 1 on this machine.\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nrepo = <conftest.Repo object at 0x10b9d07d0>\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b9d0c50>\nsdk_data = PosixPath('/Users/ravikiranvemula/Workdir/symphony-forge-fix-part-size-code-only/.pytest_cache/d/codex-sdk-0.159.2')\n\n    def _resumable_question(repo, monkeypatch, sdk_data):\n        folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)\n        stub = repo.bin / \"codex-app-server\"\n        source = stub.read_text(\"utf-8\")\n        original = '\"text\": f\"stub codex: {turn} on {id}\"'\n        assert source.count(original) == 1\n        source = source.replace(original, original + ' + os.environ.get(\"STUB_SAY\", \"\")')\n        # The resume fixture only displays its message. Give the SDK the timestamp it requires to\n        # recognize the message as a final answer, as the worker fixture does.\n        source = source.replace('\"turnId\": turn, \"item\": said',\n                                '\"turnId\": turn, \"completedAtMs\": 2, \"item\": said')\n        _install(repo.bin, \"codex-app-server\", source)\n        question = \"Question: May I use the existing parser?\"\n        monkeypatch.setenv(\"STUB_SAY\", \"\\n\\n\" + question)\n        asked = repo.forge(\"work\", \"BOARD/PAGE\")\n>       assert asked.returncode == 0, asked.stderr\nE       AssertionError: The Codex SDK 0.159.2 isn't installed in /Users/ravikiranvemula/Workdir/symphony-forge-fix-part-size-code-only/.pytest_cache/d/codex-sdk-0.159.2/forge/codex-sdk/openai-codex-0.159.2.\nE         Next: forge doctor --fix\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/Users/ravikiranvemula/Workdir/symphony-forge-fix-part-size-code-only/.venv/bin/python', '/pri...rt-size-code-only/.pytest_cache/d/codex-sdk-0.159.2/forge/codex-sdk/openai-codex-0.159.2.\\nNext: forge doctor --fix\\n\").returncode\n\ntests/test_steer_question.py:36: AssertionError\n9 failed, 49 passed in 232.83s (0:03:52)",
   "why": "A story part's size limit counts its story's design copies under docs and Markdown files as code, so a user-facing part stops on size it does not have",
   "worker": "codex"
 }
