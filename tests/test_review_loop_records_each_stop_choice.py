@@ -79,7 +79,7 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
             assert f"forge close {item} --resolve <narrow|split|accept>" in next_step.stdout
             for command in ("close", "land"):
                 waiting = env.repo.forge(command, item)
-                assert waiting.returncode == 1, waiting.stdout + waiting.stderr
+                assert waiting.returncode == (3 if command == "land" else 1), waiting.stdout + waiting.stderr
                 assert "Ask the human to narrow the part" in waiting.stderr
                 assert len(env.review_calls()) == (cycle + 1) * 3
         reason = f"The owner chose {choice} for stop {cycle + 1}"
