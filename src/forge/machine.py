@@ -397,9 +397,43 @@ def stop(args: Any) -> int:
     held = [run for run in selected if run.get("native")]
     for run in held:
         native.cancel(run)
+    cleared = False
+    if root and repo.ITEM.fullmatch(args.item):
+        for kind in ("Build", "Grill"):
+            cleared = _clear_item_lock(root, args.item, kind) or cleared
     print("Stopped Forge's hold; stop the subagent in your session too." if held else
-          "Stopped the run." if selected else "There is nothing to stop.")
+          "Stopped the run." if selected or cleared else "There is nothing to stop.")
     return 0
+
+
+def _clear_item_lock(root: Path, item: str, kind: str) -> bool:
+    """A surviving session alone does not keep an abandoned round busy."""
+    from forge import codex
+
+    lock = codex._item_file(root, item, ".lock", kind)
+    with codex._one_at_a_time(lock), _queue() as runs:
+        if not lock.exists() or any(run["repo_root"] == root.as_posix() and run["item"] == item
+                                    for run in runs):
+            return False
+        owner = codex._json(lock)
+        alive = codex._alive(owner)
+        if "started" not in owner or alive is None:
+            raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")
+        record = lock.with_suffix(".json")
+        saved = codex._json(record)
+        entry = (saved.get("pending") or {}).get("entry") or {}
+        # Only a matching native handout proves a live owner is the surviving session,
+        # rather than a work command (including older releases without saves_chat).
+        if alive and (not entry.get("native") or any(
+                owner.get(key) != entry.get("process", {}).get(key) for key in ("pid", "started"))):
+            return False
+        if any(codex._alive(saved[key]) is not False for key in ("driver", "app_server")
+               if saved.get(key)):
+            return False
+        if saved.get("pending"):
+            codex._record(record, pending=None)
+        lock.unlink()
+        return True
 
 
 @contextlib.contextmanager

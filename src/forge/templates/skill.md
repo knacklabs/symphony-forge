@@ -251,6 +251,8 @@ Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that
 both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
+Stopping an item also clears its abandoned item lock when no live run holds it, so the next
+round can start even when the coordinating session stays open.
 This applies to runs Forge launched. A handed-out native run has no process tree, so
 `forge stop` frees its hold and the coordinator stops the subagent in its session.
 
