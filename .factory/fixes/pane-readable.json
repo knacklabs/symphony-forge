@@ -22,7 +22,7 @@
     "id": "513b596a-1156-487b-a2b0-31025816736b",
     "status": "clean"
   },
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
@@ -38,22 +38,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "The Claude Code pane's Board tab is hard to read and shows wrong data is stuck. It should deliver: In the pane, each item shows its title on its own line, then short lines for status (state, round, worker, elapsed), stages with the total, and gates (plan read, review, CI with the failing check and pull request), then its next step, with a blank line between items; no field shows unknown, an empty value or 0s; rounds count from 1 and a running review shows as running; the Board and Machine tabs each have a shown key that selects them and the selected tab is marked; new repos get it at init, existing repos on upgrade and sync\nTwo rounds in a row left close's tests failing.\nThe worker tried: no new commits.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "Owner chose one more round: tests/test_live_status.py test_7 [read codex] and [read default codex] time out on this branch and pass on main",
-    "tool": "codex",
-    "wait_id": "5034291f-7b09-4c2f-b039-53cb6e501b7a",
-    "worker_round": 4
-  },
   "stuck": {
-    "close": "63b463d8-e7ee-4205-8c95-86c7e3e7bcc5",
-    "head": "92afad1e159ceec62a17f9cf4ca60514771ff211",
+    "close": "2bff59ed-6b44-4251-be17-fb316192fcfd",
+    "head": "1341a77fa107d282f6e63e0793dde3c6c6b36e20",
     "keys": {
-      "close's tests failing": 1
+      "close's tests failing": 2
     },
-    "round": 3
+    "round": 4
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest f0250948eb513a843659ab4bdf44dfc35cf18f3f` exited with status 1 on this machine.\nNo local test names src/forge/board.py; GitHub's checks will cover it.\nNo local test names src/forge/init.py; GitHub's checks will cover it.\n                env.commit(folder, \"forge.toml\", config.read_text(\"utf-8\").replace(\n                    json.dumps(f'\"{sys.executable}\" -c \"print(123)\"'),\n                    json.dumps(f'\"{sys.executable}\" -m pytest -vv{parallel} test_progress.py')))\n            process = subprocess.Popen([sys.executable, str(repo.bin / \"forge\"),\n                                       \"read\" if case.startswith(\"read\") else \"close\" if case.startswith((\"progress\", \"ci\", \"review\")) else \"work\", item], cwd=repo.path,\n                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n            connections, activities = [], []\n            try:\n                for expected in ([None] if case.startswith((\"progress\", \"ci\")) else expected_steps):\n>                   connection, _ = listener.accept()\n                                    ^^^^^^^^^^^^^^^^^\n\ntests/test_live_status.py:325:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>\n\n    def accept(self):\n        \"\"\"accept() -> (socket object, address info)\n\n        Wait for an incoming connection.  Return a new socket\n        representing the connection, and the address of the client.\n        For IP sockets, the address info is a pair (hostaddr, port).\n        \"\"\"\n>       fd, addr = self._accept()\n                   ^^^^^^^^^^^^^^\nE       TimeoutError: timed out\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/socket.py:294: TimeoutError\n3 failed, 37 passed in 170.46s (0:02:50)",
   "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard",
