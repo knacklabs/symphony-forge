@@ -174,6 +174,7 @@ Windows checklist:
 - Tests never assume a drive letter or a '/' separator.
 - File operations in tests use the repo's lock-safe helpers where it has them.
 
+Review lists binary changes by name and line counts, including added, changed and deleted images.
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder.
 
