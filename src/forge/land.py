@@ -43,6 +43,8 @@ def land(args: argparse.Namespace) -> int:
         repo.refuse(repo.REFUSALS["bad_item"], item=item)
     if item == merge.ENABLE:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
+    if match["fix"] and nextstep.remote_state(repo.root(), item, f"fix/{item}").get("status") == "dropped":
+        repo.refuse(("{item} is dropped.", "forge fix drop {item} --undo"), item=item)
     top = close._worktree(item)
     pin = repo.config(top)["version"]
     state, branch = _wait_for_choice(top, item, queued), repo.current_branch(top)
@@ -296,6 +298,9 @@ def _queue(top: Path) -> int:
         if not found:
             continue
         item, state = found
+        state = nextstep.at_ref(top, item, state, prs.get(branch))
+        if state.get("status") == "dropped":
+            continue
         age = (int(repo.git("log", "-1", "--diff-filter=A", "--format=%ct", "--",
                             repo.state_path(item), cwd=tree) or 0), item)
         if state.get("stop"):  # close decides: the owner's choice, its 30-minute default, or a stop

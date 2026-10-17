@@ -602,6 +602,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             continue
         match = STATE.fullmatch(rel)
         if match["fix"]:
+            state = nextstep.at_ref(top, match["fix"], state, by_branch.get(state.get("branch")))
+            if state.get("status") == "dropped":
+                continue
             if state.get("kind") != "story-done":
                 name = match["fix"]
                 items[name] = row(name, "fix", state.get("why") or "A small fix", state, where)

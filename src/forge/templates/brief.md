@@ -58,6 +58,9 @@ $delegation
 - $settings
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
+- Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
+  to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
+  fix needs `forge close` again before it is ready.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
