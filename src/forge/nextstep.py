@@ -54,7 +54,7 @@ STATUS = {
     "fixing": ("Close stopped on {label}: {reason}.", "forge work {item}"),
     "waiting for checks": ("{label} is waiting for its checks.", "forge close {item}"),
     "checks failed": ("{label}'s checks failed.", "forge work {item}"),
-    "ready": ("{label} is ready and waiting for someone to merge it.",
+    "ready": ("{label} is ready to merge.",
               "merge its pull request, then forge next"),
 }
 
