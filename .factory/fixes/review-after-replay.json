@@ -1,0 +1,15 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/review-after-replay",
+  "done_when": "A reused review is recorded against the branch's new head after a replay, so the pull request check passes; and when the only failing check is Forge's own review check, land closes again instead of starting a worker round",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:27.568963+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After land replays a branch, close reuses the clean review but keeps the old commit in its record, so the pull request check fails on every push; and land then hands the worker a round it cannot fix"
+}
