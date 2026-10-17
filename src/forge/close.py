@@ -665,11 +665,15 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
     state = repo.read_state(item, top) or {}
     base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
     target = f"origin/{default}"
-    if (state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
+    if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
+        return
+    trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
+    if trial.returncode not in (0, 1):
+        trial.check_returncode()
+    if (trial.returncode and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
             and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
             and task._merged(target, parent, top)
-            and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0
-            and repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode):
+            and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0):
         target = repo.git("rev-parse", target, cwd=top)
         original = repo.git("rev-parse", "HEAD", cwd=top)
         remote_ref = f"refs/heads/{branch}"
@@ -709,11 +713,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             repo.git("reset", "--keep", original, cwd=top)
             repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
         return
-    if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode == 0:
-        return
-    trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
-    if trial.returncode not in (0, 1):
-        trial.check_returncode()
     if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
             and (pr or {}).get("mergeStateStatus") != "BEHIND"):
         return

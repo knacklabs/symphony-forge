@@ -1223,7 +1223,10 @@ before editing beyond the limit. Anything else needs the human's allowance or a 
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
-after the underlying item lands. Once it lands, close replays only the follow-up's own commits
+after the underlying item lands. Close first tries a plain merge of the current default branch
+without changing the checkout. If it is clean, close keeps the branch's commits and merges when
+the pull request needs it. A clean merge needs no force-push. If the merge conflicts after the
+underlying item lands, close replays only the follow-up's own commits from its recorded start
 onto the current default branch and publishes with a lease. It preserves earlier merge edits,
 leaves unknown remote commits alone, and stops with a replay command if the fix's own changes
 conflict. Follow the printed replay and leased publication commands before closing again.
