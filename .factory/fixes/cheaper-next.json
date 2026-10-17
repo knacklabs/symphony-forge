@@ -51,7 +51,7 @@
     "id": "063b1f0d-4775-46dd-be0d-4659caeaa9bd",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -64,10 +64,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "dc2877b3cd284aaef240168c5bfc46580acfc398",
-    "keys": {},
-    "round": null
+    "close": "c06e3344-2fb4-4512-9bcc-99715d74933e",
+    "head": "530087e14a21d50ad7979661b986ba17480a6324",
+    "keys": {
+      "the review finding \"Gate: test parser and time-record reuse\" in tests/test_next_reuses_command_work.py": 1
+    },
+    "round": 2
   },
   "why": "forge next spends seconds copying cached time records, rebuilding the command parser per row and repeating the same stack checks",
   "worker": "codex"
