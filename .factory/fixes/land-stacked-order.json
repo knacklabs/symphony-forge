@@ -1,0 +1,83 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/land-stacked-order",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-df6e-7cf0-b27e-2ee074b1932e",
+    "head": null,
+    "start": "5624abc6e8b92ceac3ca3491184d66f126a61028"
+  },
+  "done_when": "Land lands a stacked fix after the fix it was stacked on",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/land.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 326,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Land lands a stacked fix after the fix it was stacked on",
+      "work": 2
+    },
+    {
+      "area": "_queue() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 315,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Stack ordering puts an unrelated younger change ahead of an older child",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "682b41e13659a61b711adef3bb841631ab2b800753cf77331fd937e5d2a2a372",
+    "changed": "0b406b59e29067263df15271c6e7c07d6c456dc199ced755d0fe881701aab68b",
+    "commit": "049508e49e6f1391c27452dfbf153289da7a3384",
+    "dismissals": [],
+    "findings": [],
+    "id": "841e22ba-cd36-402b-9253-2cebffd03810",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:46.199137+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T06:42:23.230485+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:45:00.182090+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:28:59.903882+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "fe2849ab-99c9-4214-bdae-b6bb3fc358e2",
+    "head": "fc4f706dbcde97da60e67aa59f3ce62836267870",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Land lands stacked fixes by age, not in the order they were stacked",
+  "worker": "codex"
+}

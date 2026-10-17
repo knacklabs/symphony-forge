@@ -27,8 +27,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => {
-      const value = e.argv[1] === 'board' ? board : e.argv[1] === 'next'
-        ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: 'Waiting for checks.' } }
+      const value = e.argv[1] === 'next'
+        ? { ...board, next: { command: null, line: 'Waiting for checks.' } }
         : { version: '1.2.5', agents: { size: 1, entries: [] }, tests: { size: 1, entries: [] } }
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })

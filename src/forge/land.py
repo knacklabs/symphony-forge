@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 from functools import partial
+from graphlib import TopologicalSorter
 from pathlib import Path
 
 from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, spotted, story, task, worker
@@ -53,6 +54,7 @@ def land(args: argparse.Namespace) -> int:
         saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
         else 0)
     conflict_retry = False
+    review_retry = False
     try:
         merged = _merged(top, branch)
         status = state.get("status", "started")
@@ -91,13 +93,25 @@ def land(args: argparse.Namespace) -> int:
                     conflict_retry = True
                     continue
                 red = error.entry is checks.REFUSALS["red"]
+                failing = worker._failing(branch) if red else []
+                if (red and str(error).splitlines()[0] == checks.REFUSALS["red"][0].format(
+                        names="forge-pr-check") and len(failing) == 1 and
+                        failing[0][0] == "forge-pr-check" and any(
+                            f"The committed review at the head of {branch} is {problem}" in failing[0][1]
+                            for problem in ("missing.", "for a commit that isn't part of this branch.",
+                                            "out of date:"))):
+                    if review_retry:
+                        raise repo.Refused(str(error).split("\nNext: ")[0], f"forge close {item}",
+                                           error.code, error.entry) from None
+                    review_retry = True
+                    continue
                 if red and _rerun(top, item, branch):
                     continue
                 what = ("the review's serious findings" if error.entry is close.REFUSALS["blocked"]
                         else "the failing tests" if error.entry is close.REFUSALS["tests_failed"]
                         # In a queue run, close's own check gate decides (a skipped required check
                         # fails there too); one change's fix rounds still use the worker's reading.
-                        else "the failing checks" if red and (queued or worker._failing(branch)) else "")
+                        else "the failing checks" if red and (queued or failing) else "")
                 if not what:
                     raise
                 if queued:  # forge land <item> runs this change's fix rounds
@@ -267,14 +281,15 @@ def _land_all() -> int:
 
 
 def _queue(top: Path) -> int:
-    """Close and merge every change in close, oldest first, up to the agent places at once. A change
+    """Close and merge every change in close, bases before stacked fixes, otherwise oldest first.
+    Run up to the agent places at once. A change
     not yet ready waits for an older one in the run that shares a file with it, unless a human
     merges: then nothing merges in the run, so nothing waits."""
     repo.git("fetch", "-q", "origin", cwd=top)
     default = repo.default_branch(top)
     hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
-    changes, needs = [], {}
+    changes, needs, stacked = [], {}, {}
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
@@ -307,13 +322,41 @@ def _queue(top: Path) -> int:
             ready = nextstep._item_readiness(item, state, tree, board._checks(
                 pr, repo.config(tree)["checks"])[0], pr=pr)[0] == "ready"
             changes.append((age, item, files, ready))
+            stacked[item] = state.get("stacked_on")
     changes.sort()
+    queued = {item: age for age, item, *_ in changes}
+    dependencies = TopologicalSorter({
+        item: [stacked[item]] if stacked[item] in queued else []
+        for _, item, *_ in changes})
+    dependencies.prepare()
+    available = list(dependencies.get_ready())
+    order = {}
+    while available:
+        item = min(available, key=queued.__getitem__)
+        available.remove(item)
+        order[item] = len(order)
+        dependencies.done(item)
+        available.extend(dependencies.get_ready())
+    changes.sort(key=lambda change: order[change[1]])
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     while len(finished) < len(changes):
-        for index, (_, item, files, ready) in enumerate(changes):
+        for index, (age, item, files, ready) in enumerate(changes):
             if item in running or item in finished:
                 continue
+            parent = stacked[item]
+            if parent and parent not in queued and not task._merged(f"origin/{default}", parent, top):
+                needs[item] = (age, *needs[parent][1:]) if parent in needs else (
+                    age, f"its base {parent} is not merged.", f"forge land {parent}")
+                finished.add(item)
+                continue
+            if hold and parent in queued:
+                if parent not in finished:
+                    continue
+                if parent in needs:
+                    needs[item] = (age, *needs[parent][1:])
+                    finished.add(item)
+                    continue
             # The hold first, so a held change says whom it waits for whatever the places are doing.
             older = next(((other, min(files & theirs)) for _, other, theirs, _ in changes[:index]
                           if other not in finished and files & theirs), None)
@@ -322,7 +365,7 @@ def _queue(top: Path) -> int:
                     say(f"{item} waits for {older[0]}: both change {older[1]}.")
                     waiting.add(item)
                 continue
-            # Strictly oldest first: the next change starts once every started one has entered close.
+            # Keep queue order: the next change starts once every started one has entered close.
             if len(running) >= machine.half_cores() or any(
                     child.poll() is None and f"Closing {other}." not in lines
                     for other, (child, _, lines) in running.items()):
@@ -344,7 +387,7 @@ def _queue(top: Path) -> int:
             url = next((line.rsplit(": ", 1)[1] for line in lines
                         if line.startswith(f"{item} is ready; a human merges")), None)
             if child.returncode == 0 and url:
-                ready_prs.append((age, f"{item} {url}"))
+                ready_prs.append((order[item], f"{item} {url}"))
                 say(f"{item} is ready for a human merge.")
             elif child.returncode == 0:
                 merged.append(item)
@@ -359,7 +402,7 @@ def _queue(top: Path) -> int:
                 say(f"{item} stopped: {needs[item][1]}")
         time.sleep(0.5)
     stopped = sorted(needs, key=lambda item: needs[item][0])
-    ready_prs = [line for _, line in sorted(ready_prs)]  # oldest first: the order to merge them
+    ready_prs = [line for _, line in sorted(ready_prs)]  # queue order: bases before stacked fixes
     say(f"Merged ({len(merged)}): {', '.join(merged) or 'none'} · Ready to merge ({len(ready_prs)}): "
         f"{', '.join(ready_prs) or 'none'} · Needs you ({len(stopped)}): {', '.join(stopped) or 'none'}")
     for item in stopped:
