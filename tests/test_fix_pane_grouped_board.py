@@ -58,7 +58,7 @@ const api = {{
   ui: {{invalidate() {{}}, open: async () => ({{isPlaced: false}}), resolve: () => table}},
   process: {{run: async (argv, init) => {{
     if (canned) return canned[argv[1]] ? {{exitCode: 0, stderr: '', stdout: JSON.stringify(
-      argv[1] === 'next' ? {{...canned.board, ...canned.next}} : canned[argv[1]])}}
+      argv[1] === 'next' ? {{...canned.next, ...canned.board}} : canned[argv[1]])}}
       : {{exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'"}};
     try {{
       return {{exitCode: 0, stderr: '', stdout: execFileSync(forge[0], [forge[1], ...argv.slice(1)],

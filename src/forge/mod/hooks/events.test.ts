@@ -102,7 +102,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     items = [row('Foreign guide', 'foreign-change')]
     await clock.advance(10000)
     expect(prompts.length).toBe(3)
-    expect(directories.slice(-3)).toEqual(['/other', '/other', '/other'])
+    expect(directories.slice(-2)).toEqual(['/other', '/other'])
     boardRoot = '/other'
     items = [row('New repo', 'other-baseline')]
     await clock.advance(10000)

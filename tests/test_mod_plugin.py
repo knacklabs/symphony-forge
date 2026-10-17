@@ -352,7 +352,7 @@ const api = {{
     if (mode === 'bad-board' && command === 'next') return {{exitCode: 0, stdout: '{{"items":[{{}}]}}', stderr: ''}};
     if (mode === 'bad-lanes' && command === 'lanes') return {{exitCode: 0, stdout: '{{}}', stderr: ''}};
     if (command === 'lanes') return {{exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'"}};
-    const value = structuredClone({{...fixture.board, ...fixture.next}});
+    const value = structuredClone({{...fixture.next, ...fixture.board}});
     if (mode === 'empty') value.items = [];
     if (mode === 'missing') value.items = [{{title: 'Lost state'}}];
     if (mode === 'bad-time') value.items[0].stages[0].started_at = 'not a timestamp';
