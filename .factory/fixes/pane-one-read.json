@@ -10,13 +10,29 @@
   },
   "done_when": "The pane runs one forge next --json per refresh and reads the board rows from it, and a test proves one refresh starts one read command",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c1df888829d0de1b85c1b4069bd2ca24aa27e056b0fbc2acb335463fb5cfa96a",
+    "changed": "26b6c6f435c6e9c3497c3f097fe763bb98f870b87d71c23b6487c93b17af8d21",
+    "commit": "2707949d22fc3f02e91b7bfa197bee13f5c4f260",
+    "dismissals": [],
+    "findings": [],
+    "id": "4f4d1f9c-20c1-433e-9a3b-2397349e2b7d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T14:21:20.956533+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T14:47:21.368804+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
