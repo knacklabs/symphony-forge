@@ -1,6 +1,13 @@
 {
   "base": "76beef0b82a5ee1b5f6453cbe3c6f0a6074f9622",
   "branch": "fix/cache-tests-agree",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14b0f-752f-7c22-ba0b-2286dfdc45ac",
+    "head": null,
+    "start": "b28503a92311f65f139f4c94e7256b6d882d9431"
+  },
   "done_when": "tests/test_pull_request_cache_survives_close.py passes on main with both cache fixes, and it still proves a close keeps the cached lists until they expire",
   "fix_kind": "mechanical",
   "kind": "fix",
