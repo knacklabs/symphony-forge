@@ -274,6 +274,8 @@ include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 `forge next --json` uses the same 60-second GitHub cache as `forge board --json`, while text
 `forge next` reads GitHub live.
+Pull request creates, edits and draft changes keep this shared cache. They show within a minute.
+Merges clear it at once. Each command fetches the default branch's settings at most once.
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
