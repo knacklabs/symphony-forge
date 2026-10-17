@@ -10,13 +10,29 @@
   },
   "done_when": "The test suite rebuilds a cached SDK whose Python is missing or half-installed, so tests pass after a restart without manual steps",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d304eec853311ffa3fc2f42222754ea4df5d076be6ddf95bc1ed96d260ea5295",
+    "changed": "edacf52eb82924a376b56f555f54559c60f543c5639c8e9bc8224d65067d9018",
+    "commit": "343ad9bbf4b1afab527133178694bd6d5d02ea8e",
+    "dismissals": [],
+    "findings": [],
+    "id": "6e345157-5732-4e8d-b96f-dd36e6a61157",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T05:48:37.054946+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T06:43:51.791179+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
