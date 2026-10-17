@@ -150,6 +150,7 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     wait_started = datetime.fromisoformat(loop_wait["at"])
     monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=30)).isoformat())
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
+    # Acceptance in src/forge/close.py must retain the historical commit of a review still on this branch.
     accepted = env.close(item, "--resolve", "accept", "--reason", "The owner accepts this version")
     assert accepted.returncode == 1, accepted.stdout + accepted.stderr
     assert "queued" in accepted.stderr
