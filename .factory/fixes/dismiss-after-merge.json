@@ -1,6 +1,13 @@
 {
   "base": "a255d481cb1c5eee5570279ea3b3e5ce511fbffd",
   "branch": "fix/dismiss-after-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14a79-7e4c-7bb3-8813-d1481b6762ca",
+    "head": null,
+    "start": "8cfdc3206f18c719d736d3333a8782867bf47506"
+  },
   "done_when": "A dismissal recorded with its file and reason applies to the same finding in the next review after a merge of main, and close accepts a dismissal of a finding the current review still reports",
   "fix_kind": "backend",
   "kind": "fix",
