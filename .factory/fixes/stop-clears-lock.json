@@ -10,13 +10,29 @@
   },
   "done_when": "forge stop on an item also clears that item's lock when no live run of this machine holds it, and a test stops an item whose lock outlived its run",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5e8a87e26da39bd89ca271dd56a7619c5bee95b474159422ac86141a8e248be3",
+    "changed": "6e277a6d1770d07e609d2f6b0fad2cbac5e7da68e316ec71c0980b54726069da",
+    "commit": "ea7cabb55b314a36bb10286d288799701cfcb5e2",
+    "dismissals": [],
+    "findings": [],
+    "id": "6cf1cb0e-8b97-4144-abcf-53d877f06337",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T17:15:27.504481+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:37:22.363198+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
