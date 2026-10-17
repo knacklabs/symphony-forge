@@ -10,13 +10,55 @@
   },
   "done_when": "Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on this machine, and a test covers a test run waiting under high load",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "join() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 181,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on the",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "255079f3eec0d69e41b8bb9680f2636385739627d37f470d0f6b9d77d2283a4a",
+    "changed": "023a8f4901a784f118bb02354c4545f5afe0c32a2421d85088d874fd8c9e7697",
+    "commit": "223c5eb0338ddf64322f975fc163ac3f3475635c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. A standalone `forge test --pytest <base>` starts tests under high load. The new load check runs in `machine.join`, but `src/forge/fasttest.py:269` calls `pytest_tests` directly for this documented picker mode, and `src/forge/fasttest.py:428` launches the test command without joining the lane. The new test exercises only bare `forge test`, so it does not catch this path.",
+        "file": "src/forge/machine.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 3,
+        "line": 181,
+        "priority": "P1",
+        "title": "Not done: Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on the",
+        "work": 2
+      }
+    ],
+    "id": "a63edf15-8f40-4f09-b24f-637a0ff2cc24",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T17:28:51.777172+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:39:12.306933+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
