@@ -26,6 +26,8 @@ from test_board import DOC
 from test_board_dependency_timelines import _client
 from test_story import worktree
 
+STORY = "FORGE-BOARD-4"
+
 
 @pytest.fixture(params=["new", "adopted-v1.2.2"])
 def client(repo, gh, tmp_path, request):
@@ -103,7 +105,7 @@ def pushed(teammate, message, files):
     teammate.git("push", "-q", "origin", "HEAD:main")
 
 
-def test_the_board_answers_only_on_this_computer_and_only_with_its_token(client, tmp_path):
+def test_1_the_board_answers_only_on_this_computer_and_only_with_its_token(client, tmp_path):
     pushed(clone(client, tmp_path), "Plan a basket", {"plans/SHOP.md": DOC})  # a plan the page can open
     client.git("fetch", "-q", "origin")
     with live(client) as url:
@@ -132,7 +134,7 @@ def test_the_board_answers_only_on_this_computer_and_only_with_its_token(client,
                 socket.create_connection((outside, address.port), timeout=5).close()
 
 
-def test_the_board_rebuilds_only_what_changed(client, tmp_path):
+def test_2_the_board_rebuilds_only_what_changed(client, tmp_path):
     teammate = clone(client, tmp_path)
     alpha, _ = fix(client, "alpha"), fix(client, "beta")
     with live(client) as url:
@@ -162,7 +164,7 @@ def test_the_board_rebuilds_only_what_changed(client, tmp_path):
         assert status == 404 and json.loads(missing)["error"] == "No item by that name is on the board."
 
 
-def test_the_events_stream_says_changed_after_a_commit(client):
+def test_3_the_events_stream_says_changed_after_a_commit(client):
     alpha = fix(client, "alpha")
     with live(client) as url:
         address = urlsplit(url)
@@ -177,7 +179,7 @@ def test_the_events_stream_says_changed_after_a_commit(client):
         assert lines[0] == b"\n" and lines[1] == b"event: changed\n" and lines[2].startswith(b"data: "), lines
 
 
-def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_path):
+def test_4_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_path):
     """The teammate gives the story to a developer with the plan's Owner line, as `forge assign`
     writes it. After the server's own fetch the story and its parts show the owner, and an
     unrelated change later keeps them: the story's rows come from the cache with their owner."""
@@ -206,7 +208,7 @@ def test_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_pa
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
 
 
-def test_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_path):
+def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_path):
     """A worker edits an open story's plan and a fix's record without committing: the next
     request shows both, and only those items are derived again."""
     shop, alpha = tmp_path / "shop", fix(client, "alpha")
