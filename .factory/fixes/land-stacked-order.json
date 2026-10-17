@@ -4,12 +4,20 @@
   "done_when": "Land lands a stacked fix after the fix it was stacked on",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T05:29:46.199137+00:00",
       "step": "start"
     }
   ],
-  "why": "Land lands stacked fixes by age, not in the order they were stacked"
+  "stuck": {
+    "close": null,
+    "head": "920bbd17fa4330a92e48925a213480f9771e4143",
+    "keys": {},
+    "round": null
+  },
+  "why": "Land lands stacked fixes by age, not in the order they were stacked",
+  "worker": "codex"
 }
