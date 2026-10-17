@@ -6,6 +6,8 @@ Settled findings stay settled. Each reader and reviewer gets earlier rounds' not
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
+After a merge of main, close applies a requested dismissal to the same title and file in the
+current review, even if its number changes. Only the human chooses which findings to dismiss.
 
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security

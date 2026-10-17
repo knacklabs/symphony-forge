@@ -46,8 +46,6 @@ REFUSALS = {
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
-    "stale_dismiss": ("The branch changed since the review those finding numbers came from.",
-                      "forge close {item}"),
     "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
                      "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "no_such_base_line": ("{where} is not a line of the base commit, so it can't prove a finding "
@@ -252,8 +250,12 @@ def close(args: argparse.Namespace) -> int:
                          "HEAD", cwd=top).returncode != 0):
             result["commit"] = repo.git("rev-parse", "HEAD", cwd=top)
             refreshed = True
-    if dismissals and not fresh:
-        repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
+    requested = {}
+    for number, because in dismissals:
+        if not 1 <= number <= len(previous.get("findings", [])):
+            repo.refuse(REFUSALS["bad_dismiss"], item=item)
+        finding = previous["findings"][number - 1]
+        requested[score.identity(finding["file"], finding["title"])] = because
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     choice_round = 0
     if (state.get("stop") or {}).get("choice"):
@@ -341,8 +343,10 @@ def close(args: argparse.Namespace) -> int:
     elif (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
-    for number, because in dismissals:
-        if not 1 <= number <= len(result["findings"]):
+    for key, because in requested.items():
+        number = next((n for n, finding in enumerate(result["findings"], 1)
+                       if score.identity(finding["file"], finding["title"]) == key), 0)
+        if not number:
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
         from_base = _check_line(top, item, result["commit"], f"origin/{default}",
                                 because.split()[0])
