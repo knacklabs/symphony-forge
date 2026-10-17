@@ -48,16 +48,16 @@ def land(args: argparse.Namespace) -> int:
     pin = repo.config(top)["version"]
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
-    # A round handed to a session subagent ends this run; the next one carries on its count until
-    # the item is ready or the owner records a choice.
-    saved = state.get("land") or {}
-    rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0")) or (
-        saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
-        else 0)
+    rounds = 0
     conflict_retry = False
     review_retry = False
     try:
         close.check_stop(item, state, top)
+        # A session round carries its count until ready or a recorded choice, including a default.
+        saved = state.get("land") or {}
+        rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0")) or (
+            saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
+            else 0)
         merged = _merged(top, branch)
         status = state.get("status", "started")
         start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--",

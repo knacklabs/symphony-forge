@@ -121,6 +121,8 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         waiting = env.repo.forge(command, item)
         assert waiting.returncode == (3 if command == "land" else 1), waiting.stdout + waiting.stderr
         assert waiting.stderr.splitlines()[-9:-1] == result.stderr.splitlines()[-9:-1]
+        assert waiting.stderr.splitlines()[-1] == result.stderr.splitlines()[-1] + (
+            f", then forge land {item}" if command == "land" else "")
         assert len(env.review_calls()) == 3
     reason = "The human chose this after reading the remaining findings"
     chosen = env.close(item, "--resolve", choice, "--reason", reason)
