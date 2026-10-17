@@ -11,21 +11,72 @@
   },
   "done_when": "A pull request that changes only Markdown, docs/, plans/ or Forge's records skips the test suite in the generated workflow and at close, and the required tests check passes with a docs-only note, on new repos and after sync on existing repos",
   "fix_kind": "backend",
-  "flagged": [],
+  "flagged": [
+    ".factory/fixes/cheaper-next.json",
+    "src/forge/mod/hooks/events.ts"
+  ],
   "kind": "fix",
-  "known": [],
+  "known": [
+    {
+      "area": ".factory/fixes/cheaper-next.json",
+      "file": ".factory/fixes/cheaper-next.json",
+      "gain": 4,
+      "harm": 2,
+      "line": 2,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: parser-cache allowance does not cover the mixed change",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 96,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "A queued CI failure can be delivered after a rerun within the cache window",
+      "work": 2
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6ad6e1487347aa7c8f9997f26219042b2813ea0bca06d9b8ef5a10b9675d5b61",
-    "changed": "27616a8e256f437e23c5f38b613e457cc832587fef336ce3ccb37bd29d097cef",
-    "commit": "26742da27f2a1b7d947760b8faee642d1695319c",
+    "branch_diff": "c3fa0ac09581eaee34d0a2ec061a311a5cf9370b8ab5a5fc45f4b9d9ec0278e8",
+    "changed": "42073fd4ae41895e4cb43b5d9fc0cbacf4afeaf3a9d6892f74e7f4ed9d8f9146",
+    "commit": "126769c0e35aed601170bc072b9578f3eabeca62",
     "dismissals": [],
-    "findings": [],
-    "id": "667dd2e5-061c-4804-a155-d74c6d7e272e",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate. The new allowance covers caching the internal command parser in cli.py, but the selected diff also changes binary review in src/forge/review.py, workflow event delivery in src/forge/mod/hooks/events.ts, and the required tests gate in src/forge/prcheck.py. These address different problems, so the allowance's reason does not match the whole diff.",
+        "file": ".factory/fixes/cheaper-next.json",
+        "gain": 4,
+        "harm": 2,
+        "line": 2,
+        "priority": "P1",
+        "title": "Gate: parser-cache allowance does not cover the mixed change",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. If a failure is queued during a busy turn and its workflow reruns within 60 seconds, forge board can still return the cached failed occurrence (src/forge/board.py:104). The new `latest.has(id)` check then accepts that stale occurrence and submits the failure. The rerun test advances FORGE_NOW by a full minute between snapshots (tests/test_mod_plugin.py:248), so it does not cover this normal sequence.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 96,
+        "priority": "P1",
+        "title": "A queued CI failure can be delivered after a rerun within the cache window",
+        "work": 2
+      }
+    ],
+    "id": "179f20ff-e2e6-485d-90f6-b1d3becee40d",
+    "status": "blocked"
   },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-17T17:49:25.029989+00:00",
@@ -33,6 +84,10 @@
     },
     {
       "at": "2026-10-17T18:15:09.959293+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:44:45.922633+00:00",
       "step": "review"
     }
   ],
