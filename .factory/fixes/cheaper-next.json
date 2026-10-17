@@ -1,0 +1,15 @@
+{
+  "base": "e8168963a12c1060de16e797d56e8afc9778d347",
+  "branch": "fix/cheaper-next",
+  "done_when": "Read-only callers reuse cached time records without copying, the parser is built once, stack checks are remembered per command, and a test counts the git calls and checks a time budget on a client-sized repo",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T14:21:24.671299+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge next spends seconds copying cached time records, rebuilding the command parser per row and repeating the same stack checks"
+}
