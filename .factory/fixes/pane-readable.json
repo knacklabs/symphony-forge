@@ -68,11 +68,11 @@
     "id": "967cd4a4-702a-413b-ad87-a90948361daa",
     "status": "clean"
   },
-  "round": 6,
+  "round": 7,
   "settled_areas": [
     "src/forge/mod/hooks/events.ts"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
@@ -105,10 +105,10 @@
     "worker_round": 6
   },
   "stuck": {
-    "close": "5b0fe7f7-d5b3-4d27-8d49-4809b7263907",
-    "head": "19a55485a17a36138603e6562426953364e07839",
+    "close": "5e125dab-d37b-4bce-b602-4860f51e4b62",
+    "head": "28272b5021a33473ddda245b2c4518cc99a5cdf0",
     "keys": {},
-    "round": 5
+    "round": 6
   },
   "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard",
   "worker": "codex"
