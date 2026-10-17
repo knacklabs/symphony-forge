@@ -21,7 +21,7 @@
       "gain": 4,
       "harm": 3,
       "line": 109,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "69702c8440695e2feaeae850c798bfded5391c09a44099922c3c9105379b8ea5",
-    "changed": "2454bcafde96f60c4d1e594105557aeda212da59a1041b4e818197e4dace2b0c",
-    "commit": "13888979220e3373579f245ef7fdc6bee9f24386",
+    "branch_diff": "88a1020d767b97c9d0e0a481d14486a371b808e0f65583e2fa7f0d539a17c688",
+    "changed": "e7ebb7a6a7c498f9b96b247b5c14f594610d5b8758618c5ed5c64111e007c054",
+    "commit": "bd6c9d74863da8f8076f03d47c91dcb933c0d829",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Line 109 holds a queued failure until a later checks fetch. If the turn ends during the cache window and the user restarts the pane before that fetch, session cleanup clears `pending` (events.ts:145), and the new session's baseline marks the still-visible workflow ID as seen (events.ts:71\u201375). The unchanged failure is then never delivered, even after fresh checks arrive. The new test covers waiting in one session but not this normal restart path.",
-        "file": "src/forge/mod/hooks/events.ts",
-        "gain": 4,
-        "harm": 3,
-        "line": 109,
-        "priority": "P1",
-        "title": "Queued CI failures are lost if the pane session restarts during the freshness wait",
-        "work": 2
-      }
-    ],
-    "id": "bd035321-17d6-4c1f-b5e9-7e163df1d75f",
-    "status": "blocked"
+    "findings": [],
+    "id": "2a41527d-bf16-4ae6-b44c-02538090ca00",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T19:52:40.865537+00:00",
@@ -59,6 +48,10 @@
     },
     {
       "at": "2026-10-17T20:23:12.914882+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:52:50.254366+00:00",
       "step": "review"
     }
   ],
