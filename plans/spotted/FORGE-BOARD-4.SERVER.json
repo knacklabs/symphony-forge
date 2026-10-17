@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_server.py\tGate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request\tFORGE-BOARD-4/SERVER",
+      "kind": "bug",
+      "path": "tests/test_board_server.py",
+      "line": 235,
+      "text": "Gate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/SERVER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/board.py\ta new fix's worktree carries every story's state file, so the board may move each story's chosen copy there and rebuild every story row on each fix start.",
       "kind": "improve",
       "path": "src/forge/board.py",
