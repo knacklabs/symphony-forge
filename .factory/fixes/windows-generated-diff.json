@@ -50,7 +50,7 @@
     "id": "018d8d68-e7c2-43b8-b476-1bb475f056b9",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "93aebb47c2527d535a1e23f6eafda768b72346df",
-    "keys": {},
-    "round": null
+    "close": "e44bd727-b50b-46c8-b213-8239468f3112",
+    "head": "ba2bcb81d05a6557268dba6061e20c8869e96449",
+    "keys": {
+      "the review finding \"Not done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run\" in tests/test_fix_review_bundles_include_generated_files_s.py": 1
+    },
+    "round": 1
   },
   "why": "On Windows, two generated-files tests fail because the tests' stand-in review script reads a binary diff with the Windows code page",
   "worker": "codex"
