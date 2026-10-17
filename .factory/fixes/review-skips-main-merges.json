@@ -1,0 +1,15 @@
+{
+  "base": "ddf2c24ab37e3bde066324d78c6dcb32d78bd010",
+  "branch": "fix/review-skips-main-merges",
+  "done_when": "A review after a merge of the default branch covers only the change's own work, never commits that came from the default branch, and a test merges main with an unrelated change between two closes and sees no finding about it",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-17T21:25:09.925950+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After main is merged into a branch, close's next review covers every commit since the last review, including main's own new commits, so reviews blame the change for other merged work"
+}
