@@ -260,6 +260,45 @@ def test_4_drop_refuses_without_changing_work_or_pull_request(env, blocked):
                       repo.git("status", "--porcelain", cwd=where))
 
 
+@pytest.mark.parametrize("retention", ["ignored-data", "primary-checkout"])
+def test_6_a_dropped_checkout_cannot_be_the_base_of_a_new_fix(client, retention):
+    where = _start(client)
+    _github(client)
+    if retention == "ignored-data":
+        (where / ".gitignore").write_text("local-data/\n", "utf-8")
+        client.git("add", ".gitignore", cwd=where)
+        client.git("commit", "-qm", "Keep local data private", cwd=where)
+        (where / "local-data").mkdir()
+        (where / "local-data/customers.txt").write_text("Keep this data", "utf-8")
+    else:
+        client.git("worktree", "remove", str(where))
+        client.git("switch", "-q", "fix/unwanted")
+        where = client.path
+    dropped = client.forge("fix", "drop", "unwanted", "--because", "Pause this work")
+    assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+    assert where.exists()
+    before = (client.git("rev-parse", "HEAD", cwd=where),
+              client.git("worktree", "list", "--porcelain"),
+              client.git("ls-remote", "--heads", "origin"))
+    refused = client.forge("fix", "start", "Continue the greeting", "--done", "Readers see a greeting",
+                           "--kind", "mechanical", "--slug", "follow-up", cwd=where)
+    assert refused.returncode == 1, refused.stdout + refused.stderr
+    assert refused.stderr == "Fix unwanted is dropped.\nNext: forge fix drop unwanted --undo\n"
+    assert before == (client.git("rev-parse", "HEAD", cwd=where),
+                      client.git("worktree", "list", "--porcelain"),
+                      client.git("ls-remote", "--heads", "origin"))
+    assert client.git("branch", "--list", "fix/follow-up") == ""
+    if retention == "ignored-data":
+        assert (where / "local-data/customers.txt").read_text("utf-8") == "Keep this data"
+    restored = client.forge("fix", "drop", "unwanted", "--undo")
+    assert restored.returncode == 0, restored.stdout + restored.stderr
+    restored_head = client.git("rev-parse", "HEAD", cwd=where)
+    continued = client.forge("fix", "start", "Continue the greeting", "--done", "Readers see a greeting",
+                             "--kind", "mechanical", "--slug", "follow-up", cwd=where)
+    assert continued.returncode == 0, continued.stdout + continued.stderr
+    assert client.git("rev-parse", "fix/follow-up~1") == restored_head
+
+
 def test_5_drop_refuses_while_a_real_forge_run_holds_the_fix(env, tmp_path):
     repo = env.repo
     where = _start(repo)
