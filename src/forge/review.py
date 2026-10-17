@@ -912,10 +912,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         else:
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
-            review_base = repo.git("merge-base", base, "HEAD", cwd=tree)
-            if previous.get("commit") and repo.git(
-                    "merge-base", base, previous["commit"], cwd=tree) == review_base:
-                review_base = previous["commit"]
+            review_base = previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
+            if previous.get("commit"):
+                merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
+                if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
+                    review_base = merged_base
         prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
