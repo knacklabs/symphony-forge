@@ -8,8 +8,8 @@
       "text": "In-progress CI rerun can deliver the previous failure",
       "from": "blocking",
       "item": "pane-readable",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "edge\tpyproject.toml\tA local plugin test creates ignored declaration files that the package build includes.",

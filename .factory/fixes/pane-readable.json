@@ -20,8 +20,8 @@
       "gain": 3,
       "harm": 3,
       "line": 94,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "accepted",
+      "reason": "src/forge/mod/hooks/events.ts:94 Owner accepted: this fix does not change events.ts; the rerun inside the cache window goes to its own fix",
       "round": 3,
       "security": false,
       "title": "In-progress CI rerun can deliver the previous failure",
@@ -33,7 +33,13 @@
     "branch_diff": "d22b0c663565ae666d0318820cac043b48f00e54a3d5ac38cc6aac5fdaed1bd7",
     "changed": "b9816ef51046f696a8c8685a7b4922f5887747cd7fe35cbb277b0b3a6e463634",
     "commit": "3a2de0b188f05531369609815be3ef7e24b10072",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/mod/hooks/events.ts:94 Owner accepted: this fix does not change events.ts; the rerun inside the cache window goes to its own fix",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nIf a workflow fails while Claude is busy, its failure remains in `pending`. When a same-commit rerun starts, the board emits no completed-workflow occurrence, but this loop keeps the pending event because the item still exists. When the turn ends, the pane submits the old \u201cfailed\u201d result while CI is running. The rerun proof covers completed failure and success snapshots, but not the running interval.",
@@ -47,10 +53,10 @@
       }
     ],
     "id": "89d4180e-6aed-4721-a3b5-8e4c424e7986",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T07:40:24.219745+00:00",
