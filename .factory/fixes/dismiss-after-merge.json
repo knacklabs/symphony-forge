@@ -4,12 +4,20 @@
   "done_when": "A dismissal recorded with its file and reason applies to the same finding in the next review after a merge of main, and close accepts a dismissal of a finding the current review still reports",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T15:25:39.317469+00:00",
       "step": "start"
     }
   ],
-  "why": "After the coordinator merges main into a branch, close refuses a dismissal because the branch changed since the review, so the same by-design finding must be dismissed again"
+  "stuck": {
+    "close": null,
+    "head": "29107507f63d295896681cfc3c0b43f7703fa1f3",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the coordinator merges main into a branch, close refuses a dismissal because the branch changed since the review, so the same by-design finding must be dismissed again",
+  "worker": "codex"
 }
