@@ -39,8 +39,8 @@
     "id": "8636da47-907a-4047-91c8-6b924eae64b6",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T17:18:34.533305+00:00",
@@ -56,12 +56,10 @@
     }
   ],
   "stuck": {
-    "close": "fb27a425-17c7-4762-9302-d72989e98a6b",
-    "head": "c545f8ddc2e131930bab663b83e3008da9c2cf18",
-    "keys": {
-      "the review finding \"Gate: test_1_required_check_rejects_outside_branch_with_fix_flow\" in tests/test_required_check_rejects_outside_branches.py": 1
-    },
-    "round": 1
+    "close": "9637596d-ed26-437b-b76b-8b27a0d77d76",
+    "head": "564f712572bb107e89f5607627a8da102661fde4",
+    "keys": {},
+    "round": 2
   },
   "why": "A pull request from a branch Forge did not start passes Forge's required check, then cannot merge, and nothing tells its author to redo it as a fix",
   "worker": "codex"
