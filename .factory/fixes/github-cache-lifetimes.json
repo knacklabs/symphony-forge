@@ -4,12 +4,20 @@
   "done_when": "Each GitHub cache lives as long as its data changes (open pull requests and this week each minute, past weeks and history for a day, failed schedules ten minutes), and a test proves a warm forge next --json makes no network call and finishes within its time budget",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-17T14:21:13.537518+00:00",
       "step": "start"
     }
   ],
-  "why": "The pane and the board wait on GitHub for 20 to 45 seconds because every read refetches all merged history behind one 60-second cache"
+  "stuck": {
+    "close": null,
+    "head": "b7493ec11bfb34450d221f90527eb8e4afa0a026",
+    "keys": {},
+    "round": null
+  },
+  "why": "The pane and the board wait on GitHub for 20 to 45 seconds because every read refetches all merged history behind one 60-second cache",
+  "worker": "codex"
 }
