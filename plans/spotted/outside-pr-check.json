@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/task.py\tStandard: Touch only what the task needs\toutside-pr-check",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 583,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "outside-pr-check",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_required_check_rejects_outside_branches.py\tGate: test_1_required_check_rejects_outside_branch_with_fix_flow\toutside-pr-check",
       "kind": "bug",
       "path": "tests/test_required_check_rejects_outside_branches.py",
