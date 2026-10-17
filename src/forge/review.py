@@ -889,7 +889,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     if rules := story.agents_section(top, "Review rules"):
         own = block.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
         prompt += "\n\n" + string.Template(own.strip()).substitute(review_rules=rules)
-    path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
     product = (sorted({name for command in (("ls-files", "-z"),
                                             ("ls-tree", "-r", "-z", "--name-only", head))
@@ -906,20 +905,16 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
                      ".factory", "plans", "docs/decisions", cwd=tree)
-            product_tree = repo.git("write-tree", cwd=tree)
             review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
                                    cwd=tree)
-            snapshot = repo.git("commit-tree", product_tree, "-p", review_base,
+            snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
                                 "-m", "Product snapshot for sign-off", cwd=tree)
             repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
-            # Sign-off reads every file, so generated ones (images, video, lockfiles) stay
-            # names only here too: Autoreview refuses binary media in its bundle.
-            prompt += _hide_generated(tree, review_base, snapshot)
         else:
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
-            prompt += _hide_generated(tree, repo.git("merge-base", review_base, head, cwd=tree), head)
+        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
@@ -931,7 +926,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         engine = cfg["tools"]
         if engine == "both":
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
-        argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
+        argv = [sys.executable, str(helper()), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
                 "--max-priority", "P3",  # the P0-only level applies after scoring
                 "--prompt-file", STANDARDS,
@@ -1037,26 +1032,23 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[
 
 
 def _hide_generated(tree: Path, start: str, head: str) -> str:
-    """Check out, in the review tree, head with each changed file .gitattributes marks
-    linguist-generated put back as it was at start, so its contents stay out of the reviewed diff.
+    """Put changed binary and linguist-generated files back as they were at start in the review
+    tree, so their contents stay out of the reviewed diff.
     Returns the lines naming those files with their changed-line counts, or "" when there are none."""
-    counts = {}
-    for record in repo.git("diff", "--numstat", "-z", "--no-renames", start, head,
-                           cwd=tree).split("\0"):
-        added, _, rest = record.partition("\t")
-        removed, _, path = rest.partition("\t")
-        if path:
-            counts[path] = (added, removed)
+    counts = {row[2]: row[:2] for record in repo.git(
+        "diff", "--numstat", "-z", "--no-renames", start, head, cwd=tree).split("\0")
+        if len(row := record.split("\t", 2)) == 3}
     attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
                      input="\0".join(counts)).stdout.split("\0")
-    generated = [path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")]
+    marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
+    generated = [path for path, count in counts.items() if path in marked or "-" in count]
     if not generated:
         return ""
     repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
     snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
                         "-m", "Branch head without generated files' contents", cwd=tree)
     repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
-    return ("\n\n## Generated files\n\nEach listed file is committed at the real branch head with the listed line counts. "
+    return ("\n\n## Generated files\n\nEach listed change is committed at the real branch head with the listed line counts. "
             "The review tree only restores each file to the branch start to keep its contents out of "
             "the diff. A missing or untracked copy in the review tree is not a finding:\n"
             + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"

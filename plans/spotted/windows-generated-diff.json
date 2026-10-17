@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_review_bundles_include_generated_files_s.py\tNot done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run\twindows-generated-diff",
+      "kind": "bug",
+      "path": "tests/test_fix_review_bundles_include_generated_files_s.py",
+      "line": 19,
+      "text": "Not done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
+      "from": "blocking",
+      "item": "windows-generated-diff",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
