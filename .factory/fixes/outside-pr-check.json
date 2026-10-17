@@ -21,7 +21,7 @@
       "gain": 3,
       "harm": 3,
       "line": 32,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e795203dcdb2066159b2e86ee76d8abb7c1ac20ae30cb960bc0f19e35726b46c",
-    "changed": "7cae79e3b53bb069e7c3c9f49a48f47ebd1db590c93b17d61ad3996dbf1a3e48",
-    "commit": "a440ca8ec96a3e655433938f30798b21beee6640",
+    "branch_diff": "b30bc55fdd6a430b8719fe04056a31e1f03dc9802ab18ed9e553dff2e4f13653",
+    "changed": "f101c7f7dd70a9670b43907fc465f8e1978bbd2e27af7b6fbae3fef2a388cdd9",
+    "commit": "1a4f82f4bfc0ecdf292788c6d4dea9be72201381",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. In the adopted-v1.2.2 case, the fixture and upgraded Forge files are never committed. The clone at line 32 therefore starts from the repo fixture's original README-only commit, and `--base HEAD` does not represent an upgraded, previously adopted client. The direct hook call can pass this test even if an existing client's upgraded workflow never runs the required check. Commit the adopted setup and upgrade before creating the outside pull request, then verify that the committed workflow runs the check.",
-        "file": "tests/test_required_check_rejects_outside_branches.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 32,
-        "priority": "P1",
-        "title": "Gate: test_1_required_check_rejects_outside_branch_with_fix_flow",
-        "work": 2
-      }
-    ],
-    "id": "432bf63c-0ab0-4865-803f-9de089772b35",
-    "status": "blocked"
+    "findings": [],
+    "id": "8636da47-907a-4047-91c8-6b924eae64b6",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T17:18:34.533305+00:00",
@@ -59,6 +48,10 @@
     },
     {
       "at": "2026-10-17T17:23:35.778889+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:44:07.427195+00:00",
       "step": "review"
     }
   ],
