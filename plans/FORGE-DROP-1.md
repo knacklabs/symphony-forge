@@ -1,59 +1,80 @@
 # Drop a fix nobody wants any more, and bring it back later
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
+- When you no longer want a fix, you tell the agent, and it drops the fix with one command and
+  your reason. The fix leaves the board, `forge next` and the merge queue. Its pull request
+  closes with your reason in it. Its worktree goes. Its branch stays on GitHub.
+- When you want a dropped fix back, the agent brings it back with the same command. The pull
+  request opens again, the worktree comes back from the branch, and the fix continues from where
+  it stopped.
+- Teammates see the same result after their next fetch, because the fact lives in git and on
+  GitHub, not on one laptop.
 
 ## Why
 
-Drop a fix nobody wants any more, and bring it back later
+Issue 865: a fix that nobody wants stays on the board and in `forge next` for ever. The only way
+out today is to merge it or to delete its branch by hand, and a hand deletion loses the work and
+confuses the board. On 17 October 2026 the owner chose: drop hides the fix and keeps its branch, so
+a drop can be undone.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
+1. **A fix can be dropped with a reason, and it then leaves the board, the next steps and the merge queue, and its pull request closes with that reason.**
+2. **A dropped fix can be brought back, and it continues from its last commit with its pull request open again.**
+3. **A teammate's checkout shows the same dropped or restored state after it fetches.**
 
-1. **Something anyone can observe once this is done.**
+## New and existing repos
+
+- **New repos** (init or adoption): the drop command and the coordinator guide text. Tested on a
+  repo made by `forge init`.
+- **Existing repos** (on upgrade to this release): the same command from their next fix. Fixes
+  that were left on the board before this release stay as they are until someone drops them.
+  Tested on the adopted earlier-release fixture moved to this release.
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
-
-Risks: none
+Risks: none one-way. The branch and its commits stay on GitHub, so every drop can be undone.
 
 ## For the builders
 
-<!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
-tightening it needs no new approval. -->
-
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
-
-1. <Evidence, edge cases and the tests that prove item 1.>
+1. `forge fix drop <fix> --because "<reason>"`. It is a subcommand of `fix`, so the top-level
+   command count does not change. Only the human decides a drop; the coordinator guide says the
+   agent asks first and runs it on a clear yes. The command:
+   - pushes the fix branch, so no local commit is lost, and commits a dropped record (reason, who,
+     when) on the fix branch itself, not on the default branch;
+   - closes the fix's pull request with a comment that holds the reason; a fix with no pull
+     request yet gets none;
+   - removes the worktree and the local branch, as merge cleanup does today, and keeps the remote
+     branch;
+   - refuses with a plain reason and the next step when the fix has uncommitted changes, when a
+     Forge run on this machine holds it, or when it is already merged.
+   The board, `forge next`, `forge land`'s queue and `forge board --json` skip a dropped fix. The
+   fix's name stays reserved, as abandoned names are today.
+   Tests: drop a fix with a pull request and one without; each leaves the board and `forge next`;
+   the pull request is closed with the reason; the remote branch keeps every commit; a drop with
+   uncommitted changes is refused and changes nothing.
+2. `forge fix drop <fix> --undo`. It recreates the worktree from the remote branch, commits a
+   restored record, and reopens the pull request when one was closed by the drop. The fix's next
+   step is the one it had before the drop. Tests: drop then undo; the fix is back on the board with
+   its old commits and an open pull request; `forge work` continues it.
+3. The dropped state is read from the fix branch's record and the pull request's state on GitHub,
+   never from a local-only file. Tests: a second clone fetches and shows the fix dropped, then
+   restored.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| DROP | Drop and bring back | the `fix drop` subcommand with `--undo`, the dropped record on the fix branch, pull request close and reopen, worktree cleanup and restore, `forge next` and land skip a dropped fix, guide text | 1, 2, 3 | src/forge/task.py, src/forge/cli.py, src/forge/nextstep.py, src/forge/land.py, src/forge/templates/skill.md, src/forge/templates/brief.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, docs/commands.md | tests/test_fix_drop.py | | | |
+| BOARD | The board skips dropped fixes | the board and `forge board --json` leave out a dropped fix and show it again after `--undo` | 1, 3 | src/forge/board.py, src/forge/board_facts.py | tests/test_board_skips_dropped_fixes.py | DROP | | |
 
 New moving parts: none
 
 ## Notes
+
+- BOARD waits for FORGE-BOARD-4/SERVER to merge, because both change src/forge/board.py.
