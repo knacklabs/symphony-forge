@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-GITCOST-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-18T08:31:38.338294+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T08:36:00.451518+00:00",
+      "step": "read"
     }
   ],
   "title": "Forge commands start far fewer git processes",

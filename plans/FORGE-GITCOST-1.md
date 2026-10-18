@@ -44,17 +44,22 @@ request; no record, file format or setting changes.
 
 1. Measure with a PATH shim that logs each git process (as the profile did) on this repo and on
    the client-sized test fixture, before and after; put both counts in the Proof list. Ways in:
-   the repo root (`git rev-parse --show-toplevel`) and other per-process facts go through
-   `repo.command_fact` once per process; reads of one file at another commit (`git show rev:path`)
+   the repo root (`git rev-parse --show-toplevel`) is remembered per process keyed by the
+   working directory it was asked from, never by the shared git directory, because close changes
+   into an item's worktree mid-command; reads of one file at another commit (`git show rev:path`)
    are batched through one `git cat-file --batch` process per command where a command reads more
-   than a few; repeated `merge-base`, `diff` and `ls-tree` calls for the same refs are remembered
-   per command. Tests: a command-boundary test counts git processes for `forge next --json` and
+   than a few; `merge-base`, `diff` and `ls-tree` results are remembered only keyed by resolved
+   commit ids, never by ref or branch names, so a fetch, merge or commit in the same command can
+   never return a stale answer (a ref name is resolved to its commit id each time it is asked). Tests: a command-boundary test counts git processes for `forge next --json` and
    `forge close` on a fixture and holds a ceiling below the old count.
 2. The pre-commit hook's `_promote` path (src/forge/githooks.py) calls `sync.synced`, which adds a
-   worktree and parses modules to compare generated files. Compare by content hashes of the
-   generated files Forge would write, or skip the check when no generated file or template is in
-   the commit. Tests: an oversized fix's commit stays under the time limit and a hand edit to a
-   generated file is still refused.
+   worktree and parses modules to compare generated files. Compare the content hashes of the
+   generated files in the whole fix (base to index, as today) with what Forge would write,
+   computed in the hook's own process without a worktree or module parsing; never skip the check
+   based on the current commit alone. Tests: the generated-file check step's own time (measured
+   inside the hook, not the whole commit) stays under 0.1 seconds on an oversized fix; a second
+   commit that changes only ordinary source in a fix with generated updates is accepted; a hand
+   edit to a generated file is still refused.
 3. The existing command tests for these commands are the proof; run them on both repo kinds.
 
 ## Tasks
