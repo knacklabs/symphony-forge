@@ -42,38 +42,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a8a083c3744f9381dd9500cbbdd747a7d108c67c9abf0ac32c448730ef021c3f",
-    "changed": "710ffffa4ed283a18b507ea9ad9bc82c46dd6cf929e4a31c749585c5bef07156",
-    "commit": "0344a79ff8f40b2573e4e92ae9fd0c4f3ea53d43",
+    "branch_diff": "0573f1a742b8190eb7b2ac6f18e98d92f2b98dc4cfee56b5ba5e82d3b28a968b",
+    "changed": "3937bdee19ec0659fc49bba7c0d136a9dc3c08b7a0305f3432fd4d28287956ee",
+    "commit": "8b080ed108d4a452743853e5c35f5c447446e18a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done. The shortcut recognizes only `.factory/`, although Forge also identifies `plans/spotted.json`, `plans/spotted/`, roadmap entries and story documents as its records (`src/forge/templates/review.md:274\u2013278`). A normal blocked review writes `plans/spotted/<item>.json` (`src/forge/spotted.py:234\u2013246`). If main subsequently absorbs the product change, that spotted file remains alongside the state record, so close still invokes Autoreview instead of recording a clean review and printing the promised explanation. Include the recognized planning records in this classification and cover that case in the command test.",
-        "file": "src/forge/review.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 1,
-        "line": 43,
-        "priority": "P1",
-        "title": "Not done: Records-only close still reviews Forge's planning records",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Functional. If the first attempt writes unreadable findings and the retry fails without writing a report, the diagnostic output is lost. `_attempt` unlinks the output file before every attempt (`src/forge/review.py:1088`), and both attempts now share the persistent output path. Consequently, this existence check fails after the retry and close prints no saved-output path despite having received unreadable findings. Preserve the last available malformed report across retries; the new test currently repeats the malformed response on both attempts and misses this sequence.",
-        "file": "src/forge/review.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 963,
-        "priority": "P1",
-        "title": "Preserve unreadable findings when the retry produces no report",
-        "work": 2
-      }
-    ],
-    "id": "7cebf8f8-b0e8-4d36-a588-8510d8f0461a",
+    "findings": [],
+    "id": "429cfcbb-bb21-4fbd-8825-816758238d15",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:37:43.227711+00:00",
@@ -81,6 +59,10 @@
     },
     {
       "at": "2026-10-18T17:17:02.167562+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:30:51.717302+00:00",
       "step": "review"
     }
   ],
