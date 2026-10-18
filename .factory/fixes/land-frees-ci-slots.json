@@ -21,7 +21,7 @@
       "gain": 4,
       "harm": 2,
       "line": 89,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7fd707e3d713ef08da37cba8a49cf9798b4dc4a93e476bba0abf9923531c5820",
-    "changed": "c9c56022a05192ee3d64a9e899f319cdb81ced00cabc67c904ea80d22d3458fa",
-    "commit": "742f528f06e4a7e29cee7ac02e5c0391e6d91070",
+    "branch_diff": "5bc87854696d1814b6b9f79c33bad38ef9f22e4281e74e9250e4122a29011b86",
+    "changed": "524034219f4c4d8d815934baf73ae98b6f4cc58d5bd22f544938d3d83685a864",
+    "commit": "0d72e05a364fdb2c6779b2afe7e7c88e842b33a9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. The previous finding remains unfixed. Conflict recovery forwards `check_slot` here, but the behind-base recovery at src/forge/merge.py:130\u2013133 still omits it. When another PR advances main and GitHub rejects the merge as BEHIND, the refreshed close waits for its new checks with `slot=None` (src/forge/close.py:427\u2013430). It holds its queue slot throughout running CI, blocking independent closes when the queue is saturated. Forward `check_slot` through that recovery Namespace too.",
-        "file": "src/forge/merge.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 89,
-        "priority": "P1",
-        "title": "Forward the check-slot callback through the behind-base retry",
-        "work": 2
-      }
-    ],
-    "id": "b236774a-3110-490d-9a1b-638e1808c706",
-    "status": "blocked"
+    "findings": [],
+    "id": "7354090c-e72c-48d7-b115-8004aedabc19",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T10:43:53.558893+00:00",
@@ -64,6 +53,10 @@
     {
       "at": "2026-10-18T12:14:34.786149+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-18T14:02:09.047764+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
@@ -75,7 +68,6 @@
     },
     "round": 1
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 80f61902060e0ec4fbdba358985dfa7997b29966` exited with status 1 on this machine.\nNo local test names src/forge/land.py; GitHub's checks will cover it.\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 227 in run_one_test\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 206 in pytest_runtestloop\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 384 in _main\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 330 in wrap_session\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 377 in pytest_cmdline_main\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 427 in <module>\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1291 in executetask\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 341 in run\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 411 in _perform_spawn\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 389 in integrate_as_primary_thread\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1273 in serve\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1806 in serve\n  File \"<string>\", line 8 in <module>\n  File \"<string>\", line 1 in <module>\n..                                                         [100%]\nThe test with temp folder test_1_a_check_wait_admits_ind0 left processes running: 36970 /Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/bin/python /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-239/popen-gw0/tes\nThe test with temp folder test_1_a_check_wait_admits_ind0 left processes running: 37158 /Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/bin/python -c import sys; sys.path.insert(0, '/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/sr\n\n=================================== FAILURES ===================================\n_________________ tests/test_land_releases_check_wait_slots.py _________________\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/bin/python\nworker 'gw0' crashed while running 'tests/test_land_releases_check_wait_slots.py::test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressure[new]'\n1 failed, 174 passed in 695.04s (0:11:35)",
   "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing",
   "worker": "codex"
 }
