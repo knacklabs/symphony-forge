@@ -43,6 +43,7 @@
     "id": "5da12d93-cb20-4356-ac8b-51858a334620",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -54,5 +55,14 @@
       "step": "review"
     }
   ],
-  "why": "When a build round merges main after main's forge.toml changed, the hand-back treats main's new settings as the worker's edit and restores the round's old copy, so merging the fix reverts main's settings"
+  "stuck": {
+    "close": "11e50974-c473-4463-a2cf-ab6bb633da61",
+    "head": "3ebbfd414de4f36b01141eceddadf4f5e7ccc70f",
+    "keys": {
+      "the review finding \"Preserve inherited settings on stacked fixes\" in src/forge/native.py": 1
+    },
+    "round": null
+  },
+  "why": "When a build round merges main after main's forge.toml changed, the hand-back treats main's new settings as the worker's edit and restores the round's old copy, so merging the fix reverts main's settings",
+  "worker": "codex"
 }
