@@ -25,7 +25,8 @@ def test_1_work_reuses_sdk_check_until_ready_marker_changes(
         client, made = _fresh_client(repo, gh, tmp_path)
         assert made.returncode == 0, made.stdout + made.stderr
         made = repo.forge("fix", "start", "Reuse the SDK check", "--done",
-                          "Work reuses the SDK check", cwd=client)
+                          "Work reuses the SDK check", "--kind", "mechanical", cwd=client)
+        assert made.returncode == 0, made.stdout + made.stderr
         item = "reuse-the-sdk-check"
         client = Path(made.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     else:
