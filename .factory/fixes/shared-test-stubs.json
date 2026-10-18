@@ -1,0 +1,15 @@
+{
+  "base": "8c9b59b387e92c9a6cc39f43556fb31da45ed85b",
+  "branch": "fix/shared-test-stubs",
+  "done_when": "Test stand-in programs are written once per content into a shared read-only folder and linked into each test, Windows keeps copies, and the suite runs at least 8 percent faster on macOS with every test still passing",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T10:31:49.152754+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On macOS every test writes fresh stand-in programs, and macOS checks each new program on its first run for about 0.3 seconds, one at a time across the machine, so the local suite pays that cost thousands of times"
+}
