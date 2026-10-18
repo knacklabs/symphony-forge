@@ -28,6 +28,10 @@ REFUSALS = {
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
     "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
                 "{action}, then retry this command"),
+    "remote_conflict": ("The merge of the remote branch conflicts in {files}.",
+                        "in {path}, resolve the conflicts and commit the merge, then forge close {item}"),
+    "remote_merge": ("The merge of the remote branch failed: {problem}",
+                     "in {path}, finish or abort the merge, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
@@ -227,6 +231,8 @@ def close(args: argparse.Namespace) -> int:
     spotted.check(top, item)
     if not migrating:
         _synced(top, item)
+    # Reconcile remote work before choosing tests or reusing an earlier review.
+    _push(top, branch)
     _warn_fix_kind(top, state, f"origin/{default}")
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
@@ -283,9 +289,8 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
-        # read after the merge, which may change the command
+        # Read after the merge, which may change the command.
         command = review.close_test(top, base, head=head)
-        _push(top, branch)
         pr = _publish(top, item, state, branch, default, pr,
                       {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
@@ -839,7 +844,7 @@ def synced_changes(top: Path) -> list[str]:
 
 
 def _push(top: Path, branch: str) -> None:
-    """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
+    """Merge rejected remote history; retry other push failures after 1, 2 and 4 seconds."""
     tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
                     "refs/tags/forge-start/", cwd=top).splitlines()
     # Replay and copied plans can detach ownership history from the work branch.
@@ -851,7 +856,24 @@ def _push(top: Path, branch: str) -> None:
         try:
             repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
             return
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as error:
+            if re.search(r"\[rejected\].*\((non-fast-forward|fetch first)\)", error.stderr or ""):
+                target = f"refs/remotes/origin/{branch}"
+                repo.git("fetch", "-q", "origin", f"refs/heads/{branch}:{target}", cwd=top)
+                if repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode:
+                    same = repo.git("rev-parse", "HEAD^{tree}", cwd=top) == repo.git(
+                        "rev-parse", f"{target}^{{tree}}", cwd=top)
+                    print("The local and remote branches diverged, as after an amended or rebased commit. "
+                          + ("Their trees are the same." if same else "Their trees differ."), flush=True)
+                    merged = repo.run("git", "merge", "--no-edit", target, cwd=top)
+                    if merged.returncode:
+                        files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
+                        if files:
+                            item = (review.branch_item(branch, top) or (branch, {}))[0]
+                            repo.refuse(REFUSALS["remote_conflict"], files=", ".join(files), path=top, item=item)
+                        repo.refuse(REFUSALS["remote_merge"], problem=merged.stderr.strip(), path=top)
+                    repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+                    return
             if wait is None:
                 raise
             time.sleep(wait)

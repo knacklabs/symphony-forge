@@ -75,6 +75,7 @@ $delegation
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
+- Never amend or rebase a commit that is already pushed.
 - `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
   in your next round. If you need CI evidence, commit and stop instead of asking the coordinator
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
