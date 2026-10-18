@@ -49,8 +49,8 @@
     "id": "a921cc4c-9a38-4f7a-b8eb-cc2ba1675df9",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T10:26:36.882125+00:00",
@@ -70,13 +70,10 @@
     }
   ],
   "stuck": {
-    "close": "266fb87c-9676-476f-82c1-dd3e0f076ede",
-    "head": "1828a27ec26850f851ffc58daea62f7e1f3e687b",
-    "keys": {
-      "the review finding \"Cap fixed pytest counts when busy runners reduce the budget\" in src/forge/machine.py": 1,
-      "the review finding \"Not done: New work, reads, reviews and test runs wait while free memory is below a safe floor, and start again when it recovers.\" in src/forge/machine.py": 1
-    },
-    "round": 1
+    "close": "a913e7cf-ee22-4678-a622-d9a0c3db9681",
+    "head": "be8d9ef2f3cce7106190d15dc50d9d02ce3ec5e9",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
