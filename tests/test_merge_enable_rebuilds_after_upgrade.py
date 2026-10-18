@@ -27,11 +27,10 @@ def test_1_merge_enable_rebuilds_same_fix_on_upgraded_default(unsynced_up, monke
     monkeypatch.delenv("CODEX_THREAD_ID")
     # Release launchers need the same idle-machine fixture as the normal Forge shim.
     installer = repo.bin / "uv"
-    installer.write_text(installer.read_text("utf-8").replace(
+    conftest._install(installer.parent, installer.name, installer.read_text("utf-8").replace(
         "import json, os, sys\\n",
         "import json, os, sys\\n"
-        "if hasattr(os, 'getloadavg'): os.getloadavg = lambda: (0.0, 0.0, 0.0)\\n"),
-        encoding="utf-8")
+        "if hasattr(os, 'getloadavg'): os.getloadavg = lambda: (0.0, 0.0, 0.0)\\n"))
     if adopted:
         conftest.patient(lambda: shutil.copytree(
             conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True))

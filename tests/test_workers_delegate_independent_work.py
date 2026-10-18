@@ -135,7 +135,7 @@ def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
         worked = repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
     finally:
-        command.write_text(current_command, encoding="utf-8")
+        _install(command.parent, command.name, current_command)
     if host == "codex":
         first = _sent(log, "turn/start")[0]["threadId"]
         old_brief = _sent(log, "turn/start")[0]["input"][0]["text"]

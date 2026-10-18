@@ -47,7 +47,8 @@ OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_co
 
 
 def _executable(path: Path, text: str) -> None:
-    _install(path.parent, path.name, text)
+    path.write_text(text, encoding="utf-8")
+    path.chmod(0o755)
 
 
 def _version(repo) -> str:
@@ -286,7 +287,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             folder for folder in os.environ["PATH"].split(os.pathsep)
             if not shutil.which("claude", path=folder)))
     else:
-        _executable(repo.bin / "claude", "#!/bin/sh\n")
+        _install(repo.bin, "claude", "#!/bin/sh\n")
         if os.name == "nt":
             (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
     log = _stub_forge(tmp_path, monkeypatch, "hook deny" if case == "host hook fails" else "")

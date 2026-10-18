@@ -45,7 +45,7 @@ def test_1_workers_fix_each_round_unless_close_has_stopped_the_review_loop(env, 
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
     finally:
-        command.write_text(current_command, encoding="utf-8")
+        _install(command.parent, command.name, current_command)
     # The old unconditional wait made each finding look like a fresh choice.
     # This is a delivered prompt contract; the host stub only captures its input.
     rule = ("Wait for a recorded choice only after close has stopped the review loop. "

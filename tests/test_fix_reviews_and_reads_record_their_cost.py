@@ -71,7 +71,7 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
     if case.startswith('review'):
         helper = HELPER.format(python=sys.executable, report=report())
         if case == 'review_codex':
-            (tmp_path / 'autoreview' / 'scripts' / 'autoreview').write_text(helper, 'utf-8')
+            conftest._install(tmp_path / 'autoreview' / 'scripts', 'autoreview', helper)
             conftest._install(repo.bin, 'codex', CODEX.format(python=sys.executable))
             spent = CODEX_REVIEW_SPENT
         else:
@@ -104,8 +104,8 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
         # The old proof checked only a worker round. The upgraded release must record both
         # its close review and an actual plan read, without changing the adopted settings.
         up = request.getfixturevalue('unsynced_up')
-        (tmp_path / 'autoreview' / 'scripts' / 'autoreview').write_text(
-            HELPER.format(python=sys.executable, report=report()), 'utf-8')
+        conftest._install(tmp_path / 'autoreview' / 'scripts', 'autoreview',
+                          HELPER.format(python=sys.executable, report=report()))
         conftest._install(repo.bin, 'codex', CODEX.format(python=sys.executable))
         _repo_adopted_on_the_previous_release(up)
         end = run_end(repo, 'review')

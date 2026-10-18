@@ -54,8 +54,9 @@ def machine_cores(repo, count, system_count=None):
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
 import json, pathlib, subprocess, sys
-from json_log import append_json
 here = pathlib.Path(__file__).absolute().parent
+sys.path.insert(0, str(here))
+from json_log import append_json
 args = sys.argv[1:]
 append_json(here / "gh-calls.jsonl", args)
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file

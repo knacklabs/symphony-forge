@@ -34,7 +34,7 @@ def brief(client, request, tmp_path):
         worked = client.forge("work", "BOARD/API")
         assert worked.returncode == 0, worked.stdout + worked.stderr
     finally:
-        command.write_text(current, encoding="utf-8")
+        _install(command.parent, command.name, current)
     first = calls(log)[-1]["brief"]
     if request.param:
         assert "Do not read the coordinator guide" not in first
