@@ -15,16 +15,16 @@
   "known": [],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2051f69bed37e1b31d2eddc6ed6489fa56a6ca4dff6be8c477e0143303874267",
-    "changed": "e0959780f7c410c42080cc10c84c0844ac1ad757a01b4d5650f225f8618c6b59",
-    "commit": "a913f5f1de7a75c5181119127dd73168bbc666d7",
+    "branch_diff": "043e177987842bd6eb43638263efcea7df97706960cd2ada2aa40d1fee333023",
+    "changed": "a0d024bac6450b312faafe3d7c96d54380ca0b2bb633f0f69c5cfaa2b3324c3d",
+    "commit": "2cbb2b6ba5fa9f071478994356e9c24e138ee1f6",
     "dismissals": [],
     "findings": [],
-    "id": "cb8b193f-191d-41e2-8000-3456c04b1174",
+    "id": "d564b295-7bfc-4cbe-8029-0c4188371505",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T10:14:29.731299+00:00",
@@ -32,6 +32,10 @@
     },
     {
       "at": "2026-10-18T10:43:17.416897+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T12:39:38.821912+00:00",
       "step": "review"
     }
   ],
@@ -43,7 +47,6 @@
     },
     "round": 1
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 80f61902060e0ec4fbdba358985dfa7997b29966` exited with status 1 on this machine.\nRelated tests: tests/test_board_skips_dropped_fixes.py, tests/test_doctor_batches_file_checks.py, tests/test_live_stage.py, tests/test_live_status.py, tests/test_next_reuses_command_work.py, tests/test_progress_updates_keep_history.py, tests/test_round_seconds.py, tests/test_stack_start.py\n                env.commit(folder, \"forge.toml\", config.read_text(\"utf-8\").replace(\n                    json.dumps(f'\"{sys.executable}\" -c \"print(123)\"'),\n                    json.dumps(f'\"{sys.executable}\" -m pytest -vv{parallel} test_progress.py')))\n            process = subprocess.Popen([sys.executable, str(repo.bin / \"forge\"),\n                                       \"read\" if case.startswith(\"read\") else \"close\" if case.startswith((\"progress\", \"ci\", \"review\")) else \"work\", item], cwd=repo.path,\n                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n            connections, activities = [], []\n            try:\n                for expected in ([None] if case.startswith((\"progress\", \"ci\")) else expected_steps):\n>                   connection, _ = listener.accept()\n                                    ^^^^^^^^^^^^^^^^^\n\ntests/test_live_status.py:325:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>\n\n    def accept(self):\n        \"\"\"accept() -> (socket object, address info)\n\n        Wait for an incoming connection.  Return a new socket\n        representing the connection, and the address of the client.\n        For IP sockets, the address info is a pair (hostaddr, port).\n        \"\"\"\n>       fd, addr = self._accept()\n                   ^^^^^^^^^^^^^^\nE       TimeoutError: timed out\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/socket.py:294: TimeoutError\n2 failed, 94 passed in 337.80s (0:05:37)",
   "why": "Every progress update rewrites Forge's 14 MB event log under one lock, parsing about 45,000 records each time",
   "worker": "codex"
 }
