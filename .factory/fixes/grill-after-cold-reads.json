@@ -1,6 +1,13 @@
 {
   "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
   "branch": "fix/grill-after-cold-reads",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14f13-d44d-77c1-b233-ec27594197c6",
+    "head": null,
+    "start": "801b58003823c54b8a107cbee613132cdeb20f38"
+  },
   "done_when": "The coordinator guide says: answer cold-read rounds yourself, and once a read is clean, grill the human one question at a time on the choices you made answering the notes (behaviours, limits, refusals, scope cuts) and record the answers in the plan before approval; new and existing repos get it through init and sync, and the guide test covers both",
   "fix_kind": "mechanical",
   "kind": "fix",
