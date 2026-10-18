@@ -9,6 +9,10 @@
     {
       "at": "2026-10-18T08:36:00.451518+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-18T08:37:37.860914+00:00",
+      "step": "read"
     }
   ],
   "title": "Forge commands start far fewer git processes",
