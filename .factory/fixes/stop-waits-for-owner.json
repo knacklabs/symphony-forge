@@ -10,13 +10,29 @@
   },
   "done_when": "A stop that asks the owner is cleared only by the owner's recorded choice; a merge of main or a new review never clears it, and a test merges main into a stopped item and then records the choice, on new and adopted repos",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0c98c468496fa9effd4d8f7fdd1d53df77c4d20934a4309bc394cfd80884cff8",
+    "changed": "ca073b1866a41a4f2f29be01480702df8cea40903ce8bc92cc863f746006ce8c",
+    "commit": "a86c15b358effd5a424a7eeb65138436c3301be6",
+    "dismissals": [],
+    "findings": [],
+    "id": "07f310bd-bcbc-43d9-8b7a-6af9f40f7cd6",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:58:44.001927+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:37:49.047157+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
