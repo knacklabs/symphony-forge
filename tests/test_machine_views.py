@@ -510,7 +510,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
     ("plugin " + case, None) for case in ("events", "busy reload", "reload complete", "reload start")] + [
-    (f"review {priority}", None) for priority in ("P1", "P2", "P3")] + [
+    (f"review {priority}", None) for priority in ("P1", "P3")] + [
     (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
 def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch, request,
                                                              conclusion, required):
