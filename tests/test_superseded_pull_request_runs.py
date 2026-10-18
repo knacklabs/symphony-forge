@@ -24,10 +24,10 @@ def test_1_cancel_only_older_runs_of_the_same_pull_request(clock, history, comma
     _client(env, history, "ubuntu-latest")
     where = _fix(env, "working", worked=True)
     head = env.repo.git("rev-parse", "HEAD", cwd=where)
-    base = dict(workflow_id=12, event=event, head_branch=BRANCH,
+    base = dict(workflow_id=12, name="forge", event=event, head_branch=BRANCH,
                 pull_requests=[{"number": 7}], run_number=10,
                 head_sha="old-head", check_suite_id=10, status="queued")
-    rows = [dict(base, id=101), dict(base, id=102, status="in_progress"),
+    rows = [dict(base, id=101, name="FORGE"), dict(base, id=102, status="in_progress"),
             dict(base, id=103, pull_requests=[{"number": 8}]),
             dict(base, id=104, event="push", pull_requests=[]),
             dict(base, id=105, head_branch="another-branch"),
@@ -35,6 +35,8 @@ def test_1_cancel_only_older_runs_of_the_same_pull_request(clock, history, comma
             dict(base, id=107, event="pull_request_target" if event == "pull_request" else "pull_request"),
             dict(base, id=108, status="completed"),
             dict(base, id=109, pull_requests=[]),
+            # Renaming a workflow changes its concurrency group but retains its ID.
+            dict(base, id=110, name="other checks"),
             dict(base, id=201, run_number=21, workflow_id=12 if newer else 99),
             dict(base, id=200, run_number=20, check_suite_id=77, head_sha=head,
                  status="pending" if event == "pull_request_target" else "queued")]

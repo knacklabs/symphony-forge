@@ -242,12 +242,13 @@ def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]]) -> bo
         if (current.get("check_suite_id") not in suites
                 or current.get("status") not in ("queued", "pending")
                 or current.get("event") not in ("pull_request", "pull_request_target")
-                or not current.get("workflow_id") or not current.get("head_branch")
+                or not current.get("workflow_id") or not current.get("name") or not current.get("head_branch")
                 or not isinstance(current.get("run_number"), int)
                 or len(prs) != 1 or not prs[0].get("number")):
             continue
         same = [run for run in runs.values()
                 if all(run.get(key) == current[key] for key in ("workflow_id", "event", "head_branch"))
+                and (run.get("name") or "").casefold() == current["name"].casefold()
                 and [pr.get("number") for pr in run.get("pull_requests") or []] == [prs[0]["number"]]
                 and isinstance(run.get("run_number"), int)]
         if any(run["run_number"] > current["run_number"] for run in same):
