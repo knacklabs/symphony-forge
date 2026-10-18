@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-upgrade-ci-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14dba-5e43-7460-8539-b9d2a6d3cb0f",
+    "head": null,
+    "start": "f3644651fcd841f53d9fc4b10ffdae22a1e81635"
+  },
   "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
