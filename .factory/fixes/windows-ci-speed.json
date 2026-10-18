@@ -1,6 +1,13 @@
 {
   "base": "a5cd9456c09f437b698c2a2f5af9e2c8e32aca52",
   "branch": "fix/windows-ci-speed",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fbb-ac0d-76a1-a4b1-fb664d09ab0b",
+    "head": null,
+    "start": "9149b0121e883f3470763d78b736db40574c6ced"
+  },
   "done_when": "On Windows CI the temp folder is on D:, npm downloads are cached, groups split by Windows timings, and two dispatched Windows runs measured with the same script show the change in runner-minutes and the longest group",
   "fix_kind": "mechanical",
   "kind": "fix",
