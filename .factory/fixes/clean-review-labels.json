@@ -1,6 +1,13 @@
 {
   "base": "b3880ba87978fefde7e106eb1d43ae6e18d42c0e",
   "branch": "fix/clean-review-labels",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe6-f396-7ee1-81fe-3e0fe09b734a",
+    "head": null,
+    "start": "874da88f4a1e5500bc84b0d021fec2c133762b59"
+  },
   "done_when": "When a review is clean, close labels every finding it prints as not blocking, as it already does for advice, and a test shows a clean review with a non-blocking P1 prints the label, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
