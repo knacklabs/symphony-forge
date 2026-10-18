@@ -96,7 +96,7 @@
     "id": "3e0cef8a-0d6c-44aa-bb99-09554de96815",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -109,10 +109,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "10190f9c639866de25440fe93235c1904ba2f76b",
-    "keys": {},
-    "round": null
+    "close": "7eb6606b-1c7c-456f-a0c0-218fe2590c28",
+    "head": "d8f3f4ecec0ea25bef0f40e4f094933824d197c4",
+    "keys": {
+      "the review finding \"Preserve Jest's serial execution mode\" in src/forge/fasttest.py": 1,
+      "the review finding \"Preserve npm lifecycle hooks when replacing a script's worker cap\" in src/forge/fasttest.py": 1
+    },
+    "round": 1
   },
   "why": "Test runs cap pytest's workers to the machine budget but leave Vitest and Jest at one worker per core, so parallel rounds overload the machine (issue 924)",
   "worker": "codex"
