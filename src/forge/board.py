@@ -86,7 +86,8 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
         commits(last: 1) { nodes { commit { oid statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
-            ... on CheckRun { databaseId name status conclusion startedAt completedAt }
+            ... on CheckRun { databaseId name status conclusion startedAt completedAt
+              checkSuite { status conclusion workflowRun { workflow { id name } } } }
             ... on StatusContext { id context state createdAt }
           } }
         } } } }
@@ -99,12 +100,13 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
 def _machine_prs(top: Path) -> list[Item]:
     """One request for the newest 25 open PRs, cached across command invocations for 60s."""
     cache = repo.forge_dir(top) / "checks-cache.json"
-    now = _when(repo.now())
+    fetched_at = repo.now()
+    now = _when(fetched_at)
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         at = _when(saved.get("fetched_at"))
         if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
-            return saved["prs"]
+            return [{**pr, "checks_fetched_at": saved["fetched_at"]} for pr in saved["prs"]]
     except (OSError, ValueError, AttributeError):
         pass
     done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
@@ -131,13 +133,13 @@ def _machine_prs(top: Path) -> list[Item]:
                 pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
     temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
     try:
-        temp.write_text(json.dumps({"fetched_at": repo.now(), "prs": prs}), encoding="utf-8")
+        temp.write_text(json.dumps({"fetched_at": fetched_at, "prs": prs}), encoding="utf-8")
         os.replace(temp, cache)
     except OSError:
         pass  # A read-only/full Git directory must not prevent a view.
     finally:
         temp.unlink(missing_ok=True)
-    return prs
+    return [{**pr, "checks_fetched_at": fetched_at} for pr in prs]
 
 
 def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
@@ -154,10 +156,25 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
     except (KeyError, TypeError, IndexError):
         return "unknown", [], []
     statuses, events, names, failures = [], [], [], []
+    workflows = set()
     for check in nodes:
         if not isinstance(check, dict):
             continue
         name = check.get("name") or check.get("context") or "Check"
+        suite = check.get("checkSuite") or {}
+        workflow = (suite.get("workflowRun") or {}).get("workflow") or {}
+        workflow_id = workflow.get("id")
+        if (workflow_id and suite.get("status") == "COMPLETED" and suite.get("conclusion")
+                and workflow_id not in workflows):
+            workflows.add(workflow_id)
+            result = {"SUCCESS": "passed", "FAILURE": "failed", "TIMED_OUT": "timed out",
+                      "CANCELLED": "cancelled", "ACTION_REQUIRED": "needs action",
+                      "STARTUP_FAILURE": "failed to start", "NEUTRAL": "neutral",
+                      "SKIPPED": "skipped", "STALE": "stale"}.get(
+                          suite["conclusion"], suite["conclusion"].lower().replace("_", " "))
+            events.append({"id": f"workflow:{workflow_id}:{pr['headRefOid']}",
+                           "kind": "run_finished", "title": f"{workflow['name']} {result}",
+                           "conclusion": suite["conclusion"]})
         names.append(name)
         value = (check.get("conclusion") if check.get("status") == "COMPLETED" else None) or check.get("state")
         failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE")
@@ -172,7 +189,7 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
             identity = (f"check-run:{check['databaseId']}:{check['completedAt']}"
                         if check.get("databaseId") is not None and check.get("completedAt")
                         else f"status:{check['id']}" if check.get("__typename") == "StatusContext" and check.get("id") else None)
-            if identity:
+            if identity and not workflow:
                 events.append({"id": identity, "kind": "checks_failed", "title": f"{name} failed"})
     missing = any(not any(n == want or n.startswith(want + " (") for n in names) for want in required)
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
@@ -195,16 +212,10 @@ def _rollup(pr: Item) -> list[Item]:
 
 def _event_history(top: Path) -> tuple[list[Item], dict[str, list[Item]]]:
     def read():
-        path = repo.forge_dir(top) / "events.jsonl"
-        recorded, by_item = [], {}
-        for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-            try:
-                event = json.loads(line)
-                if isinstance(event, dict):
-                    recorded.append(event)
-                    by_item.setdefault(event.get("item"), []).append(event)
-            except ValueError:
-                continue
+        from forge import event_log
+        recorded, by_item = event_log.read(top), {}
+        for event in recorded:
+            by_item.setdefault(event.get("item"), []).append(event)
         return recorded, by_item
     return repo.command_fact("board events", top, read)
 
@@ -277,6 +288,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
+    # Rows and counts must read the same published drop or restore, even with a stale worktree.
+    for rel, (state, where) in list(best.items()):
+        if fix := STATE.fullmatch(rel)["fix"]:
+            if rel not in merged and state.get("branch") not in merged_prs:
+                state = nextstep.at_ref(top, fix, state, by_branch.get(state.get("branch")))
+            best[rel] = state, where
+    best = {rel: pair for rel, pair in best.items() if pair[0].get("status") != "dropped"}
     readiness: dict[str, Item] = {}
     person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
@@ -530,6 +548,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
                 stages[-1]["elapsed"] = elapsed(live[0].get("at"))
+        # The initial close has no worker turn yet (stored as zero); people count from one.
+        if round_number is not None:
+            round_number = max(1, round_number)
+        if worker and worker.get("round") is not None:
+            worker["round"] = max(1, worker["round"])
         stage, receipt = (nextstep._item_readiness(item, state, top, checks, runs=active, pr=pr)
                           if kind != "story" else (state.get("status"), {}))
         if kind == "story" and not finished:
@@ -548,6 +571,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         for event in activity:
             event_kind = event.get("event")
             if event_kind == "run end":
+                if event.get("kind") == "ci":
+                    continue
                 occurrence_kind, message = "run_finished", f"{event.get('kind', 'Run').capitalize()} finished"
             elif event_kind == "worker question" and event.get("id") == pending:
                 occurrence_kind, message = "worker_question", event.get("question")
@@ -624,12 +649,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     top, item, state, stage, pr, readiness.get(item, {}).get("blocker")))),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
-                          "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
+                          "review": {"status": "running"} if any(e.get("kind") == "review" for e in active) else
+                              {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
                               {"status": "clean" if review else "none"}, "ci": ci},
                 "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "url": (pr or {}).get("url"),
-                       "checks": checks, "failures": failures},
+                       "checks": checks, "failures": failures, "checked_at": (pr or {}).get("checks_fetched_at")},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "merged_by": board_facts.person(people_pr["mergedBy"], names=names) if people_pr.get("mergedBy") else None,

@@ -6,7 +6,11 @@ Settled findings stay settled. Each reader and reviewer gets earlier rounds' not
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
+After a merge of main, close applies a requested dismissal to the same title and file in the
+current review, even if its number changes. Only the human chooses which findings to dismiss.
 
+After a merge of the default branch, close reviews only this change's own diff against the new
+merge base, keeping earlier findings and allowances from this item's records.
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security
 or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
@@ -37,6 +41,17 @@ $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
 review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Land prints the owner's question, open findings and failing checks, then exits with status 3
+(needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
+again. Other stops and session subagent handoffs also print the open findings and failing checks.
+
+Close records a reused review against the current branch after a replay. Land retries close once
+when only Forge's review check reports a stale or missing review. If that check still fails,
+land stops without a worker round.
+
+Normal, light and sign-off reviews use the selected tool's model and optional effort from
+`[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
+uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.
 
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
@@ -52,6 +67,10 @@ $delegation
 - $settings
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
+- Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
+  to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
+  fix needs `forge close` again before it is ready.
+  Restore a dropped fix before you start another fix from its checkout.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
@@ -168,6 +187,7 @@ Windows checklist:
 - Tests never assume a drive letter or a '/' separator.
 - File operations in tests use the repo's lock-safe helpers where it has them.
 
+Review lists binary changes by name and line counts, including added, changed and deleted images.
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder.
 
@@ -190,6 +210,10 @@ any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
+When the pytest picker selects more than a third of the test files, bare `forge test` runs
+only the part's Tests column or the fix's touched test files, plus `always_test`, and says
+that CI runs the full suite. This includes shared-fixture changes. With no named tests it
+runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

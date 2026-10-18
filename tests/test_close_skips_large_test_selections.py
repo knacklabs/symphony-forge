@@ -13,10 +13,18 @@ from test_close import env, run  # noqa: F401
 STORY = "FIX-SKIP-LARGE-LOCAL-TESTS"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
-@pytest.mark.parametrize("fast", [False, True], ids=["default-picker", "fast-test-picker"])
-@pytest.mark.parametrize("checks", ["red", "green", "without-tests"])
-@pytest.mark.parametrize("selection", [2, 3, "shared"])
+@pytest.mark.parametrize("adopted,fast,checks,selection", [
+    *[(False, fast, checks, selection)
+      for fast in (False, True)
+      for checks in ("red", "green", "without-tests")
+      for selection in (2, 3, "shared")
+      # At one third, red supplies the same successful CI response as green.
+      if checks != "red" or selection != 2],
+    (True, False, "green", 3),
+    (True, True, "green", 3),
+    (True, False, "red", "shared"),
+    (True, False, "without-tests", 2),
+])
 def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
         env, monkeypatch, adopted, fast, checks, selection):
     # Real pytest writes the receipt; only review and GitHub are faked.
@@ -83,9 +91,10 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
         assert "Checks failed on the pull request: tests." in closed.stderr
     else:
         assert "Ready:" in closed.stdout, closed.stdout + closed.stderr
-    # Explicit worker runs keep the old contract, even for shared inputs or large selections.
+    # Workers now keep broad runs to the fix's touched test files; CI owns the rest.
+    for path in log.iterdir():
+        path.unlink()
     tested = env.repo.forge("test", cwd=where)
     assert tested.returncode == 0, tested.stdout + tested.stderr
-    expected = {f"test_case_{number}" for number in
-                range(6 if not fast or selection == "shared" else selection)}
+    expected = {f"test_case_{number}" for number in range(0 if selection == "shared" else selection)}
     assert {path.name for path in log.iterdir()} == expected

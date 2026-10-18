@@ -1,4 +1,4 @@
-"""Close reviews a change that adds PNG screenshots: Forge's own Python has what image review needs."""
+"""Close lists added PNG screenshots by name; the helper's Python still has Pillow available."""
 import os
 import struct
 import zlib
@@ -12,22 +12,20 @@ from test_close_always_tests import adopt_earlier
 
 STORY = "review-images"
 
-# Autoreview's image review, as the pinned helper does it: it imports Pillow in the Python that
-# runs the helper (Forge's own) and stops with this message when Pillow is missing.
+# Binary images now stay out of the helper's diff. Keep the independent Python environment
+# contract: the pinned helper can still import Pillow when it needs it.
 IMAGE_REVIEW = '''import subprocess as _sp, sys as _sys
 _base = _sys.argv[_sys.argv.index("--base") + 1]
 _images = [path for path in _sp.run(["git", "diff", "--name-only", _base, "HEAD"],
            capture_output=True, text=True).stdout.split() if path.endswith(".png")]
-if not _images:  # this test's change adds one; seeing none means the check never ran
-    print("no image in the change")
+if _images:
+    print("binary image contents reached the review")
     _sys.exit(3)
 try:
     from PIL import Image
 except ImportError:
     print("image review requires Pillow in the autoreview Python environment")
     _sys.exit(2)
-for _path in _images:
-    Image.open(_path).verify()
 '''
 
 
@@ -57,4 +55,5 @@ def test_1_close_reviews_a_change_that_adds_a_png_screenshot(env, adopted):
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "requires Pillow" not in closed.stdout + closed.stderr
+    assert "docs/screen.png: - added, - removed" in env.prompt()
     assert len(env.review_calls()) == 1

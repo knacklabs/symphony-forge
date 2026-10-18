@@ -149,55 +149,6 @@ def test_4_next_shows_ready_parts_assigned_to_the_callers_github_login(client, c
         assert "Next: forge task start SHOP/SAVE" not in listing.stdout
 
 
-def test_5_other_developer_can_start_an_assigned_part_with_a_warning(client, claude_payload, gh):
-    _approve(client, claude_payload, _developer_doc())
-    gh.respond("api", "user", "--jq", ".login", stdout="page-dev\n")
-    started, branch = _start(client, "task")
-    assert started.returncode == 0, started.stdout + started.stderr
-    assert "This part was assigned to basket-dev; starting it anyway." in started.stderr
-    assert client.git("ls-remote", "origin", f"refs/heads/{branch}")
-
-
-def test_6_developer_assignments_can_be_added_and_changed_below_builders_without_approval(
-        client, claude_payload, gh):
-    plan = _approve(client, claude_payload, _developer_doc(None))
-    for developer in ("basket-dev", "replacement-dev"):
-        (plan / "plans/SHOP.md").write_text(_developer_doc(developer), "utf-8")
-        client.git("add", "plans/SHOP.md", cwd=plan)
-        client.git("commit", "-qm", "Choose the basket developer", cwd=plan)
-        gh.respond("api", "user", "--jq", ".login", stdout=developer + "\n")
-        listing = client.forge("next")
-        assert listing.returncode == 0, listing.stdout + listing.stderr
-        assert "Next: forge task start SHOP/SAVE" in listing.stdout
-        assert "Next: forge task start SHOP/SHOW" not in listing.stdout
-    started, _ = _start(client, "task")
-    assert started.returncode == 0, started.stdout + started.stderr
-    assert "starting it anyway" not in started.stderr
-
-
-def test_7_board_shows_assigned_developers_beside_starters_and_approvers(client, claude_payload, gh):
-    _approve(client, claude_payload, _developer_doc())
-    gh.respond("api", "user", "--jq", ".login", stdout="basket-dev\n")
-    client.git("config", "user.name", "Part Starter")
-    client.git("config", "user.email", "part-starter@example.test")
-    started, _ = _start(client, "task")
-    assert started.returncode == 0, started.stdout + started.stderr
-    listing = client.forge("board", "--json")
-    assert listing.returncode == 0, listing.stdout + listing.stderr
-    story = next(row for row in json.loads(listing.stdout)["items"] if row["id"] == "SHOP")
-    parts = {row["id"]: row for row in story["children"]}
-    assert parts["SHOP/SAVE"]["developer"] == "basket-dev"
-    assert parts["SHOP/SAVE"]["started_by"] == "Part Starter"
-    assert parts["SHOP/SAVE"]["approved_by"] == "Plan Approver"
-    assert parts["SHOP/SHOW"]["developer"] == "page-dev"
-    assert story["developer"] is None
-    page = client.forge("board", "--out", str(client.path / ".git" / "forge" / "board.html"))
-    assert page.returncode == 0, page.stdout + page.stderr
-    words = seen(client.path / ".git" / "forge" / "board.html")
-    assert "Assigned to basket-dev." in words, words
-    assert "Assigned to page-dev." in words, words
-
-
 def _teammate(client, tmp_path):
     folder = tmp_path / "teammate"
     client.git("clone", "-q", client.git("remote", "get-url", "origin"), str(folder))
@@ -207,10 +158,15 @@ def _teammate(client, tmp_path):
     return teammate
 
 
-def test_8_teammate_discovers_assigned_ready_parts_before_any_part_merges(
+def test_9_published_reassignment_reaches_teammate_commands_without_losing_local_builder_edits(
         client, claude_payload, gh, tmp_path):
+    plan = _approve(client, claude_payload, _developer_doc(None))
+    client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
     teammate = _teammate(client, tmp_path)
-    plan = _approve(client, claude_payload, _developer_doc())
+    # Adding assignments below For the builders needs no new approval.
+    (plan / "plans/SHOP.md").write_text(_developer_doc(), "utf-8")
+    client.git("add", "plans/SHOP.md", cwd=plan)
+    client.git("commit", "-qm", "Choose the part developers", cwd=plan)
     client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
     teammate.git("fetch", "-q", "origin")
     gh.respond("api", "user", "--jq", ".login", stdout="basket-dev\n")
@@ -225,16 +181,11 @@ def test_8_teammate_discovers_assigned_ready_parts_before_any_part_merges(
     assert parts["SHOP/SAVE"]["developer"] == "basket-dev"
     assert parts["SHOP/SAVE"]["started_by"] is None
     assert parts["SHOP/SHOW"]["developer"] == "page-dev"
-
-
-def test_9_published_reassignment_reaches_teammate_commands_without_losing_local_builder_edits(
-        client, claude_payload, gh, tmp_path):
-    plan = _approve(client, claude_payload, _developer_doc())
-    client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
-    teammate = _teammate(client, tmp_path)
+    assert story["developer"] is None
     gh.respond("api", "user", "--jq", ".login", stdout="page-dev\n")
     started = teammate.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stdout + started.stderr
+    assert "starting it anyway" not in started.stderr
     local_plan = tmp_path / "teammate-plan"
     teammate.git("worktree", "add", "-q", str(local_plan), "story/SHOP")
     local_doc = local_plan / "plans/SHOP.md"
@@ -255,6 +206,7 @@ def test_9_published_reassignment_reaches_teammate_commands_without_losing_local
     listing = teammate.forge("next")
     assert listing.returncode == 0, listing.stdout + listing.stderr
     assert "Next: forge task start SHOP/SAVE" in listing.stdout
+    assert "Next: forge task start SHOP/SHOW" not in listing.stdout
     listing = teammate.forge("board", "--json")
     assert listing.returncode == 0, listing.stdout + listing.stderr
     board = json.loads(listing.stdout)
@@ -278,6 +230,14 @@ def test_9_published_reassignment_reaches_teammate_commands_without_losing_local
     started = teammate.forge("task", "start", "SHOP/SAVE")
     assert started.returncode == 0, started.stdout + started.stderr
     assert "This part was assigned to replacement-dev; starting it anyway." in started.stderr
+    assert teammate.git("ls-remote", "origin", "refs/heads/task/SHOP-SAVE")
+    listing = teammate.forge("board", "--json")
+    assert listing.returncode == 0, listing.stdout + listing.stderr
+    story = next(row for row in json.loads(listing.stdout)["items"] if row["id"] == "SHOP")
+    part = next(row for row in story["children"] if row["id"] == "SHOP/SAVE")
+    assert part["developer"] == "replacement-dev"
+    assert part["started_by"] == "Teammate"
+    assert part["approved_by"] == "Plan Approver"
     assert "Local builder note." in local_doc.read_text("utf-8")
     assert "local-page-dev" in local_doc.read_text("utf-8")
     assert teammate.git("status", "--porcelain", cwd=local_plan)

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\ttests/test_upgrade_command.py\tGenerated release launchers need the same idle-machine fixture as ordinary command launchers.",
+      "kind": "improve",
+      "path": "tests/test_upgrade_command.py",
+      "line": 46,
+      "text": "Generated release launchers need the same idle-machine fixture as ordinary command launchers.",
+      "from": "worker",
+      "item": "trim-chat-brief-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

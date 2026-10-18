@@ -7,7 +7,6 @@ cap, the older-release rule, parity with `forge board --json`'s team facts throu
 mounted Board tab, and time rounding.
 """
 import copy
-import json
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -15,13 +14,11 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import conftest
-from conftest import ROOT
 from test_board_counts import ONE_PART, board, configure, read_story
 from test_board_pace import parts_per_week
 from test_close import STORY_DOC, approve_story, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_fix_pane_grouped_board import FIXTURE, PREVIOUS, board_tab, lines, row
-from test_mod_plugin import node_run
 from test_story import READER
 
 STORY = "FORGE-BOARD-2"
@@ -138,16 +135,13 @@ def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
 
 
 def pane_times_round_like_the_board(_request, tmp_path):
-    """A 150-second review reads 2m, as the board's 2 minutes, not 2m 30s or 3m."""
+    """The approved pane keeps recorded seconds in its stage line, outside the concise prompt."""
     item = row(FIXTURE["board"]["items"][0], stages=[{"name": "Review", "status": "pass", "seconds": 150},
                                                      {"name": "CI", "status": "running",
                                                       "started_at": "2026-10-13T11:59:00Z"}])
-    shown = node_run(tmp_path, f"""
-const {{ summary }} = await import({json.dumps((ROOT / "src/forge/mod/hooks/summary.ts").as_uri())});
-const data = {{ board: {json.dumps({**FIXTURE["board"], "items": [item]})}, next: null, lanes: null, error: null, refreshedAt: 0 }};
-console.log(JSON.stringify(summary(data, Date.parse("2026-10-13T12:00:00Z")).join("\\n")));
-""")
-    assert "Review ✓ 2m →" in shown and "CI ● 1m" in shown, shown
+    shown = board_tab(tmp_path, canned={**FIXTURE, "board": {**FIXTURE["board"], "items": [item]}})
+    assert item["title"] in shown and "Loading Forge" not in shown, shown
+    assert "Review ✓ 2m 30s →" in shown and "CI ● 1m" in shown, shown
 
 
 def new_client_board_tab_matches(request, tmp_path):

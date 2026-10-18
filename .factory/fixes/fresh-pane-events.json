@@ -1,0 +1,70 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/fresh-pane-events",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-d7ed-7022-9c30-6cea07e5c967",
+    "head": null,
+    "start": "4e7b6138f2fa40316f9c2c2169315ff1164ddb66"
+  },
+  "done_when": "Each delivered event's Next line is worked out from current state, events for items that have since merged are dropped, and each CI line names the workflow and its result, once per workflow and commit",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 76,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Queued CI events can report an obsolete result after a rerun",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "587340d44ccbcf5e242269342eeec7e95537ff4a94739f317393dfc472ea8586",
+    "changed": "9e4e73c874b1b03d657d3cb95f481eaef29300067fa761ab4a22a324d1c6e25b",
+    "commit": "8f410d3c0e6dfdd70757b65335b026bb7bf801ac",
+    "dismissals": [],
+    "findings": [],
+    "id": "e5e8d7b8-a221-44f8-b3e7-819e9010e382",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:35.134342+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T06:19:08.746078+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:14:17.716576+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:15:05.960446+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5adaaaf6-0002-493d-bc86-d5904e0d264a",
+    "head": "75461bf1c9d49ed2439fe0bbff6f5e3cef526482",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The Claude Code pane delivers Forge events late in bursts, with Next lines worked out when the event happened, and each push gives two bare 'Ci finished' lines",
+  "worker": "codex"
+}

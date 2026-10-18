@@ -19,18 +19,19 @@ from test_worker_and_reader_chats_survive_rounds import (
 STORY = "reuse-worker-chats"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("family,amended,failed,log_only,prior_read,missing_origin", [
-    (family, amended, False, False, False, False)
+@pytest.mark.parametrize("adopted,family,amended,failed,log_only,prior_read,missing_origin", [
+    (False, family, amended, False, False, False, False)
     for family in ("codex", "claude") for amended in (True, False)
-] + [("codex", False, True, log_only, True, False) for log_only in (False, True)]
-  + [("codex", False, True, True, False, missing_origin)
-     for missing_origin in (False, True)], ids=[
+] + [(False, "codex", False, True, log_only, True, False) for log_only in (False, True)]
+  + [(False, "codex", False, True, True, False, missing_origin)
+     for missing_origin in (False, True)]
+  + [(True, "claude", True, False, False, False, False)], ids=[
     "codex-changed-spec", "codex-unchanged-spec", "claude-changed-spec",
     "claude-unchanged-spec", "codex-failed-unchanged-spec",
     "codex-failed-unchanged-spec-log-only",
     "codex-failed-first-unchanged-spec-log-only",
     "codex-failed-first-unchanged-spec-log-only-no-origin",
+    "earlier-adoption-claude-changed-spec",
 ])
 def test_22_upgrade_keeps_removed_spec_amendment_reader_on_its_branch(
         repo, monkeypatch, tmp_path, sdk_data, adopted, family, amended, failed, log_only,

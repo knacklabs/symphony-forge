@@ -16,7 +16,9 @@ import sys
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, TypeVar
 
 import pytest
@@ -26,6 +28,11 @@ import _pytest.tmpdir
 ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+IDLE_MACHINE = """from forge import machine
+machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
+machine.busy_runners = lambda: 0
+"""
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
@@ -37,16 +44,38 @@ signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", IDLE_MACHINE + "from forge.cli import main")
 
 
 def machine_cores(repo, count, system_count=None):
     """Report a machine's CPU count at the command boundary, without a production test flag."""
+    override = (f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+                f"os.process_cpu_count = lambda: {count!r}\n")
     shim = repo.bin / "forge"
     source = shim.read_text("utf-8")
     shim.write_text(source.replace("from forge.cli import main",
-        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
-        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+        override + "from forge.cli import main"), "utf-8")
+    # Inline Python test commands inherit PYTHONPATH, but do not use the Forge launcher.
+    startup = repo.bin / "sitecustomize.py"
+    startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + override, "utf-8")
+
+
+def machine_runners(repo, count: int | Path = 0):
+    """Supply runner inventory to inline Python too; keep process identity queries real."""
+    command = "tasklist" if os.name == "nt" else "ps"
+    real = shutil.which(command)
+    args = ["/FO", "CSV", "/NH"] if os.name == "nt" else ["-axo", "comm="]
+    reading = (f"int(pathlib.Path({count.as_posix()!r}).read_text('utf-8'))"
+               if isinstance(count, Path) else repr(count))
+    worker = ('"Runner.Worker.exe","101","Console","1","100 K"\n'
+              if os.name == "nt" else "/runner/bin/Runner.Worker\n")
+    _install(repo.bin, command, f'''#!{sys.executable}
+import pathlib, subprocess, sys
+if sys.argv[1:] == {args!r}:
+    sys.stdout.write({worker!r} * {reading})
+else:
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]]))
+''')
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
@@ -86,14 +115,63 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
                                              encoding="utf-8")
 
 
+def _sdk_ready(env: Path) -> bool:
+    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if (env / "forge-sdk-ready").is_file():
+        try:
+            return subprocess.run([python, "-I", "-c", "pass"], capture_output=True,
+                                  timeout=10).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            pass  # A restart can remove the Python that this cached venv points to.
+    return False
+
+
+@contextmanager
+def _cached_sdk(env: Path, pin: str):
+    """Build privately; only the publisher may replace a cache that is still broken."""
+    if _sdk_ready(env):
+        yield None
+        return
+    env.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix="building-", dir=env.parent) as folder:
+        build = Path(folder)
+        yield build
+        (build / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+        # Keep the lock outside the directory being replaced, and never unlink it:
+        # other workers must lock the same file even after a publication.
+        with env.with_suffix(".lock").open("a+b") as lock:
+            lock.seek(0)
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                if not _sdk_ready(env):
+                    if env.exists():
+                        shutil.rmtree(env)
+                    build.rename(env)
+            finally:
+                if os.name == "nt":
+                    lock.seek(0)
+                    msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def _claude_sdk_env(data: Path, pin: str = "0.2.161") -> None:
+    """The Claude Agent SDK's separate Python environment under this XDG_DATA_HOME."""
+    env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
+    with _cached_sdk(env, pin) as build:
+        if build is not None:
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True)
+
+
 def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
     """A separate Python environment, with only the SDK's external edge replaced."""
     pin = "0.2.161"
-    env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
-    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    if not python.is_file():
-        subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(env)], check=True)
-    (env / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+    _claude_sdk_env(data, pin)
     package = bin_dir / "claude_agent_sdk"
     package.mkdir(exist_ok=True)
     shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
@@ -284,7 +362,8 @@ def _left(tmp_path: Path) -> list[str]:
 
 def _end_left(path: Path) -> list[str]:
     """Wait for the processes that name path to go, end any still there, and return those."""
-    for _ in range(20):  # a process the test just ended may take a moment to go
+    grace_seconds = float(os.environ.get("PYTEST_PROCESS_GRACE_SECONDS", "10"))
+    for _ in range(int(grace_seconds * 2)):  # a process the test just ended may take a moment to go
         left = _left(path)
         if not left:
             return []
@@ -357,6 +436,9 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
+    # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
+    monkeypatch.delenv("CI", raising=False)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 

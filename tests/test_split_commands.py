@@ -17,6 +17,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # Machine views deliberately add --json to next and board (FORGE-MOD-1).
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
 # Test adds the lane and picker; stop adds cancellation; FORGE-BOARD-3 adds assign.
+# Dropping and restoring a fix adds a fix subcommand, with no new top-level command.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -75,7 +76,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
              '  {new,accept}\n'
              '    new         Write a decision record\n'
              '    accept      Accept a decision after the human confirms in chat\n',
- 'fix': 'usage: forge fix [-h] {start,allow-large,amend} ...\n'
+ 'fix': 'usage: forge fix [-h] {start,drop,allow-large,amend} ...\n'
         '\n'
         'Start a fix, let it go over the fix limit, or change its done-when\n'
         '\n'
@@ -83,9 +84,10 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         '  -h, --help            show this help message and exit\n'
         '\n'
         'commands:\n'
-        '  {start,allow-large,amend}\n'
+        '  {start,drop,allow-large,amend}\n'
         '    start               Start a fix in its own branch and worktree, with a\n'
         '                        one-line why and done-when\n'
+        '    drop                Drop a fix with a reason, or restore it with --undo\n'
         "    allow-large         Record the human's permission for this fix to go over\n"
         '                        the fix limit\n'
         "    amend               Replace a fix's done-when, keeping the old text and\n"
@@ -289,6 +291,17 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
               '  --kind {ui,backend,mechanical}\n'
               '                        the worker kind; required for prototype fixes\n'
               "  --slug NAME           the fix's name, instead of one cut from the why\n",
+ 'fix drop': 'usage: forge fix drop [-h] [--because REASON] [--undo] FIX\n'
+             '\n'
+             'Drop a fix with a reason, or restore it with --undo\n'
+             '\n'
+             'positional arguments:\n'
+             '  FIX\n'
+             '\n'
+             'options:\n'
+             '  -h, --help        show this help message and exit\n'
+             '  --because REASON\n'
+             '  --undo\n',
  'fix allow-large': 'usage: forge fix allow-large [-h] reason\n'
                     '\n'
                     "Record the human's permission for this fix to go over the fix limit\n"

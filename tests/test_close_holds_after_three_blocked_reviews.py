@@ -1,6 +1,7 @@
 """Close keeps both review-loop holds and their owner choices after init or upgrade."""
 STORY = "any-file-hold"
 
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -79,6 +80,10 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         assert len(env.review_calls()) == number
     round_number = 3 if same_file else 4
     if not same_file:
+        # Three different files do not trigger the third-round same-file stop.
+        state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+        assert state["status"] == "fixing"
+        assert "stop" not in state
         # Unlike the existing same-file stop, this hold refuses before spending a fourth review.
         env.commit(where, "app.py", "print('attempt fourth review')\n")
         env.reviews(CLEAN)
@@ -119,8 +124,10 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     assert f'forge close {item} --resolve <narrow|split|accept>' in next_step.stdout
     for command in ("close", "land"):
         waiting = env.repo.forge(command, item)
-        assert waiting.returncode == 1, waiting.stdout + waiting.stderr
-        assert waiting.stderr.splitlines()[-9:] == result.stderr.splitlines()[-9:]
+        assert waiting.returncode == (3 if command == "land" else 1), waiting.stdout + waiting.stderr
+        assert waiting.stderr.splitlines()[-9:-1] == result.stderr.splitlines()[-9:-1]
+        assert waiting.stderr.splitlines()[-1] == result.stderr.splitlines()[-1] + (
+            f", then forge land {item}" if command == "land" else "")
         assert len(env.review_calls()) == 3
     reason = "The human chose this after reading the remaining findings"
     chosen = env.close(item, "--resolve", choice, "--reason", reason)

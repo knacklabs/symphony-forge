@@ -1,4 +1,4 @@
-"""A completed upgrade must not block the next one, or lose local work."""
+"""A completed upgrade must not block the next one, or lose local work on either history."""
 import json
 import shutil
 from pathlib import Path
@@ -12,7 +12,7 @@ STORY = "fix-upgrade-stale-fix"
 NEXT, NEXT_NAME = "v9.10.0", "upgrade-forge-to-v9-10-0"
 
 
-@pytest.fixture(params=["new", "previous release"])
+@pytest.fixture
 def completed_upgrade(unsynced_up, request):
     up = unsynced_up if request.param == "previous release" else request.getfixturevalue("up")
     if request.param == "previous release":
@@ -40,6 +40,7 @@ def completed_upgrade(unsynced_up, request):
     return up, pr
 
 
+@pytest.mark.parametrize("completed_upgrade", ["new", "previous release"], indirect=True)
 def test_1_next_upgrade_removes_merged_worktree_and_local_branch(completed_upgrade):
     up, _ = completed_upgrade
     excluded = Path(up.repo.git("rev-parse", "--path-format=absolute", "--git-path", "info/exclude"))
@@ -57,8 +58,10 @@ def test_1_next_upgrade_removes_merged_worktree_and_local_branch(completed_upgra
     assert f'version = "{NEXT}"' in up.show("forge.toml", f"fix/{NEXT_NAME}")
 
 
-@pytest.mark.parametrize("held", ["commit", "unstaged", "staged", "untracked", "ignored config",
-                                  "ignored data", "ignored cache-named file", "open", "closed", "unreadable"])
+@pytest.mark.parametrize("held,completed_upgrade", [
+    (held, "new") for held in ("commit", "unstaged", "staged", "untracked", "ignored config",
+                               "ignored data", "ignored cache-named file", "open", "closed", "unreadable")
+] + [("ignored data", "previous release")], indirect=["completed_upgrade"])
 def test_2_next_upgrade_refuses_open_or_unpushed_work(completed_upgrade, held):
     up, pr = completed_upgrade
     branch = f"fix/{NAME}"

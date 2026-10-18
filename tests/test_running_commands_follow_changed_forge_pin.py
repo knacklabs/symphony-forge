@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import FORGE_SHIM, REAL_UV, ROOT, _install
+from conftest import FORGE_SHIM, IDLE_MACHINE, REAL_UV, ROOT, _install
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
 from test_land import ITEM, URL, _fix, _workers, land  # noqa: F401
@@ -47,12 +47,16 @@ def _earlier_release(env, *, real_uv=False):
     # its actual close, tests, review and GitHub checks decide whether this command succeeds.
     _install(env.repo.bin, "uv", f'''#!{sys.executable}
 import json, os, pathlib, subprocess, sys
+# Match FORGE_SHIM's idle machine when the selected release runs in this process.
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 args = sys.argv[1:]
 here = pathlib.Path(__file__).resolve().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
 os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]
 sys.path.insert(0, {json.dumps((ROOT / 'src').as_posix())})
+{IDLE_MACHINE}
 if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
     program = args.index("python")
     assert args[program:program + 3] == ["python", "-I", "-c"], args

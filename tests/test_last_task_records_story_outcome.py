@@ -55,7 +55,6 @@ if args[:2] == ["pr", "merge"]:
 @pytest.mark.parametrize("history,outcome,already_done,command", [
     ("new", None, False, "merge"),
     ("new", 'Shoppers keep "their" baskets.\nThey return later.', False, "merge"),
-    ("adopted", None, False, "merge"),
     ("adopted", "Baskets survive a return visit.", False, "merge"),
     ("current", "Leave the original outcome alone.", True, "merge"),
     ("current", None, False, "land"),

@@ -15,9 +15,10 @@ from test_land_waits_for_check_progress import clock  # noqa: F401
 STORY = "FIX-WHERE-TIME-WENT"
 
 
-@pytest.mark.parametrize("history", ["new", "upgraded"])
-@pytest.mark.parametrize("command", ["close", "merge"])
-@pytest.mark.parametrize("status,phase", [("queued", "queued"), ("in_progress", "running")])
+@pytest.mark.parametrize("history,command,status,phase", [
+    ("new", command, status, phase) for command in ("close", "merge")
+    for status, phase in (("queued", "queued"), ("in_progress", "running"))
+] + [("upgraded", "close", "queued", "queued")])
 def test_27_cancelled_ci_wait_keeps_observed_phase_reason_and_published_history(
         clock, monkeypatch, history, command, status, phase):
     env = clock

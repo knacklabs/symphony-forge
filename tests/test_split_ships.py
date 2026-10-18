@@ -30,6 +30,7 @@ SOURCES = {
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
     ".forge/review-tests.py": "src/forge/templates/review-tests.py",
+    ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
@@ -54,7 +55,7 @@ print(json.dumps(wanted))
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
     # Exercise this checkout's sync, rather than routing to a historical release.
-    repo.write("forge.toml", 'version = "v1.2.12"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.14"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")

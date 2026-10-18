@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -26,15 +27,23 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 
 
 def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
-         progress: bool = False) -> None:
+         progress: bool = False, slot: Callable[[bool], None] | None = None) -> None:
     """Wait for green checks on sha; land renews its deadline on observed check progress."""
     start, clock = repo.now(), time.monotonic()
+    released = False
+
+    def waiting(value: bool) -> None:
+        nonlocal released
+        if slot is not None and value != released:
+            slot(value)
+            released = value
+
     from forge import codex  # codex imports what imports checks
     # The waiting process: forge land --all leaves out a change only while that process runs.
     with repo.record_run(top, item, "ci", process=codex.identity(os.getpid())) as result:
         result.update(outcome="unknown", state="unknown")
         try:
-            _wait(top, item, sha, names, branch, progress, result)
+            _wait(top, item, sha, names, branch, progress, result, waiting)
         except repo.Refused as error:
             if error.entry is REFUSALS["red"]:
                 result["outcome"] = "failed"
@@ -46,12 +55,13 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             result["reason"] = "Interrupted by Ctrl-C."
             raise
         finally:
+            waiting(False)
             repo.record_event(top, item, "CI result", commit=sha, start=start, **result)
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,
-          result: dict[str, Any]) -> None:
+          result: dict[str, Any], waiting: Callable[[bool], None]) -> None:
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
     timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
     deadline = time.monotonic() + timeout
@@ -117,6 +127,8 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if progress:
                 reason = f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}"
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
+        # Queued checks keep backpressure; running checks need no local close place.
+        waiting(not queued)
         time.sleep(min(15, left))
 
 

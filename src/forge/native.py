@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+import tempfile
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stdout
@@ -216,13 +217,28 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     state = repo.read_state(item, top) or {}
     worker._restore_settings(item, top, state)
     # A session subagent has no worker guard in the commit hook, so a committed change comes back too.
-    if repo.git("diff", "--name-only", head, "HEAD", "--", "forge.toml", cwd=top) and not (
-            task.settings_allowed(item, top, state)):
-        repo.git("checkout", head, "--", "forge.toml", cwd=top)
-        repo.git("commit", "-q", "-m", "Restore forge.toml; settings change in their own fix",
-                 "--", "forge.toml", cwd=top)
-        print("Restored forge.toml changes committed on this branch; settings change in their own fix.",
-              flush=True)
+    if not task.settings_allowed(item, top, state):
+        # Reconstruct the round's inherited settings plus incoming default-branch changes.
+        # HEAD may also contain worker edits made before or after that merge.
+        base = repo.git("merge-base", f"origin/{repo.default_branch(top)}", "HEAD", cwd=top)
+        common = repo.git("merge-base", head, base, cwd=top)
+        with tempfile.TemporaryDirectory(prefix="forge-settings-") as folder:
+            files = [Path(folder) / name for name in ("inherited", "base", "incoming")]
+            for file, ref in zip(files, (head, common, base)):
+                shown = repo.run("git", "show", f"{ref}:forge.toml", cwd=top)
+                shown.check_returncode()
+                file.write_text(shown.stdout, encoding="utf-8", newline="\n")
+            merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
+            merged.check_returncode()
+        current = repo.run("git", "show", "HEAD:forge.toml", cwd=top)
+        current.check_returncode()
+        if current.stdout != merged.stdout:
+            (top / "forge.toml").write_text(merged.stdout, encoding="utf-8", newline="\n")
+            repo.git("add", "--", "forge.toml", cwd=top)
+            repo.git("commit", "-q", "-m", "Restore forge.toml; settings change in their own fix",
+                     "--", "forge.toml", cwd=top)
+            print("Restored forge.toml changes committed on this branch; settings change in their own fix.",
+                  flush=True)
     left = repo.git("status", "--porcelain", "-uall", cwd=top).splitlines()
     if said and left and not pending.get("nudged"):
         codex._record(path, pending={**pending, "nudged": True, "said": said})

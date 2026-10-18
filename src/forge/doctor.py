@@ -451,8 +451,6 @@ def doctor(args: argparse.Namespace) -> int:
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
             + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
                for name, entry in entries]) + ".")
-    if "review" in cfg.get("models", {}):
-        print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
@@ -466,13 +464,30 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"Everything {'checks' if trusted or cfg['tools'] == 'claude' else 'else checks'} out for Forge {cfg['version']}.")
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
-    budget = machine.half_cores()
+    runners = machine.busy_runners()
+    budget = machine.half_cores(runners)
     print(f"This machine: {cores} cores, so {budget} agents at once and "
-          f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+          f"{machine.test_slots(runners)} test runs at once, each on {budget} cores.")
+    memory = machine.memory()
+    free = memory["available_bytes"]
+    available = "unknown" if free is None else f"{free / 1e9:.1f} GB"
+    print(f"Memory: {available} free, floor {machine.memory_floor(memory) / 1e9:.1f} GB.")
+    allocations = [run.get("test_cpus") for run in machine.entries()
+                   if run["kind"] == "test" and run.get("started_at")]
+    processes = "unknown" if None in allocations else str(sum(allocations))
+    print(f"Test processes in use: {processes}. Busy runners: {runners} ({runners} cores reserved).")
+    if os.name != "nt":
+        processes = repo.run("ps", "-axo", "command=")
+        if processes.returncode == 0 and re.search(
+                r"^(?:\S*/)?Runner\.Listener(?:\s|$)|"
+                r"^(?:(?:\S*/)?(?:bash|sh|dash|zsh)\s+)?(?:\S*/)?actions-runner/run\.sh(?:\s|$)",
+                processes.stdout, re.M):
+            print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
+                  "Its CPUs count against Forge's load limit.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    events = repo.forge_dir(top) / "events.jsonl"
-    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    from forge import event_log
+    history = event_log.read(top)
     last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
     said = ("" if last is None else " The last Codex turn ran with Fast."
             if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else

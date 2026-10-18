@@ -294,6 +294,24 @@
       "title": "The board's data knows who owns what, what shipped when, and what was left",
       "status": "pending",
       "order": 84
+    },
+    {
+      "key": "FORGE-DROP-1",
+      "title": "Drop a fix nobody wants any more, and bring it back later",
+      "status": "pending",
+      "order": 85
+    },
+    {
+      "key": "FORGE-GITCOST-1",
+      "title": "Forge commands start far fewer git processes",
+      "status": "pending",
+      "order": 86
+    },
+    {
+      "key": "FORGE-BUDGET-1",
+      "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
+      "status": "pending",
+      "order": 87
     }
   ],
   "epics": [

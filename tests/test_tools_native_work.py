@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -211,6 +212,30 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert repo.git("log", "-1", "--format=%s", cwd=folder) == (
             "Restore forge.toml; settings change in their own fix")
         assert repo.git("rev-list", "--count", f"{handed}..HEAD", cwd=folder) == "2"
+
+        # A round that merges the default branch after main's forge.toml changed keeps main's
+        # settings: only the worker's own edits come back (issue 921).
+        _, _, number = handout("BOARD/HELP", "worker")
+        main = repo.git("rev-parse", "origin/main", cwd=folder)
+        newer = (folder / "forge.toml").read_text("utf-8") + "# A setting main changed\n"
+        index = tmp_path / "main-index"
+        plumbing = {**os.environ, "GIT_INDEX_FILE": str(index)}
+        git = lambda *args, **kw: subprocess.run(["git", *args], cwd=folder, env=plumbing, text=True,
+                                                 capture_output=True, check=True, **kw).stdout.strip()
+        git("read-tree", main)
+        blob = git("hash-object", "-w", "--stdin", input=newer)
+        git("update-index", "--cacheinfo", f"100644,{blob},forge.toml")
+        moved = git("commit-tree", git("write-tree"), "-p", main, "-m", "Main changes a setting")
+        repo.git("update-ref", "refs/remotes/origin/main", moved, cwd=folder)
+        repo.git("-c", "core.hooksPath=/dev/null", "merge", "-q", "--no-edit", "origin/main", cwd=folder)
+        merged = handback("BOARD/HELP", number, "Merged main.", cwd=folder)
+        assert merged.returncode == 0, merged.stdout + merged.stderr
+        assert "Restored forge.toml" not in merged.stdout
+        assert (folder / "forge.toml").read_text("utf-8") == newer
+        assert repo.git("log", "-1", "--format=%s", cwd=folder) != (
+            "Restore forge.toml; settings change in their own fix")
+        repo.git("update-ref", "refs/remotes/origin/main", main, cwd=folder)
+        repo.git("-c", "core.hooksPath=/dev/null", "reset", "-q", "--hard", "HEAD~1", cwd=folder)
 
         # A fix uses the fixer role; land stops at the handout and closes after the hand-back.
         made = repo.forge("fix", "start", "Tidy the words", "--done", "The words read well",
