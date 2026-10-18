@@ -57,8 +57,60 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
+def node_worker_budget(command: str, workers: str) -> str:
+    """Cap visible Vitest/Jest invocations, preserving shell text and smaller limits."""
+    segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
+    limit = re.compile(r'''((?<!\S)--maxWorkers(?:=|\s+))(["']?)(\d+%?)\2(?=\s|$)''')
+    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 1
+
+    def count(value: str) -> int:
+        return max(1, cores * int(value[:-1]) // 100) if value.endswith("%") else int(value)
+
+    replacements = []
+    for part in segment.finditer(command):
+        text = part.group().rstrip()
+        try:
+            words = shlex.split(text)
+        except ValueError:
+            continue  # Leave shell constructs we cannot identify to their runner.
+        runner, script, passthrough = words, "", ""
+        if words and words[0] in {"npm", "pnpm", "yarn"}:
+            index = 2 if words[1:2] in (["run"], ["run-script"]) else 1
+            package = Path("package.json")
+            if len(words) <= index or not package.is_file():
+                continue
+            script = json.loads(package.read_text("utf-8")).get("scripts", {}).get(words[index], "")
+            # A compound script forwards arguments only to its last command.
+            if not script or not segment.fullmatch(script):
+                continue
+            try:
+                runner = shlex.split(script)
+            except ValueError:
+                continue
+            passthrough = " --" if words[0] == "npm" and "--" not in words else ""
+        if runner[:1] == ["npx"]:
+            runner = runner[1:]
+        name = runner[0].replace("\\", "/").rsplit("/", 1)[-1] if runner else ""
+        if name.removesuffix(".cmd").removesuffix(".exe") not in {"vitest", "jest"}:
+            continue
+        caps = [count(match[3]) for match in limit.finditer(text + " " + script)]
+        budget = min([int(workers), *caps])
+        if limit.search(text):
+            text = limit.sub(lambda match: match[0] if count(match[3]) <= budget else
+                             f"{match[1]}{match[2]}{budget}{match[2]}", text)
+        elif caps and min(caps) <= int(workers):
+            continue
+        else:
+            text += f"{passthrough} --maxWorkers={budget}"
+        replacements.append((part.start(), part.start() + len(part.group().rstrip()), text))
+    for start, end, text in reversed(replacements):
+        command = command[:start] + text + command[end:]
+    return command
+
+
 def narrow_command(command: str, excluded: list[str], workers: str, always: list[str], *,
                    launchers: bool = True) -> str:
+    command = node_worker_budget(command, workers)
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -224,6 +276,8 @@ def close_tests(base: str) -> int:
         if not package.is_file():
             return 0
         command = " && ".join(part for _, part, _ in parts)
+    command = node_worker_budget(command, machine.test_cpus())
+    parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
     if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
