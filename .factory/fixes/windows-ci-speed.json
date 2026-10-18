@@ -1,0 +1,15 @@
+{
+  "base": "a5cd9456c09f437b698c2a2f5af9e2c8e32aca52",
+  "branch": "fix/windows-ci-speed",
+  "done_when": "On Windows CI the temp folder is on D:, npm downloads are cached, groups split by Windows timings, and two dispatched Windows runs measured with the same script show the change in runner-minutes and the longest group",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T15:57:35.565002+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Windows test groups run about six times longer than Linux ones: test repos sit on the slower C: drive, npm downloads are not cached on Windows, and Windows groups are split by Linux timings"
+}
