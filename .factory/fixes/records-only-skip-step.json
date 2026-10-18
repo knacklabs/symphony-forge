@@ -4,12 +4,20 @@
   "done_when": "Forge ships a step any workflow can add first that passes in seconds on a records-only push whose parent run of that workflow passed, the guide shows the one line to add, and tests cover a records-only push skipping and a code push running, on new repos and after sync on existing repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T02:32:25.642916+00:00",
       "step": "start"
     }
   ],
-  "why": "After review, close pushes a commit that changes only Forge's records, and every repo workflow other than Forge's own reruns in full on it"
+  "stuck": {
+    "close": null,
+    "head": "9b1932139cd9b87230f76f2b60d60e3ced99fede",
+    "keys": {},
+    "round": null
+  },
+  "why": "After review, close pushes a commit that changes only Forge's records, and every repo workflow other than Forge's own reruns in full on it",
+  "worker": "codex"
 }
