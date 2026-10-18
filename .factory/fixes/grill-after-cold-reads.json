@@ -10,13 +10,29 @@
   },
   "done_when": "The coordinator guide says: answer cold-read rounds yourself, and once a read is clean, grill the human one question at a time on the choices you made answering the notes (behaviours, limits, refusals, scope cuts) and record the answers in the plan before approval; new and existing repos get it through init and sync, and the guide test covers both",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b6a41977bea0129771599c573911be9c58c276bbd764e376ffcd7fe1bf428c41",
+    "changed": "c45210e008b8af89537510c5e5fc24cc03346d76f85bd1fd8a0b684ad26b8085",
+    "commit": "b0a7d6b7167e83600afdba6fcec9a8ae3fb042fe",
+    "dismissals": [],
+    "findings": [],
+    "id": "2143348c-36d9-4a5a-8516-175625afde1a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T12:53:36.910635+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:58:21.693468+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
