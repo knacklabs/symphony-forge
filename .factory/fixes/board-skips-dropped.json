@@ -1,0 +1,15 @@
+{
+  "base": "4bcfa32bf475128748c4f9f94c21272b53c8d448",
+  "branch": "fix/board-skips-dropped",
+  "done_when": "The board and forge board --json leave out a dropped fix and show it again after forge fix drop --undo, built on main without the page server",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T01:59:11.226098+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A dropped fix still shows on the board, because the drop story's board part was built on the unmerged page server and cannot ship without it"
+}
