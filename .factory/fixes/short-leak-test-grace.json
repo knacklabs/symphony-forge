@@ -1,0 +1,15 @@
+{
+  "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
+  "branch": "fix/short-leak-test-grace",
+  "done_when": "The leak test uses a short grace period of its own while still proving leaked processes are found and ended, and the suite's cleanup keeps its normal grace",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T13:04:06.503581+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The process-leak test waits ten seconds before killing the processes it leaks on purpose"
+}
