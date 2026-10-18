@@ -97,12 +97,13 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
 def _machine_prs(top: Path) -> list[Item]:
     """One request for the newest 25 open PRs, cached across command invocations for 60s."""
     cache = repo.forge_dir(top) / "checks-cache.json"
-    now = _when(repo.now())
+    fetched_at = repo.now()
+    now = _when(fetched_at)
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         at = _when(saved.get("fetched_at"))
         if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
-            return saved["prs"]
+            return [{**pr, "checks_fetched_at": saved["fetched_at"]} for pr in saved["prs"]]
     except (OSError, ValueError, AttributeError):
         pass
     done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
@@ -129,13 +130,13 @@ def _machine_prs(top: Path) -> list[Item]:
                 pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
     temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
     try:
-        temp.write_text(json.dumps({"fetched_at": repo.now(), "prs": prs}), encoding="utf-8")
+        temp.write_text(json.dumps({"fetched_at": fetched_at, "prs": prs}), encoding="utf-8")
         os.replace(temp, cache)
     except OSError:
         pass  # A read-only/full Git directory must not prevent a view.
     finally:
         temp.unlink(missing_ok=True)
-    return prs
+    return [{**pr, "checks_fetched_at": fetched_at} for pr in prs]
 
 
 def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
@@ -169,7 +170,8 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
                       "SKIPPED": "skipped", "STALE": "stale"}.get(
                           suite["conclusion"], suite["conclusion"].lower().replace("_", " "))
             events.append({"id": f"workflow:{workflow_id}:{pr['headRefOid']}",
-                           "kind": "run_finished", "title": f"{workflow['name']} {result}"})
+                           "kind": "run_finished", "title": f"{workflow['name']} {result}",
+                           "conclusion": suite["conclusion"]})
         names.append(name)
         value = (check.get("conclusion") if check.get("status") == "COMPLETED" else None) or check.get("state")
         failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE")
@@ -482,6 +484,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
                 stages[-1]["elapsed"] = elapsed(live[0].get("at"))
+        # The initial close has no worker turn yet (stored as zero); people count from one.
+        if round_number is not None:
+            round_number = max(1, round_number)
+        if worker and worker.get("round") is not None:
+            worker["round"] = max(1, worker["round"])
         stage, receipt = (nextstep._item_readiness(item, state, top, checks, runs=active, pr=pr)
                           if kind != "story" else (state.get("status"), {}))
         if kind == "story" and not finished:
@@ -578,12 +585,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                     top, item, state, stage, pr, readiness.get(item, {}).get("blocker")))),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
-                          "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
+                          "review": {"status": "running"} if any(e.get("kind") == "review" for e in active) else
+                              {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
                               {"status": "clean" if review else "none"}, "ci": ci},
                 "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "url": (pr or {}).get("url"),
-                       "checks": checks, "failures": failures},
+                       "checks": checks, "failures": failures, "checked_at": (pr or {}).get("checks_fetched_at")},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "merged_by": board_facts.person(people_pr["mergedBy"], names=names) if people_pr.get("mergedBy") else None,

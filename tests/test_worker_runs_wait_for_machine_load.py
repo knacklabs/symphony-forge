@@ -41,7 +41,7 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     # Load counts against the cores Forge may use, not the host's 64.
     machine_cores(repo, 4, system_count=64)
     load = tmp_path / "load"
-    load.write_text("6.0", "utf-8")  # exactly 1.5 per core: busy
+    load.write_text("0.0", "utf-8")
     shim = repo.bin / "forge"
     shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main",
         f"import pathlib\nos.getloadavg = lambda: (float(pathlib.Path({str(load)!r}).read_text()),) * 3\n"
@@ -51,9 +51,10 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     hold_agents(env)
     processes = []
     try:
-        # With no other agent running, waiting would never lower the load, so the first starts.
+        # Every run now waits for external load too. Start the first before load rises.
         processes.append(start(repo.path, tmp_path / "first", repo, "work", first)[0])
         _until(lambda: (repo.bin / f"started-{first_name}").exists(), "the first round")
+        load.write_text("6.0", "utf-8")  # exactly 1.5 per core: busy
         process, output = start(repo.path, tmp_path / "second", repo, "work", second)
         processes.append(process)
         _until(lambda: BUSY in output.read_text("utf-8"), "the second round to say it waits")

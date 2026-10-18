@@ -2,7 +2,7 @@ import type { Elements, On, RenderInput, RenderNode, Timer } from 'claude-code'
 import type { Data, Item, Next } from './forge.ts'
 import { TOO_OLD } from './forge.ts'
 import type { Row } from './summary.ts'
-import { activeRows, board, itemTime, laneCounts, pending, record, stageText, stages, summary, total } from './summary.ts'
+import { activeRows, board, itemTime, laneCounts, pending, record, rowLines, stageText, stages, summary, total } from './summary.ts'
 
 type Tab = (e: RenderInput<'Pane'>, t: Elements['terminal'] | Elements['desktop'], now: number) => RenderNode
 const tabs = new Map<string, Tab>()
@@ -36,7 +36,7 @@ export function registerPane(on: On, data: Data) {
     const t = $.ui.resolve(e)
     const now = await $.clock.now()
     const children: RenderNode[] = []
-    if (tabs.size) children.push(t.Box({ flexDirection: 'row', gap: 1, children: ['Board', ...tabs.keys()].map(name => t.Button({ key: `tab-${name}`, label: name, onPress: () => { selected = name; $.ui.invalidate('ui.render') } })) }))
+    if (tabs.size) children.push(t.Box({ flexDirection: 'row', gap: 1, children: ['Board', ...tabs.keys()].map(name => t.Button({ key: `tab-${name}`, hotkey: name === 'Board' ? 'b' : 'm', label: `${selected === name ? '● ' : ''}${name} (${name === 'Board' ? 'b' : 'm'})`, onPress: () => { selected = name; $.ui.invalidate('ui.render') } })) }))
     const tab = tabs.get(selected)
     if (tab) children.push(tab(e, t, now))
     else if (data.error === TOO_OLD) children.push(t.Text({ children: TOO_OLD }))
@@ -44,15 +44,14 @@ export function registerPane(on: On, data: Data) {
       if (!data.board) children.push(t.Text({ dimColor: true, children: pending(data) }))
       else {
         const view = board(data, now)
-        // One item: title and story key, then its state and step, or both on one line with no step.
         const draw = (row: Row): RenderNode[] => {
           const title = [row.title, ...(row.key ? [t.Text({ dimColor: true, children: `  ${row.key}` })] : [])]
-          const lines: RenderNode[] = row.next ? [
+          const lines: RenderNode[] = [
             t.Text({ wrap: 'wrap', children: title }),
-            ...(row.state ? [t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: row.state }) })] : []),
-            t.Box({ paddingLeft: 2, children: t.Text({ wrap: 'wrap', children: `→ ${row.next}` }) }),
-          ] : [t.Text({ wrap: 'wrap', children: [...title, ...(row.state ? [` · ${row.state}`] : [])] })]
-          return [...lines, ...(actions.get(row.item.kind ?? '') ?? []).map(render => render(row.item, e))]
+            ...rowLines(row, now).slice(1).map(line => t.Text({ wrap: 'wrap', children: line || ' ' })),
+            ...(actions.get(row.item.kind ?? '') ?? []).map(render => render(row.item, e)),
+          ]
+          return [t.Box({ flexDirection: 'column', children: lines })]
         }
         if (view.summary) children.push(t.Text({ bold: true, wrap: 'wrap', children: view.summary }))
         if (view.sentence) children.push(t.Box({ flexDirection: 'column', children: [view.sentence, ...view.totals].map(line => t.Text({ wrap: 'wrap', children: line })) }))
@@ -61,11 +60,11 @@ export function registerPane(on: On, data: Data) {
           const lines: RenderNode[] = [t.Text({ bold: true, children: group.name })]
           for (const row of group.rows) lines.push(...draw(row))
           if (group.more) lines.push(t.Text({ dimColor: true, children: `and ${group.more} more · forge board for all` }))
-          children.push(t.Box({ flexDirection: 'column', children: [lines[0]!, t.Box({ flexDirection: 'column', paddingLeft: 2, children: lines.slice(1) })] }))
+          children.push(t.Box({ flexDirection: 'column', children: [lines[0]!, t.Box({ flexDirection: 'column', gap: 1, paddingLeft: 2, children: lines.slice(1) })] }))
         }
         if (view.waiting.length) {
           children.push(t.Button({ key: 'waiting', label: `${showWaiting ? 'Hide' : 'Show'} waiting or not started (${view.waiting.length})`, onPress: () => { showWaiting = !showWaiting; $.ui.invalidate('ui.render') } }))
-          if (showWaiting) children.push(t.Box({ flexDirection: 'column', paddingLeft: 2, children: view.waiting.flatMap(draw) }))
+          if (showWaiting) children.push(t.Box({ flexDirection: 'column', gap: 1, paddingLeft: 2, children: view.waiting.flatMap(draw) }))
         }
       }
     }
@@ -87,7 +86,7 @@ export function registerPane(on: On, data: Data) {
       const counts = data.lanes ? `${n.agentsRunning + n.testsRunning} running, ${n.agentsWaiting}+${n.testsWaiting} waiting · Tests ${n.testsRunning}/${n.testSize} · ` : ''
       const step = record(first?.worker).step
       lines = [`${counts}${command ? `1: ${command}` : data.next?.next.line ?? pending(data)}${typeof step === 'string' ? ` · ${step}` : ''}`]
-      compact = { title: first?.title ?? '', counts, timing: first ? `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · ` : '', tail: `${data.next?.next.line ?? pending(data)}${typeof step === 'string' ? ` · ${step}` : ''}` }
+      compact = { title: first?.title ?? '', counts, timing: first ? ` · ${stage ? stageText(stage, now) : first.stage ?? 'In progress'}${total(first, now) ? ` (${total(first, now)})` : ''} · ` : '', tail: `${data.next?.next.line ?? pending(data)}${typeof step === 'string' ? ` · ${step}` : ''}` }
     }
     if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) {
       lines[0] += ' · /forge for the board'
@@ -157,13 +156,13 @@ export function registerPane(on: On, data: Data) {
     const active = activeRows(data)
     for (const [n, line] of lines.slice(1, Math.min(3, e.props.maxRows)).entries()) {
       const item = active.length > 2 && n === 1 ? undefined : active[n]
-      const timing = item ? itemTime(item, now).slice(item.title.length + 2) : undefined
+      const timing = item ? itemTime(item, now).slice(item.title.length + 3) : undefined
       let status = timing ?? line
       // Reserve the timing cells; the native surface truncates only the title.
       if (timing && status.length >= e.props.bodyColumns) status = status.replaceAll(' ', '')
       const text = t.Text({ wrap: 'truncate-end', children: status.split('✗').flatMap((part, n) => n ? [t.Text({ color: 'red', children: '✗' }), part] : [part]) })
       children.push(item && timing ? t.Box({ flexDirection: 'row', width: e.props.bodyColumns, children: [
-        t.Box({ width: Math.max(0, e.props.bodyColumns - status.length), minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: `${item.title}: ` }) }),
+        t.Box({ width: Math.max(0, e.props.bodyColumns - status.length), minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: `${item.title} · ` }) }),
         t.Box({ width: status.length, flexShrink: 0, children: text }),
       ] }) : text)
     }

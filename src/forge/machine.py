@@ -129,8 +129,8 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
          small: bool = False) -> dict[str, Any]:
     """Join a lane; prerequisite agents go first, with arrival order within each group.
 
-    Reviews and plan reads wait on a model's API rather than this machine's cores, and a small
-    test run ends in moments, so they start at once and take no place from anyone else."""
+    Reviews, plan reads and small test runs take no place from anyone else, but every run
+    waits for the machine's load to fall below the limit."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
@@ -175,13 +175,10 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                         and not run.get("free")]
                 place = 0 if entry["free"] else lane.index(mine) - size + 1
                 busy = None
-                # A work round waits while the machine is busy, unless no other agent runs, since
-                # waiting then never lowers the load.
+                # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
                 # once; space admissions by a minute if that burst shows up in queue waits.
-                if place <= 0 and kind == "work" and any(
-                        run.get("admitted") or run["started_at"] or run.get("legacy")
-                        for run in lane if run["id"] != entry["id"]):
+                if place <= 0:
                     busy = _load_per_core()
                     busy = busy if busy is not None and busy >= LOAD_LIMIT else None
                 if place <= 0 and busy is None:
@@ -397,9 +394,43 @@ def stop(args: Any) -> int:
     held = [run for run in selected if run.get("native")]
     for run in held:
         native.cancel(run)
+    cleared = False
+    if not selected and root and repo.ITEM.fullmatch(args.item):
+        for kind in ("Build", "Grill"):
+            cleared = _clear_item_lock(root, args.item, kind) or cleared
     print("Stopped Forge's hold; stop the subagent in your session too." if held else
-          "Stopped the run." if selected else "There is nothing to stop.")
+          "Stopped the run." if selected or cleared else "There is nothing to stop.")
     return 0
+
+
+def _clear_item_lock(root: Path, item: str, kind: str) -> bool:
+    """A surviving session alone does not keep an abandoned round busy."""
+    from forge import codex
+
+    lock = codex._item_file(root, item, ".lock", kind)
+    with codex._one_at_a_time(lock), _queue() as runs:
+        if not lock.exists() or any(run["repo_root"] == root.as_posix() and run["item"] == item
+                                    for run in runs):
+            return False
+        owner = codex._json(lock)
+        alive = codex._alive(owner)
+        if "started" not in owner or alive is None:
+            raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")
+        record = lock.with_suffix(".json")
+        saved = codex._json(record)
+        entry = (saved.get("pending") or {}).get("entry") or {}
+        # Only a matching native handout proves a live owner is the surviving session,
+        # rather than a work command (including older releases without saves_chat).
+        if alive and (not entry.get("native") or any(
+                owner.get(key) != entry.get("process", {}).get(key) for key in ("pid", "started"))):
+            return False
+        if any(codex._alive(saved[key]) is not False for key in ("driver", "app_server")
+               if saved.get(key)):
+            return False
+        if saved.get("pending"):
+            codex._record(record, pending=None)
+        lock.unlink()
+        return True
 
 
 @contextlib.contextmanager

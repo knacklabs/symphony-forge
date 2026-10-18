@@ -293,6 +293,7 @@ def init(args: argparse.Namespace) -> None:
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
     repo.git("remote", "set-head", "origin", branch, cwd=top)
     sync.install_shims(top, cfg)
+    sync.install_mod(top)
     print(f"Set up Forge {cfg['version']} in one first commit on {branch}: forge.toml, the docs "
           "skeleton, and the adapters for Claude Code and Codex.")
     print(f"Pushed {branch} to origin and installed the git hooks that check each commit and push.")
@@ -348,6 +349,7 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
     repo.git("add", "-f", "--", *sorted(touched), cwd=path)
     repo.git("commit", "-q", "-m", "Adopt Forge", cwd=path)
     sync.install_shims(path, cfg)
+    sync.install_mod(path)
     print(f"Made {ADOPT_BRANCH} in {path} with one commit, not pushed yet: forge.toml marks this "
           "repo live with the tests, checks and interface folders you confirmed, AGENTS.md keeps "
           "your lines and adds the house rules, and the Forge skills and hooks are added. "

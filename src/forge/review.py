@@ -891,10 +891,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         own = block.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
         prompt += "\n\n" + string.Template(own.strip()).substitute(review_rules=rules)
     head = repo.git("rev-parse", "HEAD", cwd=top)
-    product = (sorted({name for command in (("ls-files", "-z"),
-                                            ("ls-tree", "-r", "-z", "--name-only", head))
-                       for name in repo.git(*command, cwd=top).split("\0")
-                       if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))})
+    product = ([name for name in repo.git("ls-files", "-z", f"--with-tree={head}", cwd=top).split("\0")
+                if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))]
                if signoff_prompt else [])
     _sweep()
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
@@ -915,6 +913,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
+            if previous.get("commit"):
+                merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
+                if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
+                    review_base = merged_base
         prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
@@ -932,6 +934,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 "--max-priority", "P3",  # the P0-only level applies after scoring
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
+        if model := repo.models(cfg, "review", engine):
+            argv += ["--model", f"{engine}={model['model']}"]
+            if effort := model.get("effort"):
+                argv += ["--thinking", f"{engine}={effort}"]
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
@@ -945,43 +951,39 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
-        if signoff_prompt:
-            serious = [f for f in findings if score.holds(f)]
-            repo.record_event(top, item, "review result", commit=head,
-                review_round=round_number(top, item, state),
-                outcome="failed" if reason else "blocked" if serious else "clean",
-                findings=None if reason else [{key: finding[key] for key in
-                    ("title", "priority", "file")} for finding in findings])
-            if reason:
-                repo.refuse(("The sign-off review did not finish: " + reason + ".",
-                             "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            if serious:
-                repo.refuse(("Customer sign-off review found a blocking issue: "
-                             + "; ".join(f["title"] for f in serious) + ".",
-                             "fix the prototype, then forge decision accept client-signoff --by \"<name>\""))
-            if repo.git("rev-parse", "HEAD", cwd=top) != head or repo.git(
-                    "status", "--porcelain", "--", "docs/product/BRIEF.md", *product, cwd=top):
-                repo.refuse(("The prototype differs from the reviewed commit.",
-                             "commit the changes, then forge decision accept client-signoff --by \"<name>\""))
-            return {"commit": head}
-        if reason:
+        if reason and not signoff_prompt:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    history = _history(top, item, base, previous)
-    settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
-    findings = [finding for finding in findings if not settled.get(
-        score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
-    _bound_findings(top, item, state, previous, head, findings)
-    dismissals = [{"finding": number, "because": reason.removeprefix("dismissed because "), "carried": True}
-                  for number, finding in enumerate(findings, 1)
-                  if (reason := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
-                  and not (reason.startswith("dismissed because ") and _cited_changed(top, history, key, head))]
-    result = {"findings": findings, "dismissals": dismissals,
-              "blocking_level": "P0" if light else "P1"}
-    identity = repo.record_event(top, item, "review result", commit=head,
-                                 review_round=round_number(top, item, state),
-                                 outcome="blocked" if blocking(result) else "clean",
-                                 findings=[{key: finding[key] for key in ("title", "priority", "file")}
-                                           for finding in findings])
+        result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
+        if not signoff_prompt:
+            history = _history(top, item, base, previous)
+            settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
+            findings = [finding for finding in findings if not settled.get(
+                score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
+            _bound_findings(top, item, state, previous, head, findings)
+            result.update(findings=findings, dismissals=[
+                {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
+                for number, finding in enumerate(findings, 1)
+                if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
+                and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
+        serious = blocking(result)
+        identity = repo.record_event(top, item, "review result", commit=head,
+            review_round=round_number(top, item, state),
+            outcome="failed" if reason else "blocked" if serious else "clean",
+            findings=None if reason else [{key: finding[key] for key in
+                ("title", "priority", "file")} for finding in findings])
+        if signoff_prompt:
+            if reason:
+                problem, action = "The sign-off review did not finish: " + reason + ".", "check Autoreview"
+            elif serious:
+                problem = "Customer sign-off review found a blocking issue: " + "; ".join(
+                    f["title"] for _, f in serious) + "."
+                action = "fix the prototype"
+            elif repo.git("rev-parse", "HEAD", cwd=top) != head or repo.git(
+                    "status", "--porcelain", "--", "docs/product/BRIEF.md", *product, cwd=top):
+                problem, action = "The prototype differs from the reviewed commit.", "commit the changes"
+            else:
+                return {"commit": head}
+            repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     return {"id": identity, "commit": head, **result,
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
@@ -1083,10 +1085,8 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
             sys.stderr.buffer.write(line)
             sys.stderr.flush()
             last = line.decode("utf-8", "replace").strip() or last
-            if last.startswith("model: "):
-                selected["model"] = last.removeprefix("model: ")
-            elif last.startswith("thinking: "):
-                selected["effort"] = last.removeprefix("thinking: ")
+            if match := re.fullmatch(r"(model|thinking): (.*)", last):
+                selected[{"model": "model", "thinking": "effort"}[match[1]]] = match[2]
             elif match := re.fullmatch(
                     r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
                 selected["model"] = match[1]
@@ -1181,12 +1181,9 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
     script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet,
                                       spent=str(folder.parent / SPENT)), encoding="utf-8")
-    if os.name == "nt":
-        launcher = folder / f"{engine}.cmd"
-        launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")
-    else:
-        launcher = folder / engine
-        launcher.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n',
-                            encoding="utf-8")
+    launcher = folder / (f"{engine}.cmd" if os.name == "nt" else engine)
+    launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n' if os.name == "nt" else
+                        f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n', encoding="utf-8")
+    if os.name != "nt":
         launcher.chmod(0o755)
     return launcher

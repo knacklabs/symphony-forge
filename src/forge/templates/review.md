@@ -295,7 +295,9 @@ missing, the changed line nearest the gap).
 <!-- repair-review -->
 ## Repair review
 The previous review checked commit $reviewed. From this second or later round, review only the
-previous round's findings and the diff since that commit, supplied as the review base. For each
+previous round's findings and the diff since that commit, supplied as the review base. If the
+default branch was merged since that review, the supplied base instead shows this change's full
+diff against its new merge base, excluding work from the default branch. For each
 previous finding, say fixed or not fixed in your review summary; return each not fixed finding
 with its previous title and file. Read unchanged code only as context for those findings or the
 changed lines. Do not start a fresh review of the whole branch or proof list.
