@@ -23,8 +23,8 @@
     "id": "500b426d-ebad-44c5-8218-22e920bd0bda",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T12:53:36.910635+00:00",
@@ -40,10 +40,10 @@
     }
   ],
   "stuck": {
-    "close": "11b5b60d-cbd1-4e51-af63-7e1fc8775269",
-    "head": "3b6d35f40ff283a4d7a631adcd0e66457f0ec427",
+    "close": "74225f14-c695-49ab-b80e-d03e541be973",
+    "head": "c332ac89476fb63c0ad3af59aaddac22a754c0be",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "After cold reads pass, the coordinator brings the plan straight to approval, so the choices it made alone while answering the read notes never reach the human",
   "worker": "codex"
