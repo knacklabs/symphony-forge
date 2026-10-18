@@ -330,7 +330,8 @@ def _left(tmp_path: Path) -> list[str]:
 
 def _end_left(path: Path) -> list[str]:
     """Wait for the processes that name path to go, end any still there, and return those."""
-    for _ in range(20):  # a process the test just ended may take a moment to go
+    grace_seconds = float(os.environ.get("PYTEST_PROCESS_GRACE_SECONDS", "10"))
+    for _ in range(int(grace_seconds * 2)):  # a process the test just ended may take a moment to go
         left = _left(path)
         if not left:
             return []
