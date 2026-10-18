@@ -1,0 +1,15 @@
+{
+  "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
+  "branch": "fix/fresh-test-timings",
+  "done_when": "CI splits by fresh test timings that name only existing tests, and the suite uses whichever xdist scheduling measured faster on the same run",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T11:11:50.314164+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The CI test groups are split by test timings from 12 October that name about 100 tests that no longer exist, and pytest-xdist uses its default scheduling"
+}
