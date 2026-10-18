@@ -1,0 +1,15 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/round-token-totals",
+  "done_when": "Each worker, reader and review record holds the round's total input, cached and output tokens across all its turns, and a test with a two-turn round records the sum",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T16:59:04.384317+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Worker, reader and review records keep only the last turn's tokens, not the round's total, so Forge's cost figures are wrong"
+}
