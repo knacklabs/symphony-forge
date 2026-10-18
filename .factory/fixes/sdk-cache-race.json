@@ -1,6 +1,13 @@
 {
   "base": "f81778ef0dd877a2f54d7f1e6a9d7bcec6f7b10a",
   "branch": "fix/sdk-cache-race",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14cd0-27c4-7af2-8000-d6efdd881d64",
+    "head": null,
+    "start": "a8efba96de250656d97e46a7f6cb6a70e5d9f08c"
+  },
   "done_when": "Parallel test workers never see a half-built or missing cached SDK: the rebuild builds in a private folder and moves it into place under a lock, and a test with two concurrent rebuilds passes",
   "fix_kind": "mechanical",
   "kind": "fix",
