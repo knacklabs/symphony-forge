@@ -129,6 +129,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                               "close again and retrying the merge.", flush=True)
                         close.close(argparse.Namespace(item=item, dismiss=None, because=None,
                                     wait_for_progress=getattr(args, "wait_for_progress", False),
+                                    check_slot=getattr(args, "check_slot", None),
                                     land_rounds=getattr(args, "land_rounds", None),
                                     pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
                         return merge(args, refreshed=True)

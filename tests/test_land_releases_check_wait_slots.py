@@ -1,23 +1,47 @@
 """A saturated land queue lends a running-check wait's place to independent work.
 
-The real commands own admission, close, checks and merges. GitHub holds the oldest
-change's checks until an independent change reaches review; existing queue coverage
-does not hold checks while all local places are occupied. No production seam is used.
+The real commands own admission, close, checks and merges in src/forge/land.py.
+GitHub advances main at the first merge, then holds the refreshed close's checks
+until an independent change reaches review. This also covers the behind-base
+retry in src/forge/merge.py, which must preserve the queue's check-slot handoff.
 """
 
 import json
 
 from conftest import machine_cores
 from test_close import env  # noqa: F401
-from test_queue_land_all import _edit, _fix, client  # noqa: F401
+from test_queue_land_all import _edit, _fix, _number, client  # noqa: F401
 
 STORY = "land-frees-ci-slots"
 
 
-HELD_CHECKS = '''if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
+HELD_CHECKS = '''behind = here / "base-behind"
+original_pr = pr
+
+
+def pr(key):
+    found = original_pr(key)
+    if (found and found["headRefName"] == "fix/base" and behind.exists()
+            and found["headRefOid"] == behind.read_text("utf-8")):
+        return {**found, "mergeStateStatus": "BEHIND"}
+    return found
+
+
+if args[:2] == ["pr", "merge"]:
+    found = pr(args[2])
+    if found and found["headRefName"] == "fix/base" and not behind.exists():
+        before = heads()["refs/heads/main"]
+        moved = subprocess.run(["git", "commit-tree", before + "^{tree}", "-p", before,
+                                "-m", "Another pull request merged"], cwd=remote,
+                               capture_output=True, text=True, check=True).stdout.strip()
+        subprocess.run(["git", "update-ref", "refs/heads/main", moved, before],
+                       cwd=remote, check=True)
+        behind.write_text(found["headRefOid"], encoding="utf-8")
+        answer("The base branch is out of date.", 1)
+if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
     branch = subprocess.run(["git", "branch", "--show-current"], capture_output=True,
                             text=True).stdout.strip()
-    if branch == "fix/base":
+    if branch == "fix/base" and behind.exists():
         history = here / "held-checks.jsonl"
         reviews = here.parent / "review-starts.jsonl"
         released = reviews.exists() and any(
@@ -61,6 +85,10 @@ def test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressur
 
     assert done.returncode == 0, done.stdout + done.stderr
     lines = done.stdout.splitlines()
+    assert any("main moved; Forge is merging it into this branch" in line for line in lines), done.stdout
+    attempts = env.gh_calls("pr", "merge", _number("fix/base"))
+    assert len(attempts) == 2, attempts
+    assert attempts[0][-1] != attempts[1][-1], attempts  # refreshed head after main moves
     assert lines.index("Starting independent.") < lines.index("base merged."), done.stdout
     assert lines.index("independent merged.") < lines.index("base merged."), done.stdout
     assert lines.index("base merged.") < lines.index("Starting child."), done.stdout
