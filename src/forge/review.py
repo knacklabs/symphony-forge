@@ -504,7 +504,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 env["FORGE_CLOSE_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
-                entry.update(output_path=log.as_posix())
+                entry.update(output_path=log.as_posix(), test_cpus=int(workers))
                 with log.open("w", encoding="utf-8") as sink, subprocess.Popen(
                                       command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,

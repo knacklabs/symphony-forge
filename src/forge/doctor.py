@@ -464,9 +464,17 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"Everything {'checks' if trusted or cfg['tools'] == 'claude' else 'else checks'} out for Forge {cfg['version']}.")
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
-    budget = machine.half_cores()
+    runners = machine.busy_runners()
+    budget = machine.half_cores(runners)
     print(f"This machine: {cores} cores, so {budget} agents at once and "
-          f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+          f"{machine.test_slots(runners)} test runs at once, each on {budget} cores.")
+    memory = machine.memory()
+    free = memory["available_bytes"]
+    available = "unknown" if free is None else f"{free / 1e9:.1f} GB"
+    print(f"Memory: {available} free, floor {machine.memory_floor(memory) / 1e9:.1f} GB.")
+    processes = sum(run.get("test_cpus", budget) for run in machine.entries()
+                    if run["kind"] == "test" and run.get("started_at"))
+    print(f"Test processes in use: {processes}; busy runners: {runners} ({runners} cores reserved).")
     if os.name != "nt":
         processes = repo.run("ps", "-axo", "command=")
         if processes.returncode == 0 and re.search(

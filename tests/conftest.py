@@ -37,6 +37,9 @@ if hasattr(os, "getloadavg"):
     os.getloadavg = lambda: (0.0, 0.0, 0.0)
 signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
+from forge import machine
+machine.memory = lambda: {{"total_bytes": 16_000_000_000, "available_bytes": 8_000_000_000}}
+machine.busy_runners = lambda: 0
 from forge.cli import main
 sys.exit(main())
 """

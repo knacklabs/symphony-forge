@@ -1,5 +1,6 @@
 """The repos this machine has used with Forge, and its line of Forge agent runs."""
 import contextlib
+import csv
 import json
 import os
 import sys
@@ -32,14 +33,16 @@ COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
     "listing": "| `forge stop <item>` | Person only: stops the item's runs in this repo (`--repo <root>` or `--id <id>`) |"}]
 
 
-def half_cores() -> int:
+def half_cores(runners: int | None = None) -> int:
     """The shared budget for agents and tests, including Python 3.11 and unknown counts."""
-    return max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2)
+    cores = (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2
+    return max(1, cores - (busy_runners() if runners is None else runners))
 
 
 def test_cpus() -> str:
     """The test processes for one test run: a worker's own budget, else half the cores."""
-    return os.environ.get("FORGE_TEST_CPUS") or str(half_cores())
+    budget = half_cores()
+    return str(min(int(os.environ.get("FORGE_TEST_CPUS") or budget), budget))
 
 
 def worker_env() -> dict[str, str]:
@@ -49,6 +52,29 @@ def worker_env() -> dict[str, str]:
 
 
 LOAD_LIMIT = 1.5
+MEMORY_FLOOR = 1_500_000_000
+
+
+def memory_floor(reading: dict[str, int | None]) -> int:
+    return max(MEMORY_FLOOR, (reading["total_bytes"] or 0) // 10)
+
+
+def busy_runners() -> int:
+    """Each local Actions job leaves one core out of Forge's half-core budget."""
+    with contextlib.suppress(OSError, repo.Refused, csv.Error):
+        if os.name == "nt":
+            listed = repo.run("tasklist", "/FO", "CSV", "/NH")
+            if listed.returncode == 0:
+                return sum(bool(row) and row[0].casefold() == "runner.worker.exe"
+                           for row in csv.reader(listed.stdout.splitlines()))
+        else:
+            listed = repo.run("ps", "-axo", "comm=")
+            if listed.returncode == 0:
+                commands = (line.strip() for line in listed.stdout.splitlines())
+                return sum(command == "Runner.Worker" or
+                           (command.startswith("/") and Path(command).name == "Runner.Worker")
+                           for command in commands)
+    return 0
 
 
 def _load_per_core() -> float | None:
@@ -58,9 +84,9 @@ def _load_per_core() -> float | None:
     return None
 
 
-def test_slots() -> int:
+def test_slots(runners: int | None = None) -> int:
     """One test run per four available cores, with at least one place."""
-    return max(1, half_cores() // 2)
+    return max(1, half_cores(runners) // 2)
 
 
 def _repos_file() -> Path:
@@ -130,7 +156,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
     """Join a lane; prerequisite agents go first, with arrival order within each group.
 
     Reviews, plan reads and small test runs take no place from anyone else, but every run
-    waits for the machine's load to fall below the limit."""
+    waits for the machine's load and memory to allow a start."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
@@ -160,13 +186,18 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None, "round": round_number, "unblocks": unblocks,
              "output_path": None, "progress": None, "free": small or kind in ("read", "review")}
-    size = test_slots() if kind == "test" else half_cores()
     with _queue() as runs:
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
     try:
         said: int | str = 0
         while True:
+            runners = busy_runners()
+            size = test_slots(runners) if kind == "test" else half_cores(runners)
+            reading = memory()
+            floor = memory_floor(reading)
+            available = reading["available_bytes"]
+            low_memory = available is not None and available < floor
             with _queue() as runs:
                 mine = next((run for run in runs if run["id"] == entry["id"]), None)
                 if mine is None:
@@ -181,13 +212,18 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 if place <= 0:
                     busy = _load_per_core()
                     busy = busy if busy is not None and busy >= LOAD_LIMIT else None
-                if place <= 0 and busy is None:
+                if place <= 0 and busy is None and not low_memory:
                     # Admission holds the place before the model process is launched.
                     mine["admitted"] = entry["admitted"] = True
-            if place <= 0 and busy is None:
+            if place <= 0 and busy is None and not low_memory:
                 _lane_event(entry, "lane admitted")
                 return entry
-            if busy is not None:
+            if place <= 0 and low_memory:
+                if said != "memory":
+                    print(f"This run is waiting for memory: {available / 1e9:.1f} GB free, "
+                          f"starts above {floor / 1e9:.1f} GB.", flush=True)
+                    said = "memory"
+            elif busy is not None:
                 if said != "busy":
                     print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
                           f"until it is under {LOAD_LIMIT}.", flush=True)
@@ -294,9 +330,10 @@ def view() -> dict[str, Any]:
     for run in runs:
         run["process"] = {key: value for key, value in run["process"].items()
                           if key in ("pid", "started")}
+    runners = busy_runners()
     return {name: {"size": size, "entries": [run for run in runs
             if (run["kind"] == "test") == (name == "tests")]}
-            for name, size in (("agents", half_cores()), ("tests", test_slots()))}
+            for name, size in (("agents", half_cores(runners)), ("tests", test_slots(runners)))}
 
 
 def lanes(args: Any) -> int:
@@ -331,10 +368,10 @@ def lanes(args: Any) -> int:
     return 0
 
 
-def load() -> dict[str, Any]:
-    """OS measurements; unavailable values stay null, never invented."""
+def memory() -> dict[str, int | None]:
+    """Available memory from the OS; an unreadable source never holds a run."""
     memory: dict[str, int | None] = {"total_bytes": None, "available_bytes": None}
-    with contextlib.suppress(OSError, ValueError, AttributeError):
+    with contextlib.suppress(OSError, ValueError, AttributeError, KeyError, IndexError, repo.Refused):
         if sys.platform == "linux":
             values = {line.split()[0]: int(line.split()[1]) * 1024
                       for line in Path("/proc/meminfo").read_text().splitlines()}
@@ -345,8 +382,7 @@ def load() -> dict[str, Any]:
             page_size = int(stats[0].split("of ")[1].split()[0])
             pages = {key: int(value.strip().rstrip(".")) for line in stats[1:]
                      if ":" in line for key, value in [line.split(":", 1)]}
-            memory["available_bytes"] = page_size * sum(pages.get(key, 0) for key in
-                ("Pages free", "Pages inactive", "Pages speculative"))
+            memory["available_bytes"] = page_size * (pages["Pages free"] + pages["Pages inactive"])
         elif os.name == "nt":
             import ctypes
             class Memory(ctypes.Structure):
@@ -358,10 +394,15 @@ def load() -> dict[str, Any]:
             status.length = ctypes.sizeof(status)
             if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
                 memory.update(total_bytes=status.total, available_bytes=status.available)
+    return memory
+
+
+def load() -> dict[str, Any]:
+    """OS measurements; unavailable values stay null, never invented."""
     average = None
     with contextlib.suppress(OSError):
         average = list(os.getloadavg()) if hasattr(os, "getloadavg") else None
-    return {"load": average, "memory": memory}
+    return {"load": average, "memory": memory()}
 
 
 def stop(args: Any) -> int:
