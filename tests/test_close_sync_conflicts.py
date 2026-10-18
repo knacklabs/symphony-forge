@@ -45,7 +45,7 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
             "from pathlib import Path\n"
             "root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip()\n"
             "sys.path.insert(0, str(Path(root) / 'src'))\n"
-            "from forge.cli import main\nsys.exit(main())\n"))
+            + conftest.IDLE_MACHINE + "from forge.cli import main\nsys.exit(main())\n"))
     repo.git("checkout", "-q", "-b", "fix/setup")
     repo.write(".factory/fixes/setup.json", json.dumps({"kind": "fix", "status": "working",
                "branch": "fix/setup", "why": "Set up Forge", "done_when": "Forge is set up"}))

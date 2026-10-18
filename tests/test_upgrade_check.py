@@ -24,7 +24,7 @@ import forge
 forge.__version__ = "<version>"
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", conftest.IDLE_MACHINE + "from forge.cli import main")
 
 # Stands in for uv at its edge: records the call, and installs the release its tag names.
 UV_STUB = """#!{python}

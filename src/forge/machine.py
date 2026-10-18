@@ -151,6 +151,17 @@ def _unblocks(top: Path, item: str) -> bool:
     return False
 
 
+def _admitted(run: dict[str, Any]) -> bool:
+    return bool(run.get("admitted") or run.get("started_at") or run.get("legacy"))
+
+
+def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
+    """Running rounds retain capacity, but do not become waiters when the budget shrinks."""
+    if run.get("free") or _admitted(run) or lane.index(run) < size:
+        return 0
+    return 1 + sum(not _admitted(row) for row in lane[:lane.index(run)])
+
+
 def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None,
          small: bool = False) -> dict[str, Any]:
     """Join a lane; prerequisite agents go first, with arrival order within each group.
@@ -204,7 +215,8 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
                         and not run.get("free")]
-                place = 0 if entry["free"] else lane.index(mine) - size + 1
+                place = _place(mine, lane, size)
+                occupied = sum(_admitted(run) for run in lane)
                 busy = None
                 # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
@@ -229,7 +241,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                           f"until it is under {LOAD_LIMIT}.", flush=True)
                     said = "busy"
             elif place != said:
-                print(f"{size} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
+                print(f"{max(size, occupied)} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
                       f"its turn: it is number {place} in line."
                       + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""), flush=True)
                 said = place
@@ -346,8 +358,7 @@ def lanes(args: Any) -> int:
         for run in lane["entries"]:
             if run.get("version") != __version__:
                 continue
-            run["place"] = (0 if run["started_at"] or run.get("free")
-                            else max(0, counted.index(run) - lane["size"] + 1))
+            run["place"] = _place(run, counted, lane["size"])
             at = run["started_at"] or run["joined_at"]
             run["elapsed"] = max(0, (now - datetime.fromisoformat(at)).total_seconds())
             rows.append(run)
@@ -515,7 +526,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 retained.append(run)
         runs[:] = retained
         agents = iter(sorted((run for run in runs if run["kind"] != "test"), key=lambda run:
-            0 if run.get("admitted") or run["started_at"] or run.get("legacy") else
+            0 if _admitted(run) else
             1 if run.get("unblocks") else 2))
         runs[:] = [run if run["kind"] == "test" else next(agents) for run in runs]
         yield runs

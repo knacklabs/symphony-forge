@@ -29,6 +29,11 @@ ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
+IDLE_MACHINE = """from forge import machine
+machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
+machine.busy_runners = lambda: 0
+"""
+
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
 import os, signal, sys
@@ -37,12 +42,9 @@ if hasattr(os, "getloadavg"):
     os.getloadavg = lambda: (0.0, 0.0, 0.0)
 signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
-from forge import machine
-machine.memory = lambda: {{"total_bytes": 16_000_000_000, "available_bytes": 8_000_000_000}}
-machine.busy_runners = lambda: 0
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", IDLE_MACHINE + "from forge.cli import main")
 
 
 def machine_cores(repo, count, system_count=None):

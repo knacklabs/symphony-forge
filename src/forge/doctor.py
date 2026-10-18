@@ -472,9 +472,10 @@ def doctor(args: argparse.Namespace) -> int:
     free = memory["available_bytes"]
     available = "unknown" if free is None else f"{free / 1e9:.1f} GB"
     print(f"Memory: {available} free, floor {machine.memory_floor(memory) / 1e9:.1f} GB.")
-    processes = sum(run.get("test_cpus", budget) for run in machine.entries()
-                    if run["kind"] == "test" and run.get("started_at"))
-    print(f"Test processes in use: {processes}; busy runners: {runners} ({runners} cores reserved).")
+    allocations = [run.get("test_cpus") for run in machine.entries()
+                   if run["kind"] == "test" and run.get("started_at")]
+    processes = "unknown" if None in allocations else str(sum(allocations))
+    print(f"Test processes in use: {processes}. Busy runners: {runners} ({runners} cores reserved).")
     if os.name != "nt":
         processes = repo.run("ps", "-axo", "command=")
         if processes.returncode == 0 and re.search(
