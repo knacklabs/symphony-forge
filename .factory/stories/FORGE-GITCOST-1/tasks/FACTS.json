@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-GITCOST-1-FACTS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T08:39:17.481537+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "728bc8549fd181681dd5be371869a90049b5dd4e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
