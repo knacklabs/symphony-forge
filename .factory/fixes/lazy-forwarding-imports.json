@@ -1,5 +1,5 @@
 {
-  "allow_large": "The owner directed this worker to commit the import-only change after the interface-glob refusal. Allow src/forge/cli.py to move release lookup imports into its Forge-checkout branch; no command interface changes.",
+  "allow_large": "Load the forwarding lookup's imports lazily in cli.py; no command interface changes",
   "base": "656f68887541b0da388b43920126917a167d8812",
   "branch": "fix/lazy-forwarding-imports",
   "chat": {
