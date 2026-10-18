@@ -1,0 +1,15 @@
+{
+  "base": "948cc898f3acb7c12b27e4451d754aaf40ae7f93",
+  "branch": "fix/sdk-cache-race-ci",
+  "done_when": "The tests' cached SDKs are never missing for a running test under pytest-xdist on Linux CI: the cause is found and fixed, and a test with parallel workers using and rebuilding the cache passes repeatedly",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T13:55:56.014701+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "CI still fails at random with 'The Claude Agent SDK isn't installed' in unrelated tests, three times on 18 October, after the lock-based cache fix merged"
+}
