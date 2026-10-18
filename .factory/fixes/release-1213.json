@@ -4,12 +4,20 @@
   "done_when": "Forge's version is 1.2.13 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T04:49:36.998971+00:00",
       "step": "start"
     }
   ],
-  "why": "Clients need v1.2.13 for the fixes to their reported issues (stale reviews after a replay, silent land waits, late pane events, image deletes, outside pull requests, docs-only and records-only skips, review model, load check, dropping a fix) and faster board and pane reads, merged since v1.2.12"
+  "stuck": {
+    "close": null,
+    "head": "10b3446253b213884d0a595f9fdf3ea34c5495c5",
+    "keys": {},
+    "round": null
+  },
+  "why": "Clients need v1.2.13 for the fixes to their reported issues (stale reviews after a replay, silent land waits, late pane events, image deletes, outside pull requests, docs-only and records-only skips, review model, load check, dropping a fix) and faster board and pane reads, merged since v1.2.12",
+  "worker": "codex"
 }
