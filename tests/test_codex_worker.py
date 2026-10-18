@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -79,7 +80,8 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
         if build is None:
             return data
         python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-        subprocess.run([uv, "venv", "-q", "--python", "3.11", str(build)], check=True)
+        # The cache outlives repo fixtures and their private uv Python install homes.
+        subprocess.run([uv, "venv", "-q", "--python", sys.executable, str(build)], check=True)
         subprocess.run([uv, "pip", "install", "-q", "--python", str(python), "--no-deps",
                         f"openai-codex=={PIN}"], check=True)
         site = Path(subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
