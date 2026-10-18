@@ -39,8 +39,8 @@
     "id": "7354090c-e72c-48d7-b115-8004aedabc19",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T10:43:53.558893+00:00",
@@ -60,13 +60,10 @@
     }
   ],
   "stuck": {
-    "close": "6d273ccc-dbbe-4299-9db7-eb76b93f718d",
-    "head": "720b908a4b06d3551e85dbb8e8666d3cbfe47854",
-    "keys": {
-      "close's tests failing": 1,
-      "the review finding \"Forward the check-slot callback through the behind-base retry\" in src/forge/merge.py": 1
-    },
-    "round": 1
+    "close": "4e985cb9-0d7b-4420-9fed-b682770545c3",
+    "head": "a726aa40adf6fa8de911a63530b9a7e60b303b25",
+    "keys": {},
+    "round": 2
   },
   "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing",
   "worker": "codex"
