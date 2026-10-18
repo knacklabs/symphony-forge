@@ -1,0 +1,46 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-upgrade-ci-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14dba-5e43-7460-8539-b9d2a6d3cb0f",
+    "head": null,
+    "start": "f3644651fcd841f53d9fc4b10ffdae22a1e81635"
+  },
+  "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bb301c818980a3ea15605a0c0e25603a373614d154819e43d98b5ba7b7b2f18b",
+    "changed": "184a5ed89b348c9189a906b0e669ab84e7fc771fd31b428dd7ab4d6a8f73c098",
+    "commit": "1aefceba74ffa82c7d49da22d4c97d0af2f95cf3",
+    "dismissals": [],
+    "findings": [],
+    "id": "17e27d43-f934-47e8-ae99-3471a0a2960d",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:34:27.691472+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:18:46.731530+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "38ffa137d506904de6a1c668dba021035b9c827f",
+    "keys": {},
+    "round": null
+  },
+  "why": "The upgrade and CI-runner tests repeat adopted rows on paths that never read adoption history",
+  "worker": "codex"
+}

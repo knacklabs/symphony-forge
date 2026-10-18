@@ -79,7 +79,9 @@ def test_probe(n):
 """
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-repo", "existing-repo"])
+@pytest.mark.parametrize("adopted,lane_adapter", [
+    (False, "claude"), (False, "codex"), (True, "claude")],
+    indirect=["lane_adapter"], ids=["claude-new-repo", "codex-new-repo", "claude-existing-repo"])
 def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person, lane_adapter, adopted):
     repo = env.repo
     _release(env, adopted, lane_adapter)

@@ -47,6 +47,9 @@ def _earlier_release(env, *, real_uv=False):
     # its actual close, tests, review and GitHub checks decide whether this command succeeds.
     _install(env.repo.bin, "uv", f'''#!{sys.executable}
 import json, os, pathlib, subprocess, sys
+# Match FORGE_SHIM's idle machine when the selected release runs in this process.
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 args = sys.argv[1:]
 here = pathlib.Path(__file__).resolve().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:

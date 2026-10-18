@@ -31,8 +31,8 @@ sys.exit(subprocess.run([{json.dumps(real)}, *sys.argv[1:]]).returncode)
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env, monkeypatch, previous):
-    client(env, previous)
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
+    client(env, previous)
     item, where = env.start_fix()
     git_calls = count_git(env.repo)
     warmed = env.repo.forge("next", "--json")
@@ -40,6 +40,8 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
     assert len(lists(env)) == 8
     assert row(json.loads(warmed.stdout), item)["pr"]["number"] is None
 
+    # Hold close just before expiry, regardless of how long its commands take.
+    monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=59)).isoformat())
     # The old contract invalidated every worktree's lists on create, edit and ready.
     # Close still publishes each change, but cached readers see it at the next expiry.
     for existing in (False, True):

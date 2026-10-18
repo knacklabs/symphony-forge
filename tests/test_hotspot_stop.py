@@ -64,7 +64,6 @@ def _carried_dismissal_cannot_stop_the_third_review(env):
 
 @pytest.mark.parametrize("case,details", [
     *[(_other_blocked_reviews_keep_the_existing_refusal, details) for details in (
-        (["src/a.py", "src/b.py", "src/c.py"], True),
         (["src/a.py", "src/a.py"], True),
         (["src/branch.py"] * 3, False),
         (["src/$cache.py"] * 3, True))],

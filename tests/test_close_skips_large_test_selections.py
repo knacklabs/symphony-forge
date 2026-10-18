@@ -13,10 +13,18 @@ from test_close import env, run  # noqa: F401
 STORY = "FIX-SKIP-LARGE-LOCAL-TESTS"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
-@pytest.mark.parametrize("fast", [False, True], ids=["default-picker", "fast-test-picker"])
-@pytest.mark.parametrize("checks", ["red", "green", "without-tests"])
-@pytest.mark.parametrize("selection", [2, 3, "shared"])
+@pytest.mark.parametrize("adopted,fast,checks,selection", [
+    *[(False, fast, checks, selection)
+      for fast in (False, True)
+      for checks in ("red", "green", "without-tests")
+      for selection in (2, 3, "shared")
+      # At one third, red supplies the same successful CI response as green.
+      if checks != "red" or selection != 2],
+    (True, False, "green", 3),
+    (True, True, "green", 3),
+    (True, False, "red", "shared"),
+    (True, False, "without-tests", 2),
+])
 def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
         env, monkeypatch, adopted, fast, checks, selection):
     # Real pytest writes the receipt; only review and GitHub are faked.

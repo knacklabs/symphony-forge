@@ -230,8 +230,10 @@ def close(args: argparse.Namespace) -> int:
     _warn_fix_kind(top, state, f"origin/{default}")
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
-    changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
-    branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
+    head = repo.resolve_commit(top, "HEAD")
+    base = repo.resolve_commit(top, f"origin/{default}")
+    changed = review.fingerprint(head, item, top, state, base)
+    branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
     fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
     if switch:
@@ -282,7 +284,7 @@ def close(args: argparse.Namespace) -> int:
         if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # read after the merge, which may change the command
-        command = review.close_test(top, f"origin/{default}")
+        command = review.close_test(top, base, head=head)
         _push(top, branch)
         pr = _publish(top, item, state, branch, default, pr,
                       {"status": "reviewing", "findings": [], "dismissals": []}, evidence)

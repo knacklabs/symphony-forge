@@ -130,11 +130,15 @@ if args[:2] in (["pr", "merge"], ["pr", "view"], ["pr", "list"]):
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + fallback)
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
-@pytest.mark.parametrize("command", ["merge", "land"])
-@pytest.mark.parametrize("merge_state,conflict", [("BEHIND", False), ("DIRTY", False),
-                                                 ("DIRTY", True)],
-                         ids=["behind-clean", "hint-clean", "conflict"])
+@pytest.mark.parametrize("previous,command,merge_state,conflict", [
+    (False, "merge", "BEHIND", False),
+    (False, "land", "BEHIND", False),
+    (False, "merge", "DIRTY", True),
+    (False, "land", "DIRTY", True),
+    # Upgraded-pin recovery below covers adopted clean refresh, but not conflicts.
+    (True, "merge", "DIRTY", True),
+], ids=["new-merge-behind-clean", "new-land-behind-clean", "new-merge-conflict",
+        "new-land-conflict", "earlier-adoption-merge-conflict"])
 def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         env, tmp_path, previous, command, conflict, merge_state):
     test_log = _client(env, tmp_path, previous)
