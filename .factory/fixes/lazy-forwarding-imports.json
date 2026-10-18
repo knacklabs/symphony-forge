@@ -1,6 +1,13 @@
 {
   "base": "656f68887541b0da388b43920126917a167d8812",
   "branch": "fix/lazy-forwarding-imports",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e22-a5fc-7043-b443-708085278331",
+    "head": null,
+    "start": "06069507cf1699c688abb731e4cde05f39391290"
+  },
   "done_when": "The forwarding lookup's imports load only when the command runs in Forge's own checkout, each forge process starts at least 10 ms faster, and the forwarding tests pass for Forge's repo and for client repos",
   "fix_kind": "backend",
   "kind": "fix",
