@@ -1,6 +1,13 @@
 {
   "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
   "branch": "fix/diverged-branch-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15004-5694-7ea2-94f8-09da8f4a6960",
+    "head": null,
+    "start": "fc1d59400bbd7cd142b2aca0bed09562fbf7d91b"
+  },
   "done_when": "Close says the local and remote branches diverged and why, merges the remote branch when it merges cleanly and goes on, never force-pushes, stops with a plain next step on a conflict, and the worker brief says never to amend a pushed commit; tests cover a clean merge and a conflict",
   "fix_kind": "backend",
   "kind": "fix",
