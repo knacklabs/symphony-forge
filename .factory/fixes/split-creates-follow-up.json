@@ -4,12 +4,20 @@
   "done_when": "Split creates one follow-up fix holding every split-out finding, linked from the item and named in close's output, and the item goes on without them; a test covers a fix and a story part, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:46:20.306165+00:00",
       "step": "start"
     }
   ],
-  "why": "Choosing split at a review stop records the choice but creates no follow-up, so the split-out findings vanish"
+  "stuck": {
+    "close": null,
+    "head": "fb69d25547419cf0a24e2a44aa463544960faf95",
+    "keys": {},
+    "round": null
+  },
+  "why": "Choosing split at a review stop records the choice but creates no follow-up, so the split-out findings vanish",
+  "worker": "codex"
 }
