@@ -9,15 +9,13 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import subprocess
 import time
-import uuid
 from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _install, _install_claude_sdk
+from conftest import REAL_UV, _cached_sdk, _install, _install_claude_sdk
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -76,40 +74,23 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")
     env = data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
-    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    if (env / "forge-sdk-ready").is_file():
-        try:
-            if subprocess.run([python, "-I", "-c", "pass"], capture_output=True,
-                              timeout=10).returncode == 0:
-                return data
-        except (OSError, subprocess.TimeoutExpired):
-            pass  # A restart can remove the Python that this cached venv points to.
-    if env.exists():
-        try:
-            shutil.rmtree(env)
-        except FileNotFoundError:  # another worker removed the stale cache first
-            pass
-    build = env.with_name(f"building-{uuid.uuid4().hex}")  # parallel workers each build their own
-    build.parent.mkdir(parents=True, exist_ok=True)
-    python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    subprocess.run([uv, "venv", "-q", "--python", "3.11", str(build)], check=True)
-    subprocess.run([uv, "pip", "install", "-q", "--python", str(python), "--no-deps",
-                    f"openai-codex=={PIN}"], check=True)
-    site = Path(subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
-                               capture_output=True, text=True, check=True).stdout.strip())
-    metadata = (next(site.glob("openai_codex-*.dist-info")) / "METADATA").read_text(encoding="utf-8")
-    needs = [line.split(":", 1)[1].strip() for line in metadata.splitlines()
-             if line.startswith("Requires-Dist:") and "openai-codex-cli-bin" not in line]
-    subprocess.run([uv, "pip", "install", "-q", "--python", str(python), *needs], check=True)
-    (site / "codex_cli_bin.py").write_text(PROGRAM, encoding="utf-8")
-    info = site / f"openai_codex_cli_bin-{PIN}.dist-info"
-    info.mkdir()
-    (info / "METADATA").write_text(f"Name: openai-codex-cli-bin\nVersion: {PIN}\n", encoding="utf-8")
-    (build / "forge-sdk-ready").write_text(f"{PIN}\n", encoding="utf-8")
-    try:
-        build.rename(env)
-    except OSError:  # another worker got there first
-        shutil.rmtree(build, ignore_errors=True)
+    with _cached_sdk(env, PIN) as build:
+        if build is None:
+            return data
+        python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        subprocess.run([uv, "venv", "-q", "--python", "3.11", str(build)], check=True)
+        subprocess.run([uv, "pip", "install", "-q", "--python", str(python), "--no-deps",
+                        f"openai-codex=={PIN}"], check=True)
+        site = Path(subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+                                   capture_output=True, text=True, check=True).stdout.strip())
+        metadata = (next(site.glob("openai_codex-*.dist-info")) / "METADATA").read_text(encoding="utf-8")
+        needs = [line.split(":", 1)[1].strip() for line in metadata.splitlines()
+                 if line.startswith("Requires-Dist:") and "openai-codex-cli-bin" not in line]
+        subprocess.run([uv, "pip", "install", "-q", "--python", str(python), *needs], check=True)
+        (site / "codex_cli_bin.py").write_text(PROGRAM, encoding="utf-8")
+        info = site / f"openai_codex_cli_bin-{PIN}.dist-info"
+        info.mkdir()
+        (info / "METADATA").write_text(f"Name: openai-codex-cli-bin\nVersion: {PIN}\n", encoding="utf-8")
     return data
 
 

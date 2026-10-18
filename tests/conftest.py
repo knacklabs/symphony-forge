@@ -16,7 +16,9 @@ import sys
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, TypeVar
 
 import pytest
@@ -86,14 +88,58 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
                                              encoding="utf-8")
 
 
+def _sdk_ready(env: Path) -> bool:
+    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if (env / "forge-sdk-ready").is_file():
+        try:
+            return subprocess.run([python, "-I", "-c", "pass"], capture_output=True,
+                                  timeout=10).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            pass  # A restart can remove the Python that this cached venv points to.
+    return False
+
+
+@contextmanager
+def _cached_sdk(env: Path, pin: str):
+    """Build privately; only the publisher may replace a cache that is still broken."""
+    if _sdk_ready(env):
+        yield None
+        return
+    env.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix="building-", dir=env.parent) as folder:
+        build = Path(folder)
+        yield build
+        (build / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+        # Keep the lock outside the directory being replaced, and never unlink it:
+        # other workers must lock the same file even after a publication.
+        with env.with_suffix(".lock").open("a+b") as lock:
+            lock.seek(0)
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                if not _sdk_ready(env):
+                    if env.exists():
+                        shutil.rmtree(env)
+                    build.rename(env)
+            finally:
+                if os.name == "nt":
+                    lock.seek(0)
+                    msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(lock, fcntl.LOCK_UN)
+
+
 def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
     """A separate Python environment, with only the SDK's external edge replaced."""
     pin = "0.2.161"
     env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
-    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    if not python.is_file():
-        subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(env)], check=True)
-    (env / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+    with _cached_sdk(env, pin) as build:
+        if build is not None:
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True)
     package = bin_dir / "claude_agent_sdk"
     package.mkdir(exist_ok=True)
     shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
