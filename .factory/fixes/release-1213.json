@@ -1,4 +1,5 @@
 {
+  "allow_large": "Release version bump: the version is recorded in eight code files; no behaviour changes",
   "base": "ec508146c4911bc4a9b4db1f727d2c00695c5cea",
   "branch": "fix/release-1213",
   "chat": {
