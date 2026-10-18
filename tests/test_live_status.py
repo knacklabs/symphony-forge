@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import ROOT, _install
 
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
@@ -84,7 +84,6 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         return
     if case.startswith("read"):
         from test_story import setup, new_story, DOC
-        from conftest import ROOT, _install
         setup(repo)
         if "default" in case:
             config = repo.path / "forge.toml"

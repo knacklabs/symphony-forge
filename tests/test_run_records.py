@@ -7,7 +7,7 @@ from uuid import UUID
 
 import pytest
 
-from conftest import _install
+from conftest import ROOT, _install
 
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
@@ -196,7 +196,6 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
         require_worker_environment(repo.bin / 'claude')
     else:
         import os
-        from conftest import ROOT, _install
         sdk = request.getfixturevalue('sdk_data')
         monkeypatch.setenv('XDG_DATA_HOME', str(sdk))
         # Every Codex turn now requires project trust so Forge's hooks run, including cold reads.
@@ -256,7 +255,6 @@ def _failures_keep_run_end_occurrences(env, monkeypatch, failure):
 
 
 def _review_processes_inherit_worker_environment(env, tmp_path, monkeypatch, family):
-    from conftest import _install
     from test_claude_review_reads_the_checkout import HELPER
     from test_close import report
     repo = env.repo
@@ -413,7 +411,6 @@ def _cached_test_result_is_recorded_as_skipped(env):
 def _previously_adopted_client_records_runs_after_upgrade(unsynced_up, monkeypatch, sdk_data):
     import os
     import subprocess
-    from conftest import ROOT, _install
     from test_upgrade_command import _repo_adopted_on_the_previous_release, NAME, RELEASE
     up = unsynced_up
     _repo_adopted_on_the_previous_release(up)
