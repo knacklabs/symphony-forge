@@ -21,7 +21,7 @@
       "gain": 4,
       "harm": 3,
       "line": 53,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fd51e889147f36f97b537f7e009e6345d53ceb0bf0b21cf9309d3c6dccf56368",
-    "changed": "a97eb9c8088852f378a70e2b1ce5d7a16521f4d7bdd65c36dc8d16d089fea1b1",
-    "commit": "75f9dbeb3c443b72ce2cbe3c2dabb3ab1a2ca5b4",
+    "branch_diff": "afd989e85cdc7885b213c8e1444d3bd288b6a1924971d7ce1640bc94963dffa2",
+    "changed": "4b768cb95a2098fc6f4d03d088748bf07d09d4178a541a12fe30089c2086e83a",
+    "commit": "91ae7381c4c898d6d5703bada818a5323a7152bd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 a successful PR run against an older main tip can suppress tests for an untested merge.\nThe selection checks only the PR head and event. If two PRs pass against the same base and one lands first, the second merge still satisfies line 49, although its successful run tested a different combined tree. Additional evidence beyond the workflow-selection ruling: .github/workflows/forge.yml:31\u201344 retains the default PR merge checkout, which [GitHub documents](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request) as the PR merge commit. Recomputing a merge against the current parent does not establish what that historical run tested. This affects tests, plugin and installer reuse, and the resulting successful main workflow can subsequently suppress release tests. Verify the proof's tested merge tree before accepting it; the new tests supply no tested-base metadata and miss this stale-proof case.",
-        "file": ".github/reuse-test-proof.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 53,
-        "priority": "P1",
-        "title": "Bind reused PR proof to the tree its run actually tested",
-        "work": 2
-      }
-    ],
-    "id": "b575b0d5-1c4c-4a5a-a86f-98b965029f8e",
-    "status": "blocked"
+    "findings": [],
+    "id": "7d192d45-5b26-4ccf-8ddd-c185e9d1fa3a",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:47:32.821444+00:00",
@@ -59,6 +48,10 @@
     },
     {
       "at": "2026-10-18T17:13:27.875555+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:00:41.303993+00:00",
       "step": "review"
     }
   ],

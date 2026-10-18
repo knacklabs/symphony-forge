@@ -10,6 +10,17 @@
       "item": "reuse-test-proof",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_memory_budget.py\tCI reports two test-lane entries in the memory recovery case; this failure remains unresolved outside this fix.",
+      "kind": "bug",
+      "path": "tests/test_machine_memory_budget.py",
+      "line": 157,
+      "text": "CI reports two test-lane entries in the memory recovery case; this failure remains unresolved outside this fix.",
+      "from": "worker",
+      "item": "reuse-test-proof",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
