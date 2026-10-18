@@ -10,13 +10,29 @@
   },
   "done_when": "The listed duplicate tests and parameter rows are gone, every removed assertion that no other test owns is moved into its kept sibling, and the merge and land tests still pass",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "807b72049088a5661a5f04a4034a435a9b226eaef999d7fa7f3355e7f0d7a6ac",
+    "changed": "daed819cda3797eea0817374bf68411d198315c18ef676860a3e6f5ac17535bb",
+    "commit": "5e4ae4e58a0dab73fc7859b159e6c37afb91f38e",
+    "dismissals": [],
+    "findings": [],
+    "id": "63a63122-5f4f-4a0b-b9c6-3f9c5248610c",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T06:26:44.568322+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:09:47.142594+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
