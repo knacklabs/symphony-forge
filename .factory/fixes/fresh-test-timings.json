@@ -10,13 +10,29 @@
   },
   "done_when": "CI splits by fresh test timings that name only existing tests, and the suite uses whichever xdist scheduling measured faster on the same run",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6bd3033099aefdc633707995396caf1c66ee8bbbfa2cc165388a99a2d9e0e41b",
+    "changed": "e1c6c6ac8d4b6d9efe1a5236edeb338c8ddc0df39b82c6346842a00bd6d8d3f4",
+    "commit": "9d286005054160810b109926e010681869f5c69f",
+    "dismissals": [],
+    "findings": [],
+    "id": "0a6c9920-485b-4c6c-a559-6f820dc97d9a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T11:11:50.314164+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:56:32.587406+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

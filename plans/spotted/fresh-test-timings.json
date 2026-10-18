@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tThe full Linux run reported 0.149 seconds against a 0.15-second lower bound; the failed-only rerun passed, so the full-suite failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+      "line": 96,
+      "text": "The full Linux run reported 0.149 seconds against a 0.15-second lower bound; the failed-only rerun passed, so the full-suite failure remains unresolved.",
+      "from": "worker",
+      "item": "fresh-test-timings",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
