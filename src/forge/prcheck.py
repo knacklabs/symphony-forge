@@ -222,6 +222,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
+            ".forge/records-only/action.yml": (sync.TEMPLATES / "records-only-action.yml").read_text(encoding="utf-8"),
             ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
 
 

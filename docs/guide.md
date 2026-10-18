@@ -293,6 +293,31 @@ When the pytest selection would cover more than a third of the repo's Python tes
 relies on the pull request's required checks. `forge test` still runs its tests. New repos
 get this from init; existing repos get it on upgrade.
 
+Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
+After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
+Give the job `contents: read` and `actions: read` permissions, and fetch the full history.
+The runner needs Python, Bash and the GitHub CLI, as GitHub-hosted runners provide.
+Add the condition below to each later step that can skip the records commit:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+  - {id: forge-records, uses: ./.forge/records-only}
+  - if: steps.forge-records.outputs.records_only != 'true'
+    run: your-build-command
+```
+
+The output is `records_only=true` only for a push or pull request whose parent passed this
+same workflow. The step uses Forge's existing close-record rule. Code changes, documentation
+changes, a failed parent run or missing proof produce `false`, so the workflow runs normally.
+For pull requests, the parent must also include the current base and its run must cover that base.
+Each job that uses the step skips only its guarded steps.
+
 ## Parts that build on reviewed work
 
 New and upgraded repos use `stack = "on"` by default, with no settings change. A part can start

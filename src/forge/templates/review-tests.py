@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from urllib.parse import quote
 
@@ -60,18 +61,22 @@ def reuse() -> bool:
 
 
 docs_only = False
+records_only = "--records-only" in sys.argv[1:]
 try:
     # Sync supplies the same Git path exclusions that close and the part-size rule use.
-    if os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
+    if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
         docs_only = not run("git", "diff", "--name-only", "-z", "--no-renames",
                             f"{os.environ['BASE_SHA']}...HEAD", "--", ".",
                             *json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
-    passed = docs_only or reuse()
+    if records_only:
+        passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
+    else:
+        passed = docs_only or reuse()
 except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, OSError):
     # Missing history, unreadable records or unavailable GitHub proof runs the full suite.
     passed = False
 with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
-    output.write(f"reuse={str(passed).lower()}\n")
+    output.write(f"{'records_only' if records_only else 'reuse'}={str(passed).lower()}\n")
     if docs_only:
         output.write("docs-only=true\n")
 print("docs only: tests skipped" if docs_only else
