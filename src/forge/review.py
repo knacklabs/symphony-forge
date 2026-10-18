@@ -490,12 +490,12 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             workers = machine.test_cpus()
             # The machine budget also caps fixed xdist counts outside worker sessions.
             cap = f" --maxprocesses={workers}" if fasttest.XDIST.search(command) else ""
-            with contextlib.chdir(top):
-                capped = fasttest.narrow_command(command, [], workers, [], launchers=False)
             env = {**os.environ, "FORGE_WORKER": "1",
                    "FORGE_TEST_LANE": entry["id"],
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
+            with contextlib.chdir(top):
+                capped = fasttest.narrow_command(command, [], workers, [], environment=env, launchers=False)
             # Every pytest the command starts, the client's own or Forge's picker, loads Forge's
             # results hook, which no command option can turn off.
             hook = repo.forge_dir(top) / "pytest"

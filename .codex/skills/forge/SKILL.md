@@ -1417,7 +1417,8 @@ a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixe
 its test command is capped with `--maxprocesses`, also outside a worker session.
 Vitest and Jest commands use the same budget through `--maxWorkers`, keeping a lower limit
 already set by the command. This includes direct commands, `npx`, and npm, pnpm or yarn scripts
-that run only Vitest or Jest and are visible in `package.json`. Other runners stay as written.
+that run only Vitest or Jest and are visible in `package.json`. Serial Jest runs stay serial,
+and package scripts keep their lifecycle hooks. Other runners stay as written.
 Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
 A picker inside close or bare `forge test` shares that run's single lane entry.
 `pytest -n auto` honours

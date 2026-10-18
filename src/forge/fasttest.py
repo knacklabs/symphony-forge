@@ -57,7 +57,7 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def node_worker_budget(command: str, workers: str) -> str:
+def node_worker_budget(command: str, workers: str, environment: dict[str, str]) -> str:
     """Cap visible Vitest/Jest invocations, preserving shell text and smaller limits."""
     segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
     limit = re.compile(r'''((?<!\S)--maxWorkers(?:=|\s+))(["']?)(\d+%?)\2(?=\s|$)''')
@@ -91,19 +91,21 @@ def node_worker_budget(command: str, workers: str) -> str:
         if runner[:1] == ["npx"]:
             runner = runner[1:]
         name = runner[0].replace("\\", "/").rsplit("/", 1)[-1] if runner else ""
-        if name.removesuffix(".cmd").removesuffix(".exe") not in {"vitest", "jest"}:
+        name = name.removesuffix(".cmd").removesuffix(".exe")
+        if name not in {"vitest", "jest"}:
+            continue
+        if name == "jest" and any(arg in {"--runInBand", "-i", "--runInBand=true", "-i=true"}
+                                  for arg in words + runner):
             continue
         caps = [count(match[3]) for match in limit.finditer(text + " " + script)]
         budget = min([int(workers), *caps])
-        if script and limit.search(script) and (limit.search(text) or min(caps) > int(workers)):
-            # Vitest rejects duplicate limits; replace the script's option through its manager.
-            arguments = words[index + 1:]
-            if arguments[:1] == ["--"]:
-                arguments = arguments[1:]
-            forwarded = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
-            script = limit.sub(lambda match: f"{match[1]}{match[2]}{budget}{match[2]}", script)
-            text = words[0] + " exec" + (" --no -- " if words[0] == "npm" else " ")
-            text += script + " " + limit.sub("", forwarded)
+        if script and limit.search(script):
+            if any(cap > int(workers) for cap in caps):
+                # Replace fixed flags before Node's runner parses them, keeping the script's lifecycle.
+                hook = json.dumps(Path(__file__).with_name("node_workers.cjs").as_posix())
+                environment["NODE_OPTIONS"] = (environment.get("NODE_OPTIONS", "") + " --require " + hook).strip()
+                environment["FORGE_TEST_CPUS"] = workers
+            continue
         elif limit.search(text):
             text = limit.sub(lambda match: match[0] if count(match[3]) <= budget else
                              f"{match[1]}{match[2]}{budget}{match[2]}", text)
@@ -118,8 +120,8 @@ def node_worker_budget(command: str, workers: str) -> str:
 
 
 def narrow_command(command: str, excluded: list[str], workers: str, always: list[str], *,
-                   launchers: bool = True) -> str:
-    command = node_worker_budget(command, workers)
+                   environment: dict[str, str], launchers: bool = True) -> str:
+    command = node_worker_budget(command, workers, environment)
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -285,18 +287,19 @@ def close_tests(base: str) -> int:
         if not package.is_file():
             return 0
         command = " && ".join(part for _, part, _ in parts)
-    command = node_worker_budget(command, machine.test_cpus())
+    environment = dict(os.environ)
+    command = node_worker_budget(command, machine.test_cpus(), environment)
     parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
     if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
             for kind, part, _ in parts if kind in ("vitest", "jest")
             for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
-        return subprocess.run(command, shell=True).returncode
+        return subprocess.run(command, shell=True, env=environment).returncode
     if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
         if any(kind == "python" for kind, _, _ in parts):
             return pytest_tests(base, command)
-        return subprocess.run(command, shell=True).returncode
+        return subprocess.run(command, shell=True, env=environment).returncode
     for kind, part, passthrough in parts:
         if kind == "python":
             status = pytest_tests(base, part)
@@ -310,7 +313,7 @@ def close_tests(base: str) -> int:
                 changed = "--changed" if kind == "vitest" else "--changedSince"
                 argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
                 part += f"{passthrough} {changed} {argument} --passWithNoTests"
-            status = subprocess.run(part, shell=True).returncode
+            status = subprocess.run(part, shell=True, env=environment).returncode
         if status:
             return status
     return 0
@@ -522,11 +525,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         if entry is None:
-            return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
+            return subprocess.run(narrow_command(command, excluded, workers, always, environment=environment), shell=True,
                                   env=environment).returncode
         from forge import codex
 
-        with subprocess.Popen(narrow_command(command, excluded, workers, always), shell=True,
+        with subprocess.Popen(narrow_command(command, excluded, workers, always, environment=environment), shell=True,
                               env=environment, **codex.GROUP) as process:
             try:
                 machine.started(entry, process.pid)
