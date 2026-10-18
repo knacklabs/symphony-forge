@@ -405,9 +405,11 @@ def close(args: argparse.Namespace) -> int:
     advice = [(n, f) for n, f in enumerate(result["findings"], 1)
               if not score.holds(f, result.get("blocking_level"))]
     if advice:
-        print("Advice that does not block the merge:")
+        print("Advice that does not block the merge:" if serious else
+              "Follow-ups that do not block the merge (recorded in the pull request):")
         for number, finding in advice:
-            print(f"{number}. {finding['priority']} {finding['title']} "
+            priority = f"{finding['priority']} " if serious else ""
+            print(f"{number}. {priority}{finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     advice = review.loop_advice(top, item) if serious else []
     if advice:
