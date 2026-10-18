@@ -17,7 +17,7 @@
       "gain": 3,
       "harm": 3,
       "line": 208,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -30,7 +30,7 @@
       "gain": 3,
       "harm": 3,
       "line": 45,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,37 +41,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "157df9dd12daab11fe1e3ee59a659abb6b304d4211055cddf7f82e4772ba2c00",
-    "changed": "db0712ffe50bc603e61e955ce20e0db8d33463f5281b32b101146510bae49250",
-    "commit": "c613a9afe2968e2ea215ae03dcd8c264a4136aa9",
+    "branch_diff": "bfd8ea5b5abd8092b93c76630efb40515ade70217f53eb60c76afc1b91041d67",
+    "changed": "e196c8588d80d70db138625b0e76a991447c46315189a53ca22d9942bdff3162",
+    "commit": "73abd232612c99f1e87a76b6215a004638074ce7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Not fixed: memory admission still runs only through machine.join(). Direct `forge test --pytest <base>` calls pytest_tests at src/forge/fasttest.py:269 and launches the test command at :428 without joining, so tests start below the memory floor. The proof still invokes bare `forge test` at tests/test_machine_memory_budget.py:116, whose outer admission conceals this bypass.",
-        "file": "src/forge/machine.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 208,
-        "priority": "P1",
-        "title": "Not done: New work, reads, reviews and test runs wait while free memory is below a safe floor, and start again when it recovers.",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Not fixed: on eight cores with two busy runners, standalone `forge test` with `test = \"pytest -n 4\"`, no fast_test and no inherited FORGE_TEST_CPUS computes a two-process budget but launches four workers. src/forge/review.py:488-489 still adds --maxprocesses only when FORGE_TEST_CPUS already exists. [The xdist contract](https://pytest-xdist.readthedocs.io/en/stable/distribution.html) confirms PYTEST_XDIST_AUTO_NUM_WORKERS controls automatic counts, whereas numeric -n sets an explicit count. Runner reservations remain unenforced, and review.py:507 records only two processes, understating usage. The runner proof at tests/test_machine_memory_budget.py:180 checks environment values rather than worker counts.",
-        "file": "src/forge/machine.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 45,
-        "priority": "P1",
-        "title": "Cap fixed pytest counts when busy runners reduce the budget",
-        "work": 2
-      }
-    ],
-    "id": "5a024839-121c-4721-9a1c-549f9b5f0dce",
-    "status": "blocked"
+    "findings": [],
+    "id": "a921cc4c-9a38-4f7a-b8eb-cc2ba1675df9",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T10:26:36.882125+00:00",
@@ -83,6 +62,10 @@
     },
     {
       "at": "2026-10-18T15:51:27.310284+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T16:10:25.641040+00:00",
       "step": "review"
     }
   ],
