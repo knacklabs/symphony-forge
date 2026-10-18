@@ -20,14 +20,18 @@ STORY = "second-stop-choice"
 
 
 # ponytail: many cases, each runs several forge commands; a busy machine needs more than the 150 s default.
-@pytest.mark.parametrize("legacy", [False, True], ids=["current-choice", "pre-upgrade-choice"])
-@pytest.mark.parametrize("previous,same_file,first,second", [
-    (False, True, "narrow", "split"),
-    (True, True, "split", "narrow"),
-    (False, True, "accept", "accept"),
-    (True, False, "narrow", "accept"),
-    (False, False, "split", "split"),
-    (True, False, "accept", "narrow"),
+@pytest.mark.parametrize("legacy,previous,same_file,first,second", [
+    *[(False, *case) for case in (
+        (False, True, "narrow", "split"),
+        (True, True, "split", "narrow"),
+        (False, True, "accept", "accept"),
+        (True, False, "narrow", "accept"),
+        (False, False, "split", "split"),
+        (True, False, "accept", "narrow"),
+    )],
+    # Earlier close has two stop formats: same-file and attempted-fourth-review.
+    (True, False, True, "accept", "accept"),
+    (True, True, False, "narrow", "accept"),
 ])
 @pytest.mark.timeout(600)
 def test_1_each_new_stop_waits_for_and_records_its_own_choice(

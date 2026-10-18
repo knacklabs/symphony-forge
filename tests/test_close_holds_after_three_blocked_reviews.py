@@ -1,6 +1,7 @@
 """Close keeps both review-loop holds and their owner choices after init or upgrade."""
 STORY = "any-file-hold"
 
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -79,6 +80,10 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         assert len(env.review_calls()) == number
     round_number = 3 if same_file else 4
     if not same_file:
+        # Three different files do not trigger the third-round same-file stop.
+        state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+        assert state["status"] == "fixing"
+        assert "stop" not in state
         # Unlike the existing same-file stop, this hold refuses before spending a fourth review.
         env.commit(where, "app.py", "print('attempt fourth review')\n")
         env.reviews(CLEAN)
