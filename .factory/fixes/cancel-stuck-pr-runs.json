@@ -10,15 +10,111 @@
   },
   "done_when": "Close and doctor cancel that pull request's own older queued or stuck runs holding its concurrency group, say which run they cancelled, and keep waiting for the new run; runs of other pull requests and branches are never touched; a test covers it",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/checks.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_cancel_superseded() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 242,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Bind cancellation to the pull request being checked",
+      "work": 2
+    },
+    {
+      "area": "_cancel_superseded() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 249,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Verify concurrency membership before cancelling older runs",
+      "work": 2
+    },
+    {
+      "area": "_cancel_superseded() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 260,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Recover blockers that ignore ordinary cancellation",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6853a63716f55935ee13a8b36c30fc29d81880fa1ea5f48ebde8683bf4985d7f",
+    "changed": "48bf39eb151b8e0348ae78833512178ab7c5892c3dcda1601ad06f00a64e123e",
+    "commit": "be32553fb10700581977fa0c752c4860de82e650",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. When two PR branches point to the same commit, closing one can cancel runs belonging to the other. The helper receives no selected PR or branch and treats every queued suite returned for the commit as a cancellation candidate. GitHub's [check-runs endpoint](https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference) is commit-scoped. Consequently, another PR's queued current run can enter this loop and authorize cancellation of its older runs. Comparing candidates with `current` only isolates that other PR's group; it does not establish that this is the PR being closed. Doctor has the same problem: `src/forge/doctor.py:400` passes only the SHA. Carry the selected PR identity into recovery and filter current runs against it. The test's other-PR row has an unrelated suite, so it misses this violation of the explicit requirement that other PRs and branches remain untouched.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 242,
+        "priority": "P1",
+        "title": "[P1] Bind cancellation to the pull request being checked",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. This predicate applies Forge's inferred concurrency key to every workflow reporting checks, including existing client workflows with no concurrency setting or a per-commit group. If such a workflow's newest run is queued for runner capacity, close and doctor cancel its older active runs even though they do not hold its concurrency group. Matching workflow, event, branch and PR does not prove concurrency membership: GitHub [allows concurrent workflow runs by default](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency). The generated grouping in `src/forge/prcheck.py:49` establishes this contract only for Forge's generated workflow. Limit recovery to workflows known to use that grouping, or verify their actual group before cancellation.",
+        "file": "src/forge/checks.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 249,
+        "priority": "P1",
+        "title": "[P1] Verify concurrency membership before cancelling older runs",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional. A successful ordinary cancellation request does not ensure that a stuck run releases its concurrency group. Forge's generated `tests-passed` job uses `always()` (`src/forge/prcheck.py:93`), which can keep an older run active after cancellation. GitHub explicitly documents [force cancellation](https://docs.github.com/en/rest/actions/workflow-runs#force-cancel-a-workflow-run) for runs that do not respond to ordinary cancellation, including jobs using `always()`. This code only repeats `gh run cancel`; it never escalates when subsequent polls show the same blocker still active. Close can therefore retain the original indefinite wait while announcing that the blocker was cancelled. Add recovery for confirmed nonresponsive blockers and cover cancellation acceptance without run termination; the current fake immediately releases checks after recording cancellation.",
+        "file": "src/forge/checks.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 260,
+        "priority": "P1",
+        "title": "[P1] Recover blockers that ignore ordinary cancellation",
+        "work": 3
+      }
+    ],
+    "id": "3b8c101a-82c1-4dba-920e-0208205ba370",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-18T16:58:53.683132+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:54:46.697494+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "area": "_cancel_superseded() in src/forge/checks.py",
+    "at": "2026-10-18T17:54:46.733438+00:00",
+    "file": "_cancel_superseded() in src/forge/checks.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "wait_id": "6b649fbb-ba29-4d7a-a08a-f33c75806f13"
+  },
   "stuck": {
     "close": null,
     "head": "6cfca25934c6332bedaaf8190787b26fea58cef4",
