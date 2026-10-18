@@ -1,0 +1,15 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/cache-tests-fixed-clock",
+  "done_when": "Both cache tests run on a fixed clock Forge already supports for tests and pass on every platform in two every-platform runs",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T06:18:19.564249+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The two GitHub cache tests depend on the real clock: they fail when a run crosses a minute or a day boundary, so main's every-platform run fails at random"
+}
