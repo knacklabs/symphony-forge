@@ -3,12 +3,55 @@
   "branch": "fix/keep-main-settings-on-handback",
   "done_when": "The hand-back reverts only the worker's own forge.toml edits, keeps settings that came from merging the default branch, and a test with a round that merges main's changed settings keeps them, on new and adopted repos",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/native.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "_work_result() in src/forge/native.py",
+      "file": "src/forge/native.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 221,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve inherited settings on stacked fixes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2ac5718d4375ca0ffba8fc552b537f88d57992e11ebb93805d550e7401b0ecf1",
+    "changed": "49c051b882300a78c75e9d6a2c49ec1d7c786be317de2be8a6ff61a55f50a972",
+    "commit": "406464fe3e3ee6df871ce19fdbd2d8a5ccbb993c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. The merge-base comparison treats settings inherited before the round as this worker's edits. `src/forge/task.py:520\u2013530` explicitly starts a child fix from an unmerged parent's HEAD. If the parent legitimately changes forge.toml and the child fixes unrelated product code, settings_allowed is false for the child. Its hand-back now commits a restoration that discards the parent's settings, such as a required test command, even when the child worker never touched forge.toml. Preserve the round's inherited settings while accounting for incoming default-branch changes.",
+        "file": "src/forge/native.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 221,
+        "priority": "P1",
+        "title": "Preserve inherited settings on stacked fixes",
+        "work": 2
+      }
+    ],
+    "id": "5da12d93-cb20-4356-ac8b-51858a334620",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T12:46:55.482512+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:52:32.474753+00:00",
+      "step": "review"
     }
   ],
   "why": "When a build round merges main after main's forge.toml changed, the hand-back treats main's new settings as the worker's edit and restores the round's old copy, so merging the fix reverts main's settings"
