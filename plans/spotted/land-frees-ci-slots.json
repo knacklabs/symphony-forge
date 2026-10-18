@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tForward the check-slot callback through the behind-base retry\tland-frees-ci-slots",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 89,
+      "text": "Forward the check-slot callback through the behind-base retry",
+      "from": "blocking",
+      "item": "land-frees-ci-slots",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
