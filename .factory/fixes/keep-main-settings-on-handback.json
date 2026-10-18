@@ -1,6 +1,13 @@
 {
   "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
   "branch": "fix/keep-main-settings-on-handback",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14f12-4766-7ef0-a70b-075b5d3005c8",
+    "head": null,
+    "start": "8da8d6645d988a3c405cae2ea42c83e607817ea7"
+  },
   "done_when": "The hand-back reverts only the worker's own forge.toml edits, keeps settings that came from merging the default branch, and a test with a round that merges main's changed settings keeps them, on new and adopted repos",
   "fix_kind": "backend",
   "flagged": [
