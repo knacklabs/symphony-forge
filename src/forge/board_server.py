@@ -31,7 +31,8 @@ PLAN = re.compile(r"/plan/([A-Z][A-Z0-9-]*)")
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 # Files the derivation itself writes under Forge's folder; watching them would rebuild forever.
-WRITTEN = re.compile(r"(-cache\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|\.tmp|\.new)$")
+WRITTEN = re.compile(r"(-cache\.json|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
+                     r"\.guard|\.tmp|\.new)$")
 # ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 # How long a request waits for a rebuild before it gets the last snapshot marked as updating.
