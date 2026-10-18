@@ -406,15 +406,23 @@ def _synced_text(source: str, packaged: str) -> str:
     return (checked_in if checked_in.is_file() else TEMPLATES / packaged).read_text(encoding="utf-8")
 
 
-def files(top: Path, cfg: dict[str, Any], *, husky: str | None = None) -> dict[str, str]:
+def files(top: Path, cfg: dict[str, Any], *, husky: str | None = None,
+          check_syntax: bool = True) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     cfg = cfg.get("shared", cfg)  # a developer's forge.local.toml never reaches committed files
     wanted: dict[str, str] = {}
-    # The owners are known; rendering never needs to parse every command module.
-    for name in ("app_baseline", "approval", "githooks", "plain_english", "prcheck",
-                 "review", "roles", "story", "sync"):
-        module = importlib.import_module(f"forge.{name}")
-        output = (module.ships(top, cfg, husky=husky) if name == "githooks"
+    for info in pkgutil.iter_modules(forge.__path__):
+        if info.ispkg:
+            continue
+        source = (Path(info.module_finder.path) / f"{info.name}.py").read_text(encoding="utf-8")
+        # Sync validates every owner; the commit check only needs their declarations.
+        owns_files = (any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                          and node.name == "ships" for node in ast.parse(source).body)
+                      if check_syntax else re.search(r"^(?:async\s+)?def ships\s*\(", source, re.M))
+        if not owns_files:
+            continue
+        module = importlib.import_module(f"forge.{info.name}")
+        output = (module.ships(top, cfg, husky=husky) if info.name == "githooks"
                   else module.ships(top, cfg))
         for rel, text in output.items():
             if rel in wanted:
@@ -473,7 +481,8 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
             target = snapshot / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
-        wanted = files(snapshot, cfg, husky=hooks.relative_to(top).as_posix() if hooks else "")
+        wanted = files(snapshot, cfg, husky=hooks.relative_to(top).as_posix() if hooks else "",
+                       check_syntax=False)
     candidates = [path for path in paths if path in wanted]
     if not candidates:
         return set()

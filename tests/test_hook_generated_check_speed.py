@@ -46,7 +46,8 @@ def test_2_generated_file_check_is_fast_and_checks_the_whole_fix(repo, kind):
     log = repo.bin / "generated-check.jsonl"
     shim = repo.bin / "forge"
     shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main", f'''
-import json, time
+import ast, json, time
+from forge import sync
 active = None
 parses = 0
 commands = []
@@ -54,21 +55,26 @@ def observe(event, args):
     if active is not None and event == "subprocess.Popen":
         commands.append(args[1])
 sys.addaudithook(observe)
-def profile(frame, event, result):
-    global active, parses, commands
-    if frame.f_code.co_name == "synced" and frame.f_code.co_filename.endswith("sync.py"):
-        if event == "call":
-            active = time.perf_counter()
-            parses, commands = 0, []
-        elif event == "return":
-            elapsed = time.perf_counter() - active
-            active = None
-            with open({json.dumps(str(log))}, "a", encoding="utf-8") as out:
-                out.write(json.dumps([elapsed, parses, commands]) + "\\n")
-    elif (active is not None and event == "call" and frame.f_code.co_name == "parse"
-          and frame.f_code.co_filename.endswith("ast.py")):
+original_parse = ast.parse
+def parse(*args, **kwargs):
+    global parses
+    if active is not None:
         parses += 1
-sys.setprofile(profile)
+    return original_parse(*args, **kwargs)
+ast.parse = parse
+original_synced = sync.synced
+def timed(*args, **kwargs):
+    global active, parses, commands
+    parses, commands = 0, []
+    active = time.perf_counter()
+    try:
+        return original_synced(*args, **kwargs)
+    finally:
+        elapsed = time.perf_counter() - active
+        active = None
+        with open({json.dumps(str(log))}, "a", encoding="utf-8") as out:
+            out.write(json.dumps([elapsed, parses, commands]) + "\\n")
+sync.synced = timed
 from forge.cli import main'''), encoding="utf-8")
 
     def measure(status):
