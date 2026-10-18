@@ -4,12 +4,20 @@
   "done_when": "A merge to main skips its full test run when its tree equals the pull request's code merged onto main's previous tip and that pull request's checks passed; a release tag skips tests when its commit's tree already passed main's full run; both say so in the job summary; the nightly every-platform run still runs everything",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:47:32.821444+00:00",
       "step": "start"
     }
   ],
-  "why": "After a pull request passes, Forge's CI runs the same tests again on the merge to main and again on the release tag, though the code is identical"
+  "stuck": {
+    "close": null,
+    "head": "1a02e5cb04ac385935af4051a66124a68f68aea8",
+    "keys": {},
+    "round": null
+  },
+  "why": "After a pull request passes, Forge's CI runs the same tests again on the merge to main and again on the release tag, though the code is identical",
+  "worker": "codex"
 }
