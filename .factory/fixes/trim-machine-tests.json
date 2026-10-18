@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-machine-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14de5-5d81-74b2-85b7-2a059d9b6768",
+    "head": null,
+    "start": "b8fa5911d80055efe5212089f007ba2dbfb8944c"
+  },
   "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
