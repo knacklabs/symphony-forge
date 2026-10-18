@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-18T10:26:19.304130+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_016JvBYpU9sJG3ZJ9yNeXka9",
+    "hash": "b3e62639f0fb3006787d6db020a010b27b116e6391233e92ea74f1189c3abca6",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-BUDGET-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-18T10:14:50.425592+00:00",
@@ -17,8 +27,12 @@
     {
       "at": "2026-10-18T10:24:58.434146+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-18T10:26:19.304417+00:00",
+      "step": "approved"
     }
   ],
   "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
-  "touches": 0
+  "touches": 1
 }
