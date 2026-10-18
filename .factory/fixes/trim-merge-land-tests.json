@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-merge-land-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14db2-2ab6-7540-9573-deb7e6367fce",
+    "head": null,
+    "start": "78ce439a328ded063462818a313b31365d2064c6"
+  },
   "done_when": "The listed duplicate tests and parameter rows are gone, every removed assertion that no other test owns is moved into its kept sibling, and the merge and land tests still pass",
   "fix_kind": "mechanical",
   "kind": "fix",
