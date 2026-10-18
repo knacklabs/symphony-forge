@@ -39,8 +39,8 @@
     "id": "ccfe840e-3db9-4b52-980d-c9ba24c07d5f",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T10:14:25.983249+00:00",
@@ -60,12 +60,10 @@
     }
   ],
   "stuck": {
-    "close": "69123d6b-13bc-472c-9acb-81c9c4b99720",
-    "head": "7998f95f16e7cf69b51bdcb62277c1819424c4a0",
-    "keys": {
-      "the review finding \"Gate: existing worker-selection regression tests\" in src/forge/fasttest.py": 1
-    },
-    "round": 1
+    "close": "b5a49656-4b65-4780-8ce6-ab2f54a6e6e6",
+    "head": "5382aeeb7e3ad67635efcee8aea254ed07f2f29f",
+    "keys": {},
+    "round": 2
   },
   "why": "A worker's forge test runs the whole suite when a shared test fixture changes (one change ran 3,190 tests for two hours on the laptop), because the broad-selection skip applies only at close",
   "worker": "codex"
