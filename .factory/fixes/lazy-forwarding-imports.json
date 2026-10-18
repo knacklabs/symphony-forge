@@ -1,0 +1,15 @@
+{
+  "base": "656f68887541b0da388b43920126917a167d8812",
+  "branch": "fix/lazy-forwarding-imports",
+  "done_when": "The forwarding lookup's imports load only when the command runs in Forge's own checkout, each forge process starts at least 10 ms faster, and the forwarding tests pass for Forge's repo and for client repos",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T08:30:45.998125+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Every forge command and git hook spends about 15 to 20 ms importing the release-forwarding lookup, which only Forge's own checkout can use"
+}
