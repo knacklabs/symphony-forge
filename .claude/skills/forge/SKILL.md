@@ -1485,7 +1485,10 @@ still stops for a pending question and gives open findings or failing tests a wo
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
 status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
 its builder, one already merged and one another command works on. It starts them oldest first,
-several at a time up to this machine's agent places, and merges each one when it passes. A stacked
+several at a time up to this machine's agent places, and merges each one when it passes.
+A child that waits only for GitHub checks releases its place so another close can start.
+It takes a place again before it continues. Queued checks keep their place to limit new CI work.
+A stacked
 fix follows its base even when its start date is earlier. Where Forge merges, it waits for its
 base to merge, including a base whose builder or another command still works on it. If the base
 stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
