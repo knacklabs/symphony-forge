@@ -10,13 +10,29 @@
   },
   "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5f023b9343d074fc46ef0d9d72b0345b577b262206f39a1f29b203fec819974e",
+    "changed": "5cd1ba8cd3a828b3ee6f4a717209f733461e1470db98a9550fb6312d4c0e7d7d",
+    "commit": "e8c6cfe22148de5a238e1c2cf7bdb1bf0b892c2d",
+    "dismissals": [],
+    "findings": [],
+    "id": "8b45ac83-e7ce-4bba-a1d9-f53f1599771a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T06:34:49.423632+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:39:31.640893+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
