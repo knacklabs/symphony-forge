@@ -289,6 +289,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
+    # Rows and counts must read the same published drop or restore, even with a stale worktree.
+    for rel, (state, where) in list(best.items()):
+        if fix := STATE.fullmatch(rel)["fix"]:
+            if rel not in merged and state.get("branch") not in merged_prs:
+                state = nextstep.at_ref(top, fix, state, by_branch.get(state.get("branch")))
+            best[rel] = state, where
+    best = {rel: pair for rel, pair in best.items() if pair[0].get("status") != "dropped"}
     readiness: dict[str, Item] = {}
     person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
@@ -610,10 +617,6 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             continue
         match = STATE.fullmatch(rel)
         if match["fix"]:
-            if rel not in merged and state.get("branch") not in merged_prs:
-                state = nextstep.at_ref(top, match["fix"], state, by_branch.get(state.get("branch")))
-            if state.get("status") == "dropped":
-                continue
             if state.get("kind") != "story-done":
                 name = match["fix"]
                 items[name] = row(name, "fix", state.get("why") or "A small fix", state, where)

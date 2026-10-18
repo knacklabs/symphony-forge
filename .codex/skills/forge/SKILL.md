@@ -1311,7 +1311,12 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
-The generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
+Close and the generated `forge.yml` skip the test command when every changed path is Markdown
+(case-insensitive), or under `docs/`, `plans/`, `.factory/` or `.forge/`. They compare against the
+base with the same rule as the part-size check. No setting is needed. The required `tests` check
+passes and says `docs only: tests skipped`. One code file runs tests as usual. New repos get
+this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
+For other changes, the generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
 which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
@@ -1336,7 +1341,8 @@ Tests that check the whole repo, such as rules over every test file, name no cha
 the pytest picker never picks them and they fail only in CI. List them in `always_test` in
 `forge.toml` (in a fix), as test files or pytest node IDs such as
 `tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
-them on every change, beside the tests it picks, even when it leaves a large selection to CI.
+them on every change that includes code or settings, beside the tests it picks, even when it
+leaves a large selection to CI. Docs-only changes skip these tests too.
 Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
 entry that runs no test, for example because `-k` deselects it, fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
@@ -1412,6 +1418,31 @@ commit changes Forge's review or test-state record and its accompanying state un
 change or missing passing parent result runs the suite on the pull request merged into its
 current base. Reuse also requires the parent to include that base; a parent pull request run
 must have tested that same base. A changed base or missing proof runs the suite again.
+Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
+After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
+Give the job `contents: read` and `actions: read` permissions, and fetch the full history.
+The runner needs Python, Bash and the GitHub CLI, as GitHub-hosted runners provide.
+Add the condition below to each later step that can skip the records commit:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+  - {id: forge-records, uses: ./.forge/records-only}
+  - if: steps.forge-records.outputs.records_only != 'true'
+    run: your-build-command
+```
+
+The output is `records_only=true` only for a push or pull request whose parent passed this
+same workflow. The step uses Forge's existing close-record rule. Code changes, documentation
+changes, a failed parent run or missing proof produce `false`, so the workflow runs normally.
+For pull requests, the parent must also include the current base and its run must cover that base.
+Each job that uses the step skips only its guarded steps.
+
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is

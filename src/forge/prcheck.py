@@ -57,6 +57,8 @@ jobs:
   tests:
     if: github.event_name == 'pull_request'
     name: test group ${{ matrix.group }} of <groups>
+    outputs:
+      docs-only: ${{ steps.parent-tests.outputs.docs-only }}
     strategy:
       fail-fast: false
       matrix:
@@ -77,6 +79,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '<docs-excludes>'
         run: python .forge/review-tests.py
 <npm-cache><node>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
@@ -94,6 +97,8 @@ jobs:
       - env:
           GROUPS: ${{ needs.tests.result }}
         run: test "$GROUPS" = success
+      - if: needs.tests.outputs.docs-only == 'true'
+        run: "echo 'docs only: tests skipped'"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
@@ -195,6 +200,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
+                .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
                 .replace("<tests-timeout>", "    timeout-minutes: 10\n"
@@ -216,6 +222,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
+            ".forge/records-only/action.yml": (sync.TEMPLATES / "records-only-action.yml").read_text(encoding="utf-8"),
             ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
 
 

@@ -30,6 +30,7 @@ SOURCES = {
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
     ".forge/review-tests.py": "src/forge/templates/review-tests.py",
+    ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
