@@ -72,8 +72,8 @@
     "id": "7cebf8f8-b0e8-4d36-a588-8510d8f0461a",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:37:43.227711+00:00",
@@ -85,10 +85,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e6c4b3e79eb56c58295634b46a60c7c8cef582fc",
+    "close": "1ee5ff54-7617-4a05-8c4d-0ce6dfa2c97d",
+    "head": "e53268a607a86e03c94aa732aa121d0a8c97ed9d",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Close sends a branch whose diff against main holds only Forge's own records to Autoreview, which fails twice with unreadable findings, and the message points at forge doctor",
   "worker": "codex"
