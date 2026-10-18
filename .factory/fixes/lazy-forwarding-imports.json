@@ -12,7 +12,7 @@
   "done_when": "The forwarding lookup's imports load only when the command runs in Forge's own checkout, each forge process starts at least 10 ms faster, and the forwarding tests pass for Forge's repo and for client repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
