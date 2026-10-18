@@ -1,6 +1,13 @@
 {
   "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
   "branch": "fix/short-leak-test-grace",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14f1c-db69-7d03-82ae-690e5fa57311",
+    "head": null,
+    "start": "a29c943f27edef748d6350deaf4208ecc1da423a"
+  },
   "done_when": "The leak test uses a short grace period of its own while still proving leaked processes are found and ended, and the suite's cleanup keeps its normal grace",
   "fix_kind": "mechanical",
   "kind": "fix",
