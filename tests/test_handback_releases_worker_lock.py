@@ -10,6 +10,7 @@ import pytest
 
 from test_tools_session_hold import Session
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
+from test_worker_liveness_controls_next_step import live_identity
 
 STORY = "FIX-STALE-WORKER-RUNNING"
 
@@ -36,6 +37,10 @@ def test_1_handback_releases_the_lock_of_a_completed_round(client, monkeypatch, 
         assert returned.returncode == 0, returned.stdout + returned.stderr
         assert not lock.exists(), "a successful handback must release the item"
         if leftover:
+            # A completed round cannot free a different live owner's lock.
+            lock.write_text(json.dumps(live_identity()), "utf-8")
+            occupied = host.forge("work", "correct-spelling")
+            assert occupied.returncode == 1 and "already running" in occupied.stderr
             # Older releases left only the live coordinator identity in the lock.
             if leftover == "legacy":
                 held.pop("native_run", None)

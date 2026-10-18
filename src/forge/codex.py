@@ -1058,12 +1058,12 @@ def _lock_alive(lock: Path) -> bool | None:
     """A completed native round frees its lock even while its host session survives."""
     owner, saved = _json(lock), _json(lock.with_suffix(".json"))
     native = saved.get("native") or {}
-    if native and not saved.get("pending") and (
+    completed = not saved.get("pending") and (
             owner.get("native_run") and owner["native_run"] == native.get("native_run")
             or not owner.get("native_run") and not owner.get("saves_chat")
-            and native.get("rounds") is not None and not saved.get("native_round")):
-        return False
-    return _alive(owner) if lock.is_file() else False
+            and native.get("rounds") is not None and not saved.get("native_round")
+            and native.get("session", "").endswith(f":{owner.get('pid')}:{owner.get('started')}"))
+    return False if completed or not lock.is_file() else _alive(owner)
 
 
 def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:

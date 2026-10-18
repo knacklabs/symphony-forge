@@ -89,6 +89,9 @@ def test_2_unfinished_worker_waits_only_while_a_process_or_lock_is_live(
     assert following["next"] == row["next"]
     next_text = client.forge("next")
     assert next_text.returncode == 0, next_text.stderr
-    assert row["next"]["line"] in next_text.stdout
+    # The board names the title; text next names the fix. Both report its liveness.
+    expected = ("A worker is building The fix correct-state." if alive
+                else "The fix correct-state's worker has stopped.")
+    assert expected in next_text.stdout
     if not alive:
         assert "Next: forge work correct-state" in next_text.stdout
