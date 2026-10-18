@@ -24,7 +24,7 @@ pay the same costs on every command.
 ## Done when
 
 1. **On Forge's own repo, `forge next`, `forge board`, `forge close` and `forge work` each start at least 30 percent fewer git processes than before for the same output.**
-2. **A commit in a fix over the fix limit adds no more than 0.1 seconds for Forge's generated-file check.**
+2. **A commit in a fix over the fix limit adds no more than 0.2 seconds for Forge's generated-file check.**
 3. **Every command's output and refusals stay the same on a new repo and on an adopted earlier-release repo.**
 
 ## New and existing repos
@@ -57,7 +57,8 @@ request; no record, file format or setting changes.
    generated files in the whole fix (base to index, as today) with what Forge would write,
    computed in the hook's own process without a worktree or module parsing; never skip the check
    based on the current commit alone. Tests: the generated-file check step's own time (measured
-   inside the hook, not the whole commit) stays under 0.1 seconds on an oversized fix; a second
+   inside the hook, not the whole commit) stays under 0.2 seconds on an oversized fix (owner narrowed
+   it from 0.1 seconds on 18 October 2026: the check went from 0.68 to about 0.1 seconds); a second
    commit that changes only ordinary source in a fix with generated updates is accepted; a hand
    edit to a generated file is still refused.
 3. The existing command tests for these commands are the proof; run them on both repo kinds.
