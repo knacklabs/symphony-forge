@@ -10,13 +10,54 @@
   },
   "done_when": "Both cache tests run on a fixed clock Forge already supports for tests and pass on every platform in two every-platform runs",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/cache-tests-fixed-clock.json",
+      "file": ".factory/fixes/cache-tests-fixed-clock.json",
+      "gain": 3,
+      "harm": 1,
+      "line": 11,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Both cache tests run on a fixed clock Forge already supports for tests and pass on every platform in two every-platform runs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d46f32f58ed95feed534be5f1fe547b268839c09d21802662e9b701fee11c4ad",
+    "changed": "48a2cd109cb0d2512f92d46c74f374540a2e22758b5238fd53e9b2c65576a58e",
+    "commit": "82d51497fcd3c6ca526714c39ea2e3181084f3b4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. The proof list explicitly marks the two every-platform runs as missing. This is not covered by a pending pull-request check: `.github/workflows/forge-next.yml:47` excludes pull requests from its full-suite matrix, and `.github/workflows/forge.yml:26` runs PR tests only on Ubuntu. Run the existing every-platform workflow twice against this head and provide passing results for both tests on every platform.",
+        "file": ".factory/fixes/cache-tests-fixed-clock.json",
+        "gain": 3,
+        "harm": 1,
+        "line": 11,
+        "priority": "P1",
+        "title": "Not done: Both cache tests run on a fixed clock Forge already supports for tests and pass on every platform in two every-platform runs",
+        "work": 2
+      }
+    ],
+    "id": "4e476dd9-5c39-4b0a-bc3c-abf949d9a9c2",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T06:18:19.564249+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T06:27:18.804680+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
