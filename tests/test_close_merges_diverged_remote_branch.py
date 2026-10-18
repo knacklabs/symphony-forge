@@ -57,7 +57,7 @@ def test_2_close_leaves_conflicting_merge_for_resolution_and_can_resume(env):
     assert closed.returncode == 1
     assert "The local and remote branches diverged" in closed.stdout
     assert "Their trees differ." in closed.stdout
-    assert "conflicts in app.py" in closed.stderr
+    assert "The merge of the remote branch conflicts in app.py." in closed.stderr
     assert "resolve the conflicts and commit the merge" in closed.stderr
     assert f"then forge close {item}" in closed.stderr
     assert "forge doctor" not in closed.stderr
@@ -71,3 +71,30 @@ def test_2_close_leaves_conflicting_merge_for_resolution_and_can_resume(env):
     pushed = repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
     for commit in (remote, local):
         repo.git("merge-base", "--is-ancestor", commit, pushed, cwd=where)
+
+
+def test_3_close_names_merge_failure_and_preserves_history_when_a_hook_refuses(env):
+    item, where = env.start_fix()
+    repo = env.repo
+    repo.git("push", "-q", "origin", "fix/tidy-readme", cwd=where)
+    remote = repo.git("rev-parse", "HEAD", cwd=where)
+    repo.git("commit", "--amend", "-qm", "Amend the work", cwd=where)
+    local = repo.git("rev-parse", "HEAD", cwd=where)
+    hooks = env.tmp / "merge-hooks"
+    hooks.mkdir()
+    hook = hooks / "pre-merge-commit"
+    hook.write_text("#!/bin/sh\necho 'merge hook refused' >&2\nexit 1\n", encoding="utf-8")
+    hook.chmod(0o755)
+    repo.git("config", "core.hooksPath", hooks.as_posix(), cwd=where)
+
+    closed = env.close(item)
+
+    assert closed.returncode == 1
+    assert "The merge of the remote branch failed: merge hook refused" in closed.stderr
+    assert f"Next: in {where}, finish or abort the merge, then retry this command" in closed.stderr
+    assert "forge doctor" not in closed.stderr
+    assert repo.git("rev-parse", "HEAD", cwd=where) == local
+    assert repo.git("rev-parse", "MERGE_HEAD", cwd=where) == remote
+    assert repo.git("diff", "--name-only", "--diff-filter=U", cwd=where) == ""
+    assert repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0] == remote
+    assert not env.review_calls()
