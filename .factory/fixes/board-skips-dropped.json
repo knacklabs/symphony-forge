@@ -10,13 +10,29 @@
   },
   "done_when": "The board and forge board --json leave out a dropped fix and show it again after forge fix drop --undo, built on main without the page server",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6e248d6b0021e581afbee562af96e03951b21f1b473e060bd9b876c0ad4514f5",
+    "changed": "46e2c612c95b66d804c594e8570a976c343a75658f33e44fadc17ad673992a61",
+    "commit": "05b15335af067bfd0ff7bcf6c4c10f31a10897c5",
+    "dismissals": [],
+    "findings": [],
+    "id": "fcbb1b6b-9f0f-4c08-b034-4a6de77397b9",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T01:59:11.226098+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T02:17:08.284351+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
