@@ -16,8 +16,12 @@ def test_1_close_records_a_clean_review_when_main_already_has_the_product_change
     # A model call on an empty product diff is the regression; CI must still gate close.
     _client(env.repo, env.gh, tmp_path, history)
     item, where = env.start_fix()
-    env.commit(env.repo.path, "app.py", "print('hello')\n", "Land the product change")
+    env.start("land-product", "fix/land-product", ".factory/fixes/land-product.json",
+              {"kind": "fix", "why": "Land the product change", "done_when": "The product changes"},
+              {"app.py": "print('hello')\n"})
+    env.repo.git("merge", "-q", "--ff-only", "fix/land-product")
     _land_fixture(env.repo)
+    env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     env.reviews({"exit": 0, "report": {"findings": ["unreadable"]}})
     env.checks([run("tests", "failure"), run("forge-pr-check")])
 
