@@ -13,7 +13,6 @@
     "tests/test_accept_dismisses_the_latest_review_findings.py::test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on[default-new]": 4.426265336000142,
     "tests/test_accept_dismisses_the_latest_review_findings.py::test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on[records-earlier-adopted]": 4.64919262799981,
     "tests/test_accept_dismisses_the_latest_review_findings.py::test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on[records-new]": 4.603676252000014,
-    "tests/test_accept_dismisses_the_latest_review_findings.py::test_4_a_clean_review_clears_an_unanswered_stop": 4.203966668000021,
     "tests/test_accept_dismisses_the_latest_review_findings.py::test_5_clients_receive_the_choice_and_clean_review_rules[earlier-adoption]": 0.5667197510001643,
     "tests/test_accept_dismisses_the_latest_review_findings.py::test_5_clients_receive_the_choice_and_clean_review_rules[init]": 0.8968520009998429,
     "tests/test_after_another_story_task.py::test_1_a_task_waits_for_another_story_s_task_then_starts_once_it_merges": 3.0501691259999006,
