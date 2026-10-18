@@ -51,7 +51,7 @@ reverts with its pull request.
 
 1. Read free memory cheaply (macOS: `vm_stat` free plus inactive pages, or `sysctl
    vm.page_free_count`; Linux: MemAvailable in /proc/meminfo; Windows: GlobalMemoryStatusEx).
-   Floor: about 1.5 GB or 10 percent of RAM, whichever is larger; a single constant like
+   Floor (owner confirmed 18 October 2026): about 1.5 GB or 10 percent of RAM, whichever is larger; a single constant like
    LOAD_LIMIT in src/forge/machine.py, not a setting. Waiting says why ("waiting for memory: 0.8 GB
    free, starts above 1.6 GB") in the same place line the load wait uses. Unknown memory (an
    unreadable source) never blocks. Tests: a fake low-memory reading holds a work round, a read, a
