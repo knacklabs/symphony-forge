@@ -14,7 +14,7 @@ from test_board import seen
 from test_fix_drop import _github, _pr, _start
 from test_started_branches_claim_the_work import client  # noqa: F401
 
-STORY = "FORGE-DROP-1"
+STORY = "board-skips-dropped"
 
 
 def test_7_board_omits_dropped_fixes_and_restores_them_after_fetch(client):
