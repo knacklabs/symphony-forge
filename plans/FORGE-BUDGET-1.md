@@ -51,7 +51,7 @@ reverts with its pull request.
 
 1. Read free memory cheaply (macOS: `vm_stat` free plus inactive pages, or `sysctl
    vm.page_free_count`; Linux: MemAvailable in /proc/meminfo; Windows: GlobalMemoryStatusEx).
-   Floor: about 1.5 GB or 10 percent of RAM, whichever is larger; a single constant like
+   Floor (owner confirmed 18 October 2026): about 1.5 GB or 10 percent of RAM, whichever is larger; a single constant like
    LOAD_LIMIT in src/forge/machine.py, not a setting. Waiting says why ("waiting for memory: 0.8 GB
    free, starts above 1.6 GB") in the same place line the load wait uses. Unknown memory (an
    unreadable source) never blocks. Tests: a fake low-memory reading holds a work round, a read, a
@@ -59,6 +59,11 @@ reverts with its pull request.
    The suite's shared fixture (tests/conftest.py, where it already isolates load averages) also
    supplies a plentiful memory reading and no busy runners by default, so existing command tests
    never wait on the host's real memory or runners; tests that need pressure set it explicitly.
+   Owner's rules (18 October 2026, after two blocked rounds): every test run has one entry, the
+   test lane, including a direct `forge test --pytest <selection>` from a worker or close, so the
+   memory floor and the budget apply to all of them; and when a repo's pytest command fixes its
+   worker count (`-n 4`), Forge caps it to the budget with pytest's `--maxprocesses`, leaving other
+   test runners as written.
 2. Today each test run uses `-n` workers on its own and small selections bypass the test lane.
    Make the test lane's capacity a count of test processes (cores minus the agent share), give each
    run a share of it through the `-n` value it passes to pytest, and count small selections too.
