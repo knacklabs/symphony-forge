@@ -1,0 +1,15 @@
+{
+  "base": "a8f183d8e92446d68ac22664c610396ff12b84b9",
+  "branch": "fix/records-only-skip-step",
+  "done_when": "Forge ships a step any workflow can add first that passes in seconds on a records-only push whose parent run of that workflow passed, the guide shows the one line to add, and tests cover a records-only push skipping and a code push running, on new repos and after sync on existing repos",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T02:32:25.642916+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After review, close pushes a commit that changes only Forge's records, and every repo workflow other than Forge's own reruns in full on it"
+}
