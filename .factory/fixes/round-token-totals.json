@@ -1,6 +1,13 @@
 {
   "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
   "branch": "fix/round-token-totals",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1500f-1d15-7822-8bf5-ce3a81c5f365",
+    "head": null,
+    "start": "3f846d10022de17ea2bc11029a3a55a7be56ed25"
+  },
   "done_when": "Each worker, reader and review record holds the round's total input, cached and output tokens across all its turns, and a test with a two-turn round records the sum",
   "fix_kind": "backend",
   "kind": "fix",
