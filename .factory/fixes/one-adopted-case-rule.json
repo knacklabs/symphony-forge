@@ -4,12 +4,20 @@
   "done_when": "AGENTS.md's review rule says each rule keeps its full cases on a new repo plus at least one adopted-repo case, with more only where the adopted path differs, and the test-audit guidance says the same",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T06:26:40.581400+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's review rule asks every change to test new and existing repos, which in practice crosses the adopted fixture with every test case and makes the suite take about four hours of machine time"
+  "stuck": {
+    "close": null,
+    "head": "11e0a0510ac7087b02c32c1b7d417188e298b709",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's review rule asks every change to test new and existing repos, which in practice crosses the adopted fixture with every test case and makes the suite take about four hours of machine time",
+  "worker": "codex"
 }
