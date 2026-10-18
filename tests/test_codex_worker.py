@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _cached_sdk, _install, _install_claude_sdk, patient
+from conftest import REAL_UV, _cached_sdk, _claude_sdk_env, _install, _install_claude_sdk, patient
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -75,6 +75,8 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
     if uv is None:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")
+    # Forge checks both SDKs under one XDG_DATA_HOME, and many tests point it here directly.
+    _claude_sdk_env(data)
     env = data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
     with _cached_sdk(env, PIN) as build:
         if build is None:

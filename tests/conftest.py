@@ -133,13 +133,18 @@ def _cached_sdk(env: Path, pin: str):
                     fcntl.flock(lock, fcntl.LOCK_UN)
 
 
-def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
-    """A separate Python environment, with only the SDK's external edge replaced."""
-    pin = "0.2.161"
+def _claude_sdk_env(data: Path, pin: str = "0.2.161") -> None:
+    """The Claude Agent SDK's separate Python environment under this XDG_DATA_HOME."""
     env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
     with _cached_sdk(env, pin) as build:
         if build is not None:
             subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True)
+
+
+def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
+    """A separate Python environment, with only the SDK's external edge replaced."""
+    pin = "0.2.161"
+    _claude_sdk_env(data, pin)
     package = bin_dir / "claude_agent_sdk"
     package.mkdir(exist_ok=True)
     shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
