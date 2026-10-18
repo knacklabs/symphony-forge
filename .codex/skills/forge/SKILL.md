@@ -962,6 +962,12 @@ accepts replies with at least one no-findings line when every numbered or bullet
 there are no findings, ignoring other note lines. A numbered or bulleted blocking finding still
 needs a disposition and another round.
 
+Handle cold-read rounds yourself: amend the plan and write dispositions.
+Once a read is clean, before Plan Mode approval, list the choices you made alone answering
+notes in all rounds: each amendment that picked a behaviour, a limit, a refusal or a scope cut.
+Grill the human one question at a time, with your recommendation first.
+Record each answer in the plan, then ask for approval. Plain factual corrections need no question.
+
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
 
