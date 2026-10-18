@@ -10,13 +10,29 @@
   },
   "done_when": "Each worker, reader and review record holds the round's total input, cached and output tokens across all its turns, and a test with a two-turn round records the sum",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "95f86ecc6e471c992ba485bae58cd9c10ab156cb8fad681d3885a34951e07765",
+    "changed": "053e118f69ca5e1d8380069fe4fe84c3bff0b930df20f751be7c46c5613a06e2",
+    "commit": "e7b65ca7d91cb91ded336169301de89b73407298",
+    "dismissals": [],
+    "findings": [],
+    "id": "7d646b50-878c-4441-9304-f2e3d5a086ac",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:59:04.384317+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:54:34.634753+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
