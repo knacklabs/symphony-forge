@@ -4,12 +4,20 @@
   "done_when": "forge work reuses the last SDK check while the SDK's ready marker is unchanged, checks again after it changes, and a test proves both on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T08:30:49.853942+00:00",
       "step": "start"
     }
   ],
-  "why": "Every forge work run starts a Python process to check the Codex SDK, about half a second each time, even when the SDK has not changed"
+  "stuck": {
+    "close": null,
+    "head": "7a11de0adb6b6f8f647d026c76d911ef462430a2",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every forge work run starts a Python process to check the Codex SDK, about half a second each time, even when the SDK has not changed",
+  "worker": "codex"
 }
