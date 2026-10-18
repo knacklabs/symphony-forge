@@ -10,7 +10,7 @@
     "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
   },
   "doc": "plans/FORGE-GITCOST-1.md",
-  "status": "approved",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-18T08:31:38.338294+00:00",
@@ -27,6 +27,10 @@
     {
       "at": "2026-10-18T08:38:41.949783+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-10-18T13:30:59.881011+00:00",
+      "step": "read"
     }
   ],
   "title": "Forge commands start far fewer git processes",
