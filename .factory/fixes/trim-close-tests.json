@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-close-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14db2-2be5-7a02-8eee-b59c9a86eb60",
+    "head": null,
+    "start": "41546070b753ae5aaad30a07f104de9bdb5dd9d5"
+  },
   "done_when": "The listed duplicate rows are gone, each rule keeps one adopted case, and the close tests still pass",
   "fix_kind": "mechanical",
   "kind": "fix",
