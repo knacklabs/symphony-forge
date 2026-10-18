@@ -10,13 +10,29 @@
   },
   "done_when": "The listed duplicate rows are gone, each rule keeps one adopted case, and the close tests still pass",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5f75c42d1c03166e3055e46f9b15b8e8ac2bfdf7265bc01c35f8982dc2153cf8",
+    "changed": "4325510a52702229224fe250b44313ec89e5eb9f79ac63bd7442ef9997c724dc",
+    "commit": "44f337bae0f9d3eb6ec0b21fe4569bd4c77993d7",
+    "dismissals": [],
+    "findings": [],
+    "id": "add95327-ad3c-457b-b102-146cbb76fa10",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T06:26:52.275364+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:23:00.610438+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
