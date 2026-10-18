@@ -10,13 +10,29 @@
   },
   "done_when": "forge work reuses the last SDK check while the SDK's ready marker is unchanged, checks again after it changes, and a test proves both on new and adopted repos",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7da52b983aa6f730deb98469612d0e757edd1b910e4d4cebdd028a82ee345001",
+    "changed": "2f022d4e5daeb89679a83fbda65da1ad54f9cbf4030aecbf54a29bb6bbc74713",
+    "commit": "2c9b22b6a3e89683e9058389bee278063b3e9495",
+    "dismissals": [],
+    "findings": [],
+    "id": "655b86cf-ee8d-42fc-bd2a-db261fbd01e7",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T08:30:49.853942+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T08:37:42.081268+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
